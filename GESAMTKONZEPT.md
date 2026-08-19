@@ -405,16 +405,17 @@ Das Dashboard ist die App-Startseite für eingeloggte Nutzer, aber nicht die ide
 
 **Modulfarben**
 
-> Übernommen 1:1 aus `DESIGN.md`, dem verbindlichen Designsystem — abweichend von den Farbrollen der ursprünglichen PDF-Vorlage (dort: Fitness Grün, Finanzen Blau, Organisation Orange, Haushalt Pink/Rot).
+> Übernommen 1:1 aus `DESIGN_SYSTEM_V2.md` (§3, §19–22), der verbindlichen Design-Quelle seit V2 — abweichend sowohl von den Farbrollen der ursprünglichen PDF-Vorlage (Fitness Grün, Finanzen Blau, Organisation Orange, Haushalt Pink/Rot) als auch vom früheren Coral/Aubergine-System (V1).
 
-| Modul | Farbrolle | Dark-Wert | Light-Wert | Designwirkung |
-|---|---|---|---|---|
-| Fitness | Korallrot | `#ff6a4d` | `#e0574b` | Energie, Aktivität, Fortschritt — bewusst nah an Coral, daher nie gleichzeitig mit Coral als Aktion einsetzen |
-| Finanzen | Grün | `#3fd196` | `#1e9e77` | Vertrauen, Klarheit, Ruhe |
-| Organisation | Indigo | `#8a8cf0` | `#5b63d6` | Fokus, Zeit, Aktivität |
-| Haushalt | Amber/Gold | `#ffb454` | `#d68a24` | Wärme, Zuhause, Aufmerksamkeit |
+| Modul | Farbrolle | Wert (Dark, Standard) | Designwirkung |
+|---|---|---|---|
+| Global Signal | Grün | `#3fe280` | Einzige globale Akzentfarbe — Primary Buttons, Fokus-Ring, aktiver Zustand |
+| Fitness | Grün (= Global Signal) | `#3fe280` | Energie, Aktivität, Fortschritt |
+| Finanzen | Blau | `#3b82f6` | Vertrauen, Klarheit, Ruhe |
+| Organisation | Amber | `#f59e0b` | Fokus, Zeit, Aktivität |
+| Haushalt | Pink | `#ec4899` | Wärme, Zuhause, Aufmerksamkeit |
 
-Alle vier Töne sind **Wegweiser, keine Flächenfarben** — sie erscheinen nur klein und funktional (Punkt, 2px-Nav-Rand, Kategorie-Tag, kleines Icon), nie als große Fläche oder CTA. Coral (`#ff4a36` dark / `#e5381f` light) bleibt die einzige Aktionsfarbe der App und ist von den Modulfarben getrennt zu halten.
+V2 ist eine **achromatische Carbon-Basis** (Canvas `#0a0a0a`, Cards `#171717`, Border `#222222`, Text `#ffffff`/`#9b9b9b`) statt der früheren warmen Aubergine-Fläche. Domain-Farben bleiben **Signale, keine Flächenfarben** (Icon, Accent-Line, Progress-Fill, Link/CTA des jeweiligen Bereichs) — keine komplett farbigen Modul-Cards. Dass Fitness und die globale Signalfarbe identisch sind, ist bewusst so definiert; in Ansichten, in denen beide gleichzeitig auftreten (z. B. ein globaler CTA neben einem Fitness-Tag), ist entsprechend besondere Sorgfalt nötig, um Verwechslung zu vermeiden.
 
 **Gemeinsame UI-Bausteine**
 
@@ -557,4 +558,4 @@ Dieses Dokument ist die vollständige Konzeptbasis für Produktdesign, Marketing
 
 ---
 
-> **Hinweis zum aktuellen Umsetzungsstand:** Produktname und Modulfarben sind zwischen diesem Dokument, `DESIGN.md` und dem Frontend abgeglichen. Das Produkt heißt durchgängig **„4One Hub“**; die Modulfarben in Abschnitt 15 entsprechen 1:1 den Tokens aus `DESIGN.md` (Korallrot/Grün/Indigo/Amber statt der ursprünglich hier vorgeschlagenen Grün/Blau/Orange/Pink-Rot-Rollen).
+> **Hinweis zum aktuellen Umsetzungsstand:** Produktname und Modulfarben sind zwischen diesem Dokument, `DESIGN_SYSTEM_V2.md` und dem Frontend abgeglichen. Das Produkt heißt durchgängig **„4One Hub“**; die Modulfarben in Abschnitt 15 entsprechen 1:1 den Tokens aus `DESIGN_SYSTEM_V2.md` §3 (Grün/Blau/Amber/Pink auf achromatischer Carbon-Basis statt der ursprünglich hier vorgeschlagenen Rollen oder des früheren Coral/Aubergine-Systems V1). `DESIGN_SYSTEM_V2.md` beschreibt zusätzlich eine sidebar-basierte App-Shell-Navigation (§12–13), die im Frontend aktuell noch nicht umgesetzt ist — dort läuft weiterhin ein Header mit Bottom-Navigation.

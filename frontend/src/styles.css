@@ -1,97 +1,115 @@
 /* 4One Hub — Design Tokens
-   Quelle: DESIGN.md — Midnight-Workspace mit Coral als einziger Aktionsfarbe
-   und vier Modul-Farben als Wegweiser (Fitness, Finanzen, Organisation, Haushalt). */
+   Quelle: DESIGN_SYSTEM_V2.md — achromatische Carbon-Basis (Schwarz/Graphit/Weiß)
+   mit sparsamer Domain-Farbe als Signal (Fitness, Finanzen, Organisation, Haushalt).
+   Werte 1:1 aus den globalen Tokens in DESIGN_SYSTEM_V2.md §3 übernommen.
+   Light-Mode ist dort nicht spezifiziert, wird hier für Barrierefreiheit
+   (Tageslicht, ältere Nutzer:innen) als abgeleitetes Pendant ergänzt. */
 
 :root {
-  /* Light — Standard-Definition */
-  --canvas: #f6f5f2;
+  /* Light — abgeleitetes Pendant, Struktur wie Dark, invertierte Basis */
+  --canvas: #fafafa;
   --surface: #ffffff;
-  --surface-recessed: #efece6;
-  --text: #1c1e2a;
-  --text-body: #4a4d5e;
-  --text-muted: #7a7d8c;
-  --border: #e2ded6;
-  --coral: #e5381f;
+  --surface-hover: #f2f2f0;
+  --surface-recessed: #f0f0ee;
+  --text: #0a0a0a;
+  --text-body: #45454a;
+  --text-muted: #7a7a7a;
+  --border: #e3e3e1;
+  --border-strong: #d2d2cf;
+  --accent: #16a34a;
+  --accent-hover: #12893d;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(22, 163, 74, 0.1);
 
-  --m-fitness: #e0574b;
-  --m-finance: #1e9e77;
-  --m-organize: #5b63d6;
-  --m-household: #d68a24;
-  --m-fitness-soft: rgba(224, 87, 75, 0.12);
-  --m-finance-soft: rgba(30, 158, 119, 0.12);
-  --m-organize-soft: rgba(91, 99, 214, 0.12);
-  --m-household-soft: rgba(214, 138, 36, 0.12);
+  --m-fitness: #16a34a;
+  --m-finance: #2563eb;
+  --m-organize: #d97706;
+  --m-household: #db2777;
+  --m-fitness-soft: rgba(22, 163, 74, 0.1);
+  --m-finance-soft: rgba(37, 99, 235, 0.1);
+  --m-organize-soft: rgba(217, 119, 6, 0.1);
+  --m-household-soft: rgba(219, 39, 119, 0.1);
 
-  /* Typografie */
-  --font-display: 'Inter Tight', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Typografie — nur Inter, keine zweite UI-Schrift (DESIGN_SYSTEM_V2.md §5) */
+  --font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --text-caption: 12px;    --leading-caption: 1.2;    --tracking-caption: -0.24px;
-  --text-body-sm: 14px;    --leading-body-sm: 1.3;    --tracking-body-sm: -0.28px;
-  --text-md: 16px;         --leading-md: 1.4;         --tracking-md: -0.32px;
-  --text-subheading: 18px; --leading-subheading: 1.3; --tracking-subheading: -0.36px;
-  --text-heading-sm: 24px; --leading-heading-sm: 1.2; --tracking-heading-sm: -0.48px;
-  --text-heading: 30px;    --leading-heading: 1.1;    --tracking-heading: -0.6px;
-  --text-heading-lg: 48px; --leading-heading-lg: 1.1; --tracking-heading-lg: -0.96px;
-  --text-display: 70px;    --leading-display: 0.95;   --tracking-display: -1.4px;
-  --text-display-xl: 88px; --leading-display-xl: 0.95;--tracking-display-xl: -1.76px;
+  --text-caption: 12px;    --leading-caption: 1.2;    --tracking-caption: 0px;
+  --text-body-sm: 14px;    --leading-body-sm: 1.4;    --tracking-body-sm: 0px;
+  --text-md: 16px;         --leading-md: 1.5;         --tracking-md: 0px;
+  --text-subheading: 18px; --leading-subheading: 1.3; --tracking-subheading: 0px;
+  --text-heading-sm: 20px; --leading-heading-sm: 1.2; --tracking-heading-sm: 0px;
+  --text-heading: 36px;    --leading-heading: 1.1;    --tracking-heading: 0px;
+  --text-heading-lg: 48px; --leading-heading-lg: 1.05;--tracking-heading-lg: 0px;
+  --text-display: 60px;    --leading-display: 1.04;   --tracking-display: 0px;
+  --text-display-xl: 64px; --leading-display-xl: 1.02;--tracking-display-xl: 0px;
 
-  /* Abstand */
-  --space-4: 4px;  --space-8: 8px;   --space-10: 10px; --space-16: 16px;
-  --space-20: 20px; --space-24: 24px; --space-32: 32px; --space-40: 40px;
-  --space-56: 56px; --space-64: 64px; --space-80: 80px;
+  /* Abstand — 8px-System (DESIGN_SYSTEM_V2.md §8) */
+  --space-4: 8px;  --space-8: 8px;   --space-10: 8px;  --space-16: 16px;
+  --space-20: 16px; --space-24: 24px; --space-32: 32px; --space-40: 40px;
+  --space-56: 48px; --space-64: 64px; --space-80: 64px;
 
-  /* Radien — nur zwei Regeln: Cards/Container 20px, Buttons/Tags voll rund */
-  --radius-cards: 20px;
-  --radius-buttons: 100px;
-  --radius-tags: 100px;
-  --radius-inputs: 8px;
+  /* Radien (DESIGN_SYSTEM_V2.md §3, §9, §11) */
+  --radius-cards: 12px;
+  --radius-buttons: 16px;
+  --radius-tags: 9999px;
+  --radius-inputs: 12px;
 
-  /* Schatten */
-  --shadow-md: rgba(0, 0, 0, 0.08) 0px 10px 15px 0px;
-  --shadow-subtle: rgba(0, 0, 0, 0.1) 0px 1px 1px 0px, rgba(0, 0, 0, 0.05) 0px 2px 4px 0px;
+  /* Schatten — V2 verzichtet bewusst auf dekorative Drop-Shadows */
+  --shadow-md: rgba(0, 0, 0, 0.24) 0px 12px 24px -8px;
+  --shadow-subtle: none;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --canvas: #181824;
-    --surface: #26253b;
+    --canvas: #0a0a0a;
+    --surface: #171717;
+    --surface-hover: #1c1c1c;
     --surface-recessed: #000000;
     --text: #ffffff;
-    --text-body: #a9adbd;
-    --text-muted: #8e8da0;
-    --border: #33324a;
-    --coral: #ff4a36;
+    --text-body: #c7c7c7;
+    --text-muted: #9b9b9b;
+    --border: #222222;
+    --border-strong: #2b2b2b;
+    --accent: #3fe280;
+    --accent-hover: #53e98e;
+    --accent-ink: #0a0a0a;
+    --accent-soft: rgba(63, 226, 128, 0.1);
 
-    --m-fitness: #ff6a4d;
-    --m-finance: #3fd196;
-    --m-organize: #8a8cf0;
-    --m-household: #ffb454;
-    --m-fitness-soft: rgba(255, 106, 77, 0.14);
-    --m-finance-soft: rgba(63, 209, 150, 0.14);
-    --m-organize-soft: rgba(138, 140, 240, 0.14);
-    --m-household-soft: rgba(255, 180, 84, 0.14);
+    --m-fitness: #3fe280;
+    --m-finance: #3b82f6;
+    --m-organize: #f59e0b;
+    --m-household: #ec4899;
+    --m-fitness-soft: rgba(63, 226, 128, 0.1);
+    --m-finance-soft: rgba(59, 130, 246, 0.1);
+    --m-organize-soft: rgba(245, 158, 11, 0.1);
+    --m-household-soft: rgba(236, 72, 153, 0.1);
   }
 }
 
 :root[data-theme="dark"] {
-  --canvas: #181824;
-  --surface: #26253b;
+  --canvas: #0a0a0a;
+  --surface: #171717;
+  --surface-hover: #1c1c1c;
   --surface-recessed: #000000;
   --text: #ffffff;
-  --text-body: #a9adbd;
-  --text-muted: #8e8da0;
-  --border: #33324a;
-  --coral: #ff4a36;
+  --text-body: #c7c7c7;
+  --text-muted: #9b9b9b;
+  --border: #222222;
+  --border-strong: #2b2b2b;
+  --accent: #3fe280;
+  --accent-hover: #53e98e;
+  --accent-ink: #0a0a0a;
+  --accent-soft: rgba(63, 226, 128, 0.1);
 
-  --m-fitness: #ff6a4d;
-  --m-finance: #3fd196;
-  --m-organize: #8a8cf0;
-  --m-household: #ffb454;
-  --m-fitness-soft: rgba(255, 106, 77, 0.14);
-  --m-finance-soft: rgba(63, 209, 150, 0.14);
-  --m-organize-soft: rgba(138, 140, 240, 0.14);
-  --m-household-soft: rgba(255, 180, 84, 0.14);
+  --m-fitness: #3fe280;
+  --m-finance: #3b82f6;
+  --m-organize: #f59e0b;
+  --m-household: #ec4899;
+  --m-fitness-soft: rgba(63, 226, 128, 0.1);
+  --m-finance-soft: rgba(59, 130, 246, 0.1);
+  --m-organize-soft: rgba(245, 158, 11, 0.1);
+  --m-household-soft: rgba(236, 72, 153, 0.1);
 }
 
 /* Reset & Basis */
@@ -117,7 +135,7 @@ body {
 
 h1, h2, h3, h4 {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 500;
   margin: 0;
   color: var(--text);
   text-wrap: balance;
@@ -130,7 +148,7 @@ button, input { font-family: var(--font-body); }
 a { color: inherit; }
 
 :focus-visible {
-  outline: 2px solid var(--coral);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 

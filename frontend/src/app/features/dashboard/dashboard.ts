@@ -4,10 +4,8 @@ import { RouterLink } from '@angular/router';
 interface ModuleCard {
   key: 'fitness' | 'finance' | 'organize' | 'household';
   label: string;
+  headline: string;
   description: string;
-  value: string;
-  valueLabel: string;
-  meta: string;
   route: string;
 }
 
@@ -23,37 +21,29 @@ export class Dashboard {
     {
       key: 'fitness',
       label: 'Fitness',
-      description: 'Trainingspläne, Workout-Log und Fortschritt im Blick.',
-      value: '3',
-      valueLabel: 'Workouts diese Woche',
-      meta: 'Nächstes Ziel: 5-km-Lauf',
+      headline: 'Trainiere. Bewege dich. Sieh deinen Fortschritt.',
+      description: 'Training, Fortschritt, Ziele und Gesundheit übersichtlich verfolgen.',
       route: '/fitness',
     },
     {
       key: 'finance',
       label: 'Finanzen',
-      description: 'Budgets, Ausgaben und Sparziele an einem Ort.',
-      value: '1.240 €',
-      valueLabel: 'frei diesen Monat',
-      meta: '3 Fixkosten in den nächsten 7 Tagen fällig',
+      headline: 'Verstehe dein Geld und behalte deine Ziele im Blick.',
+      description: 'Ausgaben, Budgets, Abos und finanzielle Ziele verständlich organisieren.',
       route: '/finanzen',
     },
     {
       key: 'organize',
       label: 'Organisation',
-      description: 'Kalender, Aufgaben und Notizen gemeinsam verwalten.',
-      value: '5',
-      valueLabel: 'offene Aufgaben',
-      meta: '2 davon heute fällig',
+      headline: 'Plane deinen Tag, deine Termine und deine Aufgaben.',
+      description: 'Termine, Aufgaben und Erinnerungen an einem zentralen Ort.',
       route: '/organisation',
     },
     {
       key: 'household',
       label: 'Haushalt',
-      description: 'Einkaufslisten und Aufgaben im Haushalt teilen.',
-      value: '2',
-      valueLabel: 'aktive Listen',
-      meta: 'Einkaufsliste · 6 Artikel offen',
+      headline: 'Organisiere dein Zuhause, ohne alles im Kopf behalten zu müssen.',
+      description: 'Einkäufe, Aufgaben und Haushaltsorganisation einfach verwalten.',
       route: '/haushalt',
     },
   ];
@@ -61,19 +51,19 @@ export class Dashboard {
   protected readonly advantages = [
     {
       title: 'Nur noch ein Login',
-      text: 'Einmal registrieren, alle vier Bereiche nutzen — kein Passwort-Chaos mehr über fünf verschiedene Apps.',
+      text: 'Einmal registrieren, alle vier Bereiche nutzen — kein Passwort-Chaos über mehrere Apps.',
     },
     {
-      title: 'Deine Bereiche rechnen mit',
-      text: 'Dein Budget kennt deine Einkaufsliste, dein Kalender kennt deinen Trainingsplan — getrennte Apps können das nicht.',
+      title: 'Alles an einem Ort — ohne alles zu vermischen',
+      text: 'Fitness, Finanzen, Organisation und Haushalt besitzen jeweils ihren eigenen klaren Bereich. Dein Dashboard bringt die wichtigsten Informationen zusammen, damit du deinen Alltag im Blick behältst.',
     },
     {
       title: 'Für die ganze Familie',
       text: 'Teile Listen, Kalender und Aufgaben mit deinem Haushalt, statt jeder Person eine eigene App zu geben.',
     },
     {
-      title: 'Günstiger als Einzel-Abos',
-      text: 'Ein Abo statt vier: Basis kostenlos, Plus ab 4,99 €/Monat für alle Bereiche zusammen.',
+      title: 'Ein Produkt statt mehrere Abos',
+      text: 'Nutze die Bereiche, die zu deinem Alltag passen — mit einem gemeinsamen Konto und einem transparenten Tarif.',
     },
   ];
 
@@ -84,7 +74,7 @@ export class Dashboard {
     },
     {
       title: 'Dein Alltag lebt nicht in Ordnern',
-      text: 'Was du diese Woche isst, hängt mit deinem Trainingsplan und deinem Budget zusammen — getrennte Apps sehen diesen Zusammenhang nie.',
+      text: 'Ein Blick aufs Dashboard genügt, um zu wissen, wo du stehst — statt zwischen mehreren Apps hin- und herzuspringen.',
     },
     {
       title: 'Nicht jeder will Technik-Profi sein',
@@ -97,10 +87,10 @@ export class Dashboard {
       label: 'Vorher',
       caption: 'dein Handy heute',
       points: [
-        'Fünf Apps, fünf Logins, fünf Orte zum Suchen.',
+        'Viele Apps, viele Logins, viele Orte zum Suchen.',
         'Einkauf hier, Budget dort — nichts hängt zusammen.',
         'Jede Person in der Familie ihre eigene App.',
-        '~30 €/Monat für Premium — überall verstreut.',
+        'Mehrere Abos, die sich unbemerkt summieren.',
       ],
     },
     after: {
@@ -108,7 +98,7 @@ export class Dashboard {
       caption: 'dein Handy ab morgen',
       points: [
         'Eine App, ein Login, ein ruhiger Überblick.',
-        'Die Bereiche rechnen mit — der Alltag erledigt sich mit.',
+        'Jeder Bereich für sich, alles an einem Ort im Blick.',
         'Ein geteiltes Zuhause für die ganze Familie.',
         'Ab 4,99 € — und die Basis bleibt kostenlos.',
       ],

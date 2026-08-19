@@ -21,7 +21,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--coral);
+  color: var(--accent);
   margin: 0;
 }
 
@@ -79,34 +79,17 @@
   color: var(--accent);
 }
 
-.module-value {
-  font-family: var(--font-display);
+.module-headline {
   font-size: var(--text-heading-sm);
-  font-weight: 600;
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
   color: var(--text);
   margin-top: var(--space-4);
-}
-
-.module-value-label {
-  font-size: var(--text-body-sm);
-  color: var(--text-muted);
-  margin-top: -4px;
 }
 
 .module-description {
   font-size: var(--text-body-sm);
   color: var(--text-body);
-  margin-top: var(--space-8);
-}
-
-.module-meta {
-  font-size: var(--text-caption);
-  color: var(--text-muted);
-  background: var(--accent-soft);
-  border-radius: var(--radius-tags);
-  padding: var(--space-8) var(--space-10);
-  margin-top: var(--space-8);
-  width: fit-content;
 }
 
 .module-open {
@@ -212,7 +195,7 @@
   height: 40px;
   border-radius: 50%;
   background: var(--surface);
-  color: var(--coral);
+  color: var(--accent);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: var(--text-body-sm);
@@ -284,12 +267,6 @@
 .compare-before li svg { color: var(--text-muted); flex-shrink: 0; margin-top: 2px; }
 .compare-after li svg { color: var(--m-finance); flex-shrink: 0; margin-top: 2px; }
 .compare-after li { color: var(--text); font-weight: 500; }
-
-.demo-note {
-  text-align: center;
-  font-size: var(--text-caption);
-  color: var(--text-muted);
-}
 
 @media (max-width: 720px) {
   .compare-grid { grid-template-columns: 1fr; }

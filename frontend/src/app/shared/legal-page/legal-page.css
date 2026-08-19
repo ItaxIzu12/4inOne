@@ -40,7 +40,7 @@
   margin: 0;
 }
 
-.legal-page a { color: var(--coral); }
+.legal-page a { color: var(--accent); }
 
 .legal-page .placeholder {
   color: var(--text-muted);
@@ -54,7 +54,7 @@
   text-decoration: none;
   width: fit-content;
 }
-.legal-page .back-link:hover { color: var(--coral); }
+.legal-page .back-link:hover { color: var(--accent); }
 
 @media (max-width: 860px) {
   .legal-page { padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px) + var(--space-24)); }

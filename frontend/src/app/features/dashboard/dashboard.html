@@ -1,10 +1,10 @@
 <main class="dashboard">
   <section class="hero">
-    <p class="eyebrow">Vier Bereiche. Ein Ort.</p>
-    <h1>Willkommen bei 4One Hub</h1>
+    <p class="eyebrow">4One Hub</p>
+    <h1>Dein Alltag. Ein Ort.</h1>
     <p class="lede">
-      Fitness, Finanzen, Organisation und Haushalt &mdash; statt vier separater Apps
-      ein gemeinsames Dashboard, ein Login, eine Übersicht für deinen Alltag.
+      Fitness, Finanzen, Organisation und Haushalt &ndash; alles, was deinen
+      Alltag strukturiert, in einer Anwendung.
     </p>
   </section>
 
@@ -13,12 +13,10 @@
       <article class="module-card" [id]="m.key" [class]="'m-' + m.key">
         <span class="module-bar"></span>
         <span class="module-label">{{ m.label }}</span>
-        <p class="module-value">{{ m.value }}</p>
-        <p class="module-value-label">{{ m.valueLabel }}</p>
+        <h3 class="module-headline">{{ m.headline }}</h3>
         <p class="module-description">{{ m.description }}</p>
-        <p class="module-meta">{{ m.meta }}</p>
         <a class="module-open" [routerLink]="m.route">
-          Öffnen
+          {{ m.label }} öffnen
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
       </article>
@@ -29,8 +27,9 @@
     <p class="eyebrow">Vorteile</p>
     <h2 id="vorteile-heading">Was du von 4One Hub hast</h2>
     <p class="lede">
-      Vier Lebensbereiche, die sonst über fünf separate Apps verstreut sind &mdash;
-      hier teilen sie sich Konto, Design und Bedienung.
+      Statt deinen Alltag auf mehrere Apps zu verteilen, bündelt 4One Hub vier
+      zentrale Bereiche in einer Anwendung &mdash; mit einem gemeinsamen Konto,
+      Design und einer Bedienung.
     </p>
 
     <div class="advantage-grid">
@@ -49,7 +48,7 @@
     <h2 id="warum-heading">Warum solltest du wechseln?</h2>
     <p class="lede">
       Nicht weil 4One Hub mehr kann als jede Einzel-App &mdash; sondern weil du
-      dir das Jonglieren zwischen fünf davon sparst.
+      dir das Jonglieren zwischen mehreren davon sparst.
     </p>
 
     <ol class="reason-list">

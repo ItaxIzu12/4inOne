@@ -27,9 +27,9 @@
 }
 
 .back-to-top:hover {
-  background: var(--coral);
-  color: #fff;
-  border-color: var(--coral);
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
 }
 
 @media (prefers-reduced-motion: reduce) {
