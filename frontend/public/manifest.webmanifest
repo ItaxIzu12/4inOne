@@ -1,0 +1,16 @@
+{
+  "name": "4One Hub",
+  "short_name": "4One Hub",
+  "description": "Fitness, Finanzen, Organisation und Haushalt an einem Ort.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#181824",
+  "theme_color": "#181824",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

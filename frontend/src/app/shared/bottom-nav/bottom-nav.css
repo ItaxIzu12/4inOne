@@ -1,0 +1,48 @@
+.bottom-nav {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 35;
+  align-items: stretch;
+  justify-content: space-around;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.nav-item {
+  --accent: var(--coral);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 58px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.nav-item.m-fitness   { --accent: var(--m-fitness); }
+.nav-item.m-finance   { --accent: var(--m-finance); }
+.nav-item.m-organize  { --accent: var(--m-organize); }
+.nav-item.m-household { --accent: var(--m-household); }
+
+.nav-item svg { transition: transform 0.15s ease; }
+.nav-item.active { color: var(--accent); }
+.nav-item.active svg { transform: translateY(-1px); }
+
+@media (max-width: 860px) {
+  .bottom-nav { display: flex; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-item, .nav-item svg { transition: none; }
+}

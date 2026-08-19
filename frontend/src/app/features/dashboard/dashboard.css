@@ -1,0 +1,309 @@
+.dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-40) var(--space-24) var(--space-80);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-56);
+}
+
+/* Hero */
+.hero {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--coral);
+  margin: 0;
+}
+
+.hero h1 {
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+}
+
+.lede {
+  font-size: var(--text-subheading);
+  line-height: var(--leading-subheading);
+  color: var(--text-body);
+  max-width: 56ch;
+}
+
+/* Module grid */
+.modules {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-20);
+}
+
+.module-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: var(--radius-cards);
+  box-shadow: var(--shadow-subtle);
+  padding: var(--space-24);
+  scroll-margin-top: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.module-card.m-fitness   { --accent: var(--m-fitness);   --accent-soft: var(--m-fitness-soft); }
+.module-card.m-finance   { --accent: var(--m-finance);   --accent-soft: var(--m-finance-soft); }
+.module-card.m-organize  { --accent: var(--m-organize);  --accent-soft: var(--m-organize-soft); }
+.module-card.m-household { --accent: var(--m-household); --accent-soft: var(--m-household-soft); }
+
+.module-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--accent);
+}
+
+.module-label {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.module-value {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-sm);
+  font-weight: 600;
+  color: var(--text);
+  margin-top: var(--space-4);
+}
+
+.module-value-label {
+  font-size: var(--text-body-sm);
+  color: var(--text-muted);
+  margin-top: -4px;
+}
+
+.module-description {
+  font-size: var(--text-body-sm);
+  color: var(--text-body);
+  margin-top: var(--space-8);
+}
+
+.module-meta {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  background: var(--accent-soft);
+  border-radius: var(--radius-tags);
+  padding: var(--space-8) var(--space-10);
+  margin-top: var(--space-8);
+  width: fit-content;
+}
+
+.module-open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  align-self: flex-start;
+  margin-top: var(--space-16);
+  padding: var(--space-8) var(--space-16);
+  border-radius: var(--radius-buttons);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.module-open:hover { background: var(--accent-soft); border-color: var(--accent); }
+.module-open svg { transition: transform 0.15s ease; }
+.module-open:hover svg { transform: translateX(2px); }
+
+/* Shared section heading */
+.vorteile, .warum {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding-top: var(--space-40);
+  border-top: 1px solid var(--border);
+  scroll-margin-top: 96px;
+}
+
+.vorteile h2, .warum h2 {
+  font-size: var(--text-heading-sm);
+  line-height: var(--leading-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Vorteile — Karten */
+.advantage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-20);
+  margin-top: var(--space-8);
+}
+
+.advantage-card {
+  background: var(--surface);
+  border-radius: var(--radius-cards);
+  padding: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.advantage-icon {
+  width: 34px;
+  height: 34px;
+  padding: var(--space-8);
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--m-finance-soft);
+  color: var(--m-finance);
+}
+
+.advantage-card h3 {
+  font-size: var(--text-subheading);
+  line-height: var(--leading-subheading);
+}
+
+.advantage-card p {
+  font-size: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+/* Warum — Gründe */
+.reason-list {
+  list-style: none;
+  margin: var(--space-8) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.reason {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: var(--space-16);
+}
+
+.reason-index {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--coral);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-body-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reason h3 {
+  font-size: var(--text-subheading);
+  line-height: var(--leading-subheading);
+  margin-bottom: var(--space-4);
+}
+
+.reason p {
+  font-size: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+/* Vorher / Mit 4One Hub */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-20);
+}
+
+.compare-card {
+  border-radius: var(--radius-cards);
+  padding: var(--space-24);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.compare-card.compare-after {
+  border-color: var(--m-finance);
+  background: color-mix(in srgb, var(--m-finance-soft) 60%, var(--surface));
+}
+
+.compare-eyebrow {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 var(--space-16);
+}
+
+.compare-after .compare-eyebrow { color: var(--m-finance); }
+
+.compare-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.compare-card li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-10);
+  font-size: var(--text-body-sm);
+  color: var(--text-body);
+  line-height: var(--leading-body-sm);
+}
+
+.compare-before li svg { color: var(--text-muted); flex-shrink: 0; margin-top: 2px; }
+.compare-after li svg { color: var(--m-finance); flex-shrink: 0; margin-top: 2px; }
+.compare-after li { color: var(--text); font-weight: 500; }
+
+.demo-note {
+  text-align: center;
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+@media (max-width: 720px) {
+  .compare-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 860px) {
+  .dashboard { padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px) + var(--space-24)); }
+}
+
+@media (max-width: 480px) {
+  .dashboard { padding: var(--space-24) var(--space-16) calc(58px + env(safe-area-inset-bottom, 0px) + var(--space-24)); gap: var(--space-40); }
+  .hero h1 { font-size: var(--text-heading-sm); }
+  .lede { font-size: var(--text-md); }
+  .vorteile, .warum { padding-top: var(--space-24); }
+  .reason { grid-template-columns: 32px 1fr; }
+  .reason-index { width: 32px; height: 32px; font-size: var(--text-caption); }
+}

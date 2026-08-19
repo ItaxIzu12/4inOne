@@ -1,0 +1,95 @@
+<main class="dashboard">
+  <section class="hero">
+    <p class="eyebrow">Vier Bereiche. Ein Ort.</p>
+    <h1>Willkommen bei 4One Hub</h1>
+    <p class="lede">
+      Fitness, Finanzen, Organisation und Haushalt &mdash; statt vier separater Apps
+      ein gemeinsames Dashboard, ein Login, eine Übersicht für deinen Alltag.
+    </p>
+  </section>
+
+  <section class="modules" aria-label="Bereiche im Überblick">
+    @for (m of modules; track m.key) {
+      <article class="module-card" [id]="m.key" [class]="'m-' + m.key">
+        <span class="module-bar"></span>
+        <span class="module-label">{{ m.label }}</span>
+        <p class="module-value">{{ m.value }}</p>
+        <p class="module-value-label">{{ m.valueLabel }}</p>
+        <p class="module-description">{{ m.description }}</p>
+        <p class="module-meta">{{ m.meta }}</p>
+        <a class="module-open" [routerLink]="m.route">
+          Öffnen
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </article>
+    }
+  </section>
+
+  <section class="vorteile" id="vorteile" aria-labelledby="vorteile-heading">
+    <p class="eyebrow">Vorteile</p>
+    <h2 id="vorteile-heading">Was du von 4One Hub hast</h2>
+    <p class="lede">
+      Vier Lebensbereiche, die sonst über fünf separate Apps verstreut sind &mdash;
+      hier teilen sie sich Konto, Design und Bedienung.
+    </p>
+
+    <div class="advantage-grid">
+      @for (a of advantages; track a.title) {
+        <div class="advantage-card">
+          <svg class="advantage-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          <h3>{{ a.title }}</h3>
+          <p>{{ a.text }}</p>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="warum" id="warum" aria-labelledby="warum-heading">
+    <p class="eyebrow">Warum?</p>
+    <h2 id="warum-heading">Warum solltest du wechseln?</h2>
+    <p class="lede">
+      Nicht weil 4One Hub mehr kann als jede Einzel-App &mdash; sondern weil du
+      dir das Jonglieren zwischen fünf davon sparst.
+    </p>
+
+    <ol class="reason-list">
+      @for (r of reasons; track r.title; let i = $index) {
+        <li class="reason">
+          <span class="reason-index">{{ i + 1 }}</span>
+          <div>
+            <h3>{{ r.title }}</h3>
+            <p>{{ r.text }}</p>
+          </div>
+        </li>
+      }
+    </ol>
+  </section>
+
+  <section class="compare" aria-labelledby="compare-heading">
+    <h2 id="compare-heading" class="sr-only">Vorher-Nachher-Vergleich</h2>
+    <div class="compare-grid">
+      <div class="compare-card compare-before">
+        <p class="compare-eyebrow">{{ comparison.before.label }} &mdash; {{ comparison.before.caption }}</p>
+        <ul>
+          @for (p of comparison.before.points; track p) {
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+              {{ p }}
+            </li>
+          }
+        </ul>
+      </div>
+      <div class="compare-card compare-after">
+        <p class="compare-eyebrow">{{ comparison.after.label }} &mdash; {{ comparison.after.caption }}</p>
+        <ul>
+          @for (p of comparison.after.points; track p) {
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              {{ p }}
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
