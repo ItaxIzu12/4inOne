@@ -16,8 +16,9 @@ export class Header {
   protected readonly menuOpen = signal(false);
 
   protected readonly sections = [
-    { key: 'vorteile', label: 'Vorteile', href: '#vorteile' },
-    { key: 'warum', label: 'Warum?', href: '#warum' },
+    { key: 'finance', label: 'Finanzen', href: '#finanzen' },
+    { key: 'household', label: 'Haushalt', href: '#haushalt' },
+    { key: 'organize', label: 'Organisation', href: '#organisation' },
   ];
 
   protected toggleMenu(): void {

@@ -1,94 +1,104 @@
 <main class="dashboard">
   <section class="hero">
-    <p class="eyebrow">4One Hub</p>
-    <h1>Dein Alltag. Ein Ort.</h1>
+    <h1 class="hero-title">
+      Finanzen, Haushalt und <span class="accent">Organisation</span>.<br>
+      Ein Login, eine App.
+    </h1>
     <p class="lede">
-      Fitness, Finanzen, Organisation und Haushalt &ndash; alles, was deinen
-      Alltag strukturiert, in einer Anwendung.
+      Kompass bündelt, was heute über drei bis vier Apps verstreut ist &mdash;
+      verknüpft, barrierefrei und genauso einfach für deine Eltern wie für dich.
     </p>
-  </section>
+    <div class="hero-cta">
+      <a class="btn-primary" routerLink="/login">Kostenlos starten</a>
+      <a class="btn-ghost" href="#module-uebersicht">So funktioniert's</a>
+    </div>
 
-  <section class="modules" aria-label="Bereiche im Überblick">
-    @for (m of modules; track m.key) {
-      <article class="module-card" [id]="m.key" [class]="'m-' + m.key">
-        <span class="module-bar"></span>
-        <span class="module-label">{{ m.label }}</span>
-        <h3 class="module-headline">{{ m.headline }}</h3>
-        <p class="module-description">{{ m.description }}</p>
-        <a class="module-open" [routerLink]="m.route">
-          {{ m.label }} öffnen
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </a>
-      </article>
-    }
-  </section>
-
-  <section class="vorteile" id="vorteile" aria-labelledby="vorteile-heading">
-    <p class="eyebrow">Vorteile</p>
-    <h2 id="vorteile-heading">Was du von 4One Hub hast</h2>
-    <p class="lede">
-      Statt deinen Alltag auf mehrere Apps zu verteilen, bündelt 4One Hub vier
-      zentrale Bereiche in einer Anwendung &mdash; mit einem gemeinsamen Konto,
-      Design und einer Bedienung.
-    </p>
-
-    <div class="advantage-grid">
-      @for (a of advantages; track a.title) {
-        <div class="advantage-card">
-          <svg class="advantage-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-          <h3>{{ a.title }}</h3>
-          <p>{{ a.text }}</p>
+    <div class="preview-card" aria-hidden="true">
+      <div class="preview-summary">
+        <div>
+          <p class="preview-label">Budget &middot; August</p>
+          <p class="preview-amount">1.240,00 &euro;</p>
         </div>
+        <p class="preview-note">64&nbsp;% verplant &middot; 710&nbsp;&euro; übrig</p>
+      </div>
+      <div class="preview-grid">
+        <div class="preview-mod">
+          <h4>Finanzen</h4>
+          <div class="preview-row"><span>Fixkosten</span><span>680&nbsp;&euro;</span></div>
+          <div class="preview-row"><span>Haushalt</span><span>420&nbsp;&euro;</span></div>
+        </div>
+        <div class="preview-mod">
+          <h4>Haushalt</h4>
+          <div class="preview-row"><span>Einkaufsliste</span><span>4 offen</span></div>
+          <div class="preview-row"><span>Aufgaben</span><span>2 / 5</span></div>
+        </div>
+        <div class="preview-mod">
+          <h4>Organisation</h4>
+          <div class="preview-row"><span>Heute</span><span>Müll &middot; 19 Uhr</span></div>
+          <div class="preview-row"><span>Fr</span><span>Zahnarzt</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="modules-section" id="module-uebersicht" aria-labelledby="modules-heading">
+    <div class="section-head">
+      <p class="eyebrow-pill">Drei Bereiche, ein Zuhause</p>
+      <h2 id="modules-heading">Alles, was deinen Alltag ausmacht</h2>
+    </div>
+
+    <div class="modules-grid">
+      @for (m of modules; track m.key) {
+        <a class="module-card" [id]="m.key === 'finance' ? 'finanzen' : m.key === 'household' ? 'haushalt' : 'organisation'" [class]="'m-' + m.key" [routerLink]="m.route">
+          <span class="module-bar"></span>
+          <div class="module-card-head">
+            <span class="module-icon">
+              @switch (m.key) {
+                @case ('finance') {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.4 1.2-2.5 2.6-2.5 1.5 0 2.6 1 2.6 2.2 0 2.8-5.2 2-5.2 4.8 0 1.3 1.2 2.3 2.7 2.3 1.4 0 2.6-1 2.6-2.3"/></svg>
+                }
+                @case ('household') {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+                }
+                @case ('organize') {
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>
+                }
+              }
+            </span>
+            <svg class="open-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
+          </div>
+          <h3>{{ m.label }}</h3>
+          <p>{{ m.description }}</p>
+          <span class="open-label">
+            {{ m.label }} öffnen
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </span>
+        </a>
       }
     </div>
   </section>
 
-  <section class="warum" id="warum" aria-labelledby="warum-heading">
-    <p class="eyebrow">Warum?</p>
-    <h2 id="warum-heading">Warum solltest du wechseln?</h2>
-    <p class="lede">
-      Nicht weil 4One Hub mehr kann als jede Einzel-App &mdash; sondern weil du
-      dir das Jonglieren zwischen mehreren davon sparst.
-    </p>
+  <section class="compare-section" aria-labelledby="compare-heading">
+    <div class="section-head">
+      <p class="eyebrow-pill">Der Unterschied</p>
+      <h2 id="compare-heading">Warum Kompass statt vier Apps?</h2>
+      <p class="lede">Kein Wechseln, kein doppeltes Eintragen, kein Passwort-Chaos.</p>
+    </div>
 
-    <ol class="reason-list">
-      @for (r of reasons; track r.title; let i = $index) {
-        <li class="reason">
-          <span class="reason-index">{{ i + 1 }}</span>
-          <div>
-            <h3>{{ r.title }}</h3>
-            <p>{{ r.text }}</p>
+    <div class="compare-table">
+      <div class="compare-head">
+        <div class="without">Ohne Kompass</div>
+        <div class="with">Mit Kompass</div>
+      </div>
+      @for (row of comparison; track row.without) {
+        <div class="compare-row">
+          <div class="without">{{ row.without }}</div>
+          <div class="with">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>
+            {{ row.withKompass }}
           </div>
-        </li>
+        </div>
       }
-    </ol>
-  </section>
-
-  <section class="compare" aria-labelledby="compare-heading">
-    <h2 id="compare-heading" class="sr-only">Vorher-Nachher-Vergleich</h2>
-    <div class="compare-grid">
-      <div class="compare-card compare-before">
-        <p class="compare-eyebrow">{{ comparison.before.label }} &mdash; {{ comparison.before.caption }}</p>
-        <ul>
-          @for (p of comparison.before.points; track p) {
-            <li>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-              {{ p }}
-            </li>
-          }
-        </ul>
-      </div>
-      <div class="compare-card compare-after">
-        <p class="compare-eyebrow">{{ comparison.after.label }} &mdash; {{ comparison.after.caption }}</p>
-        <ul>
-          @for (p of comparison.after.points; track p) {
-            <li>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-              {{ p }}
-            </li>
-          }
-        </ul>
-      </div>
     </div>
   </section>
 </main>

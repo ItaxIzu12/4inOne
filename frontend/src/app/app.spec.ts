@@ -18,6 +18,6 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.brand-name')?.textContent).toContain('4One Hub');
+    expect(compiled.querySelector('.brand-name')?.textContent).toContain('Kompass');
   });
 });

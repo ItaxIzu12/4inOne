@@ -13,7 +13,6 @@
   }
 }
 
-.preview.m-fitness   { --accent: var(--m-fitness);   --accent-soft: var(--m-fitness-soft); }
 .preview.m-finance   { --accent: var(--m-finance);   --accent-soft: var(--m-finance-soft); }
 .preview.m-organize  { --accent: var(--m-organize);  --accent-soft: var(--m-organize-soft); }
 .preview.m-household { --accent: var(--m-household); --accent-soft: var(--m-household-soft); }

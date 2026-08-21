@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 
 type Theme = 'light' | 'dark';
 
-const STORAGE_KEY = '4onehub-theme';
+const STORAGE_KEY = 'kompass-theme';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -29,6 +29,6 @@ export class ThemeService {
   private readStoredTheme(): Theme {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === 'light' || stored === 'dark') return stored;
-    return 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 }

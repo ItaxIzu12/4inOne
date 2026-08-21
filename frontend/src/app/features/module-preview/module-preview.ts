@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 interface ModulePreviewData {
   label: string;
-  accent: 'fitness' | 'finance' | 'organize' | 'household';
+  accent: 'finance' | 'organize' | 'household';
   description: string;
 }
 

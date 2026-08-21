@@ -29,7 +29,6 @@
   transition: color 0.15s ease;
 }
 
-.nav-item.m-fitness   { --accent: var(--m-fitness); }
 .nav-item.m-finance   { --accent: var(--m-finance); }
 .nav-item.m-organize  { --accent: var(--m-organize); }
 .nav-item.m-household { --accent: var(--m-household); }

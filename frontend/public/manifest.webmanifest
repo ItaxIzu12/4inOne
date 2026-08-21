@@ -1,11 +1,11 @@
 {
-  "name": "4One Hub",
-  "short_name": "4One Hub",
-  "description": "Fitness, Finanzen, Organisation und Haushalt an einem Ort.",
+  "name": "Kompass",
+  "short_name": "Kompass",
+  "description": "Finanzen, Haushalt und Organisation an einem Ort.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#181824",
-  "theme_color": "#181824",
+  "background_color": "#1a1523",
+  "theme_color": "#1a1523",
   "icons": [
     {
       "src": "favicon.ico",
