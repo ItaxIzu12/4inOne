@@ -22,7 +22,7 @@
           >
             @switch (item.key) {
               @case ('finance') {
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="700" font-family="sans-serif" stroke="none" fill="currentColor">$</text></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
               }
               @case ('household') {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
@@ -38,14 +38,22 @@
       <p class="app-check-result" aria-live="polite">
         @if (checked().size === 0) {
           Wähle aus, was du heute nutzt — wir zeigen dir, was Kompass daraus macht.
+        } @else if (checked().size === 1) {
+          {{ checkedNames() }}: Auch für einen Bereich lohnt sich Kompass &mdash; und wächst mit,
+          sobald mehr dazukommt.
         } @else {
-          Aktuell {{ checked().size }} {{ checked().size === 1 ? 'App, 1 Login' : 'Apps, ' + checked().size + ' Logins' }}.
+          {{ checkedNames() }}: aktuell {{ checked().size }} Apps, {{ checked().size }} Logins.
           Mit Kompass: <strong>1&nbsp;App, 1&nbsp;Login.</strong>
         }
       </p>
+      @if (checked().size > 0) {
+        <a class="app-check-cta" routerLink="/registrieren">
+          Bei Kompass registrieren <span aria-hidden="true">→</span>
+        </a>
+      }
     </div>
 
-    <div class="preview-card" aria-hidden="true">
+    <div class="preview-card">
       <div class="preview-summary">
         <div>
           <p class="preview-label">Budget &middot; August</p>
@@ -54,66 +62,22 @@
         <p class="preview-note">64&nbsp;% verplant &middot; 710&nbsp;&euro; übrig</p>
       </div>
       <div class="preview-grid">
-        <div class="preview-mod">
-          <h4>Finanzen</h4>
+        <a class="preview-mod m-finance" routerLink="/finanzen">
+          <h2>Finanzen <span class="preview-open" aria-hidden="true">→</span></h2>
           <div class="preview-row"><span>Fixkosten</span><span>680&nbsp;&euro;</span></div>
           <div class="preview-row"><span>Haushalt</span><span>420&nbsp;&euro;</span></div>
-        </div>
-        <div class="preview-mod">
-          <h4>Haushalt</h4>
+        </a>
+        <a class="preview-mod m-household" routerLink="/haushalt">
+          <h2>Haushalt <span class="preview-open" aria-hidden="true">→</span></h2>
           <div class="preview-row"><span>Einkaufsliste</span><span>4 offen</span></div>
           <div class="preview-row"><span>Aufgaben</span><span>2 / 5</span></div>
-        </div>
-        <div class="preview-mod">
-          <h4>Organisation</h4>
+        </a>
+        <a class="preview-mod m-organize" routerLink="/organisation">
+          <h2>Organisation <span class="preview-open" aria-hidden="true">→</span></h2>
           <div class="preview-row"><span>Heute</span><span>Müll &middot; 19 Uhr</span></div>
           <div class="preview-row"><span>Fr</span><span>Zahnarzt</span></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="modules-section" id="module-uebersicht" aria-labelledby="modules-heading">
-    <div class="section-head" appReveal>
-      <p class="eyebrow-pill">Drei Bereiche, ein Zuhause</p>
-      <h2 id="modules-heading">Alles, was deinen Alltag ausmacht</h2>
-    </div>
-
-    <div class="modules-grid">
-      @for (m of modules; track m.key; let i = $index) {
-        <a
-          class="module-card"
-          [id]="m.key === 'finance' ? 'finanzen' : m.key === 'household' ? 'haushalt' : 'organisation'"
-          [class]="'m-' + m.key"
-          [routerLink]="m.route"
-          appReveal
-          [appRevealDelay]="i * 90"
-        >
-          <span class="module-bar"></span>
-          <div class="module-card-head">
-            <span class="module-icon">
-              @switch (m.key) {
-                @case ('finance') {
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="700" font-family="sans-serif" stroke="none" fill="currentColor">$</text></svg>
-                }
-                @case ('household') {
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
-                }
-                @case ('organize') {
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>
-                }
-              }
-            </span>
-            <svg class="open-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
-          </div>
-          <h3>{{ m.label }}</h3>
-          <p>{{ m.description }}</p>
-          <span class="open-label">
-            {{ m.label }} öffnen
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-          </span>
         </a>
-      }
+      </div>
     </div>
   </section>
 
@@ -131,10 +95,10 @@
       </div>
       @for (row of comparison; track row.without) {
         <div class="compare-row">
-          <div class="without">{{ row.without }}</div>
+          <div class="without"><span class="sr-only">Ohne Kompass: </span>{{ row.without }}</div>
           <div class="with">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>
-            {{ row.withKompass }}
+            <span class="sr-only">Mit Kompass: </span>{{ row.withKompass }}
           </div>
         </div>
       }

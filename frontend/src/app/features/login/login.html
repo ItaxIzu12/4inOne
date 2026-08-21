@@ -1,7 +1,7 @@
 <main class="login-page">
   <div class="auth-card">
     <div class="auth-head">
-      <a class="brand-mark" routerLink="/" aria-label="Kompass — zum Start">K</a>
+      <a class="brand-mark" routerLink="/" aria-label="Kompass — zum Start" (click)="goHome()">K</a>
       <div class="mode-switch" role="tablist" aria-label="Anmelden oder registrieren">
         <button type="button" role="tab" [attr.aria-selected]="mode() === 'login'" [class.active]="mode() === 'login'" (click)="setMode('login')">
           Anmelden
@@ -20,13 +20,13 @@
 
       <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
         <div class="field">
-          <label for="login-email">E-Mail-Adresse</label>
+          <label for="login-email">E-Mail Adresse</label>
           <input
             id="login-email"
             type="email"
             formControlName="email"
             autocomplete="email"
-            placeholder="du@beispiel.de"
+            placeholder="E-Mail-Adresse eingeben"
             [attr.aria-invalid]="loginForm.controls.email.invalid && loginForm.controls.email.touched"
             [attr.aria-describedby]="loginForm.controls.email.invalid && loginForm.controls.email.touched ? 'login-email-error' : null"
           />
@@ -49,9 +49,9 @@
               id="login-password"
               formControlName="password"
               autocomplete="current-password"
-              placeholder="Mindestens 8 Zeichen"
+              placeholder="Passwort eingeben"
               [attr.aria-invalid]="loginForm.controls.password.invalid && loginForm.controls.password.touched"
-              [attr.aria-describedby]="loginForm.controls.password.invalid && loginForm.controls.password.touched ? 'login-password-error' : null"
+              aria-describedby="login-password-hint"
             />
             <button
               type="button"
@@ -67,20 +67,17 @@
             </button>
           </div>
           @if (loginForm.controls.password.invalid && loginForm.controls.password.touched) {
-            <p class="field-error" id="login-password-error">
-              @if (loginForm.controls.password.errors?.['required']) {
-                Bitte gib dein Passwort ein.
-              } @else {
-                Das Passwort muss mindestens 8 Zeichen haben.
-              }
-            </p>
+            <p class="field-error" id="login-password-hint">Bitte gib dein Passwort ein.</p>
           }
         </div>
 
-        <label class="checkbox-field">
-          <input type="checkbox" formControlName="remember" />
-          Angemeldet bleiben
-        </label>
+        <div class="checkbox-row">
+          <label class="checkbox-field">
+            <input type="checkbox" formControlName="remember" />
+            Angemeldet bleiben
+          </label>
+          <a class="inline-link" routerLink="/passwort-vergessen">Passwort vergessen?</a>
+        </div>
 
         <button type="submit" class="submit-button" [disabled]="submitting()">
           @if (submitting()) {
@@ -89,6 +86,12 @@
             Anmelden
           }
         </button>
+
+        <p class="mfa-hint">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          Nach der Anmeldung kannst du in den Einstellungen die Zwei-Faktor-Authentifizierung
+          aktivieren &mdash; empfohlen für Finanzfunktionen.
+        </p>
       </form>
     } @else {
       <div class="auth-intro">
@@ -114,13 +117,13 @@
         </div>
 
         <div class="field">
-          <label for="register-email">E-Mail-Adresse</label>
+          <label for="register-email">E-Mail Adresse</label>
           <input
             id="register-email"
             type="email"
             formControlName="email"
             autocomplete="email"
-            placeholder="du@beispiel.de"
+            placeholder="E-Mail-Adresse eingeben"
             [attr.aria-invalid]="registerForm.controls.email.invalid && registerForm.controls.email.touched"
             [attr.aria-describedby]="registerForm.controls.email.invalid && registerForm.controls.email.touched ? 'register-email-error' : null"
           />
@@ -143,9 +146,9 @@
               id="register-password"
               formControlName="password"
               autocomplete="new-password"
-              placeholder="Mindestens 8 Zeichen"
+              placeholder="Passwort eingeben"
               [attr.aria-invalid]="registerForm.controls.password.invalid && registerForm.controls.password.touched"
-              [attr.aria-describedby]="registerForm.controls.password.invalid && registerForm.controls.password.touched ? 'register-password-error' : null"
+              aria-describedby="register-password-policy"
             />
             <button
               type="button"
@@ -160,15 +163,35 @@
               }
             </button>
           </div>
-          @if (registerForm.controls.password.invalid && registerForm.controls.password.touched) {
-            <p class="field-error" id="register-password-error">
-              @if (registerForm.controls.password.errors?.['required']) {
-                Bitte gib ein Passwort ein.
-              } @else {
-                Das Passwort muss mindestens 8 Zeichen haben.
-              }
-            </p>
+          @if (registerForm.controls.password.invalid && registerForm.controls.password.touched && registerForm.controls.password.errors?.['required']) {
+            <p class="field-error">Bitte gib ein Passwort ein.</p>
           }
+          <ul class="password-policy" id="register-password-policy" aria-live="polite">
+            <li [class.met]="passwordChecks().length">
+              @if (passwordChecks().length) {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>
+              } @else {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+              }
+              Mindestens 10 Zeichen
+            </li>
+            <li [class.met]="passwordChecks().letter">
+              @if (passwordChecks().letter) {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>
+              } @else {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+              }
+              Mindestens ein Buchstabe
+            </li>
+            <li [class.met]="passwordChecks().digit">
+              @if (passwordChecks().digit) {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>
+              } @else {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+              }
+              Mindestens eine Zahl
+            </li>
+          </ul>
         </div>
 
         <div class="field">
@@ -205,7 +228,7 @@
 
         <label class="checkbox-field">
           <input type="checkbox" formControlName="acceptPrivacy" />
-          Ich akzeptiere die <a routerLink="/datenschutz">Datenschutzerklärung</a>.
+          Ich akzeptiere die <a routerLink="/datenschutz">Datenschutzerklärung</a>
         </label>
         @if (registerForm.controls.acceptPrivacy.invalid && registerForm.controls.acceptPrivacy.touched) {
           <p class="field-error">Bitte akzeptiere die Datenschutzerklärung.</p>
@@ -218,6 +241,12 @@
             Konto erstellen
           }
         </button>
+
+        <p class="mfa-hint">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          Zwei-Faktor-Authentifizierung kannst du direkt nach der Registrierung aktivieren &mdash;
+          für Finanzfunktionen empfehlen wir sie ausdrücklich.
+        </p>
       </form>
     }
 
@@ -228,6 +257,6 @@
       </div>
     }
 
-    <a class="back-link" routerLink="/">← Zurück zum Start</a>
+    <a class="back-link" routerLink="/" (click)="goHome()">← Zurück zum Start</a>
   </div>
 </main>

@@ -8,6 +8,17 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./features/login/login').then((m) => m.Login),
+    data: { mode: 'login' },
+  },
+  {
+    path: 'registrieren',
+    loadComponent: () => import('./features/login/login').then((m) => m.Login),
+    data: { mode: 'register' },
+  },
+  {
+    path: 'passwort-vergessen',
+    loadComponent: () =>
+      import('./features/passwort-vergessen/passwort-vergessen').then((m) => m.PasswortVergessen),
   },
   {
     path: 'finanzen',

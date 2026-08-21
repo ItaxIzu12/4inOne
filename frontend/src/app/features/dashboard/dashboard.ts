@@ -1,15 +1,14 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { RevealDirective } from '../../shared/reveal/reveal.directive';
 
-interface ModuleCard {
-  key: 'finance' | 'household' | 'organize';
-  label: string;
-  description: string;
-  route: string;
-}
-
 type ModuleKey = 'finance' | 'household' | 'organize';
+
+const LABELS: Record<ModuleKey, string> = {
+  finance: 'Finanzen',
+  household: 'Haushalt',
+  organize: 'Organisation',
+};
 
 @Component({
   selector: 'app-dashboard',
@@ -19,27 +18,6 @@ type ModuleKey = 'finance' | 'household' | 'organize';
   styleUrl: './dashboard.css',
 })
 export class Dashboard {
-  protected readonly modules: ModuleCard[] = [
-    {
-      key: 'finance',
-      label: 'Finanzen',
-      description: 'Budget, wiederkehrende Ausgaben und geteilte Haushaltskasse — auf einen Blick.',
-      route: '/finanzen',
-    },
-    {
-      key: 'household',
-      label: 'Haushalt',
-      description: 'Einkaufsliste und Aufgaben, gemeinsam bearbeitbar für die ganze Familie.',
-      route: '/haushalt',
-    },
-    {
-      key: 'organize',
-      label: 'Organisation',
-      description: 'Ein gemeinsamer Kalender, der Termine aus Finanzen und Haushalt automatisch aufnimmt.',
-      route: '/organisation',
-    },
-  ];
-
   protected readonly comparison = [
     { without: '3–4 Apps, 3–4 Logins', withKompass: '1 App, 1 Login' },
     { without: 'Einkaufsliste weiß nichts vom Budget', withKompass: 'Einkauf fließt automatisch ins Budget' },
@@ -55,6 +33,12 @@ export class Dashboard {
   ];
 
   protected readonly checked = signal<ReadonlySet<ModuleKey>>(new Set());
+
+  protected readonly checkedNames = computed(() =>
+    Array.from(this.checked())
+      .map((key) => LABELS[key])
+      .join(', '),
+  );
 
   protected toggleChecked(key: ModuleKey): void {
     this.checked.update((set) => {
