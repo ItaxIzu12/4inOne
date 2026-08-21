@@ -47,56 +47,12 @@
   color: var(--text);
 }
 
-.site-nav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-24);
-  flex: 1;
-  justify-content: center;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.site-nav::-webkit-scrollbar { display: none; }
-
-.nav-link {
-  font-size: var(--text-body-sm);
-  font-weight: 600;
-  color: var(--text-body);
-  text-decoration: none;
-  white-space: nowrap;
-  padding: 8px 2px;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-
-.nav-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
-.nav-link.m-finance:hover { color: var(--m-finance); border-bottom-color: var(--m-finance); }
-.nav-link.m-household:hover { color: var(--m-household); border-bottom-color: var(--m-household); }
-.nav-link.m-organize:hover { color: var(--m-organize); border-bottom-color: var(--m-organize); }
-
-.nav-login { display: none; }
-
 .header-actions {
   display: flex;
   align-items: center;
   gap: var(--space-10);
   flex-shrink: 0;
 }
-
-.menu-toggle {
-  display: none;
-  width: 44px;
-  height: 44px;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-inputs);
-  border: none;
-  background: transparent;
-  color: var(--text);
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-.menu-toggle:hover { background: var(--surface-recessed); }
 
 .theme-toggle {
   width: 40px;
@@ -132,46 +88,7 @@
 }
 .login-button:hover { color: var(--accent); border-color: var(--accent); }
 
-@media (max-width: 860px) {
-  .site-nav {
-    display: none;
-    position: absolute;
-    top: 72px;
-    left: 0;
-    right: 0;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-4);
-    background: var(--canvas);
-    border-bottom: 1px solid var(--border);
-    padding: var(--space-16);
-    max-height: calc(100dvh - 72px);
-    overflow-y: auto;
-    box-shadow: var(--shadow-md);
-  }
-
-  .header.menu-open .site-nav { display: flex; }
-
-  .nav-link {
-    padding: var(--space-16);
-    font-size: var(--text-md);
-    border-radius: var(--radius-inputs);
-    border-bottom: none;
-  }
-  .nav-link:hover { background: var(--surface-recessed); }
-
-  .nav-login {
-    display: flex;
-    margin-top: var(--space-8);
-    padding-top: var(--space-20);
-    border-top: 1px solid var(--border);
-    color: var(--accent);
-  }
-
-  .login-button { display: none; }
-  .menu-toggle { display: flex; }
-}
-
 @media (max-width: 480px) {
   .header-inner { padding: 0 var(--space-16); gap: var(--space-8); }
+  .login-button { padding: 0 var(--space-16); font-size: var(--text-caption); }
 }

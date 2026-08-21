@@ -8,9 +8,41 @@
       Kompass bündelt, was heute über drei bis vier Apps verstreut ist &mdash;
       verknüpft, barrierefrei und genauso einfach für deine Eltern wie für dich.
     </p>
-    <div class="hero-cta">
-      <a class="btn-primary" routerLink="/login">Kostenlos starten</a>
-      <a class="btn-ghost" href="#module-uebersicht">So funktioniert's</a>
+    <div class="app-check" role="group" aria-labelledby="app-check-heading">
+      <p id="app-check-heading" class="app-check-prompt">Welche Bereiche verwaltest du heute noch in eigenen Apps?</p>
+      <div class="app-check-chips">
+        @for (item of checklist; track item.key) {
+          <button
+            type="button"
+            class="chip"
+            [class]="'m-' + item.key"
+            [class.active]="checked().has(item.key)"
+            [attr.aria-pressed]="checked().has(item.key)"
+            (click)="toggleChecked(item.key)"
+          >
+            @switch (item.key) {
+              @case ('finance') {
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="700" font-family="sans-serif" stroke="none" fill="currentColor">$</text></svg>
+              }
+              @case ('household') {
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+              }
+              @case ('organize') {
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>
+              }
+            }
+            {{ item.label }}
+          </button>
+        }
+      </div>
+      <p class="app-check-result" aria-live="polite">
+        @if (checked().size === 0) {
+          Wähle aus, was du heute nutzt — wir zeigen dir, was Kompass daraus macht.
+        } @else {
+          Aktuell {{ checked().size }} {{ checked().size === 1 ? 'App, 1 Login' : 'Apps, ' + checked().size + ' Logins' }}.
+          Mit Kompass: <strong>1&nbsp;App, 1&nbsp;Login.</strong>
+        }
+      </p>
     </div>
 
     <div class="preview-card" aria-hidden="true">
@@ -42,20 +74,27 @@
   </section>
 
   <section class="modules-section" id="module-uebersicht" aria-labelledby="modules-heading">
-    <div class="section-head">
+    <div class="section-head" appReveal>
       <p class="eyebrow-pill">Drei Bereiche, ein Zuhause</p>
       <h2 id="modules-heading">Alles, was deinen Alltag ausmacht</h2>
     </div>
 
     <div class="modules-grid">
-      @for (m of modules; track m.key) {
-        <a class="module-card" [id]="m.key === 'finance' ? 'finanzen' : m.key === 'household' ? 'haushalt' : 'organisation'" [class]="'m-' + m.key" [routerLink]="m.route">
+      @for (m of modules; track m.key; let i = $index) {
+        <a
+          class="module-card"
+          [id]="m.key === 'finance' ? 'finanzen' : m.key === 'household' ? 'haushalt' : 'organisation'"
+          [class]="'m-' + m.key"
+          [routerLink]="m.route"
+          appReveal
+          [appRevealDelay]="i * 90"
+        >
           <span class="module-bar"></span>
           <div class="module-card-head">
             <span class="module-icon">
               @switch (m.key) {
                 @case ('finance') {
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.4 1.2-2.5 2.6-2.5 1.5 0 2.6 1 2.6 2.2 0 2.8-5.2 2-5.2 4.8 0 1.3 1.2 2.3 2.7 2.3 1.4 0 2.6-1 2.6-2.3"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="700" font-family="sans-serif" stroke="none" fill="currentColor">$</text></svg>
                 }
                 @case ('household') {
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
@@ -79,13 +118,13 @@
   </section>
 
   <section class="compare-section" aria-labelledby="compare-heading">
-    <div class="section-head">
+    <div class="section-head" appReveal>
       <p class="eyebrow-pill">Der Unterschied</p>
       <h2 id="compare-heading">Warum Kompass statt vier Apps?</h2>
       <p class="lede">Kein Wechseln, kein doppeltes Eintragen, kein Passwort-Chaos.</p>
     </div>
 
-    <div class="compare-table">
+    <div class="compare-table" appReveal>
       <div class="compare-head">
         <div class="without">Ohne Kompass</div>
         <div class="with">Mit Kompass</div>
