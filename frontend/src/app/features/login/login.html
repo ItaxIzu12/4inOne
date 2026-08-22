@@ -41,6 +41,10 @@
           }
         </div>
 
+        @if (submitError()) {
+          <p class="field-error" role="alert">{{ submitError() }}</p>
+        }
+
         <div class="field">
           <label for="login-password">Passwort</label>
           <div class="password-wrap">
@@ -131,6 +135,8 @@
             <p class="field-error" id="register-email-error">
               @if (registerForm.controls.email.errors?.['required']) {
                 Bitte gib deine E-Mail-Adresse ein.
+              } @else if (registerForm.controls.email.errors?.['backend']) {
+                {{ registerForm.controls.email.errors?.['backend'] }}
               } @else {
                 Das sieht nicht wie eine gültige E-Mail-Adresse aus.
               }
@@ -163,8 +169,10 @@
               }
             </button>
           </div>
-          @if (registerForm.controls.password.invalid && registerForm.controls.password.touched && registerForm.controls.password.errors?.['required']) {
+          @if (registerForm.controls.password.touched && registerForm.controls.password.errors?.['required']) {
             <p class="field-error">Bitte gib ein Passwort ein.</p>
+          } @else if (registerForm.controls.password.touched && registerForm.controls.password.errors?.['backend']) {
+            <p class="field-error">{{ registerForm.controls.password.errors?.['backend'] }}</p>
           }
           <ul class="password-policy" id="register-password-policy" aria-live="polite">
             <li [class.met]="passwordChecks().length">
@@ -234,6 +242,10 @@
           <p class="field-error">Bitte akzeptiere die Datenschutzerklärung.</p>
         }
 
+        @if (submitError()) {
+          <p class="field-error" role="alert">{{ submitError() }}</p>
+        }
+
         <button type="submit" class="submit-button" [disabled]="submitting()">
           @if (submitting()) {
             <span class="spinner" aria-hidden="true"></span> Wird angelegt &hellip;
@@ -248,13 +260,6 @@
           für Finanzfunktionen empfehlen wir sie ausdrücklich.
         </p>
       </form>
-    }
-
-    @if (submitted()) {
-      <div class="stub-notice" role="status">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="11"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <p>Deine Eingaben sind gültig — Login und Registrierung sind aber noch nicht mit dem Backend verbunden. Dieser Schritt folgt als Nächstes.</p>
-      </div>
     }
 
     <a class="back-link" routerLink="/" (click)="goHome()">← Zurück zum Start</a>

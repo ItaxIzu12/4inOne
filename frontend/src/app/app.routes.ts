@@ -22,30 +22,15 @@ export const routes: Routes = [
   },
   {
     path: 'finanzen',
-    loadComponent: () => import('./features/module-preview/module-preview').then((m) => m.ModulePreview),
-    data: {
-      label: 'Finanzen',
-      accent: 'finance',
-      description: 'Budget, wiederkehrende Ausgaben und geteilte Haushaltskasse — dieser Bereich wird gerade gebaut.',
-    },
+    loadComponent: () => import('./features/finanzen/finanzen').then((m) => m.Finanzen),
   },
   {
     path: 'haushalt',
-    loadComponent: () => import('./features/module-preview/module-preview').then((m) => m.ModulePreview),
-    data: {
-      label: 'Haushalt',
-      accent: 'household',
-      description: 'Einkaufsliste und Aufgaben, gemeinsam bearbeitbar für die ganze Familie — dieser Bereich wird gerade gebaut.',
-    },
+    loadComponent: () => import('./features/haushalt/haushalt').then((m) => m.Haushalt),
   },
   {
     path: 'organisation',
-    loadComponent: () => import('./features/module-preview/module-preview').then((m) => m.ModulePreview),
-    data: {
-      label: 'Organisation',
-      accent: 'organize',
-      description: 'Ein gemeinsamer Kalender, der Termine aus Finanzen und Haushalt automatisch aufnimmt — dieser Bereich wird gerade gebaut.',
-    },
+    loadComponent: () => import('./features/organisation/organisation').then((m) => m.Organisation),
   },
   {
     path: 'impressum',

@@ -1,7 +1,9 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../core/auth/auth.service';
 import { ScrollService } from '../../core/scroll/scroll.service';
 
 type Mode = 'login' | 'register';
@@ -34,12 +36,13 @@ export class Login {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly scroll = inject(ScrollService);
+  private readonly auth = inject(AuthService);
 
   protected readonly mode = signal<Mode>(
     this.route.snapshot.data['mode'] === 'register' ? 'register' : 'login',
   );
   protected readonly submitting = signal(false);
-  protected readonly submitted = signal(false);
+  protected readonly submitError = signal<string | null>(null);
   protected readonly showPassword = signal(false);
   protected readonly showConfirmPassword = signal(false);
 
@@ -84,7 +87,7 @@ export class Login {
       return;
     }
     this.mode.set(mode);
-    this.submitted.set(false);
+    this.submitError.set(null);
     this.router.navigate([mode === 'register' ? '/registrieren' : '/login']);
   }
 
@@ -101,7 +104,28 @@ export class Login {
       this.loginForm.markAllAsTouched();
       return;
     }
-    this.runStubSubmit();
+    this.submitError.set(null);
+    this.submitting.set(true);
+    const { email, password } = this.loginForm.getRawValue();
+
+    this.auth.login(email, password).subscribe({
+      next: () => {
+        this.submitting.set(false);
+        this.router.navigateByUrl('/');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.submitting.set(false);
+        this.submitError.set(
+          err.status === 0
+            ? 'Server nicht erreichbar. Bitte versuche es später erneut.'
+            // 401 deckt sowohl falsche Zugangsdaten als auch eine Axes-
+            // Sperre nach zu vielen Fehlversuchen ab (ARCHITEKTUR.md §3.1)
+            // — bewusst dieselbe Meldung für beides, damit niemand von
+            // außen erkennen kann, welcher der beiden Fälle vorliegt.
+            : 'E-Mail-Adresse oder Passwort ist falsch.',
+        );
+      },
+    });
   }
 
   protected submitRegister(): void {
@@ -109,15 +133,47 @@ export class Login {
       this.registerForm.markAllAsTouched();
       return;
     }
-    this.runStubSubmit();
+    this.submitError.set(null);
+    this.submitting.set(true);
+    const { name, email, password } = this.registerForm.getRawValue();
+
+    this.auth.register(name, email, password).subscribe({
+      next: () => {
+        this.submitting.set(false);
+        this.router.navigateByUrl('/');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.submitting.set(false);
+        this.applyRegisterFieldErrors(err);
+      },
+    });
   }
 
-  private runStubSubmit(): void {
-    this.submitting.set(true);
-    this.submitted.set(false);
-    setTimeout(() => {
-      this.submitting.set(false);
-      this.submitted.set(true);
-    }, 500);
+  private applyRegisterFieldErrors(err: HttpErrorResponse): void {
+    if (err.status === 0) {
+      this.submitError.set('Server nicht erreichbar. Bitte versuche es später erneut.');
+      return;
+    }
+
+    // Serverseitige Validierungsfehler (z. B. Passwort-Policy oder
+    // E-Mail bereits vergeben, siehe core/validators.py auf dem Backend)
+    // landen als Feldfehler in der Antwort — auf die jeweiligen Controls
+    // mappen, damit sie wie normale Formularfehler angezeigt werden.
+    const body = err.error as Record<string, string[]> | undefined;
+    let mapped = false;
+    if (body?.['email']?.length) {
+      this.registerForm.controls.email.setErrors({ backend: body['email'][0] });
+      this.registerForm.controls.email.markAsTouched();
+      mapped = true;
+    }
+    if (body?.['password']?.length) {
+      this.registerForm.controls.password.setErrors({ backend: body['password'][0] });
+      this.registerForm.controls.password.markAsTouched();
+      mapped = true;
+    }
+
+    if (!mapped) {
+      this.submitError.set('Registrierung ist fehlgeschlagen. Bitte versuche es erneut.');
+    }
   }
 }

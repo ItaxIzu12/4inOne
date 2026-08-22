@@ -1,0 +1,4 @@
+# Root-weite Secrets — siehe .env.example für die benötigten Variablennamen
+.env
+
+# Docker-Volumes werden von Docker selbst verwaltet, nicht im Repo

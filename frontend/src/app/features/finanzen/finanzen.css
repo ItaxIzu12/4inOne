@@ -1,0 +1,174 @@
+/* Gemeinsames Stylesheet für alle drei Modul-Seiten (Finanzen/Haushalt/Organisation) —
+   analog zum bestehenden Muster (passwort-vergessen.ts nutzt login.css). */
+
+.module-page {
+  min-height: calc(100dvh - 72px);
+  padding: var(--space-56) var(--space-24) var(--space-80);
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 860px) {
+  .module-page {
+    min-height: calc(100dvh - 72px - 58px - env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px) + var(--space-56));
+  }
+}
+
+@media (max-width: 640px) {
+  .module-page {
+    padding: var(--space-40) var(--space-16) var(--space-56);
+  }
+}
+
+.module-page.m-finance   { --accent: var(--m-finance);   --accent-soft: var(--m-finance-soft); }
+.module-page.m-household { --accent: var(--m-household); --accent-soft: var(--m-household-soft); }
+.module-page.m-organize  { --accent: var(--m-organize);  --accent-soft: var(--m-organize-soft); }
+
+.module-inner {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-40);
+}
+
+.back-link {
+  align-self: flex-start;
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.back-link:hover { color: var(--accent); }
+
+.module-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-16);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius-tags);
+  padding: var(--space-8) var(--space-16);
+}
+.status-badge svg { flex-shrink: 0; }
+
+.module-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.module-head h1 {
+  font-size: var(--text-heading-lg);
+  line-height: var(--leading-heading-lg);
+  letter-spacing: var(--tracking-heading-lg);
+}
+
+.module-head .lede {
+  max-width: 52ch;
+  font-size: var(--text-subheading);
+  color: var(--text-body);
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-16);
+}
+
+@media (max-width: 640px) {
+  .feature-grid { grid-template-columns: 1fr; }
+}
+
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-cards);
+  padding: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.feature-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+.feature-card h2 {
+  font-size: var(--text-subheading);
+  line-height: 1.3;
+}
+
+.feature-card p {
+  font-size: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+.cross-link {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-16);
+  background: var(--wash);
+  border-radius: var(--radius-cards);
+  padding: var(--space-24);
+}
+
+.cross-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-subtle);
+}
+
+.cross-link-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-body-sm);
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.cross-link p:last-child {
+  font-size: var(--text-body-sm);
+  color: var(--text-body);
+}
+
+.trust-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.trust-note svg { flex-shrink: 0; margin-top: 2px; color: var(--accent); }

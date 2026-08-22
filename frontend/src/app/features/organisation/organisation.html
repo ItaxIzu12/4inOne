@@ -1,0 +1,39 @@
+<main class="module-page m-organize">
+  <div class="module-inner">
+    <a class="back-link" routerLink="/" (click)="goHome()">← Zurück zum Start</a>
+
+    <header class="module-head" appReveal>
+      <span class="status-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        In Entwicklung
+      </span>
+      <div class="module-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>
+      </div>
+      <h1>Organisation</h1>
+      <p class="lede">
+        Ein gemeinsamer Kalender, der Termine aus Finanzen und Haushalt automatisch aufnimmt — verknüpft
+        statt als weiterer isolierter Kalender.
+      </p>
+    </header>
+
+    <section class="feature-grid" aria-label="Geplante Funktionen">
+      @for (feature of features; track feature.title) {
+        <div class="feature-card" appReveal>
+          <h2>{{ feature.title }}</h2>
+          <p>{{ feature.description }}</p>
+        </div>
+      }
+    </section>
+
+    <div class="cross-link" appReveal>
+      <div class="cross-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+      </div>
+      <div>
+        <p class="cross-link-label">Verknüpft mit Finanzen & Haushalt</p>
+        <p>Fällige Zahlungen und wiederkehrende Haushaltsaufgaben erscheinen automatisch hier — ohne dass du sie doppelt einträgst.</p>
+      </div>
+    </div>
+  </div>
+</main>

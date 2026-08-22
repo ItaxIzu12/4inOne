@@ -1,0 +1,49 @@
+<main class="module-page m-household">
+  <div class="module-inner">
+    <a class="back-link" routerLink="/" (click)="goHome()">← Zurück zum Start</a>
+
+    <header class="module-head" appReveal>
+      <span class="status-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        In Entwicklung
+      </span>
+      <div class="module-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+      </div>
+      <h1>Haushalt</h1>
+      <p class="lede">
+        Einkaufsliste und Aufgaben, gemeinsam bearbeitbar für die ganze Familie — verknüpft mit Finanzen
+        und Organisation, statt in einer eigenen App isoliert.
+      </p>
+    </header>
+
+    <section class="feature-grid" aria-label="Geplante Funktionen">
+      @for (feature of features; track feature.title) {
+        <div class="feature-card" appReveal>
+          <h2>{{ feature.title }}</h2>
+          <p>{{ feature.description }}</p>
+        </div>
+      }
+    </section>
+
+    <div class="cross-link" appReveal>
+      <div class="cross-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div>
+        <p class="cross-link-label">Verknüpft mit Finanzen</p>
+        <p>Die Einkaufsliste fließt automatisch als geplante Ausgabe in dein Budget ein — keine doppelte Eingabe.</p>
+      </div>
+    </div>
+
+    <div class="cross-link" appReveal>
+      <div class="cross-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>
+      </div>
+      <div>
+        <p class="cross-link-label">Verknüpft mit Organisation</p>
+        <p>Wiederkehrende Haushaltsaufgaben, z. B. Müllabfuhr, erscheinen automatisch im gemeinsamen Kalender.</p>
+      </div>
+    </div>
+  </div>
+</main>
