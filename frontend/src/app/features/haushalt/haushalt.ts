@@ -2,11 +2,12 @@ import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { RevealDirective } from '../../shared/reveal/reveal.directive';
 import { ScrollService } from '../../core/scroll/scroll.service';
+import { IconHaushalt } from '../../shared/icons/icon-haushalt';
 
 @Component({
   selector: 'app-haushalt',
   standalone: true,
-  imports: [RouterLink, RevealDirective],
+  imports: [RouterLink, RevealDirective, IconHaushalt],
   templateUrl: './haushalt.html',
   styleUrl: '../finanzen/finanzen.css',
 })

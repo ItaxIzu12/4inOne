@@ -1,0 +1,85 @@
+.module-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-card-white);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-cards);
+  overflow: hidden;
+}
+
+/* --module-accent-text ist meist gleich --module-accent, nur für
+   Haushalt/Organisation dunkler: --m-household/--m-organize erreichen bei
+   12–14px/bold auf ihrer eigenen -soft-Fläche keine 4,5:1 (axe-core
+   color-contrast, siehe .module-card__action unten) — --module-accent
+   bleibt für Icons unverändert, nur der Text auf der -soft-Fläche wird
+   dunkler. */
+.module-card--finance   { --module-accent: var(--m-finance);   --module-accent-soft: var(--m-finance-soft);   --module-accent-text: var(--m-finance); }
+.module-card--household { --module-accent: var(--m-household); --module-accent-soft: var(--m-household-soft); --module-accent-text: #8f5511; }
+.module-card--organize  { --module-accent: var(--m-organize);  --module-accent-soft: var(--m-organize-soft);  --module-accent-text: #1a7a41; }
+
+.module-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  padding: var(--space-20) var(--space-20) 0;
+}
+
+.module-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--module-accent-soft);
+  color: var(--module-accent);
+  font-size: 18px; /* steuert die Größe der 1em/1em-Icon-Komponente */
+}
+
+.module-card__title {
+  flex: 1;
+  font-size: var(--text-subheading);
+  line-height: 1.3;
+}
+
+.module-card__all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 var(--space-8);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--color-dusk-helper);
+  text-decoration: none;
+}
+.module-card__all:hover,
+.module-card__all:focus-visible { color: var(--module-accent); }
+.module-card__all-chevron { font-size: 14px; }
+
+.module-card__body {
+  padding: var(--space-16) var(--space-20);
+  flex: 1;
+}
+
+.module-card__foot {
+  padding: 0 var(--space-20) var(--space-20);
+}
+
+.module-card__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  width: 100%;
+  border-radius: var(--radius-buttons);
+  background: var(--module-accent-soft);
+  color: var(--module-accent-text);
+  font-size: var(--text-body-sm);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.module-card__action:hover,
+.module-card__action:focus-visible { background: var(--module-accent-text); color: #fff; }

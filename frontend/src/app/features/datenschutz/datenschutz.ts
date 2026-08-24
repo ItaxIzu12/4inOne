@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { LegalPage } from '../../shared/legal-page/legal-page';
 
 @Component({
   selector: 'app-datenschutz',
   standalone: true,
-  imports: [RouterLink],
+  imports: [LegalPage],
   templateUrl: './datenschutz.html',
-  styleUrl: '../../shared/legal-page/legal-page.css',
 })
 export class Datenschutz {}

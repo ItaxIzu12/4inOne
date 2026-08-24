@@ -1,4 +1,34 @@
-# Root-weite Secrets — siehe .env.example für die benötigten Variablennamen
+# ============================================================
+# Secrets — NIEMALS committen (ARCHITEKTUR.md §3.4)
+# ============================================================
 .env
+.env.local
+.env.*.local
+*.pem
+*.key
 
-# Docker-Volumes werden von Docker selbst verwaltet, nicht im Repo
+# ============================================================
+# Backend (Django/Python)
+# ============================================================
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/db.sqlite3
+backend/staticfiles/
+backend/media/
+*.log
+
+# ============================================================
+# Frontend (Angular/Node)
+# ============================================================
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# ============================================================
+# Editor/OS
+# ============================================================
+.DS_Store
+.vscode/
+.idea/

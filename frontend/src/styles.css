@@ -22,6 +22,10 @@
   --accent-ink: #ffffff;
   --accent-soft: rgba(91, 63, 214, 0.1);
   --success: #1f8a4c;
+  /* Neu (Dashboard/Login-Neugestaltung): echte Fehlerfarbe statt Zweckentfremdung
+     von --m-household. Kontrast auf --surface ~5.1:1, auf --canvas ~4.9:1 — beide
+     über WCAG AA (4.5:1). */
+  --danger: #c23b52;
 
   --m-finance: #5b3fd6;
   --m-household: #a15f14;
@@ -29,6 +33,30 @@
   --m-finance-soft: rgba(91, 63, 214, 0.1);
   --m-household-soft: rgba(255, 183, 94, 0.22);
   --m-organize-soft: rgba(31, 138, 76, 0.12);
+
+  /* design_system.md-Token-Namen — exakt dieselben Werte wie oben, nur als
+     Aliase unter den dort vorgegebenen Namen geführt, damit neuer Code
+     (Dashboard, Login) diese Namen direkt nutzen kann, ohne die bestehenden
+     --canvas/--accent/... Aufrufstellen in Header/Footer/Modulseiten
+     anzufassen. Werden unten (dark) und in [data-theme="dark"] mitgeführt. */
+  --color-cloud-canvas: var(--canvas);
+  --color-lavender-mist: var(--wash);
+  --color-card-white: var(--surface);
+  --color-fog-surface: var(--surface-recessed);
+  --color-midnight-plum: var(--text);
+  --color-slate-violet: var(--text-body);
+  --color-dusk-helper: var(--text-muted);
+  --color-hairline: var(--border);
+  --color-violet-ink: var(--accent);
+  --color-violet-signal: var(--accent-glow);
+  --color-success-green: var(--success);
+  --color-danger-coral: var(--danger);
+  /* amber-ink/-glow bilden bewusst KEIN Theme-Paar (anders als die Tokens
+     oben): "ink" ist der dunklere, "glow" der hellere Ton — beide werden
+     nebeneinander verwendet (analog violet-ink/violet-signal), nicht als
+     Hell-/Dunkelmodus-Austausch. Werte identisch zu --m-household hell/dunkel. */
+  --color-amber-ink: #a15f14;
+  --color-amber-glow: #ffb75e;
 
   /* Typografie */
   --font-display: 'Fraunces', ui-serif, Georgia, serif;
@@ -80,6 +108,9 @@
     --accent-ink: #ffffff;
     --accent-soft: rgba(143, 116, 255, 0.16);
     --success: #34c774;
+    /* Aufgehellt fürs dunkle --canvas, gleiche Methode wie --accent oben;
+       ~4.7:1 auf --canvas — über WCAG AA. */
+    --danger: #ff6f85;
 
     --m-finance: #8f74ff;
     --m-household: #ffb75e;
@@ -87,6 +118,19 @@
     --m-finance-soft: rgba(143, 116, 255, 0.16);
     --m-household-soft: rgba(255, 183, 94, 0.16);
     --m-organize-soft: rgba(52, 199, 116, 0.16);
+
+    --color-cloud-canvas: var(--canvas);
+    --color-lavender-mist: var(--wash);
+    --color-card-white: var(--surface);
+    --color-fog-surface: var(--surface-recessed);
+    --color-midnight-plum: var(--text);
+    --color-slate-violet: var(--text-body);
+    --color-dusk-helper: var(--text-muted);
+    --color-hairline: var(--border);
+    --color-violet-ink: var(--accent);
+    --color-violet-signal: var(--accent-glow);
+    --color-success-green: var(--success);
+    --color-danger-coral: var(--danger);
 
     --shadow-md: rgba(0, 0, 0, 0.4) 0px 20px 40px -18px;
     --shadow-subtle: rgba(0, 0, 0, 0.3) 0px 10px 24px -14px;
@@ -110,6 +154,7 @@
   --accent-ink: #ffffff;
   --accent-soft: rgba(143, 116, 255, 0.16);
   --success: #34c774;
+  --danger: #ff6f85;
 
   --m-finance: #8f74ff;
   --m-household: #ffb75e;
@@ -117,6 +162,19 @@
   --m-finance-soft: rgba(143, 116, 255, 0.16);
   --m-household-soft: rgba(255, 183, 94, 0.16);
   --m-organize-soft: rgba(52, 199, 116, 0.16);
+
+  --color-cloud-canvas: var(--canvas);
+  --color-lavender-mist: var(--wash);
+  --color-card-white: var(--surface);
+  --color-fog-surface: var(--surface-recessed);
+  --color-midnight-plum: var(--text);
+  --color-slate-violet: var(--text-body);
+  --color-dusk-helper: var(--text-muted);
+  --color-hairline: var(--border);
+  --color-violet-ink: var(--accent);
+  --color-violet-signal: var(--accent-glow);
+  --color-success-green: var(--success);
+  --color-danger-coral: var(--danger);
 
   --shadow-md: rgba(0, 0, 0, 0.4) 0px 20px 40px -18px;
   --shadow-subtle: rgba(0, 0, 0, 0.3) 0px 10px 24px -14px;
@@ -187,3 +245,15 @@ a { color: inherit; }
 }
 
 img { max-width: 100%; display: block; }
+
+/* Gemeinsame Größensteuerung für Sektions-Icons (icon-finanzen/-haushalt/
+   -organisation und rohe <svg class="kompass-icon">, z. B. das Start-/Home-
+   Icon): Größe folgt font-size des umgebenden Kontexts (1em), NIE eine
+   feste px-Größe im SVG selbst. Die Icon-Komponenten setzen das bereits
+   selbst auf ihrem :host — diese Regel deckt zusätzlich rohe <svg>-Fälle ab,
+   die sonst ohne width/height auf ihre browserseitige Default-Größe
+   (~300×150px) aufblähen. */
+.kompass-icon {
+  width: 1em;
+  height: 1em;
+}

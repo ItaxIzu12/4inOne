@@ -1,0 +1,57 @@
+.coming-soon {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-24) var(--space-16);
+  background: var(--color-cloud-canvas);
+}
+
+.coming-soon__card {
+  max-width: 420px;
+  width: 100%;
+  background: var(--color-card-white);
+  border-radius: var(--radius-cards);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-32) var(--space-24);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-10);
+}
+
+.coming-soon__badge {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-violet-ink);
+  background: var(--color-lavender-mist);
+  border-radius: var(--radius-tags);
+  padding: var(--space-8) var(--space-10);
+  margin-bottom: var(--space-10);
+}
+
+.coming-soon__card h1 {
+  font-size: var(--text-heading-sm);
+  line-height: var(--leading-heading-sm);
+}
+
+.coming-soon__card p {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--color-slate-violet);
+}
+
+.back-link {
+  margin-top: var(--space-16);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--color-dusk-helper);
+  text-decoration: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.back-link:hover { color: var(--color-violet-ink); }

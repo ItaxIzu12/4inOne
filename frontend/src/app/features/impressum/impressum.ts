@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { LegalPage } from '../../shared/legal-page/legal-page';
 
 @Component({
   selector: 'app-impressum',
   standalone: true,
-  imports: [RouterLink],
+  imports: [LegalPage],
   templateUrl: './impressum.html',
-  styleUrl: '../../shared/legal-page/legal-page.css',
 })
 export class Impressum {}

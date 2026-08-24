@@ -4,6 +4,9 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+    // Eigene App-Shell (Sidebar+Topbar) statt globalem Marketing-Header/
+    // -Footer/-Bottom-Nav, siehe app.ts/app.html.
+    data: { shell: 'bare' },
   },
   {
     path: 'login',
@@ -33,12 +36,53 @@ export const routes: Routes = [
     loadComponent: () => import('./features/organisation/organisation').then((m) => m.Organisation),
   },
   {
+    path: 'einstellungen',
+    loadComponent: () => import('./features/einstellungen/einstellungen').then((m) => m.Einstellungen),
+    // Eigene App-Shell wie das Dashboard, siehe app.ts/app.html — Settings
+    // ist ein App-Screen, keine öffentliche Marketing-Seite.
+    data: { shell: 'bare' },
+  },
+  {
+    path: 'einstellungen/profil',
+    loadComponent: () => import('./shared/coming-soon/coming-soon').then((m) => m.ComingSoon),
+    data: {
+      shell: 'bare',
+      title: 'Profil bearbeiten',
+      description: 'Name und E-Mail-Adresse ändern kannst du hier bald direkt — dieser Bereich wird gerade gebaut.',
+    },
+  },
+  {
+    path: 'einstellungen/zwei-faktor',
+    loadComponent: () => import('./shared/coming-soon/coming-soon').then((m) => m.ComingSoon),
+    data: {
+      shell: 'bare',
+      title: 'Zwei-Faktor-Authentifizierung',
+      description:
+        'Die TOTP-Einrichtung folgt hier, siehe ARCHITEKTUR.md §3.1 (MFA verpflichtend für Finanzfunktionen).',
+    },
+  },
+  {
+    path: 'einstellungen/sitzungen',
+    loadComponent: () => import('./shared/coming-soon/coming-soon').then((m) => m.ComingSoon),
+    data: {
+      shell: 'bare',
+      title: 'Aktive Sitzungen',
+      description:
+        'Die Übersicht deiner angemeldeten Geräte mit Möglichkeit zum Abmelden folgt hier, siehe ARCHITEKTUR.md §3.6.',
+    },
+  },
+  {
     path: 'impressum',
     loadComponent: () => import('./features/impressum/impressum').then((m) => m.Impressum),
   },
   {
     path: 'datenschutz',
     loadComponent: () => import('./features/datenschutz/datenschutz').then((m) => m.Datenschutz),
+  },
+  {
+    path: 'nutzungsbedingungen',
+    loadComponent: () =>
+      import('./features/nutzungsbedingungen/nutzungsbedingungen').then((m) => m.Nutzungsbedingungen),
   },
   {
     path: 'barrierefreiheit',

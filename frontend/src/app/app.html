@@ -1,5 +1,9 @@
-<app-header />
+@if (showGlobalChrome()) {
+  <app-header />
+}
 <router-outlet />
-<app-footer />
-<app-back-to-top />
-<app-bottom-nav />
+@if (showGlobalChrome()) {
+  <app-footer />
+  <app-back-to-top />
+  <app-bottom-nav />
+}

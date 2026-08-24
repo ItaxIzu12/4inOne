@@ -8,7 +8,7 @@ import { ScrollService } from '../../core/scroll/scroll.service';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './passwort-vergessen.html',
-  styleUrl: '../login/login.css',
+  styleUrl: './passwort-vergessen.css',
 })
 export class PasswortVergessen {
   private readonly fb = inject(FormBuilder);

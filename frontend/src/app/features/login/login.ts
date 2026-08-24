@@ -14,6 +14,10 @@ type Mode = 'login' | 'register';
 const PASSWORD_MIN_LENGTH = 10;
 const PASSWORD_HAS_LETTER = /[a-zA-Zà-öø-ÿÀ-ÖØ-ß]/;
 const PASSWORD_HAS_DIGIT = /\d/;
+// Nur für die optische Stärkeanzeige (nicht Teil der harten Policy oben):
+// ein Sonderzeichen ist NICHT Pflicht, hebt die Anzeige aber als drittes,
+// zusätzliches Signal an — siehe passwordStrength().
+const PASSWORD_HAS_SPECIAL = /[^A-Za-zÀ-ÖØ-öø-ÿ0-9\s]/;
 const PASSWORD_POLICY_PATTERN = new RegExp(
   `^(?=.*${PASSWORD_HAS_LETTER.source})(?=.*${PASSWORD_HAS_DIGIT.source}).{${PASSWORD_MIN_LENGTH},}$`,
 );
@@ -58,7 +62,10 @@ export class Login {
     {
       name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.pattern(PASSWORD_POLICY_PATTERN)]],
+      password: [
+        '',
+        [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.pattern(PASSWORD_POLICY_PATTERN)],
+      ],
       confirmPassword: ['', [Validators.required]],
       acceptPrivacy: [false, [Validators.requiredTrue]],
     },
@@ -76,6 +83,19 @@ export class Login {
       letter: PASSWORD_HAS_LETTER.test(value),
       digit: PASSWORD_HAS_DIGIT.test(value),
     };
+  });
+
+  // Rein optische Zusatzanzeige (3 Balken), NICHT die durchgesetzte Policy
+  // (die bleibt Länge+Buchstabe+Ziffer, siehe passwordChecks/PASSWORD_POLICY_PATTERN).
+  // Bewertet zusätzlich Sonderzeichen als drittes Signal für "wie stark wirkt es".
+  protected readonly passwordStrength = computed(() => {
+    const value = this.registerPassword();
+    if (!value) return 0;
+    let score = 0;
+    if (value.length >= PASSWORD_MIN_LENGTH) score++;
+    if (PASSWORD_HAS_DIGIT.test(value)) score++;
+    if (PASSWORD_HAS_SPECIAL.test(value)) score++;
+    return score;
   });
 
   protected goHome(): void {

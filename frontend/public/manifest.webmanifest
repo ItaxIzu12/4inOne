@@ -1,11 +1,13 @@
 {
   "name": "Kompass",
   "short_name": "Kompass",
-  "description": "Finanzen, Haushalt und Organisation an einem Ort.",
+  "description": "Finanzen, Haushalt und Organisation — ein Login, eine App.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#1a1523",
-  "theme_color": "#1a1523",
+  "background_color": "#fdf9f2",
+  "theme_color": "#5b3fd6",
+  "lang": "de",
   "icons": [
     {
       "src": "favicon.ico",

@@ -1,0 +1,60 @@
+<a class="skip-link" href="#main-content">Zum Hauptinhalt springen</a>
+
+<main id="main-content" class="settings-page">
+  <header class="settings-page__head">
+    <a class="settings-page__back" routerLink="/" aria-label="Zurück zum Dashboard">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+    </a>
+    <h1>Einstellungen</h1>
+  </header>
+
+  <h2 class="sr-only">Konto</h2>
+  <ul class="settings-list" aria-label="Konto">
+    @for (row of accountRows; track row.route) {
+      <li>
+        <a [routerLink]="row.route" class="settings-row">
+          <span class="settings-row__icon">
+            @switch (row.icon) {
+              @case ('profile') { <icon-profile /> }
+              @case ('two-factor') { <icon-two-factor /> }
+              @case ('sessions') { <icon-sessions /> }
+            }
+          </span>
+          <span class="settings-row__label">{{ row.label }}</span>
+          <icon-chevron class="settings-row__chevron" />
+        </a>
+      </li>
+    }
+  </ul>
+
+  <hr class="settings-divider" />
+
+  <section aria-labelledby="legal-heading">
+    <h2 id="legal-heading" class="settings-group__title">
+      <icon-legal class="settings-group__icon" />
+      Rechtliches
+    </h2>
+    <ul class="settings-list">
+      @for (row of legalRows; track row.route) {
+        <li>
+          <a [routerLink]="row.route" class="settings-row">
+            <span class="settings-row__icon"><icon-document /></span>
+            <span class="settings-row__label">{{ row.label }}</span>
+            <icon-chevron class="settings-row__chevron" />
+          </a>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <hr class="settings-divider" />
+
+  <button type="button" class="settings-row settings-row--button" (click)="logout()">
+    <span class="settings-row__icon"><icon-logout /></span>
+    <span class="settings-row__label">Abmelden</span>
+  </button>
+
+  <footer class="settings-page__footer">
+    <app-copyright />
+  </footer>
+</main>

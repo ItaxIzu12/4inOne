@@ -4,7 +4,7 @@
   padding: var(--space-56) var(--space-24) var(--space-80);
   display: flex;
   flex-direction: column;
-  gap: var(--space-32);
+  gap: var(--space-24);
 }
 
 .legal-page h1 {
@@ -13,48 +13,70 @@
   letter-spacing: var(--tracking-heading);
 }
 
-.legal-page .callout {
-  background: var(--surface);
+/* Kräftige Amber-Fläche + dunkler Text statt einer blassen Dekor-Box —
+   geprüft: #1a1523 auf --color-amber-glow (#ffb75e) liegt bei ~11,7:1,
+   weit über den geforderten 4,5:1 (WCAG 1.4.3). */
+.legal-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-12);
+  background: var(--color-amber-glow);
   border-radius: var(--radius-cards);
   padding: var(--space-16) var(--space-20);
-  font-size: var(--text-body-sm);
-  color: var(--text-muted);
+}
+.legal-warning svg { flex-shrink: 0; margin-top: 2px; color: var(--color-midnight-plum); }
+.legal-warning p {
   margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--color-midnight-plum);
+}
+.legal-warning strong { font-weight: 800; }
+
+.legal-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
 }
 
-.legal-page section {
+.legal-page__content section {
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
 }
 
-.legal-page h2 {
+.legal-page__content h2 {
   font-size: var(--text-subheading);
   line-height: var(--leading-subheading);
 }
 
-.legal-page p, .legal-page li {
+.legal-page__content p,
+.legal-page__content li {
   font-size: var(--text-body-sm);
-  color: var(--text-body);
+  color: var(--color-slate-violet);
   line-height: var(--leading-body-sm);
   margin: 0;
 }
 
-.legal-page a { color: var(--accent); }
+.legal-page__content a { color: var(--color-violet-ink); }
 
-.legal-page .placeholder {
-  color: var(--text-muted);
+.legal-page__content .placeholder {
+  color: var(--color-dusk-helper);
   font-style: italic;
 }
 
 .legal-page .back-link {
   font-size: var(--text-body-sm);
   font-weight: 500;
-  color: var(--text);
+  color: var(--color-midnight-plum);
   text-decoration: none;
   width: fit-content;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
 }
-.legal-page .back-link:hover { color: var(--accent); }
+.legal-page .back-link:hover { color: var(--color-violet-ink); }
 
 @media (max-width: 860px) {
   .legal-page { padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px) + var(--space-24)); }

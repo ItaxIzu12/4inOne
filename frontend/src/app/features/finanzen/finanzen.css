@@ -70,6 +70,7 @@
   border-radius: 16px;
   background: var(--accent-soft);
   color: var(--accent);
+  font-size: 28px; /* steuert die Größe der 1em/1em-Icon-Komponente */
   display: flex;
   align-items: center;
   justify-content: center;

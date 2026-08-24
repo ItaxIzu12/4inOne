@@ -1,13 +1,12 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Copyright } from '../copyright/copyright';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, Copyright],
   templateUrl: './footer.html',
   styleUrl: './footer.css',
 })
-export class Footer {
-  protected readonly year = new Date().getFullYear();
-}
+export class Footer {}

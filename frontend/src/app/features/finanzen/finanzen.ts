@@ -2,11 +2,12 @@ import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { RevealDirective } from '../../shared/reveal/reveal.directive';
 import { ScrollService } from '../../core/scroll/scroll.service';
+import { IconFinanzen } from '../../shared/icons/icon-finanzen';
 
 @Component({
   selector: 'app-finanzen',
   standalone: true,
-  imports: [RouterLink, RevealDirective],
+  imports: [RouterLink, RevealDirective, IconFinanzen],
   templateUrl: './finanzen.html',
   styleUrl: './finanzen.css',
 })

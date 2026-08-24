@@ -1,0 +1,23 @@
+<article class="module-card" [class]="'module-card--' + accent()">
+  <header class="module-card__head">
+    <span class="module-card__icon">
+      @switch (accent()) {
+        @case ('finance') { <icon-finanzen /> }
+        @case ('household') { <icon-haushalt /> }
+        @case ('organize') { <icon-organisation /> }
+      }
+    </span>
+    <h2 class="module-card__title">{{ title() }}</h2>
+    <a class="module-card__all" [routerLink]="allLink()">
+      Alle <icon-chevron class="module-card__all-chevron" />
+    </a>
+  </header>
+
+  <div class="module-card__body">
+    <ng-content />
+  </div>
+
+  <footer class="module-card__foot">
+    <a class="module-card__action" [routerLink]="actionLink()">{{ actionLabel() }}</a>
+  </footer>
+</article>

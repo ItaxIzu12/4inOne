@@ -1,5 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { IconFinanzen } from '../icons/icon-finanzen';
+import { IconHaushalt } from '../icons/icon-haushalt';
+import { IconOrganisation } from '../icons/icon-organisation';
 
 interface NavItem {
   route: string;
@@ -10,7 +13,7 @@ interface NavItem {
 @Component({
   selector: 'app-bottom-nav',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, IconFinanzen, IconHaushalt, IconOrganisation],
   templateUrl: './bottom-nav.html',
   styleUrl: './bottom-nav.css',
 })

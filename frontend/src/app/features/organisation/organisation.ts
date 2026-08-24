@@ -2,11 +2,12 @@ import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { RevealDirective } from '../../shared/reveal/reveal.directive';
 import { ScrollService } from '../../core/scroll/scroll.service';
+import { IconOrganisation } from '../../shared/icons/icon-organisation';
 
 @Component({
   selector: 'app-organisation',
   standalone: true,
-  imports: [RouterLink, RevealDirective],
+  imports: [RouterLink, RevealDirective, IconOrganisation],
   templateUrl: './organisation.html',
   styleUrl: '../finanzen/finanzen.css',
 })
