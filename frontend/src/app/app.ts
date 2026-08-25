@@ -20,10 +20,11 @@ export class App {
     this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)),
   );
 
-  // Routen mit eigener App-Shell (aktuell: Dashboard mit Sidebar, siehe
-  // app.routes.ts data: { shell: 'bare' }) blenden den globalen
-  // Marketing-Header/-Footer/-Bottom-Nav aus, statt sich mit einer eigenen
-  // Sidebar-Navigation zu doppeln.
+  // Header UND Footer sind überall gleich (siehe shared/header,
+  // shared/footer) und werden immer gerendert. Nur Back-to-Top/Bottom-Nav
+  // der Marketing-Seiten werden für App-Routen (aktuell: Dashboard,
+  // Einstellungen, siehe app.routes.ts data: { shell: 'bare' }) ausgeblendet
+  // — die App hat dort ihre eigene Bottom-Nav/FAB.
   protected readonly showGlobalChrome = computed(() => {
     this.navigationEnd();
     let route = this.router.routerState.root;

@@ -8,10 +8,14 @@
 
 .auth-split {
   display: flex;
+  align-items: stretch;
   min-height: 100dvh;
 }
 
 .auth-brand { display: none; }
+@media (min-width: 900px) {
+  .auth-brand { min-height: 100%; }
+}
 
 .auth-panel {
   flex: 1;
@@ -41,16 +45,10 @@
   text-decoration: none;
   min-height: 44px;
 }
-.auth-panel__brand-mobile span {
-  width: 32px;
-  height: 32px;
+.auth-panel__brand-mobile .kompass-icon {
+  font-size: 32px; /* steuert die Größe des 1em/1em-Logos */
   border-radius: 9px;
-  background: linear-gradient(135deg, var(--color-violet-signal), var(--color-amber-glow));
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
+  overflow: hidden;
 }
 
 .mode-switch {
@@ -339,13 +337,10 @@
     min-height: 44px;
   }
   .auth-brand__mark {
-    width: 36px;
-    height: 36px;
+    font-size: 36px; /* steuert die Größe des 1em/1em-Logos */
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
   }
 
   .auth-brand__headline {

@@ -34,6 +34,12 @@ def _set_refresh_cookie(response: Response, refresh: RefreshToken) -> None:
     )
 
 
+def _user_payload(user) -> dict:
+    """Für die Begrüßung/Initialen im Frontend (Header, Dashboard) — bewusst
+    nur Name/E-Mail, keine weiteren Felder (Datenminimierung)."""
+    return {'name': user.first_name, 'email': user.email}
+
+
 class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -70,7 +76,9 @@ class RegisterView(APIView):
         )
 
         refresh = RefreshToken.for_user(user)
-        response = Response({'access': str(refresh.access_token)}, status=status.HTTP_201_CREATED)
+        response = Response(
+            {'access': str(refresh.access_token), 'user': _user_payload(user)}, status=status.HTTP_201_CREATED
+        )
         _set_refresh_cookie(response, refresh)
         return response
 
@@ -99,7 +107,9 @@ class LoginView(APIView):
         serializer.is_valid(raise_exception=True)
         refresh = RefreshToken(serializer.validated_data['refresh'])
 
-        response = Response({'access': serializer.validated_data['access']})
+        response = Response(
+            {'access': serializer.validated_data['access'], 'user': _user_payload(serializer.user)}
+        )
         _set_refresh_cookie(response, refresh)
         return response
 

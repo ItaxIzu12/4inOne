@@ -4,9 +4,11 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
-    // Eigene App-Shell (Sidebar+Topbar) statt globalem Marketing-Header/
-    // -Footer/-Bottom-Nav, siehe app.ts/app.html.
-    data: { shell: 'bare' },
+    // shell: 'bare' blendet Footer/Bottom-Nav der Marketing-Seiten aus
+    // (siehe app.ts/app.html) — der Header bleibt überall gleich (siehe
+    // shared/header), bekommt hier aber zusätzlich die Modul-Reiter
+    // (dashboardNav) und zeigt Profil statt "Anmelden" (shell: 'bare').
+    data: { shell: 'bare', dashboardNav: true },
   },
   {
     path: 'login',

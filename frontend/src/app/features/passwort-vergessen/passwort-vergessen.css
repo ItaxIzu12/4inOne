@@ -31,16 +31,10 @@
   text-decoration: none;
   min-height: 44px;
 }
-.reset-card__brand span {
-  width: 32px;
-  height: 32px;
+.reset-card__brand .kompass-icon {
+  font-size: 32px; /* steuert die Größe des 1em/1em-Logos */
   border-radius: 9px;
-  background: linear-gradient(135deg, var(--color-violet-signal), var(--color-amber-glow));
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
+  overflow: hidden;
 }
 
 .auth-intro { display: flex; flex-direction: column; gap: var(--space-8); }

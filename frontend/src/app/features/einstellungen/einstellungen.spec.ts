@@ -11,7 +11,7 @@ describe('Einstellungen', () => {
     }).compileComponents();
   });
 
-  it('has a skip-link, exactly one h1 and renders all account/legal rows plus Abmelden', () => {
+  it('has a skip-link, exactly one h1 and renders the account rows plus Abmelden', () => {
     const fixture = TestBed.createComponent(Einstellungen);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
@@ -20,15 +20,17 @@ describe('Einstellungen', () => {
     expect(compiled.querySelectorAll('h1').length).toBe(1);
 
     const rows = compiled.querySelectorAll('.settings-row');
-    // 3 Konto-Zeilen + 4 Rechtliches-Zeilen + 1 Abmelden-Button
-    expect(rows.length).toBe(8);
+    // 3 Konto-Zeilen + 1 Abmelden-Button — Rechtliches lebt im Footer, nicht hier.
+    expect(rows.length).toBe(4);
     expect(compiled.textContent).toContain('Abmelden');
-    expect(compiled.textContent).toContain('Barrierefreiheitserklärung');
   });
 
-  it('renders the copyright line at the bottom', () => {
+  it('does not duplicate the legal links as settings rows (they live in the global footer, see app.spec.ts)', () => {
     const fixture = TestBed.createComponent(Einstellungen);
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).querySelector('app-copyright')).toBeTruthy();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.textContent).not.toContain('Rechtliches');
+    expect(compiled.querySelector('app-footer')).toBeNull();
   });
 });

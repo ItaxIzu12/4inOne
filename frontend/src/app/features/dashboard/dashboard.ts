@@ -1,13 +1,12 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { ThemeService } from '../../core/theme/theme.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { InsightsService } from '../../core/insights/insights.service';
 import { ModuleCard } from '../../shared/module-card/module-card';
 import { IconFinanzen } from '../../shared/icons/icon-finanzen';
 import { IconHaushalt } from '../../shared/icons/icon-haushalt';
 import { IconOrganisation } from '../../shared/icons/icon-organisation';
-import { IconSettings } from '../../shared/icons/icon-settings';
 
 interface HouseholdMember {
   name: string;
@@ -52,25 +51,25 @@ const BUDGET_TREND = [520, 610, 590, 705, 690, 760, 794];
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [
-    RouterLink,
-    RouterLinkActive,
-    ModuleCard,
-    DecimalPipe,
-    IconFinanzen,
-    IconHaushalt,
-    IconOrganisation,
-    IconSettings,
-  ],
+  imports: [RouterLink, RouterLinkActive, ModuleCard, DecimalPipe, IconFinanzen, IconHaushalt, IconOrganisation],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
 export class Dashboard {
-  protected readonly theme = inject(ThemeService);
   protected readonly insights = inject(InsightsService);
+  private readonly auth = inject(AuthService);
 
   protected readonly householdMembers = HOUSEHOLD_MEMBERS;
   protected readonly weekEntries = WEEK_ENTRIES;
+
+  // TODO (Backend): kein Route-Guard vorhanden, siehe Chat-Zusammenfassung
+  // — ohne echten Login landet man hier ohne currentUser(), daher der
+  // generische Fallback statt eines Absturzes.
+  protected readonly greeting = computed(() => {
+    const user = this.auth.currentUser();
+    const firstName = user?.name.trim().split(/\s+/)[0];
+    return firstName ? `Guten Tag, ${firstName}` : 'Guten Tag';
+  });
 
   // Banner ist schließbar, aber nicht dauerhaft: dismissed lebt nur im
   // Komponentenzustand (kein localStorage), erscheint also bei jeder neuen

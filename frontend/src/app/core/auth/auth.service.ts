@@ -7,8 +7,14 @@ import { Observable, tap } from 'rxjs';
 // fileReplacements), siehe Zusammenfassung im Chat.
 const API_BASE_URL = 'http://localhost:8000/api';
 
-interface AccessTokenResponse {
+export interface AuthUser {
+  name: string;
+  email: string;
+}
+
+interface AuthResponse {
   access: string;
+  user: AuthUser;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -24,41 +30,46 @@ export class AuthService {
   readonly accessToken = this._accessToken.asReadonly();
   readonly isAuthenticated = computed(() => this._accessToken() !== null);
 
-  login(email: string, password: string): Observable<AccessTokenResponse> {
+  // Nur für Anzeige (Begrüßung im Dashboard, Initialen im Header) — keine
+  // sicherheitsrelevante Information, siehe core/auth_views.py::_user_payload.
+  private readonly _currentUser = signal<AuthUser | null>(null);
+  readonly currentUser = this._currentUser.asReadonly();
+
+  login(email: string, password: string): Observable<AuthResponse> {
     return this.http
-      .post<AccessTokenResponse>(
-        `${API_BASE_URL}/auth/login/`,
-        { email, password },
-        { withCredentials: true },
-      )
-      .pipe(tap((res) => this._accessToken.set(res.access)));
+      .post<AuthResponse>(`${API_BASE_URL}/auth/login/`, { email, password }, { withCredentials: true })
+      .pipe(tap((res) => this.applySession(res)));
   }
 
-  register(name: string, email: string, password: string): Observable<AccessTokenResponse> {
+  register(name: string, email: string, password: string): Observable<AuthResponse> {
     return this.http
-      .post<AccessTokenResponse>(
-        `${API_BASE_URL}/auth/register/`,
-        { name, email, password },
-        { withCredentials: true },
-      )
-      .pipe(tap((res) => this._accessToken.set(res.access)));
+      .post<AuthResponse>(`${API_BASE_URL}/auth/register/`, { name, email, password }, { withCredentials: true })
+      .pipe(tap((res) => this.applySession(res)));
   }
 
   /** Versucht, die Sitzung über das httpOnly-Refresh-Cookie wiederherzustellen
    * (z. B. nach einem Seiten-Reload, bei dem das In-Memory-Token weg ist). */
-  refresh(): Observable<AccessTokenResponse> {
+  refresh(): Observable<{ access: string }> {
     return this.http
-      .post<AccessTokenResponse>(`${API_BASE_URL}/auth/refresh/`, {}, { withCredentials: true })
+      .post<{ access: string }>(`${API_BASE_URL}/auth/refresh/`, {}, { withCredentials: true })
       .pipe(tap((res) => this._accessToken.set(res.access)));
   }
 
   logout(): Observable<void> {
-    return this.http
-      .post<void>(`${API_BASE_URL}/auth/logout/`, {}, { withCredentials: true })
-      .pipe(tap(() => this._accessToken.set(null)));
+    return this.http.post<void>(`${API_BASE_URL}/auth/logout/`, {}, { withCredentials: true }).pipe(
+      tap(() => {
+        this._accessToken.set(null);
+        this._currentUser.set(null);
+      }),
+    );
   }
 
   requestPasswordReset(email: string): Observable<{ detail: string }> {
     return this.http.post<{ detail: string }>(`${API_BASE_URL}/auth/password-reset/`, { email });
+  }
+
+  private applySession(res: AuthResponse): void {
+    this._accessToken.set(res.access);
+    this._currentUser.set(res.user);
   }
 }

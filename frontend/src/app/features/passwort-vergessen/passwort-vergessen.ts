@@ -2,11 +2,12 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ScrollService } from '../../core/scroll/scroll.service';
+import { LogoKompass } from '../../shared/icons/logo-kompass';
 
 @Component({
   selector: 'app-passwort-vergessen',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, LogoKompass],
   templateUrl: './passwort-vergessen.html',
   styleUrl: './passwort-vergessen.css',
 })

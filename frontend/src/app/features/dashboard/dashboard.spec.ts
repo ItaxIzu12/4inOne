@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { Dashboard } from './dashboard';
@@ -6,7 +7,7 @@ describe('Dashboard', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
-      providers: [provideRouter([])],
+      providers: [provideRouter([]), provideHttpClient()],
     }).compileComponents();
   });
 
@@ -52,25 +53,18 @@ describe('Dashboard', () => {
     expect(compiled.querySelector('.fab')).toBeTruthy();
   });
 
-  it('uses the exact same section-icon component in the sidebar, the bottom-nav and the matching module-card', () => {
+  it('uses the exact same section-icon component in the bottom-nav and the matching module-card', () => {
     const fixture = TestBed.createComponent(Dashboard);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
     for (const tag of ['icon-finanzen', 'icon-haushalt', 'icon-organisation']) {
       const occurrences = compiled.querySelectorAll(tag);
-      // Sidebar-Nav + Bottom-Nav + Modul-Karten-Kopfzeile = 3 Stellen, immer
-      // dieselbe Icon-Komponente statt separat implementierter SVGs.
-      expect(occurrences.length).toBe(3);
+      // Bottom-Nav + Modul-Karten-Kopfzeile = 2 Stellen innerhalb des
+      // Dashboards selbst (die Header-Navigation lebt jetzt im
+      // gemeinsamen <app-header>, siehe header.spec.ts) — immer dieselbe
+      // Icon-Komponente statt separat implementierter SVGs.
+      expect(occurrences.length).toBe(2);
     }
-  });
-
-  it('makes /einstellungen reachable from both the desktop sidebar profile link and the mobile topbar gear button', () => {
-    const fixture = TestBed.createComponent(Dashboard);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-
-    expect(compiled.querySelector('.app-header__profile')?.getAttribute('href')).toBe('/einstellungen');
-    expect(compiled.querySelector('.topbar__settings')?.getAttribute('href')).toBe('/einstellungen');
   });
 });

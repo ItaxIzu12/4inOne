@@ -29,32 +29,13 @@
 
   <hr class="settings-divider" />
 
-  <section aria-labelledby="legal-heading">
-    <h2 id="legal-heading" class="settings-group__title">
-      <icon-legal class="settings-group__icon" />
-      Rechtliches
-    </h2>
-    <ul class="settings-list">
-      @for (row of legalRows; track row.route) {
-        <li>
-          <a [routerLink]="row.route" class="settings-row">
-            <span class="settings-row__icon"><icon-document /></span>
-            <span class="settings-row__label">{{ row.label }}</span>
-            <icon-chevron class="settings-row__chevron" />
-          </a>
-        </li>
-      }
-    </ul>
-  </section>
-
-  <hr class="settings-divider" />
-
   <button type="button" class="settings-row settings-row--button" (click)="logout()">
     <span class="settings-row__icon"><icon-logout /></span>
     <span class="settings-row__label">Abmelden</span>
   </button>
-
-  <footer class="settings-page__footer">
-    <app-copyright />
-  </footer>
 </main>
+
+<!-- Rechtliches (Impressum/Datenschutz/Nutzungsbedingungen/Barrierefreiheit)
+     steht bewusst nicht als Einstellungs-Zeilen hier, sondern im echten
+     Footer — der wird jetzt global von app.html gerendert (siehe app.ts),
+     nicht mehr hier einzeln eingebunden. -->

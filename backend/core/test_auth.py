@@ -36,7 +36,9 @@ def test_register_accepts_valid_password_and_hashes_with_argon2():
         content_type='application/json',
     )
     assert response.status_code == 201
-    assert 'refresh' not in response.json()  # nie im Body, siehe test_login_* unten
+    body = response.json()
+    assert 'refresh' not in body  # nie im Body, siehe test_login_* unten
+    assert body['user'] == {'name': 'Valide', 'email': 'valide@example.com'}
 
     user = get_user_model().objects.get(email='valide@example.com')
     assert user.password.startswith('argon2$argon2id$')
@@ -57,7 +59,8 @@ def test_login_sets_httponly_refresh_cookie_never_in_body():
 
     assert response.status_code == 200
     body = response.json()
-    assert list(body.keys()) == ['access']  # kein 'refresh' im Body
+    assert set(body.keys()) == {'access', 'user'}  # kein 'refresh' im Body
+    assert body['user'] == {'name': '', 'email': 'cookie@example.com'}
 
     cookie = response.cookies['refresh_token']
     assert cookie['httponly'] is True

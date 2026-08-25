@@ -27,17 +27,10 @@
 }
 
 .brand-mark {
-  width: 32px;
-  height: 32px;
+  font-size: 32px; /* steuert die Größe des 1em/1em-Logos */
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent-glow), var(--m-household));
-  color: #fff;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .brand-name {
@@ -47,11 +40,63 @@
   color: var(--text);
 }
 
+.header-nav {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.header-nav a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: 44px;
+  padding: 0 var(--space-16);
+  border-radius: var(--radius-buttons);
+  color: var(--text-body);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.header-nav a .kompass-icon { font-size: 18px; }
+.header-nav a:hover { background: var(--surface-recessed); }
+.header-nav a.is-active { background: var(--accent); color: #fff; }
+
+/* Auf schmalen Viewports übernimmt die Bottom-Nav die Modul-Navigation
+   (siehe dashboard.html/bottom-nav.html) — hier redundant. */
+@media (max-width: 899px) {
+  .header-nav { display: none; }
+}
+
 .header-actions {
   display: flex;
   align-items: center;
   gap: var(--space-10);
   flex-shrink: 0;
+}
+
+.profile-link {
+  display: flex;
+  min-height: 44px;
+  min-width: 44px;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.profile-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .theme-toggle {

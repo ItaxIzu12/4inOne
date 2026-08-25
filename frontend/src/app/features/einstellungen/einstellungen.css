@@ -132,13 +132,6 @@
 }
 .settings-group__icon { font-size: 16px; }
 
-.settings-page__footer {
-  margin-top: auto;
-  padding-top: var(--space-24);
-  display: flex;
-  justify-content: center;
-}
-
 @media (min-width: 900px) {
   .settings-page { padding-top: var(--space-40); }
 }
