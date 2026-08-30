@@ -3,7 +3,7 @@
 
 *Dieses Dokument ergänzt das `Gesamtkonzept_AllInOne_App.md` (Vision, Markt, Zielgruppen, Recht, Roadmap) um die technische Umsetzung: Tech-Stack, Architektur-Prinzipien, Security und Performance/Skalierung.*
 
-*Version 5 — Django/Python-Backend (unverändert aus Version 4), ergänzt um einen systematischen Sicherheits-Check nach konkreten Anwendungsfällen (Abschnitt 3.9) sowie Verweise auf die konkreten Finanz-Differenzierungsfeatures aus dem Gesamtkonzept.*
+*Version 6 — ergänzt um Abschnitt 3.10 "Solo-Betrieb & Self-Hosting": sechs Schwachstellen, die spezifisch auftreten, wenn das Projekt zunächst nur für den persönlichen Gebrauch (kein Mehrbenutzer-SaaS-Betrieb) läuft. Vorherige Abschnitte (Django-Backend, Sicherheits-Anwendungsfall-Check) unverändert aus Version 5.*
 
 ---
 
@@ -196,6 +196,27 @@ Diese Tabelle prüft nicht nach Themen, sondern nach **konkreten Situationen, di
 
 **Kurz zusammengefasst:** Fünf echte Lücken neu geschlossen (Einladungs-Sicherheit, Mitglieder-Entzug als Testfall, MFA-Brute-Force, Registrierungs-Spam, Export-Rate-Limit), zwei als bewusst spätere Punkte vorgemerkt (Audit-Trail, Webhook-Signaturen), eine Dateninteritätsfrage ergänzt (Concurrent Editing).
 
+### 3.10 Solo-Betrieb & Self-Hosting — Schwachstellen bei rein persönlicher Nutzung
+
+Alle bisherigen Abschnitte gingen von einem wachsenden Mehrbenutzer-Produkt aus. Wird die App zunächst **nur für den eigenen Gebrauch** betrieben (kein SaaS, kein Team, kein Support), ändert sich das Risikoprofil an sechs konkreten Stellen — teils entstehen neue Lücken, teils werden bestehende Anforderungen wichtiger statt überflüssig. **Ausdrücklich nicht vereinfachen:** Autorisierung, Passwort-Hashing, JWT-Handling und Soft-Delete bleiben unverändert Pflicht, auch bei einem einzigen Nutzer — eine Berechtigungsprüfung, die "vertraut, weil eh nur du zugreifst", ist falsch gebaut, sobald sie einmal gebraucht wird (Bug, versehentlicher Mitzugriff, spätere Erweiterung um Haushaltsmitglieder).
+
+1. 🔴 **MFA-Wiederherstellung ohne Support-Team.** Bei SaaS mit Team gibt es einen Menschen, der bei Geräteverlust hilft. Als alleiniger Nutzer und Betreiber gibt es niemanden — Verlust des MFA-Geräts kann zum Selbst-Aussperren aus den eigenen Finanzdaten führen. **Maßnahme:** Einmalige TOTP-Backup-Codes bei MFA-Einrichtung generieren (Standard-Django-OTP-Funktion), verschlüsselt speichern, dem Nutzer zum Ausdrucken/Offline-Aufbewahren anzeigen — genau einmal, danach nicht erneut abrufbar.
+
+2. 🔴 **Fernzugriff-Architektur fehlte komplett — dringend vor dem ersten Deployment klären.** Drei Optionen mit sehr unterschiedlichem Risiko:
+   - ❌ Port-Forwarding am Heimrouter direkt zum Django-Server: höchstes Risiko — ungepatchte Consumer-Router-Firmware, öffentliche IP wird von automatisierten Scannern gefunden, die gezielt nach offenen Django-/Postgres-Ports suchen.
+   - 🟡 Echter VPS (Hetzner, DigitalOcean o. ä.): sicherer, aber laufende Kosten (siehe 5.1) und eigene Verantwortung für OS-Patches.
+   - ✅ **Empfohlen für den Solo-Anwendungsfall: VPN-Tunnel zum Heimnetz (Tailscale/WireGuard).** Kein offener Port im öffentlichen Internet, trotzdem von unterwegs erreichbar, deutlich kleinere Angriffsfläche als beide anderen Optionen.
+
+3. 🔴 **Geräte-Sicherheit war nirgends dokumentiert, ist jetzt das eigentlich schwächste Glied.** Die gesamte bisherige Architektur behandelt Server-/App-Sicherheit — bei einem einzigen Nutzer verlagert sich das größte Risiko auf das genutzte Endgerät selbst (gestohlener/ungesperrter Laptop oder Handy mit aktiver "Angemeldet bleiben"-Sitzung). Bei SaaS mit vielen Nutzern verteilt sich dieses Risiko, hier trägt ein einzelnes Gerät die gesamte Last. **Maßnahme:** Voraussetzung dokumentieren, dass jedes genutzte Endgerät selbst verschlüsselt (Festplattenverschlüsselung) und mit Sperrcode/biometrischer Sperre gesichert sein muss — das ist keine reine Formsache, sondern eine explizite Betriebsvoraussetzung.
+
+4. 🔴 **Monitoring/Login-Benachrichtigung — Begründung verschiebt sich, Pflicht bleibt bestehen.** In Abschnitt 3.7 ursprünglich für professionellen Betrieb vorgesehen. Für Solo-Nutzung ist die eigentliche Begründung: **Niemand außer dir bemerkt einen ungewöhnlichen Login-Versuch.** Ohne mindestens eine einfache Benachrichtigung (E-Mail bei Login von neuem Gerät/unbekannter IP) bleibt ein Einbruchsversuch möglicherweise unbemerkt, bis Schaden entsteht.
+
+5. 🟡 **Repository-Sichtbarkeit.** Trivial, aber real: Solo-/Hobby-Repos landen leicht versehentlich öffentlich statt privat auf GitHub. Bei einer Finanz-App das Repository konsequent **privat** halten — nicht weil der Code selbst geheim sein muss, sondern weil öffentlicher Code kombiniert mit einem einzigen vergessenen `.env`-Commit das Gesamtrisiko unnötig erhöht.
+
+6. 🟡 **Patch-Disziplin ohne äußeren Zwang.** Bei einer SaaS mit Nutzern erzwingt der Betrieb selbst eine Update-Kadenz. Bei Solo-Betrieb besteht die reale Gefahr, dass `pip-audit` einmal eingerichtet, aber nie wieder ausgeführt wird. **Maßnahme:** Dependabot so konfigurieren, dass Sicherheits-Updates automatisch als PR erstellt und nach grünem CI-Lauf automatisch gemerged werden, statt auf manuelle Ausführung zu vertrauen.
+
+**Was bewusst NICHT als Schwachstelle gilt:** Die `HouseholdInvite`-Logik, das Rollenmodell und die Mehrpersonen-Rate-Limits aus 3.9 jetzt zu entfernen, weil aktuell nur eine Person die App nutzt. Diese Architektur kostet im Ruhezustand nichts und erspart einen späteren Umbau, falls doch einmal ein Haushaltsmitglied dazukommt — nicht ausbauen, aber stehen lassen.
+
 ---
 
 ## 4. Performance & Skalierung
@@ -221,6 +242,7 @@ Diese Tabelle prüft nicht nach Themen, sondern nach **konkreten Situationen, di
 | Backup-Speicher | Verschlüsselt, bei EU-Redundanz gespiegelt |
 | Sentry/Error-Tracking | Kostenloses Kontingent schnell aufgebraucht |
 | Banking-Aggregator (FinAPI/Tink) | Laufend pro Nutzer/Abfrage |
+| VPS oder VPN-Dienst für Fernzugriff (Solo-Betrieb, siehe 3.10) | Auch ohne Nutzerwachstum nötig, sobald Zugriff von unterwegs gewünscht ist |
 
 ### 5.2 Einmalige, aber unterschätzte Kosten
 | Position | Warum es leicht übersehen wird |
@@ -251,3 +273,6 @@ Diese Tabelle prüft nicht nach Themen, sondern nach **konkreten Situationen, di
 - Kurzes Threat-Modeling (STRIDE) vor Implementierungsstart — jetzt mit den Anwendungsfällen aus 3.9 als konkreter Ausgangspunkt.
 - Zwei GitHub-Repos anlegen.
 - Rate-Limit-Konfiguration pro Endpunkt-Typ festlegen (Login, MFA-Verifizierung, Registrierung, Export, Einladungsversand — siehe 3.9), bevor der erste Endpunkt live geht.
+- Fernzugriffs-Architektur für den Solo-Betrieb festlegen (empfohlen: VPN-Tunnel via Tailscale/WireGuard, siehe 3.10) — vor dem ersten Deployment außerhalb des eigenen lokalen Netzwerks.
+- MFA-Backup-Codes-Generierung implementieren, bevor MFA aktiv genutzt wird (siehe 3.10).
+- GitHub-Repository-Sichtbarkeit auf privat prüfen/setzen (siehe 3.10).
