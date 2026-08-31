@@ -33,7 +33,7 @@
 }
 
 .topbar {
-  padding: var(--space-20) var(--space-16) 0;
+  padding: var(--space-24) var(--space-16) var(--space-8);
 }
 
 .topbar__eyebrow {
@@ -47,7 +47,7 @@
 }
 
 .dashboard-main {
-  padding: var(--space-20) var(--space-16);
+  padding: var(--space-16) var(--space-16) 0;
   /* Platz für Bottom-Nav + FAB unter dem Content auf schmalen Viewports */
   padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
   display: flex;
@@ -94,39 +94,6 @@
 .household-strip__info { display: flex; flex-direction: column; line-height: 1.25; }
 .household-strip__name { font-size: 14px; font-weight: 600; color: var(--color-midnight-plum); }
 .household-strip__role { font-size: 12px; color: var(--color-dusk-helper); }
-
-/* ---------- Warum-Banner ---------- */
-.why-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-12);
-  background: var(--color-card-white);
-  border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-cards);
-  padding: var(--space-16);
-}
-.why-banner__icon { flex-shrink: 0; margin-top: 2px; color: var(--color-violet-ink); }
-.why-banner p {
-  flex: 1;
-  font-size: 17px;
-  font-weight: 500;
-  color: var(--color-slate-violet);
-}
-.why-banner strong { color: var(--color-midnight-plum); }
-.why-banner__close {
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--color-dusk-helper);
-  border-radius: 50%;
-  cursor: pointer;
-}
-.why-banner__close:hover { background: var(--color-fog-surface); color: var(--color-midnight-plum); }
 
 /* ---------- Budget-Hero (Aurora) — einziges Element mit starkem Verlauf ---------- */
 .budget-hero {
@@ -309,26 +276,70 @@
 }
 .organize-list__when { color: var(--color-dusk-helper); font-weight: 500; }
 
-/* ---------- Floating-Action-Button ---------- */
-.fab {
-  position: fixed;
-  right: var(--space-16);
-  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
-  z-index: 40;
-  width: 56px;
-  height: 56px;
+/* ---------- Vergleich: Ohne Kompass / Mit Kompass (Abschluss der Seite) ---------- */
+.compare-section h2 { font-size: var(--text-heading-sm); margin-bottom: var(--space-16); }
+
+.compare-table {
+  position: relative;
+  background: var(--color-card-white);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-cards);
+  overflow: hidden;
+}
+.compare-table::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-success-green);
+}
+
+/* Mobile: Kopfzeile ausgeblendet, jede Zeile gestapelt mit sr-only-Labels
+   für Screenreader statt der unsichtbaren Spaltenüberschriften. */
+.compare-head { display: none; }
+
+.compare-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-16);
+}
+.compare-row + .compare-row { border-top: 1px solid var(--color-hairline); }
+
+.compare-row .without,
+.compare-row .with {
+  font-size: 14px;
+  font-weight: 500;
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--color-violet-ink);
-  color: #fff;
-  box-shadow: var(--shadow-glow);
-  text-decoration: none;
-  transition: background-color 0.15s ease, transform 0.15s ease;
+  gap: var(--space-8);
 }
-.fab:hover { background: var(--accent-hover); }
-.fab:active { transform: scale(0.96); }
+.compare-row .without {
+  color: var(--color-dusk-helper);
+}
+.compare-row .without::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-hairline);
+  flex-shrink: 0;
+}
+.compare-row .with {
+  color: var(--color-midnight-plum);
+  font-weight: 700;
+}
+.compare-row .with svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  padding: 3px;
+  color: #fff;
+  background: var(--color-success-green);
+  border-radius: 50%;
+}
 
 /* ---------- Bottom-Nav (primäre Navigation auf schmalen Viewports) ---------- */
 .bottom-nav {
@@ -359,6 +370,29 @@
 .bottom-nav a .kompass-icon { font-size: 20px; }
 .bottom-nav a.is-active { color: var(--color-violet-ink); }
 
+/* ---------- Ab 600px (Tablet/Phablet): mehr Luft, zweispaltige Module ---------- */
+@media (min-width: 600px) {
+  .topbar { padding: var(--space-32) var(--space-24) var(--space-10); }
+  .dashboard-main { padding: var(--space-8) var(--space-24) calc(84px + env(safe-area-inset-bottom, 0px)); gap: var(--space-32); }
+  .household-strip { padding: var(--space-20); }
+  .week-timeline__item { padding: var(--space-20); }
+  .module-grid { grid-template-columns: repeat(2, 1fr); }
+
+  .compare-head { display: grid; grid-template-columns: 1fr 1fr; }
+  .compare-head div {
+    padding: var(--space-16) var(--space-24);
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+  }
+  .compare-head .without { color: var(--color-dusk-helper); background: var(--color-fog-surface); }
+  .compare-head .with { color: #fff; background: var(--color-violet-ink); }
+
+  .compare-row { display: grid; grid-template-columns: 1fr 1fr; padding: 0; }
+  .compare-row .without,
+  .compare-row .with { padding: var(--space-16) var(--space-24); }
+}
+
 /* ---------- Ab 900px: Header (siehe shared/header) übernimmt die Navigation ---------- */
 @media (min-width: 900px) {
   .topbar { display: none; }
@@ -377,9 +411,10 @@
   .budget-hero { padding: var(--space-32); }
   .budget-hero__amount { font-size: var(--text-heading-lg); }
 
+  .compare-table { max-width: 760px; margin: 0 auto; }
+
   .module-grid { grid-template-columns: repeat(3, 1fr); }
 
-  /* Bottom-Nav/FAB-Offset sind ab hier nicht mehr die primäre Navigation */
+  /* Bottom-Nav ist ab hier nicht mehr die primäre Navigation */
   .bottom-nav { display: none; }
-  .fab { bottom: var(--space-24); }
 }

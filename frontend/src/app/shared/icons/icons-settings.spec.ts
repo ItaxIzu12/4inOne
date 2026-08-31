@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { IconBackToTop } from './icon-back-to-top';
 import { IconChevron } from './icon-chevron';
 import { IconDocument } from './icon-document';
 import { IconLegal } from './icon-legal';
@@ -9,6 +10,7 @@ import { IconSettings } from './icon-settings';
 import { IconTwoFactor } from './icon-two-factor';
 
 const ICONS = [
+  IconBackToTop,
   IconChevron,
   IconDocument,
   IconLegal,

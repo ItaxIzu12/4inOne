@@ -26,6 +26,8 @@
   pointer-events: auto;
 }
 
+.back-to-top__icon { font-size: 18px; }
+
 .back-to-top:hover {
   background: var(--accent);
   color: var(--accent-ink);

@@ -1,9 +1,9 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { InsightsService } from '../../core/insights/insights.service';
 import { ModuleCard } from '../../shared/module-card/module-card';
+import { BackToTop } from '../../shared/back-to-top/back-to-top';
 import { IconFinanzen } from '../../shared/icons/icon-finanzen';
 import { IconHaushalt } from '../../shared/icons/icon-haushalt';
 import { IconOrganisation } from '../../shared/icons/icon-organisation';
@@ -51,12 +51,20 @@ const BUDGET_TREND = [520, 610, 590, 705, 690, 760, 794];
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, ModuleCard, DecimalPipe, IconFinanzen, IconHaushalt, IconOrganisation],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    ModuleCard,
+    DecimalPipe,
+    BackToTop,
+    IconFinanzen,
+    IconHaushalt,
+    IconOrganisation,
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
 export class Dashboard {
-  protected readonly insights = inject(InsightsService);
   private readonly auth = inject(AuthService);
 
   protected readonly householdMembers = HOUSEHOLD_MEMBERS;
@@ -70,15 +78,6 @@ export class Dashboard {
     const firstName = user?.name.trim().split(/\s+/)[0];
     return firstName ? `Guten Tag, ${firstName}` : 'Guten Tag';
   });
-
-  // Banner ist schließbar, aber nicht dauerhaft: dismissed lebt nur im
-  // Komponentenzustand (kein localStorage), erscheint also bei jeder neuen
-  // Session/nach jedem Login wieder — siehe Aufgabenstellung.
-  protected readonly bannerDismissed = signal(false);
-
-  protected dismissBanner(): void {
-    this.bannerDismissed.set(true);
-  }
 
   protected readonly budget = {
     amount: 1240,
@@ -118,5 +117,16 @@ export class Dashboard {
   protected readonly organizeAppointments = [
     { label: 'Zahnarzt · Lotte', when: 'Fr, 10:30' },
     { label: 'Elternabend', when: 'Mo, 18:00' },
+  ];
+
+  // Siehe GESAMTKONZEPT.md §4.2 — dieselbe Gegenüberstellung wie auf der
+  // öffentlichen Seite, hier als Abschluss des Dashboards statt eines
+  // Hinweisbanners.
+  protected readonly comparison = [
+    { without: '3–4 Apps, 3–4 Logins', withKompass: '1 App, 1 Login' },
+    { without: 'Einkaufsliste weiß nichts vom Budget', withKompass: 'Einkauf fließt automatisch ins Budget' },
+    { without: 'Jede App bedient sich anders', withKompass: 'Ein konsistentes, barrierefreies Design' },
+    { without: 'Kleine Schrift, schwacher Kontrast', withKompass: 'Große Schrift, starker Kontrast ab Werk' },
+    { without: 'Mehrere Abos parallel', withKompass: 'Ein Abo, volle Kostentransparenz' },
   ];
 }

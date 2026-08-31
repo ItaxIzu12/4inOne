@@ -1,11 +1,13 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { ScrollService } from '../../core/scroll/scroll.service';
+import { IconBackToTop } from '../icons/icon-back-to-top';
 
-const VISIBILITY_THRESHOLD = 480;
+const VISIBILITY_THRESHOLD = 300;
 
 @Component({
   selector: 'app-back-to-top',
   standalone: true,
+  imports: [IconBackToTop],
   templateUrl: './back-to-top.html',
   styleUrl: './back-to-top.css',
 })

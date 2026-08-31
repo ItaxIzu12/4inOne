@@ -20,16 +20,19 @@ describe('Dashboard', () => {
     expect(compiled.querySelectorAll('h1').length).toBe(1);
   });
 
-  it('shows the why-banner with the weekly link count and hides it when dismissed', () => {
+  it('ends with the "Ohne Kompass / Mit Kompass" comparison instead of a dismissible banner', () => {
     const fixture = TestBed.createComponent(Dashboard);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('.why-banner')).toBeTruthy();
-    (compiled.querySelector('.why-banner__close') as HTMLButtonElement).click();
-    fixture.detectChanges();
-
     expect(compiled.querySelector('.why-banner')).toBeNull();
+
+    const compareSection = compiled.querySelector('.compare-section');
+    expect(compareSection).toBeTruthy();
+    const rows = compiled.querySelectorAll('.compare-row');
+    expect(rows.length).toBe(fixture.componentInstance['comparison'].length);
+    // Steht als letzter Abschnitt am Ende der Seite.
+    expect(compiled.querySelector('main.dashboard-main > :last-child')).toBe(compareSection);
   });
 
   it('exposes the budget progress as an accessible progressbar', () => {
@@ -43,14 +46,13 @@ describe('Dashboard', () => {
     expect(bar?.getAttribute('aria-valuemax')).toBe('100');
   });
 
-  it('renders the mobile bottom-nav with all four sections and a FAB', () => {
+  it('renders the mobile bottom-nav with all four sections', () => {
     const fixture = TestBed.createComponent(Dashboard);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
     const bottomNavLinks = compiled.querySelectorAll('.bottom-nav a');
     expect(bottomNavLinks.length).toBe(4);
-    expect(compiled.querySelector('.fab')).toBeTruthy();
   });
 
   it('uses the exact same section-icon component in the bottom-nav and the matching module-card', () => {
@@ -66,5 +68,23 @@ describe('Dashboard', () => {
       // Icon-Komponente statt separat implementierter SVGs.
       expect(occurrences.length).toBe(2);
     }
+  });
+
+  it('keeps the "Start" tab permanently as normal navigation (no scroll-triggered icon change)', () => {
+    const fixture = TestBed.createComponent(Dashboard);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const startTab = compiled.querySelectorAll('.bottom-nav a')[0];
+    expect(startTab.textContent).toContain('Start');
+    expect(startTab.querySelector('icon-back-to-top')).toBeNull();
+  });
+
+  it('renders the same floating back-to-top button as the Finanzen/Haushalt/Organisation pages', () => {
+    const fixture = TestBed.createComponent(Dashboard);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('app-back-to-top')).toBeTruthy();
   });
 });
