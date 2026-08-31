@@ -22,14 +22,31 @@ describe('App', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('renders the global header on marketing routes (e.g. /login)', async () => {
+  it('renders the global header on marketing routes (e.g. /impressum)', async () => {
     fixture.detectChanges();
-    await router.navigateByUrl('/login');
+    await router.navigateByUrl('/impressum');
     fixture.detectChanges();
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.brand-name')?.textContent).toContain('Kompass');
+  });
+
+  it('hides the global header on /login and /registrieren (its own "Anmelden"-Button there would be redundant)', async () => {
+    fixture.detectChanges();
+    await router.navigateByUrl('/login');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    let compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('app-header')).toBeNull();
+
+    await router.navigateByUrl('/registrieren');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('app-header')).toBeNull();
   });
 
   it('keeps the shared header AND footer on the dashboard, but hides the marketing back-to-top/bottom-nav', async () => {

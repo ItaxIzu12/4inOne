@@ -6,6 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ScrollService } from '../../core/scroll/scroll.service';
 import { LogoKompass } from '../../shared/icons/logo-kompass';
+import { IconArrowLeft } from '../../shared/icons/icon-arrow-left';
 
 type Mode = 'login' | 'register';
 
@@ -32,7 +33,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, LogoKompass],
+  imports: [ReactiveFormsModule, RouterLink, LogoKompass, IconArrowLeft],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

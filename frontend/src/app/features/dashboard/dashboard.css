@@ -176,7 +176,7 @@
 .week-timeline__item {
   display: flex;
   align-items: center;
-  gap: var(--space-12);
+  gap: var(--space-16);
   padding: var(--space-16);
 }
 .week-timeline__item + .week-timeline__item { border-top: 1px solid var(--color-hairline); }
@@ -296,30 +296,47 @@
   background: var(--color-success-green);
 }
 
-/* Mobile: Kopfzeile ausgeblendet, jede Zeile gestapelt mit sr-only-Labels
-   für Screenreader statt der unsichtbaren Spaltenüberschriften. */
+/* Mobile: Kopfzeile ausgeblendet — jede Zeile bekommt stattdessen eine
+   eigene, sichtbare "Ohne Kompass"/"Mit Kompass"-Beschriftung (siehe
+   .compare-row__label), sonst ist beim Stapeln nicht erkennbar, welche
+   der beiden Zeilen was bedeutet. */
 .compare-head { display: none; }
 
 .compare-row {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-10);
   padding: var(--space-16);
 }
 .compare-row + .compare-row { border-top: 1px solid var(--color-hairline); }
 
+.compare-row__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-dusk-helper);
+  margin-bottom: 2px;
+}
+
 .compare-row .without,
 .compare-row .with {
+  display: flex;
+  flex-direction: column;
+}
+
+.compare-row__value {
   font-size: 14px;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: var(--space-8);
 }
-.compare-row .without {
+.compare-row .without .compare-row__value {
   color: var(--color-dusk-helper);
 }
-.compare-row .without::before {
+.compare-row .without .compare-row__value::before {
   content: '';
   width: 6px;
   height: 6px;
@@ -327,11 +344,11 @@
   background: var(--color-hairline);
   flex-shrink: 0;
 }
-.compare-row .with {
+.compare-row .with .compare-row__value {
   color: var(--color-midnight-plum);
   font-weight: 700;
 }
-.compare-row .with svg {
+.compare-row .with .compare-row__value svg {
   flex-shrink: 0;
   width: 18px;
   height: 18px;
@@ -391,6 +408,10 @@
   .compare-row { display: grid; grid-template-columns: 1fr 1fr; padding: 0; }
   .compare-row .without,
   .compare-row .with { padding: var(--space-16) var(--space-24); }
+
+  /* Ab hier übernimmt die sichtbare .compare-head-Kopfzeile den Kontext —
+     die Zeilen-Beschriftung wäre hier redundant. */
+  .compare-row__label { display: none; }
 }
 
 /* ---------- Ab 900px: Header (siehe shared/header) übernimmt die Navigation ---------- */

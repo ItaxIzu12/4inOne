@@ -1,4 +1,6 @@
-<app-header />
+@if (showHeader()) {
+  <app-header />
+}
 <router-outlet />
 <app-footer />
 @if (showGlobalChrome()) {

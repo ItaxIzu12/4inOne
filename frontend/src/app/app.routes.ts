@@ -5,20 +5,26 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
     // shell: 'bare' blendet Footer/Bottom-Nav der Marketing-Seiten aus
-    // (siehe app.ts/app.html) — der Header bleibt überall gleich (siehe
-    // shared/header), bekommt hier aber zusätzlich die Modul-Reiter
-    // (dashboardNav) und zeigt Profil statt "Anmelden" (shell: 'bare').
+    // (siehe app.ts/app.html) — der Header bleibt hier (siehe shared/header),
+    // bekommt aber zusätzlich die Modul-Reiter (dashboardNav) und zeigt
+    // Profil statt "Anmelden" (shell: 'bare').
     data: { shell: 'bare', dashboardNav: true },
   },
   {
     path: 'login',
     loadComponent: () => import('./features/login/login').then((m) => m.Login),
-    data: { mode: 'login' },
+    // shell: 'bare' blendet Back-to-Top/Bottom-Nav der Marketing-Seiten aus
+    // (siehe app.ts/app.html) — auf der Anmeldeseite ergibt eine Navigation
+    // zu den (noch nicht zugänglichen) App-Modulen keinen Sinn. hideHeader,
+    // weil der globale Header selbst nur einen "Anmelden"-Button zeigt, der
+    // auf genau dieser Seite redundant wäre — die Login-Seite hat ihre
+    // eigene Marke/ihren eigenen Zurück-Link (siehe features/login).
+    data: { mode: 'login', shell: 'bare', hideHeader: true },
   },
   {
     path: 'registrieren',
     loadComponent: () => import('./features/login/login').then((m) => m.Login),
-    data: { mode: 'register' },
+    data: { mode: 'register', shell: 'bare', hideHeader: true },
   },
   {
     path: 'passwort-vergessen',

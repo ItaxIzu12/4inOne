@@ -20,17 +20,24 @@ export class App {
     this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)),
   );
 
-  // Header UND Footer sind überall gleich (siehe shared/header,
-  // shared/footer) und werden immer gerendert. Nur Back-to-Top/Bottom-Nav
-  // der Marketing-Seiten werden für App-Routen (aktuell: Dashboard,
-  // Einstellungen, siehe app.routes.ts data: { shell: 'bare' }) ausgeblendet
-  // — die App hat dort ihre eigene Bottom-Nav/FAB.
-  protected readonly showGlobalChrome = computed(() => {
+  private readonly currentRouteData = computed(() => {
     this.navigationEnd();
     let route = this.router.routerState.root;
     while (route.firstChild) {
       route = route.firstChild;
     }
-    return route.snapshot.data['shell'] !== 'bare';
+    return route.snapshot.data;
   });
+
+  // Footer wird immer gerendert (siehe shared/footer). Nur Back-to-Top/
+  // Bottom-Nav der Marketing-Seiten werden für App-Routen (aktuell:
+  // Dashboard, Einstellungen, siehe app.routes.ts data: { shell: 'bare' })
+  // ausgeblendet — die App hat dort ihre eigene Bottom-Nav/FAB.
+  protected readonly showGlobalChrome = computed(() => this.currentRouteData()['shell'] !== 'bare');
+
+  // Der Header zeigt normalerweise einen "Anmelden"-Button (siehe
+  // shared/header) — auf der Anmelde-/Registrierungsseite selbst wäre das
+  // redundant, da diese Seiten schon ihre eigene Marke/ihren eigenen
+  // Zurück-Link haben (siehe app.routes.ts data: { hideHeader: true }).
+  protected readonly showHeader = computed(() => this.currentRouteData()['hideHeader'] !== true);
 }

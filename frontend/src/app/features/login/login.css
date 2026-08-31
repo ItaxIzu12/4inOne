@@ -1,24 +1,17 @@
-/* Mobile-first: Basis = schmaler Viewport (Markenseite ausgeblendet, Formular
-   zentriert). Ab 900px kommt die Split-Screen-Markenseite dazu. */
+/* Einspaltig, zentriert, für jede Breite gleich aufgebaut — keine
+   Split-Screen-Markenseite mehr, nur das Formular-Panel wächst/schrumpft
+   innerhalb einer festen max-width. */
 
 .auth-page {
   min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--color-cloud-canvas);
 }
 
-.auth-split {
-  display: flex;
-  align-items: stretch;
-  min-height: 100dvh;
-}
-
-.auth-brand { display: none; }
-@media (min-width: 900px) {
-  .auth-brand { min-height: 100%; }
-}
-
 .auth-panel {
-  flex: 1;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -33,11 +26,35 @@
   gap: var(--space-20);
 }
 
-.auth-panel__brand-mobile {
+@media (min-width: 600px) {
+  .auth-panel__inner {
+    background: var(--color-card-white);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-cards);
+    box-shadow: var(--shadow-subtle);
+    padding: var(--space-32);
+  }
+}
+
+/* 3 gleich breite Spuren: Zurück-Button links, Marke exakt mittig,
+   unsichtbarer Platzhalter rechts zum Ausgleich (sonst schiebt der
+   Zurück-Button die Marke optisch aus der Mitte). */
+.auth-panel__top {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-16);
+}
+
+.auth-panel__top-spacer {
+  width: 44px;
+}
+
+.auth-panel__brand {
   display: inline-flex;
   align-items: center;
+  justify-self: center;
   gap: var(--space-8);
-  align-self: center;
   font-family: var(--font-display);
   font-weight: 700;
   font-size: var(--text-subheading);
@@ -45,7 +62,7 @@
   text-decoration: none;
   min-height: 44px;
 }
-.auth-panel__brand-mobile .kompass-icon {
+.auth-panel__brand .kompass-icon {
   font-size: 32px; /* steuert die Größe des 1em/1em-Logos */
   border-radius: 9px;
   overflow: hidden;
@@ -249,6 +266,10 @@
   cursor: pointer;
   min-height: 44px;
 }
+.checkbox-field span {
+  flex: 1;
+  min-width: 0;
+}
 .checkbox-field input {
   margin-top: 3px;
   width: 20px;
@@ -291,90 +312,19 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .back-link {
-  align-self: center;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-dusk-helper);
-  text-decoration: none;
-  min-height: 44px;
+  justify-self: start;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--color-dusk-helper);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
-.back-link:hover { color: var(--color-violet-ink); }
+.back-link .kompass-icon { font-size: 20px; }
+.back-link:hover { background: var(--color-fog-surface); color: var(--color-violet-ink); }
 
-/* ---------- Ab 900px: Split-Screen mit Markenseite ---------- */
-@media (min-width: 900px) {
-  .auth-brand {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: var(--space-32);
-    flex: 1;
-    max-width: 480px;
-    padding: var(--space-56);
-    color: #fff;
-    background: linear-gradient(135deg, var(--color-violet-ink), var(--color-violet-signal) 55%, var(--color-amber-glow));
-    background-size: 200% 200%;
-    animation: aurora-shift 14s ease infinite;
-  }
-  @keyframes aurora-shift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .auth-brand { animation: none; }
-  }
-
-  .auth-brand__logo {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-10);
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: var(--text-subheading);
-    color: #fff;
-    text-decoration: none;
-    min-height: 44px;
-  }
-  .auth-brand__mark {
-    font-size: 36px; /* steuert die Größe des 1em/1em-Logos */
-    border-radius: 10px;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-
-  .auth-brand__headline {
-    font-size: var(--text-heading);
-    line-height: 1.15;
-    color: #fff;
-  }
-
-  .auth-brand__preview {
-    background: rgba(255, 255, 255, 0.12);
-    border-radius: var(--radius-cards);
-    padding: var(--space-20);
-  }
-  .auth-brand__preview-label { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; }
-  .auth-brand__preview-amount { font-family: var(--font-display); font-size: var(--text-heading-sm); color: #fff; margin-top: var(--space-4); }
-  .auth-brand__bar { height: 8px; border-radius: var(--radius-buttons); background: rgba(255, 255, 255, 0.25); margin-top: var(--space-16); overflow: hidden; }
-  .auth-brand__bar-fill { width: 64%; height: 100%; background: #fff; border-radius: var(--radius-buttons); }
-  .auth-brand__preview-caption { font-size: 14px; font-weight: 500; margin-top: var(--space-10); opacity: 0.95; }
-
-  .auth-brand__badges {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    gap: var(--space-16);
-  }
-  .auth-brand__badges li {
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    font-size: 14px;
-    font-weight: 600;
-  }
-
-  .auth-panel { flex: 1; padding: var(--space-56); }
-  .auth-panel__brand-mobile { display: none; }
+@media (min-width: 600px) {
+  .auth-panel { padding: var(--space-56) var(--space-24); }
 }

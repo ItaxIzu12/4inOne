@@ -16,7 +16,12 @@
 
 .footer-links {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-16);
+}
+
+@media (max-width: 600px) {
+  .footer-links { justify-content: center; }
 }
 
 .footer-links a {

@@ -1,37 +1,15 @@
 <main class="auth-page">
-  <div class="auth-split">
-    <aside class="auth-brand">
-      <a class="auth-brand__logo" routerLink="/" aria-label="Kompass — zum Start" (click)="goHome()">
-        <logo-kompass class="auth-brand__mark" />
-        Kompass
-      </a>
-
-      <h2 class="auth-brand__headline">Finanzen, Haushalt und Organisation. Ein Login, eine App.</h2>
-
-      <div class="auth-brand__preview" aria-hidden="true">
-        <p class="auth-brand__preview-label">Budget &middot; August</p>
-        <p class="auth-brand__preview-amount">1.240,00 &euro;</p>
-        <div class="auth-brand__bar"><div class="auth-brand__bar-fill"></div></div>
-        <p class="auth-brand__preview-caption">64&nbsp;% verplant &middot; 710&nbsp;&euro; übrig</p>
-      </div>
-
-      <ul class="auth-brand__badges">
-        <li>
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-          Verschlüsselt
-        </li>
-        <li>
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.6 8 11 4.6-2.4 8-6 8-11V5l-8-3Z"/></svg>
-          DSGVO-konform
-        </li>
-      </ul>
-    </aside>
-
-    <section class="auth-panel">
-      <div class="auth-panel__inner">
-        <a class="auth-panel__brand-mobile" routerLink="/" aria-label="Kompass — zum Start" (click)="goHome()">
+  <section class="auth-panel">
+    <div class="auth-panel__inner">
+      <div class="auth-panel__top">
+        <a class="back-link" routerLink="/" aria-label="Zurück zum Start" (click)="goHome()">
+          <icon-arrow-left />
+        </a>
+        <a class="auth-panel__brand" routerLink="/" aria-label="Kompass — zum Start" (click)="goHome()">
           <logo-kompass /> Kompass
         </a>
+        <span class="auth-panel__top-spacer" aria-hidden="true"></span>
+      </div>
 
         <div class="mode-switch" role="tablist" aria-label="Anmelden oder registrieren">
           <button type="button" role="tab" [attr.aria-selected]="mode() === 'login'" [class.is-active]="mode() === 'login'" (click)="setMode('login')">
@@ -274,7 +252,7 @@
 
             <label class="checkbox-field">
               <input type="checkbox" formControlName="acceptPrivacy" />
-              Ich stimme den <a routerLink="/datenschutz">Nutzungsbedingungen und der Datenschutzerklärung</a> zu
+              <span>Ich stimme den <a routerLink="/datenschutz">Nutzungsbedingungen und der Datenschutzerklärung</a> zu</span>
             </label>
             @if (registerForm.controls.acceptPrivacy.invalid && registerForm.controls.acceptPrivacy.touched) {
               <p class="field-error">Bitte stimme den Nutzungsbedingungen und der Datenschutzerklärung zu.</p>
@@ -298,9 +276,6 @@
             </p>
           </form>
         }
-
-        <a class="back-link" routerLink="/" (click)="goHome()">← Zurück zum Start</a>
-      </div>
-    </section>
-  </div>
+    </div>
+  </section>
 </main>
