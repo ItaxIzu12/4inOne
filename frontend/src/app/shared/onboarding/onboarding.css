@@ -1,0 +1,84 @@
+.onboarding {
+  margin: 0 0 28px;
+  padding: 16px 0 6px;
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.onboarding__heading {
+  font-size: var(--text-heading-sm);
+  margin: 0 0 4px;
+}
+
+.onboarding__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.onboarding__step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-hairline);
+}
+.onboarding__list li:last-child { border-bottom: none; }
+
+.onboarding__content { display: flex; flex-direction: column; min-width: 0; }
+.onboarding__title { font-size: 16px; font-weight: 700; color: var(--color-midnight-plum); }
+.onboarding__subtitle { font-size: 13px; color: var(--color-dusk-helper); }
+.onboarding__recommended { font-weight: 500; color: var(--color-dusk-helper); }
+
+.onboarding__action {
+  flex-shrink: 0;
+  background: var(--color-violet-ink);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  border: none;
+  border-radius: var(--radius-buttons);
+  padding: 8px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.onboarding__action:hover { background: var(--accent-hover); }
+.onboarding__action--submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ---------- Schritt 4 (MFA): visuell abgesetzt, kein nummerierter
+   Pflichtstil (siehe GESAMTKONZEPT.md §4.1 "kein Pflicht-Tutorial") ---------- */
+.onboarding__mfa-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-dusk-helper);
+}
+.onboarding__mfa-divider::before {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-hairline);
+}
+.onboarding__step--mfa { border-bottom: none; padding-top: 0; }
+
+/* ---------- "Kategorie anlegen"-Mini-Formular (im app-modal) ---------- */
+.onboarding__modal-heading { font-size: var(--text-heading-sm); margin: 0 0 var(--space-16); }
+.onboarding__category-form { display: flex; flex-direction: column; gap: var(--space-16); }
+.field { display: flex; flex-direction: column; gap: var(--space-8); }
+.field label { font-size: 13px; font-weight: 700; color: var(--color-midnight-plum); }
+.field input {
+  min-height: 48px;
+  padding: 0 var(--space-16);
+  border-radius: var(--radius-inputs);
+  border: 1.5px solid var(--color-hairline);
+  background: var(--color-fog-surface);
+  color: var(--color-midnight-plum);
+  font-size: 16px;
+}
+.field input:focus-visible { outline: none; border-color: var(--color-violet-ink); box-shadow: var(--shadow-focus); }
+.field-error { color: var(--color-amber-ink); font-size: 13px; font-weight: 600; margin: 0; }

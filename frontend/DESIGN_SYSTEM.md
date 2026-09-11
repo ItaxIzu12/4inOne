@@ -1,299 +1,265 @@
-# Relate — Style Reference
-> cool dawn over product canvas
+# Kompass — Style Reference
+> aurora glow over a paper-warm canvas
 
-**Theme:** light
+**Theme:** light (dark mode extension in the "Dark Mode Tokens" section)
 
-Relate renders as a cool-white SaaS surface with near-black headline ink and one vivid royal-blue accent that does all the brand talking. The product UI is shown through soft rounded cards floating on a pale lavender wash, with colored status dots (blue/green/red/orange) punctuating pipeline columns like Kanban tickets. Typography is tight: Inter at 56–80px with strong negative tracking whispers scale, body copy sits compact at 14–16px on generous line-height, and spacing leans dense (8–12px gaps) rather than airy. Everything lives in pill and rounded-rect containers; hard corners are absent.
+**Version 2 — Two-context model introduced.** A direct comparison (the extravagant Aurora Trust version vs. the minimalist variant) revealed that the full Aurora expression (glow shadows, pulse animation, filled gradient surfaces) violates a requirement already documented elsewhere — Persona B (60+) in `Gesamtkonzept.md`, Section 3, explicitly calls for "little animation." The pulse animation on the original hero card contradicted that. As of Version 2, a **two-context model** applies — this is not a change to the tokens themselves, only to how they're applied:
+
+| Context | Expression | Why |
+|---|---|---|
+| **In-app** (Dashboard, Finance/Household/Organization detail views, everything behind login) | **Minimalist.** No glow shadow, no pulse animation, no filled gradient surfaces. The Aurora gradient survives only as a **text gradient** on the largest amount on each screen — one concentrated moment instead of a large surface. Card shadows (`--shadow-card-soft`) are largely replaced by 1px dividers (`--color-hairline`); sections render as flat lists rather than card grids. | Daily use with real financial data, all age groups, lower cognitive load, satisfies the app's own "little animation" requirement |
+| **Marketing** (`website.html`, public landing page, auth brand panel) | **Full Aurora expression from Version 1 remains** — glow, gradient surfaces, hero card. Unchanged and still valid. | The first impression before sign-in is a different moment than daily use afterward — the "wow" effect is allowed to stay there |
+
+All color values, contrast checks, and typography tokens below apply **unchanged to both contexts** — only the *application rules* for shadow, animation, and surface fill changed in the in-app context, not the base palette itself.
+
+Kompass renders as a warm, light surface (cream/lavender gradient instead of pure white) with a violet-to-amber "Aurora" gradient gesture as a decorative element. The color gesture sits deliberately concentrated — in the marketing context on the hero card and background ambient glow, in the in-app context only on the amount text. Typography pairs a warm serif display face (Fraunces) for headings/amounts with a neutral, highly legible grotesque (Inter) for body copy and UI. All values are deliberately larger and higher-contrast than in the original SaaS reference system, because the target audience explicitly spans young **and** old, and the app has been subject to Germany's BFSG (WCAG 2.1 AA) since June 2025.
+
+**What changed relative to the pure mockup "wow" effect:** Buttons are consistently filled rather than ghost-outline (recognizability over restraint), text colors are checked against minimum contrast values, the base font size is 17px rather than 14–16px, and every status color always carries an icon/symbol as a second carrier of meaning.
 
 ## Tokens — Colors
 
-| Name | Value | Token | Role |
-|------|-------|-------|------|
-| Snow Canvas | `#fcfcfc` | `--color-snow-canvas` | Page background, card surfaces, nav surface — the dominant neutral that makes blue accents feel switched on |
-| Lavender Wash | `#f0f4fe` | `--color-lavender-wash` | Subtle accent surface behind hero and feature blocks — gives cool-tinted depth without darkening the page |
-| Midnight Ink | `#020520` | `--color-midnight-ink` | Hero and section headings — near-black with a violet cast, reads warmer than pure black against white |
-| Graphite Body | `#14141e` | `--color-graphite-body` | Body text, secondary headings, product UI labels — workhorse dark neutral with cool undertone |
-| Slate Caption | `#374151` | `--color-slate-caption` | Muted body text, nav labels, list items — medium-dark gray for subordinate copy |
-| Ash Helper | `#6b7280` | `--color-ash-helper` | Helper text, metadata, timestamps — lighter gray for tertiary information |
-| Stone Divider | `#e2e8f0` | `--color-stone-divider` | Hairline borders, card edges, divider lines — barely-there separation between surfaces |
-| Fog Surface | `#f1f5f9` | `--color-fog-surface` | Input backgrounds, disabled states, subtle grouping surfaces — one shade darker than canvas |
-| Royal Signal | `#145aff` | `--color-royal-signal` | Primary brand accent — headlines, links, hero word highlight, pipeline-active dots, logo mark. Single saturated hue carries the entire brand identity |
-| Cobalt Glow | `#3b82f6` | `--color-cobalt-glow` | Blue wash for highlight backgrounds, decorative bands, and soft emphasis behind content |
-| Mint Win | `#16ca2e` | `--color-mint-win` | Green text accent for links, tags, and emphasized short phrases. Use as a supporting accent, not as a status color |
-| Coral Lost | `#f26052` | `--color-coral-lost` | Red text accent for links, tags, and emphasized short phrases. Use as a supporting accent, not as a status color |
-| Amber Pending | `#ffa64d` | `--color-amber-pending` | Orange text accent for links, tags, and emphasized short phrases. Use as a supporting accent, not as a status color |
-| Azure Focus | `#0099ff` | `--color-azure-focus` | Input focus ring glow — pure blue that distinguishes active form state from ambient blue brand color |
+| Name | Value | Token | Role | Contrast on Canvas |
+|------|-------|-------|------|------|
+| Cloud Canvas | `#fdf9f2` | `--color-cloud-canvas` | Page background — warm cream instead of pure white | — |
+| Lavender Mist | `#f7f5ff` | `--color-lavender-mist` | Ambient wash behind hero/feature blocks, starting point of the background glow gradient | — |
+| Card White | `#ffffff` | `--color-card-white` | Card/module surfaces on canvas | — |
+| Midnight Plum | `#1a1523` | `--color-midnight-plum` | Primary headings, largest amounts — near-black with a violet cast | **17:1** (AAA) |
+| Slate Violet | `#4a4258` | `--color-slate-violet` | Body copy, labels, secondary headings — the workhorse tone | **9:1** (AAA) |
+| Dusk Helper | `#736a82` | `--color-dusk-helper` | Metadata, timestamps, captions — **only** at 14px and up, never for important content | **4.85:1** (AA, tight) |
+| Hairline | `#ece7f7` | `--color-hairline` | Card borders, dividers | — |
+| Fog Surface | `#f4f1fc` | `--color-fog-surface` | Input backgrounds, subtle grouping | — |
+| Violet Ink | `#5b3fd6` | `--color-violet-ink` | **Text-safe** brand color — buttons (filled), links, active icons | **6.4:1** (AA/near-AAA) |
+| Violet Signal | `#7a5af8` | `--color-violet-signal` | Decorative gradient accent (hero, glow) — **not** for body text/small links | 4.3:1 (large/decorative only) |
+| Amber Glow | `#ffb75e` | `--color-amber-glow` | Gradient counterpart, progress bars, "due soon" surface — surface only, never as text on light | — |
+| Amber Ink | `#a15f14` | `--color-amber-ink` | Text-safe variant of amber for labels/warnings | ≥4.5:1 |
+| Success Green | `#1f8a4c` | `--color-success-green` | Text/icon "done," "on budget" | ≥4.5:1 |
+| Danger Coral | `#c23b52` | `--color-danger-coral` | Text/icon "over budget," errors | ≥4.5:1 |
+
+**Core contrast rule:** Violet Signal, Amber Glow, and all gradient colors are **decoration colors** — they never carry the sole informational content and never appear as small body text on a light background. Every interactive/textual use has a darker "Ink" variant with checked contrast.
 
 ## Tokens — Typography
 
-### sans-serif — sans-serif — detected in extracted data but not described by AI · `--font-sans-serif`
-- **Weights:** 400
-- **Sizes:** 12px
-- **Line height:** 1.2
-- **Role:** sans-serif — detected in extracted data but not described by AI
+### Fraunces — Display serif for headings and large monetary amounts · `--font-fraunces`
+- **Google Fonts:** `Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700`
+- **Weights:** 500 (subheadings), 600 (standard headlines), 700 (largest hero figures only)
+- **Sizes:** 22px, 24px, 28px, 32px, 40px
+- **Line height:** 1.1–1.2
+- **Letter spacing:** −0.01em maximum — **no** aggressive negative tracking as seen in purely trend-driven SaaS systems, which reduces legibility for low vision
+- **OpenType feature:** `font-variant-numeric: tabular-nums` mandatory on all monetary amounts, so figures align cleanly in columns
 
-### Inter — Primary typeface for headings, body, nav, buttons — the only text family on the page. Weights split: 600 for hero/section headlines, 500 for subheadings and nav, 400 for body copy. Display sizes (56–80px) use aggressive negative tracking (-0.027 to -0.037em) that compresses letterforms into a tight confident block. · `--font-inter`
-- **Substitute:** DM Sans, Geist, Manrope
-- **Weights:** 400, 500, 600
-- **Sizes:** 10px, 12px, 14px, 15px, 16px, 18px, 20px, 22px, 40px, 56px, 80px
-- **Line height:** 1.05–1.50
-- **Letter spacing:** -0.0370em, -0.0270em, -0.0190em, -0.0100em, -0.0090em, 0.0060em, 0.0070em, 0.0110em, 0.0130em
-- **Role:** Primary typeface for headings, body, nav, buttons — the only text family on the page. Weights split: 600 for hero/section headlines, 500 for subheadings and nav, 400 for body copy. Display sizes (56–80px) use aggressive negative tracking (-0.027 to -0.037em) that compresses letterforms into a tight confident block.
+### Inter — UI grotesque for body copy, buttons, navigation, labels · `--font-inter`
+- **Weights:** 400 (very short secondary text only), 500 (standard body — **not** 400!), 600 (emphasis, active nav), 700 (button labels)
+- **Sizes:** 13px, 14px, 15px, 17px, 19px, 22px
+- **Line height:** 1.5–1.65
+- **Letter spacing:** normal (0), except uppercase labels at +0.04em
 
-### Pretendard — Secondary typeface used for Korean-language rendering and specific UI labels with positive tracking (+0.019 to +0.030em) — appears in localized product UI strings · `--font-pretendard`
-- **Substitute:** Pretendard (Google Fonts CDN)
-- **Weights:** 400
-- **Sizes:** 12px, 14px, 15px, 16px, 18px
-- **Line height:** 1.17–1.71
-- **Letter spacing:** 0.0190em, 0.0210em, 0.0250em, 0.0300em
-- **Role:** Secondary typeface used for Korean-language rendering and specific UI labels with positive tracking (+0.019 to +0.030em) — appears in localized product UI strings
-
-### Roboto Mono — Monospace accent for code-adjacent text, numerical callouts, and technical labels — negative tracking makes it feel geometric · `--font-roboto-mono`
-- **Substitute:** JetBrains Mono, Geist Mono
-- **Weights:** 500, 700
-- **Sizes:** 12px, 22px
-- **Line height:** 1.00–1.27
-- **Letter spacing:** -0.0450em, -0.0300em
-- **Role:** Monospace accent for code-adjacent text, numerical callouts, and technical labels — negative tracking makes it feel geometric
-
-### Font Awesome 6 Pro Light — Font Awesome 6 Pro Light — detected in extracted data but not described by AI · `--font-font-awesome-6-pro-light`
-- **Weights:** 400
-- **Sizes:** 8px, 10px, 11px, 12px, 14px
-- **Line height:** 1, 1.09, 1.55, 1.71, 2, 2.4, 2.5
-- **Role:** Font Awesome 6 Pro Light — detected in extracted data but not described by AI
-
-### Font Awesome 6 Pro Solid — Font Awesome 6 Pro Solid — detected in extracted data but not described by AI · `--font-font-awesome-6-pro-solid`
-- **Weights:** 400, 900
-- **Sizes:** 8px, 10px, 11px
-- **Line height:** 1, 1.09, 1.25
-- **Role:** Font Awesome 6 Pro Solid — detected in extracted data but not described by AI
-
-### Font Awesome 6 Pro Regular — Font Awesome 6 Pro Regular — detected in extracted data but not described by AI · `--font-font-awesome-6-pro-regular`
-- **Weights:** 400
-- **Sizes:** 11px, 12px, 14px, 18px
-- **Line height:** 1, 1.09, 1.2
-- **Letter spacing:** 0.011
-- **Role:** Font Awesome 6 Pro Regular — detected in extracted data but not described by AI
-
-### Font Awesome 6 Brands Regular — Font Awesome 6 Brands Regular — detected in extracted data but not described by AI · `--font-font-awesome-6-brands-regular`
-- **Weights:** 400
-- **Sizes:** 18px
-- **Line height:** 1
-- **Role:** Font Awesome 6 Brands Regular — detected in extracted data but not described by AI
+**Deliberate deviation from the SaaS standard:** Body text minimum is **17px/500**, not 14px/400. Thin weights (300) do not appear anywhere in the system.
 
 ### Type Scale
 
-| Role | Size | Line Height | Letter Spacing | Token |
-|------|------|-------------|----------------|-------|
-| caption | 12px | 1.2 | — | `--text-caption` |
-| body-sm | 14px | 1.43 | — | `--text-body-sm` |
-| body | 16px | 1.63 | — | `--text-body` |
-| subheading | 20px | 1.4 | -0.16px | `--text-subheading` |
-| heading-sm | 22px | 1.4 | -0.2px | `--text-heading-sm` |
-| heading | 40px | 1.05 | -1.48px | `--text-heading` |
-| heading-lg | 56px | 1.05 | -1.51px | `--text-heading-lg` |
-| display | 80px | 1.05 | -1.52px | `--text-display` |
+| Role | Size | Weight | Line Height | Font | Token |
+|------|------|--------|-------------|------|-------|
+| caption | 13px | Inter 500 | 1.4 | Inter | `--text-caption` |
+| body-sm | 15px | Inter 500 | 1.5 | Inter | `--text-body-sm` |
+| body | 17px | Inter 500 | 1.6 | Inter | `--text-body` |
+| body-lg | 19px | Inter 500 | 1.6 | Inter | `--text-body-lg` |
+| subheading | 22px | Fraunces 500 | 1.3 | Fraunces | `--text-subheading` |
+| heading-sm | 24px | Fraunces 600 | 1.2 | Fraunces | `--text-heading-sm` |
+| heading | 32px | Fraunces 600 | 1.15 | Fraunces | `--text-heading` |
+| display | 40px | Fraunces 600 | 1.1 | Fraunces | `--text-display` |
+| amount-hero | 44px | Fraunces 700, tabular-nums | 1.05 | Fraunces | `--text-amount-hero` |
+
+**Scalability (BFSG requirement):** All sizes are driven by a multiplicative CSS custom property, never hard-coded — see `--text-scale` in the Quick Start block. Users switch between 100% / 115% / 130% in app settings without layouts breaking (`rem`-based, no `px` locking in components).
 
 ## Tokens — Spacing & Shapes
 
-**Density:** compact
+**Density:** comfortable (deliberately not "compact" as in the original SaaS reference system — more whitespace, larger touch targets)
 
 ### Spacing Scale
 
 | Name | Value | Token |
 |------|-------|-------|
 | 4 | 4px | `--spacing-4` |
-| 6 | 6px | `--spacing-6` |
 | 8 | 8px | `--spacing-8` |
-| 9 | 9px | `--spacing-9` |
-| 10 | 10px | `--spacing-10` |
-| 11 | 11px | `--spacing-11` |
 | 12 | 12px | `--spacing-12` |
+| 14 | 14px | `--spacing-14` |
 | 16 | 16px | `--spacing-16` |
+| 18 | 18px | `--spacing-18` |
 | 20 | 20px | `--spacing-20` |
+| 22 | 22px | `--spacing-22` |
 | 24 | 24px | `--spacing-24` |
-| 28 | 28px | `--spacing-28` |
 | 32 | 32px | `--spacing-32` |
-| 36 | 36px | `--spacing-36` |
 | 40 | 40px | `--spacing-40` |
-| 52 | 52px | `--spacing-52` |
-| 72 | 72px | `--spacing-72` |
+| 60 | 60px | `--spacing-60` |
+| 80 | 80px | `--spacing-80` |
 
 ### Border Radius
 
 | Element | Value |
 |---------|-------|
-| cards | 8px |
-| pills | 100px |
-| inputs | 12px |
-| buttons | 9999px |
-| containers | 16-40px |
-| pipeline-cards | 16px |
+| mini-cards | 20px |
+| task-rows | 16px |
+| hero-card | 28px |
+| feature-container | 40–48px |
+| inputs | 14px |
+| buttons | 100px (pill) |
+| status-icon-container | 10–12px |
 
-### Shadows
+### Touch Targets (BFSG/WCAG 2.5.5)
 
-| Name | Value | Token |
-|------|-------|-------|
-| sm | `rgba(0, 0, 0, 0.1) 0px 0px 4px -2px` | `--shadow-sm` |
-| sm-2 | `rgba(0, 0, 0, 0.25) 0px 0px 4px -2px` | `--shadow-sm-2` |
-| xl | `rgba(20, 90, 255, 0.1) 0px 0px 100px -28px` | `--shadow-xl` |
-| sm-3 | `rgba(20, 90, 255, 0.3) 0px 0px 4px -2px` | `--shadow-sm-3` |
-| xl-2 | `rgba(20, 90, 255, 0.1) 0px 0px 50px -28px, rgba(0, 0, 0, ...` | `--shadow-xl-2` |
+| Element | Minimum size |
+|---------|------|
+| Buttons, icon buttons | 44×44px |
+| Bottom nav items | 48×48px |
+| Form input fields | height ≥ 48px |
+| Checkboxes/radio (tap area, not just the visible icon) | 44×44px |
 
-### Layout
+### Shadows & Glow
 
-- **Page max-width:** 1200px
-- **Section gap:** 80px
-- **Card padding:** 12px
-- **Element gap:** 8-12px
+The Aurora glow remains the signature "wow" effect, but is **deployed deliberately**: only on the hero/budget card and as very soft background ambient — not on every card, or it loses its impact and hurts legibility.
+
+| Name | Value | Token | Usage |
+|------|-------|-------|---------|
+| card-soft | `rgba(30,20,60,0.10) 0px 10px 24px -14px` | `--shadow-card-soft` | Standard cards (mini cards, task rows) — subtle |
+| hero-glow | `rgba(122,90,248,0.45) 0px 20px 40px -12px` | `--shadow-hero-glow` | Hero/budget card exclusively |
+| ambient-violet | `radial-gradient, rgba(122,90,248,0.35), transparent 70%` | `--glow-ambient-violet` | One background blob, max. 1–2 per screen |
+| ambient-amber | `radial-gradient, rgba(255,183,94,0.35), transparent 70%` | `--glow-ambient-amber` | Counterpart to the violet blob, also max. 1 per screen |
+| focus-ring | `0 0 0 3px rgba(91,63,214,0.35)` | `--shadow-focus` | Keyboard focus state on every interactive element — **mandatory**, not optional |
 
 ## Components
 
-### Ghost Outline Button
-**Role:** Secondary action — 'Book a demo', nav CTAs
+### Primary CTA Button
+**Role:** Primary action — "Add expense," "Save," onboarding CTA
 
-Background #fcfcfc, text #145aff (or #020520), border 1px #145aff, border-radius 50px (pill), padding 14px 32px. Semi-transparent variant uses rgba(255,255,255,0.8) background on dark surfaces.
+Filled, **not** ghost-outline (a correction relative to the original reference system). Background `--color-violet-ink` (#5b3fd6), text `#ffffff` (contrast 6.4:1), radius 100px (pill), padding 14px 28px, Inter 700 17px. An optional subtle `--shadow-hero-glow` may reinforce hover. In marketing/hero contexts the surface may additionally carry a gradient `linear-gradient(135deg, var(--color-violet-ink), var(--color-violet-signal))` — white text stays permissible only if the darker color component (Violet Ink) covers at least 60% of the surface.
 
-### Filled Dark Button
-**Role:** Primary action on light backgrounds — 'Get started free', login
+### Secondary Button
+**Role:** Secondary action, "Cancel," filters
 
-Background appears as dark text-link style; actual filled CTAs in the hero use white surface with #145aff text and pill radius. The dominant CTA pattern is a ghost-outline or frosted button, never a heavy filled block.
+Background `--color-card-white`, text `--color-violet-ink`, border 1.5px `--color-violet-ink`, radius 100px, padding 14px 28px, Inter 600 17px. Deliberately thicker border (1.5px instead of 1px) for better visibility with low vision.
 
-### Pipeline Column Card
-**Role:** Kanban deal cards in product UI screenshot
+### Hero Budget Card — marketing context only
+**Role:** Central budget overview on marketing/auth brand pages
 
-Background #ffffff, border-radius 16px, subtle shadow rgba(0,0,0,0.1) 0px 0px 4px -2px, padding 12px. Column header has a 4px colored dot (blue/green/red/orange) followed by count and total deal value in #145aff.
+Gradient `linear-gradient(135deg, var(--color-violet-signal) 0%, #a78bfa 55%, var(--color-amber-glow) 130%)`, radius 28px, padding 22px, text consistently white (contrast of white text against the darkest point of the gradient checked ≥ 4.5:1). Contains a progress bar **with an additional percentage/text figure** (never just the bar color as information), amount in Fraunces 700 44px with `tabular-nums`. **No longer used in the in-app context as of Version 2** — the Balance Block applies there instead.
 
-### Deal Card
-**Role:** Individual deal items inside pipeline columns
+### Balance Block — in-app replacement for the Hero Card
+**Role:** Central budget overview within the app (dashboard, finance detail view)
 
-Background #ffffff, border-radius 8px, padding 12px 16px, shadow rgba(0,0,0,0.1) 0px 0px 4px -2px. Contains: company avatar + name, deal value, last-activity note, assignee avatar, time-ago badge.
+No card frame, no surface fill — just a section closed off with `border-bottom: 1px solid var(--color-hairline)`. Amount in Fraunces 700, size `clamp(32px, 6vw, 44px)`, color rendered as a **text gradient** (`background: linear-gradient(100deg, var(--color-violet-ink), var(--color-amber-ink)); -webkit-background-clip: text; background-clip: text; color: transparent;`) — this is the only remaining Aurora moment in the in-app context, deliberately concentrated on the single most important value on the page. Progress bar is narrow (5px instead of 8–10px), fill is a solid `--color-violet-ink`, no gradient. The label carries a small lock icon with a `title` tooltip ("Stored encrypted") as a subtle security cue.
 
-### Prospect List Card
-**Role:** Lead/contact rows in product feature screenshot
+### Section (flat list) — in-app replacement for Mini Stat Card / Task Row in dense lists
+**Role:** Categories, transactions, subscription radar, fairness display — anywhere a card grid used to sit
 
-Background #ffffff, border-radius 16px, padding 12px. Row contains company logo, name, contact person, timestamp, and a right-side detail panel with email-thread and properties.
+No card background, no shadow. An `<h2>` section heading, followed by rows separated by `border-bottom: 1px solid var(--color-hairline)`, with the last row carrying no divider. This reduces visual border density when several similar records follow one another — the divider alone is sufficient structure; an additional card frame around every row would be redundant. **Mini Stat Card remains valid** for a single, isolated figure outside of a list (e.g., one standalone tile on a summary dashboard) — the Section rule applies specifically to multiple similar entries in sequence.
 
-### Logo Mark Badge
-**Role:** Relate brand mark in nav and footer
+### Mini Stat Card
+**Role:** Compact figure (shopping list, household tasks) — marketing context, or an isolated standalone figure in the in-app context, see Section above
 
-Rounded square 32–40px container with #145aff background, white lowercase 'r' glyph inside. Sits beside wordmark 'relate' in Inter 600.
+Background `--color-card-white`, radius 20px, padding 16px, border 1px `--color-hairline`, shadow `--shadow-card-soft`. Icon container 34×34px with a subtle tint (not the signal color), title Inter 700 13px `--color-midnight-plum`, subtitle Inter 500 12px `--color-dusk-helper`.
 
-### Nav Link
-**Role:** Top navigation items — Product, Pricing, Customers, Blog, Resources
+### Task/List Row
+**Role:** Individual appointment/task/list entry
 
-Inter 15px weight 500, color #14141, no underline, 16px horizontal gap between items. Active/hover state: color shift to #145aff.
+Background `--color-card-white`, radius 16px, padding 13px 16px, border 1px `--color-hairline`. **Status always as a combination:** colored dot (10px, with a `box-shadow` halo for better visibility) **plus** text label — never color alone. For critical status (e.g., "overdue"), add a warning icon as well, not just red.
 
-### Hero Gradient Banner
-**Role:** Blue gradient band behind hero headline and CTA
+### Status Indicator (corrected relative to the pure SaaS reference system)
+**Role:** State of a budget/task/category
 
-Linear gradient from rgba(20,90,255,0.1) to rgba(182,203,253,0.4) creating a soft blue glow under the 'Get started free' CTA. Extends full-width with large border-radius (40–48px) on the bottom edge.
+Never a pure 4–6px color dot as the sole piece of information (the original weakness). Always: color dot (min. 10px) **+** icon **+** text label. Example: "● ⚠ Over budget" instead of just a red dot.
 
-### Feature Section Card
-**Role:** Large rounded containers for product feature blocks (Prospect, Close, etc.)
+### Progress Bar
+**Role:** Budget progress, task progress
 
-Background #fcfcfc, border-radius 40px, padding 52px 72px, multi-layer shadow: rgba(0,0,0,0.08) 0px 0.36px 1.8px -1.4px, rgba(0,0,0,0.07) 0px 1.37px 6.87px -2.8px, rgba(0,0,0,0.016) 0px 6px 30px -4.25px. Gives a floating elevated feel.
+Track `rgba(255,255,255,0.3)` on the hero card, or `--color-hairline` on white cards, height 8px, radius 100px. Fill as a gradient or solid depending on context, **always accompanied by a numeric percentage/amount figure** right next to or above it — the bar alone is never the sole piece of information.
 
-### Glassmorphic Container
-**Role:** Frosted feature cards with backdrop-blur
+### Bottom Navigation
+**Role:** Primary navigation between Finance/Household/Organization/Home
 
-Background rgba(252,252,252,0.2), border-radius 28–48px, padding 12–20px, backdrop-filter blur(15px). Reveals underlying gradient — used in dark or tinted sections.
-
-### Status Dot
-**Role:** Pipeline column indicators — Potential/Pending/Closed Won/Lost
-
-4–6px filled circle, color-coded: #3b82f6 (Potential/blue), #ffa64d (Pending/orange), #16ca2 (Closed Won/green), #f26052 (Lost/red). Sits inline with column title text.
-
-### Customer Logo Strip
-**Role:** Social proof band — 'Powering the next generation B2B startups'
-
-8 monochrome brand logos arranged in 2 rows of 4 on white canvas. Logos rendered in #14141 at ~60% opacity, no color, evenly spaced with 40–60px gaps.
+Background `--color-card-white`, border-top 1px `--color-hairline`, 4 items, each with a 48×48px tap area. Active state: 22×22px icon container with `--color-lavender-mist` fill, color `--color-violet-ink`; inactive `--color-dusk-helper`. Label always visible (never icon-only), Inter 700 10px.
 
 ### Input Field
-**Role:** Form inputs — search bar, email fields
+**Role:** Form fields, search field
 
-Background rgba(255,255,255,0.08) on dark or #ffffff on light, border 1px #ffffff or #e2e8f0, border-radius 12px, padding 15px. Focus state: box-shadow with #0099ff glow ring.
-
-### Y Combinator Badge
-**Role:** Trust signal above hero headline
-
-Small inline element: orange square #f26052 icon + 'Backed by Y Combinator' text in #14141 Inter 14px. Centered above headline.
+Background `--color-fog-surface`, border 1.5px `--color-hairline`, radius 14px, height ≥ 48px, padding 14px 16px, Inter 500 17px. Focus state: border `--color-violet-ink` + `--shadow-focus`.
 
 ## Do's and Don'ts
 
 ### Do
-- Use #145aff as the sole saturated accent for headings, links, logos, and the one word-of-color in hero copy — never introduce a second brand hue
-- Set body text at 14–16px Inter 400 with #14141 or #374151 on #fcfcfc canvas; minimum 17.8:1 contrast ratio
-- Apply pill radius (9999px or 100px) to all buttons, tags, and nav items — hard 90° corners should not appear in interactive elements
-- Use the multi-layer soft shadow stack (three rgba layers at increasing blur) on feature section cards for floating elevation
-- Render colored status dots at 4–6px diameter with #3b82f6/#16ca2e/#f26052/#ffa64d for pipeline and deal states
-- Set hero and display headings at 56–80px Inter 600 with letter-spacing -0.027 to -0.037em for tight compressed scale
-- Use 8px border-radius for inner cards (deal rows, prospect items) and 16–40px for outer feature containers — maintain a two-tier rounding system
+- Filled buttons for every primary action — contrast over restraint
+- Always combine every status statement as color **+** icon **+** text, never color alone
+- Limit the Aurora glow to a maximum of 1–2 surfaces per screen (hero card + one background blob) — otherwise the effect loses its impact and hurts legibility
+- `tabular-nums` on every monetary amount for clean alignment
+- At least 17px/500 for all body copy, at least a 44×44px tap area for every interactive element
+- A visible focus ring (`--shadow-focus`) on every interactive element without exception
+- Use Dusk Helper (`#736a82`) only for metadata at 14px and up, never for amounts, error messages, or calls to action
 
 ### Don't
-- Don't use #0000ee or browser-default link blue — it is an artifact, not a brand choice; use #145aff or #3b82f6
-- Don't fill CTA buttons with heavy solid color blocks — the pattern here is ghost-outlined or frosted pills, not filled rectangles
-- Don't introduce gradients with more than two stops; all detected gradients are simple linear or radial two-color blends
-- Don't use sharp 0px corners on any visible element; the minimum radius in the system is 4px
-- Don't set body text below 14px or above #6b7280 lightness — legibility collapses below this threshold
-- Don't stack multiple saturated accent colors in one component — only one blue, green, red, or orange dot per surface
-- Don't use Inter weights above 600 or below 400 — the system operates in a tight 400/500/600 range
+- No ghost-outline buttons as a primary call to action
+- No Violet Signal (`#7a5af8`) or Amber Glow (`#ffb75e`) as text color on a light background — only the "Ink" variants
+- No negative letter spacing beyond −0.01em, not even on large headlines
+- No pure color dots under 10px as the sole status information
+- No glow/gradient on more than 1–2 surfaces at once
+- No font weights under 500 for body copy
 
 ## Surfaces
 
 | Level | Name | Value | Purpose |
 |-------|------|-------|---------|
-| 0 | Canvas | `#fcfcfc` | Page background — pure-white-feeling surface that maximizes contrast for dark text and blue accents |
-| 1 | Wash | `#f0f4fe` | Hero and feature band background — cool lavender tint that frames content blocks without darkening the page |
-| 2 | Card | `#ffffff` | Product UI cards, pipeline cards, prospect cards — pure white floating on canvas or wash |
-| 3 | Frosted | `#fcfcfc` | Glassmorphic nav and feature cards with backdrop-blur — semi-transparent surface that reveals underlying gradient |
+| 0 | Cloud Canvas | `#fdf9f2` | Page background |
+| 1 | Lavender Mist | `#f7f5ff` | Ambient wash behind hero/feature blocks |
+| 2 | Card White | `#ffffff` | Standard card surface |
+| 3 | Hero Gradient | `linear-gradient(135deg, #7a5af8, #a78bfa, #ffb75e)` | Budget/hero card, the only strongly chromatic surface |
 
 ## Elevation
 
-- **Pipeline/deal cards:** `rgba(0, 0, 0, 0.1) 0px 0px 4px -2px`
-- **Feature section cards:** `rgba(0, 0, 0, 0.082) 0px 0.36px 1.8px -1.4px, rgba(0, 0, 0, 0.07) 0px 1.37px 6.87px -2.8px, rgba(0, 0, 0, 0.016) 0px 6px 30px -4.25px`
-- **Blue glow accents:** `rgba(20, 90, 255, 0.1) 0px 0px 100px -28px`
+Elevation is primarily created through color steps (Canvas → Lavender Mist → Card White) plus a subtle `--shadow-card-soft` on standard cards. `--shadow-hero-glow` is deliberately the only "loud" elevation in the system and remains reserved for the hero card — that is the controlled frame for the wow effect.
 
 ## Imagery
 
-Minimal literal photography — the page relies on product UI screenshots rendered as floating mockups rather than lifestyle or product photography. The hero features a large Kanban-style CRM screenshot showing pipeline columns with deal cards. Below sections show prospect-list and contact-detail UI screenshots, all rendered as white cards on light backgrounds. Customer logos appear as monochrome black marks in a grid. The Y Combinator badge uses a small flat-color icon. No illustrations, no 3D renders, no decorative graphics — visual interest comes entirely from the product interface itself, which acts as the brand's visual proof.
+No photography, no stock imagery. Visual interest comes from the Aurora gradient, soft glow surfaces, and the product UI itself (cards, progress bars, amounts set in Fraunces). Icons: simple, clear symbols (e.g., Tabler outline style), never smaller than 20px in interactive contexts.
 
 ## Layout
 
-Full-width sections with centered content capped at ~1200px max-width. Hero is a centered single-column layout: YC badge above, oversized headline (56px) with one colored word, body paragraph (18px), single ghost-outline CTA button, all centered over a blue gradient band. Product UI screenshots appear as large floating elements below the fold. Mid-page sections alternate: centered heading + description above, then full-width product UI mockup. Feature blocks use large rounded containers (40px radius) with generous internal padding. Customer logo strip is a 4×2 centered grid. Footer is a dark navy section. Navigation is a horizontal top bar with logo left, center links, dual CTAs right.
-
-## Agent Prompt Guide
-
-Quick Color Reference:
-- text: #020520 (headings), #14141e (body), #374151 (secondary), #6b7280 (muted)
-- background: #fcfcfc (canvas), #f0f4fe (wash), #ffffff (cards)
-- border: #e2e8f0 (hairline), #145aff (active/outline)
-- accent: #145aff (Royal Signal — brand)
-- primary action: no distinct CTA color
-
-Example Component Prompts:
-
-1. Create a hero headline section: #fcfcfc canvas. Main headline 'Modern [Sales] CRM for B2B companies' at 56px Inter weight 600, #020520, letter-spacing -1.51px, line-height 1.05. The word 'Sales' colored #145aff. Subtext at 18px Inter weight 400, #0f1f3d, max-width 480px centered. Single ghost-outline pill button below: background #fcfcfc, text #145aff, border 1px #145aff, border-radius 50px, padding 14px 32px. Hero sits above a soft blue gradient band (rgba(182,203,253,0.4) to transparent) with 40px bottom border-radius.
-
-2. Create a pipeline Kanban board: #ffffff cards on #fcfcfc background. Four columns with headers showing a 5px colored dot (#3b82f6 blue, #ffa64d orange, #16ca2e green, #f26052 red) + column name + count + total deal value in #145aff. Deal cards: #ffffff background, 8px border-radius, 12px 16px padding, shadow rgba(0,0,0,0.1) 0px 0px 4px -2px. Card content: company avatar + name at 14px Inter 600 #14141e, deal value at 14px Inter 500 #14141e, activity note at 12px Inter 400 #6b7280, assignee + timestamp row at 12px.
-
-3. Create a customer logo strip: #fcfcfc background, centered. Heading at 14px Inter 400 #14141e reading 'Powering the next generation B2B startups'. Two rows of 4 monochrome logos at ~40px height, color #14141e at 70% opacity, evenly spaced with 48px gaps between logos, max-width 900px centered.
-
-4. Create a nav bar: #fcfcfc background with 1px bottom border #e2e8f0. Logo (32px #145aff rounded square + 'relate' wordmark at 18px Inter 600 #14141e) on left. Center nav links: 'Product', 'Pricing', 'Customers', 'Blog', 'Resources' at 15px Inter 500 #14141e with 16px gaps. Right side: 'Log in' text link + ghost-outline 'Book a demo' pill button (#145aff border, 50px radius) + ghost 'Get started free' pill button. All at 14px Inter 500.
-
-5. Create a feature section card: #fcfcfc background, 40px border-radius, padding 52px 72px, multi-layer shadow stack. Section heading 'Prospect.' at 40px Inter 600 #020520, letter-spacing -1.48px. Subtext at 18px Inter 400 #374151, max-width 560px. Below: product UI mockup showing a prospect list with three columns — company list, email thread, contact details — all on #ffffff cards with 16px radius and the soft single-layer shadow.
+Mobile-first, content width up to 390px in the app context, up to 1200px on the public marketing/landing page. Dashboard rhythm: greeting → hero budget card → two mini stat cards side by side → section title → list of task rows → bottom nav. Base spacing between sections 18–20px, padding within cards 16–22px.
 
 ## Animation Philosophy
 
-Motion is restrained and functional: timing-function is ease across all transitions with no spring or bounce curves detected. Interactive feedback is limited to color shifts (gray → blue), opacity changes on hover, and subtle shadow elevation increases on cards. No scroll-triggered animations, no parallax, no entrance choreography. The product UI screenshot shows a static, immediately-readable layout — the page communicates confidence through stillness.
+Motion stays restrained and functional: 0.2s ease for hover/focus states, no bounce, no parallax. **Correction in Version 2:** the original version allowed a gentle pulse on the hero card's Aurora glow — this contradicted the app's own "little animation" requirement for Persona B (60+) in `Gesamtkonzept.md`, Section 3, and was discovered during a direct comparison between the extravagant and minimalist versions. **The in-app context now specifies: no ambient/background animation at all, not even gated behind `prefers-reduced-motion`** — the safest implementation of "little animation" is no animation, not a conditionally-enabled effect that would still run wherever the media query isn't supported. In the marketing context (`website.html`) the pulse effect may remain, there exclusively disabled via `@media (prefers-reduced-motion: reduce)`, as originally specified. The only animation still permitted in both contexts: a very gentle fade-in when a card first loads (300–400ms), respecting `prefers-reduced-motion`.
 
-## Similar Brands
+## Dark Mode Tokens (extension, for later implementation)
 
-- **Notion** — Same ultra-clean white-canvas approach with near-black headings and a single saturated accent color (Notion's red, Relate's blue); both use tight Inter-style type with negative tracking on display sizes and pill-radius buttons
-- **Linear** — Identical compact-density philosophy, dark-near-black headline ink (#020520 vs Linear's similar), product-UI-as-hero pattern showing the app interface, and tight typographic rhythm with compressed letter-spacing on large sizes
-- **Attio** — Same CRM-product-as-hero approach with floating pipeline/contact screenshots on pale tinted backgrounds, cool-blue accent palette, and rounded soft-card components with minimal shadow
-- **Vercel** — Identical near-black heading color (#020520), single vivid accent for highlights, white-canvas-with-soft-blue-wash section pattern, and pill-radius ghost-outline button system
-- **Stripe** — Same restrained color discipline (one brand blue, achromatic everything else), generous 40–48px border-radius on feature containers, and tight Inter display type with aggressive negative tracking
+A dark mode is planned for the younger target audience from the overall concept — as a **muted**, non-neon-intensified version of the "Midnight Signal" mood from the mockup comparison:
+
+| Token | Light | Dark |
+|-------|-------|------|
+| `--color-cloud-canvas` | `#fdf9f2` | `#14121c` |
+| `--color-card-white` | `#ffffff` | `#1e1b29` |
+| `--color-midnight-plum` (primary text) | `#1a1523` | `#f4f2fb` |
+| `--color-slate-violet` (secondary text) | `#4a4258` | `#c9c2e0` |
+| `--color-violet-ink` (action) | `#5b3fd6` | `#9b86ff` |
+| `--color-hairline` | `#ece7f7` | `#2e2a3d` |
+
+Set glow effects in dark mode to **reduced opacity** (max. 0.25 instead of 0.45) — the same glow value reads noticeably more aggressive to light-sensitive eyes in the dark.
+
+## Agent Prompt Guide
+
+**Quick Color Reference**
+- Primary text: `#1a1523` (Midnight Plum)
+- Secondary text: `#4a4258` (Slate Violet)
+- Metadata text: `#736a82` (Dusk Helper, 14px and up only)
+- Canvas background: `#fdf9f2`
+- Cards: `#ffffff`
+- Primary action: `#5b3fd6` (Violet Ink), filled, never ghost-outline
+- Decorative gradient: `#7a5af8 → #a78bfa → #ffb75e`, hero card only + max. 1 background blob
+
+**Example Prompts**
+
+1. **Hero budget card:** 28px radius, 135deg gradient from `#7a5af8` through `#a78bfa` to `#ffb75e`, 22px padding, `--shadow-hero-glow`. Amount in Fraunces 700 44px white with tabular-nums. Progress bar 8px, 100px radius, with a percentage figure alongside it.
+
+2. **Primary button:** 100px pill radius, background `#5b3fd6`, white text Inter 700 17px, padding 14px 28px, tap area at least 44×44px, focus ring `--shadow-focus`.
+
+3. **Task row with critical status:** white card, 16px radius, 1px border `#ece7f7`. A 10px dot in `#c23b52` with a light halo on the left, a warning icon next to it, then text "Rent overdue" in Inter 700 13px `#1a1523` — color, icon, and text together, never just the dot.
 
 ## Quick Start
 
@@ -301,123 +267,81 @@ Motion is restrained and functional: timing-function is ease across all transiti
 
 ```css
 :root {
+  /* Text scaling — mandatory for the accessibility setting */
+  --text-scale: 1; /* 1 / 1.15 / 1.3 depending on the user's setting */
+
   /* Colors */
-  --color-snow-canvas: #fcfcfc;
-  --color-lavender-wash: #f0f4fe;
-  --color-midnight-ink: #020520;
-  --color-graphite-body: #14141e;
-  --color-slate-caption: #374151;
-  --color-ash-helper: #6b7280;
-  --color-stone-divider: #e2e8f0;
-  --color-fog-surface: #f1f5f9;
-  --color-royal-signal: #145aff;
-  --color-cobalt-glow: #3b82f6;
-  --color-mint-win: #16ca2e;
-  --color-coral-lost: #f26052;
-  --color-amber-pending: #ffa64d;
-  --color-azure-focus: #0099ff;
+  --color-cloud-canvas: #fdf9f2;
+  --color-lavender-mist: #f7f5ff;
+  --color-card-white: #ffffff;
+  --color-midnight-plum: #1a1523;
+  --color-slate-violet: #4a4258;
+  --color-dusk-helper: #736a82;
+  --color-hairline: #ece7f7;
+  --color-fog-surface: #f4f1fc;
+  --color-violet-ink: #5b3fd6;
+  --color-violet-signal: #7a5af8;
+  --color-amber-glow: #ffb75e;
+  --color-amber-ink: #a15f14;
+  --color-success-green: #1f8a4c;
+  --color-danger-coral: #c23b52;
 
-  /* Typography — Font Families */
-  --font-sans-serif: 'sans-serif', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-inter: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-pretendard: 'Pretendard', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-roboto-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-font-awesome-6-pro-light: 'Font Awesome 6 Pro Light', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-font-awesome-6-pro-solid: 'Font Awesome 6 Pro Solid', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-font-awesome-6-pro-regular: 'Font Awesome 6 Pro Regular', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-font-awesome-6-brands-regular: 'Font Awesome 6 Brands Regular', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Typography */
+  --font-fraunces: 'Fraunces', ui-serif, Georgia, serif;
+  --font-inter: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  /* Typography — Scale */
-  --text-caption: 12px;
-  --leading-caption: 1.2;
-  --text-body-sm: 14px;
-  --leading-body-sm: 1.43;
-  --text-body: 16px;
-  --leading-body: 1.63;
-  --text-subheading: 20px;
-  --leading-subheading: 1.4;
-  --tracking-subheading: -0.16px;
-  --text-heading-sm: 22px;
-  --leading-heading-sm: 1.4;
-  --tracking-heading-sm: -0.2px;
-  --text-heading: 40px;
-  --leading-heading: 1.05;
-  --tracking-heading: -1.48px;
-  --text-heading-lg: 56px;
-  --leading-heading-lg: 1.05;
-  --tracking-heading-lg: -1.51px;
-  --text-display: 80px;
-  --leading-display: 1.05;
-  --tracking-display: -1.52px;
-
-  /* Typography — Weights */
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  --font-weight-black: 900;
+  --text-caption: calc(13px * var(--text-scale));
+  --text-body-sm: calc(15px * var(--text-scale));
+  --text-body: calc(17px * var(--text-scale));
+  --text-body-lg: calc(19px * var(--text-scale));
+  --text-subheading: calc(22px * var(--text-scale));
+  --text-heading-sm: calc(24px * var(--text-scale));
+  --text-heading: calc(32px * var(--text-scale));
+  --text-display: calc(40px * var(--text-scale));
+  --text-amount-hero: calc(44px * var(--text-scale));
 
   /* Spacing */
   --spacing-4: 4px;
-  --spacing-6: 6px;
   --spacing-8: 8px;
-  --spacing-9: 9px;
-  --spacing-10: 10px;
-  --spacing-11: 11px;
   --spacing-12: 12px;
+  --spacing-14: 14px;
   --spacing-16: 16px;
+  --spacing-18: 18px;
   --spacing-20: 20px;
+  --spacing-22: 22px;
   --spacing-24: 24px;
-  --spacing-28: 28px;
   --spacing-32: 32px;
-  --spacing-36: 36px;
   --spacing-40: 40px;
-  --spacing-52: 52px;
-  --spacing-72: 72px;
-
-  /* Layout */
-  --page-max-width: 1200px;
-  --section-gap: 80px;
-  --card-padding: 12px;
-  --element-gap: 8-12px;
+  --spacing-60: 60px;
+  --spacing-80: 80px;
 
   /* Border Radius */
-  --radius-md: 4px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
-  --radius-2xl-2: 20px;
-  --radius-3xl: 24px;
-  --radius-3xl-2: 28px;
-  --radius-3xl-3: 32px;
-  --radius-3xl-4: 40px;
-  --radius-3xl-5: 44px;
-  --radius-full: 50px;
-  --radius-full-2: 100px;
-  --radius-full-3: 300px;
-  --radius-full-4: 500px;
-  --radius-full-5: 9999px;
+  --radius-mini-cards: 20px;
+  --radius-task-rows: 16px;
+  --radius-hero-card: 28px;
+  --radius-feature-container: 40px;
+  --radius-inputs: 14px;
+  --radius-buttons: 100px;
 
-  /* Named Radii */
-  --radius-cards: 8px;
-  --radius-pills: 100px;
-  --radius-inputs: 12px;
-  --radius-buttons: 9999px;
-  --radius-containers: 16-40px;
-  --radius-pipeline-cards: 16px;
+  /* Touch Targets */
+  --touch-target-min: 44px;
+  --nav-target-min: 48px;
 
   /* Shadows */
-  --shadow-sm: rgba(0, 0, 0, 0.1) 0px 0px 4px -2px;
-  --shadow-sm-2: rgba(0, 0, 0, 0.25) 0px 0px 4px -2px;
-  --shadow-xl: rgba(20, 90, 255, 0.1) 0px 0px 100px -28px;
-  --shadow-sm-3: rgba(20, 90, 255, 0.3) 0px 0px 4px -2px;
-  --shadow-xl-2: rgba(20, 90, 255, 0.1) 0px 0px 50px -28px, rgba(0, 0, 0, 0.18) 0px 0px 3px -1px;
+  --shadow-card-soft: rgba(30, 20, 60, 0.10) 0px 10px 24px -14px;
+  --shadow-hero-glow: rgba(122, 90, 248, 0.45) 0px 20px 40px -12px;
+  --glow-ambient-violet: radial-gradient(circle, rgba(122,90,248,0.35), transparent 70%);
+  --glow-ambient-amber: radial-gradient(circle, rgba(255,183,94,0.35), transparent 70%);
+  --shadow-focus: 0 0 0 3px rgba(91, 63, 214, 0.35);
+}
 
-  /* Surfaces */
-  --surface-canvas: #fcfcfc;
-  --surface-wash: #f0f4fe;
-  --surface-card: #ffffff;
-  --surface-frosted: #fcfcfc;
+[data-theme="dark"] {
+  --color-cloud-canvas: #14121c;
+  --color-card-white: #1e1b29;
+  --color-midnight-plum: #f4f2fb;
+  --color-slate-violet: #c9c2e0;
+  --color-violet-ink: #9b86ff;
+  --color-hairline: #2e2a3d;
 }
 ```
 
@@ -425,95 +349,46 @@ Motion is restrained and functional: timing-function is ease across all transiti
 
 ```css
 @theme {
-  /* Colors */
-  --color-snow-canvas: #fcfcfc;
-  --color-lavender-wash: #f0f4fe;
-  --color-midnight-ink: #020520;
-  --color-graphite-body: #14141e;
-  --color-slate-caption: #374151;
-  --color-ash-helper: #6b7280;
-  --color-stone-divider: #e2e8f0;
-  --color-fog-surface: #f1f5f9;
-  --color-royal-signal: #145aff;
-  --color-cobalt-glow: #3b82f6;
-  --color-mint-win: #16ca2e;
-  --color-coral-lost: #f26052;
-  --color-amber-pending: #ffa64d;
-  --color-azure-focus: #0099ff;
+  --color-cloud-canvas: #fdf9f2;
+  --color-lavender-mist: #f7f5ff;
+  --color-card-white: #ffffff;
+  --color-midnight-plum: #1a1523;
+  --color-slate-violet: #4a4258;
+  --color-dusk-helper: #736a82;
+  --color-hairline: #ece7f7;
+  --color-fog-surface: #f4f1fc;
+  --color-violet-ink: #5b3fd6;
+  --color-violet-signal: #7a5af8;
+  --color-amber-glow: #ffb75e;
+  --color-amber-ink: #a15f14;
+  --color-success-green: #1f8a4c;
+  --color-danger-coral: #c23b52;
 
-  /* Typography */
-  --font-sans-serif: 'sans-serif', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-inter: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-pretendard: 'Pretendard', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-roboto-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-font-awesome-6-pro-light: 'Font Awesome 6 Pro Light', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-font-awesome-6-pro-solid: 'Font Awesome 6 Pro Solid', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-font-awesome-6-pro-regular: 'Font Awesome 6 Pro Regular', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-font-awesome-6-brands-regular: 'Font Awesome 6 Brands Regular', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-fraunces: 'Fraunces', ui-serif, Georgia, serif;
+  --font-inter: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  /* Typography — Scale */
-  --text-caption: 12px;
-  --leading-caption: 1.2;
-  --text-body-sm: 14px;
-  --leading-body-sm: 1.43;
-  --text-body: 16px;
-  --leading-body: 1.63;
-  --text-subheading: 20px;
-  --leading-subheading: 1.4;
-  --tracking-subheading: -0.16px;
-  --text-heading-sm: 22px;
-  --leading-heading-sm: 1.4;
-  --tracking-heading-sm: -0.2px;
-  --text-heading: 40px;
-  --leading-heading: 1.05;
-  --tracking-heading: -1.48px;
-  --text-heading-lg: 56px;
-  --leading-heading-lg: 1.05;
-  --tracking-heading-lg: -1.51px;
-  --text-display: 80px;
-  --leading-display: 1.05;
-  --tracking-display: -1.52px;
+  --text-caption: 13px;
+  --text-body-sm: 15px;
+  --text-body: 17px;
+  --text-body-lg: 19px;
+  --text-subheading: 22px;
+  --text-heading-sm: 24px;
+  --text-heading: 32px;
+  --text-display: 40px;
+  --text-amount-hero: 44px;
 
-  /* Spacing */
-  --spacing-4: 4px;
-  --spacing-6: 6px;
-  --spacing-8: 8px;
-  --spacing-9: 9px;
-  --spacing-10: 10px;
-  --spacing-11: 11px;
-  --spacing-12: 12px;
-  --spacing-16: 16px;
-  --spacing-20: 20px;
-  --spacing-24: 24px;
-  --spacing-28: 28px;
-  --spacing-32: 32px;
-  --spacing-36: 36px;
-  --spacing-40: 40px;
-  --spacing-52: 52px;
-  --spacing-72: 72px;
-
-  /* Border Radius */
-  --radius-md: 4px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
-  --radius-2xl-2: 20px;
-  --radius-3xl: 24px;
-  --radius-3xl-2: 28px;
-  --radius-3xl-3: 32px;
-  --radius-3xl-4: 40px;
-  --radius-3xl-5: 44px;
-  --radius-full: 50px;
-  --radius-full-2: 100px;
-  --radius-full-3: 300px;
-  --radius-full-4: 500px;
-  --radius-full-5: 9999px;
-
-  /* Shadows */
-  --shadow-sm: rgba(0, 0, 0, 0.1) 0px 0px 4px -2px;
-  --shadow-sm-2: rgba(0, 0, 0, 0.25) 0px 0px 4px -2px;
-  --shadow-xl: rgba(20, 90, 255, 0.1) 0px 0px 100px -28px;
-  --shadow-sm-3: rgba(20, 90, 255, 0.3) 0px 0px 4px -2px;
-  --shadow-xl-2: rgba(20, 90, 255, 0.1) 0px 0px 50px -28px, rgba(0, 0, 0, 0.18) 0px 0px 3px -1px;
+  --radius-mini-cards: 20px;
+  --radius-task-rows: 16px;
+  --radius-hero-card: 28px;
+  --radius-feature-container: 40px;
+  --radius-inputs: 14px;
+  --radius-buttons: 100px;
 }
 ```
+
+## What was deliberately NOT carried over 1:1 from the Aurora mockup
+
+- **Ghost-outline buttons** from the original SaaS reference system were not adopted — primary actions are consistently filled.
+- **Pure color dots as status** (as in the original pipeline-dot pattern) are always supplemented with icon + text.
+- **Aggressive negative letter spacing** (−0.027 to −0.037em) was capped at max. −0.01em.
+- The glow is no longer everywhere; it's concentrated on the hero card plus at most one background blob — that's the difference between "extravagant in one place" and "a little loud everywhere," and it follows the design rule "spend boldness in one place, keep the rest calm."

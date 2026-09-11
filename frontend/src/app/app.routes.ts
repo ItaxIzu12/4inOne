@@ -1,24 +1,79 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/auth/auth.guard';
+import { FINANZEN_DATA_PROVIDER } from './features/finanzen/finanzen-data-provider';
+import { DemoFinanzenDataProvider } from './features/finanzen/demo-finanzen-data-provider';
+import { RealFinanzenDataProvider } from './features/finanzen/real-finanzen-data-provider';
 
+// Dashboard und Finanzen sind JEWEILS EIN Component, das an zwei Stellen in
+// den Routen referenziert wird — einmal öffentlich (Demo-Daten), einmal
+// unter /app (echte Daten). Welche Datenquelle eine Komponente tatsächlich
+// sieht, entscheidet sich ausschließlich über die `providers` der jeweiligen
+// Routengruppe (Dependency Injection), NICHT über eine if/else-Verzweigung
+// im Component-Code selbst — siehe FinanzenDataProvider-Interface
+// (finanzen-data-provider.ts) und dessen zwei Implementierungen.
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
-    // shell: 'bare' blendet Footer/Bottom-Nav der Marketing-Seiten aus
-    // (siehe app.ts/app.html) — der Header bleibt hier (siehe shared/header),
-    // bekommt aber zusätzlich die Modul-Reiter (dashboardNav) und zeigt
-    // Profil statt "Anmelden" (shell: 'bare').
-    data: { shell: 'bare', dashboardNav: true },
+    // Öffentliche Demo-Gruppe (KEIN authGuard): Dashboard + Finanzen mit
+    // DemoFinanzenDataProvider — feste Beispieldaten, keine HTTP-Aufrufe
+    // (siehe demo-finanzen-data-provider.ts). isDemo:true blendet die
+    // Erklär-Kopfzeile ein (siehe app.ts/app.html, shared/demo-banner).
+    providers: [{ provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider }],
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+        data: { shell: 'bare', dashboardNav: true, isDemo: true },
+      },
+      {
+        path: 'finanzen',
+        loadComponent: () => import('./features/finanzen/finanzen').then((m) => m.Finanzen),
+        data: { dashboardNav: true, isDemo: true },
+      },
+    ],
+  },
+  {
+    path: 'app',
+    // Geschützte Gruppe: derselbe authGuard wie bisher, jetzt einmal für die
+    // ganze Gruppe statt pro Route (canActivate auf einem Eltern-Route
+    // blockiert automatisch auch alle children). RealFinanzenDataProvider
+    // ruft die echten /api/v1/finanzen/-Endpunkte auf.
+    canActivate: [authGuard],
+    providers: [{ provide: FINANZEN_DATA_PROVIDER, useClass: RealFinanzenDataProvider }],
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+        data: { shell: 'bare', dashboardNav: true },
+      },
+      {
+        path: 'finanzen',
+        loadComponent: () => import('./features/finanzen/finanzen').then((m) => m.Finanzen),
+        data: { dashboardNav: true },
+      },
+      {
+        path: 'haushalt',
+        loadComponent: () => import('./features/haushalt/haushalt').then((m) => m.Haushalt),
+        data: { dashboardNav: true },
+      },
+      {
+        path: 'organisation',
+        loadComponent: () => import('./features/organisation/organisation').then((m) => m.Organisation),
+        data: { dashboardNav: true },
+      },
+    ],
   },
   {
     path: 'login',
     loadComponent: () => import('./features/login/login').then((m) => m.Login),
     // shell: 'bare' blendet Back-to-Top/Bottom-Nav der Marketing-Seiten aus
     // (siehe app.ts/app.html) — auf der Anmeldeseite ergibt eine Navigation
-    // zu den (noch nicht zugänglichen) App-Modulen keinen Sinn. hideHeader,
-    // weil der globale Header selbst nur einen "Anmelden"-Button zeigt, der
-    // auf genau dieser Seite redundant wäre — die Login-Seite hat ihre
-    // eigene Marke/ihren eigenen Zurück-Link (siehe features/login).
+    // zu den App-Modulen keinen Sinn. hideHeader, weil der globale Header
+    // selbst nur einen "Anmelden"-Button zeigt, der auf genau dieser Seite
+    // redundant wäre — die Login-Seite hat ihre eigene Marke/ihren eigenen
+    // Zurück-Link (siehe features/login).
     data: { mode: 'login', shell: 'bare', hideHeader: true },
   },
   {
@@ -32,27 +87,19 @@ export const routes: Routes = [
       import('./features/passwort-vergessen/passwort-vergessen').then((m) => m.PasswortVergessen),
   },
   {
-    path: 'finanzen',
-    loadComponent: () => import('./features/finanzen/finanzen').then((m) => m.Finanzen),
-  },
-  {
-    path: 'haushalt',
-    loadComponent: () => import('./features/haushalt/haushalt').then((m) => m.Haushalt),
-  },
-  {
-    path: 'organisation',
-    loadComponent: () => import('./features/organisation/organisation').then((m) => m.Organisation),
-  },
-  {
     path: 'einstellungen',
     loadComponent: () => import('./features/einstellungen/einstellungen').then((m) => m.Einstellungen),
     // Eigene App-Shell wie das Dashboard, siehe app.ts/app.html — Settings
-    // ist ein App-Screen, keine öffentliche Marketing-Seite.
+    // ist ein App-Screen, keine öffentliche Marketing-Seite und hat keine
+    // Demo-Variante (kein Sinn ohne echtes Konto), daher eigener Guard statt
+    // unter /app.
+    canActivate: [authGuard],
     data: { shell: 'bare' },
   },
   {
     path: 'einstellungen/profil',
     loadComponent: () => import('./shared/coming-soon/coming-soon').then((m) => m.ComingSoon),
+    canActivate: [authGuard],
     data: {
       shell: 'bare',
       title: 'Profil bearbeiten',
@@ -61,17 +108,16 @@ export const routes: Routes = [
   },
   {
     path: 'einstellungen/zwei-faktor',
-    loadComponent: () => import('./shared/coming-soon/coming-soon').then((m) => m.ComingSoon),
-    data: {
-      shell: 'bare',
-      title: 'Zwei-Faktor-Authentifizierung',
-      description:
-        'Die TOTP-Einrichtung folgt hier, siehe ARCHITEKTUR.md §3.1 (MFA verpflichtend für Finanzfunktionen).',
-    },
+    // Echter Setup-Flow (Backend core/mfa_views.py existierte bereits, die
+    // Oberfläche fehlte) — ersetzt den früheren ComingSoon-Platzhalter.
+    loadComponent: () => import('./features/mfa-setup/mfa-setup').then((m) => m.MfaSetup),
+    canActivate: [authGuard],
+    data: { shell: 'bare' },
   },
   {
     path: 'einstellungen/sitzungen',
     loadComponent: () => import('./shared/coming-soon/coming-soon').then((m) => m.ComingSoon),
+    canActivate: [authGuard],
     data: {
       shell: 'bare',
       title: 'Aktive Sitzungen',

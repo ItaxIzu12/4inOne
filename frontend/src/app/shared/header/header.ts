@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
@@ -8,6 +8,8 @@ import { ScrollService } from '../../core/scroll/scroll.service';
 import { IconFinanzen } from '../icons/icon-finanzen';
 import { IconHaushalt } from '../icons/icon-haushalt';
 import { IconOrganisation } from '../icons/icon-organisation';
+import { IconMenu } from '../icons/icon-menu';
+import { IconClose } from '../icons/icon-close';
 import { LogoKompass } from '../icons/logo-kompass';
 
 /**
@@ -23,7 +25,16 @@ import { LogoKompass } from '../icons/logo-kompass';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, IconFinanzen, IconHaushalt, IconOrganisation, LogoKompass],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    IconFinanzen,
+    IconHaushalt,
+    IconOrganisation,
+    IconMenu,
+    IconClose,
+    LogoKompass,
+  ],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
@@ -47,6 +58,42 @@ export class Header {
   });
 
   protected readonly showDashboardNav = computed(() => this.routeData()['dashboardNav'] === true);
+
+  // "Start" im Marken-Logo/in der Modul-Navigation soll für eingeloggte
+  // Nutzer:innen zum echten Dashboard führen (/app), nicht zur öffentlichen
+  // Demo-Startseite (/) — beide rendern dieselbe Dashboard-Komponente, nur
+  // mit unterschiedlichem FinanzenDataProvider (siehe app.routes.ts).
+  protected readonly homeLink = computed(() => (this.auth.isAuthenticated() ? '/app' : '/'));
+
+  // Finanzen hat ebenfalls eine öffentliche Demo-Variante (/finanzen) und
+  // eine echte (/app/finanzen) — Haushalt/Organisation haben aktuell keine
+  // Demo-Variante (rein statische Feature-Listen ohne Datenanbindung) und
+  // zeigen daher immer auf /app/..., der Guard dort leitet im ausgeloggten
+  // Zustand zu /login weiter.
+  protected readonly finanzenLink = computed(() => (this.auth.isAuthenticated() ? '/app/finanzen' : '/finanzen'));
+
+  // Mobiles Hamburger-Menü: bündelt auf schmalen Viewports dieselben Inhalte,
+  // die ab 900px direkt im Header stehen (Modul-Reiter + Anmelden/Profil),
+  // siehe header.css für die Breakpoint-Umschaltung.
+  protected readonly menuOpen = signal(false);
+
+  protected toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  protected closeMenu(): void {
+    this.menuOpen.set(false);
+  }
+
+  constructor() {
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        this.closeMenu();
+      }
+    };
+    document.addEventListener('keydown', onKeydown);
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('keydown', onKeydown));
+  }
 
   protected readonly initials = computed(() => {
     const user = this.auth.currentUser();

@@ -111,7 +111,36 @@ Diese vier Ideen sind das, was Kompass von reinen Budget-Trackern (Finanzguru, Y
 
 **Zusätzliches Vertrauensargument, das bewusst positiv kommuniziert werden sollte:** "Keine Bankverbindung nötig" / "Wir sehen deine Bankdaten nicht" — die manuelle Eingabe ohne Banking-API (Phase 5 erst später) ist bei datenschutzbewussten deutschen Nutzern eher ein Vertrauensvorteil als eine funktionale Lücke, sollte also aktiv beworben statt entschuldigt werden.
 
+### 5.2 Budgetziele — bewusst einfach statt vollständig (revidiert)
+
+**Kurskorrektur gegenüber der vorherigen Fassung:** Ein Zero-Based-Envelope-System (wie in einer früheren Version dieses Abschnitts beschrieben) wurde erwogen, aber wieder verworfen — es verlangt monatliches manuelles Zuweisen jedes Euros und viel Zahleneingabe, was direkt der Kernanforderung "stark und simpel für alle Nutzer, möglichst wenig Tippen" widerspricht, die besonders für Persona B (60+) entscheidend ist. Komplexität und Tipp-Aufwand sind hier höher zu gewichten als Funktionsumfang.
+
+**Prinzip:** Jede Kategorie hat ein Budgetziel, das automatisch aus dem Vormonat übernommen wird — keine monatliche Zuweisungs-Pflicht. Ändern ist optional, nicht Voraussetzung. Fortschritt wird als einfacher Balken (ausgegeben von Ziel) gezeigt, keine dreiteilige Zugewiesen/Ausgegeben/Verfügbar-Logik.
+
+**Eingabe so tippfrei wie möglich, durchgängiges Prinzip für das ganze Finanzmodul:**
+- Beträge per Schieberegler mit Preset-Chips (exakter Betrag / ungefährer Betrag / mehr) statt Zahlenfeld — wie beim Einkauf-zu-Ausgabe-Moment
+- Kategorie-Auswahl per Ein-Klick-Chip (häufigste Kategorien direkt antippbar), Dropdown nur als Ausweichoption für seltene Fälle
+- Kein Pflichtfeld für Beschreibung — Kategorie + Betrag reichen für einen gültigen Eintrag
+
+**Bewusst nicht Teil des Finanzmoduls:** Monatliche Zuweisungs-Rituale, Sparziele-Gruppen mit eigener Übertragslogik, Geld-Verschieben zwischen Kategorien — alles aus der verworfenen Envelope-Fassung. Falls später eine fortgeschrittene Budgetierung gewünscht wird, gehört sie als **optionaler, versteckter "Erweitert"-Modus** in den Backlog (Abschnitt 12), nie als Standardansicht.
+
 ---
+
+### 5.3 Einkommen, feste Abzüge und regelbasierte Analyse (neu, ersetzt die vorherige "Analysen"-Leerstelle)
+
+**Endlich konkret definiert, nachdem zwei vorherige Anläufe als leere Tab-Beschriftung verworfen wurden.**
+
+**Einkommen:** Jedes Haushaltsmitglied kann ein monatliches Einkommen hinterlegen — eine einzelne Zahl, kein exaktes Gehalt mit Belegen nötig. Aus Datenschutz-/Vertrauensgründen zwischen Haushaltsmitgliedern (siehe Architektur.md) ist die individuelle Zahl standardmäßig nur für die Person selbst sichtbar, nicht für andere Haushaltsmitglieder — nur die kombinierte Haushalts-Gesamtsumme fließt in gemeinsame Berechnungen ein.
+
+**Feste, wiederkehrende Abzüge:** Miete, Verträge/Abos werden einmal als "immer wiederkehrend" hinterlegt (Name, Betrag, Kategorie) — nicht jeden Monat neu eingetragen. Sie fließen automatisch in die monatliche Berechnung ein, ohne dass dafür einzelne Transaktionen angelegt werden müssen.
+
+**Puffer:** Ein zusätzlicher, frei wählbarer Betrag für Sparen/Rücklagen, der ebenfalls automatisch abgezogen wird, bevor der "wirklich frei verfügbare" Betrag berechnet wird.
+
+**Ergebnis-Kennzahl "Verfügbares Einkommen":** Haushalts-Gesamteinkommen minus Summe aller aktiven festen Abzüge minus Puffer. Das ist eine eigenständige, andere Kennzahl als das bestehende Kategorien-Budget (welches verfolgt, wie viel von einem gesetzten Ziel bereits ausgegeben wurde) — beide ergänzen sich, ersetzen sich nicht.
+
+**"Analyse" — ausdrücklich KEINE echte KI, keine laufenden API-Kosten:** Konsistent mit dem Era-inspirierten Prinzip aus dem Backlog (Abschnitt 12): Die Bewertung "ist das sinnvoll?" erfolgt über feste, im Code hinterlegte Schwellenwert-Regeln (z. B. "Fixkosten über 50 % des Einkommens gelten als hoch", "Puffer unter 10 % des Einkommens ist gering"), nicht über einen Aufruf an ein Sprachmodell. Das vermeidet genau die Kosten-/Sicherheitsprobleme, die bei der ursprünglich erwogenen, dann verworfenen Prompt-Engineering-Idee identifiziert wurden.
+
+**Tab-Struktur, jetzt final:** Zwei Tabs — **Übersicht** (Kategorien mit antippbarem Budgetziel, Fairness, Transaktionen inkl. Modal, Abo-Radar) und **Analysen** (Einkommen/Abzüge/Puffer verwalten, Verfügbares Einkommen, regelbasierte Hinweise). Kein separater "Budgets"-Tab (Budgetziel bleibt in der Übersicht antippbar) und kein separater "Transaktionen"-Tab (bleibt im Modal).
 
 ## 6. Barrierefreiheit & Usability – Pflicht seit 2025
 
@@ -167,6 +196,7 @@ Diese Liste existiert, damit Grundsatzfragen nicht wiederholt neu aufgerollt wer
 | Datenbank (Mehrbenutzer) | PostgreSQL, ab dem ersten Mehrbenutzerzugriff verpflichtend | ✅ Endgültig |
 | Repo-Struktur | Ein Repo mit `frontend/`/`backend/`-Trennung jetzt, spätere Aufteilung in zwei Repos möglich | ✅ Vorgehen festgelegt |
 | Erstes vollständig auszubauendes Modul | Finanzen | ✅ Aktuell in Bearbeitung |
+| **Aktueller Baufokus (Stand jetzt)** | **Login/Registrieren komplett mit Django, Token-Auth (JWT), allen Sicherheitsmaßnahmen aus Architektur.md 3.1 — siehe `prompt-login-register-complete.txt`** | 🔧 In Umsetzung |
 | Fitness-Modul | Nicht Teil des Produkts | ✅ Endgültig gestrichen, nicht "später vielleicht" |
 
 ---
@@ -210,8 +240,11 @@ Angesichts der ~1.450-$-CAC-Realität aus Abschnitt 2.5 ist bezahlte Werbung als
 
 ## 12. Mögliche spätere Module (Backlog, ausdrücklich nicht MVP)
 
+**Hinweis zum Umgang mit diesem Abschnitt:** Sobald Finanzen, Haushalt und Organisation als Kernmodule fertig und stabil live sind, ist es ausdrücklich vorgesehen, ein bis zwei weitere Ideen aus diesem Backlog (oder neu hinzukommende) auszuwählen und umzusetzen — nicht vorher. Neue Ideen, die währenddessen auftauchen, werden hier dokumentiert, nicht sofort verfolgt, damit der aktuelle Fokus (siehe Abschnitt 9) nicht wiederholt unterbrochen wird.
+
 - **Reisen/Flüge:** Kein eigenständiges Organisations-Feature, sondern ein Querschnittsthema (Termine → Organisation, Kosten → Finanzen, Packliste → haushaltsähnliche Struktur, Dokumente → neues Konzept). Würde als eigenes Django-App-Modul (`reisen/`) neben den bestehenden drei entstehen, ohne diese umzubauen. Bringt neue sensible Datenkategorien (Passnummern, Visadaten) mit vergleichbarer Sorgfaltspflicht wie Finanzdaten. Bewusst zurückgestellt, bis die drei Kernmodule live und stabil sind.
 - **Pflegekoordination für Angehörige**, **Vereinsverwaltung**, **B2B-Barrierefreiheits-Audit-Tool:** Als alternative Produktideen diskutiert und bewusst nicht verfolgt — Kompass bleibt der aktuelle Fokus, diese Ideen sind hier nur dokumentiert, damit sie nicht wiederholt neu erwogen werden müssen.
+- **"Für KI-Analyse exportieren" statt eigener Prompt-Bibliothek (überarbeitet):** Die ursprünglich erwogene Idee einer eingebauten KI-Prompt-Vorlagen-Bibliothek (kuratierte + selbst gespeicherte Prompts) wurde nach einer Marktbeobachtung überarbeitet und ersetzt. Grund: Eine echte KI-Anbindung würde eine neue, laufende technische Abhängigkeit schaffen (API-Kosten pro Anfrage, zusätzliche Latenz, neue Sicherheitsfläche durch Prompt-Injection), die in keiner bisherigen Kosten-/Architekturplanung vorgesehen ist. Die Finanz-App "Era" (Marktbeobachtung 2026) verfolgt einen leichteren Ansatz: keine eingebaute KI, stattdessen werden die eigenen Finanzdaten für die freie KI-Wahl des Nutzers freigegeben ("deine KI kommt zu dir, nicht umgekehrt"). Übertragen auf Kompass: ein einfacher **"Für KI-Analyse exportieren"-Button** in Finanzen/Haushalt, der die eigenen Daten des Nutzers (Kategorien, Ausgabenverlauf, offene Haushaltsaufgaben) plus einen mitgelieferten, gut formulierten Beispiel-Prompt bereitstellt — der Nutzer fügt beides selbst in sein bevorzugtes KI-Werkzeug (Claude, ChatGPT o. ä.) ein. Keine laufenden API-Kosten für Kompass, kein neues Sicherheitsrisiko durch automatisierte KI-Aufrufe, aber der ursprünglich gewünschte Nutzen ("bessere, professionellere Prompts") bleibt erhalten. **Sicherheitshinweis unverändert relevant:** Der Export selbst enthält Finanzdaten und muss über `HouseholdScopedPermission` sowie das bestehende Export-Rate-Limit (Architektur.md, Abschnitt 3.9) abgesichert werden wie jeder andere Datenexport.
 
 ---
 

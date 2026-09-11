@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -69,6 +69,9 @@ export class Login {
         [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.pattern(PASSWORD_POLICY_PATTERN)],
       ],
       confirmPassword: ['', [Validators.required]],
+      // Bewusst kein Validators.required: leer -> Backend-Fallback
+      // ("Haushalt von {Vorname}"), siehe auth_views.py RegisterView.
+      householdName: [''],
       acceptPrivacy: [false, [Validators.requiredTrue]],
     },
     { validators: passwordsMatch },
@@ -100,6 +103,30 @@ export class Login {
     return score;
   });
 
+  private errorDismissTimeout?: ReturnType<typeof setTimeout>;
+
+  constructor() {
+    // Serverfehler ("E-Mail-Adresse oder Passwort ist falsch.") soll nicht
+    // stehen bleiben, sobald man die Eingabe korrigiert — sonst wirkt eine
+    // neu eingetippte E-Mail-Adresse fälschlich weiterhin als falsch.
+    const clearSubmitError = () => this.clearSubmitError();
+    this.loginForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(clearSubmitError);
+    this.registerForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(clearSubmitError);
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.errorDismissTimeout));
+  }
+
+  private clearSubmitError(): void {
+    clearTimeout(this.errorDismissTimeout);
+    this.submitError.set(null);
+  }
+
+  /** Blendet die allgemeine Fehlermeldung nach ein paar Sekunden von selbst
+   * wieder aus, statt dauerhaft stehen zu bleiben. */
+  private scheduleErrorDismiss(): void {
+    clearTimeout(this.errorDismissTimeout);
+    this.errorDismissTimeout = setTimeout(() => this.submitError.set(null), 5000);
+  }
+
   protected goHome(): void {
     this.scroll.toTop();
   }
@@ -109,7 +136,7 @@ export class Login {
       return;
     }
     this.mode.set(mode);
-    this.submitError.set(null);
+    this.clearSubmitError();
     this.router.navigate([mode === 'register' ? '/registrieren' : '/login']);
   }
 
@@ -126,14 +153,14 @@ export class Login {
       this.loginForm.markAllAsTouched();
       return;
     }
-    this.submitError.set(null);
+    this.clearSubmitError();
     this.submitting.set(true);
-    const { email, password } = this.loginForm.getRawValue();
+    const { email, password, remember } = this.loginForm.getRawValue();
 
-    this.auth.login(email, password).subscribe({
+    this.auth.login(email, password, remember).subscribe({
       next: () => {
         this.submitting.set(false);
-        this.router.navigateByUrl('/');
+        this.router.navigateByUrl('/app');
       },
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
@@ -146,6 +173,7 @@ export class Login {
             // außen erkennen kann, welcher der beiden Fälle vorliegt.
             : 'E-Mail-Adresse oder Passwort ist falsch.',
         );
+        this.scheduleErrorDismiss();
       },
     });
   }
@@ -155,14 +183,14 @@ export class Login {
       this.registerForm.markAllAsTouched();
       return;
     }
-    this.submitError.set(null);
+    this.clearSubmitError();
     this.submitting.set(true);
-    const { name, email, password } = this.registerForm.getRawValue();
+    const { name, email, password, householdName } = this.registerForm.getRawValue();
 
-    this.auth.register(name, email, password).subscribe({
+    this.auth.register(name, email, password, householdName).subscribe({
       next: () => {
         this.submitting.set(false);
-        this.router.navigateByUrl('/');
+        this.router.navigateByUrl('/app');
       },
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
@@ -174,6 +202,7 @@ export class Login {
   private applyRegisterFieldErrors(err: HttpErrorResponse): void {
     if (err.status === 0) {
       this.submitError.set('Server nicht erreichbar. Bitte versuche es später erneut.');
+      this.scheduleErrorDismiss();
       return;
     }
 

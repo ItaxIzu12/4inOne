@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from core.models import Household
@@ -16,10 +17,29 @@ class Account(models.Model):
 
 
 class Category(models.Model):
-    """Ausgaben-/Budgetkategorie, pro Haushalt frei definierbar."""
+    """Ausgaben-/Budgetkategorie, pro Haushalt frei definierbar.
+
+    color/icon_key sind bewusst DATEN, nicht im Frontend-Template hartkodiert
+    (siehe frontend finanzen.css vor diesem Umbau) — sonst hat eine vierte,
+    selbst angelegte Kategorie keine Farbe/kein Icon. icon_key referenziert
+    einen Eintrag in der Icon-Zuordnungs-Map im Frontend (siehe
+    shared/icons/category-icon.map.ts), ist aber hier bewusst ein simples
+    CharField statt einer harten FK/Choices-Bindung ans Frontend — neue
+    Icons lassen sich so ergänzen, ohne das Backend anzufassen.
+    """
 
     household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='categories')
     name = models.CharField(max_length=80)
+    color = models.CharField(max_length=7, default='#5b3fd6', help_text='Hex-Farbwert, z. B. #5b3fd6.')
+    icon_key = models.CharField(max_length=30, default='sonstiges')
+    # Optionales monatliches Ausgabenziel — OverviewView (finanzen/views.py)
+    # stellt es dem live berechneten "ausgegeben diesen Monat" gegenüber.
+    monthly_goal = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # Gesetzt von finanzen/signals.py bei der automatischen Anlage der drei
+    # Standard-Kategorien pro neuem Haushalt — verhindert serverseitig, dass
+    # deren Name geändert wird (siehe CategorySerializer.validate()),
+    # monthly_goal/color/icon_key bleiben trotzdem änderbar.
+    is_default = models.BooleanField(default=False)
 
     class Meta:
         verbose_name_plural = 'Categories'
@@ -29,6 +49,40 @@ class Category(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class RecurringDeduction(models.Model):
+    """Ein regelmäßiger fester Abzug vom Haushaltseinkommen (z. B. Miete,
+    Versicherung) — Grundlage der "Verfügbares Einkommen"-Berechnung im
+    Analysen-Tab (finanzen/views.py AnalysenView).
+
+    Bewusst ein EIGENES Model, keine Transaction: ein fester Abzug ist eine
+    PLANGRÖSSE (wiederkehrend, ohne konkretes Datum, kein occurred_at), keine
+    tatsächlich stattgefundene Zahlung — Transaction bliebe für die
+    Kategorien-Übersicht/den Budget-Donut sonst durch nicht wirklich
+    stattgefundene Buchungen verfälscht.
+    """
+
+    household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='recurring_deductions')
+    # Für Nachvollziehbarkeit, analog zu Transaction.created_by — SET_NULL
+    # statt PROTECT: ein gelöschter Nutzer soll einen bestehenden Abzug nicht
+    # dauerhaft unlöschbar machen, nur weil er ihn einmal angelegt hat.
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
+    )
+    name = models.CharField(max_length=120)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='recurring_deductions'
+    )
+    # Ein pausierter (nicht gelöschter) Abzug fließt nicht in die
+    # "Verfügbares Einkommen"-Berechnung ein — z. B. eine Versicherung, die
+    # gerade ruht, ohne den Eintrag samt Historie zu verlieren.
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f'{self.name} ({self.amount})'
 
 
 class Budget(models.Model):
@@ -62,9 +116,6 @@ class SoftDeleteManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(deleted_at__isnull=True)
 
-    def all_with_deleted(self):
-        return super().get_queryset()
-
 
 class Transaction(models.Model):
     """Eine Ausgabe oder Einnahme. Löschung erfolgt ausschließlich über
@@ -76,11 +127,37 @@ class Transaction(models.Model):
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.CharField(max_length=255, blank=True)
+    # null=True als pragmatische Ausnahme: das Feld ist NEU auf einer
+    # bereits befüllten Tabelle (lokale Testdaten aus dieser Sitzung), für
+    # die es keinen sinnvoll rekonstruierbaren Ersteller gibt. Jede NEU
+    # angelegte Transaction bekommt created_by aber immer gesetzt (siehe
+    # TransactionViewSet.perform_create(), finanzen/views.py) — in einer
+    # frischen Produktions-DB wäre das Feld von Anfang an durchgehend befüllt.
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='transactions_created'
+    )
+    # Nachvollziehbarkeit bei Bearbeitungen (Sicherheitsprüfung PRÜFUNG 5):
+    # created_by allein reicht seit Einführung von PATCH nicht mehr — sonst
+    # geht unsichtbar verloren, wer eine fremd erfasste Ausgabe zuletzt
+    # geändert hat. Wird ausschließlich serverseitig gesetzt
+    # (TransactionViewSet.perform_update, finanzen/views.py), niemals aus
+    # dem Request-Body — sonst könnte sich ein Nutzer per Body-Feld
+    # fälschlich als jemand anderen ausgeben. SET_NULL statt PROTECT (anders
+    # als created_by): ein gelöschter Nutzer soll eine bestehende
+    # Transaction nicht dauerhaft unlöschbar machen, nur weil er sie einmal
+    # bearbeitet hat.
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
+    )
+    updated_at = models.DateTimeField(auto_now=True)
     occurred_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     objects = SoftDeleteManager()
+    # Für Admin/Audit/Tests, die AUCH weich gelöschte Datensätze sehen
+    # müssen — SoftDeleteManager (objects) blendet sie standardmäßig aus.
+    all_objects = models.Manager()
 
     def __str__(self) -> str:
         return f'{self.amount} · {self.description or self.account}'

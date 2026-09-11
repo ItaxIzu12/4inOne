@@ -1,0 +1,33 @@
+.demo-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-16);
+  padding: 10px 20px;
+  background: var(--color-violet-ink);
+  color: #fff;
+  text-align: center;
+}
+
+.demo-banner__text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.demo-banner__text strong { font-weight: 800; }
+
+.demo-banner__cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: var(--radius-buttons);
+  background: #fff;
+  color: var(--color-violet-ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.demo-banner__cta:hover { background: color-mix(in srgb, #fff 90%, var(--color-violet-ink)); }

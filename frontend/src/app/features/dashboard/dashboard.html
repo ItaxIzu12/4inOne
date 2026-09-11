@@ -8,63 +8,48 @@
     </header>
 
     <main id="main-content" class="dashboard-main">
-      <div class="household-strip">
-        <p class="household-strip__label">Dein Haushalt</p>
-        <ul class="household-strip__members">
-          @for (member of householdMembers; track member.name) {
-            <li class="household-strip__member">
-              <span class="household-strip__avatar" [style.background]="member.colorVar" aria-hidden="true">{{ member.initials }}</span>
-              <span class="household-strip__info">
-                <span class="household-strip__name">{{ member.name }}</span>
-                <span class="household-strip__role">{{ member.role }}</span>
-              </span>
-            </li>
-          }
-        </ul>
+      <div class="why-row">
+        <icon-info />
+        <p>Finanzen, Haushalt und Organisation &mdash; in einer App verknüpft.</p>
       </div>
 
-      <section class="budget-hero" aria-labelledby="budget-heading">
-        <div class="budget-hero__top">
-          <p class="budget-hero__label">Budget &middot; August</p>
-          <h2 id="budget-heading" class="budget-hero__amount">{{ budget.amount | number: '1.0-0':'de' }} &euro;</h2>
-        </div>
+      @if (auth.isAuthenticated()) {
+        <app-onboarding />
+      }
 
+      <section class="balance-block" aria-labelledby="balance-heading">
+        <p class="balance-label">
+          <icon-two-factor title="Verschlüsselt gespeichert" />
+          Budget &middot; August
+        </p>
+        <div class="balance-row">
+          <p id="balance-heading" class="balance-amount">{{ budget.amount | number: '1.0-0':'de' }} &euro;</p>
+          <p class="balance-sub">{{ budgetRemaining() | number: '1.0-0':'de' }}&nbsp;&euro; übrig</p>
+        </div>
         <div
-          class="budget-hero__bar"
+          class="balance-bar"
           role="progressbar"
           [attr.aria-valuenow]="budgetPercent()"
           aria-valuemin="0"
           aria-valuemax="100"
           [attr.aria-label]="budgetPercent() + ' Prozent des Budgets verplant'"
         >
-          <div class="budget-hero__bar-fill" [style.width.%]="budgetPercent()"></div>
+          <div class="balance-bar__fill" [style.width.%]="budgetPercent()"></div>
         </div>
-        <p class="budget-hero__bar-caption">
-          {{ budgetPercent() }}&nbsp;% verplant &middot; {{ budgetRemaining() | number: '1.0-0':'de' }}&nbsp;&euro; übrig
-        </p>
-
-        <svg
-          class="budget-hero__sparkline"
-          role="img"
-          [attr.aria-label]="sparklineDescription()"
-          viewBox="0 0 100 32"
-          preserveAspectRatio="none"
-        >
-          <polyline [attr.points]="sparklinePoints()" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
+        <p class="balance-bar-caption">{{ budgetPercent() }}&nbsp;% verplant</p>
       </section>
 
       <section class="week-section" aria-labelledby="week-heading">
         <h2 id="week-heading">Diese Woche</h2>
-        <ol class="week-timeline">
+        <ol class="week-list">
           @for (entry of weekEntries; track entry.id) {
-            <li class="week-timeline__item">
-              <span class="week-timeline__day">{{ entry.weekday }}</span>
-              <span class="week-timeline__content">
-                <span class="week-timeline__title">{{ entry.title }}</span>
-                <span class="week-timeline__detail">{{ entry.detail }}</span>
+            <li class="week-row">
+              <span class="week-row__day">{{ entry.weekday }}</span>
+              <span class="week-row__content">
+                <span class="week-row__title">{{ entry.title }}</span>
+                <span class="week-row__detail">{{ entry.detail }}</span>
               </span>
-              <span class="week-timeline__module" [class]="entry.accentClass">{{ entry.moduleLabel }}</span>
+              <span class="week-row__module" [class]="entry.accentClass">{{ entry.moduleLabel }}</span>
             </li>
           }
         </ol>
@@ -72,76 +57,26 @@
 
       <section class="modules-section" aria-labelledby="modules-heading">
         <h2 id="modules-heading">Deine Module</h2>
-        <div class="module-grid">
-          <app-module-card accent="finance" title="Finanzen" allLink="/finanzen" actionLabel="Ausgabe erfassen" actionLink="/finanzen">
-            <div class="finance-donut">
-              <svg width="88" height="88" viewBox="0 0 36 36" role="img" aria-label="Ausgabenverteilung: 55 Prozent Finanzen, 30 Prozent Haushalt, 15 Prozent Rest">
-                <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--color-hairline)" stroke-width="4"></circle>
-                <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--m-finance)" stroke-width="4"
-                  [attr.stroke-dasharray]="financeDonut.finanzenAnteil + ' ' + (100 - financeDonut.finanzenAnteil)"
-                  stroke-dashoffset="25" stroke-linecap="round"></circle>
-                <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--m-household)" stroke-width="4"
-                  [attr.stroke-dasharray]="financeDonut.haushaltAnteil + ' ' + (100 - financeDonut.haushaltAnteil)"
-                  [attr.stroke-dashoffset]="25 - financeDonut.finanzenAnteil" stroke-linecap="round"></circle>
-              </svg>
-              <ul class="finance-donut__legend">
-                <li><span class="dot m-finance" aria-hidden="true"></span>Finanzen {{ financeDonut.finanzenAnteil }}%</li>
-                <li><span class="dot m-household" aria-hidden="true"></span>Haushalt {{ financeDonut.haushaltAnteil }}%</li>
-              </ul>
-            </div>
-          </app-module-card>
-
-          <app-module-card accent="household" title="Haushalt" allLink="/haushalt" actionLabel="Aufgabe hinzufügen" actionLink="/haushalt">
-            <ul class="household-checklist">
-              @for (item of householdChecklist; track item.label) {
-                <li [class.is-done]="item.done">
-                  @if (item.done) {
-                    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>
-                  } @else {
-                    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+        <ul class="module-list">
+          @for (row of moduleRows(); track row.key) {
+            <li>
+              <a class="module-row" [class]="row.key" [routerLink]="row.link">
+                <span class="icon-wrap">
+                  @switch (row.key) {
+                    @case ('finance') { <icon-finanzen /> }
+                    @case ('household') { <icon-haushalt /> }
+                    @case ('organize') { <icon-organisation /> }
                   }
-                  {{ item.label }}
-                </li>
-              }
-            </ul>
-          </app-module-card>
-
-          <app-module-card accent="organize" title="Organisation" allLink="/organisation" actionLabel="Termin hinzufügen" actionLink="/organisation">
-            <ul class="organize-list">
-              @for (item of organizeAppointments; track item.label) {
-                <li>
-                  <span>{{ item.label }}</span>
-                  <span class="organize-list__when">{{ item.when }}</span>
-                </li>
-              }
-            </ul>
-          </app-module-card>
-        </div>
-      </section>
-
-      <section class="compare-section" aria-labelledby="compare-heading">
-        <h2 id="compare-heading">Warum Kompass statt mehrerer Apps?</h2>
-        <div class="compare-table">
-          <div class="compare-head">
-            <div class="without">Ohne Kompass</div>
-            <div class="with">Mit Kompass</div>
-          </div>
-          @for (row of comparison; track row.without) {
-            <div class="compare-row">
-              <div class="without">
-                <span class="compare-row__label" aria-hidden="true">Ohne Kompass</span>
-                <span class="compare-row__value"><span class="sr-only">Ohne Kompass: </span>{{ row.without }}</span>
-              </div>
-              <div class="with">
-                <span class="compare-row__label" aria-hidden="true">Mit Kompass</span>
-                <span class="compare-row__value">
-                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>
-                  <span class="sr-only">Mit Kompass: </span>{{ row.withKompass }}
                 </span>
-              </div>
-            </div>
+                <span class="module-row__content">
+                  <span class="module-row__title">{{ row.title }}</span>
+                  <span class="module-row__subtitle">{{ row.subtitle }}</span>
+                </span>
+                <icon-chevron />
+              </a>
+            </li>
           }
-        </div>
+        </ul>
       </section>
     </main>
 
@@ -149,7 +84,7 @@
 
     <nav class="bottom-nav" aria-label="Hauptnavigation">
       <a
-        routerLink="/"
+        [routerLink]="homeLink()"
         routerLinkActive="is-active"
         [routerLinkActiveOptions]="{ exact: true }"
         #rlaStartM="routerLinkActive"
@@ -158,15 +93,15 @@
         <svg class="kompass-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>
         <span>Start</span>
       </a>
-      <a routerLink="/finanzen" routerLinkActive="is-active" #rlaFinM="routerLinkActive" [attr.aria-current]="rlaFinM.isActive ? 'page' : null">
+      <a [routerLink]="finanzenLink()" routerLinkActive="is-active" #rlaFinM="routerLinkActive" [attr.aria-current]="rlaFinM.isActive ? 'page' : null">
         <icon-finanzen class="kompass-icon" />
         <span>Finanzen</span>
       </a>
-      <a routerLink="/haushalt" routerLinkActive="is-active" #rlaHhM="routerLinkActive" [attr.aria-current]="rlaHhM.isActive ? 'page' : null">
+      <a routerLink="/app/haushalt" routerLinkActive="is-active" #rlaHhM="routerLinkActive" [attr.aria-current]="rlaHhM.isActive ? 'page' : null">
         <icon-haushalt class="kompass-icon" />
         <span>Haushalt</span>
       </a>
-      <a routerLink="/organisation" routerLinkActive="is-active" #rlaOrgM="routerLinkActive" [attr.aria-current]="rlaOrgM.isActive ? 'page' : null">
+      <a routerLink="/app/organisation" routerLinkActive="is-active" #rlaOrgM="routerLinkActive" [attr.aria-current]="rlaOrgM.isActive ? 'page' : null">
         <icon-organisation class="kompass-icon" />
         <span>Kalender</span>
       </a>

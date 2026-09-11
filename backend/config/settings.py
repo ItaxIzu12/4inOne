@@ -59,6 +59,13 @@ INSTALLED_APPS = [
     'corsheaders',
     'csp',
     'axes',
+    # TOTP-basierte Zwei-Faktor-Authentifizierung, siehe core/mfa_views.py.
+    # Bewusst OHNE django_otp.middleware.OTPMiddleware: die verlässt sich auf
+    # Django-Sessions ("ist diese Session bereits OTP-verifiziert"), diese
+    # API ist aber stateless (JWT) — die MFA-Prüfung passiert stattdessen
+    # synchron innerhalb von LoginView.post().
+    'django_otp',
+    'django_otp.plugins.otp_totp',
     # Fachliche Module, siehe ARCHITEKTUR.md §2.1
     'core',
     'finanzen',
@@ -167,12 +174,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# ARCHITEKTUR.md §3.1: Argon2 zuerst, damit neue Passwort-Hashes damit
-# erzeugt werden. Die übrigen Hasher bleiben als Fallback zum Verifizieren
-# älterer Hashes eingetragen (Django-Standardverhalten).
+# TODO (nur lokal, vorübergehend): PBKDF2PasswordHasher steht hier bewusst
+# ABWEICHEND von ARCHITEKTUR.md §3.1 an erster Stelle, weil auf diesem
+# Windows-Rechner eine Anwendungssteuerungsrichtlinie (vermutlich Smart App
+# Control) die native _ffi-DLL von argon2-cffi blockiert ("Couldn't load
+# 'Argon2PasswordHasher' algorithm library") — dadurch schlugen Login/
+# Registrierung mit 500 fehl. PBKDF2 ist reines Python (nutzt hashlib, keine
+# native DLL) und funktioniert deshalb ohne die Richtlinien-Blockade.
+# ZURÜCKSTELLEN auf Argon2 zuerst, sobald die Windows-Richtlinie geprüft/
+# behoben ist — siehe Chat: Einstellungen → Datenschutz & Sicherheit →
+# Windows-Sicherheit → App- und Browsersteuerung → Smart App Control.
 PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.Argon2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
 ]
@@ -215,7 +229,48 @@ REST_FRAMEWORK = {
     # ARCHITEKTUR.md §3.4: bei DEBUG=False keine internen Fehlerdetails/
     # Stacktraces im Response-Body, siehe core/exception_handlers.py
     'EXCEPTION_HANDLER': 'core.exception_handlers.custom_exception_handler',
+    # Rate-Limits für die Auth-Endpunkte (core/auth_views.py, core/
+    # mfa_views.py) — Zustand landet NICHT im Redis-gestützten Default-Cache,
+    # sondern im separaten 'throttle'-Cache (LocMemCache, siehe CACHES
+    # unten): Login/Registrierung/Passwort-Reset/MFA dürfen nicht ausfallen,
+    # nur weil Redis (noch) nicht läuft. django-axes (AXES_FAILURE_LIMIT
+    # unten) sperrt zusätzlich NUR fehlgeschlagene Login-Versuche
+    # dauerhafter — beide Mechanismen ergänzen sich, siehe
+    # LoginRateThrottle-Docstring.
+    #
+    # Die ANZAHL kommt aus der Umgebung (RATE_LIMIT_*, siehe .env.example) —
+    # die Zeitfenster (hour/min) bleiben fest im Code, wie ursprünglich
+    # vorgegeben (3 Registrierungen/Stunde, 5 Logins/Minute, 5 Passwort-
+    # Resets/Stunde, 5 MFA-Versuche/5 Minuten).
+    'DEFAULT_THROTTLE_CLASSES': (),
+    'DEFAULT_THROTTLE_RATES': {
+        'register': f"{env.int('RATE_LIMIT_REGISTER', default=3)}/hour",
+        'login': f"{env.int('RATE_LIMIT_LOGIN', default=5)}/min",
+        'password_reset': f"{env.int('RATE_LIMIT_PASSWORD_RESET', default=5)}/hour",
+        # Die Zahl kommt aus RATE_LIMIT_MFA_VERIFY — der '/min'-Teil des
+        # Strings dient nur der Anzeige/DRF-Zahlen-Extraktion; die
+        # tatsächliche Regel ist "N Versuche pro 5 Minuten" mit einem
+        # eigenen duration-Override in MfaVerifyRateThrottle (core/
+        # mfa_views.py), da DRFs Rate-String-Format nur s/m/h/d als Einheit
+        # kennt, kein "alle 5 Minuten".
+        'mfa_verify': f"{env.int('RATE_LIMIT_MFA_VERIFY', default=5)}/min",
+        # Pro HAUSHALT (nicht pro Nutzer/IP), siehe HouseholdInviteRateThrottle
+        # (core/household_views.py) — mehrere Mitglieder desselben Haushalts
+        # teilen sich das Limit, sonst ließe es sich durch Rollenwechsel/
+        # mehrere Admin-Konten umgehen.
+        'household_invite': f"{env.int('RATE_LIMIT_HOUSEHOLD_INVITE', default=10)}/hour",
+        # Schutz vor einem Frontend-Bug (z. B. einer Endlosschleife), der
+        # versehentlich tausende Transaktionen anlegt/ändert/löscht — nicht
+        # primär gegen böswillige Angreifer (finanzen/throttling.py
+        # TransactionWriteRateThrottle-Docstring), siehe Sicherheitsprüfung
+        # PRÜFUNG 4.
+        'finanzen_write': f"{env.int('RATE_LIMIT_FINANZEN_WRITE', default=60)}/min",
+    },
 }
+
+# Ablaufzeit für Haushaltseinladungs-Token in Tagen (ARCHITEKTUR.md §3.9),
+# siehe core/household_views.py.
+HOUSEHOLD_INVITE_EXPIRY_DAYS = env.int('HOUSEHOLD_INVITE_EXPIRY_DAYS', default=7)
 
 # ARCHITEKTUR.md §3.1: Access-Token kurzlebig, nur im Antwort-Body (das
 # Frontend hält ihn nur im Speicher, siehe core/auth_views.py). Refresh-Token-
@@ -230,8 +285,15 @@ SIMPLE_JWT = {
 
 # CORS
 # https://github.com/adamchainz/django-cors-headers
-# ARCHITEKTUR.md §3.4: kein Wildcard, Origin kommt aus der Umgebung.
-CORS_ALLOWED_ORIGINS = [env('FRONTEND_URL', default='http://localhost:4200')]
+# ARCHITEKTUR.md §3.4: kein Wildcard, Origins kommen aus der Umgebung
+# (CORS_ALLOWED_ORIGINS, kommagetrennt — siehe .env.example). FRONTEND_URL
+# ist ein separater Wert (u. a. für spätere Links in E-Mails, z. B.
+# Passwort-Reset), NICHT dasselbe wie die CORS-Origin-Liste, auch wenn
+# beide lokal denselben Wert haben. CAPACITOR_APP_ORIGIN kommt für die
+# spätere native App-Hülle zusätzlich dazu, sobald gesetzt.
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:4200'])
+if env('CAPACITOR_APP_ORIGIN', default=None):
+    CORS_ALLOWED_ORIGINS.append(env('CAPACITOR_APP_ORIGIN'))
 CORS_ALLOW_CREDENTIALS = True
 
 # Content-Security-Policy (django-csp 4.x-Format)
@@ -245,6 +307,10 @@ CONTENT_SECURITY_POLICY = {
         'frame-ancestors': ["'none'"],
     },
 }
+
+# django-otp: Name, der in der Authenticator-App (Google Authenticator etc.)
+# neben dem Konto angezeigt wird, siehe TOTPDevice.config_url.
+OTP_TOTP_ISSUER = 'Kompass'
 
 # django-axes: Brute-Force-/Credential-Stuffing-Schutz (ARCHITEKTUR.md §3.1)
 AXES_FAILURE_LIMIT = 5
@@ -260,7 +326,16 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': REDIS_URL,
-    }
+    },
+    # Eigener Cache NUR für Rate-Limiting (core/auth_views.py) — bewusst
+    # NICHT über Redis, aus demselben Grund wie beim Verzicht auf Redis für
+    # die Token-Blacklist oben: Login/Registrierung/Passwort-Reset dürfen
+    # nicht ausfallen, nur weil Redis (noch) nicht erreichbar ist. LocMemCache
+    # reicht für einen einzelnen Prozess/Worker; bei mehreren Worker-Prozessen
+    # in Produktion (geteilter Zustand nötig) auf einen Redis-Alias wechseln.
+    'throttle': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
 }
 
 # Admin-Panel NICHT unter dem Standardpfad /admin/ (ARCHITEKTUR.md §3.4:

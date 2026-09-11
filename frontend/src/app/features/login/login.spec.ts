@@ -41,6 +41,7 @@ describe('Login', () => {
       email: 'mira@example.com',
       password: 'kurz1',
       confirmPassword: 'kurz1',
+      householdName: '',
       acceptPrivacy: true,
     });
     fixture.detectChanges();

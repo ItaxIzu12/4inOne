@@ -1,0 +1,52 @@
+<app-modal
+  [open]="modalService.isOpen()"
+  labelledBy="household-invite-heading"
+  closeLabel="Einladung schließen"
+  (closed)="close()"
+>
+  <h2 id="household-invite-heading" class="invite-modal__heading">Haushalt einladen</h2>
+
+  @if (sentTo(); as sent) {
+    <p class="invite-modal__success" role="status">
+      Einladung an {{ sent.email }} gesendet, gültig bis {{ sent.expiresAt | date: 'd. MMM y':'':'de' }}.
+    </p>
+    <button type="button" class="btn-primary" (click)="close()">Schließen</button>
+  } @else {
+    <form class="invite-modal__form" (submit)="onSubmit($event)">
+      <div class="field">
+        <label for="invite-email">E-Mail-Adresse des Haushaltsmitglieds</label>
+        <input
+          id="invite-email"
+          type="email"
+          autocomplete="off"
+          [value]="email()"
+          (input)="email.set($any($event.target).value)"
+        />
+      </div>
+
+      <fieldset class="invite-modal__roles">
+        <legend>Rolle</legend>
+        <label>
+          <input type="radio" name="invite-role" value="ADMIN" [checked]="role() === 'ADMIN'" (change)="role.set('ADMIN')" />
+          Admin
+        </label>
+        <label>
+          <input type="radio" name="invite-role" value="MEMBER" [checked]="role() === 'MEMBER'" (change)="role.set('MEMBER')" />
+          Mitglied
+        </label>
+        <label>
+          <input type="radio" name="invite-role" value="CHILD_ACCOUNT" [checked]="role() === 'CHILD_ACCOUNT'" (change)="role.set('CHILD_ACCOUNT')" />
+          Kind-Konto
+        </label>
+      </fieldset>
+
+      @if (error()) {
+        <p class="field-error" role="alert">{{ error() }}</p>
+      }
+
+      <button type="submit" class="btn-primary" [disabled]="submitting()">
+        {{ submitting() ? 'Wird gesendet …' : 'Einladung senden' }}
+      </button>
+    </form>
+  }
+</app-modal>

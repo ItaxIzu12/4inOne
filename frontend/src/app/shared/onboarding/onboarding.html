@@ -1,0 +1,60 @@
+@if (loaded() && visible()) {
+  <section class="onboarding" aria-labelledby="onboarding-heading">
+    <h2 id="onboarding-heading" class="onboarding__heading">Nächste Schritte</h2>
+
+    @if (steps().length > 0) {
+      <ul class="onboarding__list">
+        @for (step of steps(); track step.key) {
+          <li class="onboarding__step">
+            <span class="onboarding__content">
+              <span class="onboarding__title">{{ step.title }}</span>
+              <span class="onboarding__subtitle">{{ step.subtitle }}</span>
+            </span>
+            <button type="button" class="onboarding__action" (click)="step.action()">{{ step.actionLabel }}</button>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (showMfaStep()) {
+      <div class="onboarding__mfa-divider"><span>Optional</span></div>
+      <div class="onboarding__step onboarding__step--mfa">
+        <span class="onboarding__content">
+          <span class="onboarding__title">Zwei-Faktor-Schutz aktivieren <span class="onboarding__recommended">(empfohlen)</span></span>
+          <span class="onboarding__subtitle">Zusätzlicher Schutz für deine Finanzdaten — dauert eine Minute.</span>
+        </span>
+        <button type="button" class="onboarding__action" (click)="goToMfaSetup()">Einrichten</button>
+      </div>
+    }
+  </section>
+}
+
+<app-modal
+  [open]="categoryModalOpen()"
+  labelledBy="onboarding-category-heading"
+  closeLabel="Formular schließen"
+  (closed)="closeCategoryModal()"
+>
+  <h2 id="onboarding-category-heading" class="onboarding__modal-heading">Kategorie anlegen</h2>
+
+  <form class="onboarding__category-form" (submit)="onCategorySubmit($event)">
+    <div class="field">
+      <label for="onboarding-category-name">Name der Kategorie</label>
+      <input
+        id="onboarding-category-name"
+        type="text"
+        placeholder="z. B. Freizeit"
+        [value]="categoryName()"
+        (input)="categoryName.set($any($event.target).value)"
+      />
+    </div>
+
+    @if (categoryError()) {
+      <p class="field-error" role="alert">{{ categoryError() }}</p>
+    }
+
+    <button type="submit" class="onboarding__action onboarding__action--submit" [disabled]="categorySubmitting()">
+      {{ categorySubmitting() ? 'Wird angelegt …' : 'Kategorie anlegen' }}
+    </button>
+  </form>
+</app-modal>

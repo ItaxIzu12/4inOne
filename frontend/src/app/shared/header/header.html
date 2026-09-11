@@ -1,6 +1,6 @@
 <header class="header">
   <div class="header-inner">
-    <a class="brand" routerLink="/" aria-label="Kompass — zum Start" (click)="goHome()">
+    <a class="brand" [routerLink]="homeLink()" aria-label="Kompass — zum Start" (click)="goHome()">
       <logo-kompass class="brand-mark" />
       <span class="brand-name">Kompass</span>
     </a>
@@ -8,7 +8,7 @@
     @if (showDashboardNav()) {
       <nav class="header-nav" aria-label="Hauptnavigation">
         <a
-          routerLink="/"
+          [routerLink]="homeLink()"
           routerLinkActive="is-active"
           [routerLinkActiveOptions]="{ exact: true }"
           #rlaStart="routerLinkActive"
@@ -17,15 +17,15 @@
           <svg class="kompass-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>
           Start
         </a>
-        <a routerLink="/finanzen" routerLinkActive="is-active" #rlaFin="routerLinkActive" [attr.aria-current]="rlaFin.isActive ? 'page' : null">
+        <a [routerLink]="finanzenLink()" routerLinkActive="is-active" #rlaFin="routerLinkActive" [attr.aria-current]="rlaFin.isActive ? 'page' : null">
           <icon-finanzen class="kompass-icon" />
           Finanzen
         </a>
-        <a routerLink="/haushalt" routerLinkActive="is-active" #rlaHh="routerLinkActive" [attr.aria-current]="rlaHh.isActive ? 'page' : null">
+        <a routerLink="/app/haushalt" routerLinkActive="is-active" #rlaHh="routerLinkActive" [attr.aria-current]="rlaHh.isActive ? 'page' : null">
           <icon-haushalt class="kompass-icon" />
           Haushalt
         </a>
-        <a routerLink="/organisation" routerLinkActive="is-active" #rlaOrg="routerLinkActive" [attr.aria-current]="rlaOrg.isActive ? 'page' : null">
+        <a routerLink="/app/organisation" routerLinkActive="is-active" #rlaOrg="routerLinkActive" [attr.aria-current]="rlaOrg.isActive ? 'page' : null">
           <icon-organisation class="kompass-icon" />
           Organisation
         </a>
@@ -53,6 +53,62 @@
       } @else {
         <a class="login-button" routerLink="/login">Anmelden</a>
       }
+
+      <button
+        type="button"
+        class="menu-toggle"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="mobile-nav-menu"
+        [attr.aria-label]="menuOpen() ? 'Menü schließen' : 'Menü öffnen'"
+      >
+        @if (menuOpen()) {
+          <icon-close />
+        } @else {
+          <icon-menu />
+        }
+      </button>
     </div>
   </div>
 </header>
+
+@if (menuOpen()) {
+    <div class="mobile-menu-backdrop" (click)="closeMenu()"></div>
+    <nav id="mobile-nav-menu" class="mobile-menu" aria-label="Hauptnavigation">
+      @if (showDashboardNav()) {
+        <a
+          [routerLink]="homeLink()"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          #rlaStartM="routerLinkActive"
+          [attr.aria-current]="rlaStartM.isActive ? 'page' : null"
+          (click)="closeMenu()"
+        >
+          <svg class="kompass-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>
+          Start
+        </a>
+        <a [routerLink]="finanzenLink()" routerLinkActive="is-active" #rlaFinM="routerLinkActive" [attr.aria-current]="rlaFinM.isActive ? 'page' : null" (click)="closeMenu()">
+          <icon-finanzen class="kompass-icon" />
+          Finanzen
+        </a>
+        <a routerLink="/app/haushalt" routerLinkActive="is-active" #rlaHhM="routerLinkActive" [attr.aria-current]="rlaHhM.isActive ? 'page' : null" (click)="closeMenu()">
+          <icon-haushalt class="kompass-icon" />
+          Haushalt
+        </a>
+        <a routerLink="/app/organisation" routerLinkActive="is-active" #rlaOrgM="routerLinkActive" [attr.aria-current]="rlaOrgM.isActive ? 'page' : null" (click)="closeMenu()">
+          <icon-organisation class="kompass-icon" />
+          Organisation
+        </a>
+        <div class="mobile-menu__divider"></div>
+      }
+
+      @if (auth.isAuthenticated()) {
+        <a routerLink="/einstellungen" (click)="closeMenu()">
+          <span class="profile-avatar" aria-hidden="true">{{ initials() }}</span>
+          Einstellungen
+        </a>
+      } @else {
+        <a class="mobile-menu__login" routerLink="/login" (click)="closeMenu()">Anmelden</a>
+      }
+    </nav>
+  }

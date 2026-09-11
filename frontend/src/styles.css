@@ -26,6 +26,7 @@
      von --m-household. Kontrast auf --surface ~5.1:1, auf --canvas ~4.9:1 — beide
      über WCAG AA (4.5:1). */
   --danger: #c23b52;
+  --danger-soft: rgba(194, 59, 82, 0.12);
 
   --m-finance: #5b3fd6;
   --m-household: #a15f14;
@@ -111,6 +112,7 @@
     /* Aufgehellt fürs dunkle --canvas, gleiche Methode wie --accent oben;
        ~4.7:1 auf --canvas — über WCAG AA. */
     --danger: #ff6f85;
+    --danger-soft: rgba(255, 111, 133, 0.16);
 
     --m-finance: #8f74ff;
     --m-household: #ffb75e;
@@ -155,6 +157,7 @@
   --accent-soft: rgba(143, 116, 255, 0.16);
   --success: #34c774;
   --danger: #ff6f85;
+  --danger-soft: rgba(255, 111, 133, 0.16);
 
   --m-finance: #8f74ff;
   --m-household: #ffb75e;

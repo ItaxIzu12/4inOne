@@ -1,0 +1,16 @@
+@if (open()) {
+  <div class="modal-backdrop" (click)="requestClose()"></div>
+  <div
+    #panel
+    class="modal-panel"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="labelledBy()"
+    (keydown)="onKeydown($event)"
+  >
+    <ng-content />
+    <button type="button" class="modal-close" [attr.aria-label]="closeLabel()" (click)="requestClose()">
+      <icon-close />
+    </button>
+  </div>
+}

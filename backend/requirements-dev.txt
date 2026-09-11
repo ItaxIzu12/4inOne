@@ -3,6 +3,9 @@
 -r requirements.txt
 
 pip-audit==2.10.1
+# Nur zum Erzeugen echter TOTP-Codes in core/test_mfa.py — kein Laufzeit-
+# Dependency der App selbst (die nutzt django-otp, siehe requirements.txt).
+pyotp==2.10.0
 CacheControl==0.14.4
 boolean.py==5.0
 certifi==2026.7.22

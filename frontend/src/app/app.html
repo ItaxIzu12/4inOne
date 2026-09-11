@@ -1,9 +1,13 @@
 @if (showHeader()) {
   <app-header />
 }
+@if (showDemoBanner()) {
+  <app-demo-banner />
+}
 <router-outlet />
 <app-footer />
 @if (showGlobalChrome()) {
   <app-back-to-top />
   <app-bottom-nav />
 }
+<app-household-invite-modal />

@@ -133,6 +133,85 @@
 }
 .login-button:hover { color: var(--accent); border-color: var(--accent); }
 
+/* ---------- Mobiles Hamburger-Menü ---------- */
+.menu-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 18px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.menu-toggle:hover { background: var(--surface-recessed); color: var(--text); }
+
+/* Unter 900px übernimmt der Hamburger Modul-Navigation UND Anmelden/Profil
+   (siehe .mobile-menu) — beide verschwinden aus ihrer festen Position im
+   Header, um dort Platz zu sparen. */
+@media (max-width: 899px) {
+  .menu-toggle { display: flex; }
+  .login-button,
+  .profile-link { display: none; }
+}
+
+.mobile-menu-backdrop {
+  position: fixed;
+  inset: 72px 0 0 0;
+  background: rgba(20, 15, 30, 0.35);
+  z-index: 39;
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 72px;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-height: calc(100dvh - 72px);
+  overflow-y: auto;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-8) var(--space-16);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mobile-menu a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  min-height: 48px;
+  padding: 0 var(--space-10);
+  border-radius: var(--radius-inputs);
+  color: var(--text-body);
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+}
+.mobile-menu a .kompass-icon { font-size: 18px; }
+.mobile-menu a:hover { background: var(--surface-recessed); }
+.mobile-menu a.is-active { background: var(--accent); color: #fff; }
+.mobile-menu a .profile-avatar { flex-shrink: 0; }
+
+.mobile-menu__divider {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-8) 0;
+}
+
+.mobile-menu__login {
+  justify-content: center;
+  color: var(--accent);
+  border: 1.5px solid var(--border-strong);
+}
+
 @media (max-width: 480px) {
   .header-inner { padding: 0 var(--space-16); gap: var(--space-8); }
   .login-button { padding: 0 var(--space-16); font-size: var(--text-caption); }

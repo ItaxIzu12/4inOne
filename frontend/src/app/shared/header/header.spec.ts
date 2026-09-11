@@ -78,4 +78,60 @@ describe('Header', () => {
     const fixture = await renderAt('/', auth);
     expect((fixture.nativeElement as HTMLElement).querySelector('.profile-avatar')?.textContent).toBe('J');
   });
+
+  it('opens the mobile menu on hamburger click, with the module tabs (dashboardNav route) and "Anmelden"', async () => {
+    const fixture = await renderAt('/', new FakeAuthService());
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('#mobile-nav-menu')).toBeNull();
+
+    const toggle = compiled.querySelector('.menu-toggle') as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    const menu = compiled.querySelector('#mobile-nav-menu');
+    expect(menu).toBeTruthy();
+    expect(menu?.querySelectorAll('a').length).toBe(5); // Start/Finanzen/Haushalt/Organisation + Anmelden
+    expect(menu?.querySelector('.mobile-menu__login')?.getAttribute('href')).toBe('/login');
+  });
+
+  it('hides the module tabs in the mobile menu on routes without dashboardNav, but keeps "Anmelden"', async () => {
+    const fixture = await renderAt('/einstellungen', new FakeAuthService());
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    (compiled.querySelector('.menu-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const menu = compiled.querySelector('#mobile-nav-menu');
+    expect(menu?.querySelectorAll('a').length).toBe(1);
+    expect(menu?.querySelector('.mobile-menu__login')).toBeTruthy();
+  });
+
+  it('closes the mobile menu when a link inside it is clicked', async () => {
+    const fixture = await renderAt('/', new FakeAuthService());
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    (compiled.querySelector('.menu-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('#mobile-nav-menu')).toBeTruthy();
+
+    (compiled.querySelector('#mobile-nav-menu a') as HTMLAnchorElement).click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('#mobile-nav-menu')).toBeNull();
+  });
+
+  it('closes the mobile menu on Escape', async () => {
+    const fixture = await renderAt('/', new FakeAuthService());
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    (compiled.querySelector('.menu-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('#mobile-nav-menu')).toBeTruthy();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect(compiled.querySelector('#mobile-nav-menu')).toBeNull();
+  });
 });

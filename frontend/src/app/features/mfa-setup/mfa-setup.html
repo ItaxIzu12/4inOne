@@ -1,0 +1,71 @@
+<main class="mfa-page">
+  <div class="mfa-inner">
+    <p class="mfa-eyebrow">Einstellungen</p>
+    <h1>Zwei-Faktor-Authentifizierung</h1>
+
+    @if (alreadyEnabled()) {
+      <p class="mfa-note">Zwei-Faktor-Authentifizierung ist für dein Konto bereits aktiv.</p>
+      <a routerLink="/app" class="btn-primary">Zurück zum Dashboard</a>
+    } @else if (step() === 'start') {
+      <p class="mfa-lede">
+        Zusätzlicher Schutz für deine Finanzdaten — dauert etwa eine Minute. Du brauchst eine
+        Authenticator-App (z. B. Google Authenticator, Authy).
+      </p>
+      @if (error()) {
+        <p class="field-error" role="alert">{{ error() }}</p>
+      }
+      <button type="button" class="btn-primary" (click)="startSetup()" [disabled]="loading()">
+        {{ loading() ? 'Wird vorbereitet …' : 'Einrichtung starten' }}
+      </button>
+    } @else if (step() === 'verify') {
+      <p class="mfa-lede">Scanne den QR-Code mit deiner Authenticator-App und gib den angezeigten 6-stelligen Code ein.</p>
+
+      @if (qrCode()) {
+        <img [src]="qrCode()" alt="QR-Code für die Authenticator-App-Einrichtung" class="mfa-qr" />
+      }
+      @if (secret()) {
+        <p class="mfa-secret">Manuelle Eingabe: <code>{{ secret() }}</code></p>
+      }
+
+      <form class="mfa-verify-form" (submit)="onVerifySubmit($event)">
+        <div class="field">
+          <label for="mfa-code">6-stelliger Code</label>
+          <input
+            id="mfa-code"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            [value]="code()"
+            (input)="code.set($any($event.target).value)"
+          />
+        </div>
+
+        @if (error()) {
+          <p class="field-error" role="alert">{{ error() }}</p>
+        }
+
+        <button type="submit" class="btn-primary" [disabled]="loading()">
+          {{ loading() ? 'Wird geprüft …' : 'Bestätigen' }}
+        </button>
+      </form>
+    } @else if (step() === 'done') {
+      <p class="mfa-note mfa-note--success">Zwei-Faktor-Authentifizierung ist jetzt aktiv.</p>
+
+      <div class="mfa-backup-codes">
+        <h2>Deine Backup-Codes</h2>
+        <p class="mfa-lede">
+          Sichere diese Codes jetzt an einem sicheren Ort — jeder Code funktioniert einmalig, falls du dein
+          Gerät verlierst. Sie werden dir nur dieses eine Mal angezeigt.
+        </p>
+        <ul class="mfa-backup-codes__list">
+          @for (backupCode of backupCodes(); track backupCode) {
+            <li><code>{{ backupCode }}</code></li>
+          }
+        </ul>
+      </div>
+
+      <button type="button" class="btn-primary" (click)="finish()">Fertig</button>
+    }
+  </div>
+</main>

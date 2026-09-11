@@ -12,10 +12,12 @@ django-cors-headers==4.9.0
 django-cryptography==1.1
 django-csp==4.0
 django-environ==0.14.0
+django-otp==1.7.3
 djangorestframework==3.18.0
 djangorestframework_simplejwt==5.5.1
 iniconfig==2.3.0
 packaging==26.3
+Pillow==12.3.0
 pluggy==1.6.0
 psycopg2-binary==2.9.12
 pycparser==3.0
@@ -23,6 +25,7 @@ Pygments==2.21.0
 PyJWT==2.13.0
 pytest==9.1.1
 pytest-django==4.14.0
+qrcode==8.2
 redis==8.1.0
 sqlparse==0.6.0
 tzdata==2026.3

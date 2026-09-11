@@ -38,7 +38,7 @@ def test_user_from_other_household_cannot_access_transaction(two_households_with
     client = APIClient()
     client.force_authenticate(user=two_households_with_transactions['user_a'])
 
-    response = client.get(f"/api/finanzen/transaktionen/{two_households_with_transactions['transaction_b'].id}/")
+    response = client.get(f"/api/v1/finanzen/transaktionen/{two_households_with_transactions['transaction_b'].id}/")
 
     assert response.status_code in (403, 404)
 
@@ -47,7 +47,7 @@ def test_owning_household_member_can_access_transaction(two_households_with_tran
     client = APIClient()
     client.force_authenticate(user=two_households_with_transactions['user_b'])
 
-    response = client.get(f"/api/finanzen/transaktionen/{two_households_with_transactions['transaction_b'].id}/")
+    response = client.get(f"/api/v1/finanzen/transaktionen/{two_households_with_transactions['transaction_b'].id}/")
 
     assert response.status_code == 200
 

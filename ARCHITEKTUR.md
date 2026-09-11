@@ -64,6 +64,8 @@ Kein Event-Bus im MVP. Apps rufen sich über direkt importierte Service-Funktion
 
 **Hinweis zu den Finanz-Differenzierungsfeatures aus dem Gesamtkonzept** (Einkauf-zu-Ausgabe-Moment, Fairness-Anzeige, Abo-Radar): Diese laufen alle über bestehende Service-Aufrufe zwischen `haushalt` und `finanzen` — kein neues architektonisches Konzept nötig. Der Einkauf-zu-Ausgabe-Moment ruft z. B. `finanzen.services.create_transaction_from_shopping_list()` auf, sobald eine `ShoppingList` als erledigt markiert wird; die Fairness-Anzeige ist eine reine Aggregations-Abfrage über bestehende `Transaction`-Datensätze pro `HouseholdMembership`, kein zusätzliches Datenmodell.
 
+**Randfall Solo-Haushalt (neu, beim Erstellen der Verifikations-Checkliste entdeckt):** Die Fairness-Anzeige setzt mindestens zwei aktive `HouseholdMembership`-Einträge voraus, um überhaupt eine sinnvolle Aussage zu treffen. Bei genau einem Mitglied (`HouseholdMembership.objects.filter(household=household).count() < 2`) zeigt sie zwangsläufig 100 %/0 % oder müsste einen Sonderfall abfangen — beides verwirrend statt hilfreich. **Regel:** Die Fairness-Sektion wird im Frontend komplett ausgeblendet, solange der Haushalt weniger als zwei Mitglieder hat, nicht mit einem Platzhalterwert gefüllt. Das Backend muss diese Zahl trotzdem mitliefern (z. B. als `member_count` im API-Response), damit das Frontend die Entscheidung treffen kann, ohne einen zusätzlichen Request zu brauchen.
+
 ### 2.2 PostgreSQL — die wichtigste technische Festlegung dieses Dokuments
 - **Lokale Entwicklung (nur du):** SQLite ist in Ordnung.
 - **Sobald eine zweite Person testet oder die App online erreichbar ist:** PostgreSQL ist Pflicht.
@@ -85,6 +87,10 @@ class HouseholdMembership(models.Model):
     role = models.CharField(max_length=20, choices=Role.choices)
     invited_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, related_name="+", on_delete=models.SET_NULL)
     joined_at = models.DateTimeField(auto_now_add=True)
+    monthly_income = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # Individuelles monatliches Einkommen — NUR für die Person selbst sichtbar
+    # (siehe HouseholdScopedPermission-Erweiterung unten), fließt aber in die
+    # Haushalts-Gesamtsumme für "Verfügbares Einkommen" ein (Gesamtkonzept 5.3).
 
 class HouseholdInvite(models.Model):
     household = models.ForeignKey(Household, on_delete=models.CASCADE)
@@ -102,7 +108,44 @@ class Transaction(models.Model):
     category = models.ForeignKey("Category", on_delete=models.PROTECT)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)  # für Fairness-Anzeige & Audit
     deleted_at = models.DateTimeField(null=True, blank=True)  # Soft-Delete
+
+class Category(models.Model):
+    household = models.ForeignKey(Household, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    color = models.CharField(max_length=7, default="#5b3fd6")  # Hex-Wert, datengetrieben
+    icon_key = models.CharField(max_length=30, default="sonstiges")  # referenziert Frontend-Icon-Komponente
+    monthly_goal = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    is_default = models.BooleanField(default=False)  # verhindert Umbenennen/Löschen der 3 Standard-Kategorien
+    # Einfaches Budgetziel, bleibt automatisch von Monat zu Monat bestehen (kein
+    # separates Period-Model nötig) — "ausgegeben" wird wie bei Transaction immer
+    # live aus der Summe der Transaktionen des laufenden Monats berechnet, nie
+    # gespeichert.
+
+class RecurringDeduction(models.Model):
+    household = models.ForeignKey(Household, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    name = models.CharField(max_length=100)  # "Miete", "Netflix", "Fitnessstudio"
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    category = models.ForeignKey(Category, on_delete=models.PROTECT)
+    active = models.BooleanField(default=True)
+    # Bewusst KEINE einzelnen Transaction-Datensätze pro Monat — wird live in
+    # die "Verfügbares Einkommen"-Berechnung einbezogen (Gesamtkonzept 5.3),
+    # kein Cron/Celery-Job nötig, der monatlich neue Buchungen erzeugt.
+
+class Household(models.Model):
+    name = models.CharField(max_length=100)
+    monthly_buffer = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    # Frei wählbarer Puffer-Betrag (Sparen/Sonstiges), fließt in "Verfügbares
+    # Einkommen" ein — siehe Gesamtkonzept 5.3.
 ```
+
+**Neu für Einkommen/Analyse (Gesamtkonzept 5.3):** `HouseholdMembership.monthly_income`, `RecurringDeduction`, `Household.monthly_buffer`. Berechnung "Verfügbares Einkommen" = `SUM(monthly_income aller Mitglieder) − SUM(RecurringDeduction.amount wo active=True) − monthly_buffer`, immer live berechnet, nie zwischengespeichert — dasselbe Prinzip wie bei den Kategorien-Budgets.
+
+**Datenschutz zwischen Haushaltsmitgliedern (neue Erweiterung von `HouseholdScopedPermission`):** `monthly_income` ist eine Ausnahme von der sonstigen "alle Haushaltsmitglieder sehen alle Haushaltsdaten"-Regel — ein API-Response darf das `monthly_income`-Feld anderer Mitglieder NIEMALS an einen anfragenden Nutzer ausliefern, nur die eigene Zahl und die bereits verrechnete Haushalts-Gesamtsumme. Das ist eine gezielte Feldfilterung im Serializer, nicht durch `HouseholdScopedPermission` allein abgedeckt (die prüft nur Haushalts-Zugehörigkeit, nicht Feld-Sichtbarkeit innerhalb desselben Haushalts).
+
+**"Analyse"-Regeln (Gesamtkonzept 5.3) — ausdrücklich ohne LLM-Aufruf:** Feste Schwellenwerte in Python, z. B. Fixkosten-Anteil > 50 % des Einkommens, Puffer < 10 % des Einkommens. Kein API-Call, keine laufenden Kosten, konsistent mit dem Era-Prinzip aus dem Backlog.
+
+**Korrektur gegenüber der vorherigen Fassung:** Das zunächst entworfene Envelope-System (`CategoryGroup`, `BudgetPeriod`, `BudgetAllocation`) wurde wieder verworfen — die geforderte Einfachheit für alle Nutzergruppen wiegt hier schwerer als ein vollständiges Zuweisungssystem. `Category.monthly_goal` ist ein einzelnes, optionales Feld statt vier zusätzlicher Models — deutlich weniger Implementierungsaufwand und kein monatliches Zuweisungs-Ritual, das Nutzer zum Tippen zwingt.
 
 **Neu gegenüber Version 4:** `HouseholdInvite` als eigenes Model (schließt die Einladungs-Sicherheitslücke aus 3.9), `created_by` auf `Transaction` (Voraussetzung für die Fairness-Anzeige aus dem Gesamtkonzept — ohne dieses Feld lässt sich "wer hat wie viel eingebracht" nicht berechnen).
 
@@ -125,7 +168,7 @@ class Transaction(models.Model):
 - 🟡 Passkeys/WebAuthn zusätzlich.
 - 🔴 Token-Speicherung: JWTs nicht in `localStorage`. Access-Token im Speicher, Refresh-Token als `httpOnly`/`Secure`/`SameSite=Strict`-Cookie.
 - 🔴 Cookie-/CORS-Domain-Konfiguration exakt auf die Deployment-Topologie abstimmen (`django-cors-headers`, kein Wildcard).
-- 🔴 Refresh-Token-Rotation, Blacklist über Redis.
+- 🔴 Refresh-Token-Rotation, Blacklist über Redis. **Konkrete Gültigkeitsdauer (Marktvergleich 2026, siehe Chat-Recherche):** ohne "Angemeldet bleiben" reines Session-Cookie (endet beim Browser-Schließen); mit "Angemeldet bleiben" 14 Tage, bewusst kürzer als der bei Consumer-Apps üblichere 30-Tage-Wert, weil echte Finanzdaten sichtbar sind — Banking-Apps schalten "Angemeldet bleiben" laut Marktbeobachtung teils komplett ab, was für Kompass aufgrund fehlender Bankanbindung und vorhandenem MFA nicht nötig ist, aber die kürzere Dauer als bewusster Mittelweg.
 - 🔴 Rate-Limiting & Account-Lockout (`django-axes`) — **differenziert nach Endpunkt, siehe 3.9**, nicht nur global.
 - 🔴 Passwort-Hashing mit Argon2.
 
@@ -188,6 +231,7 @@ Diese Tabelle prüft nicht nach Themen, sondern nach **konkreten Situationen, di
 | **Registrierungs-Spam/Fake-Konten** | ⚠️ War nicht abgedeckt | E-Mail-Verifizierung vor vollem Funktionsumfang (Double-Opt-in), plus Rate-Limit auf den Registrierungs-Endpunkt pro IP. |
 | API-Dokumentation (Swagger) | 🔴 Abgedeckt | siehe 2.4 |
 | **Datenexport (DSGVO Art. 20)** | ⚠️ Nur beiläufig erwähnt | Eigener Export-Endpunkt (JSON/CSV) — **muss selbst rate-limitiert sein**, sonst lässt er sich zum wiederholten Bulk-Abgreifen aller Haushaltsdaten missbrauchen, auch mit gültigem Token. |
+| **Transaktions-Suche/Pagination (Historie-Modal)** | ⚠️ War nicht abgedeckt | Der Such-Query-Parameter (`?q=...`) darf niemals Transaktionen außerhalb des eigenen Haushalts zurückgeben — `HouseholdScopedPermission` muss auf dem Such-/Pagination-Endpunkt genauso greifen wie auf dem normalen Transaktions-Endpunkt, nicht nur auf der ungefilterten Liste. |
 | **Wer hat eine Finanzbuchung geändert? (Audit-Trail)** | ⚠️ War nicht abgedeckt | 🟡 Für Mehrpersonenhaushalte relevant fürs Vertrauen ("wer hat diese Ausgabe bearbeitet"), nicht MVP-kritisch, aber `created_by`/`updated_by`-Felder jetzt schon im Datenmodell vorsehen (siehe 2.3), damit die Funktion später ohne Migration nachrüstbar ist. |
 | **Zukünftige Banking-Webhooks (Phase 5)** | ⚠️ War nicht abgedeckt | 🟡 Signaturprüfung eingehender Webhooks von FinAPI/Tink zwingend vor Verarbeitung (Payload sonst gefälscht einspielbar) — jetzt dokumentieren, damit es in Phase 5 nicht vergessen wird. |
 | **Gleichzeitige Bearbeitung derselben Einkaufsliste** | ⚠️ War nicht abgedeckt (kein Security-, aber Integritätsrisiko) | 🟡 Optimistic Locking (Versionsfeld) für gemeinsam bearbeitete Objekte, verhindert stille Überschreibungen bei zwei gleichzeitigen Bearbeitern — kein MVP-Blocker, aber vormerken. |
@@ -267,12 +311,13 @@ Alle bisherigen Abschnitte gingen von einem wachsenden Mehrbenutzer-Produkt aus.
 
 - Rollen-/Rechtemodell für Mehrpersonenhaushalte final klären.
 - Vollständiges Django-Datenmodell ausarbeiten, inkl. `HouseholdInvite` und Soft-Delete-Manager.
-- API-Vertrag (ViewSets vs. Function-Based-Views) und Versionierungsstrategie festlegen.
+- ~~API-Vertrag und Versionierungsstrategie festlegen~~ — **entschieden:** alle Endpunkte unter `/api/v1/...`, DRF-ViewSets (siehe `master-prompt-finanzen.txt`, Teil 2).
 - Entscheidung Capacitor vs. native final treffen.
 - Lokale Entwicklungsumgebung von Anfang an mit PostgreSQL in Docker aufsetzen.
 - Kurzes Threat-Modeling (STRIDE) vor Implementierungsstart — jetzt mit den Anwendungsfällen aus 3.9 als konkreter Ausgangspunkt.
-- Zwei GitHub-Repos anlegen.
+- ~~Zwei GitHub-Repos anlegen~~ — **überholt, siehe Abschnitt 1.1**: ein Repo mit `frontend/`/`backend/`-Trennung jetzt, spätere Aufteilung möglich, nicht sofort nötig.
 - Rate-Limit-Konfiguration pro Endpunkt-Typ festlegen (Login, MFA-Verifizierung, Registrierung, Export, Einladungsversand — siehe 3.9), bevor der erste Endpunkt live geht.
 - Fernzugriffs-Architektur für den Solo-Betrieb festlegen (empfohlen: VPN-Tunnel via Tailscale/WireGuard, siehe 3.10) — vor dem ersten Deployment außerhalb des eigenen lokalen Netzwerks.
 - MFA-Backup-Codes-Generierung implementieren, bevor MFA aktiv genutzt wird (siehe 3.10).
 - GitHub-Repository-Sichtbarkeit auf privat prüfen/setzen (siehe 3.10).
+- Generische `<app-modal>`-Basis-Komponente einführen, bevor ein zweites Modal (Transaktions-Historie, siehe `master-prompt-finanzen.txt` Teil 3) das Hilfe-Overlay-Muster dupliziert.
