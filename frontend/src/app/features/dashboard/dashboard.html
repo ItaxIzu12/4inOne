@@ -23,7 +23,7 @@
           Budget &middot; August
         </p>
         <div class="balance-row">
-          <p id="balance-heading" class="balance-amount">{{ budget.amount | number: '1.0-0':'de' }} &euro;</p>
+          <p id="balance-heading" class="balance-amount">{{ budget().planned | number: '1.0-0':'de' }} &euro;</p>
           <p class="balance-sub">{{ budgetRemaining() | number: '1.0-0':'de' }}&nbsp;&euro; übrig</p>
         </div>
         <div

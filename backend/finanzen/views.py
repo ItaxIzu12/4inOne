@@ -15,6 +15,7 @@ from core.permissions import HouseholdScopedPermission
 from finanzen.insights import berechne_insights
 from finanzen.models import Account, Budget, Category, RecurringDeduction, Transaction
 from finanzen.serializers import (
+    MAX_CATEGORIES_PER_HOUSEHOLD,
     CategorySerializer,
     HouseholdBufferSerializer,
     HouseholdMembershipIncomeSerializer,
@@ -167,6 +168,14 @@ class CategoryViewSet(ModelViewSet):
             # Category.household laufen und als unbehandelter 500
             # IntegrityError enden statt einer sauberen 400-Antwort.
             raise ValidationError('Dieses Konto ist noch keinem Haushalt zugeordnet.')
+        if Category.objects.filter(household=household).count() >= MAX_CATEGORIES_PER_HOUSEHOLD:
+            raise ValidationError(
+                f'Maximal {MAX_CATEGORIES_PER_HOUSEHOLD} Kategorien pro Haushalt erlaubt. Lösche zuerst eine '
+                'nicht mehr benötigte Kategorie, um eine neue anzulegen.'
+            )
+        # is_default wird hier NIE mitgeschickt — der Model-Default (False)
+        # gilt für jede über diesen Endpunkt angelegte Kategorie, das Feld
+        # ist ohnehin read-only im Serializer (siehe CategorySerializer).
         serializer.save(household=household)
 
 

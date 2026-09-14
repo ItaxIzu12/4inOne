@@ -23,6 +23,14 @@
 
   <div class="fin-inner">
 
+    @if (overviewError()) {
+      <div class="load-error" role="alert">
+        <h2>{{ t.loadErrorHeading }}</h2>
+        <p>{{ t.loadErrorMessage }}</p>
+        <button type="button" class="btn-primary" (click)="retryLoadOverview()">{{ t.loadErrorRetry }}</button>
+      </div>
+    } @else {
+
     @if (householdName()) {
       <div class="household-strip">
         <div class="household-strip__avatars">
@@ -166,6 +174,10 @@
               }
             </ul>
           </div>
+          <button type="button" class="btn-add-category" (click)="openNewCategoryModal()">
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            {{ t.addCategoryButton }}
+          </button>
         </section>
 
         @if (showFairness()) {
@@ -338,6 +350,7 @@
         </section>
       </div>
     </div>
+    }
     }
   </div>
 </main>
@@ -592,4 +605,71 @@
     }
   </form>
   }
+</app-modal>
+
+<app-modal
+  [open]="newCategoryModalOpen()"
+  labelledBy="new-category-modal-heading"
+  [closeLabel]="t.addCategoryModalCloseLabel"
+  (closed)="closeNewCategoryModal()"
+>
+  <h2 id="new-category-modal-heading" class="tx-modal__heading">{{ t.addCategoryModalHeading }}</h2>
+
+  <form class="add-expense-form" (submit)="onNewCategorySubmit($event)">
+    <div class="field">
+      <label for="new-category-name">{{ t.newCategoryNameLabel }}</label>
+      <input
+        id="new-category-name"
+        type="text"
+        [placeholder]="t.newCategoryNamePlaceholder"
+        [value]="newCategoryName()"
+        (input)="newCategoryName.set($any($event.target).value)"
+      />
+    </div>
+
+    <fieldset class="field add-expense-form__categories">
+      <legend>{{ t.newCategoryIconLabel }}</legend>
+      <div class="icon-tiles" role="radiogroup" [attr.aria-label]="t.newCategoryIconLabel">
+        @for (iconKey of newCategoryIconOptions; track iconKey) {
+          <button
+            type="button"
+            class="icon-tile"
+            role="radio"
+            [attr.aria-checked]="newCategoryIconKey() === iconKey"
+            [class.is-selected]="newCategoryIconKey() === iconKey"
+            [attr.aria-label]="iconKey"
+            (click)="selectNewCategoryIcon(iconKey)"
+          >
+            <ng-container [ngComponentOutlet]="resolveCategoryIcon(iconKey)" />
+          </button>
+        }
+      </div>
+    </fieldset>
+
+    <fieldset class="field add-expense-form__categories">
+      <legend>{{ t.newCategoryColorLabel }}</legend>
+      <div class="color-swatches" role="radiogroup" [attr.aria-label]="t.newCategoryColorLabel">
+        @for (swatch of newCategoryColorOptions; track swatch) {
+          <button
+            type="button"
+            class="color-swatch"
+            role="radio"
+            [attr.aria-checked]="newCategoryColor() === swatch"
+            [class.is-selected]="newCategoryColor() === swatch"
+            [attr.aria-label]="swatch"
+            [style.background]="swatch"
+            (click)="selectNewCategoryColor(swatch)"
+          ></button>
+        }
+      </div>
+    </fieldset>
+
+    @if (newCategoryError()) {
+      <p class="field-error" role="alert">{{ newCategoryError() }}</p>
+    }
+
+    <button type="submit" class="btn-primary" [disabled]="newCategorySubmitting()">
+      {{ newCategorySubmitting() ? t.newCategorySubmitting : t.newCategorySubmit }}
+    </button>
+  </form>
 </app-modal>

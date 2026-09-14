@@ -4,17 +4,17 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { Subscription, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { Modal } from '../../shared/modal/modal';
 import { IconTwoFactor } from '../../shared/icons/icon-two-factor';
-import { resolveCategoryIcon } from '../../shared/icons/category-icon.map';
+import { CATEGORY_ICON_KEYS, resolveCategoryIcon } from '../../shared/icons/category-icon.map';
 import {
   CategoryAmountDto,
   CategoryDto,
   FairnessEntryDto,
-  HouseholdMemberDto,
   InsightDto,
   RecurringDeductionDto,
   TransactionDto,
 } from './finanzen-api.service';
 import { FINANZEN_DATA_PROVIDER } from './finanzen-data-provider';
+import { FinanzenStateService } from './finanzen-state.service';
 import { FINANZEN_I18N } from './finanzen.i18n';
 
 interface CategorySlice {
@@ -57,6 +57,23 @@ const SUBSCRIPTIONS: Subscription_[] = [
 // aber kein Absturz) — dieselben zwei Akzentfarben wie zuvor als Basis.
 const FAIRNESS_COLOR_PALETTE = ['var(--color-violet-ink)', 'var(--color-amber-ink)', 'var(--m-organize)', 'var(--m-household)'];
 
+// Kuratierte Farbauswahl fürs "Kategorie hinzufügen"-Sheet — bewusst KEIN
+// freies Farbrad (siehe Chat-Verlauf), damit selbst angelegte Kategorien
+// optisch nicht aus dem Design-System fallen. Die ersten vier sind exakt
+// die bereits an anderer Stelle verwendeten Farbwerte (Fixkosten/Haushalt/
+// Sonstiges-Default, --m-organize) — literale Hex-Werte statt CSS-
+// Variablen, weil Category.color in der Datenbank ein Hex-String ist,
+// keine Referenz auf ein Custom Property.
+const NEW_CATEGORY_COLOR_SWATCHES = [
+  '#5b3fd6', // Violett (Fixkosten-Default)
+  '#ffb75e', // Amber (Haushalt-Default)
+  '#c23b52', // Rose (Sonstiges-Default)
+  '#1f8a4c', // Grün (--m-organize)
+  '#2f7fd1', // Blau
+  '#0e9488', // Türkis
+  '#d97a3f', // Terrakotta
+];
+
 function initialsFor(name: string): string {
   const letters = name
     .trim()
@@ -80,6 +97,11 @@ export class Finanzen {
   // direkt injizieren — nur das Interface. Welche Implementierung tatsächlich
   // läuft, entscheidet die Route (siehe app.routes.ts: providers pro Route).
   private readonly provider = inject(FINANZEN_DATA_PROVIDER);
+  // Geteilter Übersicht-Zustand mit dem Dashboard (siehe Chat-Verlauf: "darf
+  // niemals auseinanderlaufen") — budget/categories/householdName/members/
+  // fairness unten sind computed() auf financeState.uebersicht(), keine
+  // eigenen Signale mehr, die diese Component unabhängig befüllt.
+  protected readonly financeState = inject(FinanzenStateService);
 
   protected readonly t = FINANZEN_I18N;
 
@@ -100,16 +122,33 @@ export class Finanzen {
   }
 
   // ---------- Haushalts-Streifen ----------
-  protected readonly householdName = signal('');
-  protected readonly members = signal<HouseholdMemberDto[]>([]);
+  // Alle fünf unten sind computed() auf financeState.uebersicht() — EINE
+  // Quelle, geteilt mit dem Dashboard (siehe finanzen-state.service.ts).
+  protected readonly householdName = computed(() => this.financeState.uebersicht()?.household_name ?? '');
+  protected readonly members = computed(() => this.financeState.uebersicht()?.members ?? []);
 
-  protected readonly budget = signal({ planned: 0, total: 0 });
+  // Sicherheitskritisch (SCHRITT 5B, jetzt im geteilten Service verankert):
+  // schlägt getOverview() fehl (Netzwerk/Server), bleibt das UI sonst bei
+  // 0 €/leeren Listen stehen — das sieht wie ein leerer, aber echter Account
+  // aus, ist aber ein stiller Fehler. Ein echter Nutzer auf /app darf diesen
+  // Unterschied nie erraten müssen. NIEMALS auf DemoFinanzenDataProvider
+  // oder feste Platzhalterwerte zurückfallen — nur ein sichtbarer
+  // Fehlerzustand mit expliziter "Erneut versuchen"-Aktion.
+  protected readonly overviewError = this.financeState.error;
+
+  protected readonly budget = computed(() => {
+    const u = this.financeState.uebersicht();
+    return u ? { planned: Number(u.budget.planned), total: Number(u.budget.total) } : { planned: 0, total: 0 };
+  });
   protected readonly budgetPercent = computed(() => {
     const { planned, total } = this.budget();
     return total > 0 ? Math.round((planned / total) * 100) : 0;
   });
   protected readonly budgetRemaining = computed(() => this.budget().total - this.budget().planned);
-  protected readonly categories = signal<CategorySlice[]>([]);
+  protected readonly categories = computed(() => {
+    const u = this.financeState.uebersicht();
+    return u ? this.buildDonutSlices(u.categories) : [];
+  });
   protected readonly categoriesAriaLabel = computed(
     () => this.categories().map((slice) => `${slice.label} ${Math.round(slice.amount)}`).join(', ') + ' Euro',
   );
@@ -127,7 +166,7 @@ export class Finanzen {
   // finanzen/views.py OverviewView. Die Anwesenheit selbst ist das Signal,
   // nicht member_count — falls sich die Backend-Regel je ändert, bleibt das
   // Frontend trotzdem korrekt (zeigt genau das, was tatsächlich mitkommt).
-  protected readonly fairness = signal<FairnessPerson[]>([]);
+  protected readonly fairness = computed(() => this.buildFairness(this.financeState.uebersicht()?.fairness));
   protected readonly showFairness = computed(() => this.fairness().length > 0);
 
   protected readonly resolveCategoryIcon = (iconKey: string): Type<unknown> => resolveCategoryIcon(iconKey);
@@ -176,6 +215,20 @@ export class Finanzen {
   protected readonly categoryGoalSubmitting = signal(false);
   protected readonly categoryGoalError = signal<string | null>(null);
 
+  // ---------- "Kategorie hinzufügen" ----------
+  // Eigene, zusätzliche Kategorien über die drei Standard-Kategorien hinaus
+  // (siehe Chat-Verlauf) — Icon-Kacheln aus CATEGORY_ICON_KEYS (derselben
+  // Zuordnungs-Map, die auch resolveCategoryIcon() speist, keine zweite
+  // Liste), Farbe aus einer kuratierten Palette statt einem freien Farbrad.
+  protected readonly newCategoryModalOpen = signal(false);
+  protected readonly newCategoryName = signal('');
+  protected readonly newCategoryIconKey = signal<string | null>(null);
+  protected readonly newCategoryColor = signal<string | null>(null);
+  protected readonly newCategorySubmitting = signal(false);
+  protected readonly newCategoryError = signal<string | null>(null);
+  protected readonly newCategoryIconOptions = CATEGORY_ICON_KEYS;
+  protected readonly newCategoryColorOptions = NEW_CATEGORY_COLOR_SWATCHES;
+
   // ---------- Analysen-Tab (Verfügbares Einkommen) ----------
   // insights kommt bereits FERTIG BERECHNET vom Provider (finanzen/
   // insights.py berechne_insights() im echten Backend, demo-insights.ts im
@@ -217,7 +270,7 @@ export class Finanzen {
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.searchSubscription?.unsubscribe());
-    this.loadOverview();
+    this.financeState.laden();
     this.loadRecentTransactions();
 
     // Fokus-Nachziehung als effect() statt direkt in requestDelete()/
@@ -246,20 +299,11 @@ export class Finanzen {
     });
   }
 
-  private loadOverview(): void {
-    this.provider.getOverview().subscribe({
-      next: (overview) => {
-        this.budget.set({ planned: Number(overview.budget.planned), total: Number(overview.budget.total) });
-        this.categories.set(this.buildDonutSlices(overview.categories));
-        this.householdName.set(overview.household_name);
-        this.members.set(overview.members);
-        this.fairness.set(this.buildFairness(overview.fairness));
-      },
-      // TODO (Backend): eigener Fehlerzustand, sobald die Seite ein
-      // generelles Lade-/Fehler-UI-Muster hat — bis dahin bleibt die
-      // Anzeige einfach bei 0/leer stehen statt abzustürzen.
-      error: () => {},
-    });
+  /** Vom "Erneut versuchen"-Button im Fehlerzustand — lädt dieselben zwei
+   * Quellen wie der initiale Aufruf im Konstruktor erneut. */
+  protected retryLoadOverview(): void {
+    this.financeState.laden();
+    this.loadRecentTransactions();
   }
 
   private buildFairness(rows: FairnessEntryDto[] | undefined): FairnessPerson[] {
@@ -401,11 +445,20 @@ export class Finanzen {
 
   private ensureCategoryChoicesLoaded(): void {
     if (this.addCategoryChoices().length === 0) {
-      this.provider.getCategories().subscribe({
-        next: (categories) => this.addCategoryChoices.set(categories),
-        error: () => {},
-      });
+      this.loadCategoryChoices();
     }
+  }
+
+  /** Im Gegensatz zu ensureCategoryChoicesLoaded() ein UNBEDINGTER Neuabruf
+   * — nach dem Anlegen einer neuen Kategorie (submitNewCategory() unten)
+   * muss die Chip-Liste im "Ausgabe hinzufügen"-Sheet die neue Kategorie
+   * sofort zeigen, auch wenn sie vorher schon einmal geladen wurde (der
+   * length===0-Schutz oben würde einen erneuten Abruf sonst überspringen). */
+  private loadCategoryChoices(): void {
+    this.provider.getCategories().subscribe({
+      next: (categories) => this.addCategoryChoices.set(categories),
+      error: () => {},
+    });
   }
 
   protected closeAddModal(): void {
@@ -458,8 +511,10 @@ export class Finanzen {
         this.closeAddModal();
         // Betrag/Prozent-Balken UND "Letzte Transaktionen" sofort
         // aktualisieren, damit die Änderung wirklich überall sichtbar wird,
-        // nicht nur als stiller Server-Zustand.
-        this.loadOverview();
+        // nicht nur als stiller Server-Zustand. invalidieren() aktualisiert
+        // den GETEILTEN Zustand — das Dashboard sieht den neuen Stand
+        // automatisch, sobald man dorthin navigiert (siehe Chat-Verlauf).
+        this.financeState.invalidieren();
         this.loadRecentTransactions();
       },
       error: () => {
@@ -494,7 +549,7 @@ export class Finanzen {
       next: () => {
         this.deleteSubmitting.set(false);
         this.closeAddModal();
-        this.loadOverview();
+        this.financeState.invalidieren();
         this.loadRecentTransactions();
       },
       error: () => {
@@ -549,11 +604,85 @@ export class Finanzen {
       next: () => {
         this.categoryGoalSubmitting.set(false);
         this.closeCategoryGoalModal();
-        this.loadOverview();
+        this.financeState.invalidieren();
       },
       error: () => {
         this.categoryGoalSubmitting.set(false);
         this.categoryGoalError.set('Ziel konnte nicht gespeichert werden. Bitte versuche es erneut.');
+      },
+    });
+  }
+
+  // ---------- "Kategorie hinzufügen" ----------
+
+  protected openNewCategoryModal(): void {
+    this.newCategoryName.set('');
+    this.newCategoryIconKey.set(null);
+    this.newCategoryColor.set(null);
+    this.newCategoryError.set(null);
+    this.newCategoryModalOpen.set(true);
+  }
+
+  protected closeNewCategoryModal(): void {
+    this.newCategoryModalOpen.set(false);
+    this.newCategoryName.set('');
+    this.newCategoryIconKey.set(null);
+    this.newCategoryColor.set(null);
+    this.newCategoryError.set(null);
+  }
+
+  protected selectNewCategoryIcon(iconKey: string): void {
+    this.newCategoryIconKey.set(iconKey);
+  }
+
+  protected selectNewCategoryColor(color: string): void {
+    this.newCategoryColor.set(color);
+  }
+
+  /** (submit) statt (ngSubmit): siehe onAddExpenseSubmit()-Kommentar oben —
+   * dasselbe fehlende-NgForm-Problem gilt für jedes Formular hier. */
+  protected onNewCategorySubmit(event: Event): void {
+    event.preventDefault();
+    this.submitNewCategory();
+  }
+
+  protected submitNewCategory(): void {
+    const name = this.newCategoryName().trim();
+    if (!name) {
+      this.newCategoryError.set('Bitte einen Namen eingeben.');
+      return;
+    }
+    const iconKey = this.newCategoryIconKey();
+    if (iconKey === null) {
+      this.newCategoryError.set('Bitte ein Icon auswählen.');
+      return;
+    }
+    const color = this.newCategoryColor();
+    if (color === null) {
+      this.newCategoryError.set('Bitte eine Farbe auswählen.');
+      return;
+    }
+
+    this.newCategoryError.set(null);
+    this.newCategorySubmitting.set(true);
+    this.provider.createCategory(name, color, iconKey, null).subscribe({
+      next: () => {
+        this.newCategorySubmitting.set(false);
+        this.closeNewCategoryModal();
+        // financeState.invalidieren(): die neue Kategorie erscheint sofort
+        // in der Kategorien-Sektion (Donut/Legende, computed auf
+        // financeState.uebersicht()) — derselbe geteilte Zustand wie im
+        // Dashboard, kein Neuladen nötig. loadCategoryChoices(): die Chips
+        // im "Ausgabe hinzufügen"-Sheet nutzen eine EIGENE Liste (volle
+        // CategoryDto[] inkl. is_default, nicht die Betrags-annotierte
+        // Übersicht-Liste) und müssen deshalb separat aufgefrischt werden.
+        this.financeState.invalidieren();
+        this.loadCategoryChoices();
+      },
+      error: (err: { error?: { name?: string[] } }) => {
+        this.newCategorySubmitting.set(false);
+        const backendMessage = err?.error?.name?.[0];
+        this.newCategoryError.set(backendMessage ?? 'Kategorie konnte nicht angelegt werden. Bitte versuche es erneut.');
       },
     });
   }

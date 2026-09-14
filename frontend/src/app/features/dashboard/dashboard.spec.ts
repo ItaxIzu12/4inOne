@@ -2,12 +2,25 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { Dashboard } from './dashboard';
+import { DemoFinanzenDataProvider } from '../finanzen/demo-finanzen-data-provider';
+import { FINANZEN_DATA_PROVIDER } from '../finanzen/finanzen-data-provider';
+import { FinanzenStateService } from '../finanzen/finanzen-state.service';
 
 describe('Dashboard', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
-      providers: [provideRouter([]), provideHttpClient()],
+      // FinanzenStateService ist bewusst NICHT providedIn:'root' (siehe
+      // finanzen-state.service.ts) — in echten Routen kommt es aus den
+      // route-level providers (app.routes.ts), im Test explizit hier.
+      // DemoFinanzenDataProvider statt HttpClient-Mocking: liefert synchron
+      // (of()) feste Beispieldaten, macht keine echten HTTP-Aufrufe.
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        { provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider },
+        FinanzenStateService,
+      ],
     }).compileComponents();
   });
 

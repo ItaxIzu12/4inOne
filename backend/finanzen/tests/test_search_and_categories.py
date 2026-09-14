@@ -84,15 +84,19 @@ def test_creating_category_with_custom_color_appears_in_api_response():
     client = APIClient()
     client.force_authenticate(user=user)
 
+    # icon_key muss seit der icon_key-Whitelist (finanzen/serializers.py
+    # ALLOWED_CATEGORY_ICON_KEYS, siehe Chat-Verlauf) einer der tatsächlich
+    # im Frontend vorhandenen Icon-Komponenten-Schlüssel sein, kein
+    # beliebiger freier String mehr.
     create_response = client.post(
-        '/api/v1/finanzen/kategorien/', {'name': 'Urlaub', 'color': '#00c8ff', 'icon_key': 'urlaub'}, format='json'
+        '/api/v1/finanzen/kategorien/', {'name': 'Urlaub', 'color': '#00c8ff', 'icon_key': 'freizeit'}, format='json'
     )
     assert create_response.status_code == 201
     assert create_response.data['color'] == '#00c8ff'
-    assert create_response.data['icon_key'] == 'urlaub'
+    assert create_response.data['icon_key'] == 'freizeit'
 
     list_response = client.get('/api/v1/finanzen/kategorien/')
-    assert any(c['color'] == '#00c8ff' and c['icon_key'] == 'urlaub' for c in list_response.data)
+    assert any(c['color'] == '#00c8ff' and c['icon_key'] == 'freizeit' for c in list_response.data)
 
 
 def test_creating_category_without_a_household_fails_cleanly_not_with_a_500():

@@ -202,6 +202,34 @@ export class DemoFinanzenDataProvider implements FinanzenDataProvider {
     return of(updated);
   }
 
+  /** Dieselben Regeln wie das echte Backend (finanzen/serializers.py/
+   * views.py) — Namens-Eindeutigkeit und 15er-Obergrenze — damit sich die
+   * Demo beim Ausprobieren nicht anders verhält als der echte Betrieb.
+   * is_default wird hier NIE gesetzt, exakt wie serverseitig. */
+  createCategory(
+    name: string,
+    color: string,
+    iconKey: string,
+    monthlyGoal: number | null,
+  ): Observable<CategoryDto> {
+    if (this.categories.some((c) => c.name === name)) {
+      return throwError(() => new Error('Es gibt in diesem Haushalt bereits eine Kategorie mit diesem Namen.'));
+    }
+    if (this.categories.length >= 15) {
+      return throwError(() => new Error('Maximal 15 Kategorien pro Haushalt erlaubt.'));
+    }
+    const category: CategoryDto = {
+      id: `demo-category-new-${this.nextId++}`,
+      name,
+      color,
+      icon_key: iconKey,
+      monthly_goal: monthlyGoal !== null ? String(monthlyGoal) : null,
+      is_default: false,
+    };
+    this.categories = [...this.categories, category];
+    return of(category);
+  }
+
   // ---------- Analysen-Tab (Verfügbares Einkommen) ----------
 
   getAnalysen(): Observable<AnalysenDto> {

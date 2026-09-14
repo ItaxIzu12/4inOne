@@ -3,6 +3,7 @@ import { authGuard } from './core/auth/auth.guard';
 import { FINANZEN_DATA_PROVIDER } from './features/finanzen/finanzen-data-provider';
 import { DemoFinanzenDataProvider } from './features/finanzen/demo-finanzen-data-provider';
 import { RealFinanzenDataProvider } from './features/finanzen/real-finanzen-data-provider';
+import { FinanzenStateService } from './features/finanzen/finanzen-state.service';
 
 // Dashboard und Finanzen sind JEWEILS EIN Component, das an zwei Stellen in
 // den Routen referenziert wird — einmal öffentlich (Demo-Daten), einmal
@@ -18,7 +19,14 @@ export const routes: Routes = [
     // DemoFinanzenDataProvider — feste Beispieldaten, keine HTTP-Aufrufe
     // (siehe demo-finanzen-data-provider.ts). isDemo:true blendet die
     // Erklär-Kopfzeile ein (siehe app.ts/app.html, shared/demo-banner).
-    providers: [{ provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider }],
+    // FinanzenStateService HIER (nicht providedIn:'root') registriert: pro
+    // Routengruppe entsteht dadurch genau eine Instanz, korrekt an
+    // DemoFinanzenDataProvider gebunden und zwischen Dashboard + Finanzen
+    // dieser Gruppe geteilt (siehe finanzen-state.service.ts-Docstring).
+    providers: [
+      { provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider },
+      FinanzenStateService,
+    ],
     children: [
       {
         path: '',
@@ -40,7 +48,10 @@ export const routes: Routes = [
     // blockiert automatisch auch alle children). RealFinanzenDataProvider
     // ruft die echten /api/v1/finanzen/-Endpunkte auf.
     canActivate: [authGuard],
-    providers: [{ provide: FINANZEN_DATA_PROVIDER, useClass: RealFinanzenDataProvider }],
+    providers: [
+      { provide: FINANZEN_DATA_PROVIDER, useClass: RealFinanzenDataProvider },
+      FinanzenStateService,
+    ],
     children: [
       {
         path: '',

@@ -22,6 +22,7 @@ export interface FinanzenDataProvider {
   deleteTransaction(id: number | string): Observable<void>;
   getCategories(): Observable<CategoryDto[]>;
   updateCategoryGoal(id: number | string, monthlyGoal: number | null): Observable<CategoryDto>;
+  createCategory(name: string, color: string, iconKey: string, monthlyGoal: number | null): Observable<CategoryDto>;
 
   // ---------- Analysen-Tab (Verfügbares Einkommen) ----------
   getAnalysen(): Observable<AnalysenDto>;

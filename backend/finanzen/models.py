@@ -29,7 +29,7 @@ class Category(models.Model):
     """
 
     household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='categories')
-    name = models.CharField(max_length=80)
+    name = models.CharField(max_length=100)
     color = models.CharField(max_length=7, default='#5b3fd6', help_text='Hex-Farbwert, z. B. #5b3fd6.')
     icon_key = models.CharField(max_length=30, default='sonstiges')
     # Optionales monatliches Ausgabenziel — OverviewView (finanzen/views.py)

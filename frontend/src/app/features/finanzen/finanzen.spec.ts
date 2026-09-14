@@ -1,6 +1,16 @@
 import { TestBed } from '@angular/core/testing';
+import { Observable, of, throwError } from 'rxjs';
 import { DemoFinanzenDataProvider } from './demo-finanzen-data-provider';
-import { FINANZEN_DATA_PROVIDER } from './finanzen-data-provider';
+import { FINANZEN_DATA_PROVIDER, FinanzenDataProvider } from './finanzen-data-provider';
+import { FinanzenStateService } from './finanzen-state.service';
+import {
+  AnalysenDto,
+  CategoryDto,
+  OverviewDto,
+  RecurringDeductionDto,
+  TransactionDto,
+  TransactionPage,
+} from './finanzen-api.service';
 import { Finanzen } from './finanzen';
 
 describe('Finanzen', () => {
@@ -10,8 +20,13 @@ describe('Finanzen', () => {
       // DemoFinanzenDataProvider statt HttpClient: liefert synchron (of())
       // feste Beispieldaten, macht KEINE HTTP-Aufrufe — dieselbe
       // Implementierung, die auch die öffentliche Demo-Route nutzt (siehe
-      // app.routes.ts).
-      providers: [{ provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider }],
+      // app.routes.ts). FinanzenStateService ist bewusst NICHT
+      // providedIn:'root' (siehe finanzen-state.service.ts) — muss hier wie
+      // in den echten Routen (app.routes.ts) explizit bereitgestellt werden.
+      providers: [
+        { provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider },
+        FinanzenStateService,
+      ],
     }).compileComponents();
   });
 
@@ -331,5 +346,182 @@ describe('Finanzen', () => {
       expect(item.querySelector('.insight-item__icon svg')).toBeTruthy();
       expect(item.querySelector('p')?.textContent?.length).toBeGreaterThan(0);
     }
+  });
+
+  // ---------- "Kategorie hinzufügen" ----------
+
+  it('the "+" button opens a sheet with name field, icon tiles and color swatches', () => {
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
+    let compiled = fixture.nativeElement as HTMLElement;
+
+    (compiled.querySelector('.btn-add-category') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('#new-category-name')).toBeTruthy();
+    expect(compiled.querySelectorAll('.icon-tile').length).toBeGreaterThanOrEqual(8);
+    expect(compiled.querySelectorAll('.color-swatch').length).toBeGreaterThanOrEqual(6);
+  });
+
+  it('creating a category requires a name, an icon and a color', () => {
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
+    let compiled = fixture.nativeElement as HTMLElement;
+
+    (compiled.querySelector('.btn-add-category') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    compiled = fixture.nativeElement as HTMLElement;
+
+    (compiled.querySelector('.add-expense-form .btn-primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('.field-error')?.textContent).toContain('Namen');
+  });
+
+  it('creating a new category adds it to the legend AND makes it available as a chip in "Ausgabe hinzufügen", without a reload', () => {
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
+    let compiled = fixture.nativeElement as HTMLElement;
+
+    (compiled.querySelector('.btn-add-category') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    compiled = fixture.nativeElement as HTMLElement;
+
+    const nameInput = compiled.querySelector('#new-category-name') as HTMLInputElement;
+    nameInput.value = 'Freizeit';
+    nameInput.dispatchEvent(new Event('input'));
+    (compiled.querySelector('.icon-tile') as HTMLButtonElement).click();
+    (compiled.querySelector('.color-swatch') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (compiled.querySelector('.add-expense-form .btn-primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    compiled = fixture.nativeElement as HTMLElement;
+
+    // Sofort in der Kategorien-Legende (Donut-Sektion) sichtbar.
+    expect(compiled.querySelector('.legend')?.textContent).toContain('Freizeit');
+
+    // Sofort auch als Chip im "Ausgabe hinzufügen"-Sheet, ohne Neuladen.
+    (compiled.querySelector('.btn-primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    compiled = fixture.nativeElement as HTMLElement;
+    const chips = Array.from(compiled.querySelectorAll('.category-chip')).map((el) => el.textContent?.trim());
+    expect(chips.some((label) => label?.includes('Freizeit'))).toBe(true);
+  });
+
+  it('rejects a duplicate category name against an existing default category', () => {
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
+    let compiled = fixture.nativeElement as HTMLElement;
+
+    (compiled.querySelector('.btn-add-category') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    compiled = fixture.nativeElement as HTMLElement;
+
+    const nameInput = compiled.querySelector('#new-category-name') as HTMLInputElement;
+    nameInput.value = 'Fixkosten'; // bereits eine der drei Demo-Standardkategorien
+    nameInput.dispatchEvent(new Event('input'));
+    (compiled.querySelector('.icon-tile') as HTMLButtonElement).click();
+    (compiled.querySelector('.color-swatch') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (compiled.querySelector('.add-expense-form .btn-primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('.field-error')).toBeTruthy();
+  });
+});
+
+// ---------- Fehlerzustand beim Laden (SCHRITT 5B) ----------
+// Eigener describe-Block mit einem fehlschlagenden Fake-Provider (statt
+// DemoFinanzenDataProvider, das per of() nie fehlschlägt) — simuliert einen
+// Netzwerk-/Serverfehler von RealFinanzenDataProvider, ohne einen echten
+// HttpClient/Backend zu brauchen.
+describe('Finanzen — Fehlerzustand beim Laden der Übersicht', () => {
+  class FailingFinanzenDataProvider implements FinanzenDataProvider {
+    getOverviewCallCount = 0;
+
+    getOverview(): Observable<OverviewDto> {
+      this.getOverviewCallCount++;
+      return throwError(() => new Error('Netzwerkfehler'));
+    }
+    searchTransactions(): Observable<TransactionPage> {
+      return of({ next: null, previous: null, results: [] });
+    }
+    addTransaction(): Observable<TransactionDto> {
+      return throwError(() => new Error('nicht relevant für diesen Test'));
+    }
+    updateTransaction(): Observable<TransactionDto> {
+      return throwError(() => new Error('nicht relevant für diesen Test'));
+    }
+    deleteTransaction(): Observable<void> {
+      return throwError(() => new Error('nicht relevant für diesen Test'));
+    }
+    getCategories(): Observable<CategoryDto[]> {
+      return of([]);
+    }
+    updateCategoryGoal(): Observable<CategoryDto> {
+      return throwError(() => new Error('nicht relevant für diesen Test'));
+    }
+    createCategory(): Observable<CategoryDto> {
+      return throwError(() => new Error('nicht relevant für diesen Test'));
+    }
+    getAnalysen(): Observable<AnalysenDto> {
+      return throwError(() => new Error('nicht relevant für diesen Test'));
+    }
+    updateOwnIncome(): Observable<{ monthly_income: string | null }> {
+      return throwError(() => new Error('nicht relevant für diesen Test'));
+    }
+    updateHouseholdBuffer(): Observable<{ monthly_buffer: string }> {
+      return throwError(() => new Error('nicht relevant für diesen Test'));
+    }
+    addRecurringDeduction(): Observable<RecurringDeductionDto> {
+      return throwError(() => new Error('nicht relevant für diesen Test'));
+    }
+    updateRecurringDeduction(): Observable<RecurringDeductionDto> {
+      return throwError(() => new Error('nicht relevant für diesen Test'));
+    }
+    deleteRecurringDeduction(): Observable<void> {
+      return throwError(() => new Error('nicht relevant für diesen Test'));
+    }
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [Finanzen],
+      providers: [
+        { provide: FINANZEN_DATA_PROVIDER, useClass: FailingFinanzenDataProvider },
+        FinanzenStateService,
+      ],
+    }).compileComponents();
+  });
+
+  it('shows a clear error state with a retry button instead of a silently empty/zero account', () => {
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const errorBlock = compiled.querySelector('.load-error');
+    expect(errorBlock).toBeTruthy();
+    expect(errorBlock?.querySelector('button')?.textContent).toContain('Erneut versuchen');
+
+    // Der normale Seiteninhalt (Budget-Betrag, Haushalts-Streifen) darf
+    // NICHT parallel sichtbar sein — sonst könnte ein Fehler mit einem
+    // echten, aber leeren Account verwechselt werden.
+    expect(compiled.querySelector('.balance-amount')).toBeFalsy();
+    expect(compiled.querySelector('.household-strip')).toBeFalsy();
+  });
+
+  it('clicking retry calls getOverview again', () => {
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
+    const provider = TestBed.inject(FINANZEN_DATA_PROVIDER) as FailingFinanzenDataProvider;
+    const callsBeforeRetry = provider.getOverviewCallCount;
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    (compiled.querySelector('.load-error button') as HTMLButtonElement).click();
+
+    expect(provider.getOverviewCallCount).toBe(callsBeforeRetry + 1);
   });
 });

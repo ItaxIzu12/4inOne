@@ -51,6 +51,10 @@ export class RealFinanzenDataProvider implements FinanzenDataProvider {
     return this.api.updateCategoryGoal(id, monthlyGoal);
   }
 
+  createCategory(name: string, color: string, iconKey: string, monthlyGoal: number | null): Observable<CategoryDto> {
+    return this.api.createCategory(name, color, iconKey, monthlyGoal);
+  }
+
   getAnalysen(): Observable<AnalysenDto> {
     return this.api.getAnalysen();
   }

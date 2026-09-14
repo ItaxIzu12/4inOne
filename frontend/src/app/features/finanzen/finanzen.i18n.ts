@@ -9,6 +9,13 @@
 export const FINANZEN_I18N = {
   eyebrow: 'Finanzen',
   pageTitle: 'August im Überblick',
+
+  // Fehlerzustand beim Laden der Übersicht (SCHRITT 5B) — ersetzt den
+  // gesamten Tab-Inhalt, damit ein fehlgeschlagener Ladevorgang nie mit
+  // einem echten, aber leeren Account verwechselt werden kann.
+  loadErrorHeading: 'Daten konnten nicht geladen werden',
+  loadErrorMessage: 'Das kann an einer kurzzeitig gestörten Verbindung liegen — bitte versuche es erneut.',
+  loadErrorRetry: 'Erneut versuchen',
   addExpense: 'Ausgabe hinzufügen',
 
   tablistLabel: 'Finanzen-Ansichten',
@@ -43,6 +50,15 @@ export const FINANZEN_I18N = {
   noCategoriesYet: 'Noch keine Ausgaben in diesem Monat.',
   legendGoalPrefix: ' von ',
   editGoalLabel: 'Ziel bearbeiten',
+  addCategoryButton: 'Kategorie hinzufügen',
+  addCategoryModalHeading: 'Kategorie hinzufügen',
+  addCategoryModalCloseLabel: 'Formular schließen',
+  newCategoryNameLabel: 'Name',
+  newCategoryNamePlaceholder: 'z. B. Freizeit',
+  newCategoryIconLabel: 'Icon',
+  newCategoryColorLabel: 'Farbe',
+  newCategorySubmit: 'Kategorie erstellen',
+  newCategorySubmitting: 'Wird erstellt …',
   fairnessHeading: 'Faire Aufteilung',
   fairnessNote: 'Ohne Wertung — nur Transparenz.',
   aboHeading: 'Abo-Radar',

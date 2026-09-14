@@ -10,6 +10,7 @@ import { IconChevron } from '../../shared/icons/icon-chevron';
 import { IconTwoFactor } from '../../shared/icons/icon-two-factor';
 import { IconInfo } from '../../shared/icons/icon-info';
 import { Onboarding } from '../../shared/onboarding/onboarding';
+import { FinanzenStateService } from '../finanzen/finanzen-state.service';
 
 interface WeekEntry {
   id: string;
@@ -63,6 +64,16 @@ export class Dashboard {
   // öffentlichen Demo-Route, siehe Chat-Verlauf TEIL 4).
   protected readonly auth = inject(AuthService);
 
+  // Geteilter Übersicht-Zustand mit der Finanzen-Seite (siehe Chat-Verlauf:
+  // "Dashboard und Finanzen dürfen niemals auseinanderlaufen") — DIESELBE
+  // Service-Instanz wie in features/finanzen/finanzen.ts (pro Routengruppe
+  // einmal bereitgestellt, siehe app.routes.ts), ruft denselben
+  // /api/v1/finanzen/uebersicht/-Endpunkt auf, keine eigene Berechnung mehr.
+  // budget war vorher ein hartkodiertes Platzhalter-Objekt ({amount:1240,
+  // spent:794}) — komplett losgelöst von echten Daten und sogar von den
+  // eigenen Demo-Werten der Finanzen-Seite abweichend (1950/1240 dort).
+  protected readonly financeState = inject(FinanzenStateService);
+
   protected readonly weekEntries = WEEK_ENTRIES;
 
   protected readonly greeting = computed(() => {
@@ -71,13 +82,27 @@ export class Dashboard {
     return firstName ? `Guten Tag, ${firstName}` : 'Guten Tag';
   });
 
-  protected readonly budget = {
-    amount: 1240,
-    spent: 794,
-  };
+  // Gleiche Feldnamen/Bedeutung wie features/finanzen/finanzen.ts budget()
+  // (planned = diesen Monat ausgegeben, total = Budget-Ziel) — bewusst NICHT
+  // mehr {amount, spent} wie im alten Platzhalter: unterschiedliche Namen
+  // für dieselbe Kennzahl waren genau die Falle, die zum eigentlichen Bug
+  // hier geführt hat (siehe Chat-Verlauf: die Hero-Zahl zeigte zunächst
+  // budget.total statt budget.planned — bei einem frischen Haushalt ohne
+  // Budget-Datensatz immer 0, obwohl bereits ausgegeben wurde).
+  protected readonly budget = computed(() => {
+    const u = this.financeState.uebersicht();
+    return u ? { planned: Number(u.budget.planned), total: Number(u.budget.total) } : { planned: 0, total: 0 };
+  });
 
-  protected readonly budgetPercent = computed(() => Math.round((this.budget.spent / this.budget.amount) * 100));
-  protected readonly budgetRemaining = computed(() => this.budget.amount - this.budget.spent);
+  protected readonly budgetPercent = computed(() => {
+    const { planned, total } = this.budget();
+    return total > 0 ? Math.round((planned / total) * 100) : 0;
+  });
+  protected readonly budgetRemaining = computed(() => this.budget().total - this.budget().planned);
+
+  constructor() {
+    this.financeState.laden();
+  }
 
   // Für die eigene Bottom-Nav unten (mobil) — dasselbe /app- vs. /-Muster
   // wie im globalen Header (shared/header/header.ts homeLink/finanzenLink).

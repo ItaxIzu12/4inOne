@@ -19,8 +19,45 @@ _COLOR_RE = re.compile(r'^#[0-9A-Fa-f]{6}$')
 # Budget-/Fairness-Berechnung verfälschen würde (PRÜFUNG 3).
 _MAX_AMOUNT = Decimal('1000000')
 
+# Muss 1:1 mit den tatsächlich vorhandenen Icon-Komponenten im Frontend
+# übereinstimmen (frontend/src/app/shared/icons/category-icon.map.ts) — ein
+# beliebiger freier String würde sonst später einen icon_key erlauben, für
+# den es im Frontend keine passende Icon-Komponente gibt (fällt dort zwar
+# per resolveCategoryIcon() auf "sonstiges" zurück statt abzustürzen, wäre
+# aber eine stille, überraschende Fehlanzeige statt einer klaren 400-Antwort
+# hier beim Anlegen). Bei einer neuen Icon-Komponente MUSS dieser Set hier
+# UND die Map im Frontend gemeinsam erweitert werden.
+ALLOWED_CATEGORY_ICON_KEYS = {
+    'fixkosten',
+    'haushalt',
+    'sonstiges',
+    'freizeit',
+    'gesundheit',
+    'bildung',
+    'transport',
+    'geschenke',
+}
+
+# Sinnvolle Obergrenze pro Haushalt (siehe Chat-Verlauf) — verhindert
+# versehentliche/missbräuchliche Massenerstellung (z. B. durch einen
+# Frontend-Bug in einer Schleife), ohne den normalen Gebrauch (eine
+# Handvoll frei definierter Kategorien zusätzlich zu den drei Standard-
+# Kategorien) einzuschränken.
+MAX_CATEGORIES_PER_HOUSEHOLD = 15
+
 
 class CategorySerializer(serializers.ModelSerializer):
+    # required=True überschreibt DRFs automatische Ableitung aus dem Modell:
+    # beide Felder haben dort einen default-Wert (color='#5b3fd6',
+    # icon_key='sonstiges'), wodurch ModelSerializer sie sonst als optional
+    # einstufen würde — beim Anlegen einer NEUEN, selbst benannten Kategorie
+    # sollen Farbe/Icon aber bewusst gewählt werden, kein stiller Rückfall
+    # auf den Modell-Default. Bei PATCH (partial=True, siehe
+    # CategoryViewSet) bleibt das folgenlos — DRF verlangt required-Felder
+    # dort ohnehin nur, wenn sie im Request-Body auftauchen.
+    color = serializers.CharField(required=True)
+    icon_key = serializers.CharField(required=True)
+
     class Meta:
         model = Category
         fields = ['id', 'name', 'color', 'icon_key', 'monthly_goal', 'is_default']
@@ -28,6 +65,10 @@ class CategorySerializer(serializers.ModelSerializer):
         # Anlegen gesetzt (finanzen/signals.py), nie vom Client — sonst
         # könnte sich eine selbst angelegte Kategorie als "Standard"
         # ausgeben oder umgekehrt der Namensschutz unten umgangen werden.
+        # Für vom NUTZER neu angelegte Kategorien bleibt is_default beim
+        # Model-Default False (read-only heißt: der Client kann es nicht
+        # setzen, nicht dass es fehlt) — CategoryViewSet.perform_create()
+        # schickt es ebenfalls nie mit.
         #
         # Mass-Assignment-Hinweis (PRÜFUNG 1): `fields` ist eine explizite
         # Whitelist, kein `fields = '__all__'` — household ist hier bewusst
@@ -42,11 +83,39 @@ class CategorySerializer(serializers.ModelSerializer):
         # icon_key bleiben für sie trotzdem änderbar, nur der Name nicht.
         if self.instance is not None and self.instance.is_default and value != self.instance.name:
             raise serializers.ValidationError('Der Name einer Standard-Kategorie kann nicht geändert werden.')
+
+        # Name muss innerhalb des Haushalts eindeutig sein. Die DB hat zwar
+        # bereits unique_category_per_household (finanzen/models.py) — die
+        # würde bei einer Verletzung aber als roher IntegrityError bis zum
+        # Client durchschlagen (500 statt einer sauberen 400-Antwort), weil
+        # DRF den Validator für diesen Constraint nicht automatisch bauen
+        # kann: household ist gar kein Serializer-Feld (siehe
+        # Mass-Assignment-Hinweis oben), DRF bräuchte aber alle
+        # constraint-Felder als Serializer-Felder, um die Prüfung selbst
+        # zu generieren. Deshalb hier explizit, mit Zugriff auf den
+        # Haushalt der ANFRAGENDEN Person (request.user), nie auf einen
+        # vom Client mitgeschickten Wert.
+        request = self.context.get('request')
+        if request is not None:
+            household = request.user.households.first()
+            if household is not None:
+                existing = Category.objects.filter(household=household, name=value)
+                if self.instance is not None:
+                    existing = existing.exclude(pk=self.instance.pk)
+                if existing.exists():
+                    raise serializers.ValidationError('Es gibt in diesem Haushalt bereits eine Kategorie mit diesem Namen.')
         return value
 
     def validate_color(self, value):
         if not _COLOR_RE.match(value):
             raise serializers.ValidationError('Die Farbe muss ein Hex-Wert im Format #RRGGBB sein.')
+        return value
+
+    def validate_icon_key(self, value):
+        if value not in ALLOWED_CATEGORY_ICON_KEYS:
+            raise serializers.ValidationError(
+                f'Unbekannter icon_key. Erlaubt sind: {", ".join(sorted(ALLOWED_CATEGORY_ICON_KEYS))}.'
+            )
         return value
 
 

@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CategoryApiService } from '../../features/finanzen/category-api.service';
+import { FinanzenStateService } from '../../features/finanzen/finanzen-state.service';
 import { HouseholdInviteModalService } from '../../core/household/household-invite-modal.service';
 import { OnboardingApiService } from '../../core/onboarding/onboarding-api.service';
 import { Modal } from '../modal/modal';
@@ -34,8 +35,22 @@ export class Onboarding {
   private readonly inviteModal = inject(HouseholdInviteModalService);
   private readonly router = inject(Router);
 
+  // Dieselbe geteilte Übersicht-Instanz wie Dashboard/Finanzen (siehe
+  // Chat-Verlauf SCHRITT 5: "keine separate, zweite hasData()-Prüfung
+  // unabhängig vom FinanzenStateService") — has_transaction aus
+  // OnboardingStatusView wird NICHT mehr verwendet, stattdessen direkt aus
+  // demselben geteilten Zustand abgeleitet, den auch das Budget im
+  // Dashboard nutzt. Sobald die erste Ausgabe erfasst wird, aktualisiert
+  // sich uebersicht() (via invalidieren() in finanzen.ts), und dieser
+  // Schritt verschwindet automatisch — aus DERSELBEN Aktualisierung, die
+  // auch die Budget-Kachel im Dashboard erneuert, nicht zeitversetzt.
+  private readonly financeState = inject(FinanzenStateService);
+  private readonly hasTransaction = computed(() => {
+    const u = this.financeState.uebersicht();
+    return u !== null && Number(u.budget.planned) > 0;
+  });
+
   private readonly status = signal<{
-    has_transaction: boolean;
     has_category: boolean;
     member_count: number;
     mfa_enabled: boolean;
@@ -47,7 +62,7 @@ export class Onboarding {
     const s = this.status();
     if (!s) return [];
     const list: OnboardingStep[] = [];
-    if (!s.has_transaction) {
+    if (!this.hasTransaction()) {
       list.push({
         key: 'transaction',
         title: 'Erste Ausgabe erfassen',

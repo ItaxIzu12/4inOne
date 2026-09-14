@@ -352,6 +352,63 @@ li.tx-row--clickable:hover, li.tx-row--clickable:focus-visible { border-radius: 
 }
 .category-chip:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
 
+/* ---------- "Kategorie hinzufügen" ---------- */
+.btn-add-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 7px 14px;
+  border-radius: var(--radius-buttons);
+  border: 1.5px dashed var(--color-hairline);
+  background: none;
+  color: var(--color-dusk-helper);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-add-category:hover, .btn-add-category:focus-visible {
+  border-color: var(--color-violet-ink);
+  color: var(--color-violet-ink);
+}
+.btn-add-category:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+
+.icon-tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+.icon-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-inputs);
+  border: 1.5px solid var(--color-hairline);
+  background: var(--color-fog-surface);
+  color: var(--color-slate-violet);
+  font-size: 18px;
+  cursor: pointer;
+}
+.icon-tile.is-selected {
+  border-color: var(--color-violet-ink);
+  background: color-mix(in srgb, var(--color-violet-ink) 14%, var(--color-fog-surface));
+  color: var(--color-violet-ink);
+}
+.icon-tile:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+
+.color-swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+.color-swatch.is-selected {
+  border-color: var(--color-midnight-plum);
+  box-shadow: 0 0 0 2px var(--color-card-white), 0 0 0 4px currentColor;
+}
+.color-swatch:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+
 /* ---------- "Beruhigend statt alarmierend" — einzelner, getönter Hinweis ---------- */
 .gentle-note {
   display: flex;
@@ -609,3 +666,18 @@ li.tx-row--clickable:hover, li.tx-row--clickable:focus-visible { border-radius: 
 .insight-item--positiv { background: var(--m-organize-soft); }
 .insight-item--positiv .insight-item__icon { color: var(--color-success-green); }
 .insights-empty { font-size: 13px; color: var(--color-dusk-helper); }
+
+/* ---------- Fehlerzustand beim Laden der Übersicht (SCHRITT 5B) ----------
+   Ersetzt den GESAMTEN Tab-Inhalt (siehe finanzen.html: @if(overviewError())
+   statt der normalen Ansicht) — niemals nur eine kleine Notiz neben sonst
+   leeren 0-€-Werten, die sich wie ein echter, aber leerer Account lesen
+   ließe. */
+.load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 40px 0;
+}
+.load-error h2 { font-size: 20px; }
+.load-error p { font-size: 14px; color: var(--color-dusk-helper); max-width: 46ch; }

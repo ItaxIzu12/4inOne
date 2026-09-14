@@ -127,6 +127,24 @@ export class FinanzenApiService {
     return this.http.get<CategoryDto[]>(`${this.base}/kategorien/`);
   }
 
+  /** Eigene, zusätzliche Kategorie über die drei Standard-Kategorien hinaus
+   * anlegen — is_default wird bewusst NICHT mitgeschickt, das Backend setzt
+   * es ohnehin serverseitig fest auf False (finanzen/serializers.py
+   * CategorySerializer, read_only) und ignoriert einen etwaigen Wert hier. */
+  createCategory(
+    name: string,
+    color: string,
+    iconKey: string,
+    monthlyGoal: number | null,
+  ): Observable<CategoryDto> {
+    return this.http.post<CategoryDto>(`${this.base}/kategorien/`, {
+      name,
+      color,
+      icon_key: iconKey,
+      monthly_goal: monthlyGoal !== null ? String(monthlyGoal) : null,
+    });
+  }
+
   /** Budget-Block + Kategorien-Donut für den laufenden Monat (siehe
    * finanzen/views.py OverviewView) — bewusst NICHT "Faire Aufteilung"/
    * "Abo-Radar", die bleiben Platzhalter (siehe Backend-Docstring). */
