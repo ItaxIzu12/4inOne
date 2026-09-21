@@ -136,7 +136,7 @@ Diese vier Ideen sind das, was Kompass von reinen Budget-Trackern (Finanzguru, Y
 
 **Puffer:** Ein zusätzlicher, frei wählbarer Betrag für Sparen/Rücklagen, der ebenfalls automatisch abgezogen wird, bevor der "wirklich frei verfügbare" Betrag berechnet wird.
 
-**Ergebnis-Kennzahl "Verfügbares Einkommen":** Haushalts-Gesamteinkommen minus Summe aller aktiven festen Abzüge minus Puffer. Das ist eine eigenständige, andere Kennzahl als das bestehende Kategorien-Budget (welches verfolgt, wie viel von einem gesetzten Ziel bereits ausgegeben wurde) — beide ergänzen sich, ersetzen sich nicht.
+**Ergebnis-Kennzahl "Verfügbares Einkommen":** Haushalts-Gesamteinkommen minus Summe aller aktiven festen Abzüge minus alle im Monat erfassten Transaktionen minus Puffer. Das ist eine eigenständige Kennzahl neben dem Kategorien-Budget (welches verfolgt, wie viel von einem gesetzten Ziel bereits ausgegeben wurde) — beide greifen auf dieselben Daten zu und ändern sich bei jeder erfassten Ausgabe gemeinsam; die genaue Formel samt Beispielwerten steht in `ARCHITEKTUR.md`, Abschnitt 2.3. Feste Abzüge werden nie zusätzlich als Transaktion erfasst, sonst zählen sie doppelt.
 
 **"Analyse" — ausdrücklich KEINE echte KI, keine laufenden API-Kosten:** Konsistent mit dem Era-inspirierten Prinzip aus dem Backlog (Abschnitt 12): Die Bewertung "ist das sinnvoll?" erfolgt über feste, im Code hinterlegte Schwellenwert-Regeln (z. B. "Fixkosten über 50 % des Einkommens gelten als hoch", "Puffer unter 10 % des Einkommens ist gering"), nicht über einen Aufruf an ein Sprachmodell. Das vermeidet genau die Kosten-/Sicherheitsprobleme, die bei der ursprünglich erwogenen, dann verworfenen Prompt-Engineering-Idee identifiziert wurden.
 

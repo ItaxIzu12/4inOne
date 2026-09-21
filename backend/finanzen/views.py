@@ -1,7 +1,6 @@
 from decimal import Decimal
 
 from django.db.models import Q, Sum
-from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import CursorPagination
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
@@ -12,8 +11,9 @@ from rest_framework.viewsets import ModelViewSet
 from core.mfa_views import user_has_mfa_enabled
 from core.models import HouseholdMembership
 from core.permissions import HouseholdScopedPermission
+from finanzen import services
 from finanzen.insights import berechne_insights
-from finanzen.models import Account, Budget, Category, RecurringDeduction, Transaction
+from finanzen.models import Account, Category, RecurringDeduction, Transaction
 from finanzen.serializers import (
     MAX_CATEGORIES_PER_HOUSEHOLD,
     CategorySerializer,
@@ -185,12 +185,9 @@ class OverviewView(APIView):
     bewusst EIN Endpunkt statt zwei, da beide Werte aus denselben
     Transaktionen des laufenden Monats berechnet werden.
 
-    "Faire Aufteilung" und "Abo-Radar" liefert dieser Endpunkt bewusst
-    NICHT: Transaction hat kein Feld für "wer hat bezahlt", und es gibt
-    noch kein Abo-Konzept im Datenmodell — beides bräuchte eine echte
-    Datenmodell-Erweiterung (neues Feld/Model + Migration), keine reine
-    Aggregation bestehender Daten, siehe Chat-Verlauf. Diese beiden Kacheln
-    bleiben im Frontend bewusst Platzhalter.
+    Kategorie-"ausgegeben" = Transaktionen des Monats + zugeordnete aktive
+    feste Abzüge (finanzen/services.py). "Abo-Radar" liefert dieser Endpunkt
+    noch nicht — es gibt kein Abo-Konzept im Datenmodell.
 
     Kein HouseholdScopedPermission nötig (anders als bei Transaction/
     Category oben): es gibt hier keine client-seitig übergebene ID, die
@@ -214,46 +211,31 @@ class OverviewView(APIView):
                 }
             )
 
-        month_start = timezone.now().date().replace(day=1)
-
-        total_budget = (
-            Budget.objects.filter(household=household, month=month_start).aggregate(total=Sum('amount'))['total']
-            or Decimal('0')
-        )
-
-        transactions_this_month = Transaction.objects.filter(account__household=household, occurred_at__gte=month_start)
-        total_spent = transactions_this_month.aggregate(total=Sum('amount'))['total'] or Decimal('0')
-
+        # ausgegeben pro Kategorie = Transaktionen des Monats + zugeordnete
+        # aktive feste Abzüge (finanzen/services.py, FinanzenTab.md §4) —
+        # dieselbe Quelle wie "Verfügbares Einkommen" im Analysen-Tab, damit
+        # eine Ausgabe BEIDE Ansichten gleichzeitig verändert.
+        #
         # ALLE Kategorien des Haushalts, nicht nur die mit Ausgaben diesen
         # Monat — sonst verschwindet eine Kategorie mit Ziel aber noch ohne
-        # Ausgabe komplett aus der Übersicht, obwohl ihr Ziel (monthly_goal)
-        # trotzdem angezeigt werden soll. filter() INNERHALB von Sum() statt
-        # .filter() auf dem Queryset, damit Kategorien ohne Treffer als 0 €
-        # erscheinen (LEFT JOIN-Semantik), nicht herausfallen (INNER JOIN).
-        categories_qs = (
-            Category.objects.filter(household=household)
-            .annotate(
-                spent=Sum(
-                    'transactions__amount',
-                    filter=Q(transactions__occurred_at__gte=month_start, transactions__deleted_at__isnull=True),
-                )
-            )
-            .order_by('name')
-        )
+        # Ausgabe komplett aus der Übersicht.
+        spent_by_category = services.category_spent(household)
+        categories_qs = Category.objects.filter(household=household).order_by('name')
+        total_spent, total_goal = services.budget_totals(household)
 
         # Faire Aufteilung ergibt bei einer Person keinen Sinn — das Feld
         # existiert dann gar nicht im JSON (nicht null/0), das Frontend prüft
         # per @if auf Anwesenheit (siehe features/finanzen/finanzen.ts).
         member_count = household.members.count()
         response_data = {
-            'budget': {'planned': str(total_spent), 'total': str(total_budget)},
+            'budget': {'planned': _money(total_spent), 'total': _money(total_goal)},
             'categories': [
                 {
                     'id': category.id,
                     'name': category.name,
                     'color': category.color,
                     'icon_key': category.icon_key,
-                    'amount': str(category.spent or Decimal('0')),
+                    'amount': _money(spent_by_category.get(category.id, Decimal('0'))),
                     'monthly_goal': str(category.monthly_goal) if category.monthly_goal is not None else None,
                 }
                 for category in categories_qs
@@ -265,7 +247,8 @@ class OverviewView(APIView):
 
         if member_count >= 2:
             fairness_totals = (
-                transactions_this_month.exclude(created_by__isnull=True)
+                services.month_transactions(household)
+                .exclude(created_by__isnull=True)
                 .values('created_by__id', 'created_by__first_name', 'created_by__email')
                 .annotate(amount=Sum('amount'))
             )
@@ -320,7 +303,8 @@ class OnboardingStatusView(APIView):
 
 class AnalysenView(APIView):
     """Aggregierte Zahlen für den Analysen-Tab (finanzen.ts) — "Verfügbares
-    Einkommen" + regelbasierte Insights (finanzen/insights.py, KEIN KI-/
+    Einkommen" (Gesamteinkommen − aktive feste Abzüge − ALLE Transaktionen
+    des Monats − Puffer, siehe finanzen/services.py) + regelbasierte Insights (finanzen/insights.py, KEIN KI-/
     LLM-Aufruf, siehe Chat-Verlauf). Analog zu OverviewView oben: ein
     Endpunkt für mehrere zusammengehörige, live berechnete Werte.
 
@@ -345,6 +329,7 @@ class AnalysenView(APIView):
                     'monthly_income': None,
                     'household_total_income': '0.00',
                     'monthly_buffer': '0.00',
+                    'transactions_total': '0.00',
                     'recurring_deductions': [],
                     'verfuegbares_einkommen': '0.00',
                     'insights': [],
@@ -356,29 +341,25 @@ class AnalysenView(APIView):
             'monthly_income'
         ]
 
-        household_total_income = (
-            HouseholdMembership.objects.filter(household=household, monthly_income__isnull=False).aggregate(
-                total=Sum('monthly_income')
-            )['total']
-            or Decimal('0')
-        )
+        # Alle Summen kommen aus finanzen/services.py — dieselben Funktionen
+        # wie OverviewView, damit "Verfügbares Einkommen" (hier) und die
+        # Kategorie-Beträge (Übersicht) aus denselben Zahlen entstehen.
+        household_total_income = services.household_income_total(household)
+        active_deductions_total = services.active_deductions_total(household)
+        month_transactions_total = services.transactions_total(household)
 
         deductions_qs = (
             RecurringDeduction.objects.filter(household=household).select_related('category').order_by('name')
         )
-        active_deductions_total = (
-            deductions_qs.filter(active=True).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-        )
-
-        verfuegbares_einkommen = household_total_income - active_deductions_total - household.monthly_buffer
 
         return Response(
             {
                 'monthly_income': own_income,
                 'household_total_income': _money(household_total_income),
                 'monthly_buffer': _money(household.monthly_buffer),
+                'transactions_total': _money(month_transactions_total),
                 'recurring_deductions': RecurringDeductionSerializer(deductions_qs, many=True).data,
-                'verfuegbares_einkommen': _money(verfuegbares_einkommen),
+                'verfuegbares_einkommen': _money(services.verfuegbares_einkommen(household)),
                 'insights': berechne_insights(household_total_income, active_deductions_total, household.monthly_buffer),
             }
         )

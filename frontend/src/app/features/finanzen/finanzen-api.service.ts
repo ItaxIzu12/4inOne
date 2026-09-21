@@ -81,6 +81,10 @@ export interface AnalysenDto {
   monthly_income: string | null;
   household_total_income: string;
   monthly_buffer: string;
+  // Summe ALLER Transaktionen des laufenden Monats — wird (neben aktiven
+  // festen Abzügen und Puffer) vom Haushalts-Gesamteinkommen abgezogen, siehe
+  // finanzen/services.py verfuegbares_einkommen().
+  transactions_total: string;
   recurring_deductions: RecurringDeductionDto[];
   verfuegbares_einkommen: string;
   insights: InsightDto[];

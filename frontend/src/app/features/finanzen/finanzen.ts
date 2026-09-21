@@ -110,13 +110,15 @@ export class Finanzen {
   // Ansichten vorzugaukeln (siehe Kritik im Entwurfsgespräch: kein
   // Envelope-Budgeting, keine Monats-Vergleiche implementiert).
   protected readonly activeTab = signal<'uebersicht' | 'analysen'>('uebersicht');
-  private analysenLoaded = false;
 
+  // Kein einmaliges Lazy-Loading der Analysen mehr (früher: analysenLoaded-
+  // Flag): beide Datensätze liegen im geteilten FinanzenStateService und
+  // werden bei jeder Schreiboperation gemeinsam neu geladen — sonst zeigte
+  // der Analysen-Tab nach dem ersten Besuch einen veralteten Stand, obwohl
+  // in der Übersicht inzwischen Ausgaben erfasst wurden.
   protected selectTab(tab: 'uebersicht' | 'analysen'): void {
     this.activeTab.set(tab);
-    if (tab === 'analysen' && !this.analysenLoaded) {
-      this.analysenLoaded = true;
-      this.loadAnalysen();
+    if (tab === 'analysen') {
       this.ensureCategoryChoicesLoaded();
     }
   }
@@ -235,17 +237,23 @@ export class Finanzen {
   // Demo-Modus) — beides reine if/else-Prozent-Regeln, AUSDRÜCKLICH KEIN
   // KI-/LLM-Aufruf. Diese Komponente zeigt die fertigen Hinweis-Objekte nur
   // an, berechnet selbst nichts.
-  protected readonly verfuegbaresEinkommen = signal(0);
-  protected readonly householdTotalIncome = signal(0);
-  protected readonly monthlyBufferValue = signal(0);
-  protected readonly deductions = signal<RecurringDeductionDto[]>([]);
+  //
+  // Alles unten sind computed() auf financeState.analysen() — EINE Quelle,
+  // dieselbe wie für die Übersicht (siehe finanzen-state.service.ts).
+  protected readonly verfuegbaresEinkommen = computed(() => Number(this.financeState.analysen()?.verfuegbares_einkommen ?? 0));
+  protected readonly householdTotalIncome = computed(() => Number(this.financeState.analysen()?.household_total_income ?? 0));
+  protected readonly monthlyBufferValue = computed(() => Number(this.financeState.analysen()?.monthly_buffer ?? 0));
+  protected readonly transactionsTotal = computed(() => Number(this.financeState.analysen()?.transactions_total ?? 0));
+  protected readonly deductions = computed<RecurringDeductionDto[]>(() => this.financeState.analysen()?.recurring_deductions ?? []);
   protected readonly activeDeductionsTotal = computed(() =>
     this.deductions()
       .filter((d) => d.active)
       .reduce((sum, d) => sum + Number(d.amount), 0),
   );
-  protected readonly insights = signal<InsightDto[]>([]);
+  protected readonly insights = computed<InsightDto[]>(() => this.financeState.analysen()?.insights ?? []);
+  protected readonly analysenError = this.financeState.analysenError;
 
+  private inputsSeeded = false;
   protected readonly ownIncomeInput = signal('');
   protected readonly ownIncomeSubmitting = signal(false);
   protected readonly ownIncomeError = signal<string | null>(null);
@@ -270,8 +278,20 @@ export class Finanzen {
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.searchSubscription?.unsubscribe());
-    this.financeState.laden();
+    this.financeState.ladenBeide();
     this.loadRecentTransactions();
+
+    // Die zwei Eingabefelder (eigenes Einkommen, Puffer) werden EINMAL aus
+    // dem ersten verfügbaren Analysen-Stand befüllt — nicht bei jeder
+    // Aktualisierung, sonst überschriebe der Neuladen nach einer fremden
+    // Schreiboperation (z. B. neue Ausgabe) einen gerade getippten Wert.
+    effect(() => {
+      const analysen = this.financeState.analysen();
+      if (analysen === null || this.inputsSeeded) return;
+      this.inputsSeeded = true;
+      this.ownIncomeInput.set(analysen.monthly_income ?? '');
+      this.bufferInput.set(analysen.monthly_buffer);
+    });
 
     // Fokus-Nachziehung als effect() statt direkt in requestDelete()/
     // cancelDelete(): ein queueMicrotask() direkt im Click-Handler läuft in
@@ -299,10 +319,10 @@ export class Finanzen {
     });
   }
 
-  /** Vom "Erneut versuchen"-Button im Fehlerzustand — lädt dieselben zwei
+  /** Vom "Erneut versuchen"-Button im Fehlerzustand — lädt dieselben
    * Quellen wie der initiale Aufruf im Konstruktor erneut. */
   protected retryLoadOverview(): void {
-    this.financeState.laden();
+    this.financeState.ladenBeide();
     this.loadRecentTransactions();
   }
 
@@ -314,21 +334,6 @@ export class Finanzen {
       percent: row.percentage,
       colorVar: FAIRNESS_COLOR_PALETTE[index % FAIRNESS_COLOR_PALETTE.length],
     }));
-  }
-
-  private loadAnalysen(): void {
-    this.provider.getAnalysen().subscribe({
-      next: (analysen) => {
-        this.ownIncomeInput.set(analysen.monthly_income ?? '');
-        this.householdTotalIncome.set(Number(analysen.household_total_income));
-        this.monthlyBufferValue.set(Number(analysen.monthly_buffer));
-        this.bufferInput.set(analysen.monthly_buffer);
-        this.deductions.set(analysen.recurring_deductions);
-        this.verfuegbaresEinkommen.set(Number(analysen.verfuegbares_einkommen));
-        this.insights.set(analysen.insights);
-      },
-      error: () => {},
-    });
   }
 
   private loadRecentTransactions(): void {
@@ -711,7 +716,7 @@ export class Finanzen {
     this.provider.updateOwnIncome(monthlyIncome).subscribe({
       next: () => {
         this.ownIncomeSubmitting.set(false);
-        this.loadAnalysen();
+        this.financeState.invalidieren();
       },
       error: () => {
         this.ownIncomeSubmitting.set(false);
@@ -740,7 +745,7 @@ export class Finanzen {
     this.provider.updateHouseholdBuffer(monthlyBuffer).subscribe({
       next: () => {
         this.bufferSubmitting.set(false);
-        this.loadAnalysen();
+        this.financeState.invalidieren();
       },
       error: () => {
         this.bufferSubmitting.set(false);
@@ -819,7 +824,7 @@ export class Finanzen {
       next: () => {
         this.deductionSubmitting.set(false);
         this.closeDeductionModal();
-        this.loadAnalysen();
+        this.financeState.invalidieren();
       },
       error: () => {
         this.deductionSubmitting.set(false);
@@ -853,7 +858,7 @@ export class Finanzen {
       next: () => {
         this.deductionDeleteSubmitting.set(false);
         this.closeDeductionModal();
-        this.loadAnalysen();
+        this.financeState.invalidieren();
       },
       error: () => {
         this.deductionDeleteSubmitting.set(false);

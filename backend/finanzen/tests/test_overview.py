@@ -1,6 +1,7 @@
 """Übersichts-Endpunkt für Budget-Block + Kategorien-Donut auf der
-Finanzen-Startseite (siehe finanzen/views.py OverviewView-Docstring für die
-bewusste Auslassung von "Faire Aufteilung"/"Abo-Radar")."""
+Finanzen-Startseite (finanzen/views.py OverviewView). Die Formel-Tests
+(Kategorie-"ausgegeben" inkl. fester Abzüge, Verfügbares Einkommen,
+Synchronität beider Endpunkte) stehen in test_monthly_formulas.py."""
 
 from datetime import datetime, timezone as dt_timezone
 from decimal import Decimal
@@ -11,7 +12,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from core.models import Household, HouseholdMembership
-from finanzen.models import Account, Budget, Category, Transaction
+from finanzen.models import Account, Category, Transaction
 
 pytestmark = pytest.mark.django_db
 
@@ -37,9 +38,11 @@ def test_overview_aggregates_budget_and_category_totals_for_current_month_only()
     fixkosten = Category.objects.get(household=household, name='Fixkosten')
     haushalt = Category.objects.get(household=household, name='Haushalt')
 
+    # Das Gesamtbudget ist die Summe der monthly_goal-Werte aller Kategorien
+    # (nicht mehr das frühere, ungenutzte Budget-Modell).
     month_start = _current_month_start()
-    Budget.objects.create(household=household, category=fixkosten, amount='1000.00', month=month_start)
-    Budget.objects.create(household=household, category=haushalt, amount='300.00', month=month_start)
+    Category.objects.filter(pk=fixkosten.pk).update(monthly_goal='1000.00')
+    Category.objects.filter(pk=haushalt.pk).update(monthly_goal='300.00')
 
     Transaction.objects.create(
         account=account, category=fixkosten, amount='680.00', occurred_at=timezone.now(), description='Miete'
@@ -81,8 +84,9 @@ def test_overview_never_includes_another_households_data():
     HouseholdMembership.objects.create(user=user_b, household=household_b)
 
     account_b = Account.objects.create(household=household_b, name='Konto B')
-    category_b = Category.objects.create(household=household_b, name='Geheimkategorie', color='#000000', icon_key='sonstiges')
-    Budget.objects.create(household=household_b, category=category_b, amount='5000.00', month=_current_month_start())
+    category_b = Category.objects.create(
+        household=household_b, name='Geheimkategorie', color='#000000', icon_key='sonstiges', monthly_goal='5000.00'
+    )
     Transaction.objects.create(
         account=account_b, category=category_b, amount='4000.00', occurred_at=timezone.now(), description='Geheim'
     )

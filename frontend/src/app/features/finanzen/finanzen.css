@@ -585,21 +585,12 @@ li.tx-row--clickable:hover, li.tx-row--clickable:focus-visible { border-radius: 
 
 /* ---------- Analysen-Tab (Verfügbares Einkommen) ----------
    income-block wiederverwendet .balance-block/.balance-label/.balance-row/
-   .balance-amount/.balance-sub (siehe oben) — nur der Gradient von
-   .income-amount unterscheidet sich (Violett→Grün statt Violett→Amber),
-   damit die Kennzahl auf den ersten Blick als andere Kennzahl als "Budget"
-   erkennbar bleibt, aber optisch klar zur selben Familie gehört. */
+   .balance-amount/.balance-sub (siehe oben) UNVERÄNDERT — auch den Text-
+   Verlauf linear-gradient(100deg, #5b3fd6, #a15f14). Bewusst KEIN eigener,
+   abweichender Verlauf für .income-amount: beide Hero-Zahlen (Budget in der
+   Übersicht, Verfügbares Einkommen in den Analysen) sollen farblich
+   identisch wirken. */
 .income-block { margin-bottom: 28px; }
-.income-amount {
-  /* var(--m-finance)/var(--m-organize) statt fixer Hex-Werte (anders als
-     .balance-amount oben): beide Custom Properties sind bereits hell/dunkel-
-     bewusst definiert (siehe styles.css), der Gradient bleibt damit über
-     beide Themes hinweg korrekt, ohne einen zweiten Satz Hex-Werte hier
-     pflegen zu müssen. */
-  background: linear-gradient(100deg, var(--m-finance), var(--m-organize));
-  -webkit-background-clip: text;
-  background-clip: text;
-}
 
 .side-section__note { font-size: 12px; color: var(--color-dusk-helper); margin: -8px 0 14px; }
 

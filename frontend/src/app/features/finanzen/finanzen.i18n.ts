@@ -20,10 +20,7 @@ export const FINANZEN_I18N = {
 
   tablistLabel: 'Finanzen-Ansichten',
   tabOverview: 'Übersicht',
-  tabTransactions: 'Transaktionen',
-  tabBudgets: 'Budgets',
   tabAnalytics: 'Analysen',
-  tabComingSoon: 'Folgt in einer späteren Version',
 
   encryptedStored: 'Verschlüsselt gespeichert',
   balanceLabel: 'Budget · August',
@@ -37,7 +34,6 @@ export const FINANZEN_I18N = {
   viewAll: 'Alle anzeigen',
   colDescription: 'Beschreibung',
   colCategory: 'Kategorie',
-  colPerson: 'Von',
   colAmount: 'Betrag',
   editRowLabel: 'Bearbeiten',
 
@@ -106,6 +102,7 @@ export const FINANZEN_I18N = {
   incomeHeroLabel: 'Verfügbares Einkommen',
   incomeHeroSubPrefix: 'Haushalt ',
   incomeHeroSubMiddle: ' € · Abzüge ',
+  incomeHeroSubTransactions: ' € · Ausgaben ',
   incomeHeroSubSuffix: ' € · Puffer ',
 
   ownIncomeHeading: 'Mein Einkommen',

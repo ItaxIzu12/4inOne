@@ -3,7 +3,6 @@ import { Observable, of, throwError } from 'rxjs';
 import {
   AnalysenDto,
   CategoryDto,
-  FairnessEntryDto,
   HouseholdMemberDto,
   OverviewDto,
   RecurringDeductionDto,
@@ -26,35 +25,30 @@ import { FinanzenDataProvider, NewTransactionInput } from './finanzen-data-provi
 // wie bei echten Standard-Kategorien, damit die Demo auch den Namensschutz
 // zeigt (siehe submitCategoryGoal() in finanzen.ts — ändert nie den Namen,
 // betrifft die Demo also ohnehin nicht, aber konsistent gehalten).
-// monthly_goal nur bei Fixkosten gesetzt, damit die Ziel-Anzeige sichtbar ist.
+// Das Gesamtbudget ist wie im echten Backend die SUMME der monthly_goal-Werte
+// aller Kategorien (finanzen/services.py budget_totals) — 1000 + 450 + 500.
 function seedCategories(): CategoryDto[] {
   return [
-    { id: 'demo-fixkosten', name: 'Fixkosten', color: '#5b3fd6', icon_key: 'fixkosten', monthly_goal: '900', is_default: true },
-    { id: 'demo-haushalt', name: 'Haushalt', color: '#ffb75e', icon_key: 'haushalt', monthly_goal: null, is_default: true },
-    { id: 'demo-sonstiges', name: 'Sonstiges', color: '#c23b52', icon_key: 'sonstiges', monthly_goal: null, is_default: true },
+    { id: 'demo-fixkosten', name: 'Fixkosten', color: '#5b3fd6', icon_key: 'fixkosten', monthly_goal: '1000', is_default: true },
+    { id: 'demo-haushalt', name: 'Haushalt', color: '#ffb75e', icon_key: 'haushalt', monthly_goal: '450', is_default: true },
+    { id: 'demo-sonstiges', name: 'Sonstiges', color: '#c23b52', icon_key: 'sonstiges', monthly_goal: '500', is_default: true },
   ];
 }
 
-const DEMO_BUDGET_TOTAL = 1950;
-const DEMO_HOUSEHOLD_NAME = 'Haushalt Zuhause';
-const DEMO_MEMBERS: HouseholdMemberDto[] = [
-  { id: 'demo-member-anna', name: 'Anna' },
-  { id: 'demo-member-jonas', name: 'Jonas' },
-];
-// Statisch statt aus den Demo-Transaktionen berechnet — die haben kein
-// created_by-Konzept, das wäre für Demo-Zwecke unnötiger Mehraufwand.
-const DEMO_FAIRNESS: FairnessEntryDto[] = [
-  { user_id: 'demo-member-anna', name: 'Anna', percentage: 58 },
-  { user_id: 'demo-member-jonas', name: 'Jonas', percentage: 42 },
-];
+// SOLO-Haushalt mit genau einem Mitglied: bei einer Person fallen "mein
+// Einkommen" und "Haushalts-Gesamteinkommen" zusammen, "Verfügbares
+// Einkommen" ist dadurch direkt nachrechenbar (Einkommen − Abzüge − Ausgaben
+// − Puffer) statt eine Summe aus mehreren Personen. Deshalb gibt es hier
+// auch KEINE Faire Aufteilung: getOverview() lässt das fairness-Feld bei
+// member_count < 2 komplett weg, exakt wie das echte Backend
+// (finanzen/views.py OverviewView), und das Template rendert die Sektion
+// dann gar nicht erst.
+const DEMO_HOUSEHOLD_NAME = 'Anna';
+const DEMO_MEMBERS: HouseholdMemberDto[] = [{ id: 'demo-member-anna', name: 'Anna' }];
 
-// Analysen-Tab: "eigenes" Einkommen (Anna, die Demo-Perspektive) + Jonas'
-// Einkommen NUR als Teil der Summe — dieselbe Regel wie im echten Backend
-// (finanzen/serializers.py HouseholdMembershipIncomeSerializer), hier als
-// fester Wert statt einer zweiten Membership, weil die Demo kein echtes
-// Mehrpersonen-Datenmodell hat.
-const DEMO_OWN_INCOME = 3200;
-const DEMO_OTHER_MEMBERS_INCOME_TOTAL = 2400;
+// Analysen-Tab: das eine Einkommen des einen Mitglieds (Anna, die Demo-
+// Perspektive) — zugleich die Haushalts-Gesamtsumme.
+const DEMO_OWN_INCOME = 1800;
 const DEMO_BUFFER_INITIAL = 300;
 
 function seedDeductions(categories: CategoryDto[]): RecurringDeductionDto[] {
@@ -92,13 +86,16 @@ export class DemoFinanzenDataProvider implements FinanzenDataProvider {
   private deductions: RecurringDeductionDto[] = seedDeductions(this.categories);
   private nextDeductionId = 100;
 
+  // "Miete" ist hier bewusst KEINE Transaktion, sondern nur ein fester Abzug
+  // (seedDeductions) — derselbe Betrag darf nie in beiden stehen, sonst wird
+  // er doppelt gezählt (FinanzenTab.md §3.2).
+  //
   // Beträge POSITIV gespeichert — dieselbe Konvention wie das echte Backend
   // (OverviewView.total_spent = Sum('amount') OHNE abs(), siehe
   // finanzen/views.py). Das "-" vor dem Betrag ist reine Anzeige-Konvention
   // im Template (finanzen.html), keine gespeicherte Eigenschaft.
   private seedTransactions(): TransactionDto[] {
     return [
-      { id: 'demo-1', account: 0, category: this.categories[0], amount: '850', description: 'Miete', occurred_at: daysAgo(3), created_at: daysAgo(3) },
       { id: 'demo-2', account: 0, category: this.categories[1], amount: '186', description: 'Wocheneinkauf', occurred_at: daysAgo(2), created_at: daysAgo(2) },
       { id: 'demo-3', account: 0, category: this.categories[1], amount: '74', description: 'Drogerie', occurred_at: daysAgo(1), created_at: daysAgo(1) },
       { id: 'demo-4', account: 0, category: this.categories[2], amount: '68.5', description: 'Restaurant', occurred_at: daysAgo(0), created_at: daysAgo(0) },
@@ -106,21 +103,39 @@ export class DemoFinanzenDataProvider implements FinanzenDataProvider {
     ];
   }
 
-  getOverview(): Observable<OverviewDto> {
-    const planned = this.transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
+  // Dieselben Summen wie finanzen/services.py im Backend — bewusst an EINER
+  // Stelle im Provider, damit getOverview() und getAnalysen() nicht
+  // auseinanderlaufen können.
+  private transactionsTotal(): number {
+    return this.transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
+  }
 
-    // ALLE Kategorien, nicht nur die mit Ausgaben — dieselbe LEFT-JOIN-
-    // Semantik wie OverviewView im echten Backend (finanzen/views.py), damit
-    // eine Kategorie mit Ziel aber (noch) ohne Ausgabe trotzdem erscheint.
+  private activeDeductionsTotal(): number {
+    return this.deductions.filter((d) => d.active).reduce((sum, d) => sum + Number(d.amount), 0);
+  }
+
+  getOverview(): Observable<OverviewDto> {
+    // Kategorie "ausgegeben" = Transaktionen dieser Kategorie + ihr
+    // zugeordnete AKTIVE feste Abzüge. ALLE Kategorien, nicht nur die mit
+    // Ausgaben — dieselbe LEFT-JOIN-Semantik wie OverviewView im echten
+    // Backend, damit eine Kategorie mit Ziel aber (noch) ohne Ausgabe
+    // trotzdem erscheint.
     const spentByCategory = new Map<string, number>();
-    for (const tx of this.transactions) {
-      if (!tx.category) continue;
-      const key = String(tx.category.id);
-      spentByCategory.set(key, (spentByCategory.get(key) ?? 0) + Number(tx.amount));
+    const addToCategory = (category: CategoryDto | null, amount: number) => {
+      if (!category) return;
+      const key = String(category.id);
+      spentByCategory.set(key, (spentByCategory.get(key) ?? 0) + amount);
+    };
+    for (const tx of this.transactions) addToCategory(tx.category, Number(tx.amount));
+    for (const deduction of this.deductions.filter((d) => d.active)) {
+      addToCategory(deduction.category, Number(deduction.amount));
     }
 
+    const planned = this.transactionsTotal() + this.activeDeductionsTotal();
+    const total = this.categories.reduce((sum, c) => sum + (c.monthly_goal !== null ? Number(c.monthly_goal) : 0), 0);
+
     return of({
-      budget: { planned: String(planned), total: String(DEMO_BUDGET_TOTAL) },
+      budget: { planned: String(planned), total: String(total) },
       categories: [...this.categories]
         .map((category) => ({
           id: category.id,
@@ -134,7 +149,6 @@ export class DemoFinanzenDataProvider implements FinanzenDataProvider {
       member_count: DEMO_MEMBERS.length,
       household_name: DEMO_HOUSEHOLD_NAME,
       members: DEMO_MEMBERS,
-      fairness: DEMO_FAIRNESS,
     });
   }
 
@@ -233,16 +247,19 @@ export class DemoFinanzenDataProvider implements FinanzenDataProvider {
   // ---------- Analysen-Tab (Verfügbares Einkommen) ----------
 
   getAnalysen(): Observable<AnalysenDto> {
-    const householdTotalIncome = (this.ownIncome ?? 0) + DEMO_OTHER_MEMBERS_INCOME_TOTAL;
-    const activeDeductionsTotal = this.deductions
-      .filter((d) => d.active)
-      .reduce((sum, d) => sum + Number(d.amount), 0);
-    const verfuegbaresEinkommen = householdTotalIncome - activeDeductionsTotal - this.buffer;
+    // Ein Mitglied: Haushalts-Gesamteinkommen == eigenes Einkommen.
+    const householdTotalIncome = this.ownIncome ?? 0;
+    const activeDeductionsTotal = this.activeDeductionsTotal();
+    const transactionsTotal = this.transactionsTotal();
+    // Gesamteinkommen − aktive feste Abzüge − ALLE Transaktionen − Puffer
+    // (FinanzenTab.md §3.4, finanzen/services.py verfuegbares_einkommen).
+    const verfuegbaresEinkommen = householdTotalIncome - activeDeductionsTotal - transactionsTotal - this.buffer;
 
     return of({
       monthly_income: this.ownIncome !== null ? String(this.ownIncome) : null,
       household_total_income: String(householdTotalIncome),
       monthly_buffer: String(this.buffer),
+      transactions_total: String(transactionsTotal),
       recurring_deductions: [...this.deductions],
       verfuegbares_einkommen: String(verfuegbaresEinkommen),
       insights: berechneInsightsDemo(householdTotalIncome, activeDeductionsTotal, this.buffer),

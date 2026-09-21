@@ -14,8 +14,6 @@
 
       <div class="subtabs" role="tablist" [attr.aria-label]="t.tablistLabel">
         <button type="button" role="tab" class="subtab" [attr.aria-selected]="activeTab() === 'uebersicht'" [class.is-active]="activeTab() === 'uebersicht'" (click)="selectTab('uebersicht')">{{ t.tabOverview }}</button>
-        <button type="button" role="tab" class="subtab" aria-selected="false" disabled [title]="t.tabComingSoon">{{ t.tabTransactions }}</button>
-        <button type="button" role="tab" class="subtab" aria-selected="false" disabled [title]="t.tabComingSoon">{{ t.tabBudgets }}</button>
         <button type="button" role="tab" class="subtab" [attr.aria-selected]="activeTab() === 'analysen'" [class.is-active]="activeTab() === 'analysen'" (click)="selectTab('analysen')">{{ t.tabAnalytics }}</button>
       </div>
     </div>
@@ -221,13 +219,21 @@
     </div>
     } @else if (activeTab() === 'analysen') {
 
+    @if (analysenError()) {
+      <div class="load-error" role="alert">
+        <h2>{{ t.loadErrorHeading }}</h2>
+        <p>{{ t.loadErrorMessage }}</p>
+        <button type="button" class="btn-primary" (click)="retryLoadOverview()">{{ t.loadErrorRetry }}</button>
+      </div>
+    } @else {
+
     <section class="balance-block income-block" aria-labelledby="income-heading">
       <p class="balance-label">{{ t.incomeHeroLabel }}</p>
       <div class="balance-row">
         <p id="income-heading" class="balance-amount income-amount">{{ verfuegbaresEinkommen() | number: '1.0-0':'de' }} &euro;</p>
       </div>
       <p class="balance-sub">
-        {{ t.incomeHeroSubPrefix }}{{ householdTotalIncome() | number: '1.0-0':'de' }}{{ t.incomeHeroSubMiddle }}{{ activeDeductionsTotal() | number: '1.0-0':'de' }}{{ t.incomeHeroSubSuffix }}{{ monthlyBufferValue() | number: '1.0-0':'de' }}&nbsp;&euro;
+        {{ t.incomeHeroSubPrefix }}{{ householdTotalIncome() | number: '1.0-0':'de' }}{{ t.incomeHeroSubMiddle }}{{ activeDeductionsTotal() | number: '1.0-0':'de' }}{{ t.incomeHeroSubTransactions }}{{ transactionsTotal() | number: '1.0-0':'de' }}{{ t.incomeHeroSubSuffix }}{{ monthlyBufferValue() | number: '1.0-0':'de' }}&nbsp;&euro;
       </p>
     </section>
 
@@ -350,6 +356,7 @@
         </section>
       </div>
     </div>
+    }
     }
     }
   </div>

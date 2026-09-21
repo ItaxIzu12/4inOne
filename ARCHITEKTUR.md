@@ -139,7 +139,26 @@ class Household(models.Model):
     # Einkommen" ein — siehe Gesamtkonzept 5.3.
 ```
 
-**Neu für Einkommen/Analyse (Gesamtkonzept 5.3):** `HouseholdMembership.monthly_income`, `RecurringDeduction`, `Household.monthly_buffer`. Berechnung "Verfügbares Einkommen" = `SUM(monthly_income aller Mitglieder) − SUM(RecurringDeduction.amount wo active=True) − monthly_buffer`, immer live berechnet, nie zwischengespeichert — dasselbe Prinzip wie bei den Kategorien-Budgets.
+**Neu für Einkommen/Analyse (Gesamtkonzept 5.3):** `HouseholdMembership.monthly_income`, `RecurringDeduction`, `Household.monthly_buffer`. Immer live berechnet, nie zwischengespeichert — an EINER Stelle (`finanzen/services.py`), die `OverviewView` und `AnalysenView` gemeinsam nutzen, damit beide Tabs nicht auseinanderlaufen können:
+
+```
+Kategorie "ausgegeben" (Übersicht) =
+    SUM(Transaction.amount dieser Kategorie im laufenden Monat, nicht gelöscht)
+  + SUM(RecurringDeduction.amount dieser Kategorie, active=True)
+
+Budget-Kopf (Übersicht):  ausgegeben = ALLE Transaktionen des Monats + ALLE aktiven festen Abzüge
+                          Ziel       = SUM(Category.monthly_goal)
+
+Verfügbares Einkommen (Analysen) =
+    SUM(monthly_income aller Mitglieder)
+  − SUM(RecurringDeduction.amount wo active=True)
+  − SUM(ALLE Transaction.amount des laufenden Monats)
+  − Household.monthly_buffer
+```
+
+Ein fester Abzug wird NIE zusätzlich als Transaktion erfasst — sonst zählt er doppelt. Daraus folgt die Kontrollgleichung `Verfügbares Einkommen = Gesamteinkommen − Budget-Kopf(ausgegeben) − Puffer`. Der laufende Monat ist `[1. dieses Monats, 1. des Folgemonats)`, in die Zukunft datierte Buchungen zählen also noch nicht.
+
+**Beispielwerte** (so auch in `finanzen/tests/test_monthly_formulas.py` geprüft): Einkommen 3.000 + 2.200 = 5.200 · aktive Abzüge Miete 900 + Versicherung 65 (beide „Fixkosten"; ein pausiertes Abo über 50 zählt nirgends) · Transaktionen 186 + 74 („Haushalt") + 68,50 („Sonstiges") = 328,50 · Puffer 300. Ergebnis: Fixkosten ausgegeben 965 · Haushalt 260 · Sonstiges 68,50 · Budget-Kopf 1.293,50 · **Verfügbares Einkommen = 5.200 − 965 − 328,50 − 300 = 3.606,50**. Kommt eine Ausgabe über 30 € in „Sonstiges" dazu, steigt „Sonstiges" auf 98,50 und das Verfügbare Einkommen sinkt auf 3.576,50 — beide Ansichten ändern sich gemeinsam.
 
 **Datenschutz zwischen Haushaltsmitgliedern (neue Erweiterung von `HouseholdScopedPermission`):** `monthly_income` ist eine Ausnahme von der sonstigen "alle Haushaltsmitglieder sehen alle Haushaltsdaten"-Regel — ein API-Response darf das `monthly_income`-Feld anderer Mitglieder NIEMALS an einen anfragenden Nutzer ausliefern, nur die eigene Zahl und die bereits verrechnete Haushalts-Gesamtsumme. Das ist eine gezielte Feldfilterung im Serializer, nicht durch `HouseholdScopedPermission` allein abgedeckt (die prüft nur Haushalts-Zugehörigkeit, nicht Feld-Sichtbarkeit innerhalb desselben Haushalts).
 

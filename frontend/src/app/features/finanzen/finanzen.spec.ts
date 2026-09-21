@@ -50,18 +50,17 @@ describe('Finanzen', () => {
     expect(rows.length).toBe(fixture.componentInstance['transactions']().length);
   });
 
-  it('only marks "Übersicht" as selected initially; Transaktionen/Budgets stay disabled placeholders, Analysen is a real tab', () => {
+  it('has exactly two tabs, Übersicht (selected initially) and Analysen, both enabled — no disabled placeholder tabs', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
     const tabs = compiled.querySelectorAll('.subtab');
-    expect(tabs.length).toBe(4);
+    expect(tabs.length).toBe(2);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true'); // Übersicht
-    expect(tabs[1].hasAttribute('disabled')).toBe(true); // Transaktionen
-    expect(tabs[2].hasAttribute('disabled')).toBe(true); // Budgets
-    expect(tabs[3].hasAttribute('disabled')).toBe(false); // Analysen
-    expect(tabs[3].getAttribute('aria-selected')).toBe('false');
+    expect(tabs[1].getAttribute('aria-selected')).toBe('false'); // Analysen
+    expect(tabs[0].hasAttribute('disabled')).toBe(false);
+    expect(tabs[1].hasAttribute('disabled')).toBe(false);
   });
 
   it('does not use the old "in Entwicklung" placeholder markup', () => {
@@ -94,22 +93,35 @@ describe('Finanzen', () => {
     expect(instance.transactions().length).toBe(before + 1);
   });
 
-  it('renders the household strip with the demo household name and member avatars', () => {
+  it('renders the household strip for the solo demo household: name "Anna" and exactly one avatar', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('.household-strip__name')?.textContent).toContain('Haushalt Zuhause');
-    expect(compiled.querySelectorAll('.household-strip__avatar').length).toBe(2);
+    expect(compiled.querySelector('.household-strip__name')?.textContent).toContain('Anna');
+    expect(compiled.querySelectorAll('.household-strip__avatar').length).toBe(1);
   });
 
-  it('shows Faire Aufteilung for the demo household (2 members) since the field is present', () => {
+  it('renders NO Faire Aufteilung section for the solo demo household — absent from the DOM, not just hidden', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('#fairness-heading')).toBeTruthy();
-    expect(compiled.querySelectorAll('.person').length).toBe(2);
+    expect(compiled.querySelector('#fairness-heading')).toBeNull();
+    expect(compiled.querySelector('.fairness-people')).toBeNull();
+    expect(compiled.querySelector('.fairness-bar')).toBeNull();
+    expect(compiled.textContent).not.toContain('Faire Aufteilung');
+    expect(compiled.textContent).not.toContain('Jonas');
+  });
+
+  it('transactions carry no per-person attribution in the solo demo (no "Von" column)', () => {
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
+    const headers = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.tx-table thead th')).map((th) =>
+      th.textContent?.trim(),
+    );
+
+    expect(headers).toEqual(['Beschreibung', 'Kategorie', 'Betrag']);
   });
 
   it('shows category chips to choose from in the add-expense modal', () => {
@@ -128,7 +140,7 @@ describe('Finanzen', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('.legend-goal')?.textContent).toContain('900');
+    expect(compiled.querySelector('.legend-goal')?.textContent).toContain('1.000'); // Fixkosten-Ziel der Demo
   });
 
   it('clicking a transaction row opens the edit form prefilled, with a delete button and edit wording', () => {
@@ -180,7 +192,7 @@ describe('Finanzen', () => {
 
     const input = compiled.querySelector('#category-goal-input') as HTMLInputElement;
     expect(input).toBeTruthy();
-    expect(input.value).toBe('900'); // Fixkosten ist die höchste Ausgabe, steht zuerst in der sortierten Legende
+    expect(input.value).toBe('1000'); // Fixkosten ist die höchste Ausgabe (965 € feste Abzüge), steht zuerst in der sortierten Legende
   });
 
   it('saving a new monthly goal updates the legend without a page reload', () => {
@@ -208,24 +220,25 @@ describe('Finanzen', () => {
     fixture.detectChanges();
     let compiled = fixture.nativeElement as HTMLElement;
 
-    // Fixkosten: 850 € ausgegeben, Ziel startet bei 900 € -> ~94 %.
+    // Fixkosten: 965 € ausgegeben (900 Miete + 65 Versicherung als feste
+    // Abzüge), Ziel startet bei 1000 € -> ~97 %.
     const barBefore = compiled.querySelector('.legend-goal-bar') as HTMLElement;
-    expect(barBefore.getAttribute('aria-valuenow')).toBe('94');
+    expect(barBefore.getAttribute('aria-valuenow')).toBe('97');
 
     (compiled.querySelector('.legend-item--clickable') as HTMLElement).click();
     fixture.detectChanges();
     compiled = fixture.nativeElement as HTMLElement;
     const input = compiled.querySelector('#category-goal-input') as HTMLInputElement;
-    input.value = '1000';
+    input.value = '2000';
     input.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     (compiled.querySelector('.add-expense-form .btn-primary') as HTMLButtonElement).click();
     fixture.detectChanges();
     compiled = fixture.nativeElement as HTMLElement;
 
-    // 850 / 1000 = 85 %.
+    // 965 / 2000 = 48 % (48,25 gerundet).
     const barAfter = compiled.querySelector('.legend-goal-bar') as HTMLElement;
-    expect(barAfter.getAttribute('aria-valuenow')).toBe('85');
+    expect(barAfter.getAttribute('aria-valuenow')).toBe('48');
   });
 
   // ---------- Analysen-Tab (Verfügbares Einkommen) ----------
@@ -239,13 +252,19 @@ describe('Finanzen', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect((compiled.querySelector('#own-income-input') as HTMLInputElement).value).toBe('3200');
-    // Verfügbares Einkommen: (3200 + 2400 Demo-Haushaltssumme) - (900 + 65 aktive Abzüge) - 300 Puffer = 4335
-    expect(compiled.querySelector('#income-heading')?.textContent).toContain('4.335');
+    expect((compiled.querySelector('#own-income-input') as HTMLInputElement).value).toBe('1800');
+    // Solo-Haushalt: EIN Einkommenswert, Haushaltssumme == eigenes Einkommen.
+    // Verfügbares Einkommen: 1800 - (900 + 65 aktive Abzüge)
+    // - 390 (alle Demo-Transaktionen des Monats) - 300 Puffer = 145
+    expect(compiled.querySelector('#income-heading')?.textContent).toContain('145');
+    // Die Formel ist in der Hero-Zeile vollständig und mit genau einem Einkommen sichtbar.
+    expect(compiled.querySelector('.income-block .balance-sub')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      'Haushalt 1.800 € · Abzüge 965 € · Ausgaben 390 € · Puffer 300 €',
+    );
     expect(compiled.querySelectorAll('.deduction-row').length).toBe(2);
   });
 
-  it('the Analysen tab never renders another members individual income anywhere, only the household total', () => {
+  it('in the solo demo the own income and the household total are the same figure, and no second person appears', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
     const instance = fixture.componentInstance as unknown as { selectTab: (tab: 'uebersicht' | 'analysen') => void };
@@ -254,12 +273,13 @@ describe('Finanzen', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    // 2400 ist der Demo-Anteil des ANDEREN Mitglieds (siehe
-    // demo-finanzen-data-provider.ts DEMO_OTHER_MEMBERS_INCOME_TOTAL) — darf
-    // an keiner Stelle als Einzelbetrag im DOM auftauchen, nur als Teil der
-    // bereits summierten Kennzahlen.
+    const ownIncome = (compiled.querySelector('#own-income-input') as HTMLInputElement).value;
+    expect(ownIncome).toBe('1800');
+    expect(compiled.querySelector('.income-block .balance-sub')?.textContent).toContain('Haushalt 1.800');
+    // Die Beträge der früheren Zwei-Personen-Demo (3200 + 2400) dürfen nicht mehr auftauchen.
     expect(compiled.textContent).not.toContain('2.400');
-    expect(compiled.textContent).not.toContain('2400');
+    expect(compiled.textContent).not.toContain('5.600');
+    expect(compiled.textContent).not.toContain('Jonas');
   });
 
   it('saving own income updates the available-income figure live', () => {
@@ -278,8 +298,8 @@ describe('Finanzen', () => {
     fixture.detectChanges();
     compiled = fixture.nativeElement as HTMLElement;
 
-    // (4000 + 2400) - 965 - 300 = 5135
-    expect(compiled.querySelector('#income-heading')?.textContent).toContain('5.135');
+    // 4000 - 965 - 390 - 300 = 2345 (Solo-Haushalt: kein zweites Einkommen in der Summe)
+    expect(compiled.querySelector('#income-heading')?.textContent).toContain('2.345');
   });
 
   it('adding a recurring deduction appears in the list and reduces the available income', () => {
@@ -346,6 +366,118 @@ describe('Finanzen', () => {
       expect(item.querySelector('.insight-item__icon svg')).toBeTruthy();
       expect(item.querySelector('p')?.textContent?.length).toBeGreaterThan(0);
     }
+  });
+
+  // ---------- Synchronisation Übersicht <-> Analysen ----------
+
+  type FinanzenInternals = {
+    selectTab: (tab: 'uebersicht' | 'analysen') => void;
+    addAmount: { set: (v: string) => void };
+    addDescription: { set: (v: string) => void };
+    addSelectedCategoryId: { set: (v: string | number) => void };
+    submitAddExpense: () => void;
+    openAddDeductionModal: () => void;
+    deductionName: { set: (v: string) => void };
+    deductionAmount: { set: (v: string) => void };
+    deductionCategoryId: { set: (v: string | number | null) => void };
+    submitDeduction: () => void;
+    categories: () => { label: string; amount: number }[];
+  };
+
+  function heroText(fixture: { nativeElement: unknown }, id: 'balance-heading' | 'income-heading'): string {
+    return ((fixture.nativeElement as HTMLElement).querySelector('#' + id)?.textContent ?? '').replace(/\s+/g, ' ').trim();
+  }
+
+  function addExpense(instance: FinanzenInternals, amount: string, categoryId: string): void {
+    instance.addAmount.set(amount);
+    instance.addDescription.set('Sync-Test');
+    instance.addSelectedCategoryId.set(categoryId);
+    instance.submitAddExpense();
+  }
+
+  it('an expense added in Übersicht is already reflected in "Verfügbares Einkommen" when switching to Analysen, without a reload', () => {
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
+    const instance = fixture.componentInstance as unknown as FinanzenInternals;
+
+    addExpense(instance, '100', 'demo-haushalt');
+    fixture.detectChanges();
+    instance.selectTab('analysen');
+    fixture.detectChanges();
+
+    // 145 (Ausgangsstand, siehe Test oben) - 100 = 45
+    expect(heroText(fixture, 'income-heading')).toBe('45 €');
+  });
+
+  it('the sync also holds when Analysen was already visited before the expense was added (no stale first-visit snapshot)', () => {
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
+    const instance = fixture.componentInstance as unknown as FinanzenInternals;
+
+    instance.selectTab('analysen');
+    fixture.detectChanges();
+    expect(heroText(fixture, 'income-heading')).toBe('145 €');
+
+    instance.selectTab('uebersicht');
+    fixture.detectChanges();
+    addExpense(instance, '45', 'demo-sonstiges');
+    fixture.detectChanges();
+    instance.selectTab('analysen');
+    fixture.detectChanges();
+
+    expect(heroText(fixture, 'income-heading')).toBe('100 €'); // 145 - 45
+  });
+
+  it('a recurring deduction added in Analysen changes the Übersicht category amount and budget figure', () => {
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
+    const instance = fixture.componentInstance as unknown as FinanzenInternals;
+    const sonstigesBefore = instance.categories().find((c) => c.label === 'Sonstiges')?.amount;
+    expect(heroText(fixture, 'balance-heading')).toContain('1.355'); // 390 Transaktionen + 965 Abzüge
+
+    instance.selectTab('analysen');
+    fixture.detectChanges();
+    instance.openAddDeductionModal();
+    instance.deductionName.set('Streaming');
+    instance.deductionAmount.set('35');
+    instance.deductionCategoryId.set('demo-sonstiges');
+    instance.submitDeduction();
+    fixture.detectChanges();
+    instance.selectTab('uebersicht');
+    fixture.detectChanges();
+
+    expect(instance.categories().find((c) => c.label === 'Sonstiges')?.amount).toBe((sonstigesBefore ?? 0) + 35);
+    expect(heroText(fixture, 'balance-heading')).toContain('1.390');
+  });
+
+  it('a fixed deduction is never counted twice: budget figure = income - available income - buffer', () => {
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
+    const instance = fixture.componentInstance as unknown as FinanzenInternals;
+
+    // 1800 Einkommen - 145 verfügbar - 300 Puffer = 1355 = Budget-Kopf (siehe oben)
+    expect(heroText(fixture, 'balance-heading')).toContain('1.355');
+    instance.selectTab('analysen');
+    fixture.detectChanges();
+    expect(heroText(fixture, 'income-heading')).toBe('145 €');
+  });
+
+  it('both hero numbers use the same shared class, so they render with the identical gradient', () => {
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
+    const instance = fixture.componentInstance as unknown as FinanzenInternals;
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const budgetHero = compiled.querySelector('#balance-heading');
+    instance.selectTab('analysen');
+    fixture.detectChanges();
+    const incomeHero = compiled.querySelector('#income-heading');
+
+    // Der Text-Verlauf linear-gradient(100deg, #5b3fd6, #a15f14) hängt an
+    // .balance-amount (finanzen.css) — es gibt bewusst keine abweichende
+    // Regel für die Analysen-Zahl mehr.
+    expect(budgetHero?.classList.contains('balance-amount')).toBe(true);
+    expect(incomeHero?.classList.contains('balance-amount')).toBe(true);
   });
 
   // ---------- "Kategorie hinzufügen" ----------
