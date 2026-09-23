@@ -2,10 +2,9 @@
 Haushalt abgeleitet (nie aus Client-Eingaben, IDOR-Schutz), und ein fehlendes
 Account wird bei Bedarf automatisch angelegt statt mit 500 abzustürzen."""
 
-from datetime import datetime, timezone
-
 import pytest
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from core.models import Household, HouseholdMembership
@@ -13,7 +12,7 @@ from finanzen.models import Account, Category
 
 pytestmark = pytest.mark.django_db
 
-NOW = datetime(2026, 9, 9, 12, 0, tzinfo=timezone.utc).isoformat()
+HEUTE = timezone.localdate().isoformat()
 
 
 def test_creating_a_transaction_without_an_existing_account_auto_creates_one():
@@ -31,7 +30,7 @@ def test_creating_a_transaction_without_an_existing_account_auto_creates_one():
     client.force_authenticate(user=user)
     response = client.post(
         '/api/v1/finanzen/transaktionen/',
-        {'amount': '42.00', 'description': 'Testausgabe', 'occurred_at': NOW, 'category_id': category.id},
+        {'amount': '42.00', 'description': 'Testausgabe', 'datum': HEUTE, 'category_id': category.id},
         format='json',
     )
 
@@ -67,7 +66,7 @@ def test_client_supplied_account_id_is_ignored_and_never_used():
             'description': 'Unterschobene Ausgabe',
             'account': victim_account.id,
             'category_id': attacker_category.id,
-            'occurred_at': NOW,
+            'datum': HEUTE,
         },
         format='json',
     )
@@ -95,7 +94,7 @@ def test_client_supplied_category_from_a_different_household_is_rejected():
     client.force_authenticate(user=attacker)
     response = client.post(
         '/api/v1/finanzen/transaktionen/',
-        {'amount': '50.00', 'description': 'Fremde Kategorie', 'occurred_at': NOW, 'category_id': victim_category.id},
+        {'amount': '50.00', 'description': 'Fremde Kategorie', 'datum': HEUTE, 'category_id': victim_category.id},
         format='json',
     )
 
@@ -112,7 +111,7 @@ def test_creating_a_transaction_without_a_category_is_rejected():
     client.force_authenticate(user=user)
     response = client.post(
         '/api/v1/finanzen/transaktionen/',
-        {'amount': '10.00', 'description': 'Ohne Kategorie', 'occurred_at': NOW},
+        {'amount': '10.00', 'description': 'Ohne Kategorie', 'datum': HEUTE},
         format='json',
     )
 
@@ -127,7 +126,7 @@ def test_creating_a_transaction_without_a_household_fails_cleanly_not_with_a_500
     client.force_authenticate(user=user)
     response = client.post(
         '/api/v1/finanzen/transaktionen/',
-        {'amount': '-10.00', 'description': 'Test', 'occurred_at': NOW},
+        {'amount': '-10.00', 'description': 'Test', 'datum': HEUTE},
         format='json',
     )
 

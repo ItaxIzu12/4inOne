@@ -1,0 +1,299 @@
+:host {
+  display: block;
+  color: #183b3b;
+  background: #f5f7f4;
+}
+.app-shell {
+  display: flex;
+  min-height: 100dvh;
+}
+.app-shell__main {
+  flex: 1;
+  min-width: 0;
+}
+.dashboard-main {
+  max-width: 1440px;
+  margin: auto;
+  padding: 36px 40px 52px;
+}
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 38px;
+}
+.topbar h1 {
+  font-size: 30px;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+}
+.topbar p {
+  font-size: 15px;
+  color: #61716e;
+  margin-top: 8px;
+}
+.btn-primary {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #164c49;
+  color: white;
+  min-height: 52px;
+  border-radius: 12px;
+  padding: 0 22px;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 580fr) minmax(0, 373fr);
+  gap: 27px;
+}
+.dashboard-primary,
+.dashboard-secondary {
+  min-width: 0;
+}
+h2 {
+  font-size: 20px;
+  line-height: 1.4;
+}
+a {
+  color: #164c49;
+  text-decoration: none;
+}
+.hero-card {
+  background: #164c49;
+  color: white;
+  padding: 24px 26px;
+  border-radius: 18px;
+  min-height: 217px;
+}
+.hero-card > p:first-child {
+  color: #d2e2dc;
+  font-size: 15px;
+}
+.hero-card__amount {
+  color: #fff;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 12px 0 18px;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+.hero-card__sub {
+  font-size: 14px;
+  color: #d2e2dc;
+  padding-top: 16px;
+  border-top: 1px solid #46716c;
+}
+.hero-card a {
+  display: flex;
+  justify-content: space-between;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 18px;
+}
+.quick-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0 24px;
+}
+.quick-links a {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 20px 16px;
+  min-height: 101px;
+  border: 1px solid #e2e8e4;
+  border-radius: 16px;
+  background: #fff;
+}
+.quick-links strong {
+  font-size: 15px;
+}
+.quick-links small {
+  display: block;
+  color: #61716e;
+  margin-top: 8px;
+  font-size: 14px;
+}
+.quick-links icon-haushalt,
+.quick-links icon-organisation,
+.recent-row icon-haushalt {
+  padding: 10px;
+  background: #e7efe9;
+  border-radius: 12px;
+  box-sizing: content-box;
+  font-size: 22px;
+  color: #164c49;
+}
+.recent-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.recent-section__head a {
+  font-size: 12px;
+  font-weight: 700;
+}
+.recent-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.recent-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid #e2e8e4;
+}
+.recent-row:last-child {
+  border: 0;
+}
+.recent-row__content {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 15px;
+}
+.recent-row__detail {
+  font-size: 12px;
+  color: #61716e;
+}
+.recent-row__amount {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.week-section {
+  padding: 24px;
+  border: 1px solid #e2e8e4;
+  border-radius: 18px;
+  background: white;
+  min-height: 285px;
+}
+.week-empty {
+  color: #61716e;
+  line-height: 1.7;
+  margin: 24px 0;
+}
+.week-section a {
+  font-size: 15px;
+  font-weight: 700;
+}
+.shopping-card {
+  margin-top: 20px;
+  background: #e7efe9;
+  padding: 24px;
+  border-radius: 18px;
+}
+.shopping-card icon-haushalt {
+  font-size: 24px;
+}
+.shopping-card h2 {
+  margin: 12px 0 8px;
+}
+.shopping-card p {
+  font-size: 15px;
+  color: #61716e;
+  line-height: 1.6;
+}
+.shopping-card a {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  min-height: 44px;
+  background: white;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.skip-link {
+  position: fixed;
+  top: -100px;
+  z-index: 100;
+  background: white;
+  padding: 16px;
+}
+.skip-link:focus {
+  top: 0;
+}
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid #164c49;
+  outline-offset: 4px;
+}
+@media (max-width: 959px) {
+  .app-shell {
+    display: block;
+  }
+  .dashboard-main {
+    padding: 16px 24px 120px;
+  }
+  .topbar {
+    margin-bottom: 24px;
+  }
+  .topbar h1 {
+    font-size: 27px;
+  }
+  .topbar > .btn-primary {
+    display: none;
+  }
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero-card {
+    padding: 20px;
+    min-height: 187px;
+  }
+  .hero-card__amount {
+    color: #fff;
+    font-size: 39px;
+  }
+  .dashboard-secondary {
+    display: flex;
+    flex-direction: column;
+  }
+  .week-section {
+    min-height: 0;
+  }
+  .quick-links a {
+    padding: 16px 12px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .quick-links icon-haushalt,
+  .quick-links icon-organisation {
+    padding: 0;
+    background: none;
+  }
+  .shopping-card {
+    margin-top: 20px;
+  }
+  .quick-links strong {
+    font-size: 16px;
+  }
+}
+@media (max-width: 359px) {
+  .dashboard-main {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .hero-card__amount {
+    color: #fff;
+    font-size: 34px;
+  }
+}

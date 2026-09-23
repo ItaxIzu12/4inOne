@@ -1,48 +1,29 @@
 import { Component } from '@angular/core';
 
-let nextInstanceId = 0;
-
 /**
  * Das Kompass-Logo — überall verwenden, wo bisher ein "K" in einem
  * Farbverlaufs-Quadrat stand (Header, Login-/Registrieren-Markenseite,
  * Passwort-vergessen). Eine einzige Komponente statt mehrfach kopierter
  * Marken-Snippets, damit sie nicht auseinanderdriften — siehe icon-*.ts.
  *
- * Farben sind bewusst feste Hex-Werte (kein currentColor/Design-Token):
- * ein Logo ist ein festes Markenzeichen, das nicht mit dem Theme wechseln
- * soll, genau wie eine echte Logo-Bilddatei es auch nicht würde.
- *
- * Die Gradient-ID wird pro Instanz eindeutig generiert — sonst würden bei
- * mehreren gleichzeitig sichtbaren Logos (z. B. Header + Seiteninhalt)
- * mehrere <linearGradient>-Elemente dieselbe id="..." tragen, was laut
- * SVG-Spezifikation ungültig ist und zu inkonsistentem Rendering führen kann.
+ * DESIGN_SYSTEM.md Version 3: flacher Kompassring statt Farbverlaufs-"K" —
+ * eine einzige Fläche in `--color-pine`, kein Verlauf mehr, passend zum
+ * neuen Ein-Akzent-System. Läuft über `currentColor`, damit die Komponente
+ * selbst (anders als vorher mit festen Hex-Werten) im Dark Mode automatisch
+ * den aufgehellten `--color-pine`-Wert übernimmt statt fest auf dem hellen
+ * Ton zu bleiben — ein Logo-Ring soll auf dunklem Grund genauso lesbar
+ * bleiben wie auf hellem.
  */
 @Component({
   selector: 'logo-kompass',
   standalone: true,
   template: `
     <svg viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="9" [attr.fill]="'url(#' + gradientId + ')'" />
-      <path
-        d="M11 22V10l6.5 8.5V10"
-        stroke="#fff"
-        stroke-width="2.6"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        fill="none"
-      />
-      <circle cx="22.5" cy="9.5" r="1.6" fill="#fff" />
-      <defs>
-        <linearGradient [attr.id]="gradientId" x1="0" y1="0" x2="32" y2="32">
-          <stop offset="0" stop-color="#7a5af8" />
-          <stop offset="1" stop-color="#ffb75e" />
-        </linearGradient>
-      </defs>
+      <circle cx="16" cy="16" r="12.5" stroke="currentColor" stroke-width="2.4" />
+      <path d="M20.5 11.5 15 15l-1.5 5.5L19 17l1.5-5.5Z" fill="currentColor" />
     </svg>
   `,
-  host: { class: 'kompass-icon', 'aria-hidden': 'true' },
+  host: { class: 'kompass-icon', 'aria-hidden': 'true', style: 'color: var(--color-pine, #164c49);' },
   styles: `svg { width: 100%; height: 100%; display: block; }`,
 })
-export class LogoKompass {
-  protected readonly gradientId = `kompass-logo-gradient-${nextInstanceId++}`;
-}
+export class LogoKompass {}

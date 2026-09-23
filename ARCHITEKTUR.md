@@ -146,8 +146,12 @@ Kategorie "ausgegeben" (Übersicht) =
     SUM(Transaction.amount dieser Kategorie im laufenden Monat, nicht gelöscht)
   + SUM(RecurringDeduction.amount dieser Kategorie, active=True)
 
-Budget-Kopf (Übersicht):  ausgegeben = ALLE Transaktionen des Monats + ALLE aktiven festen Abzüge
-                          Ziel       = SUM(Category.monthly_goal)
+Budget-Kopf (Übersicht), aus den Kategorien darunter berechnet:
+    ausgegeben = SUM("ausgegeben" aller Kategorien)
+    ziel       = SUM(Category.monthly_goal aller Kategorien, wo gesetzt)
+    uebrig     = ziel − ausgegeben              (kann negativ sein)
+    prozent    = ausgegeben / ziel × 100        (0 falls ziel = 0, kann > 100 sein)
+    Beschriftung: "X % ausgegeben" — nie "verplant" (Begriff aus dem verworfenen Envelope-Konzept)
 
 Verfügbares Einkommen (Analysen) =
     SUM(monthly_income aller Mitglieder)
@@ -156,7 +160,7 @@ Verfügbares Einkommen (Analysen) =
   − Household.monthly_buffer
 ```
 
-Ein fester Abzug wird NIE zusätzlich als Transaktion erfasst — sonst zählt er doppelt. Daraus folgt die Kontrollgleichung `Verfügbares Einkommen = Gesamteinkommen − Budget-Kopf(ausgegeben) − Puffer`. Der laufende Monat ist `[1. dieses Monats, 1. des Folgemonats)`, in die Zukunft datierte Buchungen zählen also noch nicht.
+Ein fester Abzug wird NIE zusätzlich als Transaktion erfasst — sonst zählt er doppelt. Daraus folgt die Kontrollgleichung `Verfügbares Einkommen = Gesamteinkommen − Budget-Kopf(ausgegeben) − Puffer` — solange jeder Betrag eine Kategorie hat. Buchungen ohne Kategorie (nach dem Löschen einer Kategorie ist `Transaction.category` NULL; feste Abzüge dürfen kategorielos sein) erscheinen in keiner Kategorie und zählen deshalb nicht im Budget-Kopf, wohl aber im Verfügbaren Einkommen. Der laufende Monat ist `[1. dieses Monats, 1. des Folgemonats)`, in die Zukunft datierte Buchungen zählen also noch nicht.
 
 **Beispielwerte** (so auch in `finanzen/tests/test_monthly_formulas.py` geprüft): Einkommen 3.000 + 2.200 = 5.200 · aktive Abzüge Miete 900 + Versicherung 65 (beide „Fixkosten"; ein pausiertes Abo über 50 zählt nirgends) · Transaktionen 186 + 74 („Haushalt") + 68,50 („Sonstiges") = 328,50 · Puffer 300. Ergebnis: Fixkosten ausgegeben 965 · Haushalt 260 · Sonstiges 68,50 · Budget-Kopf 1.293,50 · **Verfügbares Einkommen = 5.200 − 965 − 328,50 − 300 = 3.606,50**. Kommt eine Ausgabe über 30 € in „Sonstiges" dazu, steigt „Sonstiges" auf 98,50 und das Verfügbare Einkommen sinkt auf 3.576,50 — beide Ansichten ändern sich gemeinsam.
 

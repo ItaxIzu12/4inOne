@@ -8,10 +8,12 @@ from finanzen.models import Category
 # 0003_seed_category_colors.py, die nur bestehende, NAMENSGLEICHE
 # Kategorien einmalig nachfärbten — dieses Signal ist der laufende
 # Erzeugungsweg für JEDEN neuen Haushalt).
+# DESIGN_SYSTEM.md Version 3 (Tannengrün-System) — Pine/Amber-Ink/Danger
+# statt der vorherigen Violett/Amber/Coral-Werte.
 DEFAULT_CATEGORIES = [
-    ('Fixkosten', '#5b3fd6', 'fixkosten'),
-    ('Haushalt', '#ffb75e', 'haushalt'),
-    ('Sonstiges', '#c23b52', 'sonstiges'),
+    ('Fixkosten', '#164c49', 'fixkosten'),
+    ('Haushalt', '#8a5a23', 'haushalt'),
+    ('Sonstiges', '#a8452f', 'sonstiges'),
 ]
 
 

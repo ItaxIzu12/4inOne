@@ -1,368 +1,492 @@
 <main class="fin-page">
-  <div class="fin-sticky">
-    <div class="fin-sticky__inner">
-      <header class="page-head">
-        <div>
-          <p class="page-head__eyebrow">{{ t.eyebrow }}</p>
-          <h1>{{ t.pageTitle }}</h1>
-        </div>
-        <button type="button" class="btn-primary" (click)="openAddModal()">
-          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          {{ t.addExpense }}
-        </button>
-      </header>
+  <app-sidebar-nav />
 
-      <div class="subtabs" role="tablist" [attr.aria-label]="t.tablistLabel">
-        <button type="button" role="tab" class="subtab" [attr.aria-selected]="activeTab() === 'uebersicht'" [class.is-active]="activeTab() === 'uebersicht'" (click)="selectTab('uebersicht')">{{ t.tabOverview }}</button>
-        <button type="button" role="tab" class="subtab" [attr.aria-selected]="activeTab() === 'analysen'" [class.is-active]="activeTab() === 'analysen'" (click)="selectTab('analysen')">{{ t.tabAnalytics }}</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="fin-inner">
-
-    @if (overviewError()) {
-      <div class="load-error" role="alert">
-        <h2>{{ t.loadErrorHeading }}</h2>
-        <p>{{ t.loadErrorMessage }}</p>
-        <button type="button" class="btn-primary" (click)="retryLoadOverview()">{{ t.loadErrorRetry }}</button>
-      </div>
-    } @else {
-
-    @if (householdName()) {
-      <div class="household-strip">
-        <div class="household-strip__avatars">
-          @for (member of members(); track member.id) {
-            <span class="household-strip__avatar" [attr.title]="member.name">{{ member.name.charAt(0).toUpperCase() }}</span>
-          }
-        </div>
-        <p class="household-strip__name">{{ householdName() }}</p>
-      </div>
-    }
-
-    @if (activeTab() === 'uebersicht') {
-    <section class="balance-block" aria-labelledby="balance-heading">
-      <p class="balance-label">
-        <icon-two-factor [title]="t.encryptedStored" />
-        {{ t.balanceLabel }}
-      </p>
-      <div class="balance-row">
-        <p id="balance-heading" class="balance-amount">{{ budget().planned | number: '1.0-0':'de' }} &euro;</p>
-        <p class="balance-sub">{{ t.balanceSubPrefix }}{{ budget().total | number: '1.0-0':'de' }}{{ t.balanceSubMiddle }}{{ budgetRemaining() | number: '1.0-0':'de' }}{{ t.balanceSubSuffix }}</p>
-      </div>
-      <div
-        class="balance-bar"
-        role="progressbar"
-        [attr.aria-valuenow]="budgetPercent()"
-        aria-valuemin="0"
-        aria-valuemax="100"
-        [attr.aria-label]="budgetPercent() + ' Prozent des Budgets verplant'"
-      >
-        <div class="balance-bar__fill" [style.width.%]="budgetPercent()"></div>
-      </div>
-      <p class="balance-bar-caption">{{ budgetPercent() }}{{ t.balanceBarCaptionSuffix }}</p>
-    </section>
-
-    <div class="fin-grid">
-      <div class="fin-col-main">
-        <section class="tx-section" aria-labelledby="tx-heading">
-          <div class="section-head">
-            <h2 id="tx-heading">{{ t.transactionsHeading }}</h2>
-            <span class="section-head__meta">{{ transactionCount() }}{{ t.transactionsMetaSuffix }}</span>
-            <button type="button" class="section-head__view-all" (click)="openModal()">{{ t.viewAll }}</button>
-          </div>
-          <div class="tx-table-wrap">
-            <table class="tx-table">
-              <thead>
-                <tr>
-                  <th>{{ t.colDescription }}</th>
-                  <th>{{ t.colCategory }}</th>
-                  <th class="align-right">{{ t.colAmount }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (tx of transactions(); track tx.id) {
-                  <tr class="tx-row--clickable" tabindex="0" [attr.aria-label]="t.editRowLabel + ': ' + (tx.description || tx.category?.name)" (click)="openEditModal(tx)" (keydown.enter)="openEditModal(tx)">
-                    <td>
-                      <span class="tx-name">
-                        <span
-                          class="tx-icon"
-                          [style.background]="(tx.category?.color ?? '#736a82') + '1f'"
-                          [style.color]="tx.category?.color ?? '#736a82'"
-                          aria-hidden="true"
-                        >
-                          <ng-container [ngComponentOutlet]="resolveCategoryIcon(tx.category?.icon_key ?? '')" />
-                        </span>
-                        {{ tx.description || '—' }}
-                      </span>
-                    </td>
-                    <td>
-                      @if (tx.category) {
-                        <span class="cat-pill" [style.background]="tx.category.color + '1f'" [style.color]="tx.category.color">{{ tx.category.name }}</span>
-                      }
-                    </td>
-                    <td class="align-right">
-                      <span class="tx-amount">&minus;{{ tx.amount | number: '1.2-2':'de' }}&nbsp;&euro;</span>
-                    </td>
-                  </tr>
-                } @empty {
-                  <tr>
-                    <td colspan="3" class="tx-table__empty">{{ t.noResults }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="gentle-note" aria-labelledby="gentle-heading">
-          <span class="gentle-note__icon" aria-hidden="true">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg>
-          </span>
+  <div class="fin-page__content">
+    <app-context-bar />
+    <div class="fin-sticky">
+      <div class="fin-sticky__inner">
+        <header class="page-head">
           <div>
-            <h2 id="gentle-heading">{{ t.gentleNoteHeading }}</h2>
-            <p>{{ t.gentleNoteBefore }}<strong>{{ t.gentleNoteHighlight }}</strong>{{ t.gentleNoteAfter }}</p>
+            <h1>Eure Finanzen</h1>
+            <p class="page-subtitle">Gemeinsam planen. Wissen, was bleibt.</p>
           </div>
-        </section>
-      </div>
-
-      <div class="fin-col-side">
-        <section class="side-section" aria-labelledby="cat-heading">
-          <h2 id="cat-heading">{{ t.categoriesHeading }}</h2>
-          <div class="donut-legend">
-            <svg width="76" height="76" viewBox="0 0 36 36" role="img" [attr.aria-label]="categoriesAriaLabel()">
-              <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--color-hairline)" stroke-width="4" />
-              @for (slice of categories(); track slice.label) {
-                <circle
-                  cx="18" cy="18" r="15.5" fill="none" [attr.stroke]="slice.color" stroke-width="4"
-                  [attr.stroke-dasharray]="slice.dashPercent + ' ' + (100 - slice.dashPercent)"
-                  [attr.stroke-dashoffset]="slice.dashOffset"
-                  stroke-linecap="round"
-                />
-              }
+          <button type="button" class="btn-primary" (click)="openAddModal()">
+            <svg
+              aria-hidden="true"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 5v14M5 12h14" />
             </svg>
-            <ul class="legend">
-              @for (slice of categories(); track slice.id) {
-                <li class="legend-item legend-item--clickable" tabindex="0" [attr.aria-label]="t.editGoalLabel + ': ' + slice.label" (click)="openCategoryGoalModal(slice)" (keydown.enter)="openCategoryGoalModal(slice)">
-                  <div class="legend-item__row">
-                    <span class="legend-dot" [style.background]="slice.color"></span>
-                    {{ slice.label }}
-                    <span class="val">
-                      {{ slice.amount | number: '1.0-0':'de' }}&nbsp;&euro;
-                      @if (slice.monthlyGoal !== null) {
-                        <span class="legend-goal">{{ t.legendGoalPrefix }}{{ slice.monthlyGoal | number: '1.0-0':'de' }}&nbsp;&euro;</span>
-                      }
-                    </span>
-                  </div>
-                  @if (slice.goalPercent !== null) {
-                    <div
-                      class="legend-goal-bar"
-                      role="progressbar"
-                      [attr.aria-valuenow]="slice.goalPercent"
-                      aria-valuemin="0"
-                      aria-valuemax="100"
-                      [attr.aria-label]="slice.label + ': ' + slice.goalPercent + ' Prozent des Ziels'"
-                    >
-                      <div class="legend-goal-bar__fill" [style.width.%]="slice.goalPercent" [style.background]="slice.color"></div>
-                    </div>
-                  }
-                </li>
-              } @empty {
-                <li class="legend-item legend-item--empty">{{ t.noCategoriesYet }}</li>
-              }
-            </ul>
-          </div>
-          <button type="button" class="btn-add-category" (click)="openNewCategoryModal()">
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            {{ t.addCategoryButton }}
+            {{ t.addExpense }}
           </button>
-        </section>
+        </header>
 
-        @if (showFairness()) {
-          <section class="side-section" aria-labelledby="fairness-heading">
-            <h2 id="fairness-heading">{{ t.fairnessHeading }}</h2>
-            <div class="fairness-people">
-              @for (person of fairness(); track person.name) {
-                <span class="person">
-                  <span class="av" [style.background]="person.colorVar">{{ person.initials }}</span>
-                  {{ person.percent }}&nbsp;%
-                </span>
-              }
-            </div>
-            <div class="fairness-bar">
-              @for (person of fairness(); track person.name) {
-                <div [style.width.%]="person.percent" [style.background]="person.colorVar"></div>
-              }
-            </div>
-            <p class="fairness-note">{{ t.fairnessNote }}</p>
-          </section>
-        }
-
-        <section class="side-section" aria-labelledby="abo-heading">
-          <h2 id="abo-heading">{{ t.aboHeading }}</h2>
-          <ul class="abo-list">
-            @for (sub of subscriptions; track sub.name) {
-              <li class="abo-item">
-                <span class="abo-logo" aria-hidden="true">{{ sub.logoLabel }}</span>
-                <span class="abo-txt">
-                  <strong>{{ sub.name }}</strong>
-                  <span>{{ sub.price }}</span>
-                  @if (sub.flag) {
-                    <span class="abo-flag">{{ sub.flag }}</span>
-                  }
-                </span>
-              </li>
-            }
-          </ul>
-        </section>
-      </div>
-    </div>
-    } @else if (activeTab() === 'analysen') {
-
-    @if (analysenError()) {
-      <div class="load-error" role="alert">
-        <h2>{{ t.loadErrorHeading }}</h2>
-        <p>{{ t.loadErrorMessage }}</p>
-        <button type="button" class="btn-primary" (click)="retryLoadOverview()">{{ t.loadErrorRetry }}</button>
-      </div>
-    } @else {
-
-    <section class="balance-block income-block" aria-labelledby="income-heading">
-      <p class="balance-label">{{ t.incomeHeroLabel }}</p>
-      <div class="balance-row">
-        <p id="income-heading" class="balance-amount income-amount">{{ verfuegbaresEinkommen() | number: '1.0-0':'de' }} &euro;</p>
-      </div>
-      <p class="balance-sub">
-        {{ t.incomeHeroSubPrefix }}{{ householdTotalIncome() | number: '1.0-0':'de' }}{{ t.incomeHeroSubMiddle }}{{ activeDeductionsTotal() | number: '1.0-0':'de' }}{{ t.incomeHeroSubTransactions }}{{ transactionsTotal() | number: '1.0-0':'de' }}{{ t.incomeHeroSubSuffix }}{{ monthlyBufferValue() | number: '1.0-0':'de' }}&nbsp;&euro;
-      </p>
-    </section>
-
-    <div class="fin-grid">
-      <div class="fin-col-main">
-        <section class="tx-section" aria-labelledby="deductions-heading">
-          <div class="section-head">
-            <h2 id="deductions-heading">{{ t.deductionsHeading }}</h2>
-            <button type="button" class="section-head__view-all" (click)="openAddDeductionModal()">{{ t.addDeduction }}</button>
+        <div class="tabs-row">
+          <div class="subtabs" role="tablist" [attr.aria-label]="t.tablistLabel">
+            <button
+              type="button"
+              role="tab"
+              class="subtab"
+              [attr.aria-selected]="activeTab() === 'uebersicht'"
+              [class.is-active]="activeTab() === 'uebersicht'"
+              (click)="selectTab('uebersicht')"
+            >
+              {{ t.tabOverview }}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              class="subtab"
+              [attr.aria-selected]="activeTab() === 'analysen'"
+              [class.is-active]="activeTab() === 'analysen'"
+              (click)="selectTab('analysen')"
+            >
+              {{ t.tabAnalytics }}
+            </button>
           </div>
-          <ul class="deductions-list">
-            @for (deduction of deductions(); track deduction.id) {
-              <li
-                class="deduction-row"
-                [class.deduction-row--inactive]="!deduction.active"
-                tabindex="0"
-                [attr.aria-label]="t.editRowLabel + ': ' + deduction.name"
-                (click)="openEditDeductionModal(deduction)"
-                (keydown.enter)="openEditDeductionModal(deduction)"
-              >
-                <span class="deduction-row__name">
-                  {{ deduction.name }}
-                  @if (deduction.category) {
-                    <span class="cat-pill" [style.background]="deduction.category.color + '1f'" [style.color]="deduction.category.color">{{ deduction.category.name }}</span>
-                  }
-                  @if (!deduction.active) {
-                    <span class="deduction-row__paused">{{ t.deductionInactiveLabel }}</span>
-                  }
-                </span>
-                <span class="tx-amount">&minus;{{ deduction.amount | number: '1.2-2':'de' }}&nbsp;&euro;</span>
-              </li>
-            } @empty {
-              <li class="deduction-row deduction-row--empty">{{ t.deductionsEmpty }}</li>
-            }
-          </ul>
-        </section>
-
-        <section class="side-section" aria-labelledby="insights-heading">
-          <h2 id="insights-heading">{{ t.insightsHeading }}</h2>
-          @if (insights().length > 0) {
-            <ul class="insights-list">
-              @for (insight of insights(); track insight.text) {
-                <li class="insight-item" [class]="'insight-item--' + insight.typ">
-                  <span class="insight-item__icon" aria-hidden="true">
-                    @switch (insight.typ) {
-                      @case ('warnung') {
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
-                      }
-                      @case ('positiv') {
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                      }
-                      @default {
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-                      }
-                    }
-                  </span>
-                  <p>{{ insight.text }}</p>
-                </li>
-              }
-            </ul>
-          } @else {
-            <p class="insights-empty">{{ t.insightsEmpty }}</p>
-          }
-        </section>
-      </div>
-
-      <div class="fin-col-side">
-        <section class="side-section" aria-labelledby="own-income-heading">
-          <h2 id="own-income-heading">{{ t.ownIncomeHeading }}</h2>
-          <p class="side-section__note">{{ t.ownIncomeNote }}</p>
-          <form class="inline-field-form" (submit)="onOwnIncomeSubmit($event)">
-            <div class="field">
-              <label for="own-income-input">{{ t.ownIncomeLabel }}</label>
-              <div class="inline-field-form__row">
-                <input
-                  id="own-income-input"
-                  type="number"
-                  inputmode="decimal"
-                  min="0"
-                  step="0.01"
-                  [value]="ownIncomeInput()"
-                  (input)="ownIncomeInput.set($any($event.target).value)"
-                />
-                <button type="submit" class="btn-secondary" [disabled]="ownIncomeSubmitting()">
-                  {{ ownIncomeSubmitting() ? t.ownIncomeSaving : t.ownIncomeSave }}
-                </button>
-              </div>
-            </div>
-            @if (ownIncomeError()) {
-              <p class="field-error" role="alert">{{ ownIncomeError() }}</p>
-            }
-          </form>
-        </section>
-
-        <section class="side-section" aria-labelledby="buffer-heading">
-          <h2 id="buffer-heading">{{ t.bufferHeading }}</h2>
-          <p class="side-section__note">{{ t.bufferNote }}</p>
-          <form class="inline-field-form" (submit)="onBufferSubmit($event)">
-            <div class="field">
-              <label for="buffer-input">{{ t.bufferLabel }}</label>
-              <div class="inline-field-form__row">
-                <input
-                  id="buffer-input"
-                  type="number"
-                  inputmode="decimal"
-                  min="0"
-                  step="0.01"
-                  [value]="bufferInput()"
-                  (input)="bufferInput.set($any($event.target).value)"
-                />
-                <button type="submit" class="btn-secondary" [disabled]="bufferSubmitting()">
-                  {{ bufferSubmitting() ? t.bufferSaving : t.bufferSave }}
-                </button>
-              </div>
-            </div>
-            @if (bufferError()) {
-              <p class="field-error" role="alert">{{ bufferError() }}</p>
-            }
-          </form>
-        </section>
+          <p class="month-label">{{ currentMonthLabel() }}</p>
+        </div>
       </div>
     </div>
-    }
-    }
-    }
+
+    <div class="fin-inner">
+      @if (overviewError()) {
+        <div class="load-error" role="alert">
+          <h2>{{ t.loadErrorHeading }}</h2>
+          <p>{{ t.loadErrorMessage }}</p>
+          <button type="button" class="btn-primary" (click)="retryLoadOverview()">
+            {{ t.loadErrorRetry }}
+          </button>
+        </div>
+      } @else {
+        @if (activeTab() === 'uebersicht') {
+          <div class="overview-grid">
+            <section class="spending-card" aria-labelledby="balance-heading">
+              <p class="muted">Diesen Monat ausgegeben</p>
+              <h2 id="balance-heading" class="spending-amount">
+                {{ budget().ausgegeben | number: '1.2-2' : 'de' }} €
+              </h2>
+              <div class="budget-meta">
+                <span>von {{ budget().ziel | number: '1.2-2' : 'de' }} € Gesamtziel</span
+                ><strong>{{ budgetPercent() }} %</strong>
+              </div>
+              <div
+                class="goal-track"
+                role="progressbar"
+                [attr.aria-label]="budgetPercent() + ' Prozent des Budgets ausgegeben'"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                [attr.aria-valuenow]="budgetBarPercent()"
+              >
+                <span [style.width.%]="budgetBarPercent()"></span>
+              </div>
+              <p class="budget-note">
+                {{ budgetRemaining() >= 0 ? 'Noch ' : 'Über dem Ziel: '
+                }}{{
+                  (budgetRemaining() >= 0 ? budgetRemaining() : -budgetRemaining())
+                    | number: '1.2-2' : 'de'
+                }}
+                €{{ budgetRemaining() >= 0 ? ' bis zu eurem Ziel.' : '.' }}
+              </p>
+            </section>
+            <section class="available-card">
+              <p class="muted">Nach Kosten und Rücklage</p>
+              <h2>{{ verfuegbaresEinkommen() | number: '1.2-2' : 'de' }} €</h2>
+              <p class="muted">wirklich frei verfügbar</p>
+              <button type="button" (click)="selectTab('analysen')">
+                Berechnung ansehen <span aria-hidden="true">→</span>
+              </button>
+            </section>
+            <section class="category-section" aria-labelledby="cat-heading">
+              <div class="category-heading">
+                <h2 id="cat-heading">Kategorien</h2>
+                <span>Ziel antippen</span>
+              </div>
+              <ul class="category-list">
+                @for (slice of categories(); track slice.id; let i = $index) {
+                  <li>
+                    <button
+                      type="button"
+                      class="category-row"
+                      (click)="openCategoryGoalModal(slice)"
+                      [attr.aria-label]="'Budgetziel ändern: ' + slice.label"
+                    >
+                      <span class="category-symbol" aria-hidden="true"
+                        ><ng-container [ngComponentOutlet]="resolveCategoryIcon(slice.iconKey)"
+                      /></span>
+                      <span class="category-body"
+                        ><span class="category-name"
+                          ><strong>{{ slice.label }}</strong
+                          ><strong>{{ slice.amount | number: '1.2-2' : 'de' }} €</strong></span
+                        >
+                        <span class="category-goal"
+                          ><span>{{
+                            slice.monthlyGoal !== null
+                              ? 'Ziel: ' + (slice.monthlyGoal | number: '1.0-0' : 'de') + ' €'
+                              : 'Ziel festlegen'
+                          }}</span
+                          ><span>{{
+                            slice.goalPercent !== null ? slice.goalPercent + ' %' : ''
+                          }}</span></span
+                        >
+                        @if (slice.goalPercent !== null) {
+                          <span
+                            class="goal-track"
+                            role="progressbar"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            [attr.aria-label]="slice.label"
+                            [attr.aria-valuenow]="clampPercent(slice.goalPercent)"
+                            ><span
+                              [style.width.%]="clampPercent(slice.goalPercent)"
+                              [style.background]="
+                                i === 0 ? '#164c49' : i === 1 ? '#6c9a89' : '#cd8d52'
+                              "
+                            ></span
+                          ></span>
+                        }
+                      </span>
+                    </button>
+                  </li>
+                } @empty {
+                  <li class="muted">Noch keine Kategorien. Lege deine erste Kategorie an.</li>
+                }
+              </ul>
+              <div class="category-actions">
+                <button type="button" (click)="openNewCategoryModal()">
+                  ＋ Kategorie erstellen</button
+                ><button type="button" class="view-transactions" (click)="openModal()">
+                  Alle Ausgaben ansehen →
+                </button>
+              </div>
+            </section>
+            @if (showFairness()) {
+              <section class="contribution-card" aria-labelledby="fairness-heading">
+                <h2 id="fairness-heading">Gemeinsam beigetragen</h2>
+                <p class="muted">Anteil an euren erfassten Einzelausgaben</p>
+                <div class="fairness-bar">
+                  @for (person of fairness(); track person.name; let i = $index) {
+                    <div
+                      [style.width.%]="person.percent"
+                      [style.background]="i === 0 ? '#164c49' : '#e2e8e4'"
+                    ></div>
+                  }
+                </div>
+                @for (person of fairness(); track person.name) {
+                  <div class="contribution-row">
+                    <strong>{{ person.name }}</strong
+                    ><strong>{{ person.percent }} %</strong>
+                  </div>
+                }
+                <p class="contribution-note">{{ t.fairnessNote }}</p>
+              </section>
+            }
+          </div>
+        } @else if (activeTab() === 'analysen') {
+          @if (analysenError()) {
+            <div class="load-error" role="alert">
+              <h2>{{ t.loadErrorHeading }}</h2>
+              <p>{{ t.loadErrorMessage }}</p>
+              <button type="button" class="btn-primary" (click)="retryLoadOverview()">
+                {{ t.loadErrorRetry }}
+              </button>
+            </div>
+          } @else {
+            <section class="balance-block income-block" aria-labelledby="income-heading">
+              <p class="balance-label">{{ t.incomeHeroLabel }}</p>
+              <div class="balance-row">
+                <p id="income-heading" class="balance-amount income-amount">
+                  {{ verfuegbaresEinkommen() | number: '1.2-2' : 'de' }} &euro;
+                </p>
+              </div>
+              <p class="balance-sub">
+                {{ t.incomeHeroSubPrefix }}{{ householdTotalIncome() | number: '1.0-0' : 'de'
+                }}{{ t.incomeHeroSubMiddle }}{{ activeDeductionsTotal() | number: '1.0-0' : 'de'
+                }}{{ t.incomeHeroSubTransactions }}{{ transactionsTotal() | number: '1.0-0' : 'de'
+                }}{{ t.incomeHeroSubSuffix
+                }}{{ monthlyBufferValue() | number: '1.0-0' : 'de' }}&nbsp;&euro;
+              </p>
+            </section>
+
+            <div class="fin-grid">
+              <div class="fin-col-main">
+                <section class="tx-section" aria-labelledby="deductions-heading">
+                  <div class="section-head">
+                    <h2 id="deductions-heading">{{ t.deductionsHeading }}</h2>
+                    <button
+                      type="button"
+                      class="section-head__view-all"
+                      (click)="openAddDeductionModal()"
+                    >
+                      {{ t.addDeduction }}
+                    </button>
+                  </div>
+                  <ul class="deductions-list">
+                    @for (deduction of deductions(); track deduction.id) {
+                      <li
+                        class="deduction-row"
+                        [class.deduction-row--inactive]="!deduction.active"
+                        tabindex="0"
+                        [attr.aria-label]="t.editRowLabel + ': ' + deduction.name"
+                        (click)="openEditDeductionModal(deduction)"
+                        (keydown.enter)="openEditDeductionModal(deduction)"
+                      >
+                        <span class="deduction-row__name">
+                          {{ deduction.name }}
+                          @if (deduction.category) {
+                            <span
+                              class="cat-pill"
+                              [style.background]="deduction.category.color + '1f'"
+                              [style.color]="deduction.category.color"
+                              >{{ deduction.category.name }}</span
+                            >
+                          }
+                          @if (!deduction.active) {
+                            <span class="deduction-row__paused">{{
+                              t.deductionInactiveLabel
+                            }}</span>
+                          }
+                        </span>
+                        <span class="tx-amount"
+                          >&minus;{{ deduction.amount | number: '1.2-2' : 'de' }}&nbsp;&euro;</span
+                        >
+                      </li>
+                    } @empty {
+                      <li class="deduction-row deduction-row--empty">{{ t.deductionsEmpty }}</li>
+                    }
+                  </ul>
+                </section>
+
+                <section class="side-section" aria-labelledby="insights-heading">
+                  <h2 id="insights-heading">{{ t.insightsHeading }}</h2>
+                  @if (insights().length > 0) {
+                    <ul class="insights-list">
+                      @for (insight of insights(); track insight.text) {
+                        <li class="insight-item" [class]="'insight-item--' + insight.typ">
+                          <span class="insight-item__icon" aria-hidden="true">
+                            @switch (insight.typ) {
+                              @case ('warnung') {
+                                <svg
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path
+                                    d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+                                  />
+                                  <path d="M12 9v4M12 17h.01" />
+                                </svg>
+                              }
+                              @case ('positiv') {
+                                <svg
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path d="M20 6 9 17l-5-5" />
+                                </svg>
+                              }
+                              @default {
+                                <svg
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <circle cx="12" cy="12" r="10" />
+                                  <path d="M12 16v-4M12 8h.01" />
+                                </svg>
+                              }
+                            }
+                          </span>
+                          <p>{{ insight.text }}</p>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="insights-empty">{{ t.insightsEmpty }}</p>
+                  }
+                </section>
+              </div>
+
+              <div class="fin-col-side">
+                <section class="side-section" aria-labelledby="own-income-heading">
+                  <h2 id="own-income-heading">{{ t.ownIncomeHeading }}</h2>
+                  <p class="side-section__note">{{ t.ownIncomeNote }}</p>
+                  <form class="inline-field-form" (submit)="onOwnIncomeSubmit($event)">
+                    <div class="field">
+                      <label for="own-income-input">{{ t.ownIncomeLabel }}</label>
+                      <div class="inline-field-form__row">
+                        <input
+                          id="own-income-input"
+                          type="number"
+                          inputmode="decimal"
+                          min="0"
+                          step="0.01"
+                          [value]="ownIncomeInput()"
+                          (input)="ownIncomeInput.set($any($event.target).value)"
+                        />
+                        <button
+                          type="submit"
+                          class="btn-secondary"
+                          [disabled]="ownIncomeSubmitting()"
+                        >
+                          {{ ownIncomeSubmitting() ? t.ownIncomeSaving : t.ownIncomeSave }}
+                        </button>
+                      </div>
+                    </div>
+                    @if (ownIncomeError()) {
+                      <p class="field-error" role="alert">{{ ownIncomeError() }}</p>
+                    }
+                  </form>
+                </section>
+
+                <section class="side-section" aria-labelledby="buffer-heading">
+                  <h2 id="buffer-heading">{{ t.bufferHeading }}</h2>
+                  <p class="side-section__note">{{ t.bufferNote }}</p>
+                  <form class="inline-field-form" (submit)="onBufferSubmit($event)">
+                    <div class="field">
+                      <label for="buffer-input">{{ t.bufferLabel }}</label>
+                      <div class="inline-field-form__row">
+                        <input
+                          id="buffer-input"
+                          type="number"
+                          inputmode="decimal"
+                          min="0"
+                          step="0.01"
+                          [value]="bufferInput()"
+                          (input)="bufferInput.set($any($event.target).value)"
+                        />
+                        <button type="submit" class="btn-secondary" [disabled]="bufferSubmitting()">
+                          {{ bufferSubmitting() ? t.bufferSaving : t.bufferSave }}
+                        </button>
+                      </div>
+                    </div>
+                    @if (bufferError()) {
+                      <p class="field-error" role="alert">{{ bufferError() }}</p>
+                    }
+                  </form>
+                </section>
+
+                <section class="side-section" aria-labelledby="report-heading">
+                  <h2 id="report-heading">{{ t.reportHeading }}</h2>
+                  <p class="side-section__note">{{ t.reportNote }}</p>
+
+                  <div
+                    class="category-chips"
+                    role="radiogroup"
+                    [attr.aria-label]="t.reportPeriodTypeLabel"
+                  >
+                    <button
+                      type="button"
+                      class="category-chip"
+                      role="radio"
+                      [attr.aria-checked]="reportPeriodType() === 'monat'"
+                      [class.is-selected]="reportPeriodType() === 'monat'"
+                      (click)="reportPeriodType.set('monat')"
+                    >
+                      {{ t.reportPeriodMonat }}
+                    </button>
+                    <button
+                      type="button"
+                      class="category-chip"
+                      role="radio"
+                      [attr.aria-checked]="reportPeriodType() === 'jahr'"
+                      [class.is-selected]="reportPeriodType() === 'jahr'"
+                      (click)="reportPeriodType.set('jahr')"
+                    >
+                      {{ t.reportPeriodJahr }}
+                    </button>
+                  </div>
+
+                  <div class="inline-field-form" style="margin-top: 12px">
+                    <div class="field">
+                      @if (reportPeriodType() === 'monat') {
+                        <label for="report-monat-input">{{ t.reportMonatLabel }}</label>
+                        <input
+                          id="report-monat-input"
+                          type="month"
+                          [value]="reportMonat()"
+                          (input)="reportMonat.set($any($event.target).value)"
+                        />
+                      } @else {
+                        <label for="report-jahr-input">{{ t.reportJahrLabel }}</label>
+                        <input
+                          id="report-jahr-input"
+                          type="number"
+                          inputmode="numeric"
+                          min="2000"
+                          max="2100"
+                          [value]="reportJahr()"
+                          (input)="reportJahr.set($any($event.target).value)"
+                        />
+                      }
+                    </div>
+                  </div>
+
+                  <div class="inline-field-form__row" style="margin-top: 14px">
+                    <button
+                      type="button"
+                      class="btn-secondary"
+                      [disabled]="reportDownloading() !== null"
+                      (click)="downloadBericht('csv')"
+                    >
+                      {{
+                        reportDownloading() === 'csv' ? t.reportDownloading : t.reportDownloadCsv
+                      }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-secondary"
+                      [disabled]="reportDownloading() !== null"
+                      (click)="downloadBericht('pdf')"
+                    >
+                      {{
+                        reportDownloading() === 'pdf' ? t.reportDownloading : t.reportDownloadPdf
+                      }}
+                    </button>
+                  </div>
+
+                  @if (reportError()) {
+                    <p class="field-error" role="alert">{{ reportError() }}</p>
+                  }
+                </section>
+              </div>
+            </div>
+          }
+        }
+      }
+    </div>
   </div>
 </main>
 
-<app-modal [open]="modalOpen()" labelledBy="tx-modal-heading" [closeLabel]="t.modalCloseLabel" (closed)="closeModal()">
+<app-modal
+  [open]="modalOpen()"
+  labelledBy="tx-modal-heading"
+  [closeLabel]="t.modalCloseLabel"
+  (closed)="closeModal()"
+>
   <h2 id="tx-modal-heading" class="tx-modal__heading">{{ t.modalHeading }}</h2>
 
   <label class="tx-modal__search-label" for="tx-modal-search">{{ t.searchLabel }}</label>
@@ -379,25 +503,45 @@
     @if (modalResults().length > 0) {
       <ul class="tx-modal__list">
         @for (tx of modalResults(); track tx.id) {
-          <li class="tx-modal__row tx-row--clickable" tabindex="0" [attr.aria-label]="t.editRowLabel + ': ' + (tx.description || tx.category?.name)" (click)="openEditModal(tx)" (keydown.enter)="openEditModal(tx)">
+          <li
+            class="tx-modal__row tx-row--clickable"
+            tabindex="0"
+            [attr.aria-label]="t.editRowLabel + ': ' + (tx.description || tx.category?.name)"
+            (click)="openEditModal(tx)"
+            (keydown.enter)="openEditModal(tx)"
+          >
             <span
               class="tx-icon"
               [style.background]="(tx.category?.color ?? '#736a82') + '1f'"
               [style.color]="tx.category?.color ?? '#736a82'"
               aria-hidden="true"
             >
-              <ng-container [ngComponentOutlet]="resolveCategoryIcon(tx.category?.icon_key ?? '')" />
+              <ng-container
+                [ngComponentOutlet]="resolveCategoryIcon(tx.category?.icon_key ?? '')"
+              />
             </span>
             <span class="tx-modal__row-content">
-              <span class="tx-modal__row-title">{{ tx.description || tx.category?.name || '—' }}</span>
-              <span class="tx-modal__row-meta">{{ tx.category?.name }} &middot; {{ tx.occurred_at | date: 'd. MMM y':'':'de' }}</span>
+              <span class="tx-modal__row-title">{{
+                tx.description || tx.category?.name || '—'
+              }}</span>
+              <span class="tx-modal__row-meta"
+                >{{ tx.category?.name }} &middot;
+                {{ tx.datum | date: 'd. MMM y' : '' : 'de' }}</span
+              >
             </span>
-            <span class="tx-amount">&minus;{{ tx.amount | number: '1.2-2':'de' }}&nbsp;&euro;</span>
+            <span class="tx-amount"
+              >&minus;{{ tx.amount | number: '1.2-2' : 'de' }}&nbsp;&euro;</span
+            >
           </li>
         }
       </ul>
       @if (modalHasMore()) {
-        <button type="button" class="tx-modal__load-more" (click)="loadMoreResults()" [disabled]="modalLoading()">
+        <button
+          type="button"
+          class="tx-modal__load-more"
+          (click)="loadMoreResults()"
+          [disabled]="modalLoading()"
+        >
           {{ modalLoading() ? t.loading : t.loadMore }}
         </button>
       }
@@ -409,79 +553,117 @@
   </div>
 </app-modal>
 
-<app-modal [open]="addModalOpen()" labelledBy="add-expense-heading" [closeLabel]="t.addModalCloseLabel" (closed)="closeAddModal()">
-  <h2 id="add-expense-heading" class="tx-modal__heading">{{ isEditing() ? t.editModalHeading : t.addModalHeading }}</h2>
+<app-modal
+  [open]="addModalOpen()"
+  labelledBy="add-expense-heading"
+  [closeLabel]="t.addModalCloseLabel"
+  (closed)="closeAddModal()"
+>
+  <h2 id="add-expense-heading" class="tx-modal__heading">
+    {{ isEditing() ? t.editModalHeading : t.addModalHeading }}
+  </h2>
 
   @if (confirmingDelete()) {
     <div class="delete-confirm">
       <p>{{ t.deleteConfirmQuestion }}</p>
       <div class="delete-confirm__actions">
-        <button type="button" class="btn-secondary" #cancelDeleteBtn (click)="cancelDelete()">{{ t.deleteConfirmCancel }}</button>
-        <button type="button" class="btn-delete" [disabled]="deleteSubmitting()" (click)="confirmDelete()">
+        <button type="button" class="btn-secondary" #cancelDeleteBtn (click)="cancelDelete()">
+          {{ t.deleteConfirmCancel }}
+        </button>
+        <button
+          type="button"
+          class="btn-delete"
+          [disabled]="deleteSubmitting()"
+          (click)="confirmDelete()"
+        >
           {{ deleteSubmitting() ? t.deleteConfirmSubmitting : t.deleteConfirmYes }}
         </button>
       </div>
     </div>
   } @else {
-
-  <form class="add-expense-form" (submit)="onAddExpenseSubmit($event)">
-    <div class="field">
-      <label for="add-expense-amount">{{ t.addAmountLabel }}</label>
-      <input
-        id="add-expense-amount"
-        type="number"
-        inputmode="decimal"
-        min="0.01"
-        step="0.01"
-        [value]="addAmount()"
-        (input)="addAmount.set($any($event.target).value)"
-      />
-    </div>
-    <div class="field">
-      <label for="add-expense-description">{{ t.addDescriptionLabel }}</label>
-      <input
-        id="add-expense-description"
-        type="text"
-        [placeholder]="t.addDescriptionPlaceholder"
-        [value]="addDescription()"
-        (input)="addDescription.set($any($event.target).value)"
-      />
-    </div>
-
-    <fieldset class="field add-expense-form__categories">
-      <legend>{{ t.addCategoryLabel }}</legend>
-      <div class="category-chips" role="radiogroup" [attr.aria-label]="t.addCategoryLabel">
-        @for (category of addCategoryChoices(); track category.id) {
-          <button
-            type="button"
-            class="category-chip"
-            role="radio"
-            [attr.aria-checked]="addSelectedCategoryId() === category.id"
-            [class.is-selected]="addSelectedCategoryId() === category.id"
-            [style.--chip-color]="category.color"
-            (click)="selectCategory(category.id)"
-          >
-            <span class="category-chip__icon" aria-hidden="true">
-              <ng-container [ngComponentOutlet]="resolveCategoryIcon(category.icon_key)" />
-            </span>
-            {{ category.name }}
-          </button>
-        }
+    <form class="add-expense-form" (submit)="onAddExpenseSubmit($event)">
+      <div class="field">
+        <label for="add-expense-amount">{{ t.addAmountLabel }}</label>
+        <input
+          id="add-expense-amount"
+          type="number"
+          inputmode="decimal"
+          min="0.01"
+          step="0.01"
+          [value]="addAmount()"
+          (input)="addAmount.set($any($event.target).value)"
+        />
       </div>
-    </fieldset>
+      <div class="field">
+        <label for="add-expense-description">{{ t.addDescriptionLabel }}</label>
+        <input
+          id="add-expense-description"
+          type="text"
+          [placeholder]="t.addDescriptionPlaceholder"
+          [value]="addDescription()"
+          (input)="addDescription.set($any($event.target).value)"
+        />
+      </div>
 
-    @if (addError()) {
-      <p class="field-error" role="alert">{{ addError() }}</p>
-    }
+      <fieldset class="field add-expense-form__categories">
+        <legend>{{ t.addCategoryLabel }}</legend>
+        <div class="category-chips" role="radiogroup" [attr.aria-label]="t.addCategoryLabel">
+          @for (category of addCategoryChoices(); track category.id) {
+            <button
+              type="button"
+              class="category-chip"
+              role="radio"
+              [attr.aria-checked]="addSelectedCategoryId() === category.id"
+              [class.is-selected]="addSelectedCategoryId() === category.id"
+              [style.--chip-color]="category.color"
+              (click)="selectCategory(category.id)"
+            >
+              <span class="category-chip__icon" aria-hidden="true">
+                <ng-container [ngComponentOutlet]="resolveCategoryIcon(category.icon_key)" />
+              </span>
+              {{ category.name }}
+            </button>
+          }
+        </div>
+      </fieldset>
 
-    <button type="submit" class="btn-primary" [disabled]="addSubmitting()">
-      {{ addSubmitting() ? (isEditing() ? t.editSubmitting : t.addSubmitting) : (isEditing() ? t.editSubmit : t.addSubmit) }}
-    </button>
+      <div class="field" style="flex-direction: row; align-items: center; gap: 8px">
+        <label
+          for="add-expense-datum"
+          style="font-size: 13px; font-weight: 500; color: var(--color-dusk-helper)"
+          >{{ t.addDatumLabel }}</label
+        >
+        <input
+          id="add-expense-datum"
+          type="date"
+          style="min-height: 44px; width: auto; padding: 0 10px; font-size: 14px"
+          [value]="addDatum()"
+          (input)="addDatum.set($any($event.target).value)"
+        />
+      </div>
 
-    @if (isEditing()) {
-      <button type="button" class="btn-delete-link" #deleteLinkBtn (click)="requestDelete()">{{ t.deleteButton }}</button>
-    }
-  </form>
+      @if (addError()) {
+        <p class="field-error" role="alert">{{ addError() }}</p>
+      }
+
+      <button type="submit" class="btn-primary" [disabled]="addSubmitting()">
+        {{
+          addSubmitting()
+            ? isEditing()
+              ? t.editSubmitting
+              : t.addSubmitting
+            : isEditing()
+              ? t.editSubmit
+              : t.addSubmit
+        }}
+      </button>
+
+      @if (isEditing()) {
+        <button type="button" class="btn-delete-link" #deleteLinkBtn (click)="requestDelete()">
+          {{ t.deleteButton }}
+        </button>
+      }
+    </form>
   }
 </app-modal>
 
@@ -491,7 +673,9 @@
   [closeLabel]="t.categoryGoalCloseLabel"
   (closed)="closeCategoryGoalModal()"
 >
-  <h2 id="category-goal-heading" class="tx-modal__heading">{{ t.categoryGoalHeadingPrefix }}{{ categoryGoalCategoryLabel() }}</h2>
+  <h2 id="category-goal-heading" class="tx-modal__heading">
+    {{ t.categoryGoalHeadingPrefix }}{{ categoryGoalCategoryLabel() }}
+  </h2>
 
   <form class="add-expense-form" (submit)="onCategoryGoalSubmit($event)">
     <div class="field">
@@ -524,93 +708,129 @@
   [closeLabel]="t.deductionModalCloseLabel"
   (closed)="closeDeductionModal()"
 >
-  <h2 id="deduction-modal-heading" class="tx-modal__heading">{{ isEditingDeduction() ? t.editDeductionModalHeading : t.addDeductionModalHeading }}</h2>
+  <h2 id="deduction-modal-heading" class="tx-modal__heading">
+    {{ isEditingDeduction() ? t.editDeductionModalHeading : t.addDeductionModalHeading }}
+  </h2>
 
   @if (confirmingDeductionDelete()) {
     <div class="delete-confirm">
       <p>{{ t.deductionDeleteConfirmQuestion }}</p>
       <div class="delete-confirm__actions">
-        <button type="button" class="btn-secondary" #cancelDeductionDeleteBtn (click)="cancelDeductionDelete()">{{ t.deductionDeleteConfirmCancel }}</button>
-        <button type="button" class="btn-delete" [disabled]="deductionDeleteSubmitting()" (click)="confirmDeductionDelete()">
-          {{ deductionDeleteSubmitting() ? t.deductionDeleteConfirmSubmitting : t.deductionDeleteConfirmYes }}
+        <button
+          type="button"
+          class="btn-secondary"
+          #cancelDeductionDeleteBtn
+          (click)="cancelDeductionDelete()"
+        >
+          {{ t.deductionDeleteConfirmCancel }}
+        </button>
+        <button
+          type="button"
+          class="btn-delete"
+          [disabled]="deductionDeleteSubmitting()"
+          (click)="confirmDeductionDelete()"
+        >
+          {{
+            deductionDeleteSubmitting()
+              ? t.deductionDeleteConfirmSubmitting
+              : t.deductionDeleteConfirmYes
+          }}
         </button>
       </div>
     </div>
   } @else {
+    <form class="add-expense-form" (submit)="onDeductionSubmit($event)">
+      <div class="field">
+        <label for="deduction-name">{{ t.deductionNameLabel }}</label>
+        <input
+          id="deduction-name"
+          type="text"
+          [placeholder]="t.deductionNamePlaceholder"
+          [value]="deductionName()"
+          (input)="deductionName.set($any($event.target).value)"
+        />
+      </div>
+      <div class="field">
+        <label for="deduction-amount">{{ t.deductionAmountLabel }}</label>
+        <input
+          id="deduction-amount"
+          type="number"
+          inputmode="decimal"
+          min="0.01"
+          step="0.01"
+          [value]="deductionAmount()"
+          (input)="deductionAmount.set($any($event.target).value)"
+        />
+      </div>
 
-  <form class="add-expense-form" (submit)="onDeductionSubmit($event)">
-    <div class="field">
-      <label for="deduction-name">{{ t.deductionNameLabel }}</label>
-      <input
-        id="deduction-name"
-        type="text"
-        [placeholder]="t.deductionNamePlaceholder"
-        [value]="deductionName()"
-        (input)="deductionName.set($any($event.target).value)"
-      />
-    </div>
-    <div class="field">
-      <label for="deduction-amount">{{ t.deductionAmountLabel }}</label>
-      <input
-        id="deduction-amount"
-        type="number"
-        inputmode="decimal"
-        min="0.01"
-        step="0.01"
-        [value]="deductionAmount()"
-        (input)="deductionAmount.set($any($event.target).value)"
-      />
-    </div>
-
-    <fieldset class="field add-expense-form__categories">
-      <legend>{{ t.deductionCategoryLabel }}</legend>
-      <div class="category-chips" role="radiogroup" [attr.aria-label]="t.deductionCategoryLabel">
-        <button
-          type="button"
-          class="category-chip"
-          role="radio"
-          [attr.aria-checked]="deductionCategoryId() === null"
-          [class.is-selected]="deductionCategoryId() === null"
-          (click)="selectDeductionCategory(null)"
-        >
-          &mdash;
-        </button>
-        @for (category of addCategoryChoices(); track category.id) {
+      <fieldset class="field add-expense-form__categories">
+        <legend>{{ t.deductionCategoryLabel }}</legend>
+        <div class="category-chips" role="radiogroup" [attr.aria-label]="t.deductionCategoryLabel">
           <button
             type="button"
             class="category-chip"
             role="radio"
-            [attr.aria-checked]="deductionCategoryId() === category.id"
-            [class.is-selected]="deductionCategoryId() === category.id"
-            [style.--chip-color]="category.color"
-            (click)="selectDeductionCategory(category.id)"
+            [attr.aria-checked]="deductionCategoryId() === null"
+            [class.is-selected]="deductionCategoryId() === null"
+            (click)="selectDeductionCategory(null)"
           >
-            <span class="category-chip__icon" aria-hidden="true">
-              <ng-container [ngComponentOutlet]="resolveCategoryIcon(category.icon_key)" />
-            </span>
-            {{ category.name }}
+            &mdash;
           </button>
-        }
-      </div>
-    </fieldset>
+          @for (category of addCategoryChoices(); track category.id) {
+            <button
+              type="button"
+              class="category-chip"
+              role="radio"
+              [attr.aria-checked]="deductionCategoryId() === category.id"
+              [class.is-selected]="deductionCategoryId() === category.id"
+              [style.--chip-color]="category.color"
+              (click)="selectDeductionCategory(category.id)"
+            >
+              <span class="category-chip__icon" aria-hidden="true">
+                <ng-container [ngComponentOutlet]="resolveCategoryIcon(category.icon_key)" />
+              </span>
+              {{ category.name }}
+            </button>
+          }
+        </div>
+      </fieldset>
 
-    <label class="checkbox-field">
-      <input type="checkbox" [checked]="deductionActive()" (change)="deductionActive.set($any($event.target).checked)" />
-      {{ t.deductionActiveLabel }}
-    </label>
+      <label class="checkbox-field">
+        <input
+          type="checkbox"
+          [checked]="deductionActive()"
+          (change)="deductionActive.set($any($event.target).checked)"
+        />
+        {{ t.deductionActiveLabel }}
+      </label>
 
-    @if (deductionError()) {
-      <p class="field-error" role="alert">{{ deductionError() }}</p>
-    }
+      @if (deductionError()) {
+        <p class="field-error" role="alert">{{ deductionError() }}</p>
+      }
 
-    <button type="submit" class="btn-primary" [disabled]="deductionSubmitting()">
-      {{ deductionSubmitting() ? (isEditingDeduction() ? t.editDeductionSubmitting : t.deductionSubmitting) : (isEditingDeduction() ? t.editDeductionSubmit : t.deductionSubmit) }}
-    </button>
+      <button type="submit" class="btn-primary" [disabled]="deductionSubmitting()">
+        {{
+          deductionSubmitting()
+            ? isEditingDeduction()
+              ? t.editDeductionSubmitting
+              : t.deductionSubmitting
+            : isEditingDeduction()
+              ? t.editDeductionSubmit
+              : t.deductionSubmit
+        }}
+      </button>
 
-    @if (isEditingDeduction()) {
-      <button type="button" class="btn-delete-link" #deductionDeleteLinkBtn (click)="requestDeductionDelete()">{{ t.deductionDeleteButton }}</button>
-    }
-  </form>
+      @if (isEditingDeduction()) {
+        <button
+          type="button"
+          class="btn-delete-link"
+          #deductionDeleteLinkBtn
+          (click)="requestDeductionDelete()"
+        >
+          {{ t.deductionDeleteButton }}
+        </button>
+      }
+    </form>
   }
 </app-modal>
 

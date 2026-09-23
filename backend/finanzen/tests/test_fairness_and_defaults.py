@@ -20,11 +20,11 @@ def test_household_gets_three_default_categories_with_exact_colors_on_creation()
 
     categories = {c.name: c for c in Category.objects.filter(household=household)}
     assert set(categories) == {'Fixkosten', 'Haushalt', 'Sonstiges'}
-    assert categories['Fixkosten'].color == '#5b3fd6'
+    assert categories['Fixkosten'].color == '#164c49'
     assert categories['Fixkosten'].icon_key == 'fixkosten'
-    assert categories['Haushalt'].color == '#ffb75e'
+    assert categories['Haushalt'].color == '#8a5a23'
     assert categories['Haushalt'].icon_key == 'haushalt'
-    assert categories['Sonstiges'].color == '#c23b52'
+    assert categories['Sonstiges'].color == '#a8452f'
     assert categories['Sonstiges'].icon_key == 'sonstiges'
 
 
@@ -54,8 +54,8 @@ def test_fairness_field_appears_and_sums_to_100_percent_with_two_members():
     category = Category.objects.get(household=household, name='Fixkosten')
 
     now = datetime(2026, 9, 5, tzinfo=dt_timezone.utc)
-    Transaction.objects.create(account=account, category=category, amount='75.00', occurred_at=now, created_by=user_a)
-    Transaction.objects.create(account=account, category=category, amount='25.00', occurred_at=now, created_by=user_b)
+    Transaction.objects.create(account=account, category=category, amount='75.00', datum=now, created_by=user_a)
+    Transaction.objects.create(account=account, category=category, amount='25.00', datum=now, created_by=user_b)
 
     client = APIClient()
     client.force_authenticate(user=user_a)

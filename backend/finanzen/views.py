@@ -4,6 +4,7 @@ from django.db.models import Q, Sum
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import CursorPagination
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
+from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -11,7 +12,7 @@ from rest_framework.viewsets import ModelViewSet
 from core.mfa_views import user_has_mfa_enabled
 from core.models import HouseholdMembership
 from core.permissions import HouseholdScopedPermission
-from finanzen import services
+from finanzen import reports, services
 from finanzen.insights import berechne_insights
 from finanzen.models import Account, Category, RecurringDeduction, Transaction
 from finanzen.serializers import (
@@ -23,7 +24,7 @@ from finanzen.serializers import (
     RecurringDeductionSerializer,
     TransactionSerializer,
 )
-from finanzen.throttling import TransactionWriteRateThrottle
+from finanzen.throttling import DataExportRateThrottle, TransactionWriteRateThrottle
 
 
 def _money(value: Decimal) -> str:
@@ -40,11 +41,11 @@ class TransactionCursorPagination(CursorPagination):
     """CursorPagination statt PageNumberPagination (TEIL 4): bleibt stabil,
     wenn während des Blätterns neue Transaktionen dazukommen — ein
     Seitenzahl-Offset würde bei gleichzeitigen neuen Einträgen Zeilen
-    doppelt anzeigen oder überspringen, ein Cursor auf occurred_at/id
+    doppelt anzeigen oder überspringen, ein Cursor auf datum/id
     nicht."""
 
     page_size = 20
-    ordering = '-occurred_at'
+    ordering = '-datum'
     cursor_query_param = 'cursor'
 
 
@@ -80,7 +81,7 @@ class TransactionViewSet(ModelViewSet):
         queryset = (
             Transaction.objects.select_related('category', 'account')
             .filter(account__household__members=self.request.user)
-            .order_by('-occurred_at')
+            .order_by('-datum')
         )
 
         query = self.request.query_params.get('q', '').strip()
@@ -203,7 +204,8 @@ class OverviewView(APIView):
         if household is None:
             return Response(
                 {
-                    'budget': {'planned': '0', 'total': '0'},
+                    'budget': {'ausgegeben': '0.00', 'ziel': '0.00', 'uebrig': '0.00', 'prozent': 0},
+                    'has_transaction': False,
                     'categories': [],
                     'member_count': 1,
                     'household_name': '',
@@ -221,14 +223,24 @@ class OverviewView(APIView):
         # Ausgabe komplett aus der Übersicht.
         spent_by_category = services.category_spent(household)
         categories_qs = Category.objects.filter(household=household).order_by('name')
-        total_spent, total_goal = services.budget_totals(household)
+        head = services.budget_head(household, spent_by_category)
 
         # Faire Aufteilung ergibt bei einer Person keinen Sinn — das Feld
         # existiert dann gar nicht im JSON (nicht null/0), das Frontend prüft
         # per @if auf Anwesenheit (siehe features/finanzen/finanzen.ts).
         member_count = household.members.count()
         response_data = {
-            'budget': {'planned': _money(total_spent), 'total': _money(total_goal)},
+            # Kopfzeile aus den Kategorien darunter berechnet (services.budget_head),
+            # NICHT "planned/total"/"verplant" wie im verworfenen Envelope-Konzept.
+            'budget': {
+                'ausgegeben': _money(head['ausgegeben']),
+                'ziel': _money(head['ziel']),
+                'uebrig': _money(head['uebrig']),
+                'prozent': head['prozent'],
+            },
+            # Für das Onboarding ("Erste Ausgabe erfassen"): ausgegeben > 0 taugt
+            # dafür nicht mehr, seit auch feste Abzüge in die Kategorien einfließen.
+            'has_transaction': Transaction.objects.filter(account__household=household).exists(),
             'categories': [
                 {
                     'id': category.id,
@@ -263,6 +275,50 @@ class OverviewView(APIView):
             ]
 
         return Response(response_data)
+
+
+class BerichtCsvView(APIView):
+    """Monats-/Jahresbericht als CSV-Download (finanzen/reports.py) — zum
+    Archivieren/Ausdrucken, NICHT zu verwechseln mit dem "Für KI-Analyse
+    exportieren"-Textblock (der erzeugt keine Datei).
+
+    Kein HouseholdScopedPermission nötig, aus demselben Grund wie bei
+    OverviewView/AnalysenView oben: der Haushalt kommt ausschließlich aus
+    request.user, ?monat=/?jahr= sind Zeiträume, keine IDs eines fremden
+    Objekts — ein Angreifer kann hier strukturell keine fremde ID
+    unterschieben. Das strenge Export-Rate-Limit gilt trotzdem: ein Bericht
+    enthält vollständige Haushaltsdaten über einen ganzen Zeitraum."""
+
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [DataExportRateThrottle]
+
+    def get(self, request):
+        household = request.user.households.first()
+        if household is None:
+            raise ValidationError('Dieses Konto ist noch keinem Haushalt zugeordnet.')
+        period = reports.parse_period(request.query_params)
+        csv_content = reports.build_csv(household, period)
+        response = HttpResponse(csv_content, content_type='text/csv; charset=utf-8-sig')
+        response['Content-Disposition'] = f'attachment; filename="{reports.csv_filename(household, period)}"'
+        return response
+
+
+class BerichtPdfView(APIView):
+    """Wie BerichtCsvView, aber als formatiertes PDF (reportlab), siehe
+    finanzen/reports.py build_pdf()."""
+
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [DataExportRateThrottle]
+
+    def get(self, request):
+        household = request.user.households.first()
+        if household is None:
+            raise ValidationError('Dieses Konto ist noch keinem Haushalt zugeordnet.')
+        period = reports.parse_period(request.query_params)
+        pdf_bytes = reports.build_pdf(household, period)
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{reports.pdf_filename(household, period)}"'
+        return response
 
 
 class OnboardingStatusView(APIView):

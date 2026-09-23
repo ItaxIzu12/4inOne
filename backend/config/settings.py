@@ -197,7 +197,12 @@ PASSWORD_HASHERS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Europe/Berlin statt UTC: "heute" und die Monatsgrenzen (finanzen/services.py,
+# Transaction.datum) müssen für deutsche Nutzer stimmen — mit UTC wäre die
+# Ausgabe von 00:30 Uhr (MESZ) noch "gestern" bzw. das heutige Datum aus
+# Browsersicht läge serverseitig scheinbar in der Zukunft. In der Datenbank
+# bleiben Zeitstempel weiterhin UTC (USE_TZ = True).
+TIME_ZONE = 'Europe/Berlin'
 
 USE_I18N = True
 
@@ -265,6 +270,10 @@ REST_FRAMEWORK = {
         # TransactionWriteRateThrottle-Docstring), siehe Sicherheitsprüfung
         # PRÜFUNG 4.
         'finanzen_write': f"{env.int('RATE_LIMIT_FINANZEN_WRITE', default=60)}/min",
+        # Berichte (CSV/PDF, finanzen/views.py) — enthalten vollständige
+        # Haushaltsdaten über einen längeren Zeitraum, deshalb das strenge
+        # Limit für Datenexporte (ARCHITEKTUR.md §3.9), pro Nutzer.
+        'data_export': f"{env.int('RATE_LIMIT_DATA_EXPORT', default=2)}/min",
     },
 }
 

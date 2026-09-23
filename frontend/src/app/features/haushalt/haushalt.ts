@@ -9,7 +9,7 @@ import { IconHaushalt } from '../../shared/icons/icon-haushalt';
   standalone: true,
   imports: [RouterLink, RevealDirective, IconHaushalt],
   templateUrl: './haushalt.html',
-  styleUrl: '../finanzen/finanzen.css',
+  styleUrl: '../../shared/feature-placeholder.css',
 })
 export class Haushalt {
   private readonly scroll = inject(ScrollService);

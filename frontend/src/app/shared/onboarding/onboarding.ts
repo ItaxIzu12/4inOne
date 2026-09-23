@@ -47,7 +47,7 @@ export class Onboarding {
   private readonly financeState = inject(FinanzenStateService);
   private readonly hasTransaction = computed(() => {
     const u = this.financeState.uebersicht();
-    return u !== null && Number(u.budget.planned) > 0;
+    return u !== null && u.has_transaction;
   });
 
   private readonly status = signal<{

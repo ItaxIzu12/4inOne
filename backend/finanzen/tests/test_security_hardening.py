@@ -3,7 +3,7 @@ PRÜFUNG 1–6), ergänzend zu den bereits bestehenden CRUD-/IDOR-Tests in
 test_transaction_update.py und test_category_update.py — hier NUR die
 Lücken, die eine fokussierte Sicherheitsprüfung zusätzlich aufgedeckt hat."""
 
-from datetime import datetime, timezone as dt_timezone
+from datetime import date
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -27,7 +27,7 @@ def _client_with_transaction():
         category=category,
         amount='50.00',
         description='Ursprünglich',
-        occurred_at=datetime(2026, 9, 1, tzinfo=dt_timezone.utc),
+        datum=date(2026, 9, 1),
         created_by=user,
     )
     client = APIClient()

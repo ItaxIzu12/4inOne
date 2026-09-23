@@ -8,7 +8,6 @@
  */
 export const FINANZEN_I18N = {
   eyebrow: 'Finanzen',
-  pageTitle: 'August im Überblick',
 
   // Fehlerzustand beim Laden der Übersicht (SCHRITT 5B) — ersetzt den
   // gesamten Tab-Inhalt, damit ein fehlgeschlagener Ladevorgang nie mit
@@ -23,11 +22,11 @@ export const FINANZEN_I18N = {
   tabAnalytics: 'Analysen',
 
   encryptedStored: 'Verschlüsselt gespeichert',
-  balanceLabel: 'Budget · August',
+  balanceLabelPrefix: 'Budget · ',
   balanceSubPrefix: 'von ',
-  balanceSubMiddle: ' € verplant · ',
+  balanceSubMiddle: ' € Ziel · ',
   balanceSubSuffix: ' € übrig',
-  balanceBarCaptionSuffix: ' % verplant',
+  balanceBarCaptionSuffix: ' % ausgegeben',
 
   transactionsHeading: 'Letzte Transaktionen',
   transactionsMetaSuffix: ' diesen Monat',
@@ -42,6 +41,13 @@ export const FINANZEN_I18N = {
   gentleNoteHighlight: 'etwas über Plan',
   gentleNoteAfter: " — hier ist, wo's herkam. Kein Grund zur Sorge, nur ein guter Moment, kurz draufzuschauen.",
 
+  // Verfügbares-Einkommen-Kärtchen in der Übersicht-Seitenspalte — dieselbe
+  // Kennzahl wie im Analysen-Tab (verfuegbaresEinkommen()), hier zusätzlich
+  // direkt neben den Kategorien sichtbar, damit beide Tabs erkennbar
+  // zusammenhängen (FinanzenTab.md §4).
+  availableIncomeHeading: 'Nach Kosten und Rücklage',
+  availableIncomeLink: 'Berechnung ansehen',
+
   categoriesHeading: 'Kategorien',
   noCategoriesYet: 'Noch keine Ausgaben in diesem Monat.',
   legendGoalPrefix: ' von ',
@@ -55,7 +61,7 @@ export const FINANZEN_I18N = {
   newCategoryColorLabel: 'Farbe',
   newCategorySubmit: 'Kategorie erstellen',
   newCategorySubmitting: 'Wird erstellt …',
-  fairnessHeading: 'Faire Aufteilung',
+  fairnessHeading: 'Gemeinsam beigetragen',
   fairnessNote: 'Ohne Wertung — nur Transparenz.',
   aboHeading: 'Abo-Radar',
 
@@ -77,6 +83,7 @@ export const FINANZEN_I18N = {
   addDescriptionLabel: 'Beschreibung',
   addDescriptionPlaceholder: 'z. B. Wocheneinkauf',
   addCategoryLabel: 'Kategorie',
+  addDatumLabel: 'Datum',
   addSubmit: 'Ausgabe speichern',
   addSubmitting: 'Wird gespeichert …',
   editSubmit: 'Änderung speichern',
@@ -141,4 +148,18 @@ export const FINANZEN_I18N = {
 
   insightsHeading: 'Einschätzung',
   insightsEmpty: 'Trage ein Einkommen ein, um eine Einschätzung zu sehen.',
+
+  // Bericht-Download (CSV/PDF für Monat oder Jahr) — zum Archivieren/
+  // Ausdrucken, NICHT zu verwechseln mit dem "Für KI-Analyse exportieren"-
+  // Textblock (den gibt es an dieser Stelle noch nicht).
+  reportHeading: 'Bericht herunterladen',
+  reportNote: 'Als Datei zum Aufheben oder Ausdrucken — für einen einzelnen Monat oder ein ganzes Jahr.',
+  reportPeriodTypeLabel: 'Zeitraum',
+  reportPeriodMonat: 'Monat',
+  reportPeriodJahr: 'Jahr',
+  reportMonatLabel: 'Welcher Monat?',
+  reportJahrLabel: 'Welches Jahr?',
+  reportDownloadCsv: 'Als CSV herunterladen',
+  reportDownloadPdf: 'Als PDF herunterladen',
+  reportDownloading: 'Wird erstellt …',
 } as const;

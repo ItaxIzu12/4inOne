@@ -3,7 +3,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
-import { ThemeService } from '../../core/theme/theme.service';
 import { ScrollService } from '../../core/scroll/scroll.service';
 import { IconFinanzen } from '../icons/icon-finanzen';
 import { IconHaushalt } from '../icons/icon-haushalt';
@@ -39,7 +38,6 @@ import { LogoKompass } from '../icons/logo-kompass';
   styleUrl: './header.css',
 })
 export class Header {
-  protected readonly theme = inject(ThemeService);
   protected readonly auth = inject(AuthService);
   private readonly scroll = inject(ScrollService);
   private readonly router = inject(Router);
@@ -57,7 +55,14 @@ export class Header {
     return route.snapshot.data;
   });
 
-  protected readonly showDashboardNav = computed(() => this.routeData()['dashboardNav'] === true);
+  // `sidebarNav: true` (Dashboard/Finanzen, siehe app.routes.ts und
+  // shared/sidebar-nav) blendet die redundante Modul-Reiter-Zeile hier aus
+  // — die neue Sidebar übernimmt die Navigation für diese beiden Seiten ab
+  // 960px, die vorhandene Bottom-Nav darunter. Haushalt/Organisation haben
+  // (noch) keine eigene Sidebar und behalten diese Zeile unverändert.
+  protected readonly showDashboardNav = computed(
+    () => this.routeData()['dashboardNav'] === true && this.routeData()['sidebarNav'] !== true,
+  );
 
   // "Start" im Marken-Logo/in der Modul-Navigation soll für eingeloggte
   // Nutzer:innen zum echten Dashboard führen (/app), nicht zur öffentlichen

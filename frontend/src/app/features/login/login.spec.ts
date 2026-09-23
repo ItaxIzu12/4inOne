@@ -13,6 +13,22 @@ function createLogin(mode: 'login' | 'register') {
 }
 
 describe('Login', () => {
+  it('validates access fields before progressing to household and privacy', () => {
+    const fixture = createLogin('register');
+    const c = fixture.componentInstance;
+    c['continueRegistration']();
+    expect(c['registerStep']()).toBe(1);
+    c['registerForm'].patchValue({name:'Anna',email:'anna@example.de',password:'Passwort123',confirmPassword:'Passwort123'});
+    c['continueRegistration'](); fixture.detectChanges();
+    expect(c['registerStep']()).toBe(2);
+    expect(fixture.nativeElement.querySelector('#register-household-name')).toBeTruthy();
+    expect(c['registerForm'].valid).toBe(false);
+    c['registerForm'].controls.acceptPrivacy.setValue(true);
+    expect(c['registerForm'].valid).toBe(true);
+    c['registerStep'].set(1); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#register-email').value).toBe('anna@example.de');
+  });
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Login],
@@ -24,12 +40,12 @@ describe('Login', () => {
     }).compileComponents();
   });
 
-  it('shows the login form with a labelled email field and the MFA hint by default', () => {
+  it('shows labelled login fields and a registration link', () => {
     const fixture = createLogin('login');
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.querySelector('label[for="login-email"]')).toBeTruthy();
-    expect(compiled.querySelector('.mfa-hint')?.textContent).toContain('Zwei-Faktor-Authentifizierung');
+    expect(compiled.querySelector('.secondary-button')?.getAttribute('href')).toBe('/registrieren');
   });
 
   it('does not submit the register form when the password is shorter than 10 characters', () => {

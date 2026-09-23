@@ -1,7 +1,17 @@
+from datetime import date
+
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from core.models import Household
+
+
+def heute() -> date:
+    """Standardwert für Transaction.datum: das heutige Datum in der
+    Django-Zeitzone (settings.TIME_ZONE). Modul-Funktion statt lambda, damit
+    Migrationen sie referenzieren können."""
+    return timezone.localdate()
 
 
 class Account(models.Model):
@@ -30,7 +40,7 @@ class Category(models.Model):
 
     household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='categories')
     name = models.CharField(max_length=100)
-    color = models.CharField(max_length=7, default='#5b3fd6', help_text='Hex-Farbwert, z. B. #5b3fd6.')
+    color = models.CharField(max_length=7, default='#164c49', help_text='Hex-Farbwert, z. B. #164c49.')
     icon_key = models.CharField(max_length=30, default='sonstiges')
     # Optionales monatliches Ausgabenziel — OverviewView (finanzen/views.py)
     # stellt es dem live berechneten "ausgegeben diesen Monat" gegenüber.
@@ -150,7 +160,14 @@ class Transaction(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
     )
     updated_at = models.DateTimeField(auto_now=True)
-    occurred_at = models.DateTimeField()
+    # Wann hat die Ausgabe stattgefunden? Ein DATUM (kein Zeitstempel):
+    # standardmäßig heute, im Request überschreibbar (Validierung in
+    # TransactionSerializer.validate_datum: nicht in der Zukunft, höchstens
+    # 12 Monate zurück). Alle Monats-/Jahresrechnungen (finanzen/services.py)
+    # filtern nach DIESEM Feld. Ersetzt das frühere occurred_at (DateTime).
+    datum = models.DateField(default=heute)
+    # Technischer Erstellungs-Zeitstempel — unabhängig von datum, nur für
+    # Audit/Nachvollziehbarkeit, fließt in keine Berechnung ein.
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 

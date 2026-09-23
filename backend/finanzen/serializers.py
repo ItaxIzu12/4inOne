@@ -1,6 +1,8 @@
 import re
+from datetime import timedelta
 from decimal import Decimal
 
+from django.utils import timezone
 from rest_framework import serializers
 
 from core.models import Household, HouseholdMembership
@@ -48,7 +50,7 @@ MAX_CATEGORIES_PER_HOUSEHOLD = 15
 
 class CategorySerializer(serializers.ModelSerializer):
     # required=True überschreibt DRFs automatische Ableitung aus dem Modell:
-    # beide Felder haben dort einen default-Wert (color='#5b3fd6',
+    # beide Felder haben dort einen default-Wert (color='#164c49',
     # icon_key='sonstiges'), wodurch ModelSerializer sie sonst als optional
     # einstufen würde — beim Anlegen einer NEUEN, selbst benannten Kategorie
     # sollen Farbe/Icon aber bewusst gewählt werden, kein stiller Rückfall
@@ -140,7 +142,7 @@ class TransactionSerializer(serializers.ModelSerializer):
             'category_id',
             'amount',
             'description',
-            'occurred_at',
+            'datum',
             'created_at',
             'created_by',
             'updated_by',
@@ -167,6 +169,18 @@ class TransactionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Der Betrag muss größer als 0 sein.')
         if value >= _MAX_AMOUNT:
             raise serializers.ValidationError('Der Betrag darf nicht 1.000.000 € oder mehr betragen.')
+        return value
+
+    def validate_datum(self, value):
+        # Wählbares Ausgabedatum (nicht mehr zwingend "jetzt"): nicht in der
+        # Zukunft, und nicht mehr als 12 Monate zurück — verhindert
+        # versehentliche Fehleingaben (z. B. ein Tippfehler im Jahr), ohne
+        # den normalen Gebrauch einzuschränken.
+        today = timezone.localdate()
+        if value > today:
+            raise serializers.ValidationError('Das Datum darf nicht in der Zukunft liegen.')
+        if value < today - timedelta(days=365):
+            raise serializers.ValidationError('Das Datum darf nicht mehr als 12 Monate zurückliegen.')
         return value
 
     def validate(self, attrs):

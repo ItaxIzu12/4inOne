@@ -3,7 +3,6 @@ Finanzen-Startseite (finanzen/views.py OverviewView). Die Formel-Tests
 (Kategorie-"ausgegeben" inkl. fester Abzüge, Verfügbares Einkommen,
 Synchronität beider Endpunkte) stehen in test_monthly_formulas.py."""
 
-from datetime import datetime, timezone as dt_timezone
 from decimal import Decimal
 
 import pytest
@@ -23,6 +22,10 @@ def _current_month_start():
 
 def _previous_month_start(month_start):
     return (month_start.replace(day=1) - timezone.timedelta(days=1)).replace(day=1)
+
+
+def _current_month_start_date():
+    return timezone.localdate().replace(day=1)
 
 
 def test_overview_aggregates_budget_and_category_totals_for_current_month_only():
@@ -45,17 +48,16 @@ def test_overview_aggregates_budget_and_category_totals_for_current_month_only()
     Category.objects.filter(pk=haushalt.pk).update(monthly_goal='300.00')
 
     Transaction.objects.create(
-        account=account, category=fixkosten, amount='680.00', occurred_at=timezone.now(), description='Miete'
+        account=account, category=fixkosten, amount='680.00', datum=timezone.localdate(), description='Miete'
     )
     Transaction.objects.create(
-        account=account, category=haushalt, amount='64.20', occurred_at=timezone.now(), description='Einkauf'
+        account=account, category=haushalt, amount='64.20', datum=timezone.localdate(), description='Einkauf'
     )
 
     # Eine Transaktion aus dem VORMONAT darf nicht mitgezählt werden.
     last_month = _previous_month_start(month_start)
-    old_datetime = timezone.make_aware(datetime.combine(last_month, datetime.min.time()), dt_timezone.utc)
     Transaction.objects.create(
-        account=account, category=fixkosten, amount='999.00', occurred_at=old_datetime, description='Alte Miete'
+        account=account, category=fixkosten, amount='999.00', datum=last_month, description='Alte Miete'
     )
 
     client = APIClient()
@@ -63,13 +65,13 @@ def test_overview_aggregates_budget_and_category_totals_for_current_month_only()
     response = client.get('/api/v1/finanzen/uebersicht/')
 
     assert response.status_code == 200
-    assert Decimal(response.data['budget']['total']) == Decimal('1300.00')
-    assert Decimal(response.data['budget']['planned']) == Decimal('744.20')
+    assert Decimal(response.data['budget']['ziel']) == Decimal('1300.00')
+    assert Decimal(response.data['budget']['ausgegeben']) == Decimal('744.20')
 
     categories_by_name = {c['name']: c for c in response.data['categories']}
     assert Decimal(categories_by_name['Fixkosten']['amount']) == Decimal('680.00')
     assert Decimal(categories_by_name['Haushalt']['amount']) == Decimal('64.20')
-    assert categories_by_name['Fixkosten']['color'] == '#5b3fd6'
+    assert categories_by_name['Fixkosten']['color'] == '#164c49'
     assert categories_by_name['Fixkosten']['icon_key'] == 'fixkosten'
 
 
@@ -88,7 +90,7 @@ def test_overview_never_includes_another_households_data():
         household=household_b, name='Geheimkategorie', color='#000000', icon_key='sonstiges', monthly_goal='5000.00'
     )
     Transaction.objects.create(
-        account=account_b, category=category_b, amount='4000.00', occurred_at=timezone.now(), description='Geheim'
+        account=account_b, category=category_b, amount='4000.00', datum=timezone.localdate(), description='Geheim'
     )
 
     client = APIClient()
@@ -96,8 +98,8 @@ def test_overview_never_includes_another_households_data():
     response = client.get('/api/v1/finanzen/uebersicht/')
 
     assert response.status_code == 200
-    assert Decimal(response.data['budget']['total']) == Decimal('0')
-    assert Decimal(response.data['budget']['planned']) == Decimal('0')
+    assert Decimal(response.data['budget']['ziel']) == Decimal('0')
+    assert Decimal(response.data['budget']['ausgegeben']) == Decimal('0')
     # household_a hat seine eigenen (automatisch angelegten) Kategorien mit
     # 0 € Ausgaben — die "Geheimkategorie" aus household_b darf darin NICHT
     # auftauchen.

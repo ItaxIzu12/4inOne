@@ -4,7 +4,7 @@ nutzt bereits Transaction.objects (SoftDeleteManager), eine bereits weich
 gelöschte Transaction ist darin schlicht nicht mehr auffindbar — PATCH/DELETE
 darauf laufen automatisch auf 404, nicht stillschweigend durch."""
 
-from datetime import datetime, timezone as dt_timezone
+from datetime import date
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -28,7 +28,7 @@ def _client_with_transaction():
         category=category,
         amount='50.00',
         description='Ursprünglich',
-        occurred_at=datetime(2026, 9, 1, tzinfo=dt_timezone.utc),
+        datum=date(2026, 9, 1),
         created_by=user,
     )
     client = APIClient()

@@ -2,7 +2,7 @@
 /api/v1/onboarding/status/) — aggregierter Status für den Onboarding-Block
 im Dashboard (siehe frontend shared/onboarding)."""
 
-from datetime import datetime, timezone as dt_timezone
+from datetime import date
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -49,7 +49,7 @@ def test_onboarding_status_reflects_real_progress():
     # Kategorie existiert bereits automatisch (finanzen/signals.py) — hier
     # nicht erneut anlegen, sonst UniqueConstraint-Verletzung.
     Transaction.objects.create(
-        account=account, amount='10.00', occurred_at=datetime(2026, 9, 1, tzinfo=dt_timezone.utc)
+        account=account, amount='10.00', datum=date(2026, 9, 1)
     )
 
     client = APIClient()

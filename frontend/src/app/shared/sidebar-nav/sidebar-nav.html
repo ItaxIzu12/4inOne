@@ -1,0 +1,78 @@
+<nav class="sidebar-nav" aria-label="Hauptnavigation">
+  <a class="sidebar-nav__brand" [routerLink]="homeLink()" aria-label="Kompass — zum Überblick">
+    <logo-kompass />
+    <span>Kompass</span>
+  </a>
+
+  <p class="sidebar-nav__household-label">Dein Zuhause</p>
+  <ul class="sidebar-nav__list">
+    <li>
+      <a
+        [routerLink]="homeLink()"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        #rlaStart="routerLinkActive"
+        [attr.aria-current]="rlaStart.isActive ? 'page' : null"
+      >
+        <svg
+          class="kompass-icon"
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3 11.5 12 4l9 7.5" />
+          <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
+        </svg>
+        <span>Überblick</span>
+      </a>
+    </li>
+    <li>
+      <a
+        [routerLink]="finanzenLink()"
+        routerLinkActive="is-active"
+        #rlaFin="routerLinkActive"
+        [attr.aria-current]="rlaFin.isActive ? 'page' : null"
+      >
+        <icon-finanzen class="kompass-icon" />
+        <span>Finanzen</span>
+      </a>
+    </li>
+    <li>
+      <a
+        routerLink="/app/haushalt"
+        routerLinkActive="is-active"
+        #rlaHh="routerLinkActive"
+        [attr.aria-current]="rlaHh.isActive ? 'page' : null"
+      >
+        <icon-haushalt class="kompass-icon" />
+        <span>Haushalt</span>
+      </a>
+    </li>
+    <li>
+      <a
+        routerLink="/app/organisation"
+        routerLinkActive="is-active"
+        #rlaOrg="routerLinkActive"
+        [attr.aria-current]="rlaOrg.isActive ? 'page' : null"
+      >
+        <icon-organisation class="kompass-icon" />
+        <span>Organisation</span>
+      </a>
+    </li>
+  </ul>
+
+  <div class="sidebar-nav__footer">
+    @if (auth.isAuthenticated()) {
+      <a class="sidebar-nav__profile" routerLink="/einstellungen">
+        <span class="sidebar-nav__profile-avatar" aria-hidden="true">{{ initials() }}</span>
+        <span>Einstellungen</span>
+      </a>
+    } @else {
+      <a class="sidebar-nav__profile sidebar-nav__profile--login" routerLink="/login">Anmelden</a>
+    }
+  </div>
+</nav>

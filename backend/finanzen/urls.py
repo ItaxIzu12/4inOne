@@ -3,6 +3,8 @@ from rest_framework.routers import DefaultRouter
 
 from finanzen.views import (
     AnalysenView,
+    BerichtCsvView,
+    BerichtPdfView,
     CategoryViewSet,
     OverviewView,
     RecurringDeductionViewSet,
@@ -21,5 +23,7 @@ urlpatterns = [
     path('analysen/', AnalysenView.as_view(), name='finanzen-analysen'),
     path('analysen/einkommen/', SetOwnIncomeView.as_view(), name='finanzen-analysen-einkommen'),
     path('analysen/puffer/', SetHouseholdBufferView.as_view(), name='finanzen-analysen-puffer'),
+    path('berichte/csv/', BerichtCsvView.as_view(), name='finanzen-bericht-csv'),
+    path('berichte/pdf/', BerichtPdfView.as_view(), name='finanzen-bericht-pdf'),
     *router.urls,
 ]

@@ -12,7 +12,7 @@ Ausgangslage (ein Haushalt, zwei Mitglieder):
   Puffer           300,00
 """
 
-from datetime import datetime, timedelta, timezone as dt_timezone
+from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
@@ -52,22 +52,22 @@ def setup():
         household=household, name='Pausiertes Abo', amount='50.00', category=fixkosten, active=False
     )
 
-    now = timezone.now()
+    heute = timezone.localdate()
     for amount, category, description in [
         ('186.00', haushalt, 'Wocheneinkauf'),
         ('74.00', haushalt, 'Drogerie'),
         ('68.50', sonstiges, 'Restaurant'),
     ]:
         Transaction.objects.create(
-            account=account, category=category, amount=amount, description=description, occurred_at=now, created_by=me
+            account=account, category=category, amount=amount, description=description, datum=heute, created_by=me
         )
 
     start, _ = month_bounds()
     Transaction.objects.create(
-        account=account, category=fixkosten, amount='999.00', occurred_at=start - timedelta(days=1), description='Vormonat'
+        account=account, category=fixkosten, amount='999.00', datum=start - timedelta(days=1), description='Vormonat'
     )
     deleted = Transaction.objects.create(
-        account=account, category=haushalt, amount='500.00', occurred_at=now, description='Gelöscht'
+        account=account, category=haushalt, amount='500.00', datum=heute, description='Gelöscht'
     )
     deleted.soft_delete()
 
@@ -77,7 +77,7 @@ def setup():
         account=other_account,
         category=Category.objects.get(household=other_household, name='Haushalt'),
         amount='4000.00',
-        occurred_at=now,
+        datum=heute,
         description='Fremd',
     )
 
@@ -111,20 +111,90 @@ def test_category_spent_is_transactions_plus_assigned_active_deductions(setup):
     assert spent['Sonstiges'] == Decimal('68.50')
 
 
-def test_budget_head_is_all_spending_versus_sum_of_category_goals(setup):
+# Budget-Kopfzeile (aus den Kategorien darunter berechnet) ----------------------
+
+
+def test_budget_head_is_computed_from_the_categories_below(setup):
     response = setup['me'].get('/api/v1/finanzen/uebersicht/')
+    budget = response.data['budget']
 
-    assert Decimal(response.data['budget']['planned']) == Decimal('1293.50')  # 965 + 328,50
-    assert Decimal(response.data['budget']['total']) == Decimal('1300.00')  # 1000 + 300 (Sonstiges ohne Ziel)
+    assert set(budget) == {'ausgegeben', 'ziel', 'uebrig', 'prozent'}  # kein "planned"/"total"/"verplant" mehr
+    # ausgegeben = SUMME der Kategorie-Beträge (965 + 260 + 68,50), nicht eine freistehende Zahl
+    assert Decimal(budget['ausgegeben']) == sum(_categories(response).values()) == Decimal('1293.50')
+    # ziel = SUMME der monthly_goal-Werte, wo gesetzt: 1000 + 300 (Sonstiges hat keins)
+    assert Decimal(budget['ziel']) == Decimal('1300.00')
+    assert Decimal(budget['uebrig']) == Decimal('6.50')  # 1300 − 1293,50
+    assert budget['prozent'] == 100  # 1293,50 / 1300 = 99,5 % -> gerundet 100
 
 
-def test_uncategorised_deduction_counts_in_budget_head_but_in_no_category(setup):
+def test_budget_head_follows_the_categories_when_a_transaction_is_added(setup):
+    before = setup['me'].get('/api/v1/finanzen/uebersicht/').data['budget']
+
+    setup['me'].post(
+        '/api/v1/finanzen/transaktionen/',
+        {
+            'amount': '50.00',
+            'description': 'Kopf-Test',
+            'category_id': setup['categories']['Haushalt'].id,
+            'datum': timezone.localdate().isoformat(),
+        },
+        format='json',
+    )
+    after = setup['me'].get('/api/v1/finanzen/uebersicht/')
+
+    assert Decimal(after.data['budget']['ausgegeben']) - Decimal(before['ausgegeben']) == Decimal('50.00')
+    assert Decimal(after.data['budget']['uebrig']) == Decimal(before['uebrig']) - Decimal('50.00')
+    assert Decimal(after.data['budget']['ausgegeben']) == sum(_categories(after).values())
+
+
+def test_budget_percent_is_zero_when_no_goal_is_set(setup):
+    Category.objects.filter(household=setup['household']).update(monthly_goal=None)
+
+    budget = setup['me'].get('/api/v1/finanzen/uebersicht/').data['budget']
+
+    assert Decimal(budget['ziel']) == Decimal('0.00')
+    assert budget['prozent'] == 0  # keine Division durch 0
+    assert Decimal(budget['uebrig']) == Decimal('-1293.50')
+
+
+def test_budget_percent_can_exceed_100_and_uebrig_goes_negative(setup):
+    Category.objects.filter(pk=setup['categories']['Fixkosten'].pk).update(monthly_goal='500.00')  # Ziel 800, ausgegeben 1293,50
+
+    budget = setup['me'].get('/api/v1/finanzen/uebersicht/').data['budget']
+
+    assert Decimal(budget['ziel']) == Decimal('800.00')
+    assert Decimal(budget['uebrig']) == Decimal('-493.50')
+    assert budget['prozent'] == 162  # 161,69 -> gerundet
+
+
+def test_uncategorised_items_are_in_verfuegbares_einkommen_but_not_in_the_budget_head(setup):
+    # Ohne Kategorie taucht ein Betrag in keiner Kategorie auf — der Kopf
+    # geht mit der Liste auf, das Verfügbare Einkommen zählt ihn trotzdem.
     RecurringDeduction.objects.create(household=setup['household'], name='Ohne Kategorie', amount='10.00')
+    Transaction.objects.create(
+        account=setup['account'], category=None, amount='20.00', datum=timezone.localdate(), description='Verwaist'
+    )
 
     overview = setup['me'].get('/api/v1/finanzen/uebersicht/')
+    analysen = setup['me'].get('/api/v1/finanzen/analysen/')
 
-    assert Decimal(overview.data['budget']['planned']) == Decimal('1303.50')
-    assert sum(_categories(overview).values()) == Decimal('1293.50')  # Kategorien-Summe unverändert
+    assert Decimal(overview.data['budget']['ausgegeben']) == Decimal('1293.50')  # unverändert
+    assert Decimal(analysen.data['verfuegbares_einkommen']) == Decimal('3606.50') - Decimal('10.00') - Decimal('20.00')
+
+
+def test_overview_reports_has_transaction_independent_of_fixed_deductions(setup):
+    assert setup['me'].get('/api/v1/finanzen/uebersicht/').data['has_transaction'] is True
+
+    User = get_user_model()
+    fresh = User.objects.create_user(username='fresh@example.com', password='irrelevant-for-test')
+    fresh_household = Household.objects.create(name='Neu')
+    HouseholdMembership.objects.create(user=fresh, household=fresh_household)
+    RecurringDeduction.objects.create(household=fresh_household, name='Miete', amount='900.00')
+    client = APIClient()
+    client.force_authenticate(user=fresh)
+
+    # Nur ein fester Abzug, keine Transaktion -> Onboarding-Schritt "Erste Ausgabe" bleibt offen.
+    assert client.get('/api/v1/finanzen/uebersicht/').data['has_transaction'] is False
 
 
 # Verfügbares Einkommen (Analysen) ---------------------------------------------
@@ -140,12 +210,13 @@ def test_verfuegbares_einkommen_subtracts_deductions_all_transactions_and_buffer
 
 
 def test_deductions_are_never_counted_twice(setup):
-    # Zusammenhang der beiden Tabs: Einkommen − Hero-"ausgegeben" − Puffer.
+    # Zusammenhang der beiden Tabs: Einkommen − Budget-Kopf("ausgegeben") − Puffer
+    # (gilt, solange jeder Betrag eine Kategorie hat, siehe Test zu kategorielosen Beträgen).
     overview = setup['me'].get('/api/v1/finanzen/uebersicht/')
     analysen = setup['me'].get('/api/v1/finanzen/analysen/')
 
     assert Decimal(analysen.data['verfuegbares_einkommen']) == (
-        Decimal('5200.00') - Decimal(overview.data['budget']['planned']) - Decimal('300.00')
+        Decimal('5200.00') - Decimal(overview.data['budget']['ausgegeben']) - Decimal('300.00')
     )
 
 
@@ -170,7 +241,7 @@ def test_adding_a_transaction_changes_category_amount_and_verfuegbares_einkommen
             'amount': '30.00',
             'description': 'Wochenende',
             'category_id': setup['categories']['Sonstiges'].id,
-            'occurred_at': timezone.now().isoformat(),
+            'datum': timezone.localdate().isoformat(),
         },
         format='json',
     )
@@ -227,7 +298,7 @@ def test_transactions_dated_in_the_future_do_not_count_for_the_current_month(set
         account=setup['account'],
         category=setup['categories']['Sonstiges'],
         amount='777.00',
-        occurred_at=end,
+        datum=end,
         description='Nächster Monat',
     )
 
@@ -237,7 +308,7 @@ def test_transactions_dated_in_the_future_do_not_count_for_the_current_month(set
 
 
 def test_month_bounds_roll_over_december():
-    start, end = month_bounds(datetime(2026, 12, 15, 12, 0, tzinfo=dt_timezone.utc))
+    start, end = month_bounds(date(2026, 12, 15))
 
     assert (start.year, start.month, start.day) == (2026, 12, 1)
     assert (end.year, end.month, end.day) == (2027, 1, 1)
@@ -282,7 +353,7 @@ def test_solo_household_total_income_equals_own_income_and_overview_has_no_fairn
     haushalt = Category.objects.get(household=household, name='Haushalt')
     RecurringDeduction.objects.create(household=household, name='Miete', amount='900.00', category=fixkosten)
     Transaction.objects.create(
-        account=account, category=haushalt, amount='100.00', occurred_at=timezone.now(), created_by=user
+        account=account, category=haushalt, amount='100.00', datum=timezone.localdate(), created_by=user
     )
     client = APIClient()
     client.force_authenticate(user=user)

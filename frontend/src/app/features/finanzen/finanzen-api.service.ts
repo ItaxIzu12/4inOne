@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { API_BASE_URL } from '../../core/api.config';
 
 // id ist number | string statt nur number: die echte API liefert numerische
@@ -26,7 +27,10 @@ export interface TransactionDto {
   category: CategoryDto | null;
   amount: string;
   description: string;
-  occurred_at: string;
+  // "YYYY-MM-DD", das vom Nutzer gewählte Ausgabedatum — ersetzt das
+  // frühere occurred_at (ein Zeitstempel). created_at (Erstellungs-
+  // Zeitstempel) bleibt ein rein technisches, hier nicht benötigtes Feld.
+  datum: string;
   created_at: string;
 }
 
@@ -73,6 +77,29 @@ export interface InsightDto {
   text: string;
 }
 
+// Monats-ODER-Jahresbericht zum Herunterladen (CSV/PDF, finanzen/reports.py)
+// — zum Archivieren/Ausdrucken, NICHT zu verwechseln mit dem "Für
+// KI-Analyse exportieren"-Textblock. Genau EINES der beiden Felder ist
+// gesetzt, wie beim Backend-Endpunkt (?monat=YYYY-MM ODER ?jahr=YYYY).
+export interface BerichtPeriod {
+  monat?: string; // "YYYY-MM"
+  jahr?: string; // "YYYY"
+}
+
+export interface BerichtDownload {
+  blob: Blob;
+  filename: string;
+}
+
+/** Liest den Dateinamen aus dem Content-Disposition-Header
+ * (`attachment; filename="kompass-bericht-....csv"`) — derselbe Name, den
+ * der Server für den Download vorschlägt (finanzen/reports.py
+ * csv_filename()/pdf_filename()), nicht clientseitig neu zusammengesetzt. */
+function filenameFromContentDisposition(header: string | null, fallbackExtension: string): string {
+  const match = header?.match(/filename="?([^";]+)"?/);
+  return match ? match[1] : `kompass-bericht.${fallbackExtension}`;
+}
+
 export interface AnalysenDto {
   // Nur das EIGENE Einkommen — das Backend liefert monthly_income anderer
   // Haushaltsmitglieder strukturell nie mit aus (finanzen/serializers.py
@@ -91,7 +118,15 @@ export interface AnalysenDto {
 }
 
 export interface OverviewDto {
-  budget: { planned: string; total: string };
+  // Kopfzeile, vom Backend aus den Kategorien darunter berechnet
+  // (finanzen/services.py budget_head): ausgegeben = SUMME der Kategorie-
+  // Beträge, ziel = SUMME der monthly_goal-Werte, uebrig = ziel − ausgegeben,
+  // prozent = ausgegeben / ziel × 100 (0 ohne Ziel, kann über 100 liegen).
+  budget: { ausgegeben: string; ziel: string; uebrig: string; prozent: number };
+  // Mindestens eine (nicht gelöschte) Transaktion im Haushalt — für das
+  // Onboarding; ausgegeben > 0 taugt dafür nicht, weil auch feste Abzüge
+  // in die Kategorie-Beträge einfließen.
+  has_transaction: boolean;
   categories: CategoryAmountDto[];
   // Für die "Faire Aufteilung"-Sichtbarkeit — kommt aus
   // household.members.count() (finanzen/views.py OverviewView).
@@ -163,29 +198,31 @@ export class FinanzenApiService {
    * RealFinanzenDataProvider — OverviewView.total_spent rechnet Sum(amount)
    * ohne abs()). categoryId ist Pflicht — der Serializer lehnt eine
    * Transaction ohne category_id jetzt ab (finanzen/serializers.py). */
-  addTransaction(amount: number, description: string, categoryId: number | string): Observable<TransactionDto> {
+  addTransaction(amount: number, description: string, categoryId: number | string, datum: string): Observable<TransactionDto> {
     return this.http.post<TransactionDto>(`${this.base}/transaktionen/`, {
       amount,
       description,
       category_id: categoryId,
-      occurred_at: new Date().toISOString(),
+      datum,
     });
   }
 
-  /** occurred_at wird bewusst NICHT mitgeschickt — nur der Betrag/die
-   * Kategorie/Beschreibung ändern sich beim Bearbeiten, der ursprüngliche
-   * Zeitpunkt der Ausgabe bleibt unangetastet (PATCH ändert nur die
-   * mitgeschickten Felder). */
+  /** datum wird HIER mitgeschickt (anders als früher occurred_at): der
+   * Nutzer kann das Ausgabedatum beim Bearbeiten ebenso korrigieren wie
+   * beim Anlegen — dasselbe Sheet bedient beide Fälle (finanzen.ts
+   * isEditing()). */
   updateTransaction(
     id: number | string,
     amount: number,
     description: string,
     categoryId: number | string,
+    datum: string,
   ): Observable<TransactionDto> {
     return this.http.patch<TransactionDto>(`${this.base}/transaktionen/${id}/`, {
       amount,
       description,
       category_id: categoryId,
+      datum,
     });
   }
 
@@ -255,5 +292,26 @@ export class FinanzenApiService {
 
   deleteRecurringDeduction(id: number | string): Observable<void> {
     return this.http.delete<void>(`${this.base}/abzuege/${id}/`);
+  }
+
+  /** CSV/PDF-Bericht für einen Monat oder ein Jahr (finanzen/reports.py,
+   * BerichtCsvView/BerichtPdfView) — echter Datei-Download über einen
+   * Blob-Response (observe: 'response', damit der Content-Disposition-
+   * Header für den Dateinamen lesbar ist), kein Öffnen in neuem Tab. */
+  downloadBericht(format: 'csv' | 'pdf', period: BerichtPeriod): Observable<BerichtDownload> {
+    let params = new HttpParams();
+    if (period.monat) {
+      params = params.set('monat', period.monat);
+    } else if (period.jahr) {
+      params = params.set('jahr', period.jahr);
+    }
+    return this.http
+      .get(`${this.base}/berichte/${format}/`, { params, responseType: 'blob', observe: 'response' })
+      .pipe(
+        map((response) => ({
+          blob: response.body as Blob,
+          filename: filenameFromContentDisposition(response.headers.get('Content-Disposition'), format),
+        })),
+      );
   }
 }

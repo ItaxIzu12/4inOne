@@ -13,14 +13,17 @@
   letter-spacing: var(--tracking-heading);
 }
 
-/* Kräftige Amber-Fläche + dunkler Text statt einer blassen Dekor-Box —
-   geprüft: #1a1523 auf --color-amber-glow (#ffb75e) liegt bei ~11,7:1,
+/* Kräftig getönte Amber-Fläche + dunkler Text statt einer blassen Dekor-Box
+   — DESIGN_SYSTEM.md Version 3: --color-amber-glow selbst ist NUR für rein
+   dekorative Flächen freigegeben (2,78:1, siehe dortige Kontrast-Notiz),
+   für substanziellen Fließtext hier stattdessen eine 30%-Mischung auf Weiß/
+   Canvas — geprüft: --color-midnight-plum darauf liegt bei ~8,2–9,2:1,
    weit über den geforderten 4,5:1 (WCAG 1.4.3). */
 .legal-warning {
   display: flex;
   align-items: flex-start;
   gap: var(--space-12);
-  background: var(--color-amber-glow);
+  background: color-mix(in srgb, var(--color-amber-glow) 30%, var(--color-card-white));
   border-radius: var(--radius-cards);
   padding: var(--space-16) var(--space-20);
 }

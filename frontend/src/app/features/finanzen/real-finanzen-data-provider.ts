@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   AnalysenDto,
+  BerichtDownload,
+  BerichtPeriod,
   CategoryDto,
   FinanzenApiService,
   OverviewDto,
@@ -36,11 +38,11 @@ export class RealFinanzenDataProvider implements FinanzenDataProvider {
     // "planned"-Betrag verringert statt erhöht. Das Vorzeichen "-" in der
     // Tabelle (finanzen.html) ist eine reine Anzeige-Konvention (MVP kennt
     // nur Ausgaben, kein Einnahmen-Konzept), keine gespeicherte Eigenschaft.
-    return this.api.addTransaction(Math.abs(input.amount), input.description, input.categoryId);
+    return this.api.addTransaction(Math.abs(input.amount), input.description, input.categoryId, input.datum);
   }
 
   updateTransaction(id: number | string, input: NewTransactionInput): Observable<TransactionDto> {
-    return this.api.updateTransaction(id, Math.abs(input.amount), input.description, input.categoryId);
+    return this.api.updateTransaction(id, Math.abs(input.amount), input.description, input.categoryId, input.datum);
   }
 
   deleteTransaction(id: number | string): Observable<void> {
@@ -87,5 +89,9 @@ export class RealFinanzenDataProvider implements FinanzenDataProvider {
 
   deleteRecurringDeduction(id: number | string): Observable<void> {
     return this.api.deleteRecurringDeduction(id);
+  }
+
+  downloadBericht(format: 'csv' | 'pdf', period: BerichtPeriod): Observable<BerichtDownload> {
+    return this.api.downloadBericht(format, period);
   }
 }

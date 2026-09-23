@@ -2,7 +2,7 @@
 Transaction aus Haushalt B abrufen, auch nicht über eine erratene ID
 (IDOR/Broken Object Level Authorization)."""
 
-from datetime import datetime, timezone
+from datetime import date
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -28,7 +28,7 @@ def two_households_with_transactions(db):
     transaction_b = Transaction.objects.create(
         account=account_b,
         amount='42.00',
-        occurred_at=datetime(2026, 8, 1, tzinfo=timezone.utc),
+        datum=date(2026, 8, 1),
     )
 
     return {'user_a': user_a, 'user_b': user_b, 'transaction_b': transaction_b}
@@ -62,7 +62,7 @@ def test_household_scoped_permission_denies_foreign_household_object():
     household = Household.objects.create(name='Haushalt B')
     account = Account.objects.create(household=household, name='Konto B')
     transaction = Transaction.objects.create(
-        account=account, amount='10.00', occurred_at=datetime(2026, 8, 1, tzinfo=timezone.utc)
+        account=account, amount='10.00', datum=date(2026, 8, 1)
     )
 
     class DummyRequest:

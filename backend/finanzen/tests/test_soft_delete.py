@@ -3,7 +3,7 @@
 echten DELETE — Transaction.objects blendet gelöschte Einträge aus,
 Transaction.all_objects zeigt weiterhin alle (finanzen/models.py)."""
 
-from datetime import datetime, timezone as dt_timezone
+from datetime import date
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -26,7 +26,7 @@ def test_deleting_a_transaction_soft_deletes_it_not_hard_deletes():
         account=account,
         category=category,
         amount='42.00',
-        occurred_at=datetime(2026, 9, 1, tzinfo=dt_timezone.utc),
+        datum=date(2026, 9, 1),
         created_by=user,
     )
 
@@ -56,7 +56,7 @@ def test_soft_deleted_transaction_disappears_from_the_list_and_search_endpoint()
         category=category,
         amount='17.00',
         description='Wird gelöscht',
-        occurred_at=datetime(2026, 9, 1, tzinfo=dt_timezone.utc),
+        datum=date(2026, 9, 1),
         created_by=user,
     )
 

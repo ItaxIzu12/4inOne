@@ -2,19 +2,15 @@ import { TestBed } from '@angular/core/testing';
 import { LogoKompass } from './logo-kompass';
 
 describe('LogoKompass', () => {
-  it('renders an aria-hidden svg and gives each instance a unique gradient id', () => {
-    const a = TestBed.createComponent(LogoKompass);
-    const b = TestBed.createComponent(LogoKompass);
-    a.detectChanges();
-    b.detectChanges();
+  it('renders an aria-hidden, flat single-color svg (no gradient, DESIGN_SYSTEM.md Version 3)', () => {
+    const fixture = TestBed.createComponent(LogoKompass);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
 
-    const hostA = a.nativeElement as HTMLElement;
-    expect(hostA.getAttribute('aria-hidden')).toBe('true');
-
-    const gradientIdA = hostA.querySelector('linearGradient')?.getAttribute('id');
-    const gradientIdB = (b.nativeElement as HTMLElement).querySelector('linearGradient')?.getAttribute('id');
-    expect(gradientIdA).toBeTruthy();
-    expect(gradientIdA).not.toBe(gradientIdB);
-    expect(hostA.querySelector('rect')?.getAttribute('fill')).toBe(`url(#${gradientIdA})`);
+    expect(host.getAttribute('aria-hidden')).toBe('true');
+    // Kein Verlauf mehr — flache Einfarbigkeit über currentColor/--color-pine.
+    expect(host.querySelector('linearGradient')).toBeNull();
+    expect(host.querySelector('circle')).toBeTruthy();
+    expect(host.querySelector('path')?.getAttribute('fill')).toBe('currentColor');
   });
 });

@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import {
   AnalysenDto,
+  BerichtDownload,
+  BerichtPeriod,
   CategoryDto,
   HouseholdMemberDto,
   OverviewDto,
@@ -29,9 +31,9 @@ import { FinanzenDataProvider, NewTransactionInput } from './finanzen-data-provi
 // aller Kategorien (finanzen/services.py budget_totals) — 1000 + 450 + 500.
 function seedCategories(): CategoryDto[] {
   return [
-    { id: 'demo-fixkosten', name: 'Fixkosten', color: '#5b3fd6', icon_key: 'fixkosten', monthly_goal: '1000', is_default: true },
-    { id: 'demo-haushalt', name: 'Haushalt', color: '#ffb75e', icon_key: 'haushalt', monthly_goal: '450', is_default: true },
-    { id: 'demo-sonstiges', name: 'Sonstiges', color: '#c23b52', icon_key: 'sonstiges', monthly_goal: '500', is_default: true },
+    { id: 'demo-fixkosten', name: 'Fixkosten', color: '#164c49', icon_key: 'fixkosten', monthly_goal: '1000', is_default: true },
+    { id: 'demo-haushalt', name: 'Haushalt', color: '#8a5a23', icon_key: 'haushalt', monthly_goal: '450', is_default: true },
+    { id: 'demo-sonstiges', name: 'Sonstiges', color: '#a8452f', icon_key: 'sonstiges', monthly_goal: '500', is_default: true },
   ];
 }
 
@@ -61,7 +63,9 @@ function seedDeductions(categories: CategoryDto[]): RecurringDeductionDto[] {
 function daysAgo(days: number): string {
   const date = new Date();
   date.setDate(date.getDate() - days);
-  return date.toISOString();
+  // "YYYY-MM-DD" — Transaction.datum ist ein reines Datum, kein Zeitstempel
+  // (siehe finanzen-api.service.ts TransactionDto.datum).
+  return date.toISOString().slice(0, 10);
 }
 
 /** Feste Beispieldaten für die öffentliche Demo-Route (/, siehe
@@ -96,10 +100,10 @@ export class DemoFinanzenDataProvider implements FinanzenDataProvider {
   // im Template (finanzen.html), keine gespeicherte Eigenschaft.
   private seedTransactions(): TransactionDto[] {
     return [
-      { id: 'demo-2', account: 0, category: this.categories[1], amount: '186', description: 'Wocheneinkauf', occurred_at: daysAgo(2), created_at: daysAgo(2) },
-      { id: 'demo-3', account: 0, category: this.categories[1], amount: '74', description: 'Drogerie', occurred_at: daysAgo(1), created_at: daysAgo(1) },
-      { id: 'demo-4', account: 0, category: this.categories[2], amount: '68.5', description: 'Restaurant', occurred_at: daysAgo(0), created_at: daysAgo(0) },
-      { id: 'demo-5', account: 0, category: this.categories[2], amount: '61.5', description: 'Streaming-Abo', occurred_at: daysAgo(0), created_at: daysAgo(0) },
+      { id: 'demo-2', account: 0, category: this.categories[1], amount: '186', description: 'Wocheneinkauf', datum: daysAgo(2), created_at: daysAgo(2) },
+      { id: 'demo-3', account: 0, category: this.categories[1], amount: '74', description: 'Drogerie', datum: daysAgo(1), created_at: daysAgo(1) },
+      { id: 'demo-4', account: 0, category: this.categories[2], amount: '68.5', description: 'Restaurant', datum: daysAgo(0), created_at: daysAgo(0) },
+      { id: 'demo-5', account: 0, category: this.categories[2], amount: '61.5', description: 'Streaming-Abo', datum: daysAgo(0), created_at: daysAgo(0) },
     ];
   }
 
@@ -131,11 +135,19 @@ export class DemoFinanzenDataProvider implements FinanzenDataProvider {
       addToCategory(deduction.category, Number(deduction.amount));
     }
 
-    const planned = this.transactionsTotal() + this.activeDeductionsTotal();
-    const total = this.categories.reduce((sum, c) => sum + (c.monthly_goal !== null ? Number(c.monthly_goal) : 0), 0);
+    // Kopfzeile wie im echten Backend (finanzen/services.py budget_head) aus
+    // den Kategorien darunter berechnet, nicht als freistehende Zahl.
+    const ausgegeben = [...spentByCategory.values()].reduce((sum, amount) => sum + amount, 0);
+    const ziel = this.categories.reduce((sum, c) => sum + (c.monthly_goal !== null ? Number(c.monthly_goal) : 0), 0);
 
     return of({
-      budget: { planned: String(planned), total: String(total) },
+      budget: {
+        ausgegeben: String(ausgegeben),
+        ziel: String(ziel),
+        uebrig: String(ziel - ausgegeben),
+        prozent: ziel > 0 ? Math.round((ausgegeben / ziel) * 100) : 0,
+      },
+      has_transaction: this.transactions.length > 0,
       categories: [...this.categories]
         .map((category) => ({
           id: category.id,
@@ -162,7 +174,7 @@ export class DemoFinanzenDataProvider implements FinanzenDataProvider {
 
     // Demo-Datensatz ist klein genug, um immer als eine Seite zurückzukommen
     // — kein cursorUrl-Parameter nötig, "Weitere laden" erscheint dadurch nie.
-    return of({ next: null, previous: null, results: [...results].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at)) });
+    return of({ next: null, previous: null, results: [...results].sort((a, b) => b.datum.localeCompare(a.datum)) });
   }
 
   getCategories(): Observable<CategoryDto[]> {
@@ -177,7 +189,7 @@ export class DemoFinanzenDataProvider implements FinanzenDataProvider {
       category,
       amount: String(Math.abs(input.amount)),
       description: input.description || 'Ausgabe',
-      occurred_at: new Date().toISOString(),
+      datum: input.datum,
       created_at: new Date().toISOString(),
     };
 
@@ -195,6 +207,7 @@ export class DemoFinanzenDataProvider implements FinanzenDataProvider {
       ...this.transactions[index],
       amount: String(Math.abs(input.amount)),
       description: input.description || 'Ausgabe',
+      datum: input.datum,
       category,
     };
     this.transactions = [...this.transactions.slice(0, index), updated, ...this.transactions.slice(index + 1)];
@@ -313,5 +326,66 @@ export class DemoFinanzenDataProvider implements FinanzenDataProvider {
   deleteRecurringDeduction(id: number | string): Observable<void> {
     this.deductions = this.deductions.filter((d) => String(d.id) !== String(id));
     return of(undefined);
+  }
+
+  // ---------- Bericht-Download (CSV/PDF, Monat oder Jahr) ----------
+
+  /** Nur CSV wird in der Demo tatsächlich erzeugt (reine Textdatei, ohne
+   * neue Abhängigkeit) — für ein echtes PDF bräuchte es einen
+   * clientseitigen PDF-Renderer NUR für die öffentliche Demo, ohne
+   * Gegenwert (das Backend erzeugt das echte PDF bereits mit reportlab,
+   * siehe finanzen/reports.py). PDF liefert deshalb einen klaren Fehler
+   * statt eines irreführenden Textdokuments mit .pdf-Endung. */
+  downloadBericht(format: 'csv' | 'pdf', period: BerichtPeriod): Observable<BerichtDownload> {
+    if (format === 'pdf') {
+      return throwError(
+        () => new Error('PDF-Berichte sind in der Demo nicht verfügbar — im echten Konto herunterladen.'),
+      );
+    }
+
+    const { start, end, slug, label } = this.resolveDemoPeriod(period);
+    const transactions = this.transactions.filter((t) => t.datum >= start && t.datum < end);
+
+    // Dieselbe Struktur wie der echte CSV-Bericht (finanzen/reports.py
+    // build_csv): Transaktionszeilen + Summe, dann ein eigener, klar
+    // abgesetzter Abschnitt für die aktiven festen Abzüge. Semikolon als
+    // Trennzeichen aus demselben Grund wie im Backend (deutsches Excel).
+    const rows: string[] = [];
+    rows.push(`Kompass — Finanzbericht (Demo);${DEMO_HOUSEHOLD_NAME};${label}`);
+    rows.push('');
+    rows.push('Datum;Beschreibung;Kategorie;Betrag (€)');
+    let gesamt = 0;
+    for (const transaction of transactions) {
+      gesamt += Number(transaction.amount);
+      rows.push(
+        `${transaction.datum};${transaction.description || '—'};${transaction.category?.name ?? '—'};${Number(transaction.amount).toFixed(2)}`,
+      );
+    }
+    rows.push(`;;Summe Transaktionen;${gesamt.toFixed(2)}`);
+    rows.push('');
+    rows.push('Feste Abzüge (aktiv, monatlich wiederkehrend — separat, nicht in obiger Summe enthalten)');
+    rows.push('Name;Kategorie;Betrag (€/Monat)');
+    let abzuegeGesamt = 0;
+    for (const deduction of this.deductions.filter((d) => d.active)) {
+      abzuegeGesamt += Number(deduction.amount);
+      rows.push(`${deduction.name};${deduction.category?.name ?? '—'};${Number(deduction.amount).toFixed(2)}`);
+    }
+    rows.push(`;Summe feste Abzüge (pro Monat);${abzuegeGesamt.toFixed(2)}`);
+
+    // '﻿'-BOM aus demselben Grund wie utf-8-sig im Backend: Umlaute/€
+    // sollen beim Doppelklick-Öffnen in Excel korrekt erscheinen.
+    const blob = new Blob(['﻿' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    return of({ blob, filename: `kompass-bericht-demo-${slug}.csv` });
+  }
+
+  private resolveDemoPeriod(period: BerichtPeriod): { start: string; end: string; slug: string; label: string } {
+    if (period.monat) {
+      const [jahr, monat] = period.monat.split('-').map(Number);
+      const start = `${period.monat}-01`;
+      const end = monat === 12 ? `${jahr + 1}-01-01` : `${jahr}-${String(monat + 1).padStart(2, '0')}-01`;
+      return { start, end, slug: period.monat, label: period.monat };
+    }
+    const jahr = period.jahr ?? String(new Date().getFullYear());
+    return { start: `${jahr}-01-01`, end: `${Number(jahr) + 1}-01-01`, slug: jahr, label: jahr };
   }
 }

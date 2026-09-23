@@ -9,7 +9,7 @@ import { IconOrganisation } from '../../shared/icons/icon-organisation';
   standalone: true,
   imports: [RouterLink, RevealDirective, IconOrganisation],
   templateUrl: './organisation.html',
-  styleUrl: '../finanzen/finanzen.css',
+  styleUrl: '../../shared/feature-placeholder.css',
 })
 export class Organisation {
   private readonly scroll = inject(ScrollService);

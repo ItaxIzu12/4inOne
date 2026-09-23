@@ -1,62 +1,31 @@
-import { DecimalPipe } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { ContextBar } from '../../shared/context-bar/context-bar';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { BackToTop } from '../../shared/back-to-top/back-to-top';
-import { IconFinanzen } from '../../shared/icons/icon-finanzen';
 import { IconHaushalt } from '../../shared/icons/icon-haushalt';
 import { IconOrganisation } from '../../shared/icons/icon-organisation';
-import { IconChevron } from '../../shared/icons/icon-chevron';
-import { IconTwoFactor } from '../../shared/icons/icon-two-factor';
-import { IconInfo } from '../../shared/icons/icon-info';
 import { Onboarding } from '../../shared/onboarding/onboarding';
+import { SidebarNav } from '../../shared/sidebar-nav/sidebar-nav';
+import { FINANZEN_DATA_PROVIDER } from '../finanzen/finanzen-data-provider';
+import { TransactionDto } from '../finanzen/finanzen-api.service';
 import { FinanzenStateService } from '../finanzen/finanzen-state.service';
-
-interface WeekEntry {
-  id: string;
-  weekday: string;
-  title: string;
-  detail: string;
-  moduleLabel: string;
-  accentClass: string;
-}
-
-type ModuleKey = 'finance' | 'household' | 'organize';
-
-// TODO (Backend): Platzhalterdaten — Wochenüberblick und Modul-Kennzahlen
-// sollen später aus finanzen.models.Transaction/Budget, haushalt.models.Task
-// bzw. organisation.models.CalendarEvent kommen (siehe ARCHITEKTUR.md §2.3).
-const WEEK_ENTRIES: WeekEntry[] = [
-  { id: 'mo', weekday: 'Mo', title: 'Miete abgebucht', detail: '850 € · Fixkosten', moduleLabel: 'Finanzen', accentClass: 'm-finance' },
-  { id: 'mi', weekday: 'Mi', title: 'Einkaufsliste erledigt', detail: '4 Artikel · ins Budget übernommen', moduleLabel: 'Haushalt', accentClass: 'm-household' },
-  { id: 'do', weekday: 'Do', title: 'Müllabfuhr', detail: 'Erinnerung um 19 Uhr', moduleLabel: 'Organisation', accentClass: 'm-organize' },
-  { id: 'fr', weekday: 'Fr', title: 'Zahnarzttermin', detail: 'Lotte · 10:30 Uhr', moduleLabel: 'Organisation', accentClass: 'm-organize' },
-];
-
-// Entspricht den vormaligen householdChecklist/organizeAppointments-Listen
-// (2 offene Aufgaben, 2 Termine) — hier nur noch als Zeilen-Kennzahl, da die
-// Modul-Karten im Minimal-Layout keine Detail-Vorschau mehr zeigen.
-const HOUSEHOLD_OPEN_TASKS = 2;
-const ORGANIZE_APPOINTMENTS_THIS_WEEK = 2;
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
     RouterLink,
-    RouterLinkActive,
     DecimalPipe,
-    BackToTop,
-    IconFinanzen,
+    DatePipe,
     IconHaushalt,
     IconOrganisation,
-    IconChevron,
-    IconTwoFactor,
-    IconInfo,
     Onboarding,
+    SidebarNav,
+    ContextBar,
   ],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css',
+  styleUrl: './dashboard.scss',
 })
 export class Dashboard {
   // protected statt private: dashboard.html braucht auth.isAuthenticated()
@@ -73,68 +42,55 @@ export class Dashboard {
   // spent:794}) — komplett losgelöst von echten Daten und sogar von den
   // eigenen Demo-Werten der Finanzen-Seite abweichend (1950/1240 dort).
   protected readonly financeState = inject(FinanzenStateService);
+  private readonly provider = inject(FINANZEN_DATA_PROVIDER);
 
-  protected readonly weekEntries = WEEK_ENTRIES;
+  // "Dienstag, 22. September" — für die jetzt sichtbare Begrüßungszeile
+  // (siehe Design-Entwurf: "Guten Morgen, Anna." + Datum darunter).
+  protected readonly todayLabel = computed(() =>
+    new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }).format(
+      new Date(),
+    ),
+  );
 
+  // Tageszeit-abhängig ("Guten Morgen"/"Guten Tag"/"Guten Abend") statt der
+  // Mockup-Beispielzeit fest zu übernehmen — sonst stünde nachmittags
+  // fälschlich "Guten Morgen" da.
   protected readonly greeting = computed(() => {
     const user = this.auth.currentUser();
     const firstName = user?.name.trim().split(/\s+/)[0];
-    return firstName ? `Guten Tag, ${firstName}` : 'Guten Tag';
+    const hour = new Date().getHours();
+    const zeit = hour < 11 ? 'Guten Morgen' : hour < 18 ? 'Guten Tag' : 'Guten Abend';
+    return firstName ? `${zeit}, ${firstName}` : zeit;
   });
 
-  // Gleiche Feldnamen/Bedeutung wie features/finanzen/finanzen.ts budget()
-  // (planned = diesen Monat ausgegeben, total = Budget-Ziel) — bewusst NICHT
-  // mehr {amount, spent} wie im alten Platzhalter: unterschiedliche Namen
-  // für dieselbe Kennzahl waren genau die Falle, die zum eigentlichen Bug
-  // hier geführt hat (siehe Chat-Verlauf: die Hero-Zahl zeigte zunächst
-  // budget.total statt budget.planned — bei einem frischen Haushalt ohne
-  // Budget-Datensatz immer 0, obwohl bereits ausgegeben wurde).
-  protected readonly budget = computed(() => {
-    const u = this.financeState.uebersicht();
-    return u ? { planned: Number(u.budget.planned), total: Number(u.budget.total) } : { planned: 0, total: 0 };
-  });
+  // Hero-Kennzahl (Design-Entwurf: "Diesen Monat verfügbar") — dieselbe
+  // Kennzahl wie im Analysen-Tab von Finanzen (verfuegbares_einkommen),
+  // NICHT der Budget-"ausgegeben"-Wert von oben. Kommt aus demselben
+  // geteilten FinanzenStateService, braucht dafür ladenBeide() statt nur
+  // laden() (siehe Konstruktor).
+  protected readonly verfuegbaresEinkommen = computed(() =>
+    Number(this.financeState.analysen()?.verfuegbares_einkommen ?? 0),
+  );
+  protected readonly monthlyBuffer = computed(() =>
+    Number(this.financeState.analysen()?.monthly_buffer ?? 0),
+  );
 
-  protected readonly budgetPercent = computed(() => {
-    const { planned, total } = this.budget();
-    return total > 0 ? Math.round((planned / total) * 100) : 0;
-  });
-  protected readonly budgetRemaining = computed(() => this.budget().total - this.budget().planned);
+  // "Letzte Ausgaben" (Design-Entwurf) — dieselben echten Transaktionen wie
+  // in Finanzen (searchTransactions('')), hier nur die obersten paar.
+  protected readonly recentTransactions = signal<TransactionDto[]>([]);
 
   constructor() {
-    this.financeState.laden();
+    this.financeState.ladenBeide();
+    this.provider.searchTransactions('').subscribe({
+      next: (page) => this.recentTransactions.set(page.results.slice(0, 3)),
+      error: () => {},
+    });
   }
 
   // Für die eigene Bottom-Nav unten (mobil) — dasselbe /app- vs. /-Muster
   // wie im globalen Header (shared/header/header.ts homeLink/finanzenLink).
   protected readonly homeLink = computed(() => (this.auth.isAuthenticated() ? '/app' : '/'));
-  protected readonly finanzenLink = computed(() => (this.auth.isAuthenticated() ? '/app/finanzen' : '/finanzen'));
-
-  // Finanzen hat eine öffentliche Demo-Variante (/finanzen) UND eine echte
-  // (/app/finanzen, siehe app.routes.ts) — welche verlinkt wird, hängt vom
-  // Auth-Status ab. Haushalt/Organisation haben keine Demo-Variante (reine
-  // Feature-Listen ohne Datenanbindung) und zeigen daher immer auf /app/...
-  // — im Demo-Kontext bounct das über authGuard zu /login, das ist so
-  // beabsichtigt (kein Onboarding-/Leerzustand nötig, siehe Chat-Verlauf).
-  protected readonly moduleRows = computed<
-    { key: ModuleKey; title: string; link: string; subtitle: string }[]
-  >(() => [
-    {
-      key: 'finance',
-      title: 'Finanzen',
-      link: this.auth.isAuthenticated() ? '/app/finanzen' : '/finanzen',
-      subtitle: `${this.budgetRemaining().toLocaleString('de-DE')} € übrig diesen Monat`,
-    },
-    {
-      key: 'household',
-      title: 'Haushalt',
-      link: '/app/haushalt',
-      subtitle: `${HOUSEHOLD_OPEN_TASKS} offene Aufgaben`,
-    },
-    {
-      key: 'organize',
-      title: 'Organisation',
-      link: '/app/organisation',
-      subtitle: `${ORGANIZE_APPOINTMENTS_THIS_WEEK} Termine diese Woche`,
-    },
-  ]);
+  protected readonly finanzenLink = computed(() =>
+    this.auth.isAuthenticated() ? '/app/finanzen' : '/finanzen',
+  );
 }

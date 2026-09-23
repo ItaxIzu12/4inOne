@@ -49,16 +49,17 @@ describe('App', () => {
     expect(compiled.querySelector('app-header')).toBeNull();
   });
 
-  it('keeps the shared header AND footer on the dashboard, but hides the marketing back-to-top/bottom-nav', async () => {
+  it('uses the app navigation and hides the marketing chrome on the dashboard', async () => {
     fixture.detectChanges();
     await router.navigateByUrl('/');
     fixture.detectChanges();
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.brand-name')?.textContent).toContain('Kompass');
+    expect(compiled.querySelector('app-sidebar-nav')).toBeTruthy();
+    expect(compiled.querySelector('app-header')).toBeNull();
     // Footer ist überall vorhanden — auch im Dashboard, siehe app.html.
-    expect(compiled.querySelector('.site-footer')).toBeTruthy();
+    expect(compiled.querySelector('.site-footer')).toBeNull();
     expect(compiled.querySelector('app-bottom-nav .nav-item')).toBeNull();
   });
 });

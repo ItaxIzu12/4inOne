@@ -1,0 +1,358 @@
+:host {
+  display: block;
+  color: #183b3b;
+  background: #fff;
+}
+.auth-page {
+  display: grid;
+  grid-template-columns: 41.4% 58.6%;
+  min-height: 100dvh;
+}
+.auth-brand {
+  background: #164c49;
+  color: #fff;
+  padding: 40px 50px;
+  display: flex;
+  flex-direction: column;
+  min-height: 780px;
+}
+.auth-brand__logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  text-decoration: none;
+}
+.auth-brand__logo logo-kompass {
+  font-size: 32px;
+  filter: brightness(0) invert(1);
+}
+.auth-brand__headline {
+  font-size: 42px;
+  line-height: 1.35;
+  letter-spacing: -0.5px;
+  margin-top: 96px;
+  color: #fff;
+}
+.auth-brand__lede {
+  font-size: 18px;
+  line-height: 1.7;
+  color: #d2e2dc;
+  margin-top: 20px;
+  max-width: 370px;
+}
+.auth-brand__preview {
+  margin-top: 40px;
+  padding: 26px 24px;
+  background: #205753;
+  border-radius: 16px;
+  max-width: 500px;
+}
+.auth-brand__preview-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: #d2e2dc;
+}
+.auth-brand__preview-amount {
+  color: #fff;
+  font-size: 38px;
+  font-weight: 700;
+  margin: 12px 0 4px;
+  line-height: 1.2;
+}
+.auth-brand__preview-sub {
+  font-size: 14px;
+  color: #d2e2dc;
+}
+.auth-brand__preview-facts {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 26px;
+  margin-top: 20px;
+  border-top: 1px solid #46716c;
+  font-size: 14px;
+  color: #d2e2dc;
+}
+.auth-brand__preview-facts span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.auth-brand__trust {
+  margin-top: auto;
+  padding-top: 60px;
+  font-size: 14px;
+  color: #d2e2dc;
+}
+.auth-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 40px;
+}
+.auth-panel__inner {
+  width: 100%;
+  max-width: 496px;
+}
+.auth-panel__top {
+  display: none;
+}
+.auth-intro h1 {
+  font-size: 32px;
+  line-height: 1.3;
+  letter-spacing: -0.5px;
+}
+.lede {
+  font-size: 15px;
+  color: #61716e;
+  margin: 10px 0 42px;
+  line-height: 1.6;
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.field label {
+  font-size: 15px;
+  font-weight: 700;
+}
+.field input {
+  width: 100%;
+  height: 52px;
+  border: 1px solid #bfcfc4;
+  border-radius: 12px;
+  padding: 0 15px;
+  background: #fff;
+  color: #273d3d;
+  font-size: 16px;
+}
+.password-wrap {
+  position: relative;
+}
+.password-wrap input {
+  padding-right: 52px;
+}
+.toggle-visibility {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #61716e;
+  cursor: pointer;
+}
+.field-hint {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #61716e;
+  margin-top: -6px;
+}
+.field-error {
+  color: #a53f3f;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.field input[aria-invalid='true'] {
+  border-color: #a53f3f;
+}
+.checkbox-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.checkbox-field input {
+  width: 22px;
+  height: 22px;
+  accent-color: #164c49;
+  flex-shrink: 0;
+}
+a {
+  color: #164c49;
+}
+.inline-link {
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.submit-button,
+.secondary-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  min-height: 52px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.submit-button {
+  background: #164c49;
+  color: #fff;
+  border: 0;
+  margin-top: 6px;
+}
+.submit-button:after {
+  content: '→';
+  position: absolute;
+  right: 22px;
+  font-size: 22px;
+  font-weight: 400;
+}
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.secondary-button {
+  background: #fff;
+  color: #164c49;
+  border: 1px solid #e2e8e4;
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: #61716e;
+  font-size: 14px;
+  margin: 40px 0 24px;
+}
+.auth-divider:before,
+.auth-divider:after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8e4;
+}
+.legal,
+.login-link {
+  text-align: center;
+  color: #61716e;
+  font-size: 13px;
+  margin-top: 42px;
+}
+.legal a,
+.login-link a {
+  text-decoration: none;
+}
+.step-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #61716e;
+}
+.step-label span:first-child {
+  color: #164c49;
+  font-weight: 700;
+}
+.step-track {
+  height: 4px;
+  background: #e2e8e4;
+  margin: 14px 0 24px;
+  border-radius: 2px;
+}
+.step-track span {
+  display: block;
+  height: 100%;
+  background: #164c49;
+  border-radius: 2px;
+}
+.back-step {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  color: #164c49;
+  min-height: 44px;
+  cursor: pointer;
+}
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid #164c49;
+  outline-offset: 3px;
+}
+@media (max-width: 959px) {
+  .auth-page {
+    display: block;
+  }
+  .auth-brand {
+    display: none;
+  }
+  .auth-panel {
+    padding: 28px 24px 40px;
+    min-height: 100dvh;
+    align-items: flex-start;
+  }
+  .auth-panel__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 8px 0 42px;
+  }
+  .auth-panel__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .auth-panel__brand logo-kompass {
+    font-size: 30px;
+  }
+  .back-link {
+    display: none;
+  }
+  .auth-intro h1 {
+    font-size: 27px;
+  }
+  .lede {
+    font-size: 16px;
+    margin-bottom: 36px;
+  }
+  .auth-form {
+    gap: 24px;
+  }
+  .field input,
+  .submit-button,
+  .secondary-button {
+    min-height: 52px;
+  }
+  .checkbox-row {
+    flex-wrap: wrap;
+    row-gap: 20px;
+  }
+  .legal {
+    margin-top: 36px;
+  }
+  .auth-divider {
+    margin-top: 36px;
+  }
+  .login-link {
+    font-size: 15px;
+  }
+}

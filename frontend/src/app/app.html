@@ -5,7 +5,7 @@
   <app-demo-banner />
 }
 <router-outlet />
-<app-footer />
+@if (showGlobalChrome()) { <app-footer /> }
 @if (showGlobalChrome()) {
   <app-back-to-top />
   <app-bottom-nav />

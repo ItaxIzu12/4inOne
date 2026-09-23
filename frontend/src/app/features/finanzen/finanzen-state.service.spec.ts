@@ -16,13 +16,16 @@ import { FinanzenStateService } from './finanzen-state.service';
  * Components teilen sich dadurch dieselbe Instanz, exakt wie im echten
  * Routing.
  *
- * WICHTIG: Assertions hier prüfen den GERENDERTEN DOM-Text (#balance-
- * heading), nicht nur interne Signal-Werte — ein früherer Versuch dieses
- * Tests verglich nur zwei intern abgeleitete Felder gegeneinander und
- * übersah dadurch einen echten Mapping-Bug (Dashboard zeigte budget.total
- * statt budget.planned als Hero-Zahl, beides aus demselben geteilten
- * Zustand abgeleitet, aber semantisch falsch zugeordnet — die interne
- * Konsistenzprüfung war also trivial wahr, obwohl die UI falsch war).
+ * Seit dem Design-Entwurf (Version 3) zeigt der Dashboard-Hero "Diesen
+ * Monat verfügbar" (verfuegbares_einkommen), NICHT mehr denselben Wert wie
+ * Finanzen-Übersicht ("ausgegeben") — das sind laut Entwurf bewusst zwei
+ * unterschiedliche Kennzahlen. Der geteilte Wert ist jetzt
+ * verfuegbares_einkommen, exakt derselbe wie im Finanzen-Analysen-Tab.
+ *
+ * WICHTIG: Assertions hier prüfen den GERENDERTEN DOM-Text, nicht nur
+ * interne Signal-Werte — ein früherer Versuch dieses Tests verglich nur
+ * zwei intern abgeleitete Felder gegeneinander und übersah dadurch einen
+ * echten Mapping-Bug (die UI zeigte einen anderen Wert als die Signale).
  */
 describe('FinanzenStateService — geteilter Zustand zwischen Dashboard und Finanzen', () => {
   beforeEach(async () => {
@@ -37,20 +40,32 @@ describe('FinanzenStateService — geteilter Zustand zwischen Dashboard und Fina
     }).compileComponents();
   });
 
-  it('Dashboard and Finanzen render the exact same budget figure in the DOM from the same demo data', () => {
+  function financeIncomeHeroText(fixture: {
+    componentInstance: unknown;
+    nativeElement: unknown;
+    detectChanges: () => void;
+  }): string | undefined {
+    (fixture.componentInstance as { selectTab: (tab: 'uebersicht' | 'analysen') => void }).selectTab('analysen');
+    fixture.detectChanges();
+    return (fixture.nativeElement as HTMLElement).querySelector('#income-heading')?.textContent?.trim();
+  }
+
+  it('Dashboard hero and Finanzen Analysen-Tab render the exact same "Verfügbares Einkommen" figure', () => {
     const dashboardFixture = TestBed.createComponent(Dashboard);
     dashboardFixture.detectChanges();
     const financeFixture = TestBed.createComponent(Finanzen);
     financeFixture.detectChanges();
 
     const dashboardHero = (dashboardFixture.nativeElement as HTMLElement).querySelector('#balance-heading')?.textContent?.trim();
-    const financeHero = (financeFixture.nativeElement as HTMLElement).querySelector('#balance-heading')?.textContent?.trim();
+    financeFixture.detectChanges();
+    const financeHero = financeIncomeHeroText(financeFixture);
+    financeFixture.detectChanges();
 
     expect(dashboardHero).toBeTruthy();
     expect(dashboardHero).toBe(financeHero);
   });
 
-  it('adding an expense on the Finanzen page is immediately reflected in the Dashboard budget DOM text, without the Dashboard fetching independently', () => {
+  it('adding an expense on the Finanzen page is immediately reflected in the Dashboard hero DOM text, without the Dashboard fetching independently', () => {
     const dashboardFixture = TestBed.createComponent(Dashboard);
     dashboardFixture.detectChanges();
 
@@ -80,31 +95,13 @@ describe('FinanzenStateService — geteilter Zustand zwischen Dashboard und Fina
 
     const dashboardHeroAfter = (dashboardFixture.nativeElement as HTMLElement).querySelector('#balance-heading')
       ?.textContent?.trim();
-    const financeHeroAfter = (financeFixture.nativeElement as HTMLElement).querySelector('#balance-heading')
-      ?.textContent?.trim();
+    const financeHeroAfter = financeIncomeHeroText(financeFixture);
 
     expect(dashboardHeroAfter).not.toBe(dashboardHeroBefore);
     expect(dashboardHeroAfter).toBe(financeHeroAfter);
   });
 
-  it('both components derive the same budget()/total/planned values from a single shared OverviewDto', () => {
-    const dashboardFixture = TestBed.createComponent(Dashboard);
-    dashboardFixture.detectChanges();
-    const financeFixture = TestBed.createComponent(Finanzen);
-    financeFixture.detectChanges();
-
-    const dashboardInstance = dashboardFixture.componentInstance as unknown as {
-      budget: () => { planned: number; total: number };
-    };
-    const financeInstance = financeFixture.componentInstance as unknown as {
-      budget: () => { planned: number; total: number };
-    };
-
-    expect(dashboardInstance.budget().total).toBe(financeInstance.budget().total);
-    expect(dashboardInstance.budget().planned).toBe(financeInstance.budget().planned);
-  });
-
-  it('deleting a transaction on the Finanzen page updates the Dashboard budget DOM text on next read', () => {
+  it('deleting a transaction on the Finanzen page updates the Dashboard hero DOM text on next read', () => {
     const dashboardFixture = TestBed.createComponent(Dashboard);
     dashboardFixture.detectChanges();
 
@@ -196,7 +193,9 @@ describe('FinanzenStateService — Übersicht und Analysen gemeinsam', () => {
     const before = Number(state.analysen()?.verfuegbares_einkommen);
 
     await new Promise<void>((resolve) =>
-      provider.addTransaction({ amount: 50, description: 'x', categoryId: 'demo-haushalt' }).subscribe(() => resolve()),
+      provider
+        .addTransaction({ amount: 50, description: 'x', categoryId: 'demo-haushalt', datum: '2026-09-15' })
+        .subscribe(() => resolve()),
     );
     state.invalidieren();
 

@@ -20,3 +20,23 @@ class TransactionWriteRateThrottle(LocalCacheThrottle):
     def get_cache_key(self, request, view):
         ident = request.user.pk if request.user.is_authenticated else self.get_ident(request)
         return self.cache_format % {'scope': self.scope, 'ident': ident}
+
+
+class DataExportRateThrottle(LocalCacheThrottle):
+    """Rate-Limit für Datenexporte (ARCHITEKTUR.md §3.9: "muss selbst
+    rate-limitiert sein, sonst lässt er sich zum wiederholten Bulk-Abgreifen
+    aller Haushaltsdaten missbrauchen, auch mit gültigem Token") — bisher nur
+    als Umgebungsvariable (RATE_LIMIT_DATA_EXPORT) reserviert, jetzt zum
+    ersten Mal tatsächlich verwendet: für die Berichte-Endpunkte (CSV/PDF,
+    finanzen/views.py BerichtCsvView/BerichtPdfView). Ein Bericht enthält
+    vollständige Haushaltsdaten über einen ganzen Monat/ein ganzes Jahr —
+    mindestens so sensibel wie ein einzelner Datenexport.
+
+    Pro NUTZER (wie TransactionWriteRateThrottle), nicht pro Haushalt — sonst
+    könnte ein Mitglied das Limit für den ganzen Haushalt aufbrauchen."""
+
+    scope = 'data_export'
+
+    def get_cache_key(self, request, view):
+        ident = request.user.pk if request.user.is_authenticated else self.get_ident(request)
+        return self.cache_format % {'scope': self.scope, 'ident': ident}

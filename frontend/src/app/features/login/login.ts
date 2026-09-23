@@ -1,12 +1,20 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ScrollService } from '../../core/scroll/scroll.service';
 import { LogoKompass } from '../../shared/icons/logo-kompass';
 import { IconArrowLeft } from '../../shared/icons/icon-arrow-left';
+import { IconTwoFactor } from '../../shared/icons/icon-two-factor';
+import { IconFinanzen } from '../../shared/icons/icon-finanzen';
 
 type Mode = 'login' | 'register';
 
@@ -33,9 +41,16 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, LogoKompass, IconArrowLeft],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    LogoKompass,
+    IconArrowLeft,
+    IconTwoFactor,
+    IconFinanzen,
+  ],
   templateUrl: './login.html',
-  styleUrl: './login.css',
+  styleUrl: './login.scss',
 })
 export class Login {
   private readonly fb = inject(FormBuilder);
@@ -47,6 +62,19 @@ export class Login {
   protected readonly mode = signal<Mode>(
     this.route.snapshot.data['mode'] === 'register' ? 'register' : 'login',
   );
+  protected readonly registerStep = signal(1);
+  protected continueRegistration(): void {
+    if (this.registerStep() === 2) {
+      this.submitRegister();
+      return;
+    }
+    const controls = this.registerForm.controls;
+    const fields = [controls.name, controls.email, controls.password, controls.confirmPassword];
+    fields.forEach((field) => field.markAsTouched());
+    if (fields.some((field) => field.invalid) || this.registerForm.hasError('mismatch')) return;
+    this.registerStep.set(2);
+  }
+
   protected readonly submitting = signal(false);
   protected readonly submitError = signal<string | null>(null);
   protected readonly showPassword = signal(false);
@@ -66,7 +94,11 @@ export class Login {
       email: ['', [Validators.required, Validators.email]],
       password: [
         '',
-        [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.pattern(PASSWORD_POLICY_PATTERN)],
+        [
+          Validators.required,
+          Validators.minLength(PASSWORD_MIN_LENGTH),
+          Validators.pattern(PASSWORD_POLICY_PATTERN),
+        ],
       ],
       confirmPassword: ['', [Validators.required]],
       // Bewusst kein Validators.required: leer -> Backend-Fallback
@@ -167,11 +199,11 @@ export class Login {
         this.submitError.set(
           err.status === 0
             ? 'Server nicht erreichbar. Bitte versuche es später erneut.'
-            // 401 deckt sowohl falsche Zugangsdaten als auch eine Axes-
-            // Sperre nach zu vielen Fehlversuchen ab (ARCHITEKTUR.md §3.1)
-            // — bewusst dieselbe Meldung für beides, damit niemand von
-            // außen erkennen kann, welcher der beiden Fälle vorliegt.
-            : 'E-Mail-Adresse oder Passwort ist falsch.',
+            : // 401 deckt sowohl falsche Zugangsdaten als auch eine Axes-
+              // Sperre nach zu vielen Fehlversuchen ab (ARCHITEKTUR.md §3.1)
+              // — bewusst dieselbe Meldung für beides, damit niemand von
+              // außen erkennen kann, welcher der beiden Fälle vorliegt.
+              'E-Mail-Adresse oder Passwort ist falsch.',
         );
         this.scheduleErrorDismiss();
       },
@@ -212,6 +244,7 @@ export class Login {
     // mappen, damit sie wie normale Formularfehler angezeigt werden.
     const body = err.error as Record<string, string[]> | undefined;
     let mapped = false;
+    this.registerStep.set(1);
     if (body?.['email']?.length) {
       this.registerForm.controls.email.setErrors({ backend: body['email'][0] });
       this.registerForm.controls.email.markAsTouched();

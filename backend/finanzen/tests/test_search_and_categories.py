@@ -1,7 +1,7 @@
 """TEIL 4/7: Suche/Pagination des Transaktions-Endpunkts und TEIL 1:
 Kategorie-Farbe/Icon als Daten statt hartkodiert."""
 
-from datetime import datetime, timezone
+from datetime import date
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -30,10 +30,10 @@ def test_search_endpoint_never_returns_results_from_a_different_household():
     # haushaltsübergreifend filtern, träfe der Suchbegriff hier fälschlich
     # beide Treffer statt nur den eigenen.
     Transaction.objects.create(
-        account=account_a, description='Geheime Miete', amount='1.00', occurred_at=datetime(2026, 8, 1, tzinfo=timezone.utc)
+        account=account_a, description='Geheime Miete', amount='1.00', datum=date(2026, 8, 1)
     )
     Transaction.objects.create(
-        account=account_b, description='Geheime Miete', amount='2.00', occurred_at=datetime(2026, 8, 1, tzinfo=timezone.utc)
+        account=account_b, description='Geheime Miete', amount='2.00', datum=date(2026, 8, 1)
     )
 
     client = APIClient()
@@ -64,7 +64,7 @@ def test_search_endpoint_finds_nothing_for_a_query_that_only_matches_another_hou
         account=account_b,
         description='Nur in Haushalt B vorhanden',
         amount='9.00',
-        occurred_at=datetime(2026, 8, 1, tzinfo=timezone.utc),
+        datum=date(2026, 8, 1),
     )
 
     client = APIClient()

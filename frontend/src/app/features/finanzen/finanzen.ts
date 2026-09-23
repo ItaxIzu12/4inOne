@@ -1,9 +1,22 @@
+import { ContextBar } from '../../shared/context-bar/context-bar';
+import { ActivatedRoute } from '@angular/router';
 import { DatePipe, DecimalPipe, NgComponentOutlet } from '@angular/common';
-import { Component, DestroyRef, ElementRef, Injector, Type, computed, effect, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  Injector,
+  Type,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Subscription, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { Modal } from '../../shared/modal/modal';
-import { IconTwoFactor } from '../../shared/icons/icon-two-factor';
+import { SidebarNav } from '../../shared/sidebar-nav/sidebar-nav';
 import { CATEGORY_ICON_KEYS, resolveCategoryIcon } from '../../shared/icons/category-icon.map';
 import {
   CategoryAmountDto,
@@ -18,6 +31,7 @@ import { FinanzenStateService } from './finanzen-state.service';
 import { FINANZEN_I18N } from './finanzen.i18n';
 
 interface CategorySlice {
+  iconKey: string;
   id: number | string;
   label: string;
   amount: number;
@@ -45,6 +59,18 @@ interface Subscription_ {
   flag: string | null;
 }
 
+/** Heutiges Datum als "YYYY-MM-DD" in der LOKALEN Zeitzone des Geräts —
+ * bewusst NICHT toISOString().slice(0, 10) (das nimmt UTC: kurz nach
+ * Mitternacht in MESZ/MEZ wäre das Ergebnis noch "gestern"). Standardwert
+ * für addDatum unten sowie beim Zurücksetzen des Sheets. */
+function heuteIso(): string {
+  const now = new Date();
+  const jahr = now.getFullYear();
+  const monat = String(now.getMonth() + 1).padStart(2, '0');
+  const tag = String(now.getDate()).padStart(2, '0');
+  return `${jahr}-${monat}-${tag}`;
+}
+
 // "Abo-Radar" bleibt bewusst Platzhalter — es gibt kein Abo-Datenmodell
 // (siehe finanzen/views.py OverviewView-Docstring). "Faire Aufteilung"
 // kommt jetzt echt aus dem API-Response (fairness()-Signal unten).
@@ -55,23 +81,25 @@ const SUBSCRIPTIONS: Subscription_[] = [
 
 // Zyklisch zugewiesen, falls mehr Mitglieder als Farben (unwahrscheinlich,
 // aber kein Absturz) — dieselben zwei Akzentfarben wie zuvor als Basis.
-const FAIRNESS_COLOR_PALETTE = ['var(--color-violet-ink)', 'var(--color-amber-ink)', 'var(--m-organize)', 'var(--m-household)'];
+const FAIRNESS_COLOR_PALETTE = [
+  'var(--color-violet-ink)',
+  'var(--color-amber-ink)',
+  'var(--m-organize)',
+  'var(--m-household)',
+];
 
 // Kuratierte Farbauswahl fürs "Kategorie hinzufügen"-Sheet — bewusst KEIN
 // freies Farbrad (siehe Chat-Verlauf), damit selbst angelegte Kategorien
-// optisch nicht aus dem Design-System fallen. Die ersten vier sind exakt
-// die bereits an anderer Stelle verwendeten Farbwerte (Fixkosten/Haushalt/
-// Sonstiges-Default, --m-organize) — literale Hex-Werte statt CSS-
-// Variablen, weil Category.color in der Datenbank ein Hex-String ist,
-// keine Referenz auf ein Custom Property.
+// optisch nicht aus dem Design-System fallen. Exakt die fünf Werte aus
+// DESIGN_SYSTEM.md Version 3 "Kuratierte Kategorie-Farbpalette" — literale
+// Hex-Werte statt CSS-Variablen, weil Category.color in der Datenbank ein
+// Hex-String ist, keine Referenz auf ein Custom Property.
 const NEW_CATEGORY_COLOR_SWATCHES = [
-  '#5b3fd6', // Violett (Fixkosten-Default)
-  '#ffb75e', // Amber (Haushalt-Default)
-  '#c23b52', // Rose (Sonstiges-Default)
-  '#1f8a4c', // Grün (--m-organize)
-  '#2f7fd1', // Blau
-  '#0e9488', // Türkis
-  '#d97a3f', // Terrakotta
+  '#164c49', // Pine (Fixkosten-Default)
+  '#8a5a23', // Amber Ink (Haushalt-Default)
+  '#a8452f', // Danger/Terrakotta (Sonstiges-Default)
+  '#205753', // Pine Deep
+  '#556660', // Dusk Sage
 ];
 
 function initialsFor(name: string): string {
@@ -88,9 +116,9 @@ function initialsFor(name: string): string {
 @Component({
   selector: 'app-finanzen',
   standalone: true,
-  imports: [DecimalPipe, DatePipe, NgComponentOutlet, IconTwoFactor, Modal],
+  imports: [DecimalPipe, DatePipe, NgComponentOutlet, Modal, SidebarNav, ContextBar],
   templateUrl: './finanzen.html',
-  styleUrl: './finanzen.css',
+  styleUrl: './finanzen.scss',
 })
 export class Finanzen {
   // Nie FinanzenApiService/RealFinanzenDataProvider/DemoFinanzenDataProvider
@@ -104,6 +132,12 @@ export class Finanzen {
   protected readonly financeState = inject(FinanzenStateService);
 
   protected readonly t = FINANZEN_I18N;
+
+  // Ersetzt das früher hartkodierte "August" in Seitentitel/Budget-Label —
+  // läuft mit, statt im nächsten Monat falsch stehen zu bleiben.
+  protected readonly currentMonthLabel = computed(() =>
+    new Intl.DateTimeFormat('de-DE', { month: 'long' }).format(new Date()),
+  );
 
   // Sub-Tabs: "Übersicht" und jetzt auch "Analysen" haben echten Inhalt —
   // Transaktionen/Budgets bleiben bewusst als inaktiv markiert statt leere
@@ -126,7 +160,9 @@ export class Finanzen {
   // ---------- Haushalts-Streifen ----------
   // Alle fünf unten sind computed() auf financeState.uebersicht() — EINE
   // Quelle, geteilt mit dem Dashboard (siehe finanzen-state.service.ts).
-  protected readonly householdName = computed(() => this.financeState.uebersicht()?.household_name ?? '');
+  protected readonly householdName = computed(
+    () => this.financeState.uebersicht()?.household_name ?? '',
+  );
   protected readonly members = computed(() => this.financeState.uebersicht()?.members ?? []);
 
   // Sicherheitskritisch (SCHRITT 5B, jetzt im geteilten Service verankert):
@@ -139,20 +175,30 @@ export class Finanzen {
   protected readonly overviewError = this.financeState.error;
 
   protected readonly budget = computed(() => {
-    const u = this.financeState.uebersicht();
-    return u ? { planned: Number(u.budget.planned), total: Number(u.budget.total) } : { planned: 0, total: 0 };
+    const b = this.financeState.uebersicht()?.budget;
+    return b
+      ? {
+          ausgegeben: Number(b.ausgegeben),
+          ziel: Number(b.ziel),
+          uebrig: Number(b.uebrig),
+          prozent: b.prozent,
+        }
+      : { ausgegeben: 0, ziel: 0, uebrig: 0, prozent: 0 };
   });
-  protected readonly budgetPercent = computed(() => {
-    const { planned, total } = this.budget();
-    return total > 0 ? Math.round((planned / total) * 100) : 0;
-  });
-  protected readonly budgetRemaining = computed(() => this.budget().total - this.budget().planned);
+  // Wert für die Beschriftung "X % ausgegeben" (kann über 100 liegen)...
+  protected readonly budgetPercent = computed(() => this.budget().prozent);
+  // ...und für den Balken/aria-valuenow, die bei 100 enden (aria-valuemax).
+  protected readonly budgetBarPercent = computed(() => Math.min(100, this.budgetPercent()));
+  protected readonly budgetRemaining = computed(() => this.budget().uebrig);
   protected readonly categories = computed(() => {
     const u = this.financeState.uebersicht();
     return u ? this.buildDonutSlices(u.categories) : [];
   });
   protected readonly categoriesAriaLabel = computed(
-    () => this.categories().map((slice) => `${slice.label} ${Math.round(slice.amount)}`).join(', ') + ' Euro',
+    () =>
+      this.categories()
+        .map((slice) => `${slice.label} ${Math.round(slice.amount)}`)
+        .join(', ') + ' Euro',
   );
 
   // "Letzte Transaktionen" kommt jetzt aus demselben Provider wie das
@@ -168,10 +214,13 @@ export class Finanzen {
   // finanzen/views.py OverviewView. Die Anwesenheit selbst ist das Signal,
   // nicht member_count — falls sich die Backend-Regel je ändert, bleibt das
   // Frontend trotzdem korrekt (zeigt genau das, was tatsächlich mitkommt).
-  protected readonly fairness = computed(() => this.buildFairness(this.financeState.uebersicht()?.fairness));
+  protected readonly fairness = computed(() =>
+    this.buildFairness(this.financeState.uebersicht()?.fairness),
+  );
   protected readonly showFairness = computed(() => this.fairness().length > 0);
 
-  protected readonly resolveCategoryIcon = (iconKey: string): Type<unknown> => resolveCategoryIcon(iconKey);
+  protected readonly resolveCategoryIcon = (iconKey: string): Type<unknown> =>
+    resolveCategoryIcon(iconKey);
 
   // ---------- Transaktions-Historie-Modal ----------
   protected readonly modalOpen = signal(false);
@@ -195,6 +244,12 @@ export class Finanzen {
   protected readonly addModalOpen = signal(false);
   protected readonly addAmount = signal('');
   protected readonly addDescription = signal('');
+  // Wählbares Ausgabedatum, "YYYY-MM-DD" (passt exakt zum Wertformat eines
+  // <input type="date">) — Standardwert "heute", im Sheet bewusst klein und
+  // nicht im Vordergrund platziert (finanzen.html), da die meisten Ausgaben
+  // tagesaktuell bleiben. Serverseitige Grenzen (nicht Zukunft, max. 12
+  // Monate zurück) in finanzen/serializers.py validate_datum.
+  protected readonly addDatum = signal(heuteIso());
   protected readonly addCategoryChoices = signal<CategoryDto[]>([]);
   protected readonly addSelectedCategoryId = signal<number | string | null>(null);
   protected readonly addSubmitting = signal(false);
@@ -240,17 +295,29 @@ export class Finanzen {
   //
   // Alles unten sind computed() auf financeState.analysen() — EINE Quelle,
   // dieselbe wie für die Übersicht (siehe finanzen-state.service.ts).
-  protected readonly verfuegbaresEinkommen = computed(() => Number(this.financeState.analysen()?.verfuegbares_einkommen ?? 0));
-  protected readonly householdTotalIncome = computed(() => Number(this.financeState.analysen()?.household_total_income ?? 0));
-  protected readonly monthlyBufferValue = computed(() => Number(this.financeState.analysen()?.monthly_buffer ?? 0));
-  protected readonly transactionsTotal = computed(() => Number(this.financeState.analysen()?.transactions_total ?? 0));
-  protected readonly deductions = computed<RecurringDeductionDto[]>(() => this.financeState.analysen()?.recurring_deductions ?? []);
+  protected readonly verfuegbaresEinkommen = computed(() =>
+    Number(this.financeState.analysen()?.verfuegbares_einkommen ?? 0),
+  );
+  protected readonly householdTotalIncome = computed(() =>
+    Number(this.financeState.analysen()?.household_total_income ?? 0),
+  );
+  protected readonly monthlyBufferValue = computed(() =>
+    Number(this.financeState.analysen()?.monthly_buffer ?? 0),
+  );
+  protected readonly transactionsTotal = computed(() =>
+    Number(this.financeState.analysen()?.transactions_total ?? 0),
+  );
+  protected readonly deductions = computed<RecurringDeductionDto[]>(
+    () => this.financeState.analysen()?.recurring_deductions ?? [],
+  );
   protected readonly activeDeductionsTotal = computed(() =>
     this.deductions()
       .filter((d) => d.active)
       .reduce((sum, d) => sum + Number(d.amount), 0),
   );
-  protected readonly insights = computed<InsightDto[]>(() => this.financeState.analysen()?.insights ?? []);
+  protected readonly insights = computed<InsightDto[]>(
+    () => this.financeState.analysen()?.insights ?? [],
+  );
   protected readonly analysenError = this.financeState.analysenError;
 
   private inputsSeeded = false;
@@ -261,6 +328,16 @@ export class Finanzen {
   protected readonly bufferInput = signal('');
   protected readonly bufferSubmitting = signal(false);
   protected readonly bufferError = signal<string | null>(null);
+
+  // ---------- Bericht-Download (CSV/PDF, Monat oder Jahr) ----------
+  // Zum Archivieren/Ausdrucken, NICHT zu verwechseln mit "Für KI-Analyse
+  // exportieren" (kein solcher Button existiert bislang im Frontend).
+  protected readonly reportPeriodType = signal<'monat' | 'jahr'>('monat');
+  // "YYYY-MM" (passt zum Wertformat von <input type="month">).
+  protected readonly reportMonat = signal(heuteIso().slice(0, 7));
+  protected readonly reportJahr = signal(String(new Date().getFullYear()));
+  protected readonly reportDownloading = signal<'csv' | 'pdf' | null>(null);
+  protected readonly reportError = signal<string | null>(null);
 
   // "Abzug hinzufügen"/"Abzug bearbeiten" — dasselbe Formular für beide
   // Fälle, dasselbe Muster wie beim Ausgabe-Formular oben.
@@ -276,7 +353,10 @@ export class Finanzen {
   protected readonly confirmingDeductionDelete = signal(false);
   protected readonly deductionDeleteSubmitting = signal(false);
 
+  protected readonly clampPercent = (value: number): number => Math.max(0, Math.min(100, value));
+
   constructor() {
+    if (inject(ActivatedRoute).snapshot.queryParamMap.get('action') === 'add') this.openAddModal();
     inject(DestroyRef).onDestroy(() => this.searchSubscription?.unsubscribe());
     this.financeState.ladenBeide();
     this.loadRecentTransactions();
@@ -357,12 +437,14 @@ export class Finanzen {
       const monthlyGoal = row.monthly_goal !== null ? Number(row.monthly_goal) : null;
       const dashPercent = total > 0 ? (amount / total) * 100 : 0;
       const slice: CategorySlice = {
+        iconKey: row.icon_key,
         id: row.id,
         label: row.name,
         amount,
         color: row.color,
         monthlyGoal,
-        goalPercent: monthlyGoal !== null && monthlyGoal > 0 ? Math.round((amount / monthlyGoal) * 100) : null,
+        goalPercent:
+          monthlyGoal !== null && monthlyGoal > 0 ? Math.round((amount / monthlyGoal) * 100) : null,
         dashPercent,
         dashOffset: 25 - cumulativePercent,
       };
@@ -430,6 +512,7 @@ export class Finanzen {
 
   protected openAddModal(): void {
     this.editingTransactionId.set(null);
+    this.addDatum.set(heuteIso());
     this.addModalOpen.set(true);
     this.ensureCategoryChoicesLoaded();
   }
@@ -443,6 +526,7 @@ export class Finanzen {
     this.addAmount.set(tx.amount);
     this.addDescription.set(tx.description);
     this.addSelectedCategoryId.set(tx.category?.id ?? null);
+    this.addDatum.set(tx.datum);
     this.confirmingDelete.set(false);
     this.addModalOpen.set(true);
     this.ensureCategoryChoicesLoaded();
@@ -471,6 +555,7 @@ export class Finanzen {
     this.addAmount.set('');
     this.addDescription.set('');
     this.addSelectedCategoryId.set(null);
+    this.addDatum.set(heuteIso());
     this.addError.set(null);
     this.editingTransactionId.set(null);
     this.confirmingDelete.set(false);
@@ -506,9 +591,17 @@ export class Finanzen {
 
     this.addError.set(null);
     this.addSubmitting.set(true);
-    const input = { amount, description: this.addDescription().trim(), categoryId };
+    const input = {
+      amount,
+      description: this.addDescription().trim(),
+      categoryId,
+      datum: this.addDatum(),
+    };
     const editingId = this.editingTransactionId();
-    const request = editingId !== null ? this.provider.updateTransaction(editingId, input) : this.provider.addTransaction(input);
+    const request =
+      editingId !== null
+        ? this.provider.updateTransaction(editingId, input)
+        : this.provider.addTransaction(input);
 
     request.subscribe({
       next: () => {
@@ -599,7 +692,9 @@ export class Finanzen {
     // Category-Model) — kein Pflichtfeld, anders als der Ausgaben-Betrag.
     const monthlyGoal = raw === '' ? null : Number(raw.replace(',', '.'));
     if (monthlyGoal !== null && (!Number.isFinite(monthlyGoal) || monthlyGoal < 0)) {
-      this.categoryGoalError.set('Bitte ein gültiges Ziel eingeben (oder leer lassen, um es zu entfernen).');
+      this.categoryGoalError.set(
+        'Bitte ein gültiges Ziel eingeben (oder leer lassen, um es zu entfernen).',
+      );
       return;
     }
 
@@ -613,7 +708,9 @@ export class Finanzen {
       },
       error: () => {
         this.categoryGoalSubmitting.set(false);
-        this.categoryGoalError.set('Ziel konnte nicht gespeichert werden. Bitte versuche es erneut.');
+        this.categoryGoalError.set(
+          'Ziel konnte nicht gespeichert werden. Bitte versuche es erneut.',
+        );
       },
     });
   }
@@ -687,7 +784,9 @@ export class Finanzen {
       error: (err: { error?: { name?: string[] } }) => {
         this.newCategorySubmitting.set(false);
         const backendMessage = err?.error?.name?.[0];
-        this.newCategoryError.set(backendMessage ?? 'Kategorie konnte nicht angelegt werden. Bitte versuche es erneut.');
+        this.newCategoryError.set(
+          backendMessage ?? 'Kategorie konnte nicht angelegt werden. Bitte versuche es erneut.',
+        );
       },
     });
   }
@@ -707,7 +806,9 @@ export class Finanzen {
     // core/models.py HouseholdMembership) — kein Pflichtfeld.
     const monthlyIncome = raw === '' ? null : Number(raw.replace(',', '.'));
     if (monthlyIncome !== null && (!Number.isFinite(monthlyIncome) || monthlyIncome < 0)) {
-      this.ownIncomeError.set('Bitte ein gültiges Einkommen eingeben (oder leer lassen, um es zu entfernen).');
+      this.ownIncomeError.set(
+        'Bitte ein gültiges Einkommen eingeben (oder leer lassen, um es zu entfernen).',
+      );
       return;
     }
 
@@ -720,7 +821,9 @@ export class Finanzen {
       },
       error: () => {
         this.ownIncomeSubmitting.set(false);
-        this.ownIncomeError.set('Einkommen konnte nicht gespeichert werden. Bitte versuche es erneut.');
+        this.ownIncomeError.set(
+          'Einkommen konnte nicht gespeichert werden. Bitte versuche es erneut.',
+        );
       },
     });
   }
@@ -838,8 +941,11 @@ export class Finanzen {
   }
 
   // Ziel-Elemente für die Fokus-Nachziehung, siehe effect() im Konstruktor.
-  private readonly cancelDeductionDeleteBtn = viewChild<ElementRef<HTMLButtonElement>>('cancelDeductionDeleteBtn');
-  private readonly deductionDeleteLinkBtn = viewChild<ElementRef<HTMLButtonElement>>('deductionDeleteLinkBtn');
+  private readonly cancelDeductionDeleteBtn = viewChild<ElementRef<HTMLButtonElement>>(
+    'cancelDeductionDeleteBtn',
+  );
+  private readonly deductionDeleteLinkBtn =
+    viewChild<ElementRef<HTMLButtonElement>>('deductionDeleteLinkBtn');
 
   protected requestDeductionDelete(): void {
     this.confirmingDeductionDelete.set(true);
@@ -867,4 +973,47 @@ export class Finanzen {
       },
     });
   }
+
+  // ---------- Bericht-Download (CSV/PDF, Monat oder Jahr) ----------
+
+  protected downloadBericht(format: 'csv' | 'pdf'): void {
+    this.reportError.set(null);
+    this.reportDownloading.set(format);
+    const period =
+      this.reportPeriodType() === 'monat'
+        ? { monat: this.reportMonat() }
+        : { jahr: this.reportJahr() };
+
+    this.provider.downloadBericht(format, period).subscribe({
+      next: ({ blob, filename }) => {
+        this.reportDownloading.set(null);
+        triggerBlobDownload(blob, filename);
+      },
+      error: (err: unknown) => {
+        this.reportDownloading.set(null);
+        // Die Demo wirft für PDF einen echten Error mit verständlichem Text
+        // (demo-finanzen-data-provider.ts) — HttpErrorResponse (der echte
+        // Backend-Fehlerpfad) ist KEINE Error-Instanz, deshalb landet der
+        // technische Netzwerkfehler dort nie ungefiltert in der Anzeige.
+        this.reportError.set(
+          err instanceof Error
+            ? err.message
+            : 'Bericht konnte nicht erstellt werden. Bitte versuche es erneut.',
+        );
+      },
+    });
+  }
+}
+
+/** Löst einen echten Datei-Download aus (Blob-Response), kein Öffnen in
+ * einem neuen Tab — siehe finanzen-api.service.ts downloadBericht(). */
+function triggerBlobDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
