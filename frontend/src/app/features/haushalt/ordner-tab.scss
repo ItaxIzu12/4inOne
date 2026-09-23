@@ -1,0 +1,79 @@
+.hh-main-col {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.row__edit {
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.row__edit:hover .row__title {
+  text-decoration: underline;
+}
+.amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.list .empty {
+  padding: 8px 0;
+  text-align: left;
+}
+.deadlines {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.deadline {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface);
+}
+.deadline__kind {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--accent);
+}
+.deadline--late .deadline__kind,
+.deadline--late .deadline__when {
+  color: var(--danger);
+}
+.deadline__title {
+  min-width: 0;
+  font-weight: 700;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.deadline__when {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.deadline .btn-link {
+  justify-self: start;
+  min-height: 40px;
+  padding: 0;
+}
+.upcoming-empty {
+  margin-top: 12px;
+}
+.upcoming-note {
+  margin-top: 16px;
+}
+@media (max-width: 959px) {
+  // Einspaltig: anstehende Fristen zuerst, sie sind der Grund, den Ordner
+  // zu öffnen.
+  .hh-side {
+    order: -1;
+  }
+}

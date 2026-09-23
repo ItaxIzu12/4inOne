@@ -1,0 +1,304 @@
+@if (loadError()) {
+  <div class="load-error" role="alert">
+    <p>Die Einkaufsliste konnte nicht geladen werden.</p>
+    <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
+  </div>
+} @else if (data()) {
+  <div class="hh-grid">
+    <section class="card list-card" aria-labelledby="shopping-heading">
+      <div class="card-head">
+        <div>
+          <h2 id="shopping-heading">Einkaufsliste</h2>
+          <p class="muted small">
+            {{ openCount() === 1 ? '1 Artikel fehlt noch' : openCount() + ' Artikel fehlen noch' }}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="mode-toggle"
+          [attr.aria-pressed]="shoppingMode()"
+          [class.is-on]="shoppingMode()"
+          (click)="toggleMode()"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="20" r="1.4" />
+            <circle cx="17" cy="20" r="1.4" />
+            <path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L20 8H6.2" />
+          </svg>
+          Einkaufsmodus
+        </button>
+      </div>
+
+      @if (shoppingMode()) {
+        <p class="mode-hint">
+          Du siehst nur, was noch fehlt – sortiert wie im Laden. Abgehakte Artikel landen im Wagen.
+        </p>
+      } @else {
+        <form class="add-form" (submit)="submitNew($event)">
+          <label class="sr-only" for="new-item-name">Artikel</label>
+          <input
+            id="new-item-name"
+            class="add-form__name"
+            type="text"
+            autocomplete="off"
+            maxlength="120"
+            placeholder="Was fehlt? z. B. Milch"
+            [value]="newName()"
+            (input)="newName.set($any($event.target).value)"
+          />
+          <label class="sr-only" for="new-item-quantity">Menge (optional)</label>
+          <input
+            id="new-item-quantity"
+            class="add-form__qty"
+            type="text"
+            autocomplete="off"
+            maxlength="40"
+            placeholder="Menge"
+            [value]="newQuantity()"
+            (input)="newQuantity.set($any($event.target).value)"
+          />
+          <button type="submit" class="btn-primary" [disabled]="!newName().trim() || adding()">
+            Hinzufügen
+          </button>
+        </form>
+      }
+
+      @if (actionError()) {
+        <p class="field-error action-error" role="alert">{{ actionError() }}</p>
+      }
+
+      @for (group of openGroups(); track group.section.key) {
+        <div class="group">
+          <h3>{{ group.section.label }}</h3>
+          <ul class="list">
+            @for (item of group.items; track item.id) {
+              <li class="row" [class.row--big]="shoppingMode()" [class.row--done]="item.is_checked">
+                <button
+                  type="button"
+                  class="check"
+                  [class.is-checked]="item.is_checked"
+                  [attr.aria-label]="item.is_checked ? itemLabel(item) + ' zurück auf die Liste' : itemLabel(item) + ' abhaken'"
+                  (click)="toggle(item)"
+                >
+                  <span class="check__ring">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10" /></svg>
+                  </span>
+                </button>
+                <span class="row__main">
+                  <span class="row__title">{{ item.name }}</span>
+                  @if (item.quantity) {
+                    <span class="row__meta">{{ item.quantity }}</span>
+                  }
+                </span>
+                @if (!shoppingMode()) {
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    [attr.aria-label]="itemLabel(item) + ' bearbeiten'"
+                    (click)="openEdit(item)"
+                  >
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+      } @empty {
+        <div class="empty">
+          <p class="muted">
+            @if (checkedItems().length > 0) {
+              Alles im Wagen. Schließe den Einkauf ab, um ihn als Ausgabe zu buchen.
+            } @else {
+              Die Liste ist leer. Trage ein, was fehlt – oder nutze „Schnell hinzufügen“.
+            }
+          </p>
+        </div>
+      }
+
+      @if (checkedItems().length > 0) {
+        <details class="cart" [open]="!shoppingMode()">
+          <summary>
+            Im Wagen <span class="pill pill--accent">{{ checkedItems().length }}</span>
+          </summary>
+          <ul class="list">
+            @for (item of cartItems(); track item.id) {
+              <li class="row row--done">
+                <button
+                  type="button"
+                  class="check is-checked"
+                  [attr.aria-label]="itemLabel(item) + ' zurück auf die Liste'"
+                  (click)="toggle(item)"
+                >
+                  <span class="check__ring">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10" /></svg>
+                  </span>
+                </button>
+                <span class="row__main">
+                  <span class="row__title">{{ item.name }}</span>
+                  @if (item.quantity || item.checked_by_name) {
+                    <span class="row__meta">
+                      {{ item.quantity }}{{ item.quantity && item.checked_by_name ? ' · ' : '' }}{{
+                        item.checked_by_name ? 'von ' + item.checked_by_name : ''
+                      }}
+                    </span>
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        </details>
+
+        <div class="checkout-bar">
+          <span class="checkout-bar__count"><strong>{{ checkedItems().length }}</strong> im Wagen</span>
+          <button type="button" class="btn-primary" (click)="openComplete()">Einkauf abschließen</button>
+        </div>
+      }
+    </section>
+
+    <div class="hh-side">
+      @if (!shoppingMode()) {
+        <section class="card" aria-labelledby="suggest-heading">
+          <h2 id="suggest-heading">Schnell hinzufügen</h2>
+          @if (data()!.suggestions.length > 0) {
+            <p class="muted small suggest-intro">Was ihr oft kauft – ein Tippen genügt.</p>
+            <ul class="chips">
+              @for (suggestion of data()!.suggestions; track suggestion.id) {
+                <li>
+                  <button type="button" class="chip" [disabled]="adding()" (click)="addSuggestion(suggestion)">
+                    <span aria-hidden="true">＋</span> {{ suggestion.name }}
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="muted small suggest-intro">
+              Hier erscheinen Artikel, die ihr regelmäßig kauft, sobald ihr die Liste ein paar Mal genutzt habt.
+            </p>
+          }
+        </section>
+      }
+
+      <section class="card card--lavender" aria-labelledby="link-heading">
+        <h2 id="link-heading">Einkauf wird zur Ausgabe</h2>
+        <p class="muted link-copy">
+          Beim Abschließen schlägt Kompass den Betrag vor. Du bestätigst per Schieberegler – die Ausgabe
+          steht sofort in euren Finanzen unter „Haushalt“.
+        </p>
+        <p class="muted small">
+          @if (data()!.price_from_history) {
+            Eure Schätzung: etwa {{ pricePerItem() | number: '1.2-2' : 'de' }} € pro Artikel, aus euren letzten
+            Einkäufen.
+          } @else {
+            Startwert: {{ pricePerItem() | number: '1.2-2' : 'de' }} € pro Artikel – mit jedem Einkauf wird die
+            Schätzung genauer.
+          }
+        </p>
+      </section>
+    </div>
+  </div>
+} @else {
+  <p class="muted" aria-live="polite">Einkaufsliste wird geladen …</p>
+}
+
+<app-modal [open]="!!editing()" labelledBy="edit-item-heading" closeLabel="Bearbeiten schließen" (closed)="closeEdit()">
+  <form class="form" (submit)="saveEdit($event)">
+    <h2 id="edit-item-heading">Eintrag bearbeiten</h2>
+    <div class="field">
+      <label for="edit-item-name">Artikel</label>
+      <input id="edit-item-name" type="text" maxlength="120" [value]="editName()" (input)="editName.set($any($event.target).value)" />
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="edit-item-quantity">Menge</label>
+        <input
+          id="edit-item-quantity"
+          type="text"
+          maxlength="40"
+          placeholder="optional"
+          [value]="editQuantity()"
+          (input)="editQuantity.set($any($event.target).value)"
+        />
+      </div>
+      <div class="field">
+        <label for="edit-item-section">Bereich im Laden</label>
+        <select id="edit-item-section" [value]="editSection()" (change)="editSection.set($any($event.target).value)">
+          @for (section of sections(); track section.key) {
+            <option [value]="section.key" [selected]="section.key === editSection()">{{ section.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <p class="field-hint">Den Bereich merkt sich Kompass für das nächste Mal.</p>
+    @if (editError()) {
+      <p class="field-error" role="alert">{{ editError() }}</p>
+    }
+    <div class="form-actions">
+      <button type="button" class="btn-link btn-danger-link" [disabled]="editSaving()" (click)="deleteEditing()">
+        Von der Liste entfernen
+      </button>
+      <button type="submit" class="btn-primary" [disabled]="editSaving()">Speichern</button>
+    </div>
+  </form>
+</app-modal>
+
+<app-modal [open]="completeOpen()" labelledBy="complete-heading" closeLabel="Abschließen abbrechen" (closed)="closeComplete()">
+  <div class="form">
+    <h2 id="complete-heading">Einkauf abschließen</h2>
+    <p class="muted">
+      {{ checkedItems().length }} Artikel im Wagen. Was noch
+      auf der Liste steht, bleibt für das nächste Mal.
+    </p>
+
+    @if (canBook()) {
+      <div class="amount-box">
+        <p class="amount-question" id="amount-question">War es ungefähr</p>
+        <p class="amount-value" aria-live="polite">{{ formatEuro(completeAmount()) }}?</p>
+        <div class="amount-slider">
+          <button type="button" class="icon-btn nudge" aria-label="50 Cent weniger" (click)="nudge(-0.5)">−</button>
+          <input
+            type="range"
+            min="0"
+            step="0.5"
+            aria-labelledby="amount-question"
+            [attr.aria-valuetext]="formatEuro(completeAmount())"
+            [max]="completeSliderMax()"
+            [value]="completeAmount()"
+            (input)="setAmountFromSlider($any($event.target).value)"
+          />
+          <button type="button" class="icon-btn nudge" aria-label="50 Cent mehr" (click)="nudge(0.5)">＋</button>
+        </div>
+        <div class="field exact-field">
+          <label for="exact-amount">Genauer Betrag laut Kassenbon</label>
+          <input
+            id="exact-amount"
+            type="text"
+            inputmode="decimal"
+            [value]="exactValue()"
+            (change)="setAmountFromInput($any($event.target).value)"
+          />
+        </div>
+      </div>
+      @if (completeError()) {
+        <p class="field-error" role="alert">{{ completeError() }}</p>
+      }
+      <button type="button" class="btn-primary book-btn" [disabled]="completeSubmitting()" (click)="complete(true)">
+        @if (completeSubmitting()) {
+          <span class="save-spinner" aria-hidden="true"></span>
+        }
+        {{ formatEuro(completeAmount()) }} als Ausgabe buchen
+      </button>
+      <p class="field-hint centered">Wird in Finanzen unter „Haushalt“ mit dem heutigen Datum gebucht.</p>
+      <button type="button" class="btn-link" [disabled]="completeSubmitting()" (click)="complete(false)">
+        Ohne Betrag abschließen
+      </button>
+    } @else {
+      @if (completeError()) {
+        <p class="field-error" role="alert">{{ completeError() }}</p>
+      }
+      <button type="button" class="btn-primary book-btn" [disabled]="completeSubmitting()" (click)="complete(false)">
+        Einkauf abschließen
+      </button>
+    }
+  </div>
+</app-modal>

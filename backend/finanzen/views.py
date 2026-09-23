@@ -14,7 +14,7 @@ from core.models import HouseholdMembership
 from core.permissions import HouseholdScopedPermission
 from finanzen import reports, services
 from finanzen.insights import berechne_insights
-from finanzen.models import Account, Category, RecurringDeduction, Transaction
+from finanzen.models import Category, RecurringDeduction, Transaction
 from finanzen.serializers import (
     MAX_CATEGORIES_PER_HOUSEHOLD,
     CategorySerializer,
@@ -94,19 +94,11 @@ class TransactionViewSet(ModelViewSet):
         # account kommt nie vom Client (siehe serializers.py read_only_fields)
         # — stattdessen aus dem Haushalt der anfragenden Person abgeleitet,
         # dasselbe IDOR-Muster wie CategoryViewSet.perform_create() oben.
-        # .first() statt get_or_create(household=household, ...): ein
-        # Haushalt kann laut Datenmodell mehrere Accounts haben, ein
-        # get_or_create-Lookup nur auf household würde dann mit
-        # MultipleObjectsReturned abstürzen. Existiert noch keiner (Haushalte
-        # aus RegisterView bekommen nur Household+HouseholdMembership, kein
-        # Account), wird beim ersten "Ausgabe hinzufügen" eines angelegt.
+        # Fehlt noch ein Konto, legt services.household_account() eines an.
         household = self.request.user.households.first()
         if household is None:
             raise ValidationError('Dieses Konto ist noch keinem Haushalt zugeordnet.')
-        account = Account.objects.filter(household=household).first()
-        if account is None:
-            account = Account.objects.create(household=household, name='Haushaltskasse')
-        serializer.save(account=account, created_by=self.request.user)
+        serializer.save(account=services.household_account(household), created_by=self.request.user)
 
     def perform_update(self, serializer):
         # updated_by ausschließlich aus request.user, NIEMALS aus dem

@@ -1,0 +1,93 @@
+// Seitenhülle — gleiche Maße wie die Finanzen-Seite (DESIGN_SYSTEM.md v4:
+// Seitennavigation 190 px, Inhaltspadding 34 px, mobil 24 px).
+:host {
+  display: block;
+  background: var(--canvas);
+  color: var(--text);
+}
+.hh-page {
+  min-height: 100dvh;
+  background: var(--canvas);
+}
+.hh-page__content {
+  min-width: 0;
+}
+.hh-main {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 34px 34px 52px;
+}
+.page-head {
+  margin-bottom: 28px;
+}
+.page-head h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+}
+.page-subtitle {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+.subtabs {
+  display: flex;
+  width: 342px;
+  max-width: 100%;
+  margin-bottom: 24px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--lavender);
+}
+.subtab {
+  flex: 1;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 11px;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.subtab.is-active {
+  background: var(--surface);
+  color: var(--accent);
+  font-weight: 700;
+}
+.subtab:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (min-width: 960px) {
+  .hh-page {
+    display: flex;
+  }
+  .hh-page__content {
+    flex: 1;
+  }
+}
+@media (max-width: 959px) {
+  .hh-main {
+    padding: 16px 24px 190px;
+  }
+  .page-head {
+    margin-bottom: 20px;
+  }
+  .page-head h1 {
+    font-size: 27px;
+  }
+  .page-subtitle {
+    display: none;
+  }
+  .subtabs {
+    width: 100%;
+  }
+}
+@media (max-width: 380px) {
+  .hh-main {
+    padding-inline: 16px;
+  }
+}

@@ -4,6 +4,9 @@ import { FINANZEN_DATA_PROVIDER } from './features/finanzen/finanzen-data-provid
 import { DemoFinanzenDataProvider } from './features/finanzen/demo-finanzen-data-provider';
 import { RealFinanzenDataProvider } from './features/finanzen/real-finanzen-data-provider';
 import { FinanzenStateService } from './features/finanzen/finanzen-state.service';
+import { HAUSHALT_DATA_PROVIDER } from './features/haushalt/haushalt-data-provider';
+import { DemoHaushaltDataProvider } from './features/haushalt/demo-haushalt-data-provider';
+import { RealHaushaltDataProvider } from './features/haushalt/real-haushalt-data-provider';
 
 // Dashboard und Finanzen sind JEWEILS EIN Component, das an zwei Stellen in
 // den Routen referenziert wird — einmal öffentlich (Demo-Daten), einmal
@@ -23,8 +26,13 @@ export const routes: Routes = [
     // Routengruppe entsteht dadurch genau eine Instanz, korrekt an
     // DemoFinanzenDataProvider gebunden und zwischen Dashboard + Finanzen
     // dieser Gruppe geteilt (siehe finanzen-state.service.ts-Docstring).
+    // Haushalt-Demo (GESAMTKONZEPT.md §5.4: der Einkauf-zu-Ausgabe-Moment
+    // darf nicht hinter dem Login versteckt sein) — DemoHaushaltDataProvider
+    // bucht über den Demo-Finanzen-Provider DIESER Gruppe, komplett im
+    // Speicher.
     providers: [
       { provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider },
+      { provide: HAUSHALT_DATA_PROVIDER, useClass: DemoHaushaltDataProvider },
       FinanzenStateService,
     ],
     children: [
@@ -39,6 +47,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/finanzen/finanzen').then((m) => m.Finanzen),
         data: { dashboardNav: true, sidebarNav: true, isDemo: true },
       },
+      {
+        path: 'haushalt',
+        loadComponent: () => import('./features/haushalt/haushalt').then((m) => m.Haushalt),
+        data: { dashboardNav: true, sidebarNav: true, isDemo: true },
+      },
     ],
   },
   {
@@ -50,6 +63,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     providers: [
       { provide: FINANZEN_DATA_PROVIDER, useClass: RealFinanzenDataProvider },
+      { provide: HAUSHALT_DATA_PROVIDER, useClass: RealHaushaltDataProvider },
       FinanzenStateService,
     ],
     children: [
@@ -67,7 +81,7 @@ export const routes: Routes = [
       {
         path: 'haushalt',
         loadComponent: () => import('./features/haushalt/haushalt').then((m) => m.Haushalt),
-        data: { dashboardNav: true },
+        data: { dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'organisation',

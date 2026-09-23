@@ -21,12 +21,12 @@ export class BottomNav {
   // Nur auf Marketing-/Rechtsseiten sichtbar (data: shell !== 'bare', siehe
   // app.ts showGlobalChrome()) — Dashboard/Finanzen haben ihre eigene
   // Bottom-Nav. Finanzen zeigt hier immer auf die öffentliche Demo-Route
-  // (/finanzen); Haushalt/Organisation haben keine Demo-Variante und zeigen
-  // auf /app/..., der Guard leitet im ausgeloggten Zustand zu /login.
+  // (/finanzen bzw. /haushalt); Organisation hat keine Demo-Variante und
+  // zeigt auf /app/..., der Guard leitet im ausgeloggten Zustand zu /login.
   protected readonly items: NavItem[] = [
     { route: '/', label: 'Start' },
     { route: '/finanzen', label: 'Finanzen', accent: 'finance' },
-    { route: '/app/haushalt', label: 'Haushalt', accent: 'household' },
+    { route: '/haushalt', label: 'Haushalt', accent: 'household' },
     { route: '/app/organisation', label: 'Organisation', accent: 'organize' },
   ];
 }

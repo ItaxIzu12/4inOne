@@ -95,4 +95,7 @@ export class Dashboard {
   protected readonly finanzenLink = computed(() =>
     this.auth.isAuthenticated() ? '/app/finanzen' : '/finanzen',
   );
+  protected readonly haushaltLink = computed(() =>
+    this.auth.isAuthenticated() ? '/app/haushalt' : '/haushalt',
+  );
 }

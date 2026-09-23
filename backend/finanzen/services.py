@@ -20,9 +20,55 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from core.models import Household, HouseholdMembership
-from finanzen.models import Category, RecurringDeduction, Transaction
+from finanzen.models import Account, Category, RecurringDeduction, Transaction
 
 ZERO = Decimal('0')
+
+# Name der Standard-Kategorie, in die ein abgeschlossener Einkauf gebucht
+# wird, wenn keine andere gewählt wurde (siehe finanzen/signals.py — sie
+# ist is_default und kann deshalb weder umbenannt noch gelöscht werden).
+SHOPPING_DEFAULT_CATEGORY = 'Haushalt'
+
+
+def household_account(household: Household) -> Account:
+    """Das Konto, auf das neue Ausgaben dieses Haushalts gebucht werden.
+
+    .first() statt get_or_create(household=household): ein Haushalt kann
+    laut Datenmodell mehrere Accounts haben, ein get_or_create-Lookup nur
+    auf household würde dann mit MultipleObjectsReturned abstürzen.
+    Existiert noch keiner (Haushalte aus RegisterView bekommen nur Household+
+    HouseholdMembership, kein Account), wird hier eines angelegt."""
+    account = Account.objects.filter(household=household).first()
+    if account is None:
+        account = Account.objects.create(household=household, name='Haushaltskasse')
+    return account
+
+
+def create_transaction_from_shopping_list(
+    household: Household,
+    user,
+    amount: Decimal,
+    item_count: int,
+    category: Category | None = None,
+) -> Transaction:
+    """Der Einkauf-zu-Ausgabe-Moment (GESAMTKONZEPT.md §5.1,
+    ARCHITEKTUR.md §2.1): ein abgeschlossener Einkauf wird zu einer ganz
+    normalen Ausgabe von heute — sie erscheint sofort in Budget, Kategorien
+    und "Verfügbares Einkommen", ohne doppelte Eingabe.
+
+    `category` muss, falls übergeben, bereits vom Aufrufer gegen den
+    Haushalt geprüft sein (IDOR); sonst wird die Standard-Kategorie
+    "Haushalt" verwendet."""
+    if category is None:
+        category = Category.objects.filter(household=household, name=SHOPPING_DEFAULT_CATEGORY).first()
+    return Transaction.objects.create(
+        account=household_account(household),
+        category=category,
+        amount=amount,
+        description=f'Einkauf ({item_count} Artikel)',
+        created_by=user,
+        datum=timezone.localdate(),
+    )
 
 
 def month_bounds(today: date | None = None) -> tuple[date, date]:

@@ -21,7 +21,7 @@
           <icon-finanzen class="kompass-icon" />
           Finanzen
         </a>
-        <a routerLink="/app/haushalt" routerLinkActive="is-active" #rlaHh="routerLinkActive" [attr.aria-current]="rlaHh.isActive ? 'page' : null">
+        <a [routerLink]="haushaltLink()" routerLinkActive="is-active" #rlaHh="routerLinkActive" [attr.aria-current]="rlaHh.isActive ? 'page' : null">
           <icon-haushalt class="kompass-icon" />
           Haushalt
         </a>
@@ -78,7 +78,7 @@
           <icon-finanzen class="kompass-icon" />
           Finanzen
         </a>
-        <a routerLink="/app/haushalt" routerLinkActive="is-active" #rlaHhM="routerLinkActive" [attr.aria-current]="rlaHhM.isActive ? 'page' : null" (click)="closeMenu()">
+        <a [routerLink]="haushaltLink()" routerLinkActive="is-active" #rlaHhM="routerLinkActive" [attr.aria-current]="rlaHhM.isActive ? 'page' : null" (click)="closeMenu()">
           <icon-haushalt class="kompass-icon" />
           Haushalt
         </a>

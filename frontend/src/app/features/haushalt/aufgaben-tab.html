@@ -1,0 +1,198 @@
+@if (loadError()) {
+  <div class="load-error" role="alert">
+    <p>Die Aufgaben konnten nicht geladen werden.</p>
+    <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
+  </div>
+} @else if (tasks()) {
+  <div class="hh-grid">
+    <section class="card" aria-labelledby="tasks-heading">
+      <div class="card-head">
+        <h2 id="tasks-heading">Anstehende Aufgaben</h2>
+        <button type="button" class="btn-primary" (click)="openNew()">
+          <span aria-hidden="true">＋</span> Aufgabe
+        </button>
+      </div>
+
+      @if (actionError()) {
+        <p class="field-error" role="alert">{{ actionError() }}</p>
+      }
+
+      @for (group of groups(); track group.key) {
+        <div class="group" [class.group--overdue]="group.key === 'overdue'">
+          <h3>{{ group.label }}</h3>
+          <ul class="list">
+            @for (task of group.tasks; track task.id) {
+              <li class="row">
+                <button
+                  type="button"
+                  class="check"
+                  [attr.aria-label]="task.title + ' als erledigt markieren'"
+                  [disabled]="completing() === task.id"
+                  (click)="complete(task)"
+                >
+                  <span class="check__ring"></span>
+                </button>
+                <button type="button" class="row__main row__edit" (click)="openEdit(task)">
+                  <span class="row__title">{{ task.title }}</span>
+                  <span class="row__meta">{{ metaLine(task) }}</span>
+                </button>
+                @if (task.due_date) {
+                  <span class="pill" [class.pill--warn]="task.is_overdue">{{ relativeDay(task.due_date) }}</span>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+      } @empty {
+        <div class="empty">
+          <p class="muted">Keine offenen Aufgaben. Leg wiederkehrende Aufgaben an – z. B. Müll, Bad, Pflanzen.</p>
+        </div>
+      }
+    </section>
+
+    <div class="hh-side">
+      <section class="card" aria-labelledby="load-heading">
+        <h2 id="load-heading">Wer macht wie viel?</h2>
+        <p class="muted small load-intro">Erledigte Aufgaben diesen Monat, gewichtet nach Aufwand.</p>
+        <ul class="load-list">
+          @for (member of members(); track member.user_id) {
+            <li>
+              <div class="load-row">
+                <span>{{ member.name }}</span>
+                <span class="load-points">
+                  {{ member.points }} {{ member.points === 1 ? 'Punkt' : 'Punkte' }}
+                  <span class="muted small">· {{ member.count }} erledigt</span>
+                </span>
+              </div>
+              <div
+                class="load-track"
+                role="img"
+                [attr.aria-label]="member.name + ': ' + member.points + ' Punkte'"
+              >
+                <span [style.width.%]="(member.points / maxPoints()) * 100"></span>
+              </div>
+            </li>
+          }
+        </ul>
+        @if (totalPoints() === 0) {
+          <p class="muted small">Noch nichts erledigt in diesem Monat.</p>
+        }
+        <p class="muted small load-legend">Aufwand: klein = 1 · mittel = 2 · groß = 3 Punkte</p>
+      </section>
+
+      <section class="card card--lavender" aria-labelledby="calendar-heading">
+        <h2 id="calendar-heading">Steht automatisch im Kalender</h2>
+        <p class="muted calendar-copy">
+          Aufgaben mit Datum erscheinen im gemeinsamen Kalender. Nach dem Abhaken rückt eine wiederkehrende
+          Aufgabe weiter – bei „reihum“ ist dann die nächste Person dran.
+        </p>
+      </section>
+    </div>
+  </div>
+} @else {
+  <p class="muted" aria-live="polite">Aufgaben werden geladen …</p>
+}
+
+<app-modal [open]="formOpen()" labelledBy="task-form-heading" closeLabel="Formular schließen" (closed)="closeForm()">
+  <form class="form" (submit)="submit($event)">
+    <h2 id="task-form-heading">{{ editingId() === null ? 'Neue Aufgabe' : 'Aufgabe bearbeiten' }}</h2>
+
+    <div class="field">
+      <label for="task-title">Was ist zu tun?</label>
+      <input
+        id="task-title"
+        type="text"
+        maxlength="120"
+        placeholder="z. B. Bad putzen"
+        [value]="formTitle()"
+        (input)="formTitle.set($any($event.target).value)"
+      />
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="task-recurrence">Wie oft?</label>
+        <select id="task-recurrence" (change)="setRecurrence($any($event.target).value)">
+          @for (option of recurrenceOptions; track option.label) {
+            <option [value]="option.value ?? ''" [selected]="option.value === formRecurrence()">
+              {{ option.label }}
+            </option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="task-due">{{ formRecurrence() ? 'Nächstes Mal' : 'Fällig am' }}</label>
+        <input id="task-due" type="date" [value]="formDue()" (change)="formDue.set($any($event.target).value)" />
+      </div>
+    </div>
+
+    <fieldset class="field">
+      <legend>Aufwand</legend>
+      <div class="segmented" role="radiogroup" aria-label="Aufwand">
+        @for (effort of effortOptions; track effort) {
+          <button
+            type="button"
+            role="radio"
+            [attr.aria-checked]="formEffort() === effort"
+            (click)="formEffort.set(effort)"
+          >
+            {{ effortLabels[effort] }}
+          </button>
+        }
+      </div>
+    </fieldset>
+
+    @if (!formRotate() || !canRotate()) {
+      <div class="field">
+        <label for="task-assignee">Zuständig</label>
+        <select id="task-assignee" (change)="setAssignee($any($event.target).value)">
+          <option value="" [selected]="formAssignee() === null">Alle / wer Zeit hat</option>
+          @for (member of members(); track member.user_id) {
+            <option [value]="member.user_id" [selected]="member.user_id === formAssignee()">{{ member.name }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    @if (canRotate()) {
+      <label class="checkbox">
+        <input type="checkbox" [checked]="formRotate()" (change)="toggleRotate($any($event.target).checked)" />
+        Reihum wechseln
+      </label>
+      @if (formRotate()) {
+        <fieldset class="field rotation">
+          <legend>Wer ist in der Runde?</legend>
+          @for (member of members(); track member.user_id) {
+            <label class="checkbox">
+              <input
+                type="checkbox"
+                [checked]="isInRotation(member.user_id)"
+                (change)="toggleRotationMember(member.user_id, $any($event.target).checked)"
+              />
+              {{ member.name }}
+            </label>
+          }
+        </fieldset>
+      }
+    } @else if (formRecurrence() && members().length < 2) {
+      <p class="field-hint">„Reihum wechseln“ gibt es, sobald mindestens zwei Personen im Haushalt sind.</p>
+    }
+
+    @if (formError()) {
+      <p class="field-error" role="alert">{{ formError() }}</p>
+    }
+    <div class="form-actions">
+      @if (editingId() !== null) {
+        <button type="button" class="btn-link btn-danger-link" [disabled]="formSaving()" (click)="deleteEditing()">
+          Löschen
+        </button>
+      }
+      <button type="submit" class="btn-primary" [disabled]="formSaving()">
+        @if (formSaving()) {
+          <span class="save-spinner" aria-hidden="true"></span>
+        }
+        Speichern
+      </button>
+    </div>
+  </form>
+</app-modal>

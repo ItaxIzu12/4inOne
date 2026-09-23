@@ -43,7 +43,7 @@
     </li>
     <li>
       <a
-        routerLink="/app/haushalt"
+        [routerLink]="haushaltLink()"
         routerLinkActive="is-active"
         #rlaHh="routerLinkActive"
         [attr.aria-current]="rlaHh.isActive ? 'page' : null"

@@ -270,6 +270,10 @@ REST_FRAMEWORK = {
         # TransactionWriteRateThrottle-Docstring), siehe Sicherheitsprüfung
         # PRÜFUNG 4.
         'finanzen_write': f"{env.int('RATE_LIMIT_FINANZEN_WRITE', default=60)}/min",
+        # Dasselbe für das Haushalt-Modul (haushalt/throttling.py) —
+        # großzügiger, weil beim Einkaufen viele Einträge schnell
+        # hintereinander abgehakt werden.
+        'haushalt_write': f"{env.int('RATE_LIMIT_HAUSHALT_WRITE', default=120)}/min",
         # Berichte (CSV/PDF, finanzen/views.py) — enthalten vollständige
         # Haushaltsdaten über einen längeren Zeitraum, deshalb das strenge
         # Limit für Datenexporte (ARCHITEKTUR.md §3.9), pro Nutzer.

@@ -76,6 +76,8 @@ export class Header {
   // zeigen daher immer auf /app/..., der Guard dort leitet im ausgeloggten
   // Zustand zu /login weiter.
   protected readonly finanzenLink = computed(() => (this.auth.isAuthenticated() ? '/app/finanzen' : '/finanzen'));
+  // Haushalt hat seit dem Haushalt-Modul ebenfalls eine öffentliche Demo.
+  protected readonly haushaltLink = computed(() => (this.auth.isAuthenticated() ? '/app/haushalt' : '/haushalt'));
 
   // Mobiles Hamburger-Menü: bündelt auf schmalen Viewports dieselben Inhalte,
   // die ab 900px direkt im Header stehen (Modul-Reiter + Anmelden/Profil),

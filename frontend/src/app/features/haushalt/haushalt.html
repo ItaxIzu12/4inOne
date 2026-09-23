@@ -1,49 +1,70 @@
-<main class="module-page m-household">
-  <div class="module-inner">
-    <a class="back-link" routerLink="/" (click)="goHome()">← Zurück zum Start</a>
+<app-save-feedback [message]="saveMessage()" (dismissed)="dismissSaved()" />
+<div class="hh-page">
+  <app-sidebar-nav />
 
-    <header class="module-head" appReveal>
-      <span class="status-badge">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-        In Entwicklung
-      </span>
-      <div class="module-icon">
-        <icon-haushalt />
-      </div>
-      <h1>Haushalt</h1>
-      <p class="lede">
-        Einkaufsliste und Aufgaben, gemeinsam bearbeitbar für die ganze Familie — verknüpft mit Finanzen
-        und Organisation, statt in einer eigenen App isoliert.
-      </p>
-    </header>
+  <div class="hh-page__content">
+    <app-context-bar />
+    <main id="main-content" class="hh-main">
+      <header class="page-head">
+        <h1>Euer Haushalt</h1>
+        <p class="page-subtitle">Einkaufen, Aufgaben und wichtige Fristen – für alle sichtbar.</p>
+      </header>
 
-    <section class="feature-grid" aria-label="Geplante Funktionen">
-      @for (feature of features; track feature.title) {
-        <div class="feature-card" appReveal>
-          <h2>{{ feature.title }}</h2>
-          <p>{{ feature.description }}</p>
-        </div>
-      }
-    </section>
+      <div class="subtabs" role="tablist" aria-label="Bereiche im Haushalt" (keydown)="onTabKeydown($event)">
+        <button
+          id="hh-tab-einkauf"
+          type="button"
+          role="tab"
+          class="subtab"
+          aria-controls="hh-panel"
+          [attr.aria-selected]="activeTab() === 'einkauf'"
+          [attr.tabindex]="activeTab() === 'einkauf' ? 0 : -1"
+          [class.is-active]="activeTab() === 'einkauf'"
+          (click)="selectTab('einkauf')"
+        >
+          Einkauf
+        </button>
+        <button
+          id="hh-tab-aufgaben"
+          type="button"
+          role="tab"
+          class="subtab"
+          aria-controls="hh-panel"
+          [attr.aria-selected]="activeTab() === 'aufgaben'"
+          [attr.tabindex]="activeTab() === 'aufgaben' ? 0 : -1"
+          [class.is-active]="activeTab() === 'aufgaben'"
+          (click)="selectTab('aufgaben')"
+        >
+          Aufgaben
+        </button>
+        <button
+          id="hh-tab-ordner"
+          type="button"
+          role="tab"
+          class="subtab"
+          aria-controls="hh-panel"
+          [attr.aria-selected]="activeTab() === 'ordner'"
+          [attr.tabindex]="activeTab() === 'ordner' ? 0 : -1"
+          [class.is-active]="activeTab() === 'ordner'"
+          (click)="selectTab('ordner')"
+        >
+          Ordner
+        </button>
+      </div>
 
-    <div class="cross-link" appReveal>
-      <div class="cross-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+      <div id="hh-panel" role="tabpanel" [attr.aria-labelledby]="'hh-tab-' + activeTab()">
+        @switch (activeTab()) {
+          @case ('einkauf') {
+            <app-einkauf-tab (saved)="showSaved($event)" />
+          }
+          @case ('aufgaben') {
+            <app-aufgaben-tab (saved)="showSaved($event)" />
+          }
+          @case ('ordner') {
+            <app-ordner-tab (saved)="showSaved($event)" />
+          }
+        }
       </div>
-      <div>
-        <p class="cross-link-label">Verknüpft mit Finanzen</p>
-        <p>Die Einkaufsliste fließt automatisch als geplante Ausgabe in dein Budget ein — keine doppelte Eingabe.</p>
-      </div>
-    </div>
-
-    <div class="cross-link" appReveal>
-      <div class="cross-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
-      </div>
-      <div>
-        <p class="cross-link-label">Verknüpft mit Organisation</p>
-        <p>Wiederkehrende Haushaltsaufgaben, z. B. Müllabfuhr, erscheinen automatisch im gemeinsamen Kalender.</p>
-      </div>
-    </div>
+    </main>
   </div>
-</main>
+</div>
