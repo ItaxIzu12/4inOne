@@ -1,0 +1,262 @@
+app-finance-settings {
+  display: block;
+  margin-top: 28px;
+  .settings-disclosure {
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+  summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 22px 24px;
+    cursor: pointer;
+    list-style: none;
+    color: var(--text);
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  .settings-summary-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: var(--lavender);
+    color: var(--accent);
+    font-size: 24px;
+  }
+  .settings-summary-copy {
+    display: grid;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+  }
+  .settings-summary-copy strong {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+  .settings-summary-copy > span {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .settings-chevron {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+  details[open] > summary {
+    border-bottom: 1px solid var(--border);
+  }
+  details[open] .settings-chevron {
+    transform: rotate(180deg);
+  }
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    padding: 24px;
+    background: var(--canvas);
+    align-items: start;
+  }
+  .settings-card {
+    min-width: 0;
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+  }
+  .settings-card[data-section='insights'] {
+    grid-column: 1 / -1;
+    background: var(--lavender);
+    border-color: transparent;
+  }
+  .settings-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 18px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .settings-icon {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--lavender);
+    color: var(--accent);
+    font-size: 20px;
+  }
+  [data-section='buffer'] .settings-icon {
+    background: var(--mint);
+    color: var(--success);
+  }
+  .settings-card h2 {
+    font-size: 19px;
+    line-height: 1.35;
+    margin: 0 0 10px;
+  }
+  .side-section__note {
+    margin: 0 0 22px;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.65;
+  }
+  .inline-field-form {
+    margin-top: 20px;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  label {
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .inline-field-form__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  input {
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    padding: 12px 14px;
+    background: var(--canvas);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 16px;
+    color: var(--text);
+  }
+  .inline-field-form__row input {
+    flex: 1 1 140px;
+  }
+  .inline-field-form__row .btn-secondary {
+    min-height: 52px;
+    background: var(--accent);
+    color: white;
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 0 18px;
+  }
+  .category-chips {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--lavender);
+  }
+  .category-chip {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    border-radius: 10px;
+  }
+  .category-chip.is-selected {
+    background: white;
+    box-shadow: none;
+    color: var(--accent);
+  }
+  .report-downloads {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .report-downloads button {
+    justify-content: center;
+    min-height: 48px;
+    padding: 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: white;
+    color: var(--accent);
+  }
+  .section-head {
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .section-head__view-all {
+    border-radius: 10px;
+    padding: 0 12px;
+    background: var(--lavender);
+  }
+  .deduction-row {
+    min-height: 64px;
+    padding: 12px 0;
+    margin: 0;
+  }
+  .deduction-row__name {
+    flex-wrap: wrap;
+    min-width: 0;
+    font-size: 14px;
+  }
+  .tx-amount {
+    font-size: 14px;
+  }
+  .field-error {
+    color: var(--danger);
+    font-size: 13px;
+    margin-top: 10px;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+  :is(summary, button, input):focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+  }
+  @media (max-width: 1100px) {
+    .settings-grid {
+      gap: 16px;
+      padding: 20px;
+    }
+    .settings-card {
+      padding: 20px;
+    }
+  }
+  @media (max-width: 700px) {
+    summary {
+      padding: 18px 16px;
+      gap: 12px;
+    }
+    .settings-summary-icon {
+      display: none;
+    }
+    .settings-grid {
+      grid-template-columns: 1fr;
+      padding: 12px;
+      gap: 12px;
+    }
+    .settings-card {
+      padding: 20px 16px;
+    }
+    .settings-summary-copy strong {
+      font-size: 15px;
+    }
+    .report-downloads {
+      grid-template-columns: 1fr;
+    }
+  }
+}

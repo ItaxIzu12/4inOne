@@ -43,7 +43,9 @@ describe('Finanzen', () => {
     const compiled = fixture.nativeElement as HTMLElement;
 
     const bar = compiled.querySelector('[role="progressbar"]');
-    expect(bar?.getAttribute('aria-valuenow')).toBe(String(fixture.componentInstance['budgetBarPercent']()));
+    expect(bar?.getAttribute('aria-valuenow')).toBe(
+      String(fixture.componentInstance['budgetBarPercent']()),
+    );
     expect(bar?.getAttribute('aria-valuemin')).toBe('0');
     expect(bar?.getAttribute('aria-valuemax')).toBe('100');
   });
@@ -54,13 +56,16 @@ describe('Finanzen', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    const text = (selector: string) => (compiled.querySelector(selector)?.textContent ?? '').replace(/\s+/g, ' ').trim();
+    const text = (selector: string) =>
+      (compiled.querySelector(selector)?.textContent ?? '').replace(/\s+/g, ' ').trim();
 
     // Demo: 1355 ausgegeben (965 feste Abzüge + 390 Transaktionen) von 1950 Ziel -> 595 übrig, 69 %.
     expect(text('#balance-heading')).toBe('1.355,00 €');
-    expect(text('.budget-meta')).toContain('von 1.950,00 € Gesamtziel');
+    expect(text('.budget-meta')).toContain('von 1.950,00 € Ausgabenlimit');
     expect(text('.budget-meta strong')).toBe('69 %');
-    expect(compiled.querySelector('[role="progressbar"]')?.getAttribute('aria-label')).toBe('69 Prozent des Budgets ausgegeben');
+    expect(compiled.querySelector('[role="progressbar"]')?.getAttribute('aria-label')).toBe(
+      '69 Prozent des Budgets ausgegeben',
+    );
     expect(compiled.textContent).not.toContain('verplant');
   });
 
@@ -86,18 +91,25 @@ describe('Finanzen', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('.budget-meta strong')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('129 %');
+    expect(
+      compiled.querySelector('.budget-meta strong')?.textContent?.replace(/\s+/g, ' ').trim(),
+    ).toBe('129 %');
     const bar = compiled.querySelector('[role="progressbar"]');
     expect(bar?.getAttribute('aria-valuenow')).toBe('100');
     expect(bar?.getAttribute('aria-label')).toBe('129 Prozent des Budgets ausgegeben');
   });
 
   it('opens transaction history from the overview', async () => {
-    const fixture = TestBed.createComponent(Finanzen); fixture.detectChanges();
+    const fixture = TestBed.createComponent(Finanzen);
+    fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    (el.querySelector('.view-transactions') as HTMLButtonElement).click(); fixture.detectChanges();
-    await new Promise(resolve=>setTimeout(resolve,350)); fixture.detectChanges();
-    expect(el.querySelectorAll('.tx-modal__row').length).toBe(fixture.componentInstance['transactions']().length);
+    (el.querySelector('.view-transactions') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    fixture.detectChanges();
+    expect(el.querySelectorAll('.tx-modal__row').length).toBe(
+      fixture.componentInstance['transactions']().length,
+    );
   });
 
   it('has exactly two tabs, Übersicht (selected initially) and Analysen, both enabled — no disabled placeholder tabs', () => {
@@ -167,7 +179,9 @@ describe('Finanzen', () => {
   it('shows category chips to choose from in the add-expense modal', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
-    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.btn-primary')?.click();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('.btn-primary')
+      ?.click();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
@@ -190,7 +204,7 @@ describe('Finanzen', () => {
 
     (compiled.querySelector('.view-transactions') as HTMLButtonElement).click();
     fixture.detectChanges();
-    await new Promise(resolve => setTimeout(resolve, 350));
+    await new Promise((resolve) => setTimeout(resolve, 350));
     fixture.detectChanges();
     (compiled.querySelector('.tx-row--clickable') as HTMLElement).click();
     fixture.detectChanges();
@@ -219,19 +233,23 @@ describe('Finanzen', () => {
   it('editing an existing transaction prefills the date field with ITS date, not today', async () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
-    const instance = fixture.componentInstance as unknown as { transactions: () => { datum: string }[] };
+    const instance = fixture.componentInstance as unknown as {
+      transactions: () => { datum: string }[];
+    };
     let compiled = fixture.nativeElement as HTMLElement;
 
     const firstTransactionDatum = instance.transactions()[0].datum;
     (compiled.querySelector('.view-transactions') as HTMLButtonElement).click();
     fixture.detectChanges();
-    await new Promise(resolve => setTimeout(resolve, 350));
+    await new Promise((resolve) => setTimeout(resolve, 350));
     fixture.detectChanges();
     (compiled.querySelector('.tx-row--clickable') as HTMLElement).click();
     fixture.detectChanges();
     compiled = fixture.nativeElement as HTMLElement;
 
-    expect((compiled.querySelector('#add-expense-datum') as HTMLInputElement).value).toBe(firstTransactionDatum);
+    expect((compiled.querySelector('#add-expense-datum') as HTMLInputElement).value).toBe(
+      firstTransactionDatum,
+    );
   });
 
   it('changing the date and saving a new expense sends that chosen date, not today, to the provider', () => {
@@ -244,7 +262,9 @@ describe('Finanzen', () => {
     compiled = fixture.nativeElement as HTMLElement;
 
     (compiled.querySelector('#add-expense-amount') as HTMLInputElement).value = '12';
-    (compiled.querySelector('#add-expense-amount') as HTMLInputElement).dispatchEvent(new Event('input'));
+    (compiled.querySelector('#add-expense-amount') as HTMLInputElement).dispatchEvent(
+      new Event('input'),
+    );
     (compiled.querySelector('.category-chip') as HTMLElement).click();
     const datumInput = compiled.querySelector('#add-expense-datum') as HTMLInputElement;
     datumInput.value = '2026-01-15';
@@ -257,7 +277,9 @@ describe('Finanzen', () => {
     // in die Vergangenheit gesetztes Datum landet deshalb korrekt NICHT an
     // erster Stelle. Stattdessen über die (sonst einmalige) Beschreibung
     // finden, die die Demo für ein leeres Beschreibungsfeld einsetzt.
-    const instance = fixture.componentInstance as unknown as { transactions: () => { datum: string; description: string }[] };
+    const instance = fixture.componentInstance as unknown as {
+      transactions: () => { datum: string; description: string }[];
+    };
     const saved = instance.transactions().find((t) => t.description === 'Ausgabe');
     expect(saved?.datum).toBe('2026-01-15');
   });
@@ -269,12 +291,15 @@ describe('Finanzen', () => {
 
     (compiled.querySelector('.view-transactions') as HTMLButtonElement).click();
     fixture.detectChanges();
-    await new Promise(resolve => setTimeout(resolve, 350));
+    await new Promise((resolve) => setTimeout(resolve, 350));
     fixture.detectChanges();
     (compiled.querySelector('.tx-row--clickable') as HTMLElement).click(); // Bearbeiten öffnen — anderes Datum
     fixture.detectChanges();
 
-    const instance = fixture.componentInstance as unknown as { closeAddModal: () => void; openAddModal: () => void };
+    const instance = fixture.componentInstance as unknown as {
+      closeAddModal: () => void;
+      openAddModal: () => void;
+    };
     instance.closeAddModal();
     instance.openAddModal();
     fixture.detectChanges();
@@ -287,12 +312,14 @@ describe('Finanzen', () => {
   it('deleting a transaction requires confirmation before it disappears', async () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
-    const instance = fixture.componentInstance as unknown as { transactions: () => { id: unknown }[] };
+    const instance = fixture.componentInstance as unknown as {
+      transactions: () => { id: unknown }[];
+    };
     let compiled = fixture.nativeElement as HTMLElement;
 
     (compiled.querySelector('.view-transactions') as HTMLButtonElement).click();
     fixture.detectChanges();
-    await new Promise(resolve => setTimeout(resolve, 350));
+    await new Promise((resolve) => setTimeout(resolve, 350));
     fixture.detectChanges();
     (compiled.querySelector('.tx-row--clickable') as HTMLElement).click();
     fixture.detectChanges();
@@ -377,7 +404,9 @@ describe('Finanzen', () => {
   it('switching to the Analysen tab loads and shows own income, household total, buffer and deductions', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
-    const instance = fixture.componentInstance as unknown as { selectTab: (tab: 'uebersicht' | 'analysen') => void };
+    const instance = fixture.componentInstance as unknown as {
+      selectTab: (tab: 'uebersicht' | 'analysen') => void;
+    };
 
     instance.selectTab('analysen');
     fixture.detectChanges();
@@ -389,16 +418,20 @@ describe('Finanzen', () => {
     // - 390 (alle Demo-Transaktionen des Monats) - 300 Puffer = 145
     expect(compiled.querySelector('#income-heading')?.textContent).toContain('145');
     // Die Formel ist in der Hero-Zeile vollständig und mit genau einem Einkommen sichtbar.
-    expect(compiled.querySelector('.income-block .balance-sub')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-      'Haushalt 1.800 € · Abzüge 965 € · Ausgaben 390 € · Puffer 300 €',
-    );
+    expect(
+      Array.from(compiled.querySelectorAll('.calculation-card dd')).map((el) =>
+        el.textContent?.trim(),
+      ),
+    ).toEqual(['1.800,00 €', '−965,00 €', '−390,00 €', '−300,00 €', '145,00 €']);
     expect(compiled.querySelectorAll('.deduction-row').length).toBe(2);
   });
 
   it('in the solo demo the own income and the household total are the same figure, and no second person appears', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
-    const instance = fixture.componentInstance as unknown as { selectTab: (tab: 'uebersicht' | 'analysen') => void };
+    const instance = fixture.componentInstance as unknown as {
+      selectTab: (tab: 'uebersicht' | 'analysen') => void;
+    };
 
     instance.selectTab('analysen');
     fixture.detectChanges();
@@ -406,7 +439,7 @@ describe('Finanzen', () => {
 
     const ownIncome = (compiled.querySelector('#own-income-input') as HTMLInputElement).value;
     expect(ownIncome).toBe('1800');
-    expect(compiled.querySelector('.income-block .balance-sub')?.textContent).toContain('Haushalt 1.800');
+    expect(compiled.querySelector('.calculation-card dd')?.textContent).toContain('1.800,00');
     // Die Beträge der früheren Zwei-Personen-Demo (3200 + 2400) dürfen nicht mehr auftauchen.
     expect(compiled.textContent).not.toContain('2.400');
     expect(compiled.textContent).not.toContain('5.600');
@@ -416,7 +449,9 @@ describe('Finanzen', () => {
   it('saving own income updates the available-income figure live', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
-    const instance = fixture.componentInstance as unknown as { selectTab: (tab: 'uebersicht' | 'analysen') => void };
+    const instance = fixture.componentInstance as unknown as {
+      selectTab: (tab: 'uebersicht' | 'analysen') => void;
+    };
     instance.selectTab('analysen');
     fixture.detectChanges();
     let compiled = fixture.nativeElement as HTMLElement;
@@ -436,7 +471,9 @@ describe('Finanzen', () => {
   it('adding a recurring deduction appears in the list and reduces the available income', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
-    const instance = fixture.componentInstance as unknown as { selectTab: (tab: 'uebersicht' | 'analysen') => void };
+    const instance = fixture.componentInstance as unknown as {
+      selectTab: (tab: 'uebersicht' | 'analysen') => void;
+    };
     instance.selectTab('analysen');
     fixture.detectChanges();
     let compiled = fixture.nativeElement as HTMLElement;
@@ -446,9 +483,13 @@ describe('Finanzen', () => {
     compiled = fixture.nativeElement as HTMLElement;
 
     (compiled.querySelector('#deduction-name') as HTMLInputElement).value = 'Streaming';
-    (compiled.querySelector('#deduction-name') as HTMLInputElement).dispatchEvent(new Event('input'));
+    (compiled.querySelector('#deduction-name') as HTMLInputElement).dispatchEvent(
+      new Event('input'),
+    );
     (compiled.querySelector('#deduction-amount') as HTMLInputElement).value = '35';
-    (compiled.querySelector('#deduction-amount') as HTMLInputElement).dispatchEvent(new Event('input'));
+    (compiled.querySelector('#deduction-amount') as HTMLInputElement).dispatchEvent(
+      new Event('input'),
+    );
     (compiled.querySelector('.add-expense-form .btn-primary') as HTMLButtonElement).click();
     fixture.detectChanges();
     compiled = fixture.nativeElement as HTMLElement;
@@ -460,7 +501,9 @@ describe('Finanzen', () => {
   it('deleting a recurring deduction requires confirmation, then removes it and updates the available income', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
-    const instance = fixture.componentInstance as unknown as { selectTab: (tab: 'uebersicht' | 'analysen') => void };
+    const instance = fixture.componentInstance as unknown as {
+      selectTab: (tab: 'uebersicht' | 'analysen') => void;
+    };
     instance.selectTab('analysen');
     fixture.detectChanges();
     let compiled = fixture.nativeElement as HTMLElement;
@@ -485,7 +528,9 @@ describe('Finanzen', () => {
   it('insights render with an icon and text for each hint, not color alone', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
-    const instance = fixture.componentInstance as unknown as { selectTab: (tab: 'uebersicht' | 'analysen') => void };
+    const instance = fixture.componentInstance as unknown as {
+      selectTab: (tab: 'uebersicht' | 'analysen') => void;
+    };
 
     instance.selectTab('analysen');
     fixture.detectChanges();
@@ -513,13 +558,17 @@ describe('Finanzen', () => {
   it('shows a "Bericht herunterladen" section in the Analysen tab with Monat/Jahr and both format buttons', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
-    const instance = fixture.componentInstance as unknown as { selectTab: (tab: 'uebersicht' | 'analysen') => void };
+    const instance = fixture.componentInstance as unknown as {
+      selectTab: (tab: 'uebersicht' | 'analysen') => void;
+    };
 
     instance.selectTab('analysen');
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('#report-heading')?.textContent).toContain('Bericht herunterladen');
+    expect(compiled.querySelector('#report-heading')?.textContent).toContain(
+      'Bericht herunterladen',
+    );
     expect(compiled.querySelector('#report-monat-input')).toBeTruthy();
     expect(compiled.textContent).toContain('Als CSV herunterladen');
     expect(compiled.textContent).toContain('Als PDF herunterladen');
@@ -528,14 +577,18 @@ describe('Finanzen', () => {
   it('switching the period type from Monat to Jahr swaps the month input for a year input', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
-    const instance = fixture.componentInstance as unknown as { selectTab: (tab: 'uebersicht' | 'analysen') => void };
+    const instance = fixture.componentInstance as unknown as {
+      selectTab: (tab: 'uebersicht' | 'analysen') => void;
+    };
     instance.selectTab('analysen');
     fixture.detectChanges();
     let compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('#report-monat-input')).toBeTruthy();
     expect(compiled.querySelector('#report-jahr-input')).toBeNull();
 
-    const chips = compiled.querySelectorAll('.side-section .category-chips')[0].querySelectorAll('.category-chip');
+    const chips = compiled
+      .querySelectorAll('[data-section="report"] .category-chips')[0]
+      .querySelectorAll('.category-chip');
     (chips[1] as HTMLElement).click(); // "Jahr"
     fixture.detectChanges();
     compiled = fixture.nativeElement as HTMLElement;
@@ -555,7 +608,9 @@ describe('Finanzen', () => {
     let capturedFilename: string | null = null;
     const createUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
     const revokeUrlSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
-    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
       capturedFilename = this.download;
     });
 
@@ -616,7 +671,9 @@ describe('Finanzen', () => {
 
     expect(createUrlSpy).not.toHaveBeenCalled();
     expect(clickSpy).not.toHaveBeenCalled();
-    expect(instance.reportError()).toBe('PDF-Berichte sind in der Demo nicht verfügbar — im echten Konto herunterladen.');
+    expect(instance.reportError()).toBe(
+      'PDF-Berichte sind in der Demo nicht verfügbar — im echten Konto herunterladen.',
+    );
 
     createUrlSpy.mockRestore();
     clickSpy.mockRestore();
@@ -625,7 +682,9 @@ describe('Finanzen', () => {
   it('the download buttons are disabled while a download is in flight', () => {
     const fixture = TestBed.createComponent(Finanzen);
     fixture.detectChanges();
-    const instance = fixture.componentInstance as unknown as { selectTab: (tab: 'uebersicht' | 'analysen') => void };
+    const instance = fixture.componentInstance as unknown as {
+      selectTab: (tab: 'uebersicht' | 'analysen') => void;
+    };
     instance.selectTab('analysen');
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
@@ -655,8 +714,13 @@ describe('Finanzen', () => {
     categories: () => { label: string; amount: number }[];
   };
 
-  function heroText(fixture: { nativeElement: unknown }, id: 'balance-heading' | 'income-heading'): string {
-    return ((fixture.nativeElement as HTMLElement).querySelector('#' + id)?.textContent ?? '').replace(/\s+/g, ' ').trim();
+  function heroText(
+    fixture: { nativeElement: unknown },
+    id: 'balance-heading' | 'income-heading',
+  ): string {
+    return ((fixture.nativeElement as HTMLElement).querySelector('#' + id)?.textContent ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   function addExpense(instance: FinanzenInternals, amount: string, categoryId: string): void {
@@ -717,7 +781,9 @@ describe('Finanzen', () => {
     instance.selectTab('uebersicht');
     fixture.detectChanges();
 
-    expect(instance.categories().find((c) => c.label === 'Sonstiges')?.amount).toBe((sonstigesBefore ?? 0) + 35);
+    expect(instance.categories().find((c) => c.label === 'Sonstiges')?.amount).toBe(
+      (sonstigesBefore ?? 0) + 35,
+    );
     expect(heroText(fixture, 'balance-heading')).toContain('1.390');
   });
 
@@ -811,7 +877,9 @@ describe('Finanzen', () => {
     (compiled.querySelector('.btn-primary') as HTMLButtonElement).click();
     fixture.detectChanges();
     compiled = fixture.nativeElement as HTMLElement;
-    const chips = Array.from(compiled.querySelectorAll('.category-chip')).map((el) => el.textContent?.trim());
+    const chips = Array.from(compiled.querySelectorAll('.category-chip')).map((el) =>
+      el.textContent?.trim(),
+    );
     expect(chips.some((label) => label?.includes('Freizeit'))).toBe(true);
   });
 

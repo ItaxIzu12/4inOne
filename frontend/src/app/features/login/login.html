@@ -1,20 +1,10 @@
-<main class="auth-page">
+<main class="auth-page" [class.is-register]="mode() === 'register'">
   <aside class="auth-brand">
     <a class="auth-brand__logo" routerLink="/" (click)="goHome()"> <logo-kompass /> Kompass </a>
-    <h2 class="auth-brand__headline">Ein Überblick.<br />Für euren Alltag.</h2>
-    <p class="auth-brand__lede">Finanzen, Haushalt und Organisation. Allein oder gemeinsam.</p>
-
-    <div class="auth-brand__preview">
-      <p class="auth-brand__preview-label">September &middot; Beispielansicht</p>
-      <p class="auth-brand__preview-amount">3.606,50&nbsp;&euro;</p>
-      <p class="auth-brand__preview-sub">nach Kosten und Rücklage verfügbar</p>
-      <div class="auth-brand__preview-facts">
-        <span><icon-two-factor /> Einkauf erledigt</span>
-        <span><icon-finanzen /> Ausgabe erfasst</span>
-      </div>
-    </div>
-
-    <p class="auth-brand__trust">Keine Bankverbindung nötig.</p>
+    <h2 class="auth-brand__headline">Ein Zuhause.<br />Viele kleine Pläne.</h2>
+    <p class="auth-brand__lede">Alles zusammen. Für euch gemacht.</p>
+    <illustration-home class="auth-illustration" />
+    <p class="auth-brand__trust">Finanzen · Haushalt · Kalender</p>
   </aside>
 
   <section class="auth-panel">
@@ -35,9 +25,10 @@
       </div>
 
       @if (mode() === 'login') {
+        <illustration-home class="mobile-illustration" />
         <div class="auth-intro">
-          <h1>Willkommen zurück.</h1>
-          <p class="lede">Melde dich an und behalte euren Alltag im Blick.</p>
+          <h1>Schön, dass du da bist.</h1>
+          <p class="lede">Euer Alltag. Gemeinsam leichter.</p>
         </div>
 
         <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
@@ -162,7 +153,7 @@
           <p class="lede">
             {{
               registerStep() === 1
-                ? 'Danach richtest du euren Haushalt ein.'
+                ? 'Danach richtest du euer Zuhause ein.'
                 : 'Allein oder gemeinsam. Du kannst später weitere Personen einladen.'
             }}
           </p>

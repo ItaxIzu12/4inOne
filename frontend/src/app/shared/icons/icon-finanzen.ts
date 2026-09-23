@@ -13,17 +13,29 @@ import { Component } from '@angular/core';
   selector: 'icon-finanzen',
   standalone: true,
   template: `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path
-        d="M12 7v10M9.5 9.5c0-1.4 1.2-2.5 2.6-2.5 1.5 0 2.6 1 2.6 2.2 0 2.8-5.2 2-5.2 4.8 0 1.3 1.2 2.3 2.7 2.3 1.4 0 2.6-1 2.6-2.3"
-      />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.65"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <rect x="3" y="5" width="18" height="15" rx="3" />
+      <path d="M3 9h18m-6 5h6M6 5V3h12" />
     </svg>
   `,
   host: { class: 'kompass-icon', 'aria-hidden': 'true' },
   styles: `
-    :host { display: inline-flex; width: 1em; height: 1em; }
-    svg { width: 100%; height: 100%; }
+    :host {
+      display: inline-flex;
+      width: 1em;
+      height: 1em;
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+    }
   `,
 })
 export class IconFinanzen {}

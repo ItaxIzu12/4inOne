@@ -7,7 +7,7 @@
       <header class="topbar">
         <div>
           <h1>{{ greeting() }}.</h1>
-          <p>{{ todayLabel() }} · Das steht bei euch an.</p>
+          <p>{{ todayLabel() }}</p>
         </div>
         <a class="btn-primary" [routerLink]="finanzenLink()" [queryParams]="{ action: 'add' }"
           ><span aria-hidden="true">＋</span> Ausgabe erfassen</a
@@ -22,34 +22,53 @@
           <button (click)="financeState.ladenBeide()">Erneut versuchen</button>
         </p>
       }
+
       <div class="dashboard-grid">
-        <div class="dashboard-primary">
-          <section class="hero-card" aria-labelledby="balance-heading">
-            <p>Diesen Monat verfügbar</p>
-            <p id="balance-heading" class="hero-card__amount">
-              {{ verfuegbaresEinkommen() | number: '1.2-2' : 'de' }} €
-            </p>
-            <p class="hero-card__sub">
-              Nach Kosten und {{ monthlyBuffer() | number: '1.0-0' : 'de' }} € Rücklage
-            </p>
-            <a [routerLink]="finanzenLink()">Finanzen ansehen <span aria-hidden="true">→</span></a>
-          </section>
+        <section class="today-card week-section">
+          <h2>Heute bei euch</h2>
+          <p class="today-empty">
+            Die Tagesübersicht ist noch in Vorbereitung. Hier werden eure gemeinsamen Pläne
+            erscheinen.
+          </p>
+          <a routerLink="/app/organisation">Kalender öffnen <span aria-hidden="true">→</span></a>
+        </section>
+        <section class="home-card">
+          <illustration-home />
+          <h2>Kleine Dinge, gemeinsam.</h2>
+          <p>Platz für euren Alltag.</p>
+        </section>
+        <section class="quick-section" aria-labelledby="quick-heading">
+          <h2 id="quick-heading">Schnell erledigt</h2>
           <div class="quick-links">
             <a routerLink="/app/haushalt"
               ><icon-haushalt /><span
-                ><strong>Einkaufsliste</strong><small>Liste öffnen</small></span
+                ><strong>Einkaufsliste</strong><small>Haushalt öffnen</small></span
               ></a
-            ><a routerLink="/app/organisation"
+            >
+            <a routerLink="/app/organisation"
               ><icon-organisation /><span
-                ><strong>Diese Woche</strong><small>Termine ansehen</small></span
+                ><strong>Kalender</strong><small>Pläne ansehen</small></span
               ></a
             >
           </div>
+        </section>
+        <section class="hero-card" aria-labelledby="balance-heading">
+          <p>Nach Kosten und Rücklage</p>
+          <p id="balance-heading" class="hero-card__amount">
+            {{ verfuegbaresEinkommen() | number: '1.2-2' : 'de' }} €
+          </p>
+          <a [routerLink]="finanzenLink()" [queryParams]="{ tab: 'analysen' }"
+            >Berechnung ansehen <span aria-hidden="true">→</span></a
+          >
+        </section>
+        <div class="recent-wrap">
           @if (recentTransactions().length > 0) {
             <section class="recent-section" aria-labelledby="recent-heading">
               <div class="recent-section__head">
                 <h2 id="recent-heading">Letzte Ausgaben</h2>
-                <a [routerLink]="finanzenLink()">Alle anzeigen</a>
+                <a [routerLink]="finanzenLink()" [queryParams]="{ action: 'history' }"
+                  >Alle anzeigen</a
+                >
               </div>
               <ul class="recent-list">
                 @for (tx of recentTransactions(); track tx.id) {
@@ -81,23 +100,9 @@
             </section>
           }
         </div>
-        <aside class="dashboard-secondary">
-          <section class="week-section">
-            <h2>Diese Woche</h2>
-            <p class="week-empty">Deine Termine und Aufgaben findest du in der Organisation.</p>
-            <a routerLink="/app/organisation"
-              >Organisation öffnen <span aria-hidden="true">→</span></a
-            >
-          </section>
-          <section class="shopping-card">
-            <icon-haushalt />
-            <h2>Einkauf erledigt?</h2>
-            <p>Übernimm den Betrag direkt als Ausgabe.<br />Einmal bestätigen genügt.</p>
-            <a [routerLink]="finanzenLink()" [queryParams]="{ action: 'add' }"
-              >Einkauf abschließen <span aria-hidden="true">→</span></a
-            >
-          </section>
-        </aside>
+        <a class="mobile-expense" [routerLink]="finanzenLink()" [queryParams]="{ action: 'add' }"
+          ><span aria-hidden="true">＋</span> Ausgabe erfassen</a
+        >
       </div>
     </main>
   </div>

@@ -1,7 +1,7 @@
 :host {
   display: block;
-  color: #183b3b;
-  background: #f5f7f4;
+  color: var(--text);
+  background: var(--canvas);
 }
 .app-shell {
   display: flex;
@@ -14,212 +14,204 @@
 .dashboard-main {
   max-width: 1440px;
   margin: auto;
-  padding: 36px 40px 52px;
+  padding: 34px 34px 52px;
 }
 .topbar {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
+  align-items: center;
   gap: 24px;
-  margin-bottom: 38px;
+  margin-bottom: 34px;
 }
 .topbar h1 {
-  font-size: 30px;
+  font-size: 28px;
   line-height: 1.25;
   letter-spacing: -0.5px;
 }
 .topbar p {
-  font-size: 15px;
-  color: #61716e;
+  font-size: 14px;
+  color: var(--text-muted);
   margin-top: 8px;
 }
-.btn-primary {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  background: #164c49;
-  color: white;
-  min-height: 52px;
-  border-radius: 12px;
-  padding: 0 22px;
-  font-size: 15px;
-  font-weight: 700;
+a {
+  color: var(--accent);
   text-decoration: none;
+}
+.btn-primary,
+.mobile-expense {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.btn-primary {
+  background: var(--accent);
+  color: white;
   white-space: nowrap;
 }
 .dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(0, 580fr) minmax(0, 373fr);
-  gap: 27px;
-}
-.dashboard-primary,
-.dashboard-secondary {
-  min-width: 0;
+  grid-template-columns: minmax(0, 510fr) minmax(0, 308fr);
+  gap: 24px;
+  align-items: start;
 }
 h2 {
   font-size: 20px;
   line-height: 1.4;
 }
-a {
-  color: #164c49;
-  text-decoration: none;
-}
+.today-card,
+.home-card,
 .hero-card {
-  background: #164c49;
-  color: white;
-  padding: 24px 26px;
-  border-radius: 18px;
-  min-height: 217px;
+  border-radius: 22px;
+  padding: 24px;
 }
-.hero-card > p:first-child {
-  color: #d2e2dc;
-  font-size: 15px;
+.today-card {
+  background: var(--lavender);
+  min-height: 236px;
 }
-.hero-card__amount {
-  color: #fff;
-  font-size: 48px;
-  font-weight: 700;
-  line-height: 1.2;
-  margin: 12px 0 18px;
-  letter-spacing: -1px;
-  font-variant-numeric: tabular-nums;
+.today-card h2 {
+  font-size: 22px;
+  margin-bottom: 16px;
 }
-.hero-card__sub {
+.today-card p {
+  color: var(--text-muted);
   font-size: 14px;
-  color: #d2e2dc;
-  padding-top: 16px;
-  border-top: 1px solid #46716c;
 }
-.hero-card a {
+.today-empty {
+  margin: 16px 0;
+}
+.today-card a {
   display: flex;
   justify-content: space-between;
-  color: #fff;
-  font-size: 15px;
+  min-height: 44px;
+  align-items: center;
+  font-size: 14px;
   font-weight: 700;
-  margin-top: 18px;
+}
+.home-card {
+  background: white;
+  min-height: 236px;
+}
+.home-card illustration-home {
+  width: 119px;
+  margin: -10px auto 12px;
+}
+.home-card h2 {
+  font-size: 18px;
+}
+.home-card p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+.quick-section h2 {
+  display: none;
 }
 .quick-links {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  margin: 20px 0 24px;
 }
 .quick-links a {
   display: flex;
-  gap: 14px;
   align-items: center;
-  padding: 20px 16px;
-  min-height: 101px;
-  border: 1px solid #e2e8e4;
-  border-radius: 16px;
-  background: #fff;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border-radius: 22px;
+  min-height: 94px;
 }
 .quick-links strong {
-  font-size: 15px;
+  font-size: 16px;
 }
 .quick-links small {
   display: block;
-  color: #61716e;
-  margin-top: 8px;
-  font-size: 14px;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
 }
 .quick-links icon-haushalt,
-.quick-links icon-organisation,
-.recent-row icon-haushalt {
-  padding: 10px;
-  background: #e7efe9;
-  border-radius: 12px;
-  box-sizing: content-box;
-  font-size: 22px;
-  color: #164c49;
+.quick-links icon-organisation {
+  font-size: 24px;
+}
+.hero-card {
+  background: var(--accent);
+  color: white;
+  min-height: 170px;
+  grid-column: 2;
+  grid-row: 2 / span 2;
+}
+.hero-card p {
+  color: white;
+  font-size: 13px;
+}
+.hero-card .hero-card__amount {
+  color: white;
+  font-size: 35px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  margin: 14px 0 24px;
+  font-variant-numeric: tabular-nums;
+}
+.hero-card a {
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+}
+.recent-wrap {
+  grid-column: 1;
 }
 .recent-section__head {
   display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  align-items: center;
 }
 .recent-section__head a {
   font-size: 12px;
-  font-weight: 700;
 }
 .recent-list {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 12px 0 0;
 }
 .recent-row {
   display: flex;
+  gap: 12px;
   align-items: center;
-  gap: 14px;
-  padding: 16px 0;
-  border-bottom: 1px solid #e2e8e4;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
 }
-.recent-row:last-child {
-  border: 0;
+.recent-row icon-haushalt {
+  font-size: 22px;
+  color: var(--accent);
 }
 .recent-row__content {
   display: flex;
   flex: 1;
   min-width: 0;
   flex-direction: column;
-  gap: 6px;
   font-size: 15px;
 }
 .recent-row__detail {
+  color: var(--text-muted);
   font-size: 12px;
-  color: #61716e;
 }
 .recent-row__amount {
   font-size: 15px;
   font-weight: 700;
   white-space: nowrap;
 }
-.week-section {
-  padding: 24px;
-  border: 1px solid #e2e8e4;
-  border-radius: 18px;
-  background: white;
-  min-height: 285px;
-}
-.week-empty {
-  color: #61716e;
-  line-height: 1.7;
-  margin: 24px 0;
-}
-.week-section a {
-  font-size: 15px;
-  font-weight: 700;
-}
-.shopping-card {
-  margin-top: 20px;
-  background: #e7efe9;
-  padding: 24px;
-  border-radius: 18px;
-}
-.shopping-card icon-haushalt {
-  font-size: 24px;
-}
-.shopping-card h2 {
-  margin: 12px 0 8px;
-}
-.shopping-card p {
-  font-size: 15px;
-  color: #61716e;
-  line-height: 1.6;
-}
-.shopping-card a {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 16px;
-  padding: 12px 16px;
-  min-height: 44px;
-  background: white;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
+.mobile-expense {
+  display: none;
 }
 .skip-link {
   position: fixed;
@@ -233,7 +225,7 @@ a {
 }
 a:focus-visible,
 button:focus-visible {
-  outline: 3px solid #164c49;
+  outline: 3px solid var(--accent);
   outline-offset: 4px;
 }
 @media (max-width: 959px) {
@@ -247,44 +239,56 @@ button:focus-visible {
     margin-bottom: 24px;
   }
   .topbar h1 {
-    font-size: 27px;
+    font-size: 28px;
   }
-  .topbar > .btn-primary {
+  .topbar > .btn-primary,
+  .home-card {
     display: none;
   }
   .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-  .hero-card {
-    padding: 20px;
-    min-height: 187px;
-  }
-  .hero-card__amount {
-    color: #fff;
-    font-size: 39px;
-  }
-  .dashboard-secondary {
     display: flex;
     flex-direction: column;
+    gap: 20px;
   }
-  .week-section {
-    min-height: 0;
+  .dashboard-grid > * {
+    width: 100%;
+  }
+  .today-card {
+    min-height: 184px;
+    padding: 20px;
+  }
+  .today-card h2 {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 11px;
+    color: var(--accent);
+  }
+  .quick-section h2 {
+    display: block;
+    margin: 12px 0;
   }
   .quick-links a {
-    padding: 16px 12px;
-    align-items: flex-start;
+    min-height: 105px;
     flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
-  .quick-links icon-haushalt,
-  .quick-links icon-organisation {
-    padding: 0;
-    background: none;
+  .hero-card {
+    min-height: 122px;
+    padding: 20px;
   }
-  .shopping-card {
-    margin-top: 20px;
+  .hero-card .hero-card__amount {
+    font-size: 33px;
+    margin: 8px 0 12px;
   }
-  .quick-links strong {
-    font-size: 16px;
+  .mobile-expense {
+    display: flex;
+    order: 4;
+    background: white;
+    border: 1px solid var(--border);
+  }
+  .recent-wrap {
+    order: 5;
   }
 }
 @media (max-width: 359px) {
@@ -292,8 +296,10 @@ button:focus-visible {
     padding-left: 16px;
     padding-right: 16px;
   }
-  .hero-card__amount {
-    color: #fff;
-    font-size: 34px;
+  .quick-links {
+    gap: 12px;
+  }
+  .quick-links a {
+    padding: 12px;
   }
 }

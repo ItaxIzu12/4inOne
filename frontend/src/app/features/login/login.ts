@@ -1,3 +1,4 @@
+import { IllustrationHome } from '../../shared/icons/illustration-home';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -13,8 +14,6 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ScrollService } from '../../core/scroll/scroll.service';
 import { LogoKompass } from '../../shared/icons/logo-kompass';
 import { IconArrowLeft } from '../../shared/icons/icon-arrow-left';
-import { IconTwoFactor } from '../../shared/icons/icon-two-factor';
-import { IconFinanzen } from '../../shared/icons/icon-finanzen';
 
 type Mode = 'login' | 'register';
 
@@ -41,14 +40,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    LogoKompass,
-    IconArrowLeft,
-    IconTwoFactor,
-    IconFinanzen,
-  ],
+  imports: [IllustrationHome, ReactiveFormsModule, RouterLink, LogoKompass, IconArrowLeft],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

@@ -23,7 +23,7 @@ import { Component } from '@angular/core';
       <path d="M20.5 11.5 15 15l-1.5 5.5L19 17l1.5-5.5Z" fill="currentColor" />
     </svg>
   `,
-  host: { class: 'kompass-icon', 'aria-hidden': 'true', style: 'color: var(--color-pine, #164c49);' },
+  host: { class: 'kompass-icon', 'aria-hidden': 'true', style: 'color: var(--color-pine, #514775);' },
   styles: `svg { width: 100%; height: 100%; display: block; }`,
 })
 export class LogoKompass {}

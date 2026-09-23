@@ -1,3 +1,4 @@
+import { IllustrationHome } from '../../shared/icons/illustration-home';
 import { ContextBar } from '../../shared/context-bar/context-bar';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
@@ -15,6 +16,7 @@ import { FinanzenStateService } from '../finanzen/finanzen-state.service';
   selector: 'app-dashboard',
   standalone: true,
   imports: [
+    IllustrationHome,
     RouterLink,
     DecimalPipe,
     DatePipe,

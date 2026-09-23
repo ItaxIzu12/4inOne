@@ -34,22 +34,29 @@ describe('Dashboard', () => {
   });
 
   it('shows the shared available balance with cents and links to expense entry', () => {
-    const fixture = TestBed.createComponent(Dashboard); fixture.detectChanges();
+    const fixture = TestBed.createComponent(Dashboard);
+    fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('#balance-heading')?.textContent?.trim()).toBe('145,00 €');
     expect(el.querySelector('.topbar a')?.getAttribute('href')).toBe('/finanzen?action=add');
-    expect(el.querySelector('.shopping-card a')?.getAttribute('href')).toBe('/finanzen?action=add');
+    expect(el.querySelector('.mobile-expense')?.getAttribute('href')).toBe('/finanzen?action=add');
   });
   it('offers the four sections through one responsive navigation', () => {
-    const fixture = TestBed.createComponent(Dashboard); fixture.detectChanges();
+    const fixture = TestBed.createComponent(Dashboard);
+    fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    const labels = Array.from(el.querySelectorAll('.sidebar-nav__list a')).map(a=>a.textContent?.trim());
-    expect(labels).toEqual(['Überblick', 'Finanzen', 'Haushalt', 'Organisation']);
+    const labels = Array.from(el.querySelectorAll('.sidebar-nav__list a')).map((a) =>
+      a.textContent?.trim(),
+    );
+    expect(labels).toEqual(['Heute', 'Finanzen', 'Haushalt', 'Kalender']);
     expect(el.querySelectorAll('.quick-links a').length).toBe(2);
   });
   it('does not present placeholder appointments as user data', () => {
-    const fixture = TestBed.createComponent(Dashboard); fixture.detectChanges();
+    const fixture = TestBed.createComponent(Dashboard);
+    fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('Zahnarzttermin');
-    expect(fixture.nativeElement.querySelector('.week-section a').getAttribute('href')).toBe('/app/organisation');
+    expect(fixture.nativeElement.querySelector('.week-section a').getAttribute('href')).toBe(
+      '/app/organisation',
+    );
   });
 });

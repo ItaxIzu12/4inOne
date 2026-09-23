@@ -21,13 +21,13 @@ import { LogoKompass } from '../icons/logo-kompass';
   </div>`,
   styles: `
     .context {
-      min-height: 67px;
-      padding: 0 40px;
+      min-height: 62px;
+      padding: 0 34px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid #e2e8e4;
-      color: #61716e;
+      border-bottom: 1px solid #DFE4ED;
+      color: #5A6476;
       font-size: 12px;
     }
     .brand,
@@ -50,7 +50,7 @@ import { LogoKompass } from '../icons/logo-kompass';
         align-items: center;
         font-size: 24px;
         font-weight: 700;
-        color: #183b3b;
+        color: #29374E;
         text-decoration: none;
       }
       .brand logo-kompass {
@@ -62,8 +62,8 @@ import { LogoKompass } from '../icons/logo-kompass';
         width: 38px;
         height: 38px;
         border-radius: 50%;
-        background: #e7efe9;
-        color: #164c49;
+        background: var(--mint);
+        color: #514775;
         text-decoration: none;
         font-weight: 700;
       }

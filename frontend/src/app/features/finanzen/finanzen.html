@@ -1,3 +1,4 @@
+<app-save-feedback [message]="saveMessage()" (dismissed)="dismissSaveMessage()" />
 <main class="fin-page">
   <app-sidebar-nav />
 
@@ -48,7 +49,7 @@
               [class.is-active]="activeTab() === 'analysen'"
               (click)="selectTab('analysen')"
             >
-              {{ t.tabAnalytics }}
+              Analyse
             </button>
           </div>
           <p class="month-label">{{ currentMonthLabel() }}</p>
@@ -74,7 +75,7 @@
                 {{ budget().ausgegeben | number: '1.2-2' : 'de' }} €
               </h2>
               <div class="budget-meta">
-                <span>von {{ budget().ziel | number: '1.2-2' : 'de' }} € Gesamtziel</span
+                <span>von {{ budget().ziel | number: '1.2-2' : 'de' }} € Ausgabenlimit</span
                 ><strong>{{ budgetPercent() }} %</strong>
               </div>
               <div
@@ -88,12 +89,12 @@
                 <span [style.width.%]="budgetBarPercent()"></span>
               </div>
               <p class="budget-note">
-                {{ budgetRemaining() >= 0 ? 'Noch ' : 'Über dem Ziel: '
+                {{ budgetRemaining() >= 0 ? 'Noch ' : 'Über dem Limit: '
                 }}{{
                   (budgetRemaining() >= 0 ? budgetRemaining() : -budgetRemaining())
                     | number: '1.2-2' : 'de'
                 }}
-                €{{ budgetRemaining() >= 0 ? ' bis zu eurem Ziel.' : '.' }}
+                €{{ budgetRemaining() >= 0 ? ' im Budget.' : '.' }}
               </p>
             </section>
             <section class="available-card">
@@ -107,7 +108,7 @@
             <section class="category-section" aria-labelledby="cat-heading">
               <div class="category-heading">
                 <h2 id="cat-heading">Kategorien</h2>
-                <span>Ziel antippen</span>
+                <span>Limits ändern</span>
               </div>
               <ul class="category-list">
                 @for (slice of categories(); track slice.id; let i = $index) {
@@ -116,7 +117,7 @@
                       type="button"
                       class="category-row"
                       (click)="openCategoryGoalModal(slice)"
-                      [attr.aria-label]="'Budgetziel ändern: ' + slice.label"
+                      [attr.aria-label]="'Ausgabenlimit ändern: ' + slice.label"
                     >
                       <span class="category-symbol" aria-hidden="true"
                         ><ng-container [ngComponentOutlet]="resolveCategoryIcon(slice.iconKey)"
@@ -129,8 +130,8 @@
                         <span class="category-goal"
                           ><span>{{
                             slice.monthlyGoal !== null
-                              ? 'Ziel: ' + (slice.monthlyGoal | number: '1.0-0' : 'de') + ' €'
-                              : 'Ziel festlegen'
+                              ? 'Limit: ' + (slice.monthlyGoal | number: '1.0-0' : 'de') + ' €'
+                              : 'Limit festlegen'
                           }}</span
                           ><span>{{
                             slice.goalPercent !== null ? slice.goalPercent + ' %' : ''
@@ -147,7 +148,7 @@
                             ><span
                               [style.width.%]="clampPercent(slice.goalPercent)"
                               [style.background]="
-                                i === 0 ? '#164c49' : i === 1 ? '#6c9a89' : '#cd8d52'
+                                i === 0 ? '#514775' : i === 1 ? '#779889' : '#B2865E'
                               "
                             ></span
                           ></span>
@@ -175,7 +176,7 @@
                   @for (person of fairness(); track person.name; let i = $index) {
                     <div
                       [style.width.%]="person.percent"
-                      [style.background]="i === 0 ? '#164c49' : '#e2e8e4'"
+                      [style.background]="i === 0 ? '#514775' : '#DFE4ED'"
                     ></div>
                   }
                 </div>
@@ -199,281 +200,327 @@
               </button>
             </div>
           } @else {
-            <section class="balance-block income-block" aria-labelledby="income-heading">
-              <p class="balance-label">{{ t.incomeHeroLabel }}</p>
-              <div class="balance-row">
-                <p id="income-heading" class="balance-amount income-amount">
-                  {{ verfuegbaresEinkommen() | number: '1.2-2' : 'de' }} &euro;
-                </p>
-              </div>
-              <p class="balance-sub">
-                {{ t.incomeHeroSubPrefix }}{{ householdTotalIncome() | number: '1.0-0' : 'de'
-                }}{{ t.incomeHeroSubMiddle }}{{ activeDeductionsTotal() | number: '1.0-0' : 'de'
-                }}{{ t.incomeHeroSubTransactions }}{{ transactionsTotal() | number: '1.0-0' : 'de'
-                }}{{ t.incomeHeroSubSuffix
-                }}{{ monthlyBufferValue() | number: '1.0-0' : 'de' }}&nbsp;&euro;
+            <section class="analysis-summary">
+              <p class="eyebrow">Ausgaben im Vergleich</p>
+              <h2>{{ currentMonthLabel() }} läuft noch</h2>
+              <p>
+                {{ budget().ausgegeben | number: '1.2-2' : 'de' }} € bisher ausgegeben · Laufender
+                Monat
               </p>
             </section>
-
-            <div class="fin-grid">
-              <div class="fin-col-main">
-                <section class="tx-section" aria-labelledby="deductions-heading">
-                  <div class="section-head">
-                    <h2 id="deductions-heading">{{ t.deductionsHeading }}</h2>
-                    <button
-                      type="button"
-                      class="section-head__view-all"
-                      (click)="openAddDeductionModal()"
-                    >
-                      {{ t.addDeduction }}
-                    </button>
+            <div class="analysis-grid">
+              <section class="trend-card" aria-labelledby="trend-heading">
+                <h2 id="trend-heading">Die letzten 3 Monate</h2>
+                <div class="trend-empty">
+                  <span aria-hidden="true">▥</span>
+                  <p>Der Monatsvergleich ist noch nicht verfügbar.</p>
+                  <p>Deine bisherigen Ausgaben kannst du in den Monatsberichten nachsehen.</p>
+                </div>
+              </section>
+              <section class="calculation-card" aria-labelledby="calculation-heading">
+                <h2 id="calculation-heading">So bleibt Geld übrig</h2>
+                <dl>
+                  <div>
+                    <dt>Einkommen</dt>
+                    <dd>{{ householdTotalIncome() | number: '1.2-2' : 'de' }} €</dd>
                   </div>
-                  <ul class="deductions-list">
-                    @for (deduction of deductions(); track deduction.id) {
-                      <li
-                        class="deduction-row"
-                        [class.deduction-row--inactive]="!deduction.active"
-                        tabindex="0"
-                        [attr.aria-label]="t.editRowLabel + ': ' + deduction.name"
-                        (click)="openEditDeductionModal(deduction)"
-                        (keydown.enter)="openEditDeductionModal(deduction)"
+                  <div>
+                    <dt>Fixkosten</dt>
+                    <dd>−{{ activeDeductionsTotal() | number: '1.2-2' : 'de' }} €</dd>
+                  </div>
+                  <div>
+                    <dt>Einzelausgaben</dt>
+                    <dd>−{{ transactionsTotal() | number: '1.2-2' : 'de' }} €</dd>
+                  </div>
+                  <div>
+                    <dt>Rücklage</dt>
+                    <dd>−{{ monthlyBufferValue() | number: '1.2-2' : 'de' }} €</dd>
+                  </div>
+                  <div class="calculation-total">
+                    <dt>Verfügbar</dt>
+                    <dd id="income-heading">
+                      {{ verfuegbaresEinkommen() | number: '1.2-2' : 'de' }} €
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+            </div>
+            <app-finance-settings>
+              <section
+                class="settings-card"
+                data-section="own-income"
+                aria-labelledby="own-income-heading"
+              >
+                <p class="settings-eyebrow">
+                  <span class="settings-icon" aria-hidden="true">€</span>Dein Beitrag
+                </p>
+                <h2 id="own-income-heading">{{ t.ownIncomeHeading }}</h2>
+                <p class="side-section__note">{{ t.ownIncomeNote }}</p>
+                <form class="inline-field-form" (submit)="onOwnIncomeSubmit($event)">
+                  <div class="field">
+                    <label for="own-income-input">{{ t.ownIncomeLabel }}</label>
+                    <div class="inline-field-form__row">
+                      <input
+                        id="own-income-input"
+                        type="number"
+                        inputmode="decimal"
+                        min="0"
+                        step="0.01"
+                        [value]="ownIncomeInput()"
+                        (input)="ownIncomeInput.set($any($event.target).value)"
+                      />
+                      <button
+                        type="submit"
+                        class="btn-secondary"
+                        [disabled]="ownIncomeSubmitting()"
+                       [attr.aria-busy]="ownIncomeSubmitting()">
+ @if (ownIncomeSubmitting()) { <span class="save-spinner" aria-hidden="true"></span> }
+                        {{ ownIncomeSubmitting() ? t.ownIncomeSaving : t.ownIncomeSave }}
+                      </button>
+                    </div>
+                  </div>
+                  @if (ownIncomeError()) {
+                    <p class="field-error" role="alert">{{ ownIncomeError() }}</p>
+                  }
+                </form>
+              </section>
+              <section class="settings-card" data-section="buffer" aria-labelledby="buffer-heading">
+                <p class="settings-eyebrow">
+                  <span class="settings-icon" aria-hidden="true">◇</span>Für später
+                </p>
+                <h2 id="buffer-heading">{{ t.bufferHeading }}</h2>
+                <p class="side-section__note">{{ t.bufferNote }}</p>
+                <form class="inline-field-form" (submit)="onBufferSubmit($event)">
+                  <div class="field">
+                    <label for="buffer-input">{{ t.bufferLabel }}</label>
+                    <div class="inline-field-form__row">
+                      <input
+                        id="buffer-input"
+                        type="number"
+                        inputmode="decimal"
+                        min="0"
+                        step="0.01"
+                        [value]="bufferInput()"
+                        (input)="bufferInput.set($any($event.target).value)"
+                      />
+                      <button type="submit" class="btn-secondary" [disabled]="bufferSubmitting()" [attr.aria-busy]="bufferSubmitting()">
+ @if (bufferSubmitting()) { <span class="save-spinner" aria-hidden="true"></span> }
+                        {{ bufferSubmitting() ? t.bufferSaving : t.bufferSave }}
+                      </button>
+                    </div>
+                  </div>
+                  @if (bufferError()) {
+                    <p class="field-error" role="alert">{{ bufferError() }}</p>
+                  }
+                </form>
+              </section>
+              <section
+                class="settings-card"
+                data-section="deductions"
+                aria-labelledby="deductions-heading"
+              >
+                <p class="settings-eyebrow">
+                  <span class="settings-icon" aria-hidden="true">↻</span>Monatlich wiederkehrend
+                </p>
+                <div class="section-head">
+                  <h2 id="deductions-heading">{{ t.deductionsHeading }}</h2>
+                  <button
+                    type="button"
+                    class="section-head__view-all"
+                    (click)="openAddDeductionModal()"
+                  >
+                    {{ t.addDeduction }}
+                  </button>
+                </div>
+                <ul class="deductions-list">
+                  @for (deduction of deductions(); track deduction.id) {
+                    <li
+                      class="deduction-row"
+                      [class.deduction-row--inactive]="!deduction.active"
+                      role="button"
+                      tabindex="0"
+                      [attr.aria-label]="t.editRowLabel + ': ' + deduction.name"
+                      (click)="openEditDeductionModal(deduction)"
+                      (keydown.enter)="openEditDeductionModal(deduction)"
+                      (keydown.space)="$event.preventDefault(); openEditDeductionModal(deduction)"
+                    >
+                      <span class="deduction-row__name">
+                        {{ deduction.name }}
+                        @if (deduction.category) {
+                          <span
+                            class="cat-pill"
+                            [style.background]="deduction.category.color + '1f'"
+                            [style.color]="deduction.category.color"
+                            >{{ deduction.category.name }}</span
+                          >
+                        }
+                        @if (!deduction.active) {
+                          <span class="deduction-row__paused">{{ t.deductionInactiveLabel }}</span>
+                        }
+                      </span>
+                      <span class="tx-amount"
+                        >&minus;{{ deduction.amount | number: '1.2-2' : 'de' }}&nbsp;&euro;</span
                       >
-                        <span class="deduction-row__name">
-                          {{ deduction.name }}
-                          @if (deduction.category) {
-                            <span
-                              class="cat-pill"
-                              [style.background]="deduction.category.color + '1f'"
-                              [style.color]="deduction.category.color"
-                              >{{ deduction.category.name }}</span
-                            >
-                          }
-                          @if (!deduction.active) {
-                            <span class="deduction-row__paused">{{
-                              t.deductionInactiveLabel
-                            }}</span>
+                    </li>
+                  } @empty {
+                    <li class="deduction-row deduction-row--empty">{{ t.deductionsEmpty }}</li>
+                  }
+                </ul>
+              </section>
+              <section class="settings-card" data-section="report" aria-labelledby="report-heading">
+                <p class="settings-eyebrow">
+                  <span class="settings-icon" aria-hidden="true">▤</span>Zum Nachschauen
+                </p>
+                <h2 id="report-heading">{{ t.reportHeading }}</h2>
+                <p class="side-section__note">{{ t.reportNote }}</p>
+
+                <div
+                  class="category-chips"
+                  role="radiogroup"
+                  [attr.aria-label]="t.reportPeriodTypeLabel"
+                >
+                  <button
+                    type="button"
+                    class="category-chip"
+                    role="radio"
+                    [attr.aria-checked]="reportPeriodType() === 'monat'"
+                    [class.is-selected]="reportPeriodType() === 'monat'"
+                    (click)="reportPeriodType.set('monat')"
+                  >
+                    {{ t.reportPeriodMonat }}
+                  </button>
+                  <button
+                    type="button"
+                    class="category-chip"
+                    role="radio"
+                    [attr.aria-checked]="reportPeriodType() === 'jahr'"
+                    [class.is-selected]="reportPeriodType() === 'jahr'"
+                    (click)="reportPeriodType.set('jahr')"
+                  >
+                    {{ t.reportPeriodJahr }}
+                  </button>
+                </div>
+
+                <div class="inline-field-form">
+                  <div class="field">
+                    @if (reportPeriodType() === 'monat') {
+                      <label for="report-monat-input">{{ t.reportMonatLabel }}</label>
+                      <input
+                        id="report-monat-input"
+                        type="month"
+                        [value]="reportMonat()"
+                        (input)="reportMonat.set($any($event.target).value)"
+                      />
+                    } @else {
+                      <label for="report-jahr-input">{{ t.reportJahrLabel }}</label>
+                      <input
+                        id="report-jahr-input"
+                        type="number"
+                        inputmode="numeric"
+                        min="2000"
+                        max="2100"
+                        [value]="reportJahr()"
+                        (input)="reportJahr.set($any($event.target).value)"
+                      />
+                    }
+                  </div>
+                </div>
+
+                <div class="report-downloads">
+                  <button
+                    type="button"
+                    class="btn-secondary"
+                    [disabled]="reportDownloading() !== null"
+                    (click)="downloadBericht('csv')"
+                  >
+                    {{ reportDownloading() === 'csv' ? t.reportDownloading : t.reportDownloadCsv }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-secondary"
+                    [disabled]="reportDownloading() !== null"
+                    (click)="downloadBericht('pdf')"
+                  >
+                    {{ reportDownloading() === 'pdf' ? t.reportDownloading : t.reportDownloadPdf }}
+                  </button>
+                </div>
+
+                @if (reportError()) {
+                  <p class="field-error" role="alert">{{ reportError() }}</p>
+                }
+              </section>
+              <section
+                class="settings-card"
+                data-section="insights"
+                aria-labelledby="insights-heading"
+              >
+                <p class="settings-eyebrow">
+                  <span class="settings-icon" aria-hidden="true">i</span>Gut zu wissen
+                </p>
+                <h2 id="insights-heading">{{ t.insightsHeading }}</h2>
+                @if (insights().length > 0) {
+                  <ul class="insights-list">
+                    @for (insight of insights(); track insight.text) {
+                      <li class="insight-item" [class]="'insight-item--' + insight.typ">
+                        <span class="insight-item__icon" aria-hidden="true">
+                          @switch (insight.typ) {
+                            @case ('warnung') {
+                              <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <path
+                                  d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+                                />
+                                <path d="M12 9v4M12 17h.01" />
+                              </svg>
+                            }
+                            @case ('positiv') {
+                              <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <path d="M20 6 9 17l-5-5" />
+                              </svg>
+                            }
+                            @default {
+                              <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M12 16v-4M12 8h.01" />
+                              </svg>
+                            }
                           }
                         </span>
-                        <span class="tx-amount"
-                          >&minus;{{ deduction.amount | number: '1.2-2' : 'de' }}&nbsp;&euro;</span
-                        >
+                        <p>{{ insight.text }}</p>
                       </li>
-                    } @empty {
-                      <li class="deduction-row deduction-row--empty">{{ t.deductionsEmpty }}</li>
                     }
                   </ul>
-                </section>
-
-                <section class="side-section" aria-labelledby="insights-heading">
-                  <h2 id="insights-heading">{{ t.insightsHeading }}</h2>
-                  @if (insights().length > 0) {
-                    <ul class="insights-list">
-                      @for (insight of insights(); track insight.text) {
-                        <li class="insight-item" [class]="'insight-item--' + insight.typ">
-                          <span class="insight-item__icon" aria-hidden="true">
-                            @switch (insight.typ) {
-                              @case ('warnung') {
-                                <svg
-                                  width="18"
-                                  height="18"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <path
-                                    d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
-                                  />
-                                  <path d="M12 9v4M12 17h.01" />
-                                </svg>
-                              }
-                              @case ('positiv') {
-                                <svg
-                                  width="18"
-                                  height="18"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <path d="M20 6 9 17l-5-5" />
-                                </svg>
-                              }
-                              @default {
-                                <svg
-                                  width="18"
-                                  height="18"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <circle cx="12" cy="12" r="10" />
-                                  <path d="M12 16v-4M12 8h.01" />
-                                </svg>
-                              }
-                            }
-                          </span>
-                          <p>{{ insight.text }}</p>
-                        </li>
-                      }
-                    </ul>
-                  } @else {
-                    <p class="insights-empty">{{ t.insightsEmpty }}</p>
-                  }
-                </section>
-              </div>
-
-              <div class="fin-col-side">
-                <section class="side-section" aria-labelledby="own-income-heading">
-                  <h2 id="own-income-heading">{{ t.ownIncomeHeading }}</h2>
-                  <p class="side-section__note">{{ t.ownIncomeNote }}</p>
-                  <form class="inline-field-form" (submit)="onOwnIncomeSubmit($event)">
-                    <div class="field">
-                      <label for="own-income-input">{{ t.ownIncomeLabel }}</label>
-                      <div class="inline-field-form__row">
-                        <input
-                          id="own-income-input"
-                          type="number"
-                          inputmode="decimal"
-                          min="0"
-                          step="0.01"
-                          [value]="ownIncomeInput()"
-                          (input)="ownIncomeInput.set($any($event.target).value)"
-                        />
-                        <button
-                          type="submit"
-                          class="btn-secondary"
-                          [disabled]="ownIncomeSubmitting()"
-                        >
-                          {{ ownIncomeSubmitting() ? t.ownIncomeSaving : t.ownIncomeSave }}
-                        </button>
-                      </div>
-                    </div>
-                    @if (ownIncomeError()) {
-                      <p class="field-error" role="alert">{{ ownIncomeError() }}</p>
-                    }
-                  </form>
-                </section>
-
-                <section class="side-section" aria-labelledby="buffer-heading">
-                  <h2 id="buffer-heading">{{ t.bufferHeading }}</h2>
-                  <p class="side-section__note">{{ t.bufferNote }}</p>
-                  <form class="inline-field-form" (submit)="onBufferSubmit($event)">
-                    <div class="field">
-                      <label for="buffer-input">{{ t.bufferLabel }}</label>
-                      <div class="inline-field-form__row">
-                        <input
-                          id="buffer-input"
-                          type="number"
-                          inputmode="decimal"
-                          min="0"
-                          step="0.01"
-                          [value]="bufferInput()"
-                          (input)="bufferInput.set($any($event.target).value)"
-                        />
-                        <button type="submit" class="btn-secondary" [disabled]="bufferSubmitting()">
-                          {{ bufferSubmitting() ? t.bufferSaving : t.bufferSave }}
-                        </button>
-                      </div>
-                    </div>
-                    @if (bufferError()) {
-                      <p class="field-error" role="alert">{{ bufferError() }}</p>
-                    }
-                  </form>
-                </section>
-
-                <section class="side-section" aria-labelledby="report-heading">
-                  <h2 id="report-heading">{{ t.reportHeading }}</h2>
-                  <p class="side-section__note">{{ t.reportNote }}</p>
-
-                  <div
-                    class="category-chips"
-                    role="radiogroup"
-                    [attr.aria-label]="t.reportPeriodTypeLabel"
-                  >
-                    <button
-                      type="button"
-                      class="category-chip"
-                      role="radio"
-                      [attr.aria-checked]="reportPeriodType() === 'monat'"
-                      [class.is-selected]="reportPeriodType() === 'monat'"
-                      (click)="reportPeriodType.set('monat')"
-                    >
-                      {{ t.reportPeriodMonat }}
-                    </button>
-                    <button
-                      type="button"
-                      class="category-chip"
-                      role="radio"
-                      [attr.aria-checked]="reportPeriodType() === 'jahr'"
-                      [class.is-selected]="reportPeriodType() === 'jahr'"
-                      (click)="reportPeriodType.set('jahr')"
-                    >
-                      {{ t.reportPeriodJahr }}
-                    </button>
-                  </div>
-
-                  <div class="inline-field-form" style="margin-top: 12px">
-                    <div class="field">
-                      @if (reportPeriodType() === 'monat') {
-                        <label for="report-monat-input">{{ t.reportMonatLabel }}</label>
-                        <input
-                          id="report-monat-input"
-                          type="month"
-                          [value]="reportMonat()"
-                          (input)="reportMonat.set($any($event.target).value)"
-                        />
-                      } @else {
-                        <label for="report-jahr-input">{{ t.reportJahrLabel }}</label>
-                        <input
-                          id="report-jahr-input"
-                          type="number"
-                          inputmode="numeric"
-                          min="2000"
-                          max="2100"
-                          [value]="reportJahr()"
-                          (input)="reportJahr.set($any($event.target).value)"
-                        />
-                      }
-                    </div>
-                  </div>
-
-                  <div class="inline-field-form__row" style="margin-top: 14px">
-                    <button
-                      type="button"
-                      class="btn-secondary"
-                      [disabled]="reportDownloading() !== null"
-                      (click)="downloadBericht('csv')"
-                    >
-                      {{
-                        reportDownloading() === 'csv' ? t.reportDownloading : t.reportDownloadCsv
-                      }}
-                    </button>
-                    <button
-                      type="button"
-                      class="btn-secondary"
-                      [disabled]="reportDownloading() !== null"
-                      (click)="downloadBericht('pdf')"
-                    >
-                      {{
-                        reportDownloading() === 'pdf' ? t.reportDownloading : t.reportDownloadPdf
-                      }}
-                    </button>
-                  </div>
-
-                  @if (reportError()) {
-                    <p class="field-error" role="alert">{{ reportError() }}</p>
-                  }
-                </section>
-              </div>
-            </div>
+                } @else {
+                  <p class="insights-empty">{{ t.insightsEmpty }}</p>
+                }
+              </section>
+            </app-finance-settings>
           }
         }
       }
@@ -575,7 +622,8 @@
           class="btn-delete"
           [disabled]="deleteSubmitting()"
           (click)="confirmDelete()"
-        >
+         [attr.aria-busy]="deleteSubmitting()">
+ @if (deleteSubmitting()) { <span class="save-spinner" aria-hidden="true"></span> }
           {{ deleteSubmitting() ? t.deleteConfirmSubmitting : t.deleteConfirmYes }}
         </button>
       </div>
@@ -646,7 +694,8 @@
         <p class="field-error" role="alert">{{ addError() }}</p>
       }
 
-      <button type="submit" class="btn-primary" [disabled]="addSubmitting()">
+      <button type="submit" class="btn-primary" [disabled]="addSubmitting()" [attr.aria-busy]="addSubmitting()">
+ @if (addSubmitting()) { <span class="save-spinner" aria-hidden="true"></span> }
         {{
           addSubmitting()
             ? isEditing()
@@ -696,7 +745,8 @@
       <p class="field-error" role="alert">{{ categoryGoalError() }}</p>
     }
 
-    <button type="submit" class="btn-primary" [disabled]="categoryGoalSubmitting()">
+    <button type="submit" class="btn-primary" [disabled]="categoryGoalSubmitting()" [attr.aria-busy]="categoryGoalSubmitting()">
+ @if (categoryGoalSubmitting()) { <span class="save-spinner" aria-hidden="true"></span> }
       {{ categoryGoalSubmitting() ? t.categoryGoalSubmitting : t.categoryGoalSubmit }}
     </button>
   </form>
@@ -729,7 +779,8 @@
           class="btn-delete"
           [disabled]="deductionDeleteSubmitting()"
           (click)="confirmDeductionDelete()"
-        >
+         [attr.aria-busy]="deductionDeleteSubmitting()">
+ @if (deductionDeleteSubmitting()) { <span class="save-spinner" aria-hidden="true"></span> }
           {{
             deductionDeleteSubmitting()
               ? t.deductionDeleteConfirmSubmitting
@@ -808,7 +859,8 @@
         <p class="field-error" role="alert">{{ deductionError() }}</p>
       }
 
-      <button type="submit" class="btn-primary" [disabled]="deductionSubmitting()">
+      <button type="submit" class="btn-primary" [disabled]="deductionSubmitting()" [attr.aria-busy]="deductionSubmitting()">
+ @if (deductionSubmitting()) { <span class="save-spinner" aria-hidden="true"></span> }
         {{
           deductionSubmitting()
             ? isEditingDeduction()
@@ -895,7 +947,8 @@
       <p class="field-error" role="alert">{{ newCategoryError() }}</p>
     }
 
-    <button type="submit" class="btn-primary" [disabled]="newCategorySubmitting()">
+    <button type="submit" class="btn-primary" [disabled]="newCategorySubmitting()" [attr.aria-busy]="newCategorySubmitting()">
+ @if (newCategorySubmitting()) { <span class="save-spinner" aria-hidden="true"></span> }
       {{ newCategorySubmitting() ? t.newCategorySubmitting : t.newCategorySubmit }}
     </button>
   </form>

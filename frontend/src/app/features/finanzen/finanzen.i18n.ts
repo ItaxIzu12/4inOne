@@ -15,7 +15,7 @@ export const FINANZEN_I18N = {
   loadErrorHeading: 'Daten konnten nicht geladen werden',
   loadErrorMessage: 'Das kann an einer kurzzeitig gestörten Verbindung liegen — bitte versuche es erneut.',
   loadErrorRetry: 'Erneut versuchen',
-  addExpense: 'Ausgabe hinzufügen',
+  addExpense: 'Ausgabe erfassen',
 
   tablistLabel: 'Finanzen-Ansichten',
   tabOverview: 'Übersicht',
@@ -118,9 +118,9 @@ export const FINANZEN_I18N = {
   ownIncomeSave: 'Speichern',
   ownIncomeSaving: 'Wird gespeichert …',
 
-  bufferHeading: 'Puffer',
+  bufferHeading: 'Rücklage',
   bufferNote: 'Eure gemeinsame monatliche Rücklage.',
-  bufferLabel: 'Monatlicher Puffer (€)',
+  bufferLabel: 'Monatliche Rücklage (€)',
   bufferSave: 'Speichern',
   bufferSaving: 'Wird gespeichert …',
 

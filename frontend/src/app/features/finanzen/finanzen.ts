@@ -1,3 +1,5 @@
+import { SaveFeedback } from '../../shared/save-feedback/save-feedback';
+import { FinanceSettings } from './finance-settings';
 import { ContextBar } from '../../shared/context-bar/context-bar';
 import { ActivatedRoute } from '@angular/router';
 import { DatePipe, DecimalPipe, NgComponentOutlet } from '@angular/common';
@@ -116,7 +118,15 @@ function initialsFor(name: string): string {
 @Component({
   selector: 'app-finanzen',
   standalone: true,
-  imports: [DecimalPipe, DatePipe, NgComponentOutlet, Modal, SidebarNav, ContextBar],
+  imports: [SaveFeedback,
+    FinanceSettings,
+    DecimalPipe,
+    DatePipe,
+    NgComponentOutlet,
+    Modal,
+    SidebarNav,
+    ContextBar,
+  ],
   templateUrl: './finanzen.html',
   styleUrl: './finanzen.scss',
 })
@@ -136,7 +146,7 @@ export class Finanzen {
   // Ersetzt das früher hartkodierte "August" in Seitentitel/Budget-Label —
   // läuft mit, statt im nächsten Monat falsch stehen zu bleiben.
   protected readonly currentMonthLabel = computed(() =>
-    new Intl.DateTimeFormat('de-DE', { month: 'long' }).format(new Date()),
+    new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' }).format(new Date()),
   );
 
   // Sub-Tabs: "Übersicht" und jetzt auch "Analysen" haben echten Inhalt —
@@ -252,6 +262,22 @@ export class Finanzen {
   protected readonly addDatum = signal(heuteIso());
   protected readonly addCategoryChoices = signal<CategoryDto[]>([]);
   protected readonly addSelectedCategoryId = signal<number | string | null>(null);
+  protected readonly saveMessage = signal('');
+  private saveMessageTimer?: ReturnType<typeof setTimeout>;
+  private beginSave(): void {
+    clearTimeout(this.saveMessageTimer);
+    this.saveMessage.set('');
+  }
+  private saved(message: string): void {
+    clearTimeout(this.saveMessageTimer);
+    this.saveMessage.set(message);
+    this.saveMessageTimer = setTimeout(() => this.saveMessage.set(''), 5000);
+  }
+  protected dismissSaveMessage(): void {
+    clearTimeout(this.saveMessageTimer);
+    this.saveMessage.set('');
+  }
+
   protected readonly addSubmitting = signal(false);
   protected readonly addError = signal<string | null>(null);
   protected readonly editingTransactionId = signal<number | string | null>(null);
@@ -356,7 +382,11 @@ export class Finanzen {
   protected readonly clampPercent = (value: number): number => Math.max(0, Math.min(100, value));
 
   constructor() {
-    if (inject(ActivatedRoute).snapshot.queryParamMap.get('action') === 'add') this.openAddModal();
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.saveMessageTimer));
+    const params = inject(ActivatedRoute).snapshot.queryParamMap;
+    if (params.get('action') === 'add') this.openAddModal();
+    if (params.get('action') === 'history') this.openModal();
+    if (params.get('tab') === 'analysen') this.selectTab('analysen');
     inject(DestroyRef).onDestroy(() => this.searchSubscription?.unsubscribe());
     this.financeState.ladenBeide();
     this.loadRecentTransactions();
@@ -578,6 +608,7 @@ export class Finanzen {
   }
 
   protected submitAddExpense(): void {
+    if (this.addSubmitting()) return;
     const amount = Number(this.addAmount().replace(',', '.'));
     if (!amount || amount <= 0) {
       this.addError.set('Bitte einen gültigen Betrag größer als 0 eingeben.');
@@ -590,6 +621,7 @@ export class Finanzen {
     }
 
     this.addError.set(null);
+    this.beginSave();
     this.addSubmitting.set(true);
     const input = {
       amount,
@@ -605,6 +637,7 @@ export class Finanzen {
 
     request.subscribe({
       next: () => {
+        this.saved('Ausgabe gespeichert.');
         this.addSubmitting.set(false);
         this.closeAddModal();
         // Betrag/Prozent-Balken UND "Letzte Transaktionen" sofort
@@ -684,6 +717,7 @@ export class Finanzen {
   }
 
   protected submitCategoryGoal(): void {
+    if (this.categoryGoalSubmitting()) return;
     const categoryId = this.categoryGoalCategoryId();
     if (categoryId === null) return;
 
@@ -699,9 +733,11 @@ export class Finanzen {
     }
 
     this.categoryGoalError.set(null);
+    this.beginSave();
     this.categoryGoalSubmitting.set(true);
     this.provider.updateCategoryGoal(categoryId, monthlyGoal).subscribe({
       next: () => {
+        this.saved('Ausgabenlimit gespeichert.');
         this.categoryGoalSubmitting.set(false);
         this.closeCategoryGoalModal();
         this.financeState.invalidieren();
@@ -749,6 +785,7 @@ export class Finanzen {
   }
 
   protected submitNewCategory(): void {
+    if (this.newCategorySubmitting()) return;
     const name = this.newCategoryName().trim();
     if (!name) {
       this.newCategoryError.set('Bitte einen Namen eingeben.');
@@ -766,9 +803,11 @@ export class Finanzen {
     }
 
     this.newCategoryError.set(null);
+    this.beginSave();
     this.newCategorySubmitting.set(true);
     this.provider.createCategory(name, color, iconKey, null).subscribe({
       next: () => {
+        this.saved('Kategorie erstellt.');
         this.newCategorySubmitting.set(false);
         this.closeNewCategoryModal();
         // financeState.invalidieren(): die neue Kategorie erscheint sofort
@@ -801,6 +840,7 @@ export class Finanzen {
   }
 
   protected submitOwnIncome(): void {
+    if (this.ownIncomeSubmitting()) return;
     const raw = this.ownIncomeInput().trim();
     // Leeres Feld = Einkommen entfernen (monthly_income ist optional, siehe
     // core/models.py HouseholdMembership) — kein Pflichtfeld.
@@ -813,9 +853,11 @@ export class Finanzen {
     }
 
     this.ownIncomeError.set(null);
+    this.beginSave();
     this.ownIncomeSubmitting.set(true);
     this.provider.updateOwnIncome(monthlyIncome).subscribe({
       next: () => {
+        this.saved('Einkommen gespeichert.');
         this.ownIncomeSubmitting.set(false);
         this.financeState.invalidieren();
       },
@@ -836,6 +878,7 @@ export class Finanzen {
   }
 
   protected submitBuffer(): void {
+    if (this.bufferSubmitting()) return;
     const raw = this.bufferInput().trim();
     const monthlyBuffer = raw === '' ? 0 : Number(raw.replace(',', '.'));
     if (!Number.isFinite(monthlyBuffer) || monthlyBuffer < 0) {
@@ -844,9 +887,11 @@ export class Finanzen {
     }
 
     this.bufferError.set(null);
+    this.beginSave();
     this.bufferSubmitting.set(true);
     this.provider.updateHouseholdBuffer(monthlyBuffer).subscribe({
       next: () => {
+        this.saved('Rücklage gespeichert.');
         this.bufferSubmitting.set(false);
         this.financeState.invalidieren();
       },
@@ -902,6 +947,7 @@ export class Finanzen {
   }
 
   protected submitDeduction(): void {
+    if (this.deductionSubmitting()) return;
     const name = this.deductionName().trim();
     if (!name) {
       this.deductionError.set('Bitte einen Namen eingeben.');
@@ -914,6 +960,7 @@ export class Finanzen {
     }
 
     this.deductionError.set(null);
+    this.beginSave();
     this.deductionSubmitting.set(true);
     const categoryId = this.deductionCategoryId();
     const active = this.deductionActive();
@@ -925,6 +972,7 @@ export class Finanzen {
 
     request.subscribe({
       next: () => {
+        this.saved('Laufende Kosten gespeichert.');
         this.deductionSubmitting.set(false);
         this.closeDeductionModal();
         this.financeState.invalidieren();
