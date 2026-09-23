@@ -58,13 +58,74 @@ backend/
   finanzen/       # Konten, Transaktionen, Budgets, Kategorien
   haushalt/       # Einkaufsliste, Aufgaben, Pläne
   organisation/   # Kalender, To-dos, Erinnerungen
+  reisen/         # Reiseziel, Reisebudget, Packliste, Dokumente, Buchungen — NEU, vierter gleichrangiger Bereich
+  connections/    # Connection Engine — verknüpft Datensätze modulübergreifend, siehe 2.1b
   integrations/   # Banking-API-Anbindung (später), Kalender-Sync
 ```
-Kein Event-Bus im MVP. Apps rufen sich über direkt importierte Service-Funktionen auf. Ein Signal-/Event-System erst einführen, wenn mehrere unabhängige Konsumenten pro Ereignis existieren.
+Kein Event-Bus im MVP für die drei bestehenden Kernmodule (Finanzen/Haushalt/Organisation). Apps rufen sich über direkt importierte Service-Funktionen auf. **Für Reisen und die Connection Engine gilt das erweitert** — siehe 2.1b, da hier mehrere unabhängige Konsumenten pro Ereignis existieren (eine Reise erzeugt gleichzeitig Budget, Kalendertermine, Packliste, Haushaltsaufgaben-Anpassung), was laut eigener Regel genau der Schwellenwert ist, ab dem ein Signal-/Event-System gerechtfertigt ist.
 
 **Hinweis zu den Finanz-Differenzierungsfeatures aus dem Gesamtkonzept** (Einkauf-zu-Ausgabe-Moment, Fairness-Anzeige, Abo-Radar): Diese laufen alle über bestehende Service-Aufrufe zwischen `haushalt` und `finanzen` — kein neues architektonisches Konzept nötig. Der Einkauf-zu-Ausgabe-Moment ruft z. B. `finanzen.services.create_transaction_from_shopping_list()` auf, sobald eine `ShoppingList` als erledigt markiert wird; die Fairness-Anzeige ist eine reine Aggregations-Abfrage über bestehende `Transaction`-Datensätze pro `HouseholdMembership`, kein zusätzliches Datenmodell.
 
+### 2.1b Connection Engine — neues, zentrales Architekturprinzip für 4inOne
+
+**Kernidee (aus der Produktbeschreibung):** Eine Information wird einmal eingegeben und ist danach über mehrere Module hinweg sichtbar/verknüpft, ohne Duplizierung. Beispiel: Ein Reisebudget gehört gleichzeitig zu `reisen` UND `finanzen` — es wird nicht zweimal angelegt.
+
+**Technischer Ansatz:** Ein zentrales `Connection`-Model (in der neuen `connections`-App), das lose zwei beliebige Objekte über Content-Types verknüpft:
+
+```python
+class Connection(models.Model):
+    household = models.ForeignKey('core.Household', on_delete=models.CASCADE)
+    von_content_type = models.ForeignKey(ContentType, related_name='+', on_delete=models.CASCADE)
+    von_object_id = models.PositiveIntegerField()
+    von_objekt = GenericForeignKey('von_content_type', 'von_object_id')
+    zu_content_type = models.ForeignKey(ContentType, related_name='+', on_delete=models.CASCADE)
+    zu_object_id = models.PositiveIntegerField()
+    zu_objekt = GenericForeignKey('zu_content_type', 'zu_object_id')
+    beziehungstyp = models.CharField(max_length=50)  # z. B. "reise_budget", "reise_kalendereintrag"
+    erstellt_am = models.DateTimeField(auto_now_add=True)
+```
+
+**Warum Generic Relations statt fester Fremdschlüssel pro Modul-Paar:** Ohne dieses Muster bräuchte jede neue Verknüpfungsart (Reise↔Budget, Reise↔Kalender, Reise↔Haushaltsaufgabe, später vielleicht Haushalt↔Kalender) ein eigenes Zwischenmodell — bei vier Modulen mit wachsenden Kreuzverbindungen skaliert das schlecht. Eine generische Connection-Tabelle wächst nicht mit der Anzahl der Modul-Paare, sondern bleibt eine einzige Tabelle.
+
+**Sicherheitskonsequenz:** `HouseholdScopedPermission` muss beim Auflösen einer Connection **beide** verknüpften Objekte prüfen, nicht nur eines — sonst könnte über eine Connection ein Objekt aus einem fremden Haushalt sichtbar werden, selbst wenn das direkt angefragte Objekt korrekt zum eigenen Haushalt gehört.
+
+### 2.1c Automation Engine — Vorschläge vor Automatisierung (MVP-Abgrenzung)
+
+Aus der Produktbeschreibung: kontextbezogene Vorschläge ("Deine Reise beginnt in 5 Tagen, Packliste öffnen?"), die der Nutzer bestätigt oder ablehnt — **keine automatische Ausführung ohne Zustimmung im MVP.** Technisch: eine `Suggestion`-Tabelle (Regel-Trigger, kein LLM-Aufruf, konsistent mit dem bereits an anderer Stelle festgelegten "keine eingebaute KI"-Prinzip aus dem Analysen-Insights-Ansatz), die bei bestimmten Ereignissen (Reise angelegt, Reise-Startdatum nähert sich) einen Vorschlag-Datensatz erzeugt, den das Frontend anzeigt. **Echte Automatisierungen (mehrstufige automatische Aktionsketten) sind ausdrücklich Post-MVP** — die Produktbeschreibung selbst sagt "Automatisierungen sollen transparent und jederzeit deaktivierbar sein", was ein eigenes Regelwerk und eine eigene Sicherheitsprüfung braucht, nicht im MVP-Rahmen.
+
+### 2.1d Notification Engine
+
+Baut auf dem bereits vorhandenen `core`-App-Notifications-Grundgerüst auf, erweitert um Trigger aus der Automation Engine (2.1c). Kein neues Architekturprinzip, sondern eine Erweiterung des Bestehenden.
+
+### 2.1e Granulare Berechtigungen (Sharing & Permissions) — Erweiterung des bestehenden Rollenmodells
+
+Die Produktbeschreibung verlangt granulare, pro-Bereich vergebbare Rechte (Beispiel: "Kind" hat keinen Finanzen-Zugriff, aber Organisation bearbeiten). Das bestehende `HouseholdMembership.role`-Feld (ADMIN/MEMBER/CHILD_ACCOUNT) reicht dafür NICHT aus — es ist eine einzige Rolle pro Person, keine Pro-Modul-Matrix. Erweiterung nötig:
+
+```python
+class ModulBerechtigung(models.Model):
+    membership = models.ForeignKey('core.HouseholdMembership', on_delete=models.CASCADE)
+    modul = models.CharField(max_length=20, choices=[('finanzen','Finanzen'),('haushalt','Haushalt'),('organisation','Organisation'),('reisen','Reisen')])
+    stufe = models.CharField(max_length=20, choices=[('kein_zugriff','Kein Zugriff'),('ansehen','Ansehen'),('bearbeiten','Bearbeiten')])
+```
+`HouseholdScopedPermission` muss um eine zweite Prüfschicht erweitert werden: nicht nur "gehört zum Haushalt", sondern zusätzlich "hat für dieses Modul mindestens Ansehen/Bearbeiten-Rechte". Das ist eine **echte, nicht triviale Erweiterung** der bestehenden Sicherheitsarchitektur, kein kosmetischer Zusatz — verdient eigene, gründliche Tests (siehe Sicherheits-Anwendungsfall-Muster aus 3.9).
+
+**Lücke im `ModulBerechtigung`-Modell, beim Integrieren der Produktbeschreibung entdeckt — objektbezogene statt modulweite Freigabe:** Die Produktbeschreibung nennt das Beispiel "Freund: Nur Zugriff auf eine gemeinsame Reise." `ModulBerechtigung` regelt Zugriff pro **Modul** (ganz Reisen ja/nein), nicht pro **einzelnem Datensatz** (nur genau diese eine Reise, nicht alle Reisen des Haushalts). Das ist ein struktureller Unterschied — ein "Freund" ist außerdem gar kein vollwertiges `HouseholdMembership`-Mitglied, sondern hätte nur punktuellen Zugriff auf ein einzelnes Reise-Objekt, ohne dem Haushalt selbst beizutreten. **Benötigte Erweiterung, noch nicht im Detail ausgearbeitet:**
+
+```python
+class ObjektFreigabe(models.Model):
+    # Gibt einer Person punktuellen Zugriff auf EIN Objekt, unabhängig von
+    # Haushaltsmitgliedschaft — z. B. "Freund X darf Reise Y ansehen"
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    objekt = GenericForeignKey('content_type', 'object_id')
+    stufe = models.CharField(max_length=20, choices=[('ansehen','Ansehen'),('bearbeiten','Bearbeiten')])
+```
+Nutzt dasselbe Generic-Relation-Muster wie die Connection Engine (2.1b) — bewusst konsistent, nicht zwei unterschiedliche Verknüpfungsansätze im selben System. `HouseholdScopedPermission` bräuchte einen dritten Prüfpfad: "gehört nicht zum Haushalt, aber hat eine explizite `ObjektFreigabe` für genau dieses Objekt". **Als offener Punkt vermerkt (Abschnitt 6), nicht für den MVP-Umfang der vier Kernmodule — relevant erst, wenn "Familie & Freunde" als eigener Bereich ausgearbeitet wird.**
+
 **Randfall Solo-Haushalt (neu, beim Erstellen der Verifikations-Checkliste entdeckt):** Die Fairness-Anzeige setzt mindestens zwei aktive `HouseholdMembership`-Einträge voraus, um überhaupt eine sinnvolle Aussage zu treffen. Bei genau einem Mitglied (`HouseholdMembership.objects.filter(household=household).count() < 2`) zeigt sie zwangsläufig 100 %/0 % oder müsste einen Sonderfall abfangen — beides verwirrend statt hilfreich. **Regel:** Die Fairness-Sektion wird im Frontend komplett ausgeblendet, solange der Haushalt weniger als zwei Mitglieder hat, nicht mit einem Platzhalterwert gefüllt. Das Backend muss diese Zahl trotzdem mitliefern (z. B. als `member_count` im API-Response), damit das Frontend die Entscheidung treffen kann, ohne einen zusätzlichen Request zu brauchen.
+
+**Dieselbe Bedingung, zweite Anwendung — Personen-Zuordnung bei Transaktionen:** In der Übersicht zeigt jede Transaktionszeile zusätzlich zur Kategorie, WER sie eingetragen hat (`created_by`, das Feld existiert bereits für die Fairness-Berechnung — kein neues Backend-Feld nötig). **Regel, identisch zur Fairness-Bedingung:** Bei `member_count < 2` wird die Personen-Angabe weggelassen ("Haushalt" statt "Haushalt · Anna", redundant bei nur einer Person). Ab `member_count >= 2` wird sie angezeigt ("Haushalt · Jonas"). Beide Regeln (Fairness-Sichtbarkeit UND Personen-Anzeige bei Transaktionen) sollten im Frontend auf dieselbe `member_count`-Prüfung zurückgreifen, nicht zwei unabhängige Bedingungen — sonst könnten sie bei einem Bug auseinanderlaufen (z. B. Fairness korrekt ausgeblendet, Personen-Tag versehentlich trotzdem sichtbar).
 
 ### 2.2 PostgreSQL — die wichtigste technische Festlegung dieses Dokuments
 - **Lokale Entwicklung (nur du):** SQLite ist in Ordnung.
@@ -139,30 +200,14 @@ class Household(models.Model):
     # Einkommen" ein — siehe Gesamtkonzept 5.3.
 ```
 
-**Neu für Einkommen/Analyse (Gesamtkonzept 5.3):** `HouseholdMembership.monthly_income`, `RecurringDeduction`, `Household.monthly_buffer`. Immer live berechnet, nie zwischengespeichert — an EINER Stelle (`finanzen/services.py`), die `OverviewView` und `AnalysenView` gemeinsam nutzen, damit beide Tabs nicht auseinanderlaufen können:
+**Neu für Einkommen/Analyse (Gesamtkonzept 5.3):** `HouseholdMembership.monthly_income`, `RecurringDeduction`, `Household.monthly_buffer`.
 
-```
-Kategorie "ausgegeben" (Übersicht) =
-    SUM(Transaction.amount dieser Kategorie im laufenden Monat, nicht gelöscht)
-  + SUM(RecurringDeduction.amount dieser Kategorie, active=True)
+**Korrektur — beide Berechnungen waren zunächst unverbunden, jetzt zusammengeführt:** Ursprünglich zog "Verfügbares Einkommen" nur feste Abzüge ab, ohne einzeln erfasste Transaktionen zu berücksichtigen — das führte dazu, dass eine erfasste Ausgabe das verfügbare Einkommen gar nicht verändert hätte, was keinen Sinn ergibt. Korrigierte Formeln:
 
-Budget-Kopf (Übersicht), aus den Kategorien darunter berechnet:
-    ausgegeben = SUM("ausgegeben" aller Kategorien)
-    ziel       = SUM(Category.monthly_goal aller Kategorien, wo gesetzt)
-    uebrig     = ziel − ausgegeben              (kann negativ sein)
-    prozent    = ausgegeben / ziel × 100        (0 falls ziel = 0, kann > 100 sein)
-    Beschriftung: "X % ausgegeben" — nie "verplant" (Begriff aus dem verworfenen Envelope-Konzept)
+- **Kategorie "ausgegeben"** (Übersicht) = `SUM(Transaction.amount dieser Kategorie im laufenden Monat) + SUM(RecurringDeduction.amount dieser Kategorie, wo active=True)` — feste Abzüge zählen automatisch als "ausgegeben", ohne manuell als Transaktion erfasst zu werden.
+- **"Verfügbares Einkommen"** (Analysen) = `SUM(monthly_income aller Mitglieder) − SUM(RecurringDeduction.amount wo active=True) − SUM(Transaction.amount aller Kategorien im laufenden Monat) − monthly_buffer`
 
-Verfügbares Einkommen (Analysen) =
-    SUM(monthly_income aller Mitglieder)
-  − SUM(RecurringDeduction.amount wo active=True)
-  − SUM(ALLE Transaction.amount des laufenden Monats)
-  − Household.monthly_buffer
-```
-
-Ein fester Abzug wird NIE zusätzlich als Transaktion erfasst — sonst zählt er doppelt. Daraus folgt die Kontrollgleichung `Verfügbares Einkommen = Gesamteinkommen − Budget-Kopf(ausgegeben) − Puffer` — solange jeder Betrag eine Kategorie hat. Buchungen ohne Kategorie (nach dem Löschen einer Kategorie ist `Transaction.category` NULL; feste Abzüge dürfen kategorielos sein) erscheinen in keiner Kategorie und zählen deshalb nicht im Budget-Kopf, wohl aber im Verfügbaren Einkommen. Der laufende Monat ist `[1. dieses Monats, 1. des Folgemonats)`, in die Zukunft datierte Buchungen zählen also noch nicht.
-
-**Beispielwerte** (so auch in `finanzen/tests/test_monthly_formulas.py` geprüft): Einkommen 3.000 + 2.200 = 5.200 · aktive Abzüge Miete 900 + Versicherung 65 (beide „Fixkosten"; ein pausiertes Abo über 50 zählt nirgends) · Transaktionen 186 + 74 („Haushalt") + 68,50 („Sonstiges") = 328,50 · Puffer 300. Ergebnis: Fixkosten ausgegeben 965 · Haushalt 260 · Sonstiges 68,50 · Budget-Kopf 1.293,50 · **Verfügbares Einkommen = 5.200 − 965 − 328,50 − 300 = 3.606,50**. Kommt eine Ausgabe über 30 € in „Sonstiges" dazu, steigt „Sonstiges" auf 98,50 und das Verfügbare Einkommen sinkt auf 3.576,50 — beide Ansichten ändern sich gemeinsam.
+Beide Werte immer live berechnet, nie zwischengespeichert. **Wichtige Konsequenz:** Feste Kosten wie Miete gehören ausschließlich in `RecurringDeduction`, nicht zusätzlich als manuelle `Transaction` — sonst würden sie doppelt gezählt (einmal als fester Abzug, einmal als Transaktion). Das widerspricht einem früheren Mockup, in dem "Miete" fälschlich als einzelne Transaktion dargestellt wurde — das war ein Konzeptfehler, korrigiert.
 
 **Datenschutz zwischen Haushaltsmitgliedern (neue Erweiterung von `HouseholdScopedPermission`):** `monthly_income` ist eine Ausnahme von der sonstigen "alle Haushaltsmitglieder sehen alle Haushaltsdaten"-Regel — ein API-Response darf das `monthly_income`-Feld anderer Mitglieder NIEMALS an einen anfragenden Nutzer ausliefern, nur die eigene Zahl und die bereits verrechnete Haushalts-Gesamtsumme. Das ist eine gezielte Feldfilterung im Serializer, nicht durch `HouseholdScopedPermission` allein abgedeckt (die prüft nur Haushalts-Zugehörigkeit, nicht Feld-Sichtbarkeit innerhalb desselben Haushalts).
 

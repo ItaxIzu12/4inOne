@@ -1,15 +1,81 @@
-# Gesamtkonzept: All-in-One-Lebensmanagement-App
-## Finanzen · Organisation · Haushalt in einer App
+# Gesamtkonzept: 4inOne
+## Finanzen · Haushalt · Organisation · Reisen — dein Alltag, alles verbunden.
 
-*Version 2 — ergänzt um aktuelle Marktzahlen (Kundenakquisekosten), konkrete Finanz-Differenzierungsfeatures, eine realistische Kundengewinnungsstrategie und eine schriftliche Liste festgelegter Grundsatzentscheidungen.*
+*Version 3 — bewusste Umbenennung und Umfang-Erweiterung von "Kompass" (3 Module) zu "4inOne" (4 gleichrangige Module inkl. Reisen), nach expliziter Entscheidung trotz vorheriger Bedenken zur Scope-Ausweitung. Diese Entscheidung wird hier dokumentiert, nicht erneut infrage gestellt — die vorherige Zurückhaltung bei "Reisen als eigenständiges Modul" ist damit bewusst aufgehoben, siehe Abschnitt "Entscheidungen, die nicht mehr offen sind".*
 
 ---
 
 ## 1. Executive Summary
 
-Die Idee: eine zentrale App, die Menschen von mehreren Logins und fragmentierten Einzel-Apps befreit, indem sie Finanzen, Organisation und Haushalt bündelt – barrierefrei, für Jung und Alt gleichermaßen nutzbar. Dieses Konzept liefert die Marktanalyse, die Produktstruktur, alle rechtlichen "Stolperfallen" sowie eine realistische Roadmap. Die technische Umsetzung steht separat in `Architektur.md`.
+Die Idee: eine zentrale Plattform, die Menschen von mehreren Logins und fragmentierten Einzel-Apps befreit, indem sie **vier** Lebensbereiche bündelt — Finanzen, Haushalt, Organisation, Reisen — barrierefrei, für Jung und Alt gleichermaßen nutzbar. Dieses Konzept liefert die Marktanalyse, die Produktstruktur, alle rechtlichen "Stolperfallen" sowie eine realistische Roadmap. Die technische Umsetzung steht separat in `Architektur.md`.
 
-**Kernaussage:** Der größte Erfolgsfaktor ist nicht die Anzahl der Features, sondern wie tief die drei Bereiche wirklich integriert sind. Bloßes Nebeneinanderstellen von drei Mini-Apps bringt keinen Mehrwert gegenüber drei guten Einzel-Apps – die Verknüpfung ist der eigentliche USP.
+**Kernaussage, jetzt präzisiert als Leitgedanke:** *"Eine Information. Einmal eingeben. Überall sinnvoll verbunden."* Der größte Erfolgsfaktor ist nicht die Anzahl der Features, sondern wie tief die vier Bereiche wirklich integriert sind — über eine explizite **Connection Engine** (siehe Architektur.md), nicht durch bloßes Nebeneinanderstellen von vier Mini-Apps.
+
+---
+
+## 1.1 Vision
+
+4inOne ist eine zentrale Plattform für die Organisation des persönlichen und gemeinsamen Alltags. Die Anwendung verbindet vier Lebensbereiche: **Finanzen · Haushalt · Organisation · Reisen**.
+
+Das Ziel besteht nicht darin, vier voneinander getrennte Anwendungen innerhalb einer Oberfläche anzubieten. Die einzelnen Bereiche sollen miteinander kommunizieren und Informationen gemeinsam verwenden. Eine Information soll möglichst nur einmal eingegeben werden müssen. 4inOne erkennt Zusammenhänge zwischen Terminen, Aufgaben, Budgets, Haushaltsaktivitäten und Reisen und kann daraus Verknüpfungen, Vorschläge und Automatisierungen erzeugen.
+
+## 1.2 Dashboard-Prinzip
+
+Das Dashboard ist die zentrale Startseite. Es soll dem Nutzer nicht möglichst viele Informationen gleichzeitig zeigen, sondern beantworten: **Was ist heute wichtig?** Es zeigt heutige Termine, wichtige Aufgaben, offene Haushaltsaufgaben, Budgetinformationen, bevorstehende Reisen, Erinnerungen, automatisch verbundene Inhalte und intelligente 4inOne-Vorschläge. Personalisiert, mit Unterscheidung zwischen relevanten und weniger wichtigen Daten.
+
+## 1.3 Modul: Finanzen
+
+Verwaltet persönliche oder gemeinsame Finanzen übersichtlich. Kernfunktionen: monatliche Budgets, Einnahmen, Ausgaben, Kategorien, Sparziele, wiederkehrende Kosten, gemeinsame Kosten, Finanzübersichten, Statistiken. Besonders stark mit anderen Bereichen verbunden — ein Reisebudget gehört gleichzeitig zu Reisen UND Finanzen, ohne doppelte Anlage. Die bereits ausgearbeiteten Differenzierungsfeatures (Einkauf-zu-Ausgabe-Moment, Fairness-Anzeige, Abo-Radar, Einkommens-/Analysen-Berechnung, KI-Export) bleiben vollständig gültig — siehe Abschnitte 5.1–5.4 weiter unten, jetzt als Teilmenge dieses größeren Finanzen-Moduls zu verstehen.
+
+## 1.4 Modul: Haushalt
+
+Organisiert Aufgaben und Routinen: Haushaltsaufgaben, wiederkehrende Aufgaben, Einkaufslisten, Verantwortlichkeiten, gemeinsame Aufgaben, Haushaltsmitglieder, Fälligkeiten, Erinnerungen. Aufgaben lassen sich einzelnen Personen zuordnen (z. B. Müll herausbringen, Wäsche waschen, Küche reinigen, Einkauf erledigen, Pflanzen gießen). Verbindet sich mit Terminen und Reisen — steht eine Reise bevor, kann 4inOne vorschlagen: *"Du bist nächste Woche nicht zu Hause. Möchtest du deine Haushaltsaufgaben verschieben?"*
+
+## 1.5 Modul: Organisation
+
+Bildet die zeitliche und organisatorische Grundlage: Kalender, Termine, Aufgaben, Erinnerungen, Notizen, gemeinsame Termine, persönliche Termine, Projekte. Eng mit allen anderen Bereichen verbunden — eine Reise kann automatisch Termine für Abflug, Rückflug, Check-in, Hotel und Aktivitäten erzeugen.
+
+## 1.6 Modul: Reisen
+
+Bündelt alle Informationen zu einer Reise an einem Ort: Reiseziel, Reisedatum, Teilnehmer, Reisebudget, Sparziel, Aufgaben, Packliste, Dokumente, Buchungen, Termine, Aktivitäten. Eine Reise ist kein isolierter Datensatz, sondern verbindet automatisch Informationen aus mehreren Bereichen.
+
+**Beispiel "Berlin Wochenende":** Reisen (Berlin, 16.–18. Mai) → Finanzen (Budget: 700 €) → Organisation (2 Termine) → Aufgaben (4 Aufgaben) → Haushalt (Aufgaben während der Abwesenheit anpassen).
+
+**Datenschutz-Hinweis (bereits in Architektur.md verankert):** Reisen bringt neue sensible Datenkategorien (Passnummern, Visadaten, Dokumente) mit vergleichbarer Sorgfaltspflicht wie Finanzdaten — dieselben Sicherheitsprinzipien (Verschlüsselung, HouseholdScopedPermission) gelten hier unverändert.
+
+## 1.7 Connections — das eigentliche Kernkonzept
+
+Connections verbinden Informationen unterschiedlicher Bereiche miteinander. Beispiel Japanreise: → Reise → Budget → Sparziel → Kalender → Aufgaben → Teilnehmer. Der Nutzer erkennt dadurch jederzeit, welche Informationen zusammenhängen. 4inOne soll sich dadurch nicht wie vier Apps anfühlen, sondern wie ein zusammenhängendes System. **Technische Umsetzung:** siehe Architektur.md, Abschnitt 2.1b (Connection Engine, generisches Verknüpfungsmodell).
+
+## 1.8 4inOne-Vorschläge
+
+Kontextbezogene Vorschläge, z. B.: *"Deine Berlin-Reise beginnt in fünf Tagen. Möchtest du deine Packliste öffnen?"* / *"Du hast morgen einen Arzttermin. Möchtest du eine Erinnerung zwei Stunden vorher?"* / *"Dein Urlaub beginnt am Montag. Drei Haushaltsaufgaben liegen während deiner Reise."* / *"Für dein Reiseziel fehlen noch 420 €. Möchtest du dein monatliches Sparziel anpassen?"* Der Nutzer behält immer die Kontrolle, ob ein Vorschlag übernommen wird — **keine Automatisierung ohne Zustimmung**, siehe Architektur.md 2.1c.
+
+## 1.9 Automatisierungen (Post-MVP)
+
+Später können aus Vorschlägen Automatisierungen entstehen — z. B. beim Anlegen einer Reise automatisch: Reisebudget erstellen, Packliste erzeugen, Reise im Kalender eintragen, Haushaltsaufgaben prüfen, Teilnehmer informieren. **Automatisierungen müssen transparent und jederzeit deaktivierbar sein** — diese Anforderung ist bereits in Architektur.md 2.1c als bindende MVP-Abgrenzung festgehalten, nicht nur als Absichtserklärung.
+
+## 1.10 Familie und gemeinsame Nutzung
+
+4inOne funktioniert sowohl allein als auch gemeinsam. Ein Nutzer kann andere Personen zu einem Haushalt oder zu bestimmten Bereichen einladen. Berechtigungen werden granular vergeben — technisch bereits als `ModulBerechtigung`-Erweiterung in Architektur.md 2.1e festgehalten. Konkrete Rollenbeispiele:
+
+| Rolle | Finanzen | Haushalt | Organisation | Reisen |
+|---|---|---|---|---|
+| Partner | Bearbeiten | Bearbeiten | Bearbeiten | Bearbeiten |
+| Kind | Kein Zugriff | Eingeschränkt | Bearbeiten | Ansehen |
+| Freund | — | — | — | Nur eine gemeinsame Reise |
+
+Die "Freund"-Zeile zeigt eine noch nicht abgedeckte Anforderung: Zugriff auf **einen einzelnen Datensatz** (eine bestimmte Reise), nicht auf ein ganzes Modul — das bestehende `ModulBerechtigung`-Modell (Zugriff pro Modul) reicht dafür nicht aus, es braucht zusätzlich objektbezogene Freigaben (eine Connection zwischen Person und einzelnem Reise-Datensatz, nicht dem ganzen Haushalt). **Offener Punkt für die technische Detailplanung**, siehe Architektur.md "Offene Punkte".
+
+## 1.11 Designprinzip
+
+4inOne soll trotz großen Funktionsumfangs nicht kompliziert wirken: **Komplexe Funktionen – einfache Oberfläche.** Die Oberfläche soll ruhig, freundlich, modern, verständlich, großzügig und barrierearm sein. Farben dienen primär der Orientierung: Grün (Finanzen), Rosa (Haushalt), Lila (Organisation), Blau (Reisen). Dekorationen, Illustrationen und verspielte Elemente werden sparsam eingesetzt — siehe `design_system.md` für die technische Umsetzung dieses Prinzips.
+
+## 1.12 Produktprinzip
+
+Bei jeder neuen Funktion wird geprüft: **Mit welchem anderen Bereich kann diese Funktion sinnvoll verbunden werden?** 4inOne soll keine Sammlung einzelner Funktionen werden — die Verbindung zwischen den Lebensbereichen ist das wichtigste Alleinstellungsmerkmal, nicht die Anzahl der Features selbst.
+
+**Leitgedanke, verbindlich für jede künftige Entscheidung:** *Eine Information. Einmal eingeben. Überall sinnvoll verbunden.*
 
 ---
 
@@ -205,9 +271,12 @@ Diese Liste existiert, damit Grundsatzfragen nicht wiederholt neu aufgerollt wer
 | Datenbank (lokal) | SQLite, ausschließlich Solo-Entwicklung | ✅ Endgültig |
 | Datenbank (Mehrbenutzer) | PostgreSQL, ab dem ersten Mehrbenutzerzugriff verpflichtend | ✅ Endgültig |
 | Repo-Struktur | Ein Repo mit `frontend/`/`backend/`-Trennung jetzt, spätere Aufteilung in zwei Repos möglich | ✅ Vorgehen festgelegt |
+| **Produktname** | **4inOne** (vormals "Kompass") | ✅ Umbenannt, Version 3 |
+| **Modulanzahl/-umfang** | **Vier gleichrangige Kernmodule: Finanzen, Haushalt, Organisation, Reisen** | ✅ Erweitert — Reisen von "später/Querschnittsthema" auf vollwertiges Kernmodul gehoben, bewusste Entscheidung nach expliziter Abwägung |
 | Erstes vollständig auszubauendes Modul | Finanzen | ✅ Aktuell in Bearbeitung |
 | **Aktueller Baufokus (Stand jetzt)** | **Login/Registrieren komplett mit Django, Token-Auth (JWT), allen Sicherheitsmaßnahmen aus Architektur.md 3.1 — siehe `prompt-login-register-complete.txt`** | 🔧 In Umsetzung |
-| Fitness-Modul | Nicht Teil des Produkts | ✅ Endgültig gestrichen, nicht "später vielleicht" |
+| Fitness-Modul | Weiterhin nicht Teil des Produkts | ✅ Endgültig gestrichen, nicht "später vielleicht" — diese Entscheidung bleibt von der Reisen-Erweiterung unberührt |
+| **Farbschema** | Grün (Finanzen) · Rosa (Haushalt) · Lila (Organisation) · Blau (Reisen), Farben primär zur Orientierung zwischen Modulen | ✅ Neu festgelegt, ersetzt Aurora-Trust-Violett/Amber — siehe design_system.md |
 
 ---
 
@@ -215,7 +284,7 @@ Diese Liste existiert, damit Grundsatzfragen nicht wiederholt neu aufgerollt wer
 
 1. **Phase 0 – Fundament (4–6 Wochen):** Django + Postgres + Angular Grundgerüst, Auth/MFA, Design-System mit Barrierefreiheits-Basis.
 2. **Phase 1 – Ein starkes Modul (6–10 Wochen):** Login/Registrierung vollständig (aktueller Stand), danach Finanzen komplett inkl. der Differenzierungsfeatures aus 5.1.
-3. **Phase 2 – Drittes Modul (6–10 Wochen):** Haushalt, dann Organisation.
+3. **Phase 2 – Drittes und viertes Modul (10–16 Wochen):** Haushalt, dann Organisation, dann Reisen (inkl. Connection Engine zwischen allen vier Modulen — siehe Architektur.md 2.1b).
 4. **Phase 3 – Barrierefreiheits-Audit.**
 5. **Phase 4 – Beta mit echten Nutzern.**
 6. **Phase 5 – Banking-API-Anbindung** erst, wenn Budget/Nutzerbasis es tragen.
@@ -250,10 +319,9 @@ Angesichts der ~1.450-$-CAC-Realität aus Abschnitt 2.5 ist bezahlte Werbung als
 
 ## 12. Mögliche spätere Module (Backlog, ausdrücklich nicht MVP)
 
-**Hinweis zum Umgang mit diesem Abschnitt:** Sobald Finanzen, Haushalt und Organisation als Kernmodule fertig und stabil live sind, ist es ausdrücklich vorgesehen, ein bis zwei weitere Ideen aus diesem Backlog (oder neu hinzukommende) auszuwählen und umzusetzen — nicht vorher. Neue Ideen, die währenddessen auftauchen, werden hier dokumentiert, nicht sofort verfolgt, damit der aktuelle Fokus (siehe Abschnitt 9) nicht wiederholt unterbrochen wird.
+**Hinweis zum Umgang mit diesem Abschnitt:** Sobald Finanzen, Haushalt, Organisation und Reisen als Kernmodule fertig und stabil live sind, ist es ausdrücklich vorgesehen, ein bis zwei weitere Ideen aus diesem Backlog (oder neu hinzukommende) auszuwählen und umzusetzen — nicht vorher. Neue Ideen, die währenddessen auftauchen, werden hier dokumentiert, nicht sofort verfolgt, damit der aktuelle Fokus (siehe Abschnitt 9) nicht wiederholt unterbrochen wird. **Reisen ist seit Version 3 kein Backlog-Punkt mehr, sondern eigenes Kernmodul — siehe Abschnitt 1.6.**
 
-- **Reisen/Flüge:** Kein eigenständiges Organisations-Feature, sondern ein Querschnittsthema (Termine → Organisation, Kosten → Finanzen, Packliste → haushaltsähnliche Struktur, Dokumente → neues Konzept). Würde als eigenes Django-App-Modul (`reisen/`) neben den bestehenden drei entstehen, ohne diese umzubauen. Bringt neue sensible Datenkategorien (Passnummern, Visadaten) mit vergleichbarer Sorgfaltspflicht wie Finanzdaten. Bewusst zurückgestellt, bis die drei Kernmodule live und stabil sind.
-- **Pflegekoordination für Angehörige**, **Vereinsverwaltung**, **B2B-Barrierefreiheits-Audit-Tool:** Als alternative Produktideen diskutiert und bewusst nicht verfolgt — Kompass bleibt der aktuelle Fokus, diese Ideen sind hier nur dokumentiert, damit sie nicht wiederholt neu erwogen werden müssen.
+- **Pflegekoordination für Angehörige**, **Vereinsverwaltung**, **B2B-Barrierefreiheits-Audit-Tool:** Als alternative Produktideen diskutiert und bewusst nicht verfolgt — 4inOne bleibt der aktuelle Fokus, diese Ideen sind hier nur dokumentiert, damit sie nicht wiederholt neu erwogen werden müssen.
 - **"Für KI-Analyse exportieren" statt eigener Prompt-Bibliothek (überarbeitet):** Die ursprünglich erwogene Idee einer eingebauten KI-Prompt-Vorlagen-Bibliothek (kuratierte + selbst gespeicherte Prompts) wurde nach einer Marktbeobachtung überarbeitet und ersetzt. Grund: Eine echte KI-Anbindung würde eine neue, laufende technische Abhängigkeit schaffen (API-Kosten pro Anfrage, zusätzliche Latenz, neue Sicherheitsfläche durch Prompt-Injection), die in keiner bisherigen Kosten-/Architekturplanung vorgesehen ist. Die Finanz-App "Era" (Marktbeobachtung 2026) verfolgt einen leichteren Ansatz: keine eingebaute KI, stattdessen werden die eigenen Finanzdaten für die freie KI-Wahl des Nutzers freigegeben ("deine KI kommt zu dir, nicht umgekehrt"). Übertragen auf Kompass: ein einfacher **"Für KI-Analyse exportieren"-Button** in Finanzen/Haushalt, der die eigenen Daten des Nutzers (Kategorien, Ausgabenverlauf, offene Haushaltsaufgaben) plus einen mitgelieferten, gut formulierten Beispiel-Prompt bereitstellt — der Nutzer fügt beides selbst in sein bevorzugtes KI-Werkzeug (Claude, ChatGPT o. ä.) ein. Keine laufenden API-Kosten für Kompass, kein neues Sicherheitsrisiko durch automatisierte KI-Aufrufe, aber der ursprünglich gewünschte Nutzen ("bessere, professionellere Prompts") bleibt erhalten. **Sicherheitshinweis unverändert relevant:** Der Export selbst enthält Finanzdaten und muss über `HouseholdScopedPermission` sowie das bestehende Export-Rate-Limit (Architektur.md, Abschnitt 3.9) abgesichert werden wie jeder andere Datenexport.
 - **n8n-Automatisierungs-Anbindung — ausgewählt als zweite Erweiterung nach den Kernmodulen (Entscheidung getroffen):** Idee, Kompass' API von außen mit n8n (Workflow-Automatisierungswerkzeug) zu verbinden, um eigene Automatisierungen zu bauen (z. B. automatischer Export bestimmter Finanzdaten, Benachrichtigungen bei Budgetüberschreitung an andere Dienste). Folgt demselben Grundprinzip wie der KI-Export-Ansatz oben: Kompass baut keine eigene Automatisierungs-Engine ein, sondern öffnet sich für externe Werkzeuge nach freier Wahl des Nutzers. **Technischer Haken, bereits identifiziert:** Das bestehende Auth-System (kurzlebiger Access-Token + `httpOnly`-Refresh-Cookie) ist für Browser-Sitzungen gebaut, nicht für dauerhaft laufende externe Dienste ohne Browser. Eine Umsetzung bräuchte ein separates **Personal-Access-Token-System** (langlebiger, gezielt einschränkbarer und jederzeit widerrufbarer API-Schlüssel, unabhängig vom normalen Passwort-Login) — ein eigenständiges Sicherheitsthema, das denselben sorgfältigen Prozess (erst Scope definieren, dann Sicherheitsmodell, dann Umsetzung) verdient wie jedes andere Modul. **Zusätzlich bestätigt (Konkurrenzbeobachtung 2026):** TimeTree — mit über 60 Mio. Nutzern einer der größten Wettbewerber in der Familien-Organizer-Kategorie — wurde in unabhängigen Vergleichen explizit der "Organizer"-Kategorie zugeordnet (manuelle Eingabe, kein proaktives Mitdenken), eine öffentlich nutzbare Automatisierungs-Schnittstelle für Werkzeuge wie n8n ist in keiner der recherchierten Quellen für TimeTree oder vergleichbare Apps dokumentiert — spricht dafür, dass eine offene API-Anbindung eine echte, von der etablierten Konkurrenz nicht abgedeckte Lücke wäre, nicht nur "auch noch nicht gemacht". Bewusst zurückgestellt, bis Kernmodule (Finanzen, Haushalt, Organisation) fertig und getestet sind — zusammen mit Reisen (siehe oben) die beiden gewählten Erweiterungen für danach.
 
