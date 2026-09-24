@@ -1,3 +1,4 @@
+import { AppIcon } from '../../shared/icons/app-icon';
 import { Brand } from '../../shared/brand/brand';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
@@ -39,7 +40,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [Brand, ReactiveFormsModule, RouterLink, IconArrowLeft],
+  imports: [AppIcon, Brand, ReactiveFormsModule, RouterLink, IconArrowLeft],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

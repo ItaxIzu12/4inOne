@@ -1,238 +1,262 @@
 :host {
   display: block;
+  color: #111344;
 }
 .dashboard {
-  max-width: 1440px;
+  max-width: 1500px;
   margin: auto;
-  padding: 36px 36px 40px;
+  padding: 32px 32px 40px;
 }
 .greeting {
   display: flex;
   justify-content: space-between;
-  gap: 24px;
   align-items: center;
-  margin-bottom: 12px;
+  gap: 24px;
+  margin-bottom: 10px;
 }
 .greeting h1 {
-  font-size: 38px;
-  letter-spacing: -1.3px;
-  line-height: 1.2;
-  color: #101d40;
+  font-size: clamp(32px, 3.5vw, 52px);
+  letter-spacing: -1.6px;
+  line-height: 1.15;
 }
 .greeting p {
-  font-size: 21px;
-  color: #596a83;
-  margin-top: 8px;
+  font-size: 26px;
+  color: #657294;
+  margin-top: 5px;
 }
 .greeting time {
-  font-size: 14px;
-  color: #62718b;
+  color: #596987;
+  font-size: 16px;
 }
 .preview-note {
-  font-size: 12px;
-  color: #596a83;
-  margin: 0 0 22px;
+  font-size: 11px;
+  color: #596987;
+  margin: 0 0 20px;
 }
 .dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
-  gap: 20px;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  gap: 18px;
+}
+.card,
+.suggestion,
+.domain {
+  border: 1px solid #ffffff;
+  border-radius: 24px;
+  box-shadow:
+    0 8px 18px #6477a014,
+    inset 0 1px 1px #fff;
 }
 .card {
-  background: #fff;
-  border: 1px solid #e7edf3;
-  border-radius: 19px;
-  padding: 24px;
-  box-shadow: 0 4px 20px #1a375003;
+  padding: 22px;
+  background: linear-gradient(145deg, #fff, #ffffffdf);
 }
 .card > header,
 .domain header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 .card h2,
-.suggestion h2,
-.linked h2 {
-  font-size: 20px;
-  color: #142143;
-  letter-spacing: -0.4px;
+.suggestion h2 {
+  font-size: 24px;
+  letter-spacing: -0.6px;
 }
 .card h2 {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 .text-button {
   border: 0;
   background: none;
-  color: #285eaa;
+  color: #155eae;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   min-height: 44px;
-  font-size: 13px;
   padding: 0;
+  font-size: 14px;
+  white-space: nowrap;
 }
 .text-button app-icon {
-  width: 18px;
+  width: 16px;
 }
 .today-list {
-  margin-top: 8px;
+  margin-top: 10px;
 }
 .today-row {
   display: flex;
   width: 100%;
-  align-items: center;
   gap: 16px;
+  align-items: center;
   text-align: left;
   border: 0;
-  border-top: 1px solid #edf0f5;
+  border-top: 1px solid #e9edf5;
   background: transparent;
-  padding: 17px 0;
-  min-height: 77px;
-  color: #142143;
+  padding: 13px 0;
+  min-height: 75px;
+  color: inherit;
 }
 .today-row:first-child {
   border: 0;
 }
 .icon-disc {
-  width: 46px;
-  height: 46px;
+  width: 50px;
+  height: 50px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 18px;
   flex-shrink: 0;
+  box-shadow:
+    0 5px 10px #6477a014,
+    inset 0 1px 2px #fff;
+}
+.icon-disc app-icon {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 3px 2px #35437120);
 }
 .finance {
-  background: #eff8f2;
-  color: #28774b;
+  background: linear-gradient(135deg, #f4fff8, #e3f8ee);
+  color: #13b759;
 }
 .household {
-  background: #fff0f5;
-  color: #ae4777;
+  background: linear-gradient(135deg, #fff7fb, #ffe2ef);
+  color: #ed4d93;
 }
 .organisation {
-  background: #f5f0fd;
-  color: #7950af;
+  background: linear-gradient(135deg, #faf6ff, #ece2fc);
+  color: #9145ed;
 }
 .travel {
-  background: #eef6ff;
-  color: #306db0;
+  background: linear-gradient(135deg, #f1faff, #dcefff);
+  color: #2889ef;
 }
 .family {
-  background: #fff3df;
-  color: #975b08;
+  background: linear-gradient(135deg, #fff9ed, #ffedd8);
+  color: #e99413;
 }
 .time {
-  font-size: 14px;
-  color: #617089;
+  font-size: 15px;
+  color: #647294;
   min-width: 44px;
+  font-variant-numeric: tabular-nums;
 }
 .item-copy {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
+  font-size: 15px;
 }
 .item-copy strong {
-  font-weight: 600;
+  font-weight: 650;
+}
+.item-copy small {
+  color: #647294;
+  font-size: 12px;
+  margin-top: 4px;
 }
 .chevron {
-  width: 17px;
-  color: #70819a;
-  flex-shrink: 0;
+  width: 16px;
+  height: 18px;
+  color: #6c7da0;
 }
 .connected {
-  background: #f2faf6;
-  border-color: #e0efe7;
+  background:
+    radial-gradient(ellipse at 90% 100%, #9fe1d0a6, transparent 55%),
+    radial-gradient(ellipse at 20% 0, #f6fff0, transparent 65%), #e3f7ef;
+  position: relative;
 }
 .connected h2 > app-icon {
-  color: #3c9662;
+  color: #18b66b;
+  width: 32px;
+  height: 32px;
 }
 .trip {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin: 24px 0;
-  background: #fff;
-  border-radius: 14px;
-  padding: 10px;
+  margin: 20px 0;
+  background: #ffffffed;
+  border-radius: 19px;
+  box-shadow: 0 6px 15px #4ca48c15;
 }
 .berlin {
-  width: 130px;
-  min-height: 98px;
-  background: linear-gradient(#dfedfa, #f7f1dd);
-  border-radius: 11px;
+  width: 43%;
+  min-height: 148px;
+  align-self: stretch;
+  border-radius: 19px;
+  overflow: hidden;
+  background: linear-gradient(#b7d9f4, #ffe4bd);
   display: grid;
   align-items: end;
-  flex-shrink: 0;
-  overflow: hidden;
 }
-.berlin svg {
+.berlin img {
   width: 100%;
+  height: 100%;
+  min-height: 148px;
+  object-fit: cover;
 }
 .trip-copy {
-  min-width: 0;
   flex: 1;
+  min-width: 0;
+  padding: 16px;
 }
 .trip h3 {
-  font-size: 18px;
-  color: #142143;
+  font-size: 22px;
+  letter-spacing: -0.6px;
 }
 .trip p {
-  font-size: 12px;
-  color: #68778f;
-  margin: 5px 0 14px;
+  font-size: 13px;
+  color: #5f6d8d;
+  margin: 8px 0 18px;
 }
 .trip-progress {
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
 }
 .trip-progress progress {
   flex: 1;
-  min-width: 70px;
+  min-width: 65px;
 }
 .trip-progress small {
   font-size: 11px;
-  color: #606e85;
+  color: #596987;
 }
 progress {
   appearance: none;
   border: 0;
   border-radius: 20px;
-  height: 8px;
+  height: 11px;
   width: 100%;
   overflow: hidden;
-  background: #e6edf2;
-  accent-color: #65b581;
+  background: #dfe7f2;
+  accent-color: #22c969;
 }
 progress::-webkit-progress-bar {
-  background: #e6edf2;
+  background: #dfe7f2;
 }
 progress::-webkit-progress-value {
-  background: #68bc89;
+  background: linear-gradient(#63e69b, #21c362);
   border-radius: 20px;
 }
 progress::-moz-progress-bar {
-  background: #68bc89;
+  background: #21c362;
+  border-radius: 20px;
 }
 .connections {
   display: flex;
-  gap: 20px;
+  gap: 24px;
   position: relative;
 }
 .connections:before {
   content: '';
   position: absolute;
-  top: -24px;
-  left: 15%;
-  right: 15%;
-  height: 48px;
-  border: 1px solid #c9dfd3;
-  border-bottom: 0;
+  inset: -20px 16% 50%;
+  border: 1px dashed #90bcb2;
+  border-top: 0;
 }
 .connections button {
   position: relative;
@@ -242,108 +266,170 @@ progress::-moz-progress-bar {
   flex-direction: column;
   gap: 10px;
   align-items: center;
-  border: 1px solid #e7efea;
-  border-radius: 13px;
-  background: #fff;
-  padding: 16px 8px;
-  color: #142143;
+  border: 1px solid #fff;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #fff, #f6fcfbdc);
+  padding: 14px 8px;
+  color: inherit;
   font-size: 14px;
+  box-shadow: 0 6px 14px #5d998318;
 }
-.connections button app-icon {
-  color: #348c5b;
+.connections button > app-icon {
+  width: 34px;
+  height: 34px;
+  color: #16b853;
+  filter: drop-shadow(0 4px 3px #28b96625);
 }
-.connections button:nth-child(2) app-icon {
-  color: #8250bd;
+.connections button:nth-child(2) > app-icon {
+  color: #9145ed;
 }
-.connections button:nth-child(3) app-icon {
-  color: #377cc2;
+.connections button:nth-child(3) > app-icon {
+  color: white;
+  background: linear-gradient(135deg, #68bcff, #1775ef);
+  border-radius: 8px;
+  padding: 5px;
 }
 .connection-check {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
-  background: #368554;
-  color: white;
+  right: 9px;
+  bottom: 10px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(#4adf91, #16b965);
+  color: #fff;
+  border: 1px solid #fff;
   border-radius: 50%;
-  font-size: 10px;
-  width: 15px;
-  height: 15px;
+  font-size: 12px;
+  width: 22px;
+  height: 22px;
 }
 .suggestion {
   grid-column: 1/-1;
   display: flex;
   align-items: center;
   gap: 22px;
-  padding: 22px 24px;
-  border-radius: 18px;
-  background: #eaf3ff;
+  padding: 20px 24px;
+  background: linear-gradient(110deg, #fff7f0, #e8f4ff 60%, #e0f0ff);
 }
 .suggestion > div {
   flex: 1;
 }
+.suggestion > .icon-disc {
+  width: 60px;
+  height: 64px;
+}
+.suggestion > .icon-disc app-icon {
+  width: 38px;
+  height: 38px;
+}
 .suggestion p,
 .linked p {
   font-size: 14px;
-  color: #5c6e89;
+  color: #596987;
   margin-top: 6px;
+  line-height: 1.5;
 }
 .primary {
-  background: #2864b5;
-  color: white;
-  border: 0;
-  min-height: 46px;
-  border-radius: 24px;
-  padding: 10px 21px;
+  background: linear-gradient(#4c9bff, #1470ee);
+  color: #fff;
+  border: 1px solid #6daaff;
+  min-height: 50px;
+  border-radius: 26px;
+  padding: 12px 22px;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 10px;
   white-space: nowrap;
+  box-shadow:
+    0 6px 12px #2775d82b,
+    inset 0 1px 2px #ffffff80;
 }
 .domains {
   grid-column: 1/-1;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 .domain {
-  padding: 22px 18px;
-  border: 1px solid #e7ecf2;
-  border-radius: 17px;
-  text-decoration: none;
+  padding: 20px 18px;
   min-width: 0;
+  min-height: 166px;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.18s,
+    box-shadow 0.18s;
+}
+.domain:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 20px #6477a027;
+}
+.domain header,
+.domain p,
+.domain progress {
+  position: relative;
+  z-index: 1;
 }
 .domain header {
   gap: 10px;
 }
+.domain header > app-icon:first-child {
+  width: 40px;
+  height: 40px;
+  filter: drop-shadow(0 4px 3px #67759630);
+}
 .domain h2 {
-  font-size: 15px;
-  color: #142143;
+  font-size: 17px;
+  color: #111344;
   flex: 1;
 }
 .domain p {
-  font-size: 13px;
-  color: #344768;
-  margin: 20px 0 10px;
+  font-size: 14px;
+  color: #23365b;
+  margin: 22px 0 12px;
 }
 .domain progress {
-  height: 7px;
+  height: 10px;
+}
+.domain-decoration {
+  position: absolute;
+  right: 5px;
+  bottom: -8px;
+  width: 80px;
+  height: 80px;
+  opacity: 0.13;
+  transform: rotate(12deg);
 }
 .linked {
   grid-column: 1/-1;
   display: flex;
-  gap: 18px;
+  gap: 22px;
   align-items: center;
+}
+.linked > app-icon {
+  width: 38px;
+  height: 38px;
 }
 .linked-domains {
   margin-left: auto;
   display: flex;
-  gap: 9px;
+  gap: 8px;
   align-items: center;
-  font-size: 12px;
+  font-size: 14px;
 }
 .linked-domains span:nth-child(odd) {
-  padding: 12px;
-  border-radius: 12px;
+  padding: 14px 18px;
+  border-radius: 17px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: #23365b;
+  border: 1px solid #fff;
+  box-shadow: 0 5px 12px #6477a015;
+}
+.linked-domains span:nth-child(even) {
+  display: none;
 }
 .mobile-copy {
   display: none;
@@ -388,49 +474,39 @@ a:focus-visible {
 }
 @media (max-width: 1250px) {
   .dashboard {
-    padding: 28px 24px;
-  }
-  .dashboard-grid {
-    gap: 16px;
+    padding: 26px 22px;
   }
   .card {
     padding: 18px;
   }
-  .trip {
-    flex-wrap: wrap;
-  }
-  .berlin {
-    width: 90px;
-    min-height: 75px;
-  }
-  .connections {
-    gap: 12px;
-  }
   .card h2 {
+    font-size: 20px;
+  }
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 16px;
+  }
+  .trip h3 {
     font-size: 18px;
   }
-  .linked-domains {
-    flex-wrap: wrap;
+  .trip-copy {
+    padding: 12px;
   }
-  .domains {
-    gap: 10px;
+  .connections {
+    gap: 14px;
   }
   .domain {
     padding: 18px 12px;
   }
-  .domain header {
-    flex-wrap: wrap;
+  .domain h2 {
+    font-size: 15px;
+  }
+  .domain header > app-icon:first-child {
+    width: 30px;
+    height: 30px;
   }
   .domain .chevron {
-    display: none;
-  }
-}
-@media (min-width: 761px) and (max-width: 1000px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-  .domains {
-    grid-template-columns: repeat(2, 1fr);
+    width: 12px;
   }
   .linked {
     flex-wrap: wrap;
@@ -438,165 +514,171 @@ a:focus-visible {
   .linked-domains {
     margin-left: 0;
   }
+}
+@media (min-width: 761px) and (max-width: 1050px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .domains {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .suggestion {
     flex-wrap: wrap;
   }
-  .trip {
-    flex-wrap: nowrap;
-  }
-  .connected {
-    min-height: 280px;
+  .greeting time {
+    display: none;
   }
 }
 @media (max-width: 760px) {
   .dashboard {
-    padding: 12px 20px 24px;
+    padding: 12px 18px 24px;
   }
   .greeting {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
   .greeting h1 {
-    font-size: 30px;
+    font-size: 32px;
     letter-spacing: -1px;
   }
   .greeting p {
-    font-size: 16px;
-    margin-top: 6px;
+    font-size: 20px;
+    margin-top: 4px;
   }
   .greeting time,
-  .desktop-copy,
-  .optional-row,
-  .time {
+  .desktop-copy {
     display: none;
   }
   .mobile-copy {
     display: block;
   }
   .preview-note {
-    font-size: 11px;
-    margin-bottom: 18px;
-    max-width: 38ch;
+    font-size: 10px;
+    line-height: 1.5;
+    margin-bottom: 16px;
   }
   .dashboard-grid {
     display: flex;
     flex-direction: column;
     gap: 16px;
   }
+  .card {
+    padding: 16px;
+    border-radius: 22px;
+  }
   .today {
     order: 1;
   }
-  .suggestion {
+  .connected {
     order: 2;
   }
-  .connected {
+  .domains {
     order: 3;
   }
-  .domains {
+  .suggestion {
     order: 4;
   }
   .linked {
     display: none;
   }
-  .card {
-    padding: 18px;
-    border-radius: 19px;
+  .card h2 {
+    font-size: 18px;
   }
-  .today > header .text-button {
-    font-size: 0;
-    gap: 0;
-  }
-  .today h2,
-  .connected h2 {
-    font-size: 17px;
+  .text-button {
+    font-size: 12px;
   }
   .today-row {
-    gap: 14px;
-    min-height: 82px;
-    padding: 15px 0;
-    border: 0;
-  }
-  .item-copy {
-    font-size: 15px;
-  }
-  .item-copy small {
-    font-size: 13px;
-    color: #64728c;
-    margin-top: 4px;
-  }
-  .today-row .chevron {
-    display: none;
+    gap: 10px;
+    min-height: 65px;
+    padding: 10px 0;
   }
   .icon-disc {
-    width: 44px;
-    height: 44px;
-  }
-  .suggestion {
-    padding: 19px;
-    display: grid;
-    grid-template-columns: 40px minmax(0, 1fr);
-    gap: 10px 14px;
-  }
-  .suggestion h2 {
-    font-size: 16px;
-  }
-  .suggestion p {
-    font-size: 13px;
-    line-height: 1.5;
-  }
-  .suggestion .primary {
-    grid-column: 2;
-    justify-self: end;
-    font-size: 13px;
-    min-height: 44px;
-    padding: 10px 15px;
-  }
-  .suggestion .icon-disc {
-    align-self: start;
-    width: 40px;
+    width: 38px;
     height: 40px;
+    border-radius: 14px;
   }
-  .trip {
-    padding: 0;
-    margin: 16px 0 22px;
-    background: none;
-    flex-wrap: nowrap;
-    gap: 12px;
+  .icon-disc app-icon {
+    width: 26px;
+    height: 26px;
   }
-  .berlin {
-    width: 66px;
-    min-height: 50px;
+  .time {
+    font-size: 12px;
+    min-width: 35px;
   }
-  .trip h3 {
-    font-size: 16px;
+  .item-copy {
+    font-size: 13px;
   }
-  .trip p,
-  .trip-progress {
-    display: none;
-  }
-  .connections {
-    gap: 10px;
-  }
-  .connections:before {
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 0;
-    border-top: 1px solid #bcd5c8;
-  }
-  .connections button {
-    padding: 10px 7px;
-    min-height: 52px;
-    flex-direction: row;
-    justify-content: center;
-    gap: 6px;
+  .item-copy small {
     font-size: 11px;
   }
-  .connections app-icon {
-    width: 18px;
-    height: 18px;
+  .chevron {
+    width: 12px;
+  }
+  .connected h2 {
+    font-size: 15px;
+    gap: 8px;
+  }
+  .connected h2 > app-icon {
+    width: 25px;
+    height: 25px;
+  }
+  .trip {
+    display: block;
+    margin: 12px 0 14px;
+    background: #ffffffd9;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .berlin img {
+    min-height: 0;
+    height: 125px;
+    object-position: center 55%;
+  }
+  .berlin {
+    width: 100%;
+    height: 125px;
+    min-height: 0;
+    border-radius: 16px 16px 0 0;
+  }
+  .trip-copy {
+    padding: 14px;
+  }
+  .trip h3 {
+    font-size: 22px;
+  }
+  .trip p {
+    font-size: 11px;
+    margin: 5px 0 12px;
+  }
+  .trip-progress {
+    flex-wrap: nowrap;
+  }
+  .trip-progress small {
+    font-size: 10px;
+  }
+  .connections {
+    gap: 8px;
+  }
+  .connections:before {
+    display: none;
+  }
+  .connections button {
+    flex-direction: row;
+    gap: 5px;
+    padding: 12px 5px;
+    min-height: 54px;
+    font-size: 10px;
+    border-radius: 15px;
+  }
+  .connections button > app-icon {
+    width: 23px;
+    height: 23px;
   }
   .connection-check {
-    display: none;
+    position: static;
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
+    flex-shrink: 0;
   }
   .domains {
     display: grid;
@@ -604,28 +686,71 @@ a:focus-visible {
     gap: 12px;
   }
   .domain {
-    padding: 20px 13px;
-    min-height: 88px;
-    display: flex;
-    align-items: center;
+    padding: 16px 12px;
+    min-height: 125px;
+    border-radius: 20px;
   }
   .domain header {
-    width: 100%;
-    flex-wrap: nowrap;
-    gap: 9px;
+    gap: 7px;
   }
   .domain h2 {
     font-size: 13px;
   }
-  .domain header > app-icon {
-    width: 21px;
+  .domain header > app-icon:first-child {
+    width: 28px;
+    height: 28px;
   }
-  .domain .chevron {
-    display: block;
-    width: 13px;
+  .domain p {
+    font-size: 12px;
+    line-height: 1.5;
+    margin: 15px 0 8px;
   }
-  .domain p,
+  .domain-decoration {
+    width: 55px;
+    height: 55px;
+  }
   .domain progress {
-    display: none;
+    height: 8px;
   }
+  .suggestion {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 10px 12px;
+  }
+  .suggestion > .icon-disc {
+    width: 38px;
+    height: 44px;
+  }
+  .suggestion > .icon-disc app-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .suggestion h2 {
+    font-size: 16px;
+  }
+  .suggestion p {
+    font-size: 12px;
+  }
+  .suggestion .primary {
+    grid-column: 2;
+    justify-self: end;
+    font-size: 12px;
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .domain {
+    transition: none;
+  }
+}
+
+.linked-domains .finance app-icon {
+  color: #17af51;
+}
+.linked-domains .organisation app-icon {
+  color: #9145ed;
+}
+.linked-domains .household app-icon {
+  color: #ed4d93;
 }

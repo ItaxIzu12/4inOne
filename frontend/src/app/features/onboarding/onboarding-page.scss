@@ -410,3 +410,42 @@ button:disabled {
     font-size: 28px;
   }
 }
+
+/* Use the dashboard's domain icon palette and restrained depth. */
+.finanzen app-icon {
+  color: #13b759;
+}
+.haushalt app-icon {
+  color: #ed4d93;
+}
+.organisation app-icon {
+  color: #9145ed;
+}
+.reisen app-icon {
+  color: #2889ef;
+}
+.welcome-tile,
+.domain-options button {
+  box-shadow:
+    0 6px 14px #6477a014,
+    inset 0 1px 2px #fff;
+}
+.welcome-tile app-icon,
+.domain-options app-icon,
+.usage-options app-icon,
+.summary-domains app-icon {
+  filter: drop-shadow(0 3px 2px #67759625);
+}
+.secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.back-icon {
+  transform: rotate(180deg);
+}
+footer app-icon {
+  width: 20px;
+  height: 20px;
+}

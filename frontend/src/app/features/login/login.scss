@@ -303,3 +303,47 @@
     margin-bottom: 30px;
   }
 }
+
+.brand-orbits i {
+  display: grid;
+  place-items: center;
+  box-shadow:
+    0 8px 18px #6477a014,
+    inset 0 1px 2px #fff;
+}
+.brand-orbits app-icon {
+  width: 54px;
+  height: 54px;
+  filter: drop-shadow(0 4px 3px #67759630);
+}
+.brand-orbits i:nth-child(1),
+.mobile-domain-icons app-icon:nth-child(1) {
+  color: #13b759;
+}
+.brand-orbits i:nth-child(2),
+.mobile-domain-icons app-icon:nth-child(3) {
+  color: #9145ed;
+}
+.brand-orbits i:nth-child(3),
+.mobile-domain-icons app-icon:nth-child(2) {
+  color: #ed4d93;
+}
+.brand-orbits i:nth-child(4),
+.mobile-domain-icons app-icon:nth-child(4) {
+  color: #2889ef;
+}
+.mobile-domain-icons {
+  display: none;
+}
+@media (max-width: 760px) {
+  .mobile-domain-icons {
+    display: flex;
+    gap: 18px;
+    margin: 0 0 24px;
+  }
+  .mobile-domain-icons app-icon {
+    width: 30px;
+    height: 30px;
+    filter: drop-shadow(0 3px 2px #67759625);
+  }
+}

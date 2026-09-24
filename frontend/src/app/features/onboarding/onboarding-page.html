@@ -126,11 +126,13 @@
     }
     <footer>
       @if (step() > 1) {
-        <button class="secondary" (click)="move(step() - 1)" [disabled]="saving()">Zurück</button>
+        <button class="secondary" (click)="move(step() - 1)" [disabled]="saving()">
+          <app-icon class="back-icon" name="arrow" />Zurück
+        </button>
       }
       @if (step() < 4) {
         <button class="primary" (click)="next()">
-          {{ step() === 1 ? 'Los geht’s' : 'Weiter' }} <span aria-hidden="true">→</span>
+          {{ step() === 1 ? 'Los geht’s' : 'Weiter' }} <app-icon name="arrow" />
         </button>
       } @else {
         <button
@@ -139,7 +141,7 @@
           [disabled]="saving()"
           [attr.aria-busy]="saving()"
         >
-          {{ saving() ? 'Wird gespeichert …' : 'Zum Dashboard' }} <span aria-hidden="true">→</span>
+          {{ saving() ? 'Wird gespeichert …' : 'Zum Dashboard' }} <app-icon name="arrow" />
         </button>
       }
     </footer>

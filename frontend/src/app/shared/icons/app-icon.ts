@@ -30,24 +30,67 @@ let nextIconId = 0;
     stroke-linejoin="round"
     aria-hidden="true"
   >
-    <defs><linearGradient [id]="gradientId" x1="0" y1="0" x2="1" y2="1"><stop stop-color="white" stop-opacity=".38"/><stop offset=".45" stop-color="currentColor"/><stop offset="1" stop-color="currentColor" stop-opacity=".8"/></linearGradient></defs>
+    <defs>
+      <linearGradient [id]="gradientId" x1="0" y1="0" x2="1" y2="1">
+        <stop stop-color="white" stop-opacity=".38" />
+        <stop offset=".45" stop-color="currentColor" />
+        <stop offset="1" stop-color="currentColor" stop-opacity=".8" />
+      </linearGradient>
+    </defs>
     @switch (name()) {
       @case ('finance') {
-        <path d="M4 7V5Q4 3 7 3L19 2v5" fill="currentColor"/>
-        <rect x="3" y="6" width="19" height="15" rx="3" [attr.fill]="paint" stroke-width=".6"/>
-        <path d="M17 11h5v6h-5a3 3 0 0 1 0-6" fill="#d7f7cf" stroke-width=".8"/><circle cx="18" cy="14" r="1" fill="currentColor" stroke="none"/>
-        <path d="M6 8h12" stroke="white" stroke-opacity=".6" stroke-width="1"/>
+        <path d="M4 7V5Q4 3 7 3L19 2v5" fill="currentColor" />
+        <rect x="3" y="6" width="19" height="15" rx="3" [attr.fill]="paint" stroke-width=".6" />
+        <path d="M17 11h5v6h-5a3 3 0 0 1 0-6" fill="#d7f7cf" stroke-width=".8" />
+        <circle cx="18" cy="14" r="1" fill="currentColor" stroke="none" />
+        <path d="M6 8h12" stroke="white" stroke-opacity=".6" stroke-width="1" />
       }
-      @case ('household') { <path d="M2 10 12 2l10 8-2 3-2-2v10h-5v-7h-3v7H5V11l-2 2Z" [attr.fill]="paint" stroke-width=".5"/> }
-      @case ('home') { <path d="M2 10 12 2l10 8-2 3-2-2v10h-5v-7h-3v7H5V11l-2 2Z" [attr.fill]="paint" stroke-width=".5"/> }
+      @case ('household') {
+        <path
+          d="M2 10 12 2l10 8-2 3-2-2v10h-5v-7h-3v7H5V11l-2 2Z"
+          [attr.fill]="paint"
+          stroke-width=".5"
+        />
+      }
+      @case ('home') {
+        <path
+          d="M2 10 12 2l10 8-2 3-2-2v10h-5v-7h-3v7H5V11l-2 2Z"
+          [attr.fill]="paint"
+          stroke-width=".5"
+        />
+      }
       @case ('calendar') {
-        <rect x="3" y="5" width="18" height="17" rx="3" [attr.fill]="paint" stroke-width=".6"/>
-        <path d="M6 10h12v9H6Z" fill="#f6efff" stroke="none"/>
-        <path d="M8 2v5m8-5v5" stroke-width="2.4"/><path d="M8 13h2m4 0h2m-8 3h2m4 0h2" stroke-width="1.8"/>
+        <rect x="3" y="5" width="18" height="17" rx="3" [attr.fill]="paint" stroke-width=".6" />
+        <path d="M6 10h12v9H6Z" fill="#f6efff" stroke="none" />
+        <path d="M8 2v5m8-5v5" stroke-width="2.4" />
+        <path d="M8 13h2m4 0h2m-8 3h2m4 0h2" stroke-width="1.8" />
       }
-      @case ('travel') { <path d="m3 3 10 4 5-5q3-2 4 0t-1 4l-5 5 4 10-2 1-6-8-5 4v4l-2 1-1-5-4-2 2-2 4 1 4-5-9-5Z" [attr.fill]="paint" stroke-width=".4"/> }
-      @case ('bulb') { <path d="M8 16a8 8 0 1 1 8 0l-1 3H9Z" [attr.fill]="paint" stroke-width=".5"/><path d="M9 20h6m-5 2h4" stroke-width="2"/> }
-      @default { <path [attr.d]="paths[name()]" /> }
+      @case ('travel') {
+        <path
+          d="m3 3 10 4 5-5q3-2 4 0t-1 4l-5 5 4 10-2 1-6-8-5 4v4l-2 1-1-5-4-2 2-2 4 1 4-5-9-5Z"
+          [attr.fill]="paint"
+          stroke-width=".4"
+        />
+      }
+      @case ('people') {
+        <circle cx="9" cy="7" r="4" [attr.fill]="paint" stroke="none" />
+        <circle cx="18" cy="9" r="3" fill="currentColor" opacity=".7" stroke="none" />
+        <path
+          d="M1 21v-3a8 8 0 0 1 16 0v3ZM18 14q5 0 5 6v1h-4v-3Z"
+          [attr.fill]="paint"
+          stroke="none"
+        />
+      }
+      @case ('bars') {
+        <path d="M5 15v6m7-17v17m7-11v11" stroke-width="4" />
+      }
+      @case ('bulb') {
+        <path d="M8 16a8 8 0 1 1 8 0l-1 3H9Z" [attr.fill]="paint" stroke-width=".5" />
+        <path d="M9 20h6m-5 2h4" stroke-width="2" />
+      }
+      @default {
+        <path [attr.d]="paths[name()]" />
+      }
     }
   </svg>`,
   styles: `

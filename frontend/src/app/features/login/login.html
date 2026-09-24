@@ -3,7 +3,10 @@
     <a class="auth-brand__logo" routerLink="/" (click)="goHome()"> <app-brand /> </a>
     <h2 class="auth-brand__headline">Dein Alltag.<br />Alles verbunden.</h2>
     <p class="auth-brand__lede">Mehr Überblick. Mehr Raum für das, was dir wichtig ist.</p>
-    <div class="brand-orbits" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="brand-orbits" aria-hidden="true">
+      <i><app-icon name="finance" /></i><i><app-icon name="calendar" /></i
+      ><i><app-icon name="household" /></i><i><app-icon name="travel" /></i>
+    </div>
     <p class="auth-brand__trust">Finanzen · Haushalt · Organisation · Reisen</p>
   </aside>
 
@@ -24,6 +27,11 @@
         <span class="auth-panel__top-spacer" aria-hidden="true"></span>
       </div>
 
+      <div class="mobile-domain-icons" aria-hidden="true">
+        <app-icon name="finance" /><app-icon name="household" /><app-icon
+          name="calendar"
+        /><app-icon name="travel" />
+      </div>
       @if (mode() === 'login') {
         <div class="auth-intro">
           <h1>Willkommen zurück</h1>
@@ -151,12 +159,14 @@
             @if (submitting()) {
               <span class="spinner" aria-hidden="true"></span> Wird geprüft &hellip;
             } @else {
-              Anmelden
+              Anmelden <app-icon name="arrow" />
             }
           </button>
         </form>
         <div class="auth-divider">Neu bei 4inOne?</div>
-        <a class="secondary-button" routerLink="/registrieren">Konto erstellen</a>
+        <a class="secondary-button" routerLink="/registrieren"
+          >Konto erstellen <app-icon name="plus"
+        /></a>
         <p class="legal">
           <a routerLink="/datenschutz">Datenschutz</a> ·
           <a routerLink="/nutzungsbedingungen">Nutzungsbedingungen</a>
@@ -392,7 +402,7 @@
             @if (submitting()) {
               <span class="spinner" aria-hidden="true"></span> Wird angelegt &hellip;
             } @else {
-              Konto erstellen
+              Konto erstellen <app-icon name="arrow" />
             }
           </button>
         </form>

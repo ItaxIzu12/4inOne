@@ -256,12 +256,177 @@ input:focus-visible {
   left: 16px;
   top: 12px;
   z-index: 100;
-  transform: translateY(-150%);
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
   padding: 12px 18px;
   background: #fff;
   border: 2px solid #2864b5;
   border-radius: 10px;
 }
 .skip-link:focus {
-  transform: translateY(0);
+  clip-path: none;
+  width: auto;
+  height: auto;
+  overflow: visible;
+}
+
+/* Soft, floating surfaces shared by the dashboard and domain navigation. */
+:host {
+  --text: #111344;
+  background:
+    radial-gradient(ellipse at 70% 10%, #f9eefa80, transparent 40%),
+    radial-gradient(ellipse at 85% 65%, #d9f1ff90, transparent 50%),
+    radial-gradient(ellipse at 25% 90%, #ece5fb90, transparent 50%), #f2f8fd;
+}
+.shell {
+  grid-template-columns: 280px minmax(0, 1fr);
+  padding: 16px;
+  gap: 12px;
+}
+.sidebar {
+  top: 16px;
+  height: calc(100dvh - 32px);
+  border: 1px solid #fff;
+  border-radius: 25px;
+  background: #ffffffc9;
+  padding: 30px 18px;
+  box-shadow: 0 10px 26px #6a8bb50a;
+}
+.sidebar nav {
+  gap: 15px;
+}
+.sidebar nav a {
+  min-height: 62px;
+  border: 1px solid transparent;
+}
+.sidebar nav a.active {
+  background: linear-gradient(110deg, #deefff, #eaf6ff);
+  border-color: #fff;
+  box-shadow: 0 6px 12px #718ebb0c;
+}
+.sidebar nav app-icon {
+  width: 31px;
+  height: 31px;
+  filter: drop-shadow(0 3px 2px #6579a322);
+}
+.home {
+  color: #237eea;
+}
+.finance {
+  color: #17af51;
+}
+.household {
+  color: #eb4b92;
+}
+.calendar {
+  color: #9346ed;
+}
+.travel {
+  color: #2e8aef;
+}
+.nav-space {
+  height: 12px;
+  border-bottom: 1px solid #e9edf5;
+}
+.sidebar-note {
+  background: linear-gradient(140deg, #f1fff7, #fff, #ffeff8);
+  border: 1px solid #fff;
+  padding: 22px;
+  line-height: 1.6;
+}
+.topbar {
+  height: 84px;
+  padding: 12px 24px;
+  background: #ffffff8f;
+  border: 1px solid #fff;
+  border-radius: 26px;
+  box-shadow: 0 8px 20px #7590b515;
+}
+.search {
+  background: linear-gradient(120deg, #fff, #edf4ff);
+  border: 2px solid #fff;
+  box-shadow:
+    0 7px 14px #657fab20,
+    inset 0 1px 3px #b6cce41a;
+  min-height: 54px;
+  width: min(600px, 65%);
+}
+.avatar {
+  width: 44px;
+  height: 44px;
+  border: 2px solid #fff;
+  background: linear-gradient(145deg, #d2f3e2, #daf0fc);
+  box-shadow: 0 4px 9px #607eaa22;
+}
+.profile-button {
+  border-left: 1px solid #dae1ef;
+  padding-left: 20px;
+}
+@media (max-width: 1250px) {
+  .shell {
+    grid-template-columns: 224px minmax(0, 1fr);
+    gap: 4px;
+    padding: 12px;
+  }
+  .sidebar {
+    padding: 25px 12px;
+  }
+  .sidebar nav a {
+    gap: 12px;
+    padding: 10px;
+    font-size: 14px;
+  }
+  .sidebar nav app-icon {
+    width: 27px;
+    height: 27px;
+  }
+  .topbar {
+    padding: 12px 20px;
+  }
+}
+@media (max-width: 760px) {
+  .shell {
+    display: block;
+    padding: 0 0 calc(90px + env(safe-area-inset-bottom));
+  }
+  .topbar {
+    height: 82px;
+    padding: 16px 18px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .profile-button {
+    padding-left: 8px;
+  }
+  .avatar {
+    width: 38px;
+    height: 38px;
+  }
+  .mobile-nav {
+    background: #ffffffed;
+    backdrop-filter: blur(18px);
+    box-shadow: 0 -5px 20px #627ca00c;
+  }
+  .mobile-nav .active {
+    color: #164ed0;
+  }
+  .mobile-nav .add {
+    width: 56px;
+    height: 56px;
+    border: 1px solid #8cc4ff;
+    background: linear-gradient(135deg, #72c9ff, #2f82ef);
+    box-shadow:
+      0 5px 12px #2784e840,
+      inset 0 1px 3px #ffffffb0;
+    border-radius: 19px;
+  }
+  .mobile-nav .add app-icon {
+    width: 30px;
+    height: 30px;
+  }
 }

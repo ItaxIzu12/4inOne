@@ -129,3 +129,24 @@ Fachmodullogik implementiert.
 - `frontend/src/app/shared/brand/brand.ts`
 - `frontend/src/app/shared/icons/app-icon.ts`
 - `frontend/src/index.html`
+
+## Dashboard-Design nach den Referenzen (24.09.2026)
+
+Die vorhandenen Angular-Komponenten wurden weiterverwendet: schwebende Navigation,
+pastellfarbene Karten, dezente Verläufe und Schatten, ausgefüllte Bereichssymbole
+mit Flugzeug für Reisen. Auf Mobilgeräten erscheinen vier Tageseinträge mit
+Uhrzeiten, eine breite Reisevorschau mit Fortschritt und ein zweispaltiges
+Bereichsraster mit Kennzahlen. Entsprechend der neuesten mobilen Referenz stehen
+Reisevorschau und Bereiche vor dem weiterhin verfügbaren Vorschlag.
+
+Das generierte Berlin-Motiv liegt lokal unter
+`frontend/public/images/dashboard/berlin-sunset.jpg`. Es ist eine neue, mit imagegen
+erstellte Illustration im Fotostil; keine ausgeschnittene UI-Referenz und kein
+extern geladener Inhalt. Kontobilder werden nicht durch fremde Porträts ersetzt.
+Beispieldaten und lokale Packlisteninteraktionen bleiben als Vorschau gekennzeichnet.
+
+Validierung: 124 Frontend-Tests, 19 Browserprüfungen; nach den abschließenden
+Bild-/Symbolanpassungen erneut alle sieben Phase-1-Browserprüfungen erfolgreich.
+Dashboard visuell bei 390 und 1440 Pixeln geprüft; automatisierte Prüfungen auch
+bei 360 und 768 Pixeln, ohne horizontalen Überlauf oder erkannte WCAG-A/AA-Verstöße.
+Produktionsbuild erfolgreich. Bestehende Größenwarnung für `finanzen.scss` bleibt.

@@ -11,6 +11,9 @@ for (const width of [360, 390, 768, 1440]) {
     if (width < 761) {
       await expect(page.getByRole('button', { name: /Yoga/ })).toBeVisible();
       await expect(page.locator('.mobile-nav')).toBeVisible();
+      await expect(page.locator('.time')).toHaveCount(4);
+      await expect(page.locator('.domain p')).toHaveCount(4);
+      await expect(page.locator('.trip-progress')).toBeVisible();
     }
     await page.getByRole('button', { name: 'Zur Packliste' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -22,6 +25,8 @@ for (const width of [360, 390, 768, 1440]) {
       .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
       .analyze();
     expect(results.violations).toEqual([]);
+    await page.getByRole('heading', { name: 'Hallo Sophie!' }).click();
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: `test-results/dashboard-${width}.png`, fullPage: true });
   });
 }

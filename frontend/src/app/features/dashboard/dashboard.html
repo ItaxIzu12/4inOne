@@ -29,8 +29,7 @@
               ><span class="time">{{ item.time }}</span
               ><span class="item-copy"
                 ><strong class="desktop-copy">{{ item.title }}</strong
-                ><strong class="mobile-copy"
-                  >{{ item.mobile }}</strong
+                ><strong class="mobile-copy">{{ item.mobile }}</strong
                 ><small class="mobile-copy">{{
                   item.title === 'Arzttermin' || item.tone === 'household' ? item.note : ''
                 }}</small></span
@@ -52,15 +51,13 @@
         </header>
         <div class="trip">
           <div class="berlin" aria-hidden="true">
-            <svg viewBox="0 0 180 110" fill="none">
-              <path d="M0 90h180v20H0" fill="#dce7da" />
-              <path
-                d="M24 92h132M32 40h116l-9-9H42l-10 9Zm3 7h110v8H35Zm6 8v35m19-35v35m20-35v35m20-35v35m20-35v35m19-35v35"
-                stroke="#737e71"
-                stroke-width="7"
-              />
-              <path d="M78 28h26m-21-3 5-10 6 8 6-8" stroke="#5f766b" stroke-width="4" />
-            </svg>
+            <img
+              src="/images/dashboard/berlin-sunset.jpg"
+              alt=""
+              width="1536"
+              height="1024"
+              decoding="async"
+            />
           </div>
           <div class="trip-copy">
             <h3>Berlin Wochenende</h3>
@@ -104,7 +101,8 @@
               <h2>{{ domain.name }}</h2>
               <app-icon class="chevron" name="arrow" />
             </header>
-            <p>{{ domain.summary }}</p><app-icon class="domain-decoration" [name]="domain.icon" aria-hidden="true" />
+            <p>{{ domain.summary }}</p>
+            <app-icon class="domain-decoration" [name]="domain.icon" aria-hidden="true" />
             @if (domain.name === 'Finanzen') {
               <progress
                 value="2340"
@@ -122,8 +120,10 @@
           <p>Diese Bereiche arbeiten für dich zusammen.</p>
         </div>
         <div class="linked-domains">
-          <span class="finance"><app-icon name="finance" />Finanzen</span><span aria-hidden="true">↔</span
-          ><span class="organisation"><app-icon name="calendar" />Organisation</span><span aria-hidden="true">↔</span
+          <span class="finance"><app-icon name="finance" />Finanzen</span
+          ><span aria-hidden="true">↔</span
+          ><span class="organisation"><app-icon name="calendar" />Organisation</span
+          ><span aria-hidden="true">↔</span
           ><span class="household"><app-icon name="household" />Haushalt</span>
         </div>
       </section>
