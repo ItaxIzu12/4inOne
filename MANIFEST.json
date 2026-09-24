@@ -1,0 +1,23 @@
+{
+  "project": "4inOne",
+  "purpose": "Codex handoff blueprint",
+  "files": [
+    "AGENTS.md",
+    "CODEX_START_PROMPT.md",
+    "README_CODEX.md",
+    "docs/ARCHITECTURE.md",
+    "docs/AUTH_AND_PERMISSIONS.md",
+    "docs/CODEX_WORKFLOW.md",
+    "docs/COMPETITIVE_POSITIONING.md",
+    "docs/CONNECTION_ENGINE.md",
+    "docs/DATA_MODEL.md",
+    "docs/DECISIONS.md",
+    "docs/DESIGN_SYSTEM.md",
+    "docs/PRODUCT_REQUIREMENTS.md",
+    "docs/PRODUCT_VISION.md",
+    "docs/ROADMAP.md",
+    "docs/SECURITY.md",
+    "docs/references/mockup-mobile.png",
+    "docs/references/mockup-web.png"
+  ]
+}
