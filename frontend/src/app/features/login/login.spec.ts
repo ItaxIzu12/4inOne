@@ -13,20 +13,21 @@ function createLogin(mode: 'login' | 'register') {
 }
 
 describe('Login', () => {
-  it('validates access fields before progressing to household and privacy', () => {
+  it('shows a single registration form without asking for a household', () => {
     const fixture = createLogin('register');
     const c = fixture.componentInstance;
-    c['continueRegistration']();
-    expect(c['registerStep']()).toBe(1);
-    c['registerForm'].patchValue({name:'Anna',email:'anna@example.de',password:'Passwort123',confirmPassword:'Passwort123'});
-    c['continueRegistration'](); fixture.detectChanges();
-    expect(c['registerStep']()).toBe(2);
-    expect(fixture.nativeElement.querySelector('#register-household-name')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('#register-household-name')).toBeNull();
+    c['registerForm'].patchValue({
+      name: 'Anna',
+      email: 'anna@example.de',
+      password: 'Passwort123',
+      confirmPassword: 'Passwort123',
+    });
     expect(c['registerForm'].valid).toBe(false);
     c['registerForm'].controls.acceptPrivacy.setValue(true);
     expect(c['registerForm'].valid).toBe(true);
-    c['registerStep'].set(1); fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('#register-email').value).toBe('anna@example.de');
+    c['registerForm'].controls.confirmPassword.setValue('anders');
+    expect(c['registerForm'].valid).toBe(false);
   });
 
   beforeEach(async () => {
@@ -57,7 +58,6 @@ describe('Login', () => {
       email: 'mira@example.com',
       password: 'kurz1',
       confirmPassword: 'kurz1',
-      householdName: '',
       acceptPrivacy: true,
     });
     fixture.detectChanges();

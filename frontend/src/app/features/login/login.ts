@@ -1,4 +1,4 @@
-import { IllustrationHome } from '../../shared/icons/illustration-home';
+import { Brand } from '../../shared/brand/brand';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -12,7 +12,6 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ScrollService } from '../../core/scroll/scroll.service';
-import { LogoKompass } from '../../shared/icons/logo-kompass';
 import { IconArrowLeft } from '../../shared/icons/icon-arrow-left';
 
 type Mode = 'login' | 'register';
@@ -40,7 +39,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [IllustrationHome, ReactiveFormsModule, RouterLink, LogoKompass, IconArrowLeft],
+  imports: [Brand, ReactiveFormsModule, RouterLink, IconArrowLeft],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
@@ -54,19 +53,8 @@ export class Login {
   protected readonly mode = signal<Mode>(
     this.route.snapshot.data['mode'] === 'register' ? 'register' : 'login',
   );
-  protected readonly registerStep = signal(1);
-  protected continueRegistration(): void {
-    if (this.registerStep() === 2) {
-      this.submitRegister();
-      return;
-    }
-    const controls = this.registerForm.controls;
-    const fields = [controls.name, controls.email, controls.password, controls.confirmPassword];
-    fields.forEach((field) => field.markAsTouched());
-    if (fields.some((field) => field.invalid) || this.registerForm.hasError('mismatch')) return;
-    this.registerStep.set(2);
-  }
-
+  protected readonly mfaRequired = signal(false);
+  protected readonly mfaCode = signal('');
   protected readonly submitting = signal(false);
   protected readonly submitError = signal<string | null>(null);
   protected readonly showPassword = signal(false);
@@ -82,7 +70,7 @@ export class Login {
 
   protected readonly registerForm = this.fb.nonNullable.group(
     {
-      name: ['', [Validators.required, Validators.minLength(2)]],
+      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
       email: ['', [Validators.required, Validators.email]],
       password: [
         '',
@@ -93,9 +81,6 @@ export class Login {
         ],
       ],
       confirmPassword: ['', [Validators.required]],
-      // Bewusst kein Validators.required: leer -> Backend-Fallback
-      // ("Haushalt von {Vorname}"), siehe auth_views.py RegisterView.
-      householdName: [''],
       acceptPrivacy: [false, [Validators.requiredTrue]],
     },
     { validators: passwordsMatch },
@@ -148,7 +133,7 @@ export class Login {
    * wieder aus, statt dauerhaft stehen zu bleiben. */
   private scheduleErrorDismiss(): void {
     clearTimeout(this.errorDismissTimeout);
-    this.errorDismissTimeout = setTimeout(() => this.submitError.set(null), 5000);
+    // Errors remain visible until the user edits or retries.
   }
 
   protected goHome(): void {
@@ -173,6 +158,11 @@ export class Login {
   }
 
   protected submitLogin(): void {
+    if (this.submitting()) return;
+    if (this.mfaRequired() && !this.mfaCode().trim()) {
+      this.submitError.set('Bitte gib deinen Bestätigungscode ein.');
+      return;
+    }
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
@@ -181,8 +171,13 @@ export class Login {
     this.submitting.set(true);
     const { email, password, remember } = this.loginForm.getRawValue();
 
-    this.auth.login(email, password, remember).subscribe({
-      next: () => {
+    this.auth.login(email, password, remember, this.mfaCode()).subscribe({
+      next: (response) => {
+        if ('mfa_required' in response) {
+          this.submitting.set(false);
+          this.mfaRequired.set(true);
+          return;
+        }
         this.submitting.set(false);
         this.router.navigateByUrl('/app');
       },
@@ -203,24 +198,28 @@ export class Login {
   }
 
   protected submitRegister(): void {
+    if (this.submitting()) return;
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       return;
     }
     this.clearSubmitError();
     this.submitting.set(true);
-    const { name, email, password, householdName } = this.registerForm.getRawValue();
+    const { name, email, password, confirmPassword, acceptPrivacy } =
+      this.registerForm.getRawValue();
 
-    this.auth.register(name, email, password, householdName).subscribe({
-      next: () => {
-        this.submitting.set(false);
-        this.router.navigateByUrl('/app');
-      },
-      error: (err: HttpErrorResponse) => {
-        this.submitting.set(false);
-        this.applyRegisterFieldErrors(err);
-      },
-    });
+    this.auth
+      .register(name.trim(), email.trim(), password, confirmPassword, acceptPrivacy)
+      .subscribe({
+        next: () => {
+          this.submitting.set(false);
+          this.router.navigateByUrl('/app');
+        },
+        error: (err: HttpErrorResponse) => {
+          this.submitting.set(false);
+          this.applyRegisterFieldErrors(err);
+        },
+      });
   }
 
   private applyRegisterFieldErrors(err: HttpErrorResponse): void {
@@ -236,7 +235,7 @@ export class Login {
     // mappen, damit sie wie normale Formularfehler angezeigt werden.
     const body = err.error as Record<string, string[]> | undefined;
     let mapped = false;
-    this.registerStep.set(1);
+
     if (body?.['email']?.length) {
       this.registerForm.controls.email.setErrors({ backend: body['email'][0] });
       this.registerForm.controls.email.markAsTouched();
@@ -248,6 +247,17 @@ export class Login {
       mapped = true;
     }
 
+    for (const [key, control] of [
+      ['name', this.registerForm.controls.name],
+      ['confirm_password', this.registerForm.controls.confirmPassword],
+      ['accept_privacy', this.registerForm.controls.acceptPrivacy],
+    ] as const) {
+      if (body?.[key]?.length) {
+        control.setErrors({ backend: body[key][0] });
+        control.markAsTouched();
+        mapped = true;
+      }
+    }
     if (!mapped) {
       this.submitError.set('Registrierung ist fehlgeschlagen. Bitte versuche es erneut.');
     }

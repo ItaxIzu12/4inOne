@@ -1,6 +1,7 @@
 from django.urls import path
 
 from core.auth_views import (
+    CsrfTokenView,
     LoginView,
     LogoutView,
     PasswordResetConfirmView,
@@ -11,6 +12,7 @@ from core.auth_views import (
 from core.mfa_views import MfaSetupView, MfaVerifyView
 
 urlpatterns = [
+    path('csrf/', CsrfTokenView.as_view(), name='auth-csrf'),
     path('login/', LoginView.as_view(), name='auth-login'),
     path('register/', RegisterView.as_view(), name='auth-register'),
     path('refresh/', RefreshView.as_view(), name='auth-refresh'),

@@ -1,0 +1,147 @@
+<main class="onboarding">
+  <header class="brand-row">
+    <app-brand /><span aria-live="polite">{{ step() }} / 4</span>
+  </header>
+  <nav class="steps" aria-label="Einrichtungsschritte">
+    @for (stage of stages; track stage; let i = $index) {
+      <span [class.done]="step() >= i + 1" [attr.aria-current]="step() === i + 1 ? 'step' : null"
+        ><b>{{ i + 1 }}</b
+        ><span>{{ stage }}</span></span
+      >
+    }
+  </nav>
+  <div
+    class="progress"
+    role="progressbar"
+    aria-label="Einrichtung"
+    aria-valuemin="1"
+    aria-valuemax="4"
+    [attr.aria-valuenow]="step()"
+  >
+    @for (stage of stages; track stage; let i = $index) {
+      <span [class.done]="step() >= i + 1"></span>
+    }
+  </div>
+  @if (loading()) {
+    <p class="status" role="status">Dein Konto wird vorbereitet …</p>
+  } @else if (!allowed()) {
+    <div class="status">
+      <p role="alert">{{ error() }}</p>
+      <button class="primary" (click)="load()">Erneut versuchen</button>
+    </div>
+  } @else {
+    <section class="step-content">
+      @switch (step()) {
+        @case (1) {
+          <div class="intro">
+            <h1 #heading tabindex="-1">Willkommen<br />bei 4inOne</h1>
+            <p>
+              Finanzen, Haushalt, Organisation und Reisen an einem Ort. Für einen einfacheren
+              Alltag.
+            </p>
+          </div>
+          <div class="welcome-domains" aria-label="Deine vier Bereiche">
+            @for (domain of domains; track domain.key) {
+              <div [class]="'welcome-tile ' + domain.key">
+                <app-icon [name]="domain.icon" /><span>{{ domain.label }}</span>
+              </div>
+            }
+          </div>
+        }
+        @case (2) {
+          <h1 #heading tabindex="-1">Wie möchtest du<br />4inOne nutzen?</h1>
+          <p>Wähle die Option, die am besten zu dir passt.</p>
+          <div class="usage-options" role="group" aria-label="Nutzungsart">
+            <button
+              [attr.aria-pressed]="usage() === 'personal'"
+              [class.selected]="usage() === 'personal'"
+              (click)="usage.set('personal')"
+            >
+              <app-icon name="home" /><span
+                ><strong>Nur für mich</strong
+                ><small>Ich nutze 4inOne hauptsächlich alleine.</small></span
+              ><span aria-hidden="true">{{ usage() === 'personal' ? '✓' : '›' }}</span></button
+            ><button
+              [attr.aria-pressed]="usage() === 'shared'"
+              [class.selected]="usage() === 'shared'"
+              (click)="usage.set('shared')"
+            >
+              <app-icon name="people" /><span
+                ><strong>Mit Partner / Familie / WG</strong
+                ><small>Ich möchte meinen Alltag gemeinsam planen.</small></span
+              ><span aria-hidden="true">{{ usage() === 'shared' ? '✓' : '›' }}</span>
+            </button>
+          </div>
+          <p class="privacy-note">
+            Deine Daten bleiben privat. Teilen und Einladungen entscheidest du später ausdrücklich
+            selbst.
+          </p>
+        }
+        @case (3) {
+          <h1 #heading tabindex="-1">Was möchtest du<br />zuerst organisieren?</h1>
+          <p>Wähle einen oder mehrere Bereiche aus. Alle Bereiche bleiben für dich erreichbar.</p>
+          <div class="domain-options" role="group" aria-label="Bereiche auswählen">
+            @for (domain of domains; track domain.key) {
+              <button
+                [class]="domain.key"
+                [class.selected]="selected().includes(domain.key)"
+                [attr.aria-pressed]="selected().includes(domain.key)"
+                (click)="toggle(domain.key)"
+              >
+                <span class="selection" aria-hidden="true">{{
+                  selected().includes(domain.key) ? '✓' : ''
+                }}</span
+                ><app-icon [name]="domain.icon" /><strong>{{ domain.label }}</strong
+                ><small>{{ domain.description }}</small>
+              </button>
+            }
+          </div>
+        }
+        @case (4) {
+          <div class="finish">
+            <div class="success" aria-hidden="true"><app-icon name="check" /></div>
+            <h1 #heading tabindex="-1">Dein 4inOne ist bereit</h1>
+            <p>Dein Alltag, dein Überblick. Starte mit dem, was dir wichtig ist.</p>
+            <div class="summary">
+              <app-brand />
+              <h2>Deine Auswahl</h2>
+              <p>{{ usage() === 'personal' ? 'Nur für mich' : 'Gemeinsam planen' }}</p>
+              <div class="summary-domains">
+                @for (domain of domains; track domain.key) {
+                  @if (selected().includes(domain.key)) {
+                    <span [class]="domain.key"
+                      ><app-icon [name]="domain.icon" />{{ domain.label }}</span
+                    >
+                  }
+                }
+              </div>
+              <small>Du kannst alle Bereiche jederzeit öffnen. Noch wurde nichts geteilt.</small>
+            </div>
+          </div>
+        }
+      }
+    </section>
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+    <footer>
+      @if (step() > 1) {
+        <button class="secondary" (click)="move(step() - 1)" [disabled]="saving()">Zurück</button>
+      }
+      @if (step() < 4) {
+        <button class="primary" (click)="next()">
+          {{ step() === 1 ? 'Los geht’s' : 'Weiter' }} <span aria-hidden="true">→</span>
+        </button>
+      } @else {
+        <button
+          class="primary"
+          (click)="finish()"
+          [disabled]="saving()"
+          [attr.aria-busy]="saving()"
+        >
+          {{ saving() ? 'Wird gespeichert …' : 'Zum Dashboard' }} <span aria-hidden="true">→</span>
+        </button>
+      }
+    </footer>
+  }
+</main>

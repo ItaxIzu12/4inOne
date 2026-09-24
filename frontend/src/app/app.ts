@@ -19,7 +19,9 @@ export class App {
   private readonly router = inject(Router);
 
   private readonly navigationEnd = toSignal(
-    this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)),
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+    ),
   );
 
   private readonly currentRouteData = computed(() => {
@@ -35,16 +37,25 @@ export class App {
   // Bottom-Nav der Marketing-Seiten werden für App-Routen (aktuell:
   // Dashboard, Einstellungen, siehe app.routes.ts data: { shell: 'bare' })
   // ausgeblendet — die App hat dort ihre eigene Bottom-Nav/FAB.
-  protected readonly showGlobalChrome = computed(() => this.currentRouteData()['shell'] !== 'bare' && !this.currentRouteData()['sidebarNav'] && !this.currentRouteData()['hideHeader']);
+  protected readonly showGlobalChrome = computed(
+    () =>
+      this.currentRouteData()['shell'] !== 'bare' &&
+      !this.currentRouteData()['sidebarNav'] &&
+      !this.currentRouteData()['hideHeader'],
+  );
 
   // Der Header zeigt normalerweise einen "Anmelden"-Button (siehe
   // shared/header) — auf der Anmelde-/Registrierungsseite selbst wäre das
   // redundant, da diese Seiten schon ihre eigene Marke/ihren eigenen
   // Zurück-Link haben (siehe app.routes.ts data: { hideHeader: true }).
-  protected readonly showHeader = computed(() => this.currentRouteData()['hideHeader'] !== true && !this.currentRouteData()['sidebarNav']);
+  protected readonly showHeader = computed(
+    () => this.currentRouteData()['hideHeader'] !== true && !this.currentRouteData()['sidebarNav'],
+  );
 
   // Kompakte Erklär-Kopfzeile NUR auf den öffentlichen Demo-Routen (data:
   // { isDemo: true } auf der Root-Routengruppe, siehe app.routes.ts) —
   // niemals unter /app, wo echte Nutzerdaten laufen.
-  protected readonly showDemoBanner = computed(() => this.currentRouteData()['isDemo'] === true);
+  protected readonly showDemoBanner = computed(
+    () => this.currentRouteData()['isDemo'] === true && !this.currentRouteData()['ownPreviewLabel'],
+  );
 }

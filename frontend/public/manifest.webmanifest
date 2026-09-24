@@ -1,12 +1,12 @@
 {
-  "name": "Kompass",
-  "short_name": "Kompass",
-  "description": "Finanzen, Haushalt und Organisation — ein Login, eine App.",
+  "name": "4inOne",
+  "short_name": "4inOne",
+  "description": "Dein Alltag. Alles verbunden.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#F4F5FA",
-  "theme_color": "#514775",
+  "background_color": "#f8fafd",
+  "theme_color": "#2864b5",
   "lang": "de",
   "icons": [
     {

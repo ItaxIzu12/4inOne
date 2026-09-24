@@ -19,8 +19,10 @@ from django.contrib import admin
 from django.urls import include, path
 
 from finanzen.views import OnboardingStatusView
+from core.onboarding_views import OnboardingProfileView
 
 urlpatterns = [
+    path('api/v1/onboarding/profile/', OnboardingProfileView.as_view(), name='onboarding-profile'),
     # Pfad kommt aus ADMIN_URL_PATH (.env), NICHT hart als 'admin/' —
     # siehe ARCHITEKTUR.md §3.4 (Standardziel automatisierter Scanner).
     path(settings.ADMIN_URL_PATH, admin.site.urls),

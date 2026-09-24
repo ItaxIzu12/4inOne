@@ -22,7 +22,7 @@ pytestmark = pytest.mark.django_db
 def test_register_rejects_short_password():
     response = Client().post(
         '/api/v1/auth/register/',
-        {'email': 'kurz@example.com', 'password': 'kurz1'},
+        {'confirm_password': 'kurz1', 'accept_privacy': True, 'name': 'Test', 'email': 'kurz@example.com', 'password': 'kurz1'},
         content_type='application/json',
     )
     assert response.status_code == 400
@@ -32,7 +32,7 @@ def test_register_rejects_short_password():
 def test_register_rejects_password_without_digit():
     response = Client().post(
         '/api/v1/auth/register/',
-        {'email': 'nodigit@example.com', 'password': 'nurbuchstaben'},
+        {'confirm_password': 'nurbuchstaben', 'accept_privacy': True, 'name': 'Test', 'email': 'nodigit@example.com', 'password': 'nurbuchstaben'},
         content_type='application/json',
     )
     assert response.status_code == 400
@@ -42,7 +42,7 @@ def test_register_rejects_password_without_digit():
 def test_register_accepts_valid_password_and_hashes_with_configured_hasher():
     response = Client().post(
         '/api/v1/auth/register/',
-        {'email': 'valide@example.com', 'password': 'Sicher123!x', 'name': 'Valide'},
+        {'confirm_password': 'Sicher123!x', 'accept_privacy': True, 'email': 'valide@example.com', 'password': 'Sicher123!x', 'name': 'Valide'},
         content_type='application/json',
     )
     assert response.status_code == 201
@@ -63,7 +63,7 @@ def test_register_accepts_valid_password_and_hashes_with_configured_hasher():
 def test_login_sets_httponly_refresh_cookie_never_in_body():
     Client().post(
         '/api/v1/auth/register/',
-        {'email': 'cookie@example.com', 'password': 'Sicher123!x'},
+        {'confirm_password': 'Sicher123!x', 'accept_privacy': True, 'name': 'Test', 'email': 'cookie@example.com', 'password': 'Sicher123!x'},
         content_type='application/json',
     )
 
@@ -76,7 +76,7 @@ def test_login_sets_httponly_refresh_cookie_never_in_body():
     assert response.status_code == 200
     body = response.json()
     assert set(body.keys()) == {'access', 'user'}  # kein 'refresh' im Body
-    assert body['user'] == {'name': '', 'email': 'cookie@example.com'}
+    assert body['user'] == {'name': 'Test', 'email': 'cookie@example.com'}
 
     cookie = response.cookies['refresh_token']
     assert cookie['httponly'] is True
@@ -86,7 +86,7 @@ def test_login_sets_httponly_refresh_cookie_never_in_body():
 def test_axes_locks_out_after_failure_limit(settings):
     Client().post(
         '/api/v1/auth/register/',
-        {'email': 'lockout@example.com', 'password': 'Sicher123!x'},
+        {'confirm_password': 'Sicher123!x', 'accept_privacy': True, 'name': 'Test', 'email': 'lockout@example.com', 'password': 'Sicher123!x'},
         content_type='application/json',
     )
 
@@ -133,7 +133,7 @@ def test_password_reset_response_identical_regardless_of_account_existence():
 def test_register_creates_household_with_registering_user_as_admin():
     response = Client().post(
         '/api/v1/auth/register/',
-        {'email': 'admin@example.com', 'password': 'Sicher123!x', 'name': 'Rita'},
+        {'confirm_password': 'Sicher123!x', 'accept_privacy': True, 'email': 'admin@example.com', 'password': 'Sicher123!x', 'name': 'Rita'},
         content_type='application/json',
     )
     assert response.status_code == 201
@@ -147,7 +147,7 @@ def test_register_creates_household_with_registering_user_as_admin():
 def test_register_without_household_name_uses_fallback():
     response = Client().post(
         '/api/v1/auth/register/',
-        {'email': 'no-household-name@example.com', 'password': 'Sicher123!x', 'name': 'Mira'},
+        {'confirm_password': 'Sicher123!x', 'accept_privacy': True, 'email': 'no-household-name@example.com', 'password': 'Sicher123!x', 'name': 'Mira'},
         content_type='application/json',
     )
     assert response.status_code == 201
@@ -160,7 +160,7 @@ def test_register_without_household_name_uses_fallback():
 def test_register_with_household_name_uses_it_verbatim():
     response = Client().post(
         '/api/v1/auth/register/',
-        {
+        {'confirm_password': 'Sicher123!x', 'accept_privacy': True,
             'email': 'own-household-name@example.com',
             'password': 'Sicher123!x',
             'name': 'Mira',
@@ -181,7 +181,7 @@ def test_register_with_blank_household_name_falls_back_too():
     als Haushaltsname '' gespeichert werden."""
     response = Client().post(
         '/api/v1/auth/register/',
-        {
+        {'confirm_password': 'Sicher123!x', 'accept_privacy': True,
             'email': 'blank-household-name@example.com',
             'password': 'Sicher123!x',
             'name': 'Mira',
@@ -203,14 +203,14 @@ def test_register_rate_limit_blocks_after_configured_attempts(settings):
     for i in range(limit):
         response = client.post(
             '/api/v1/auth/register/',
-            {'email': f'rate{i}@example.com', 'password': 'Sicher123!x'},
+            {'confirm_password': 'Sicher123!x', 'accept_privacy': True, 'name': 'Test', 'email': f'rate{i}@example.com', 'password': 'Sicher123!x'},
             content_type='application/json',
         )
         assert response.status_code == 201
 
     response = client.post(
         '/api/v1/auth/register/',
-        {'email': 'rate-over-limit@example.com', 'password': 'Sicher123!x'},
+        {'confirm_password': 'Sicher123!x', 'accept_privacy': True, 'name': 'Test', 'email': 'rate-over-limit@example.com', 'password': 'Sicher123!x'},
         content_type='application/json',
     )
     assert response.status_code == 429
@@ -247,7 +247,7 @@ def test_login_rate_limit_cache_key_is_scoped_by_email_not_only_ip():
 def test_password_reset_confirm_changes_password_and_token_is_single_use():
     Client().post(
         '/api/v1/auth/register/',
-        {'email': 'reset-me@example.com', 'password': 'Altes12Passwort'},
+        {'confirm_password': 'Altes12Passwort', 'accept_privacy': True, 'name': 'Test', 'email': 'reset-me@example.com', 'password': 'Altes12Passwort'},
         content_type='application/json',
     )
     user = get_user_model().objects.get(email='reset-me@example.com')
@@ -282,7 +282,7 @@ def test_password_reset_confirm_changes_password_and_token_is_single_use():
 def test_password_reset_confirm_rejects_expired_token():
     Client().post(
         '/api/v1/auth/register/',
-        {'email': 'expired@example.com', 'password': 'Altes12Passwort'},
+        {'confirm_password': 'Altes12Passwort', 'accept_privacy': True, 'name': 'Test', 'email': 'expired@example.com', 'password': 'Altes12Passwort'},
         content_type='application/json',
     )
     user = get_user_model().objects.get(email='expired@example.com')

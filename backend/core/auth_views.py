@@ -6,12 +6,15 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
+from django.middleware.csrf import get_token
 from rest_framework import serializers, status
 from rest_framework.exceptions import Throttled
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -80,7 +83,8 @@ class LoginRateThrottle(LocalCacheThrottle):
     scope = 'login'
 
     def get_cache_key(self, request, view):
-        email = (request.data.get('email') or '').strip().lower()
+        raw_email = request.data.get('email')
+        email = raw_email.strip().lower() if isinstance(raw_email, str) else ''
         ident = f'{self.get_ident(request)}:{email}'
         return self.cache_format % {'scope': self.scope, 'ident': ident}
 
@@ -96,8 +100,18 @@ class PasswordResetRateThrottle(LocalCacheThrottle):
 
 class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
-    name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True, trim_whitespace=False, max_length=1024)
+    name = serializers.CharField(max_length=150, min_length=2)
+    confirm_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    accept_privacy = serializers.BooleanField()
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({'confirm_password': 'Die Passwörter stimmen nicht überein.'})
+        if not attrs['accept_privacy']:
+            raise serializers.ValidationError({'accept_privacy': 'Bitte bestätige die Nutzungsbedingungen und den Datenschutz.'})
+        return attrs
+
     # Optional: leer -> Fallback-Name in RegisterView.post() (nicht hier im
     # Serializer, weil der Fallback von einem ANDEREN Feld (name/email)
     # abhängt, nicht validierbar auf Feldebene).
@@ -117,6 +131,7 @@ class RegisterSerializer(serializers.Serializer):
         return value
 
 
+@method_decorator(csrf_protect, name='dispatch')
 class RegisterView(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [RegisterRateThrottle]
@@ -162,6 +177,13 @@ class RegisterView(APIView):
         return response
 
 
+class LoginInputSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=254)
+    password = serializers.CharField(trim_whitespace=False, max_length=1024)
+    remember = serializers.BooleanField(default=True)
+
+
+@method_decorator(csrf_protect, name='dispatch')
 class LoginView(APIView):
     """Login per E-Mail + Passwort.
 
@@ -179,9 +201,14 @@ class LoginView(APIView):
     throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
+        credentials_input = LoginInputSerializer(data=request.data)
+        credentials_input.is_valid(raise_exception=True)
+        login_data = credentials_input.validated_data
+        email = login_data['email']
+        existing_user = get_user_model().objects.filter(email__iexact=email).first()
         credentials = {
-            'username': request.data.get('email', ''),
-            'password': request.data.get('password', ''),
+            'username': existing_user.username if existing_user else email,
+            'password': login_data['password'],
         }
         serializer = TokenObtainPairSerializer(data=credentials, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -210,13 +237,14 @@ class LoginView(APIView):
             if not verify_mfa_code(user, mfa_code):
                 return Response({'detail': 'Der Code ist ungültig oder abgelaufen.'}, status=401)
 
-        remember = bool(request.data.get('remember', True))
+        remember = login_data['remember']
         refresh = RefreshToken(serializer.validated_data['refresh'])
         response = Response({'access': serializer.validated_data['access'], 'user': _user_payload(user)})
         _set_refresh_cookie(response, refresh, remember=remember)
         return response
 
 
+@method_decorator(csrf_protect, name='dispatch')
 class RefreshView(APIView):
     """Liest das Refresh-Token aus dem httpOnly-Cookie statt aus dem
     Request-Body — das Frontend schickt es nie explizit mit, der Browser
@@ -236,7 +264,10 @@ class RefreshView(APIView):
         # (settings.py) — dadurch wird ein altes Refresh-Token serverseitig
         # ungültig, sobald ein neues ausgestellt wurde.
         serializer = TokenRefreshSerializer(data={'refresh': raw_token})
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as exc:
+            raise InvalidToken('Die Sitzung ist abgelaufen. Bitte erneut anmelden.') from exc
 
         payload = {'access': serializer.validated_data['access']}
         new_refresh_str = serializer.validated_data.get('refresh')
@@ -270,6 +301,7 @@ class RefreshView(APIView):
         return response
 
 
+@method_decorator(csrf_protect, name='dispatch')
 class LogoutView(APIView):
     def post(self, request):
         raw_token = request.COOKIES.get(REFRESH_COOKIE_NAME)
@@ -362,3 +394,13 @@ class PasswordResetConfirmView(APIView):
             reset_token.save(update_fields=['used_at'])
 
         return Response({'detail': 'Passwort erfolgreich geändert.'})
+
+
+class CsrfTokenView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        response = Response({'csrfToken': get_token(request)})
+        response['Cache-Control'] = 'no-store'
+        return response

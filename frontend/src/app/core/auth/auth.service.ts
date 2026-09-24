@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, switchMap, shareReplay } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
 
 export interface AuthUser {
@@ -8,7 +8,7 @@ export interface AuthUser {
   email: string;
 }
 
-interface AuthResponse {
+export interface AuthResponse {
   access: string;
   user: AuthUser;
 }
@@ -31,20 +31,54 @@ export class AuthService {
   private readonly _currentUser = signal<AuthUser | null>(null);
   readonly currentUser = this._currentUser.asReadonly();
 
-  login(email: string, password: string, remember = true): Observable<AuthResponse> {
-    return this.http
-      .post<AuthResponse>(`${API_BASE_URL}/auth/login/`, { email, password, remember }, { withCredentials: true })
-      .pipe(tap((res) => this.applySession(res)));
+  private csrfRequest?: Observable<{ csrfToken: string }>;
+
+  private cookiePost<T>(path: string, body: unknown): Observable<T> {
+    this.csrfRequest ??= this.http
+      .get<{ csrfToken: string }>(`${API_BASE_URL}/auth/csrf/`, { withCredentials: true })
+      .pipe(shareReplay(1));
+    return this.csrfRequest.pipe(
+      switchMap(({ csrfToken }) =>
+        this.http.post<T>(`${API_BASE_URL}/auth/${path}/`, body, {
+          withCredentials: true,
+          headers: { 'X-CSRFToken': csrfToken },
+        }),
+      ),
+    );
   }
 
-  register(name: string, email: string, password: string, householdName = ''): Observable<AuthResponse> {
-    return this.http
-      .post<AuthResponse>(
-        `${API_BASE_URL}/auth/register/`,
-        { name, email, password, household_name: householdName },
-        { withCredentials: true },
-      )
-      .pipe(tap((res) => this.applySession(res)));
+  login(
+    email: string,
+    password: string,
+    remember = true,
+    mfaCode = '',
+  ): Observable<AuthResponse | { mfa_required: true }> {
+    return this.cookiePost<AuthResponse | { mfa_required: true }>('login', {
+      email,
+      password,
+      remember,
+      mfa_code: mfaCode,
+    }).pipe(
+      tap((res) => {
+        if ('access' in res) this.applySession(res);
+      }),
+    );
+  }
+
+  register(
+    name: string,
+    email: string,
+    password: string,
+    confirmPassword: string,
+    acceptPrivacy: boolean,
+  ): Observable<AuthResponse> {
+    return this.cookiePost<AuthResponse>('register', {
+      name,
+      email,
+      password,
+      confirm_password: confirmPassword,
+      accept_privacy: acceptPrivacy,
+    }).pipe(tap((res) => this.applySession(res)));
   }
 
   /** Versucht, die Sitzung über das httpOnly-Refresh-Cookie wiederherzustellen
@@ -54,15 +88,11 @@ export class AuthService {
    * Name/keine Initialen), weil applySession() sonst nur bei login()/
    * register() läuft. */
   refresh(): Observable<AuthResponse> {
-    return this.http
-      .post<AuthResponse>(`${API_BASE_URL}/auth/refresh/`, {}, { withCredentials: true })
-      .pipe(tap((res) => this.applySession(res)));
+    return this.cookiePost<AuthResponse>('refresh', {}).pipe(tap((res) => this.applySession(res)));
   }
 
   logout(): Observable<void> {
-    return this.http
-      .post<void>(`${API_BASE_URL}/auth/logout/`, {}, { withCredentials: true })
-      .pipe(tap(() => this.forceLogout()));
+    return this.cookiePost<void>('logout', {}).pipe(tap(() => this.forceLogout()));
   }
 
   /** Räumt nur den lokalen Zustand auf, ohne das Backend zu benachrichtigen —
@@ -77,11 +107,16 @@ export class AuthService {
   }
 
   requestPasswordReset(email: string): Observable<{ detail: string }> {
-    return this.http.post<{ detail: string }>(`${API_BASE_URL}/auth/password-reset/request/`, { email });
+    return this.http.post<{ detail: string }>(`${API_BASE_URL}/auth/password-reset/request/`, {
+      email,
+    });
   }
 
   confirmPasswordReset(token: string, password: string): Observable<{ detail: string }> {
-    return this.http.post<{ detail: string }>(`${API_BASE_URL}/auth/password-reset/confirm/`, { token, password });
+    return this.http.post<{ detail: string }>(`${API_BASE_URL}/auth/password-reset/confirm/`, {
+      token,
+      password,
+    });
   }
 
   private applySession(res: AuthResponse): void {

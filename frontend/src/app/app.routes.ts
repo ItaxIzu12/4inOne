@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { onboardingGuard } from './core/onboarding/onboarding.guard';
 import { FINANZEN_DATA_PROVIDER } from './features/finanzen/finanzen-data-provider';
 import { DemoFinanzenDataProvider } from './features/finanzen/demo-finanzen-data-provider';
 import { RealFinanzenDataProvider } from './features/finanzen/real-finanzen-data-provider';
@@ -40,7 +41,13 @@ export const routes: Routes = [
         path: '',
         pathMatch: 'full',
         loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
-        data: { shell: 'bare', dashboardNav: true, sidebarNav: true, isDemo: true },
+        data: {
+          shell: 'bare',
+          dashboardNav: true,
+          sidebarNav: true,
+          isDemo: true,
+          ownPreviewLabel: true,
+        },
       },
       {
         path: 'finanzen',
@@ -61,6 +68,7 @@ export const routes: Routes = [
     // blockiert automatisch auch alle children). RealFinanzenDataProvider
     // ruft die echten /api/v1/finanzen/-Endpunkte auf.
     canActivate: [authGuard],
+    canActivateChild: [authGuard],
     providers: [
       { provide: FINANZEN_DATA_PROVIDER, useClass: RealFinanzenDataProvider },
       { provide: HAUSHALT_DATA_PROVIDER, useClass: RealHaushaltDataProvider },
@@ -71,6 +79,7 @@ export const routes: Routes = [
         path: '',
         pathMatch: 'full',
         loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+        canActivate: [onboardingGuard],
         data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
       },
       {
@@ -84,8 +93,37 @@ export const routes: Routes = [
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
+        path: 'onboarding',
+        loadComponent: () =>
+          import('./features/onboarding/onboarding-page').then((m) => m.OnboardingPage),
+        data: { shell: 'bare', hideHeader: true },
+      },
+      {
+        path: 'reisen',
+        loadComponent: () =>
+          import('./features/area-preview/area-preview').then((m) => m.AreaPreview),
+        data: {
+          shell: 'bare',
+          sidebarNav: true,
+          title: 'Reisen',
+          description: 'Platz für deine nächsten Reisen und gemeinsamen Pläne.',
+        },
+      },
+      {
+        path: 'familie',
+        loadComponent: () =>
+          import('./features/area-preview/area-preview').then((m) => m.AreaPreview),
+        data: {
+          shell: 'bare',
+          sidebarNav: true,
+          title: 'Familie & Freunde',
+          description: 'Du entscheidest, was du mit wem teilst.',
+        },
+      },
+      {
         path: 'organisation',
-        loadComponent: () => import('./features/organisation/organisation').then((m) => m.Organisation),
+        loadComponent: () =>
+          import('./features/organisation/organisation').then((m) => m.Organisation),
         data: { dashboardNav: true },
       },
     ],
@@ -113,7 +151,8 @@ export const routes: Routes = [
   },
   {
     path: 'einstellungen',
-    loadComponent: () => import('./features/einstellungen/einstellungen').then((m) => m.Einstellungen),
+    loadComponent: () =>
+      import('./features/einstellungen/einstellungen').then((m) => m.Einstellungen),
     // Eigene App-Shell wie das Dashboard, siehe app.ts/app.html — Settings
     // ist ein App-Screen, keine öffentliche Marketing-Seite und hat keine
     // Demo-Variante (kein Sinn ohne echtes Konto), daher eigener Guard statt
@@ -128,7 +167,8 @@ export const routes: Routes = [
     data: {
       shell: 'bare',
       title: 'Profil bearbeiten',
-      description: 'Name und E-Mail-Adresse ändern kannst du hier bald direkt — dieser Bereich wird gerade gebaut.',
+      description:
+        'Name und E-Mail-Adresse ändern kannst du hier bald direkt — dieser Bereich wird gerade gebaut.',
     },
   },
   {
@@ -161,11 +201,14 @@ export const routes: Routes = [
   {
     path: 'nutzungsbedingungen',
     loadComponent: () =>
-      import('./features/nutzungsbedingungen/nutzungsbedingungen').then((m) => m.Nutzungsbedingungen),
+      import('./features/nutzungsbedingungen/nutzungsbedingungen').then(
+        (m) => m.Nutzungsbedingungen,
+      ),
   },
   {
     path: 'barrierefreiheit',
-    loadComponent: () => import('./features/barrierefreiheit/barrierefreiheit').then((m) => m.Barrierefreiheit),
+    loadComponent: () =>
+      import('./features/barrierefreiheit/barrierefreiheit').then((m) => m.Barrierefreiheit),
   },
   {
     path: '**',

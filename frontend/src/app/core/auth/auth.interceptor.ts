@@ -23,12 +23,17 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (!req.url.startsWith(API_ORIGIN)) {
+  if (new URL(req.url, window.location.origin).origin !== API_ORIGIN) {
     return next(req);
   }
 
   const token = auth.accessToken();
-  const authorized = token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+  const needsBearer =
+    !PUBLIC_AUTH_URLS.includes(req.url) &&
+    req.url !== REFRESH_URL &&
+    req.url !== `${API_BASE_URL}/auth/csrf/`;
+  const authorized =
+    token && needsBearer ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
   return next(authorized).pipe(
     catchError((error: unknown) => {
@@ -61,7 +66,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // starten und die ursprüngliche Anfrage mit dem neuen Access-Token
       // wiederholen.
       return auth.refresh().pipe(
-        switchMap((res) => next(req.clone({ setHeaders: { Authorization: `Bearer ${res.access}` } }))),
+        switchMap((res) =>
+          next(req.clone({ setHeaders: { Authorization: `Bearer ${res.access}` } })),
+        ),
         catchError((refreshError: unknown) => {
           auth.forceLogout();
           router.navigateByUrl('/login');

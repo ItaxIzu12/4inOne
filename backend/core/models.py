@@ -148,3 +148,11 @@ class Notification(models.Model):
 
     def __str__(self) -> str:
         return self.message
+
+
+class OnboardingProfile(models.Model):
+    """Personal preferences only; never grants membership or sharing rights."""
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='onboarding_profile')
+    usage = models.CharField(max_length=10, choices=[('personal', 'Nur für mich'), ('shared', 'Gemeinsam')])
+    domains = models.JSONField(default=list)
+    completed_at = models.DateTimeField(null=True, blank=True)

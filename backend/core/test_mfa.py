@@ -17,7 +17,7 @@ pytestmark = pytest.mark.django_db
 
 
 def _register_and_login(client: APIClient, email='mfa@example.com', password='Sicher123!x'):
-    client.post('/api/v1/auth/register/', {'email': email, 'password': password}, format='json')
+    client.post('/api/v1/auth/register/', {'confirm_password': password, 'accept_privacy': True, 'name': 'Test', 'email': email, 'password': password}, format='json')
     user = get_user_model().objects.get(email=email)
     client.force_authenticate(user=user)
     return user
@@ -130,7 +130,7 @@ def test_login_accepts_unused_backup_code_exactly_once():
 
 def test_login_without_mfa_enabled_is_unaffected():
     client = APIClient()
-    client.post('/api/v1/auth/register/', {'email': 'nomfa@example.com', 'password': 'Sicher123!x'}, format='json')
+    client.post('/api/v1/auth/register/', {'confirm_password': 'Sicher123!x', 'accept_privacy': True, 'name': 'Test', 'email': 'nomfa@example.com', 'password': 'Sicher123!x'}, format='json')
 
     response = client.post(
         '/api/v1/auth/login/', {'email': 'nomfa@example.com', 'password': 'Sicher123!x'}, format='json'

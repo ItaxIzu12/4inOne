@@ -56,7 +56,7 @@ describe('App', () => {
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('app-sidebar-nav')).toBeTruthy();
+    expect(compiled.querySelector('app-shell .sidebar')).toBeTruthy();
     expect(compiled.querySelector('app-header')).toBeNull();
     // Footer ist überall vorhanden — auch im Dashboard, siehe app.html.
     expect(compiled.querySelector('.site-footer')).toBeNull();

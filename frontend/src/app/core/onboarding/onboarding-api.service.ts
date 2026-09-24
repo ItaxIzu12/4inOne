@@ -3,6 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
 
+export interface OnboardingProfileDto {
+  needs_onboarding: boolean;
+  completed: boolean;
+  usage: 'personal' | 'shared' | null;
+  domains: string[];
+}
+
 export interface OnboardingStatusDto {
   has_transaction: boolean;
   has_category: boolean;
@@ -16,6 +23,16 @@ export interface OnboardingStatusDto {
 @Injectable({ providedIn: 'root' })
 export class OnboardingApiService {
   private readonly http = inject(HttpClient);
+
+  getProfile(): Observable<OnboardingProfileDto> {
+    return this.http.get<OnboardingProfileDto>(`${API_BASE_URL}/onboarding/profile/`);
+  }
+  complete(usage: 'personal' | 'shared', domains: string[]): Observable<OnboardingProfileDto> {
+    return this.http.put<OnboardingProfileDto>(`${API_BASE_URL}/onboarding/profile/`, {
+      usage,
+      domains,
+    });
+  }
 
   getStatus(): Observable<OnboardingStatusDto> {
     return this.http.get<OnboardingStatusDto>(`${API_BASE_URL}/onboarding/status/`);

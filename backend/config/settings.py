@@ -308,6 +308,7 @@ CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localho
 if env('CAPACITOR_APP_ORIGIN', default=None):
     CORS_ALLOWED_ORIGINS.append(env('CAPACITOR_APP_ORIGIN'))
 CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=CORS_ALLOWED_ORIGINS)
 
 # Content-Security-Policy (django-csp 4.x-Format)
 # ARCHITEKTUR.md §3.4: script-src 'self' ohne unsafe-inline/unsafe-eval.

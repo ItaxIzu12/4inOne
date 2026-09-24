@@ -1,109 +1,192 @@
-<a class="skip-link" href="#main-content">Zum Hauptinhalt springen</a>
-<div class="app-shell">
-  <app-sidebar-nav />
-  <div class="app-shell__main">
-    <app-context-bar />
-    <main id="main-content" class="dashboard-main">
-      <header class="topbar">
-        <div>
-          <h1>{{ greeting() }}.</h1>
-          <p>{{ todayLabel() }}</p>
+<app-shell
+  ><main id="main-content" class="dashboard" tabindex="-1">
+    <header class="greeting">
+      <div>
+        <h1>Hallo {{ name() }}!</h1>
+        <p class="desktop-copy">Hier ist dein Tag.</p>
+        <p class="mobile-copy">Was ist heute wichtig?</p>
+      </div>
+      <time>{{ date }}</time>
+    </header>
+    <p class="preview-note">
+      Vorschau · Die folgenden Termine, Beträge und Verbindungen sind Beispieldaten.
+    </p>
+    <div class="dashboard-grid">
+      <section class="card today">
+        <header>
+          <h2>
+            <span class="desktop-copy">Heute</span><span class="mobile-copy">Heute für dich</span>
+          </h2>
+          <button class="text-button" (click)="detail.set('Dein Tag')">
+            Alle anzeigen <app-icon name="arrow" />
+          </button>
+        </header>
+        <div class="today-list">
+          @for (item of items; track item.title; let first = $first) {
+            <button class="today-row" [class.optional-row]="first" (click)="detail.set(item.title)">
+              <span class="icon-disc" [class]="'icon-disc ' + item.tone"
+                ><app-icon [name]="item.icon" /></span
+              ><span class="time">{{ item.time }}</span
+              ><span class="item-copy"
+                ><strong class="desktop-copy">{{ item.title }}</strong
+                ><strong class="mobile-copy"
+                  >{{ item.mobile }}</strong
+                ><small class="mobile-copy">{{
+                  item.title === 'Arzttermin' || item.tone === 'household' ? item.note : ''
+                }}</small></span
+              ><app-icon class="chevron" name="arrow" />
+            </button>
+          }
         </div>
-        <a class="btn-primary" [routerLink]="finanzenLink()" [queryParams]="{ action: 'add' }"
-          ><span aria-hidden="true">＋</span> Ausgabe erfassen</a
-        >
-      </header>
-      @if (auth.isAuthenticated()) {
-        <app-onboarding />
+      </section>
+      <section class="card connected">
+        <header>
+          <h2><app-icon name="link" />Automatisch verbunden</h2>
+          <button
+            class="text-button"
+            aria-label="Verbindung im Beispiel ansehen"
+            (click)="detail.set('Berlin Wochenende')"
+          >
+            <span class="desktop-copy">Details anzeigen</span><app-icon name="arrow" />
+          </button>
+        </header>
+        <div class="trip">
+          <div class="berlin" aria-hidden="true">
+            <svg viewBox="0 0 180 110" fill="none">
+              <path d="M0 90h180v20H0" fill="#dce7da" />
+              <path
+                d="M24 92h132M32 40h116l-9-9H42l-10 9Zm3 7h110v8H35Zm6 8v35m19-35v35m20-35v35m20-35v35m20-35v35m19-35v35"
+                stroke="#737e71"
+                stroke-width="7"
+              />
+              <path d="M78 28h26m-21-3 5-10 6 8 6-8" stroke="#5f766b" stroke-width="4" />
+            </svg>
+          </div>
+          <div class="trip-copy">
+            <h3>Berlin Wochenende</h3>
+            <p>Fr, 16. Mai – So, 18. Mai · Beispiel</p>
+            <div class="trip-progress">
+              <progress value="4" max="6" aria-label="4 von 6 Aufgaben erledigt"></progress
+              ><small>4 von 6 Aufgaben erledigt</small>
+            </div>
+          </div>
+        </div>
+        <div class="connections" aria-label="Verbundene Bereiche">
+          @for (
+            connection of ['Budget', 'Kalender', 'Aufgaben'];
+            track connection;
+            let i = $index
+          ) {
+            <button (click)="detail.set(connection)">
+              <app-icon [name]="i === 0 ? 'finance' : i === 1 ? 'calendar' : 'check'" /><span>{{
+                connection
+              }}</span
+              ><span class="connection-check" aria-label="verbunden">✓</span>
+            </button>
+          }
+        </div>
+      </section>
+      <section class="suggestion">
+        <span class="icon-disc family"><app-icon name="bulb" /></span>
+        <div>
+          <h2>4inOne Vorschlag</h2>
+          <p>Dein Wochenendtrip nach Berlin rückt näher. Möchtest du die Packliste öffnen?</p>
+        </div>
+        <button class="primary" (click)="detail.set('Packliste')">
+          Zur Packliste <app-icon name="arrow" />
+        </button>
+      </section>
+      <div class="domains">
+        @for (domain of domains(); track domain.name) {
+          <a [routerLink]="domain.path" [class]="'domain ' + domain.tone"
+            ><header>
+              <app-icon [name]="domain.icon" />
+              <h2>{{ domain.name }}</h2>
+              <app-icon class="chevron" name="arrow" />
+            </header>
+            <p>{{ domain.summary }}</p><app-icon class="domain-decoration" [name]="domain.icon" aria-hidden="true" />
+            @if (domain.name === 'Finanzen') {
+              <progress
+                value="2340"
+                max="3000"
+                aria-label="Beispielbudget: 2.340 Euro von 3.000 Euro"
+              ></progress>
+            }
+          </a>
+        }
+      </div>
+      <section class="card linked">
+        <app-icon name="link" />
+        <div>
+          <h2>Verknüpft</h2>
+          <p>Diese Bereiche arbeiten für dich zusammen.</p>
+        </div>
+        <div class="linked-domains">
+          <span class="finance"><app-icon name="finance" />Finanzen</span><span aria-hidden="true">↔</span
+          ><span class="organisation"><app-icon name="calendar" />Organisation</span><span aria-hidden="true">↔</span
+          ><span class="household"><app-icon name="household" />Haushalt</span>
+        </div>
+      </section>
+    </div>
+  </main></app-shell
+>
+<app-modal [open]="detail() !== ''" labelledBy="dashboard-detail" (closed)="detail.set('')"
+  ><h2 id="dashboard-detail">{{ detail() }}</h2>
+  <div class="detail-body">
+    <p class="muted">Beispielansicht · Keine Änderung an deinen persönlichen Daten.</p>
+    @switch (detail()) {
+      @case ('Packliste') {
+        <p>Für das Wochenende in Berlin.</p>
+        @for (
+          label of ['Ausweis & Tickets', 'Kleidung fürs Wochenende', 'Ladegerät'];
+          track label;
+          let i = $index
+        ) {
+          <label class="packing-row"
+            ><input type="checkbox" [checked]="packing()[i]" (change)="togglePacking(i)" />{{
+              label
+            }}</label
+          >
+        }
+        <p class="muted">Die Häkchen bleiben nur während dieser Vorschau erhalten.</p>
       }
-      @if (financeState.error() || financeState.analysenError()) {
-        <p role="alert">
-          Die Finanzdaten konnten nicht geladen werden.
-          <button (click)="financeState.ladenBeide()">Erneut versuchen</button>
+      @case ('Dein Tag') {
+        @for (item of items; track item.title) {
+          <button (click)="detail.set(item.title)">{{ item.time }} · {{ item.title }} →</button>
+        }
+      }
+      @case ('Berlin Wochenende') {
+        <p>
+          Eine Reise, drei verbundene Bereiche: Budget, Kalender und Aufgaben. Hier siehst du, wie
+          sie später zusammenarbeiten können.
+        </p>
+        <progress value="4" max="6" aria-label="4 von 6 Aufgaben erledigt"></progress
+        ><button (click)="detail.set('Packliste')">Packliste öffnen →</button>
+      }
+      @case ('Budget') {
+        <p>
+          Für Berlin sind beispielhaft 700 € geplant, davon 420 € vorgesehen. Diese Vorschau bucht
+          keine Ausgabe.
         </p>
       }
-
-      <div class="dashboard-grid">
-        <section class="today-card week-section">
-          <h2>Heute bei euch</h2>
-          <p class="today-empty">
-            Die Tagesübersicht ist noch in Vorbereitung. Hier werden eure gemeinsamen Pläne
-            erscheinen.
-          </p>
-          <a routerLink="/app/organisation">Kalender öffnen <span aria-hidden="true">→</span></a>
-        </section>
-        <section class="home-card">
-          <illustration-home />
-          <h2>Kleine Dinge, gemeinsam.</h2>
-          <p>Platz für euren Alltag.</p>
-        </section>
-        <section class="quick-section" aria-labelledby="quick-heading">
-          <h2 id="quick-heading">Schnell erledigt</h2>
-          <div class="quick-links">
-            <a [routerLink]="haushaltLink()"
-              ><icon-haushalt /><span
-                ><strong>Einkaufsliste</strong><small>Haushalt öffnen</small></span
-              ></a
-            >
-            <a routerLink="/app/organisation"
-              ><icon-organisation /><span
-                ><strong>Kalender</strong><small>Pläne ansehen</small></span
-              ></a
-            >
-          </div>
-        </section>
-        <section class="hero-card" aria-labelledby="balance-heading">
-          <p>Nach Kosten und Rücklage</p>
-          <p id="balance-heading" class="hero-card__amount">
-            {{ verfuegbaresEinkommen() | number: '1.2-2' : 'de' }} €
-          </p>
-          <a [routerLink]="finanzenLink()" [queryParams]="{ tab: 'analysen' }"
-            >Berechnung ansehen <span aria-hidden="true">→</span></a
-          >
-        </section>
-        <div class="recent-wrap">
-          @if (recentTransactions().length > 0) {
-            <section class="recent-section" aria-labelledby="recent-heading">
-              <div class="recent-section__head">
-                <h2 id="recent-heading">Letzte Ausgaben</h2>
-                <a [routerLink]="finanzenLink()" [queryParams]="{ action: 'history' }"
-                  >Alle anzeigen</a
-                >
-              </div>
-              <ul class="recent-list">
-                @for (tx of recentTransactions(); track tx.id) {
-                  <li class="recent-row">
-                    <icon-haushalt /><span class="recent-row__content">
-                      <span class="recent-row__title">{{
-                        tx.description || tx.category?.name || '—'
-                      }}</span>
-                      <span class="recent-row__detail">{{
-                        tx.datum | date: 'd. MMMM' : '' : 'de'
-                      }}</span>
-                    </span>
-                    <span class="recent-row__amount"
-                      >{{ tx.amount | number: '1.2-2' : 'de' }}&nbsp;&euro;</span
-                    >
-                  </li>
-                }
-              </ul>
-            </section>
+      @case ('Kalender') {
+        <p>
+          Anreise am Freitag, Rückreise am Sonntag. In dieser Vorschau werden keine Kalendereinträge
+          angelegt.
+        </p>
+      }
+      @case ('Aufgaben') {
+        <p>4 von 6 Vorbereitungen sind im Beispiel erledigt.</p>
+        <button (click)="detail.set('Packliste')">Packliste öffnen →</button>
+      }
+      @default {
+        @for (item of items; track item.title) {
+          @if (item.title === detail()) {
+            <p>{{ item.time }} · {{ item.note }}</p>
+            <p>Dieser Eintrag zeigt beispielhaft, wie dein Tag in 4inOne aussehen kann.</p>
           }
-
-          @if (!recentTransactions().length) {
-            <section class="recent-section">
-              <h2>Letzte Ausgaben</h2>
-              <p>Noch keine Ausgaben erfasst.</p>
-              <a [routerLink]="finanzenLink()" [queryParams]="{ action: 'add' }"
-                >Erste Ausgabe erfassen</a
-              >
-            </section>
-          }
-        </div>
-        <a class="mobile-expense" [routerLink]="finanzenLink()" [queryParams]="{ action: 'add' }"
-          ><span aria-hidden="true">＋</span> Ausgabe erfassen</a
-        >
-      </div>
-    </main>
-  </div>
-</div>
+        }
+      }
+    }
+  </div></app-modal
+>
