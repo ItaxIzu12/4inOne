@@ -1,119 +1,21 @@
 <a class="skip-link" href="#main-content">Zum Hauptinhalt springen</a>
 <div class="shell">
-  <aside class="sidebar">
-    <a [routerLink]="links()[0].path" aria-label="4inOne – Startseite"><app-brand /></a>
-    <p class="claim">Dein Alltag. Alles verbunden.</p>
-    <nav aria-label="Hauptnavigation">
-      @for (link of links(); track link.label) {
-        <a
-          [routerLink]="link.path"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          ariaCurrentWhenActive="page"
-          ><app-icon [name]="link.icon" [class]="link.icon" />{{ link.label }}</a
-        >
-      }
-      <div class="nav-space"></div>
-      <a routerLink="/app/familie" routerLinkActive="active" ariaCurrentWhenActive="page"
-        ><app-icon name="people" />Familie &amp; Freunde</a
-      ><a routerLink="/einstellungen"><app-icon name="settings" />Einstellungen</a>
-    </nav>
-    <p class="sidebar-note">Alles Wichtige.<br />Ein guter Überblick.</p>
-  </aside>
-  <div class="workspace">
-    <header class="topbar">
-      <a class="mobile-brand" [routerLink]="links()[0].path" aria-label="4inOne – Startseite"
-        ><app-brand
-      /></a>
-      <button class="search" (click)="panel.set('Suche')">
-        <app-icon name="search" /><span>Suche in 4inOne …</span>
-      </button>
-      <div class="profile">
-        <button
-          class="icon-button"
-          aria-label="Benachrichtigungen öffnen"
-          (click)="panel.set('Benachrichtigungen')"
-        >
-          <app-icon name="bell" /></button
-        ><button
-          class="profile-button"
-          (click)="panel.set('Dein Konto')"
-          aria-label="Kontomenü öffnen"
-        >
-          <span class="avatar">{{ initials() }}</span
-          ><span class="profile-name">{{ name() }}</span
-          ><span class="profile-name" aria-hidden="true">⌄</span>
-        </button>
-      </div>
-    </header>
-    <ng-content />
-  </div>
+ <aside class="sidebar"><a [routerLink]="links()[0].path" aria-label="4inOne – Startseite"><app-brand /></a><p class="claim">Dein Alltag. Alles verbunden.</p>
+ <nav aria-label="Hauptnavigation">@for(link of links();track link.label){<a [routerLink]="link.path" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page"><app-icon [name]="link.icon" [class]="link.icon" />{{link.label}}</a>}
+ <div class="nav-space"></div><a routerLink="/app/familie" routerLinkActive="active" ariaCurrentWhenActive="page"><app-icon name="people" />Familie &amp; Freunde</a><a routerLink="/einstellungen"><app-icon name="settings" />Einstellungen</a></nav>
+ <p class="sidebar-note">Alles Wichtige.<br>Ein guter Überblick.</p></aside>
+ <div class="workspace"><header class="topbar"><a class="mobile-brand" [routerLink]="links()[0].path" aria-label="4inOne – Startseite"><app-brand /></a>
+ <button class="search" (click)="panel.set('Suche')"><app-icon name="search" /><span>Suche in 4inOne …</span></button>
+ <div class="profile"><button class="icon-button" aria-label="Benachrichtigungen öffnen" (click)="panel.set('Benachrichtigungen')"><app-icon name="bell" /></button><button class="profile-button" (click)="panel.set('Dein Konto')" aria-label="Kontomenü öffnen"><span class="avatar">{{initials()}}</span><span class="profile-name">{{name()}}</span><span class="profile-name" aria-hidden="true">⌄</span></button></div></header>
+ <ng-content />
+ </div>
 </div>
-<nav class="mobile-nav" aria-label="Mobile Navigation">
-  <a
-    [routerLink]="links()[0].path"
-    routerLinkActive="active"
-    [routerLinkActiveOptions]="{ exact: true }"
-    ariaCurrentWhenActive="page"
-    ><app-icon name="home" />Start</a
-  ><a [routerLink]="links()[1].path"><app-icon name="bars" />Finanzen</a
-  ><button
-    class="add"
-    aria-label="Schnellaktion auswählen"
-    (click)="panel.set('Schnell hinzufügen')"
-  >
-    <app-icon name="plus" /></button
-  ><a routerLink="/app/familie"><app-icon name="people" />Familie</a
-  ><button (click)="panel.set('Alle Bereiche')"><app-icon name="more" />Mehr</button>
-</nav>
-<app-modal [open]="panel() !== ''" labelledBy="shell-dialog-title" (closed)="close()"
-  ><h2 id="shell-dialog-title">{{ panel() }}</h2>
-  <div class="dialog-body">
-    @switch (panel()) {
-      @case ('Suche') {
-        <label for="app-search">Bereich suchen</label
-        ><input
-          id="app-search"
-          type="search"
-          [value]="query()"
-          (input)="query.set($any($event.target).value)"
-          autocomplete="off"
-        />
-        @for (link of results(); track link.label) {
-          <a [routerLink]="link.path" (click)="close()">{{ link.label }} →</a>
-        } @empty {
-          <p>Kein Bereich gefunden. Versuche „Haushalt“ oder „Reisen“.</p>
-        }
-      }
-      @case ('Benachrichtigungen') {
-        <p>Du hast noch keine Benachrichtigungen.</p>
-      }
-      @case ('Dein Konto') {
-        @if (auth.isAuthenticated()) {
-          <p>{{ name() }}</p>
-          <a routerLink="/einstellungen" (click)="close()">Einstellungen</a
-          ><button (click)="logout()" [disabled]="busy()">
-            {{ busy() ? 'Wird abgemeldet …' : 'Abmelden' }}
-          </button>
-          @if (logoutError()) {
-            <p role="alert">{{ logoutError() }}</p>
-          }
-        } @else {
-          <p>Du siehst die Vorschau mit Beispieldaten.</p>
-          <a routerLink="/login">Anmelden</a><a routerLink="/registrieren">Konto erstellen</a>
-        }
-      }
-      @case ('Schnell hinzufügen') {
-        <a [routerLink]="links()[1].path" [queryParams]="{ action: 'add' }">Ausgabe erfassen →</a
-        ><a [routerLink]="links()[2].path">Einkaufsliste öffnen →</a>
-      }
-      @default {
-        @for (link of links(); track link.label) {
-          <a [routerLink]="link.path" (click)="close()">{{ link.label }} →</a>
-        }
-        <a routerLink="/einstellungen">Einstellungen →</a
-        ><button (click)="panel.set('Suche')">Suche öffnen</button>
-      }
-    }
-  </div></app-modal
->
+<nav class="mobile-nav" aria-label="Mobile Navigation"><a [routerLink]="links()[0].path" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" ariaCurrentWhenActive="page"><app-icon name="home" />Start</a><a [routerLink]="links()[1].path"><app-icon name="finance" />Finanzen</a><button class="add" aria-label="Schnellaktion auswählen" (click)="panel.set('Schnell hinzufügen')"><app-icon name="plus" /></button><a routerLink="/app/familie"><app-icon name="people" />Familie</a><button (click)="panel.set('Alle Bereiche')"><app-icon name="more" />Mehr</button></nav>
+<app-modal [open]="panel() !== ''" labelledBy="shell-dialog-title" (closed)="close()"><h2 id="shell-dialog-title">{{panel()}}</h2><div class="dialog-body">
+ @switch(panel()){
+ @case('Suche'){<label for="app-search">Bereich suchen</label><input id="app-search" type="search" [value]="query()" (input)="query.set($any($event.target).value)" autocomplete="off" />@for(link of results();track link.label){<a [routerLink]="link.path" (click)="close()">{{link.label}} →</a>}@empty{<p>Kein Bereich gefunden. Versuche „Haushalt“ oder „Reisen“.</p>}}
+ @case('Benachrichtigungen'){<p>Du hast noch keine Benachrichtigungen.</p>}
+ @case('Dein Konto'){@if(auth.isAuthenticated()){<p>{{name()}}</p><a routerLink="/einstellungen" (click)="close()">Einstellungen</a><button (click)="logout()" [disabled]="busy()">{{busy()?'Wird abgemeldet …':'Abmelden'}}</button>@if(logoutError()){<p role="alert">{{logoutError()}}</p>}}@else{<p>Du siehst die Vorschau mit Beispieldaten.</p><a routerLink="/login">Anmelden</a><a routerLink="/registrieren">Konto erstellen</a>}}
+ @case('Schnell hinzufügen'){<a [routerLink]="links()[1].path" [queryParams]="{action:'add'}">Ausgabe erfassen →</a><a [routerLink]="links()[2].path">Einkaufsliste öffnen →</a>}
+ @default{@for(link of links();track link.label){<a [routerLink]="link.path" (click)="close()">{{link.label}} →</a>}<a routerLink="/einstellungen">Einstellungen →</a><button (click)="panel.set('Suche')">Suche öffnen</button>}
+ }</div></app-modal>
