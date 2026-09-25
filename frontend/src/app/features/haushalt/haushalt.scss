@@ -1,24 +1,48 @@
-// Seitenhülle — gleiche Maße wie die Finanzen-Seite (DESIGN_SYSTEM.md v4:
-// Seitennavigation 190 px, Inhaltspadding 34 px, mobil 24 px).
+// Inhalt der Haushalt-Seite; Navigation und Kopfzeile kommen aus AppShell.
 :host {
   display: block;
-  background: var(--canvas);
   color: var(--text);
-}
-.hh-page {
-  min-height: 100dvh;
-  background: var(--canvas);
-}
-.hh-page__content {
-  min-width: 0;
+  // Bereichsfarbe Haushalt (docs/DESIGN_SYSTEM.md: soft pink). Nur hier
+  // überschrieben — die Kindkomponenten erben die Variablen. Kontrast:
+  // Rosa auf Weiß 5,6:1, weiß auf Rosa 5,6:1.
+  --accent: #b8336f;
+  --accent-glow: #b8336f;
+  --accent-hover: #9a275c;
+  --accent-soft: #fce8f1;
+  --lavender: #fce8f1;
 }
 .hh-main {
+  // Dunkleres Grau als in der Shell: Sekundärtext hält so auf Weiß, Grau und
+  // Rosa mindestens 5,2:1.
+  --text-muted: #56627a;
   max-width: 1440px;
   margin: 0 auto;
   padding: 34px 34px 52px;
 }
 .page-head {
-  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.page-head__icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: 0 6px 14px -8px var(--accent);
+}
+.page-head__icon app-icon {
+  width: 28px;
+  height: 28px;
+}
+.page-head__text {
+  flex: 1;
+  min-width: 0;
 }
 .page-head h1 {
   margin: 0;
@@ -27,47 +51,73 @@
   letter-spacing: -0.5px;
 }
 .page-subtitle {
-  margin: 8px 0 0;
+  margin: 4px 0 0;
   font-size: 15px;
   color: var(--text-muted);
 }
+.page-head__action {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-buttons);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.page-head__action:hover {
+  background: var(--accent-hover);
+}
+.page-head__action:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.page-head__action app-icon {
+  width: 18px;
+  height: 18px;
+}
+// Tabs als Leiste mit Unterstrich (Entwurf), nicht als Pillen.
 .subtabs {
   display: flex;
-  width: 342px;
-  max-width: 100%;
+  width: 100%;
   margin-bottom: 24px;
-  padding: 4px;
-  border-radius: 14px;
-  background: var(--lavender);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: none;
+}
+.subtabs::-webkit-scrollbar {
+  display: none;
 }
 .subtab {
-  flex: 1;
-  min-height: 40px;
-  padding: 6px 12px;
+  flex: 0 0 auto;
+  min-height: 44px;
+  margin-bottom: -1px;
+  padding: 8px 18px;
   border: 0;
-  border-radius: 11px;
+  border-bottom: 3px solid transparent;
   background: none;
   color: var(--text-muted);
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
+  white-space: nowrap;
   cursor: pointer;
 }
 .subtab.is-active {
-  background: var(--surface);
+  border-bottom-color: var(--accent);
   color: var(--accent);
   font-weight: 700;
 }
 .subtab:focus-visible {
   outline: 3px solid var(--accent);
-  outline-offset: 2px;
-}
-@media (min-width: 960px) {
-  .hh-page {
-    display: flex;
-  }
-  .hh-page__content {
-    flex: 1;
-  }
+  outline-offset: -3px;
+  border-radius: 8px;
 }
 @media (max-width: 959px) {
   .hh-main {
@@ -82,8 +132,30 @@
   .page-subtitle {
     display: none;
   }
+  .page-head__icon {
+    width: 44px;
+    height: 44px;
+  }
+  // Fünf Tabs sollen auf 390 px ohne Scrollen passen.
+  .subtab {
+    padding: 8px 6px;
+    font-size: 13px;
+  }
   .subtabs {
-    width: 100%;
+    justify-content: space-between;
+  }
+}
+@media (max-width: 560px) {
+  // Nur das Plus als runde Aktion, wie im mobilen Entwurf; der Name bleibt
+  // über aria-label erhalten.
+  .page-head__action {
+    justify-content: center;
+    width: 44px;
+    padding: 0;
+    border-radius: 50%;
+  }
+  .page-head__action span {
+    display: none;
   }
 }
 @media (max-width: 380px) {

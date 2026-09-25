@@ -1,70 +1,53 @@
 <app-save-feedback [message]="saveMessage()" (dismissed)="dismissSaved()" />
-<div class="hh-page">
-  <app-sidebar-nav />
-
-  <div class="hh-page__content">
-    <app-context-bar />
-    <main id="main-content" class="hh-main">
+<app-shell>
+  <main id="main-content" class="hh-main" tabindex="-1">
       <header class="page-head">
-        <h1>Euer Haushalt</h1>
-        <p class="page-subtitle">Einkaufen, Aufgaben und wichtige Fristen – für alle sichtbar.</p>
+        <span class="page-head__icon" aria-hidden="true"><app-icon name="household" /></span>
+        <div class="page-head__text">
+          <h1>Haushalt</h1>
+          <p class="page-subtitle">Organisiere dein Zuhause. Gemeinsam.</p>
+        </div>
+        <button type="button" class="btn-primary page-head__action" aria-label="Neue Aufgabe" (click)="newTask()">
+          <app-icon name="plus" /> <span>Neue Aufgabe</span>
+        </button>
       </header>
 
       <div class="subtabs" role="tablist" aria-label="Bereiche im Haushalt" (keydown)="onTabKeydown($event)">
-        <button
-          id="hh-tab-einkauf"
-          type="button"
-          role="tab"
-          class="subtab"
-          aria-controls="hh-panel"
-          [attr.aria-selected]="activeTab() === 'einkauf'"
-          [attr.tabindex]="activeTab() === 'einkauf' ? 0 : -1"
-          [class.is-active]="activeTab() === 'einkauf'"
-          (click)="selectTab('einkauf')"
-        >
-          Einkauf
-        </button>
-        <button
-          id="hh-tab-aufgaben"
-          type="button"
-          role="tab"
-          class="subtab"
-          aria-controls="hh-panel"
-          [attr.aria-selected]="activeTab() === 'aufgaben'"
-          [attr.tabindex]="activeTab() === 'aufgaben' ? 0 : -1"
-          [class.is-active]="activeTab() === 'aufgaben'"
-          (click)="selectTab('aufgaben')"
-        >
-          Aufgaben
-        </button>
-        <button
-          id="hh-tab-ordner"
-          type="button"
-          role="tab"
-          class="subtab"
-          aria-controls="hh-panel"
-          [attr.aria-selected]="activeTab() === 'ordner'"
-          [attr.tabindex]="activeTab() === 'ordner' ? 0 : -1"
-          [class.is-active]="activeTab() === 'ordner'"
-          (click)="selectTab('ordner')"
-        >
-          Ordner
-        </button>
+        @for (tab of tabs; track tab.key) {
+          <button
+            [id]="'hh-tab-' + tab.key"
+            type="button"
+            role="tab"
+            class="subtab"
+            aria-controls="hh-panel"
+            [attr.aria-selected]="activeTab() === tab.key"
+            [attr.tabindex]="activeTab() === tab.key ? 0 : -1"
+            [class.is-active]="activeTab() === tab.key"
+            (click)="selectTab(tab.key)"
+          >
+            {{ tab.label }}
+          </button>
+        }
       </div>
 
       <div id="hh-panel" role="tabpanel" [attr.aria-labelledby]="'hh-tab-' + activeTab()">
         @switch (activeTab()) {
+          @case ('uebersicht') {
+            <app-uebersicht-tab (saved)="showSaved($event)" (openTab)="selectTab($event)" />
+          }
+          @case ('routinen') {
+            <app-aufgaben-tab mode="routinen" [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />
+          }
           @case ('einkauf') {
             <app-einkauf-tab (saved)="showSaved($event)" />
           }
           @case ('aufgaben') {
-            <app-aufgaben-tab (saved)="showSaved($event)" />
+            <app-aufgaben-tab [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />
           }
           @case ('ordner') {
             <app-ordner-tab (saved)="showSaved($event)" />
           }
         }
       </div>
-    </main>
-  </div>
-</div>
+  </main>
+</app-shell>

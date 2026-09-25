@@ -29,9 +29,96 @@ describe('Haushalt (Demo)', () => {
     return (element?.textContent ?? '').replace(/\s+/g, ' ').trim();
   }
 
+  function openTab(fixture: ReturnType<typeof TestBed.createComponent<Haushalt>>, key: string) {
+    const compiled = fixture.nativeElement as HTMLElement;
+    (compiled.querySelector(`#hh-tab-${key}`) as HTMLButtonElement).click();
+    fixture.detectChanges();
+  }
+
+  it('starts on the overview with the five tabs from the design', () => {
+    const fixture = TestBed.createComponent(Haushalt);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const tabs = Array.from(compiled.querySelectorAll('[role="tab"]')).map(text);
+    expect(tabs).toEqual(['Übersicht', 'Aufgaben', 'Geräte', 'Einkaufsliste', 'Routinen']);
+    expect(compiled.querySelector('[role="tab"][aria-selected="true"]')?.id).toBe('hh-tab-uebersicht');
+    // Demo: 2 fällige Aufgaben (gestern + heute), Zähler aus derselben Antwort
+    expect(text(compiled.querySelector('app-uebersicht-tab .stat__value'))).toBe('4');
+    expect(text(compiled.querySelector('app-uebersicht-tab .stat__label'))).toBe('offene Aufgaben');
+    // „Aktuelle Aufgaben“: überfällig, heute, dann die nächsten (vier Zeilen)
+    expect(compiled.querySelectorAll('app-uebersicht-tab .row').length).toBe(4);
+    const subtitles = Array.from(compiled.querySelectorAll('app-uebersicht-tab .row__meta')).map(text);
+    expect(subtitles.slice(0, 3)).toEqual(['Überfällig', 'Heute', 'Morgen']);
+    expect(compiled.querySelector('app-uebersicht-tab .device')).not.toBeNull(); // „Meine Geräte“
+    expect(text(compiled.querySelector('.page-head__action'))).toBe('Neue Aufgabe');
+    expect(compiled.querySelector('button[aria-label="Bad putzen als erledigt markieren"]')).not.toBeNull();
+  });
+
+  it('completing a recurring task on the overview moves it out of today but keeps it open', () => {
+    const fixture = TestBed.createComponent(Haushalt);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    (compiled.querySelector('button[aria-label="Bad putzen als erledigt markieren"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    // wiederkehrend: rückt weiter, bleibt offen, ist aber nicht mehr heute fällig
+    const subtitles = Array.from(compiled.querySelectorAll('app-uebersicht-tab .row__meta')).map(text);
+    expect(subtitles).not.toContain('Heute');
+    expect(text(compiled.querySelector('app-uebersicht-tab .stat__value'))).toBe('4');
+  });
+
+  it('"Neue Aufgabe" in the page header opens the task form on the tasks tab', () => {
+    const fixture = TestBed.createComponent(Haushalt);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    (compiled.querySelector('.page-head__action') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(compiled.querySelector('[role="tab"][aria-selected="true"]')?.id).toBe('hh-tab-aufgaben');
+    expect(text(compiled.querySelector('app-modal-form h2'))).toBe('Neue Aufgabe');
+  });
+
+  it('the routines tab lists only recurring tasks and offers daily, weekly and monthly', () => {
+    const fixture = TestBed.createComponent(Haushalt);
+    fixture.detectChanges();
+    openTab(fixture, 'routinen');
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const rows = Array.from(compiled.querySelectorAll('app-aufgaben-tab .row__title')).map(text);
+    expect(rows).toContain('Bad putzen');
+    expect(rows).not.toContain('Winterreifen-Termin vereinbaren'); // einmalig
+    (compiled.querySelector('app-aufgaben-tab .card-head .btn-primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const options = Array.from(compiled.querySelectorAll('#task-recurrence option')).map(text);
+    expect(options).toEqual(['Einmalig', 'Täglich', 'Wöchentlich', 'Monatlich']);
+    // Eine neue Routine startet wöchentlich, nicht einmalig
+    expect((compiled.querySelector('#task-recurrence') as HTMLSelectElement).value).toBe('weekly');
+  });
+
+  it('a one-off task can be completed and reopened from the done list', () => {
+    const fixture = TestBed.createComponent(Haushalt);
+    fixture.detectChanges();
+    openTab(fixture, 'aufgaben');
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    (compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren als erledigt markieren"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren als erledigt markieren"]')).toBeNull();
+
+    (compiled.querySelector('#toggle-done') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren wieder öffnen"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren als erledigt markieren"]')).not.toBeNull();
+  });
+
   it('shows the shopping list grouped by shop section with accessible check buttons', () => {
     const fixture = TestBed.createComponent(Haushalt);
     fixture.detectChanges();
+    openTab(fixture, 'einkauf');
     const compiled = fixture.nativeElement as HTMLElement;
 
     const headings = Array.from(compiled.querySelectorAll('app-einkauf-tab h3')).map(text);
@@ -43,6 +130,7 @@ describe('Haushalt (Demo)', () => {
   it('checking items shows the checkout bar, completing books an expense in the demo finances', async () => {
     const fixture = TestBed.createComponent(Haushalt);
     fixture.detectChanges();
+    openTab(fixture, 'einkauf');
     const compiled = fixture.nativeElement as HTMLElement;
     const finanzen = TestBed.inject(FINANZEN_DATA_PROVIDER);
     const before = await firstValueFrom(finanzen.getOverview());

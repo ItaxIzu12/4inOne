@@ -10,7 +10,7 @@ Do not hand it the entire historical chat as the primary source. These files are
 
 ### Step 1 — Audit
 
-Use `CODEX_START_PROMPT.md`.
+Use `CODEX_START_PROMPT.md` (repository root).
 
 No code changes.
 

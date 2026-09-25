@@ -1,6 +1,8 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, computed, inject, output, signal } from '@angular/core';
+import { Field } from '../../shared/form/field';
 import { Modal } from '../../shared/modal/modal';
+import { ModalForm } from '../../shared/form/modal-form';
 import { FinanzenStateService } from '../finanzen/finanzen-state.service';
 import { ItemSuggestionDto, SectionKey, ShoppingItemDto, ShoppingOverviewDto } from './haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
@@ -40,7 +42,7 @@ function formatEuro(value: number): string {
 @Component({
   selector: 'app-einkauf-tab',
   standalone: true,
-  imports: [DecimalPipe, Modal],
+  imports: [DecimalPipe, Field, Modal, ModalForm],
   templateUrl: './einkauf-tab.html',
   styleUrls: ['./haushalt-common.scss', './einkauf-tab.scss'],
 })
@@ -214,8 +216,7 @@ export class EinkaufTab {
     this.editing.set(null);
   }
 
-  protected saveEdit(event: Event): void {
-    event.preventDefault();
+  protected saveEdit(): void {
     const item = this.editing();
     if (!item || this.editSaving()) return;
     const name = this.editName().trim();

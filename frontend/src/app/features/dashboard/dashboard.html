@@ -9,7 +9,11 @@
       <time>{{ date }}</time>
     </header>
     <p class="preview-note">
-      Vorschau · Die folgenden Termine, Beträge und Verbindungen sind Beispieldaten.
+      {{
+        live()
+          ? 'Heute zeigt deine privaten Organisationseinträge. Haushalt und Reiseverbindungen enthalten noch Beispieldaten.'
+          : 'Vorschau · Die folgenden Termine, Beträge und Verbindungen sind Beispieldaten.'
+      }}
     </p>
     <div class="dashboard-grid">
       <section class="card today">
@@ -17,13 +21,23 @@
           <h2>
             <span class="desktop-copy">Heute</span><span class="mobile-copy">Heute für dich</span>
           </h2>
-          <button class="text-button" (click)="detail.set('Dein Tag')">
+          <button class="text-button" (click)="showDay()">
             Alle anzeigen <app-icon name="arrow" />
           </button>
         </header>
         <div class="today-list">
-          @for (item of items; track item.title; let first = $first) {
-            <button class="today-row" [class.optional-row]="first" (click)="detail.set(item.title)">
+          @if (todayLoading()) {
+            <p role="status">Dein Tag wird geladen …</p>
+          }
+          @if (todayError()) {
+            <p role="alert">{{ todayError() }}</p>
+            <button class="text-button" (click)="loadToday()">Erneut versuchen</button>
+          }
+          @if (live() && !todayLoading() && !todayError() && !items.length) {
+            <p>Heute stehen keine Termine oder fälligen Aufgaben an.</p>
+          }
+          @for (item of items; track $index; let first = $first) {
+            <button class="today-row" [class.optional-row]="first" (click)="openItem(item)">
               <span class="icon-disc" [class]="'icon-disc ' + item.tone"
                 ><app-icon [name]="item.icon" /></span
               ><span class="time">{{ item.time }}</span
@@ -31,7 +45,9 @@
                 ><strong class="desktop-copy">{{ item.title }}</strong
                 ><strong class="mobile-copy">{{ item.mobile }}</strong
                 ><small class="mobile-copy">{{
-                  item.title === 'Arzttermin' || item.tone === 'household' ? item.note : ''
+                  live() || item.title === 'Arzttermin' || item.tone === 'household'
+                    ? item.note
+                    : ''
                 }}</small></span
               ><app-icon class="chevron" name="arrow" />
             </button>
@@ -103,11 +119,13 @@
             </header>
             <p>{{ domain.summary }}</p>
             <app-icon class="domain-decoration" [name]="domain.icon" aria-hidden="true" />
-            @if (domain.name === 'Finanzen') {
+            @if (domain.name === 'Finanzen' && (!live() || finance()?.budget != null)) {
               <progress
-                value="2340"
-                max="3000"
-                aria-label="Beispielbudget: 2.340 Euro von 3.000 Euro"
+                [value]="live() ? financeProgress() : 78"
+                max="100"
+                [attr.aria-label]="
+                  live() ? 'Monatsbudget verbraucht' : 'Beispielbudget: 2.340 Euro von 3.000 Euro'
+                "
               ></progress>
             }
           </a>
@@ -151,8 +169,8 @@
         <p class="muted">Die Häkchen bleiben nur während dieser Vorschau erhalten.</p>
       }
       @case ('Dein Tag') {
-        @for (item of items; track item.title) {
-          <button (click)="detail.set(item.title)">{{ item.time }} · {{ item.title }} →</button>
+        @for (item of items; track $index) {
+          <button (click)="openItem(item)">{{ item.time }} · {{ item.title }} →</button>
         }
       }
       @case ('Berlin Wochenende') {
@@ -180,7 +198,7 @@
         <button (click)="detail.set('Packliste')">Packliste öffnen →</button>
       }
       @default {
-        @for (item of items; track item.title) {
+        @for (item of items; track $index) {
           @if (item.title === detail()) {
             <p>{{ item.time }} · {{ item.note }}</p>
             <p>Dieser Eintrag zeigt beispielhaft, wie dein Tag in 4inOne aussehen kann.</p>

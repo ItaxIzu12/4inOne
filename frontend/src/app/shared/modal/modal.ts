@@ -26,6 +26,8 @@ export class Modal {
   readonly open = input.required<boolean>();
   readonly labelledBy = input.required<string>();
   readonly closeLabel = input('Schließen');
+  /** Ohne Innenabstand: der Inhalt (z. B. ModalForm) gestaltet Kopf, Körper und Fuß selbst. */
+  readonly flush = input(false);
   readonly closed = output<void>();
 
   private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');

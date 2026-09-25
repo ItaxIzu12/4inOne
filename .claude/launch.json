@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "frontend", "start"],
       "port": 4200
+    },
+    {
+      "name": "design-v2",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8766", "--directory", "/private/tmp/claude-501/-Users-richard-4inOne/b23f441e-1134-40b3-a248-28c1a296a0b4/scratchpad/v2"],
+      "port": 8766
     }
   ]
 }

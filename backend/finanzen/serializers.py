@@ -193,7 +193,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         category = attrs.get('category', getattr(self.instance, 'category', None))
         if request is not None and category is not None:
-            if not category.household.members.filter(pk=request.user.pk).exists():
+            if category.household_id is None or not category.household.members.filter(pk=request.user.pk).exists():
                 raise serializers.ValidationError({'category_id': 'Diese Kategorie gehört nicht zu deinem Haushalt.'})
         return attrs
 
@@ -297,6 +297,6 @@ class RecurringDeductionSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         category = attrs.get('category', getattr(self.instance, 'category', None))
         if request is not None and category is not None:
-            if not category.household.members.filter(pk=request.user.pk).exists():
+            if category.household_id is None or not category.household.members.filter(pk=request.user.pk).exists():
                 raise serializers.ValidationError({'category_id': 'Diese Kategorie gehört nicht zu deinem Haushalt.'})
         return attrs

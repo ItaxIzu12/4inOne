@@ -1,4 +1,5 @@
-from django.db.models import F
+from django.db.models import F, Q
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -160,12 +161,21 @@ class TaskViewSet(_WriteThrottleMixin, ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
-        return (
+        queryset = (
             Task.objects.select_related('assigned_to', 'last_done_by', 'household')
             .prefetch_related('rotation_members')
-            .filter(household__members=self.request.user, is_done=False)
-            .order_by(F('due_date').asc(nulls_last=True), 'id')
+            .filter(household__members=self.request.user)
         )
+        if self.action != 'list':
+            # Einzelzugriff (ändern, löschen, wieder öffnen) gilt auch für
+            # erledigte Aufgaben — die Haushaltsgrenze bleibt oben erhalten.
+            return queryset
+        state = self.request.query_params.get('status', 'open')
+        if state == 'done':
+            return queryset.filter(is_done=True).order_by('-last_done_at', '-id')
+        if state == 'all':
+            return queryset.order_by(F('due_date').asc(nulls_last=True), 'id')
+        return queryset.filter(is_done=False).order_by(F('due_date').asc(nulls_last=True), 'id')
 
     def perform_create(self, serializer):
         household = _require_membership(self.request).household
@@ -183,8 +193,86 @@ class TaskViewSet(_WriteThrottleMixin, ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='erledigt')
     def complete(self, request, pk=None):
-        task = services.complete_task(self.get_object(), request.user)
-        return Response(self.get_serializer(task).data)
+        task = self.get_object()
+        if task.is_done:
+            raise ValidationError('Diese Aufgabe ist bereits erledigt.')
+        return Response(self.get_serializer(services.complete_task(task, request.user)).data)
+
+    @action(detail=True, methods=['post'], url_path='wieder-oeffnen')
+    def reopen(self, request, pk=None):
+        task = self.get_object()
+        if not task.is_done:
+            raise ValidationError('Diese Aufgabe ist noch offen.')
+        return Response(self.get_serializer(services.reopen_task(task)).data)
+
+
+class HaushaltOverviewView(APIView):
+    """Kurzüberblick für „Heute“ und die Dashboard-Karte: Zahl offener
+    Aufgaben, überfällige und heute fällige Aufgaben (höchstens 5), offene
+    Einkaufseinträge und Geräte. Der Haushalt kommt nur aus request.user;
+    ohne Haushalt ist alles leer, statt einen Fehler zu liefern."""
+
+    permission_classes = [IsAuthenticated]
+    LIMIT = 5
+
+    def get(self, request):
+        membership = services.membership_for(request.user)
+        if membership is None:
+            return Response(
+                {
+                    'open_tasks': 0,
+                    'overdue_tasks': 0,
+                    'today': [],
+                    'upcoming': [],
+                    'open_shopping_items': 0,
+                    'devices': 0,
+                    'device_list': [],
+                }
+            )
+        household = membership.household
+        today = timezone.localdate()
+        open_tasks = Task.objects.filter(household=household, is_done=False)
+        due = (
+            open_tasks.filter(due_date__lte=today)
+            .select_related('assigned_to', 'last_done_by', 'household')
+            .prefetch_related('rotation_members')
+            .order_by('due_date', F('due_time').asc(nulls_last=True), 'id')[: self.LIMIT]
+        )
+        upcoming = (
+            open_tasks.filter(Q(due_date__gt=today) | Q(due_date__isnull=True))
+            .select_related('assigned_to', 'last_done_by', 'household')
+            .prefetch_related('rotation_members')
+            .order_by(F('due_date').asc(nulls_last=True), F('due_time').asc(nulls_last=True), 'id')[: self.LIMIT]
+        )
+        devices = []
+        if not services.is_child_account(membership):
+            devices = [
+                {
+                    'id': entry.id,
+                    'name': entry.name,
+                    'provider': entry.provider,
+                    'next_maintenance': entry.next_maintenance,
+                    'warranty_until': entry.warranty_until,
+                }
+                for entry in FolderEntry.objects.filter(household=household, kind=FolderEntry.Kind.DEVICE).order_by(
+                    'name'
+                )[: self.LIMIT]
+            ]
+        return Response(
+            {
+                'open_tasks': open_tasks.count(),
+                'overdue_tasks': open_tasks.filter(due_date__lt=today).count(),
+                'today': TaskSerializer(due, many=True, context={'request': request}).data,
+                'upcoming': TaskSerializer(upcoming, many=True, context={'request': request}).data,
+                'device_list': devices,
+                'open_shopping_items': ShoppingItem.objects.filter(
+                    shopping_list__household=household, is_checked=False
+                ).count(),
+                'devices': 0
+                if services.is_child_account(membership)
+                else FolderEntry.objects.filter(household=household, kind=FolderEntry.Kind.DEVICE).count(),
+            }
+        )
 
 
 class TaskLoadView(APIView):

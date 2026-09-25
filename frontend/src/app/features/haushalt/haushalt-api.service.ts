@@ -72,13 +72,21 @@ export interface CompleteShoppingResult {
 
 export type Effort = 1 | 2 | 3;
 
+export type Recurrence = 'daily' | 'weekly' | 'monthly';
+export type TaskStatus = 'open' | 'done';
+
 export interface TaskDto {
   id: Id;
   title: string;
+  description: string;
+  status: TaskStatus;
   assigned_to: Id | null;
   assigned_to_name: string | null;
   due_date: string | null;
+  due_time: string | null;
+  recurrence: Recurrence | null;
   recurrence_days: number | null;
+  recurrence_months: number | null;
   effort: Effort;
   rotate: boolean;
   rotation_member_ids: Id[];
@@ -90,12 +98,35 @@ export interface TaskDto {
 
 export interface TaskInput {
   title: string;
+  description: string;
   assigned_to: Id | null;
   due_date: string | null;
-  recurrence_days: number | null;
+  due_time: string | null;
+  recurrence: Recurrence | null;
   effort: Effort;
   rotate: boolean;
   rotation_member_ids: Id[];
+}
+
+/** GET /haushalt/uebersicht/ — Zahlen für „Übersicht“ und die Dashboard-Karte. */
+export interface OverviewDeviceDto {
+  id: Id;
+  name: string;
+  provider: string;
+  next_maintenance: string | null;
+  warranty_until: string | null;
+}
+
+export interface HaushaltOverviewDto {
+  open_tasks: number;
+  overdue_tasks: number;
+  /** Überfällig oder heute fällig. */
+  today: TaskDto[];
+  /** Später fällig oder ohne Datum. */
+  upcoming: TaskDto[];
+  open_shopping_items: number;
+  devices: number;
+  device_list: OverviewDeviceDto[];
 }
 
 export interface MemberLoadDto {
@@ -186,8 +217,16 @@ export class HaushaltApiService {
     });
   }
 
-  getTasks(): Observable<TaskDto[]> {
-    return this.http.get<TaskDto[]>(`${this.base}/aufgaben/`);
+  getTasks(status: TaskStatus | 'all' = 'open'): Observable<TaskDto[]> {
+    return this.http.get<TaskDto[]>(`${this.base}/aufgaben/`, { params: { status } });
+  }
+
+  getOverview(): Observable<HaushaltOverviewDto> {
+    return this.http.get<HaushaltOverviewDto>(`${this.base}/uebersicht/`);
+  }
+
+  reopenTask(id: Id): Observable<TaskDto> {
+    return this.http.post<TaskDto>(`${this.base}/aufgaben/${id}/wieder-oeffnen/`, {});
   }
 
   getTaskLoad(): Observable<MemberLoadDto[]> {

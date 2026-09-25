@@ -137,16 +137,23 @@ class TaskSerializer(serializers.ModelSerializer):
     assigned_to_name = serializers.SerializerMethodField()
     last_done_by_name = serializers.SerializerMethodField()
     is_overdue = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    recurrence = serializers.ChoiceField(choices=['daily', 'weekly', 'monthly'], required=False, allow_null=True)
 
     class Meta:
         model = Task
         fields = [
             'id',
             'title',
+            'description',
+            'status',
             'assigned_to',
             'assigned_to_name',
             'due_date',
+            'due_time',
+            'recurrence',
             'recurrence_days',
+            'recurrence_months',
             'effort',
             'rotate',
             'rotation_member_ids',
@@ -156,6 +163,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'last_done_by_name',
         ]
         read_only_fields = ['id', 'is_done', 'last_done_at', 'last_done_by_name', 'assigned_to_name', 'is_overdue']
+        extra_kwargs = {'description': {'required': False, 'allow_blank': True}}
 
     def get_assigned_to_name(self, obj) -> str | None:
         return _display_name(obj.assigned_to)
@@ -166,8 +174,19 @@ class TaskSerializer(serializers.ModelSerializer):
     def get_is_overdue(self, obj) -> bool:
         return bool(obj.due_date and not obj.is_done and obj.due_date < timezone.localdate())
 
+    def get_status(self, obj) -> str:
+        return 'done' if obj.is_done else 'open'
+
     def validate_title(self, value):
         return _clean_name(value)
+
+    def validate_description(self, value):
+        return value.strip()
+
+    def validate_recurrence_months(self, value):
+        if value is not None and not 1 <= value <= 12:
+            raise serializers.ValidationError('Die Wiederholung muss zwischen 1 und 12 Monaten liegen.')
+        return value
 
     def validate_recurrence_days(self, value):
         if value is not None and not 1 <= value <= 365:
@@ -189,7 +208,19 @@ class TaskSerializer(serializers.ModelSerializer):
                 return getattr(self.instance, field)
             return default
 
-        recurrence = current('recurrence_days')
+        # Die einfache Auswahl (täglich/wöchentlich/monatlich) setzt genau eines
+        # der beiden Intervallfelder; ein direkt gesetztes Intervall löscht das
+        # andere, damit nie beide gelten.
+        if 'recurrence' in attrs:
+            choice = attrs.pop('recurrence')
+            attrs['recurrence_days'] = {'daily': 1, 'weekly': 7}.get(choice)
+            attrs['recurrence_months'] = 1 if choice == 'monthly' else None
+        elif attrs.get('recurrence_days'):
+            attrs['recurrence_months'] = None
+        elif attrs.get('recurrence_months'):
+            attrs['recurrence_days'] = None
+
+        recurrence = current('recurrence_days') or current('recurrence_months')
         rotate = current('rotate', False)
         rotation = current('rotation_members', [])
 

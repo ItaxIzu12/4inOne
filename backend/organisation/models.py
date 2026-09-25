@@ -44,3 +44,47 @@ class CalendarEvent(models.Model):
 
     def __str__(self) -> str:
         return f'{self.title} ({self.starts_at:%Y-%m-%d})'
+
+
+class PersonalEvent(models.Model):
+    """Private appointments, separate from the existing shared household calendar."""
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_events')
+    title = models.CharField(max_length=120)
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField(null=True, blank=True)
+    location = models.CharField(max_length=240, blank=True)
+    description = models.TextField(blank=True, max_length=5000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['starts_at', 'id']
+        indexes = [models.Index(fields=['owner', 'starts_at'])]
+        constraints = [models.CheckConstraint(condition=models.Q(ends_at__isnull=True) | models.Q(ends_at__gte=models.F('starts_at')), name='personal_event_end_after_start')]
+
+
+class PersonalTask(models.Model):
+    class Status(models.TextChoices):
+        OPEN = 'OPEN', 'Offen'
+        IN_PROGRESS = 'IN_PROGRESS', 'In Bearbeitung'
+        DONE = 'DONE', 'Erledigt'
+
+    class Priority(models.TextChoices):
+        LOW = 'LOW', 'Niedrig'
+        MEDIUM = 'MEDIUM', 'Mittel'
+        HIGH = 'HIGH', 'Hoch'
+
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_tasks')
+    title = models.CharField(max_length=120)
+    description = models.TextField(blank=True, max_length=5000)
+    due_date = models.DateField(null=True, blank=True)
+    due_time = models.TimeField(null=True, blank=True)
+    priority = models.CharField(max_length=6, choices=Priority.choices, default=Priority.MEDIUM)
+    status = models.CharField(max_length=11, choices=Status.choices, default=Status.OPEN)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['due_date', 'due_time', 'id']
+        indexes = [models.Index(fields=['owner', 'status', 'due_date'])]
+        constraints = [models.CheckConstraint(condition=models.Q(due_time__isnull=True) | models.Q(due_date__isnull=False), name='personal_task_time_requires_date')]

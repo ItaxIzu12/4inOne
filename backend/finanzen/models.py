@@ -38,7 +38,8 @@ class Category(models.Model):
     Icons lassen sich so ergänzen, ohne das Backend anzufassen.
     """
 
-    household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='categories')
+    household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='categories', null=True, blank=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='finance_categories')
     name = models.CharField(max_length=100)
     color = models.CharField(max_length=7, default='#164c49', help_text='Hex-Farbwert, z. B. #164c49.')
     icon_key = models.CharField(max_length=30, default='sonstiges')
@@ -54,7 +55,9 @@ class Category(models.Model):
     class Meta:
         verbose_name_plural = 'Categories'
         constraints = [
-            models.UniqueConstraint(fields=['household', 'name'], name='unique_category_per_household')
+            models.UniqueConstraint(fields=['household', 'name'], name='unique_category_per_household'),
+            models.UniqueConstraint(fields=['owner', 'name'], name='unique_category_per_owner'),
+            models.CheckConstraint(condition=(models.Q(owner__isnull=False, household__isnull=True) | models.Q(owner__isnull=True, household__isnull=False)), name='category_exactly_one_scope')
         ]
 
     def __str__(self) -> str:
@@ -131,7 +134,10 @@ class Transaction(models.Model):
     """Eine Ausgabe oder Einnahme. Löschung erfolgt ausschließlich über
     soft_delete() — siehe Docstring dort."""
 
-    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='transactions')
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='transactions', null=True, blank=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='private_transactions')
+    currency = models.CharField(max_length=3, default='EUR')
+    type = models.CharField(max_length=7, choices=[('INCOME', 'Einnahme'), ('EXPENSE', 'Ausgabe')], default='EXPENSE')
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions'
     )
@@ -179,6 +185,10 @@ class Transaction(models.Model):
     def __str__(self) -> str:
         return f'{self.amount} · {self.description or self.account}'
 
+    class Meta:
+        indexes = [models.Index(fields=['owner', 'datum'])]
+        constraints = [models.CheckConstraint(condition=(models.Q(owner__isnull=False, account__isnull=True) | models.Q(owner__isnull=True, account__isnull=False)), name='transaction_exactly_one_scope')]
+
     def soft_delete(self) -> None:
         """Markiert die Transaction als gelöscht, statt sie zu entfernen.
 
@@ -194,3 +204,29 @@ class Transaction(models.Model):
 
         self.deleted_at = timezone.now()
         self.save(update_fields=['deleted_at'])
+
+
+class MonthlyBudget(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='monthly_budgets')
+    month = models.DateField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default='EUR')
+
+    class Meta:
+        ordering = ['-month']
+        constraints = [models.UniqueConstraint(fields=['owner', 'month', 'currency'], name='unique_owner_month_budget'), models.CheckConstraint(condition=models.Q(amount__gte=0), name='monthly_budget_nonnegative')]
+
+
+class SavingsGoal(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='savings_goals')
+    title = models.CharField(max_length=120)
+    target_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    current_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    target_date = models.DateField(null=True, blank=True)
+    currency = models.CharField(max_length=3, default='EUR')
+    status = models.CharField(max_length=9, choices=[('ACTIVE', 'Aktiv'), ('COMPLETED', 'Erreicht'), ('PAUSED', 'Pausiert')], default='ACTIVE')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        constraints = [models.CheckConstraint(condition=models.Q(target_amount__gt=0, current_amount__gte=0), name='savings_goal_valid_amounts')]

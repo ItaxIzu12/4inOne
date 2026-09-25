@@ -1,7 +1,9 @@
-import { Component, computed, inject, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { forkJoin } from 'rxjs';
-import { Modal } from '../../shared/modal/modal';
-import { Effort, Id, MemberLoadDto, TaskDto, TaskInput } from './haushalt-api.service';
+import { AppIcon } from '../../shared/icons/app-icon';
+import { Field } from '../../shared/form/field';
+import { ModalForm } from '../../shared/form/modal-form';
+import { Effort, Id, MemberLoadDto, Recurrence, TaskDto, TaskInput } from './haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
 import { daysUntil, recurrenceLabel, relativeDay, todayIso } from './haushalt-logic';
 
@@ -11,13 +13,11 @@ interface TaskGroup {
   tasks: TaskDto[];
 }
 
-const RECURRENCE_OPTIONS: { value: number | null; label: string }[] = [
+const RECURRENCE_OPTIONS: { value: Recurrence | null; label: string }[] = [
   { value: null, label: 'Einmalig' },
-  { value: 1, label: 'Täglich' },
-  { value: 3, label: 'Alle 3 Tage' },
-  { value: 7, label: 'Wöchentlich' },
-  { value: 14, label: 'Alle 2 Wochen' },
-  { value: 30, label: 'Monatlich' },
+  { value: 'daily', label: 'Täglich' },
+  { value: 'weekly', label: 'Wöchentlich' },
+  { value: 'monthly', label: 'Monatlich' },
 ];
 
 const EFFORT_LABELS: Record<Effort, string> = { 1: 'Klein', 2: 'Mittel', 3: 'Groß' };
@@ -32,15 +32,24 @@ const EFFORT_LABELS: Record<Effort, string> = { 1: 'Klein', 2: 'Mittel', 3: 'Gro
 @Component({
   selector: 'app-aufgaben-tab',
   standalone: true,
-  imports: [Modal],
+  imports: [AppIcon, Field, ModalForm],
   templateUrl: './aufgaben-tab.html',
   styleUrls: ['./haushalt-common.scss', './aufgaben-tab.scss'],
 })
 export class AufgabenTab {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
   readonly saved = output<string>();
+  /** „aufgaben“ zeigt alle offenen Aufgaben, „routinen“ nur wiederkehrende —
+   * dieselben Daten und dasselbe Formular, keine zweite Aufgabenlogik. */
+  readonly mode = input<'aufgaben' | 'routinen'>('aufgaben');
+  /** Steigt bei jedem „Neue Aufgabe“ im Seitenkopf; > 0 öffnet das Formular. */
+  readonly newRequest = input(0);
 
   protected readonly tasks = signal<TaskDto[] | null>(null);
+  protected readonly doneTasks = signal<TaskDto[] | null>(null);
+  protected readonly showDone = signal(false);
+  protected readonly reopening = signal<Id | null>(null);
+  protected readonly isRoutines = computed(() => this.mode() === 'routinen');
   protected readonly members = signal<MemberLoadDto[]>([]);
   protected readonly loadError = signal(false);
   protected readonly actionError = signal<string | null>(null);
@@ -52,8 +61,13 @@ export class AufgabenTab {
   protected readonly relativeDay = relativeDay;
   protected readonly recurrenceLabel = recurrenceLabel;
 
-  protected readonly groups = computed<TaskGroup[]>(() => {
+  private readonly visibleTasks = computed(() => {
     const tasks = this.tasks() ?? [];
+    return this.isRoutines() ? tasks.filter((t) => t.recurrence_days || t.recurrence_months) : tasks;
+  });
+
+  protected readonly groups = computed<TaskGroup[]>(() => {
+    const tasks = this.visibleTasks();
     const groups: TaskGroup[] = [
       { key: 'overdue', label: 'Überfällig', tasks: [] },
       { key: 'today', label: 'Heute', tasks: [] },
@@ -78,8 +92,10 @@ export class AufgabenTab {
   protected readonly formOpen = signal(false);
   protected readonly editingId = signal<Id | null>(null);
   protected readonly formTitle = signal('');
-  protected readonly formRecurrence = signal<number | null>(null);
+  protected readonly formDescription = signal('');
+  protected readonly formRecurrence = signal<Recurrence | null>(null);
   protected readonly formDue = signal('');
+  protected readonly formTime = signal('');
   protected readonly formEffort = signal<Effort>(1);
   protected readonly formAssignee = signal<Id | null>(null);
   protected readonly formRotate = signal(false);
@@ -91,6 +107,9 @@ export class AufgabenTab {
 
   constructor() {
     this.load();
+    effect(() => {
+      if (this.newRequest() > 0) untracked(() => this.openNew());
+    });
   }
 
   protected load(): void {
@@ -104,12 +123,43 @@ export class AufgabenTab {
     });
   }
 
+  protected toggleDone(): void {
+    const next = !this.showDone();
+    this.showDone.set(next);
+    if (next) this.loadDone();
+  }
+
+  private loadDone(): void {
+    this.provider.getTasks('done').subscribe({
+      next: (rows) => this.doneTasks.set(rows),
+      error: () => this.actionError.set('Erledigte Aufgaben konnten nicht geladen werden.'),
+    });
+  }
+
+  protected reopen(task: TaskDto): void {
+    if (this.reopening() !== null) return;
+    this.reopening.set(task.id);
+    this.actionError.set(null);
+    this.provider.reopenTask(task.id).subscribe({
+      next: () => {
+        this.reopening.set(null);
+        this.load();
+        this.loadDone();
+        this.saved.emit(`„${task.title}“ ist wieder offen.`);
+      },
+      error: () => {
+        this.reopening.set(null);
+        this.actionError.set(`„${task.title}“ konnte nicht wieder geöffnet werden.`);
+      },
+    });
+  }
+
   private reloadLoad(): void {
     this.provider.getTaskLoad().subscribe({ next: (members) => this.members.set(members), error: () => undefined });
   }
 
   protected metaLine(task: TaskDto): string {
-    const parts = [recurrenceLabel(task.recurrence_days)];
+    const parts = [recurrenceLabel(task.recurrence_days, task.recurrence_months)];
     if (task.assigned_to_name) parts.push(task.rotate ? `${task.assigned_to_name} (reihum)` : task.assigned_to_name);
     else parts.push('alle');
     parts.push(`Aufwand ${EFFORT_LABELS[task.effort].toLowerCase()}`);
@@ -130,6 +180,7 @@ export class AufgabenTab {
             .sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999')),
         );
         this.reloadLoad();
+        if (this.showDone()) this.loadDone();
         if (updated.is_done) {
           this.saved.emit(`„${task.title}“ erledigt.`);
         } else {
@@ -150,7 +201,9 @@ export class AufgabenTab {
   protected openNew(): void {
     this.editingId.set(null);
     this.formTitle.set('');
-    this.formRecurrence.set(null);
+    this.formDescription.set('');
+    this.formRecurrence.set(this.isRoutines() ? 'weekly' : null);
+    this.formTime.set('');
     this.formDue.set(todayIso());
     this.formEffort.set(1);
     this.formAssignee.set(null);
@@ -163,7 +216,9 @@ export class AufgabenTab {
   protected openEdit(task: TaskDto): void {
     this.editingId.set(task.id);
     this.formTitle.set(task.title);
-    this.formRecurrence.set(task.recurrence_days);
+    this.formDescription.set(task.description ?? '');
+    this.formRecurrence.set(task.recurrence);
+    this.formTime.set(task.due_time ? task.due_time.slice(0, 5) : '');
     this.formDue.set(task.due_date ?? '');
     this.formEffort.set(task.effort);
     this.formAssignee.set(task.assigned_to);
@@ -178,7 +233,7 @@ export class AufgabenTab {
   }
 
   protected setRecurrence(value: string): void {
-    this.formRecurrence.set(value === '' ? null : Number(value));
+    this.formRecurrence.set(value === '' ? null : (value as Recurrence));
     if (value === '') this.formRotate.set(false);
   }
 
@@ -203,8 +258,7 @@ export class AufgabenTab {
     return this.formRotation().includes(id);
   }
 
-  protected submit(event: Event): void {
-    event.preventDefault();
+  protected submit(): void {
     if (this.formSaving()) return;
     const title = this.formTitle().trim();
     if (!title) {
@@ -218,8 +272,10 @@ export class AufgabenTab {
     }
     const input: TaskInput = {
       title,
-      recurrence_days: this.formRecurrence(),
+      description: this.formDescription().trim(),
+      recurrence: this.formRecurrence(),
       due_date: this.formDue() || null,
+      due_time: this.formDue() && this.formTime() ? this.formTime() : null,
       effort: this.formEffort(),
       assigned_to: this.formAssignee(),
       rotate,
@@ -234,7 +290,9 @@ export class AufgabenTab {
         this.formSaving.set(false);
         this.formOpen.set(false);
         this.load();
-        this.saved.emit(id === null ? 'Aufgabe angelegt.' : 'Aufgabe gespeichert.');
+        this.saved.emit(
+          id === null ? (this.isRoutines() ? 'Routine angelegt.' : 'Aufgabe angelegt.') : 'Aufgabe gespeichert.',
+        );
       },
       error: () => {
         this.formSaving.set(false);

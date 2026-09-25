@@ -10,9 +10,9 @@ from core.throttling import LocalCacheThrottle
 
 
 def has_user_data(user):
-    from finanzen.models import Budget, Category, RecurringDeduction, Transaction
+    from finanzen.models import Budget, Category, RecurringDeduction, Transaction, MonthlyBudget, SavingsGoal
     from haushalt.models import FolderEntry, ShoppingItem, ShoppingTrip, Task, TaskCompletion
-    from organisation.models import CalendarEvent
+    from organisation.models import CalendarEvent, PersonalEvent, PersonalTask
 
     # Older records without author information count only in the user's sole-member homes.
     personal = Household.objects.annotate(member_total=Count('members')).filter(member_total=1, members=user)
@@ -21,6 +21,10 @@ def has_user_data(user):
     if personal.filter(monthly_buffer__gt=0).exists():
         return True
     checks = [
+        MonthlyBudget.objects.filter(owner=user),
+        SavingsGoal.objects.filter(owner=user),
+        PersonalEvent.objects.filter(owner=user),
+        PersonalTask.objects.filter(owner=user),
         Transaction.objects.filter(Q(created_by=user) | Q(account__household__in=personal)),
         RecurringDeduction.objects.filter(Q(created_by=user) | Q(household__in=personal)),
         Category.objects.filter(household__in=personal).filter(Q(is_default=False) | Q(monthly_goal__isnull=False)),

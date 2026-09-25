@@ -16,7 +16,10 @@ export type IconName =
   | 'more'
   | 'arrow'
   | 'leaf'
-  | 'bars';
+  | 'bars'
+  | 'trash'
+  | 'basket'
+  | 'device';
 let nextIconId = 0;
 @Component({
   selector: 'app-icon',
@@ -112,6 +115,9 @@ export class AppIcon {
   readonly name = input<IconName>('home');
   readonly paths: Record<IconName, string> = {
     bars: 'M5 14v7m7-18v18m7-12v12',
+    trash: 'M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5',
+    basket: 'M3 9h18l-2 11H5L3 9Zm4 0 3-5m7 5-3-5M9 13v3m6-3v3',
+    device: 'M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm-1 5h14M9 5.5h.01M12 15a3 3 0 1 0 0 .01',
     home: 'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',
     household: 'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',
     finance: 'M20 7H5a2 2 0 0 1 0-4h13v4M3 5v14a2 2 0 0 0 2 2h15V7m0 5h-6v5h6m-3-2.5h.01',

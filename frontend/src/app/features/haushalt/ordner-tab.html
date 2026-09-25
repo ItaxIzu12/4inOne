@@ -25,13 +25,16 @@
         <ul class="list">
           @for (entry of contracts(); track entry.id) {
             <li class="row">
-              <button type="button" class="row__main row__edit" (click)="openEdit(entry)">
+              <button type="button" class="row__link row__edit" (click)="openEdit(entry)">
+                <span class="task-icon" aria-hidden="true"><app-icon name="finance" /></span>
+                <span class="row__main">
                 <span class="row__title">{{ entry.name }}</span>
                 <span class="row__meta">
                   {{ entry.provider || 'Anbieter nicht angegeben' }}
                   @if (entry.cancel_by) {
                     · {{ entry.notice_period_months ? 'kündbar bis' : 'endet am' }} {{ formatDate(entry.cancel_by) }}
                   }
+                </span>
                 </span>
               </button>
               @if (entry.monthly_cost) {
@@ -43,7 +46,7 @@
           } @empty {
             <li class="empty">
               <p class="muted">
-                Strom, Internet, Handy, Versicherungen … Leg Verträge ab – Kompass erinnert rechtzeitig an die
+                Strom, Internet, Handy, Versicherungen … Leg Verträge ab – 4inOne erinnert rechtzeitig an die
                 Kündigungsfrist.
               </p>
             </li>
@@ -61,7 +64,9 @@
         <ul class="list">
           @for (entry of devices(); track entry.id) {
             <li class="row">
-              <button type="button" class="row__main row__edit" (click)="openEdit(entry)">
+              <button type="button" class="row__link row__edit" (click)="openEdit(entry)">
+                <span class="task-icon" aria-hidden="true"><app-icon name="device" /></span>
+                <span class="row__main">
                 <span class="row__title">{{ entry.name }}</span>
                 <span class="row__meta">
                   @if (entry.warranty_until) {
@@ -77,6 +82,8 @@
                     {{ entry.provider || 'Keine Fristen hinterlegt' }}
                   }
                 </span>
+                </span>
+                <app-icon class="chevron" name="arrow" />
               </button>
             </li>
           } @empty {
@@ -120,163 +127,128 @@
   <p class="muted" aria-live="polite">Haushaltsordner wird geladen …</p>
 }
 
-<app-modal [open]="formOpen()" labelledBy="folder-form-heading" closeLabel="Formular schließen" (closed)="closeForm()">
-  <form class="form" (submit)="submit($event)">
-    <h2 id="folder-form-heading">
-      {{ editingId() === null ? (formKind() === 'vertrag' ? 'Neuer Vertrag' : 'Neues Gerät') : 'Eintrag bearbeiten' }}
-    </h2>
-
-    @if (formKind() === 'vertrag' && deductionOptions().length > 0) {
-      <div class="field">
-        <label for="folder-deduction">Kosten aus Finanzen übernehmen</label>
-        <select id="folder-deduction" (change)="setDeduction($any($event.target).value)">
-          <option value="" [selected]="formDeduction() === null">Kein fester Abzug</option>
-          @for (option of deductionOptions(); track option.id) {
-            <option [value]="option.id" [selected]="option.id === formDeduction()">
-              {{ option.name }} · {{ option.amount | number: '1.2-2' : 'de' }} €{{ option.active ? '' : ' (pausiert)' }}
-            </option>
-          }
-        </select>
-        <p class="field-hint">
-          @if (selectedDeduction(); as selected) {
-            @if (selected.active) {
-              Monatliche Kosten: {{ selected.amount | number: '1.2-2' : 'de' }} € – geändert wird der Betrag in
-              Finanzen.
-            } @else {
-              Dieser feste Abzug ist in Finanzen pausiert und zählt deshalb gerade nicht zu den Kosten.
-            }
-          } @else {
-            Verknüpft ihr einen festen Abzug, stehen die Kosten automatisch hier.
-          }
-        </p>
-      </div>
-    }
-
-    <div class="field-row">
-      <div class="field">
-        <label for="folder-name">Name</label>
-        <input
-          id="folder-name"
-          type="text"
-          maxlength="120"
-          [placeholder]="formKind() === 'vertrag' ? 'z. B. Stromvertrag' : 'z. B. Heizung'"
-          [value]="formName()"
-          (input)="formName.set($any($event.target).value)"
-        />
-      </div>
-      <div class="field">
-        <label for="folder-provider">{{ formKind() === 'vertrag' ? 'Anbieter' : 'Marke / Modell' }}</label>
-        <input
-          id="folder-provider"
-          type="text"
-          maxlength="120"
-          placeholder="optional"
-          [value]="formProvider()"
-          (input)="formProvider.set($any($event.target).value)"
-        />
-      </div>
-    </div>
-
-    @if (formKind() === 'vertrag') {
-      <div class="field-row">
-        <div class="field">
-          <label for="folder-end">Vertragsende</label>
-          <input
-            id="folder-end"
-            type="date"
-            [value]="formContractEnd()"
-            (change)="formContractEnd.set($any($event.target).value)"
-          />
-        </div>
-        <div class="field">
-          <label for="folder-notice">Kündigungsfrist (Monate)</label>
-          <input
-            id="folder-notice"
-            type="number"
-            inputmode="numeric"
-            min="0"
-            max="36"
-            placeholder="z. B. 3"
-            [value]="formNotice()"
-            (input)="formNotice.set($any($event.target).value)"
-          />
-        </div>
-      </div>
-      <p class="field-hint">Kompass trägt den letzten Kündigungstag in euren Kalender ein.</p>
-    } @else {
-      <div class="field-row">
-        <div class="field">
-          <label for="folder-purchase">Gekauft am</label>
-          <input
-            id="folder-purchase"
-            type="date"
-            [value]="formPurchase()"
-            (change)="formPurchase.set($any($event.target).value)"
-          />
-        </div>
-        <div class="field">
-          <label for="folder-warranty">Garantie bis</label>
-          <input
-            id="folder-warranty"
-            type="date"
-            [value]="formWarranty()"
-            (change)="formWarranty.set($any($event.target).value)"
-          />
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label for="folder-interval">Wartung alle … Monate</label>
-          <input
-            id="folder-interval"
-            type="number"
-            inputmode="numeric"
-            min="1"
-            max="120"
-            placeholder="z. B. 12"
-            [value]="formInterval()"
-            (input)="formInterval.set($any($event.target).value)"
-          />
-        </div>
-        <div class="field">
-          <label for="folder-next">Nächste Wartung</label>
-          <input
-            id="folder-next"
-            type="date"
-            [value]="formNextMaintenance()"
-            (change)="formNextMaintenance.set($any($event.target).value)"
-          />
-        </div>
-      </div>
-      <p class="field-hint">Ohne Datum rechnet Kompass die nächste Wartung aus Kaufdatum und Intervall aus.</p>
-    }
-
-    <div class="field">
-      <label for="folder-notes">Notizen</label>
-      <textarea
-        id="folder-notes"
-        maxlength="1000"
-        placeholder="z. B. Kundennummer, Ansprechpartner"
-        [value]="formNotes()"
-        (input)="formNotes.set($any($event.target).value)"
-      ></textarea>
-    </div>
-
-    @if (formError()) {
-      <p class="field-error" role="alert">{{ formError() }}</p>
-    }
-    <div class="form-actions">
-      @if (editingId() !== null) {
-        <button type="button" class="btn-link btn-danger-link" [disabled]="formSaving()" (click)="deleteEditing()">
-          Löschen
-        </button>
-      }
-      <button type="submit" class="btn-primary" [disabled]="formSaving()">
-        @if (formSaving()) {
-          <span class="save-spinner" aria-hidden="true"></span>
+<app-modal-form
+  [icon]="formKind() === 'vertrag' ? 'finance' : 'device'"
+  [title]="editingId() === null ? (formKind() === 'vertrag' ? 'Neuer Vertrag' : 'Neues Gerät') : 'Eintrag bearbeiten'"
+  [open]="formOpen()"
+  [saving]="formSaving()"
+  [error]="formError() ?? ''"
+  [deleteLabel]="editingId() !== null ? 'Löschen' : ''"
+  closeLabel="Formular schließen"
+  (submitted)="submit()"
+  (closed)="closeForm()"
+  (deleted)="deleteEditing()"
+>
+  @if (formKind() === 'vertrag' && deductionOptions().length > 0) {
+    <app-field label="Kosten aus Finanzen übernehmen" [hint]="deductionHint()">
+      <select id="folder-deduction" (change)="setDeduction($any($event.target).value)">
+        <option value="" [selected]="formDeduction() === null">Kein fester Abzug</option>
+        @for (option of deductionOptions(); track option.id) {
+          <option [value]="option.id" [selected]="option.id === formDeduction()">
+            {{ option.name }} · {{ option.amount | number: '1.2-2' : 'de' }} €{{ option.active ? '' : ' (pausiert)' }}
+          </option>
         }
-        Speichern
-      </button>
+      </select>
+    </app-field>
+  }
+
+  <div class="field-row">
+    <app-field label="Name">
+      <input
+        id="folder-name"
+        type="text"
+        maxlength="120"
+        [placeholder]="formKind() === 'vertrag' ? 'z. B. Stromvertrag' : 'z. B. Heizung'"
+        [value]="formName()"
+        (input)="formName.set($any($event.target).value)"
+      />
+    </app-field>
+    <app-field [label]="formKind() === 'vertrag' ? 'Anbieter' : 'Marke / Modell'" [optional]="true">
+      <input
+        id="folder-provider"
+        type="text"
+        maxlength="120"
+        [value]="formProvider()"
+        (input)="formProvider.set($any($event.target).value)"
+      />
+    </app-field>
+  </div>
+
+  @if (formKind() === 'vertrag') {
+    <div class="field-row">
+      <app-field label="Vertragsende">
+        <input
+          id="folder-end"
+          type="date"
+          [value]="formContractEnd()"
+          (change)="formContractEnd.set($any($event.target).value)"
+        />
+      </app-field>
+      <app-field label="Kündigungsfrist (Monate)">
+        <input
+          id="folder-notice"
+          type="number"
+          inputmode="numeric"
+          min="0"
+          max="36"
+          placeholder="z. B. 3"
+          [value]="formNotice()"
+          (input)="formNotice.set($any($event.target).value)"
+        />
+      </app-field>
     </div>
-  </form>
-</app-modal>
+    <p class="field-hint">4inOne trägt den letzten Kündigungstag in euren Kalender ein.</p>
+  } @else {
+    <div class="field-row">
+      <app-field label="Gekauft am">
+        <input
+          id="folder-purchase"
+          type="date"
+          [value]="formPurchase()"
+          (change)="formPurchase.set($any($event.target).value)"
+        />
+      </app-field>
+      <app-field label="Garantie bis">
+        <input
+          id="folder-warranty"
+          type="date"
+          [value]="formWarranty()"
+          (change)="formWarranty.set($any($event.target).value)"
+        />
+      </app-field>
+    </div>
+    <div class="field-row">
+      <app-field label="Wartung alle … Monate">
+        <input
+          id="folder-interval"
+          type="number"
+          inputmode="numeric"
+          min="1"
+          max="120"
+          placeholder="z. B. 12"
+          [value]="formInterval()"
+          (input)="formInterval.set($any($event.target).value)"
+        />
+      </app-field>
+      <app-field label="Nächste Wartung">
+        <input
+          id="folder-next"
+          type="date"
+          [value]="formNextMaintenance()"
+          (change)="formNextMaintenance.set($any($event.target).value)"
+        />
+      </app-field>
+    </div>
+    <p class="field-hint">Ohne Datum rechnet 4inOne die nächste Wartung aus Kaufdatum und Intervall aus.</p>
+  }
+
+  <app-field label="Notizen" [optional]="true">
+    <textarea
+      id="folder-notes"
+      maxlength="1000"
+      placeholder="z. B. Kundennummer, Ansprechpartner"
+      [value]="formNotes()"
+      (input)="formNotes.set($any($event.target).value)"
+    ></textarea>
+  </app-field>
+</app-modal-form>

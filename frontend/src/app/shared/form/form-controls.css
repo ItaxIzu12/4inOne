@@ -1,0 +1,54 @@
+/* Gemeinsames Aussehen aller Eingaben in <app-field>. Global geladen
+   (angular.json), weil das Eingabeelement dem aufrufenden Component
+   gehört und nicht der Field-Komponente. Höhe 44 px, Schrift 15 px —
+   mobil 16 px, sonst zoomt iOS beim Fokussieren in die Seite. */
+app-field input:not([type='checkbox']):not([type='radio']):not([type='range']),
+app-field select,
+app-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--border-strong, #b9c0ce);
+  border-radius: var(--radius-inputs, 10px);
+  background: var(--surface, #fff);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+}
+app-field textarea {
+  min-height: 80px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+app-field input:focus-visible,
+app-field select:focus-visible,
+app-field textarea:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: -1.5px; /* legt sich über den Rahmen statt daneben */
+}
+app-field .ng-invalid.ng-touched,
+app-field [aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+/* Zwei Felder nebeneinander, mobil untereinander. */
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 480px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  app-field input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  app-field select,
+  app-field textarea {
+    font-size: 16px;
+  }
+}

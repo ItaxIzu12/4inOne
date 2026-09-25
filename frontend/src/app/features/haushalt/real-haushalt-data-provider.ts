@@ -6,6 +6,7 @@ import {
   FolderEntryDto,
   FolderEntryInput,
   HaushaltApiService,
+  HaushaltOverviewDto,
   Id,
   MemberLoadDto,
   SectionKey,
@@ -14,6 +15,7 @@ import {
   ShoppingOverviewDto,
   TaskDto,
   TaskInput,
+  TaskStatus,
 } from './haushalt-api.service';
 import { HaushaltDataProvider } from './haushalt-data-provider';
 
@@ -38,8 +40,11 @@ export class RealHaushaltDataProvider implements HaushaltDataProvider {
     return this.api.completeShopping(amount);
   }
 
-  getTasks(): Observable<TaskDto[]> {
-    return this.api.getTasks();
+  getOverview(): Observable<HaushaltOverviewDto> {
+    return this.api.getOverview();
+  }
+  getTasks(status: TaskStatus = 'open'): Observable<TaskDto[]> {
+    return this.api.getTasks(status);
   }
   getTaskLoad(): Observable<MemberLoadDto[]> {
     return this.api.getTaskLoad();
@@ -55,6 +60,9 @@ export class RealHaushaltDataProvider implements HaushaltDataProvider {
   }
   completeTask(id: Id): Observable<TaskDto> {
     return this.api.completeTask(id);
+  }
+  reopenTask(id: Id): Observable<TaskDto> {
+    return this.api.reopenTask(id);
   }
 
   getFolder(): Observable<FolderEntryDto[]> {

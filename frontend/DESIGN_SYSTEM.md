@@ -1,5 +1,7 @@
 # Kompass · Leichtigkeit — Designsystem
 
+> **Hinweis (24.09.2026):** Maßgeblich ist `docs/DESIGN_SYSTEM.md` (Rang 6 in `AGENTS.md`). Dieses Dokument enthält noch die konkreten Token-Werte (Farben, Radien, Maße), die dort fehlen, und bleibt dafür gültig, bis sie übernommen sind. Bekannte Widersprüche: Markenname „Kompass“ statt „4inOne“, ein Lavendel-Akzent für alle Bereiche statt eigener Bereichsfarben (Haushalt rosa, Finanzen grün, Organisation lila, Reisen blau).
+
 Version 4 · 23. September 2026 · verbindliche Richtung: Variante C.
 
 Dieses System ersetzt das bisherige Tannengrün-Design. Referenz sind die ausgewählten App- und Web-Entwürfe „C / Kompass · Leichtigkeit“. Die Referenz zeigt fünf Ansichten: Anmelden, Registrieren, Heute, Finanzen Übersicht und Analyse.

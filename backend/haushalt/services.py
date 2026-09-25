@@ -347,12 +347,33 @@ def complete_task(task: Task, user) -> Task:
     )
     task.last_done_at = now
     task.last_done_by = user
-    if task.recurrence_days:
-        task.due_date = timezone.localdate() + timedelta(days=task.recurrence_days)
+    if task.recurrence_days or task.recurrence_months:
+        today = timezone.localdate()
+        task.due_date = (
+            today + timedelta(days=task.recurrence_days)
+            if task.recurrence_days
+            else add_months(today, task.recurrence_months)
+        )
         if task.rotate:
             task.assigned_to = next_assignee(task)
     else:
         task.is_done = True
+    task.save()
+    sync_task_event(task)
+    return task
+
+
+@db_transaction.atomic
+def reopen_task(task: Task) -> Task:
+    """Erledigte einmalige Aufgabe wieder öffnen. Die zugehörige Erledigung
+    wird aus dem Protokoll genommen, damit die Lastanzeige nicht doppelt
+    zählt."""
+    last = task.completions.order_by('-done_at', '-id').first()
+    if last is not None:
+        last.delete()
+    task.is_done = False
+    task.last_done_at = None
+    task.last_done_by = None
     task.save()
     sync_task_event(task)
     return task

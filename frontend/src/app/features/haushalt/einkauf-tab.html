@@ -182,7 +182,7 @@
       <section class="card card--lavender" aria-labelledby="link-heading">
         <h2 id="link-heading">Einkauf wird zur Ausgabe</h2>
         <p class="muted link-copy">
-          Beim Abschließen schlägt Kompass den Betrag vor. Du bestätigst per Schieberegler – die Ausgabe
+          Beim Abschließen schlägt 4inOne den Betrag vor. Du bestätigst per Schieberegler – die Ausgabe
           steht sofort in euren Finanzen unter „Haushalt“.
         </p>
         <p class="muted small">
@@ -201,46 +201,41 @@
   <p class="muted" aria-live="polite">Einkaufsliste wird geladen …</p>
 }
 
-<app-modal [open]="!!editing()" labelledBy="edit-item-heading" closeLabel="Bearbeiten schließen" (closed)="closeEdit()">
-  <form class="form" (submit)="saveEdit($event)">
-    <h2 id="edit-item-heading">Eintrag bearbeiten</h2>
-    <div class="field">
-      <label for="edit-item-name">Artikel</label>
-      <input id="edit-item-name" type="text" maxlength="120" [value]="editName()" (input)="editName.set($any($event.target).value)" />
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label for="edit-item-quantity">Menge</label>
-        <input
-          id="edit-item-quantity"
-          type="text"
-          maxlength="40"
-          placeholder="optional"
-          [value]="editQuantity()"
-          (input)="editQuantity.set($any($event.target).value)"
-        />
-      </div>
-      <div class="field">
-        <label for="edit-item-section">Bereich im Laden</label>
-        <select id="edit-item-section" [value]="editSection()" (change)="editSection.set($any($event.target).value)">
-          @for (section of sections(); track section.key) {
-            <option [value]="section.key" [selected]="section.key === editSection()">{{ section.label }}</option>
-          }
-        </select>
-      </div>
-    </div>
-    <p class="field-hint">Den Bereich merkt sich Kompass für das nächste Mal.</p>
-    @if (editError()) {
-      <p class="field-error" role="alert">{{ editError() }}</p>
-    }
-    <div class="form-actions">
-      <button type="button" class="btn-link btn-danger-link" [disabled]="editSaving()" (click)="deleteEditing()">
-        Von der Liste entfernen
-      </button>
-      <button type="submit" class="btn-primary" [disabled]="editSaving()">Speichern</button>
-    </div>
-  </form>
-</app-modal>
+<app-modal-form
+  icon="basket"
+  title="Eintrag bearbeiten"
+  [open]="!!editing()"
+  [saving]="editSaving()"
+  [error]="editError() ?? ''"
+  deleteLabel="Von der Liste entfernen"
+  closeLabel="Bearbeiten schließen"
+  (submitted)="saveEdit()"
+  (closed)="closeEdit()"
+  (deleted)="deleteEditing()"
+>
+  <app-field label="Artikel">
+    <input id="edit-item-name" type="text" maxlength="120" [value]="editName()" (input)="editName.set($any($event.target).value)" />
+  </app-field>
+  <div class="field-row">
+    <app-field label="Menge" [optional]="true">
+      <input
+        id="edit-item-quantity"
+        type="text"
+        maxlength="40"
+        [value]="editQuantity()"
+        (input)="editQuantity.set($any($event.target).value)"
+      />
+    </app-field>
+    <app-field label="Bereich im Laden">
+      <select id="edit-item-section" [value]="editSection()" (change)="editSection.set($any($event.target).value)">
+        @for (section of sections(); track section.key) {
+          <option [value]="section.key" [selected]="section.key === editSection()">{{ section.label }}</option>
+        }
+      </select>
+    </app-field>
+  </div>
+  <p class="field-hint">Den Bereich merkt sich 4inOne für das nächste Mal.</p>
+</app-modal-form>
 
 <app-modal [open]="completeOpen()" labelledBy="complete-heading" closeLabel="Abschließen abbrechen" (closed)="closeComplete()">
   <div class="form">

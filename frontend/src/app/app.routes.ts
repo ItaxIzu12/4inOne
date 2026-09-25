@@ -84,6 +84,12 @@ export const routes: Routes = [
       },
       {
         path: 'finanzen',
+        loadComponent: () =>
+          import('./features/finanzen/private-finance').then((m) => m.PrivateFinance),
+        data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
+      },
+      {
+        path: 'haushaltsfinanzen',
         loadComponent: () => import('./features/finanzen/finanzen').then((m) => m.Finanzen),
         data: { dashboardNav: true, sidebarNav: true },
       },
@@ -124,7 +130,7 @@ export const routes: Routes = [
         path: 'organisation',
         loadComponent: () =>
           import('./features/organisation/organisation').then((m) => m.Organisation),
-        data: { dashboardNav: true },
+        data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
       },
     ],
   },

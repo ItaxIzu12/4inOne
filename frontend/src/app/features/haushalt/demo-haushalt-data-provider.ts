@@ -5,6 +5,7 @@ import { RecurringDeductionDto } from '../finanzen/finanzen-api.service';
 import { DemoFinanzenDataProvider } from '../finanzen/demo-finanzen-data-provider';
 import { FINANZEN_DATA_PROVIDER } from '../finanzen/finanzen-data-provider';
 import {
+  HaushaltOverviewDto,
   CompleteShoppingResult,
   DeductionOptionDto,
   FolderEntryDto,
@@ -18,6 +19,7 @@ import {
   ShoppingOverviewDto,
   TaskDto,
   TaskInput,
+  TaskStatus,
 } from './haushalt-api.service';
 import { HaushaltDataProvider } from './haushalt-data-provider';
 import { SECTIONS, addDaysIso, addMonthsIso, guessSectionDemo, todayIso } from './haushalt-logic';
@@ -52,8 +54,13 @@ function task(partial: Partial<TaskDto> & Pick<TaskDto, 'id' | 'title'>): TaskDt
   return {
     assigned_to: ANNA.user_id,
     assigned_to_name: ANNA.name,
+    description: '',
+    status: 'open',
     due_date: null,
+    due_time: null,
+    recurrence: null,
     recurrence_days: null,
+    recurrence_months: null,
     effort: 1,
     rotate: false,
     rotation_member_ids: [],
@@ -92,9 +99,9 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
   private trips: { transactionId: Id; count: number }[] = [];
 
   private tasks: TaskDto[] = [
-    task({ id: 'demo-task-1', title: 'Pflanzen gießen', recurrence_days: 3, due_date: addDaysIso(-1), is_overdue: true }),
-    task({ id: 'demo-task-2', title: 'Bad putzen', recurrence_days: 7, effort: 3, due_date: todayIso() }),
-    task({ id: 'demo-task-3', title: 'Müll rausbringen', recurrence_days: 7, due_date: addDaysIso(1) }),
+    task({ id: 'demo-task-1', title: 'Pflanzen gießen', recurrence: 'daily', recurrence_days: 1, due_date: addDaysIso(-1), is_overdue: true }),
+    task({ id: 'demo-task-2', title: 'Bad putzen', recurrence: 'weekly', recurrence_days: 7, effort: 3, due_date: todayIso() }),
+    task({ id: 'demo-task-3', title: 'Müll rausbringen', recurrence: 'weekly', recurrence_days: 7, due_date: addDaysIso(1) }),
     task({ id: 'demo-task-4', title: 'Winterreifen-Termin vereinbaren', effort: 2, due_date: addDaysIso(9) }),
   ];
   private load: MemberLoadDto = { ...ANNA, points: 5, count: 3 };
@@ -242,11 +249,41 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
 
   // ---------- Aufgaben ----------
 
-  getTasks(): Observable<TaskDto[]> {
+  getOverview(): Observable<HaushaltOverviewDto> {
+    const today = todayIso();
+    const open = this.tasks.filter((t) => !t.is_done);
+    const byDate = (a: TaskDto, b: TaskDto) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999');
+    const devices = this.folder.filter((e) => e.kind === 'geraet');
+    return of({
+      open_tasks: open.length,
+      overdue_tasks: open.filter((t) => !!t.due_date && t.due_date < today).length,
+      today: open
+        .filter((t) => !!t.due_date && t.due_date <= today)
+        .sort(byDate)
+        .slice(0, 5)
+        .map((t) => ({ ...t, is_overdue: t.due_date! < today })),
+      upcoming: open
+        .filter((t) => !t.due_date || t.due_date > today)
+        .sort(byDate)
+        .slice(0, 5)
+        .map((t) => ({ ...t })),
+      open_shopping_items: this.items.filter((i) => !i.is_checked).length,
+      devices: devices.length,
+      device_list: devices.slice(0, 5).map((e) => ({
+        id: e.id,
+        name: e.name,
+        provider: e.provider ?? '',
+        next_maintenance: e.next_maintenance ?? null,
+        warranty_until: e.warranty_until ?? null,
+      })),
+    });
+  }
+
+  getTasks(status: TaskStatus = 'open'): Observable<TaskDto[]> {
     const today = todayIso();
     return of(
       this.tasks
-        .filter((t) => !t.is_done)
+        .filter((t) => (status === 'done' ? t.is_done : !t.is_done))
         .map((t) => ({ ...t, is_overdue: !!t.due_date && t.due_date < today }))
         .sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999')),
     );
@@ -256,12 +293,21 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     return of([{ ...this.load }]);
   }
 
+  private recurrenceFields(recurrence: TaskDto['recurrence']): Pick<TaskDto, 'recurrence' | 'recurrence_days' | 'recurrence_months'> {
+    return {
+      recurrence,
+      recurrence_days: recurrence === 'daily' ? 1 : recurrence === 'weekly' ? 7 : null,
+      recurrence_months: recurrence === 'monthly' ? 1 : null,
+    };
+  }
+
   createTask(input: TaskInput): Observable<TaskDto> {
     const created = task({
       id: `demo-task-new-${this.nextId++}`,
       ...input,
+      ...this.recurrenceFields(input.recurrence),
       title: input.title.trim(),
-      due_date: input.due_date ?? (input.recurrence_days ? todayIso() : null),
+      due_date: input.due_date ?? (input.recurrence ? todayIso() : null),
       assigned_to_name: input.assigned_to ? ANNA.name : null,
     });
     this.tasks.push(created);
@@ -271,7 +317,9 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
   updateTask(id: Id, input: TaskInput): Observable<TaskDto> {
     const found = this.tasks.find((t) => t.id === id);
     if (!found) return throwError(() => new Error('Demo-Aufgabe nicht gefunden.'));
-    Object.assign(found, input, { assigned_to_name: input.assigned_to ? ANNA.name : null });
+    Object.assign(found, input, this.recurrenceFields(input.recurrence), {
+      assigned_to_name: input.assigned_to ? ANNA.name : null,
+    });
     return of({ ...found });
   }
 
@@ -287,8 +335,22 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     found.last_done_at = new Date().toISOString();
     found.last_done_by_name = ANNA.name;
     if (found.recurrence_days) found.due_date = addDaysIso(found.recurrence_days);
-    else found.is_done = true;
+    else if (found.recurrence_months) found.due_date = addMonthsIso(todayIso(), found.recurrence_months);
+    else {
+      found.is_done = true;
+      found.status = 'done';
+    }
     found.is_overdue = false;
+    return of({ ...found });
+  }
+
+  reopenTask(id: Id): Observable<TaskDto> {
+    const found = this.tasks.find((t) => t.id === id);
+    if (!found) return throwError(() => new Error('Demo-Aufgabe nicht gefunden.'));
+    found.is_done = false;
+    found.status = 'open';
+    found.last_done_at = null;
+    found.last_done_by_name = null;
     return of({ ...found });
   }
 

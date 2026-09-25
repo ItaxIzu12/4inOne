@@ -85,3 +85,9 @@ Connections must also work for everyday finance, organization and household use.
 Examples include a washing-machine purchase, birthday, household routine, financial goal and appointment.
 
 **Status:** Accepted
+
+## D-011 — Eigentümerschaft über „Bereiche“ (persönlich, Haushalt, später Reise)
+
+Jeder Datensatz gehört genau einem Bereich. Persönliche Bereiche sind nicht teilbar; geteilt wird nur über ausdrücklich angelegte gemeinsame Bereiche. Details, Alternativen und Migrationsschritte: `ADR-001-OWNERSHIP.md`.
+
+**Status:** Proposed — wartet auf Entscheidung (offene Fragen in ADR-001 §7)

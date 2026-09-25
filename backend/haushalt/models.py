@@ -147,9 +147,15 @@ class Task(models.Model):
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
     )
+    description = models.CharField(max_length=500, blank=True, default='')
     due_date = models.DateField(null=True, blank=True)
-    # None = einmalige Aufgabe, sonst Wiederholung alle N Tage.
+    # Optionale Uhrzeit; der Kalendertermin bleibt ganztägig (kein
+    # Zeitzonen-Sonderfall in V1).
+    due_time = models.TimeField(null=True, blank=True)
+    # None = einmalige Aufgabe, sonst Wiederholung alle N Tage ...
     recurrence_days = models.PositiveSmallIntegerField(null=True, blank=True)
+    # ... oder alle N Kalendermonate ("monatlich"). Höchstens eines von beiden.
+    recurrence_months = models.PositiveSmallIntegerField(null=True, blank=True)
     effort = models.PositiveSmallIntegerField(choices=Effort.choices, default=Effort.SMALL)
     # Reihum wechselnde Zuständigkeit: nach jedem Erledigen übernimmt die
     # nächste Person aus rotation_members (sortiert nach ID).
@@ -159,6 +165,14 @@ class Task(models.Model):
     last_done_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
     )
+
+    @property
+    def recurrence(self) -> str | None:
+        """Die drei V1-Wiederholungen; andere Intervalle (z. B. alle 3 Tage,
+        aus älteren Aufgaben) bleiben über recurrence_days erhalten."""
+        if self.recurrence_months == 1:
+            return 'monthly'
+        return {1: 'daily', 7: 'weekly'}.get(self.recurrence_days)
 
     def __str__(self) -> str:
         return self.title

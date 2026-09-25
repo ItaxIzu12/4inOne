@@ -2,6 +2,21 @@
 
 The roadmap is ordered to reduce architectural rework.
 
+## Stand (24.09.2026)
+
+| Phase | Stand |
+|---|---|
+| 0 Audit | erledigt (Grundlage für Phase 1) |
+| 1 Auth & App-Grundlage | erledigt, siehe `IMPLEMENTATION_PHASE1.md`; offen: echter E-Mail-Versand für Passwort-Reset |
+| 2 Eigentümerschaft | **offen, blockiert weitere geteilte Funktionen** – Vorschlag: `ADR-001-OWNERSHIP.md` |
+| 3 Organisation | in Arbeit (persönliche Termine/Aufgaben, Heute-Ansicht) |
+| 4 Finanzen | großteils vorhanden (Ausgaben, Einkommen, Kategorien mit Monatslimit, feste Kosten, Analyse, Berichte); fehlt: Sparziele; noch auf Haushalts-Eigentum |
+| 5 Haushalt | vorhanden (Einkaufsliste mit Einkaufsmodus, wiederkehrende Aufgaben mit Rotation, Haushaltsordner); noch auf Haushalts-Eigentum |
+| 6 Connection Engine | nicht begonnen; bisher feste Verknüpfungen: Aufgabe → Termin, Einkauf → Ausgabe, Vertrag → fester Abzug, Ordnerfrist → Termin |
+| 7–12 | offen |
+
+Phasen 4 und 5 sind vor Phase 2 entstanden. Deshalb sollte Phase 2 vor jeder weiteren geteilten Funktion kommen.
+
 ## Phase 0 — Repository audit
 
 - inspect Angular structure;

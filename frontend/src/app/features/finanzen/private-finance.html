@@ -1,0 +1,340 @@
+<app-shell
+  ><main id="main-content" class="finance-page" tabindex="-1">
+    <header class="page-head">
+      <div class="identity">
+        <span class="wallet"><app-icon name="finance" /></span>
+        <div>
+          <h1>Finanzen</h1>
+          <p>Behalte deine Finanzen im Überblick.</p>
+        </div>
+      </div>
+      <button class="primary" (click)="open('transactions')">
+        <app-icon name="plus" />Neue Buchung
+      </button>
+    </header>
+    <nav class="tabs" aria-label="Finanzansichten">
+      <button
+        [attr.aria-current]="tab() === 'overview' ? 'page' : null"
+        (click)="tab.set('overview')"
+      >
+        Übersicht</button
+      ><button
+        [attr.aria-current]="tab() === 'transactions' ? 'page' : null"
+        (click)="tab.set('transactions')"
+      >
+        Ausgaben</button
+      ><button
+        [attr.aria-current]="tab() === 'budgets' ? 'page' : null"
+        (click)="tab.set('budgets')"
+      >
+        Budgets</button
+      ><button [attr.aria-current]="tab() === 'goals' ? 'page' : null" (click)="tab.set('goals')">
+        Sparziele
+      </button>
+    </nav>
+    <div class="period">
+      <span>Privat · EUR</span
+      ><label for="finance-month"
+        >Monat
+        <input
+          id="finance-month"
+          type="month"
+          [value]="month()"
+          (change)="setMonth($any($event.target).value)"
+      /></label>
+    </div>
+    @if (loading()) {
+      <p class="empty" role="status">Deine Finanzen werden geladen …</p>
+    } @else if (error()) {
+      <div class="empty">
+        <p role="alert">{{ error() }}</p>
+        <button class="secondary" (click)="load()">Erneut versuchen</button>
+      </div>
+    } @else {
+      @if (tab() === 'overview') {
+        <div class="overview-grid">
+          <section class="card month-card">
+            <p>Verfügbares Monatsbudget</p>
+            <h2 class="amount">{{ money(summary()?.available) }}</h2>
+            @if (summary()?.budget !== null) {
+              <p>
+                Von {{ money(summary()?.budget) }} geplant ·
+                {{ percent(summary()?.expenses, summary()?.budget) }} % ausgegeben
+              </p>
+              <progress
+                [value]="percent(summary()?.expenses, summary()?.budget)"
+                max="100"
+                aria-label="Monatsbudget verbraucht"
+              ></progress>
+              @if (summary()?.available?.startsWith('-')) {
+                <p class="negative">Deine Ausgaben liegen über dem Monatsbudget.</p>
+              }
+            } @else {
+              <p>Lege dein erstes Monatsbudget fest.</p>
+              <button class="text-button" (click)="open('budgets')">
+                Budget erstellen <app-icon name="arrow" />
+              </button>
+            }
+          </section>
+          <div class="totals">
+            <section class="card">
+              <span class="mini-icon expense"><app-icon name="bars" /></span>
+              <div>
+                <p>Ausgaben</p>
+                <strong>{{ money(summary()?.expenses) }}</strong>
+              </div>
+            </section>
+            <section class="card">
+              <span class="mini-icon income"><app-icon name="finance" /></span>
+              <div>
+                <p>Einnahmen</p>
+                <strong>{{ money(summary()?.income) }}</strong>
+              </div>
+            </section>
+          </div>
+          <section class="card categories">
+            <header><h2>Ausgaben nach Kategorien</h2></header>
+            @for (category of summary()?.categories; track category.name) {
+              <div class="category-row">
+                <span>{{ category.name }}</span
+                ><progress
+                  [value]="percent(category.amount, summary()?.expenses)"
+                  max="100"
+                  [attr.aria-label]="category.name + ' Anteil an Ausgaben'"
+                ></progress
+                ><strong>{{ money(category.amount) }}</strong>
+              </div>
+            } @empty {
+              <p class="empty">Noch keine Ausgaben in diesem Monat.</p>
+            }
+          </section>
+          <section class="card savings">
+            <header>
+              <h2>Deine Sparziele</h2>
+              <button class="text-button" (click)="tab.set('goals')">
+                Anzeigen <app-icon name="arrow" />
+              </button>
+            </header>
+            @if (goals().length) {
+              <strong>{{ money(summary()?.savings_current) }}</strong>
+              <p>Von {{ money(summary()?.savings_target) }} · aktive und erreichte Ziele</p>
+              <progress
+                [value]="percent(summary()?.savings_current, summary()?.savings_target)"
+                max="100"
+                aria-label="Sparziel-Fortschritt"
+              ></progress>
+            } @else {
+              <p class="empty">Wofür möchtest du sparen?</p>
+              <button class="secondary" (click)="open('goals')">Sparziel erstellen</button>
+            }
+          </section>
+        </div>
+        <section class="card recent">
+          <header>
+            <h2>Letzte Buchungen</h2>
+            <button class="text-button" (click)="tab.set('transactions')">
+              Alle anzeigen <app-icon name="arrow" />
+            </button>
+          </header>
+          @for (row of summary()?.recent; track row.id) {
+            <button class="transaction" (click)="open('transactions', row)">
+              <span
+                class="mini-icon"
+                [class.income]="row.type === 'INCOME'"
+                [class.expense]="row.type === 'EXPENSE'"
+                ><app-icon [name]="row.type === 'INCOME' ? 'finance' : 'bars'" /></span
+              ><span class="transaction-copy"
+                ><strong>{{ row.note || categoryName(row.category) }}</strong
+                ><small
+                  >{{ categoryName(row.category) }} · {{ row.date | date: 'dd.MM.yyyy' }}</small
+                ></span
+              ><strong
+                [class.negative]="row.type === 'EXPENSE'"
+                [class.positive]="row.type === 'INCOME'"
+                >{{ row.type === 'EXPENSE' ? '−' : '+' }}{{ money(row.amount) }}</strong
+              >
+            </button>
+          } @empty {
+            <p class="empty">Noch keine Buchungen. Trage deine erste Einnahme oder Ausgabe ein.</p>
+          }
+        </section>
+      } @else if (tab() === 'transactions') {
+        <section class="card">
+          <header><h2>Einnahmen und Ausgaben</h2></header>
+          <label class="filter" for="finance-filter"
+            >Anzeigen<select
+              id="finance-filter"
+              [value]="typeFilter()"
+              (change)="typeFilter.set($any($event.target).value)"
+            >
+              <option value="ALL">Alle Buchungen</option>
+              <option value="EXPENSE">Ausgaben</option>
+              <option value="INCOME">Einnahmen</option>
+            </select></label
+          >
+          @for (row of rows(); track row.id) {
+            <button class="transaction" (click)="open('transactions', row)">
+              <span class="transaction-copy"
+                ><strong>{{ row.note || categoryName(row.category) }}</strong
+                ><small
+                  >{{ categoryName(row.category) }} · {{ row.date | date: 'dd.MM.yyyy' }}</small
+                ></span
+              ><strong
+                [class.negative]="row.type === 'EXPENSE'"
+                [class.positive]="row.type === 'INCOME'"
+                >{{ row.type === 'EXPENSE' ? '−' : '+' }}{{ money(row.amount) }}</strong
+              ><app-icon name="arrow" />
+            </button>
+          } @empty {
+            <p class="empty">Für diesen Monat und Filter gibt es noch keine Buchungen.</p>
+          }
+        </section>
+      } @else if (tab() === 'budgets') {
+        <section class="card">
+          <header>
+            <h2>Monatsbudget</h2>
+            <button class="secondary" (click)="open('budgets', activeBudget())">
+              {{ activeBudget() ? 'Budget ändern' : 'Budget erstellen' }}
+            </button>
+          </header>
+          @if (activeBudget(); as budget) {
+            <h3 class="amount">{{ money(budget.amount) }}</h3>
+            <p>
+              {{ money(summary()?.expenses) }} ausgegeben ·
+              {{ money(summary()?.available) }} verfügbar
+            </p>
+            <progress
+              [value]="percent(summary()?.expenses, budget.amount)"
+              max="100"
+              aria-label="Budgetfortschritt"
+            ></progress>
+          } @else {
+            <p class="empty">Für diesen Monat hast du noch kein Budget festgelegt.</p>
+          }
+          <h3 class="subheading">Alle Monatsbudgets</h3>
+          @for (budget of budgets(); track budget.id) {
+            <button class="transaction" (click)="month.set(budget.month.slice(0, 7)); load()">
+              <span>{{ budget.month | date: 'MM.yyyy' }}</span
+              ><strong>{{ money(budget.amount) }}</strong
+              ><app-icon name="arrow" />
+            </button>
+          }
+        </section>
+      } @else {
+        <section class="card">
+          <header>
+            <h2>Sparziele</h2>
+            <button class="secondary" (click)="open('goals')">
+              <app-icon name="plus" />Sparziel erstellen
+            </button>
+          </header>
+          <div class="goal-grid">
+            @for (goal of goals(); track goal.id) {
+              <button class="goal" (click)="open('goals', goal)">
+                <span class="goal-head"
+                  ><strong>{{ goal.title }}</strong
+                  ><small>{{ goalStatus[goal.status] }}</small></span
+                ><span>{{ money(goal.current_amount) }} von {{ money(goal.target_amount) }}</span
+                ><progress
+                  [value]="percent(goal.current_amount, goal.target_amount)"
+                  max="100"
+                  [attr.aria-label]="goal.title + ' Fortschritt'"
+                ></progress
+                ><small
+                  >{{ percent(goal.current_amount, goal.target_amount) }} % erreicht
+                  @if (goal.target_date) {
+                    · Bis {{ goal.target_date | date: 'dd.MM.yyyy' }}
+                  }
+                </small>
+              </button>
+            } @empty {
+              <div class="empty">
+                <h3>Dein nächstes Ziel beginnt hier</h3>
+                <p>Zum Beispiel eine neue Waschmaschine, ein Fahrrad oder eine Rücklage.</p>
+              </div>
+            }
+          </div>
+        </section>
+      }
+    }
+    <p class="legacy">
+      <a routerLink="/app/haushaltsfinanzen">Bisherige Haushaltsfinanzen öffnen</a> · Separater
+      Haushaltsbereich
+    </p>
+  </main></app-shell
+>
+<app-modal-form
+  icon="finance"
+  [formGroup]="form"
+  [title]="editorTitle()"
+  [open]="editor() !== null"
+  [saving]="saving()"
+  [error]="formError()"
+  [deleteLabel]="editId() ? 'Eintrag löschen' : ''"
+  (submitted)="save()"
+  (closed)="close()"
+  (deleted)="remove()"
+>
+  @if (editor() === 'transactions') {
+    <app-field label="Typ">
+      <select id="booking-type" formControlName="type">
+        <option value="EXPENSE">Ausgabe</option>
+        <option value="INCOME">Einnahme</option>
+      </select>
+    </app-field>
+    <app-field label="Betrag in EUR">
+      <input id="booking-amount" inputmode="decimal" formControlName="amount" aria-required="true" />
+    </app-field>
+    @if (categories().length) {
+      <app-field label="Kategorie">
+        <select id="booking-category" formControlName="category">
+          @for (category of categories(); track category.id) {
+            <option [value]="category.id">{{ category.name }}</option>
+          }
+        </select>
+      </app-field>
+    } @else {
+      <p>Lege die sieben vorgeschlagenen Kategorien für deine privaten Buchungen an.</p>
+      <button type="button" class="secondary" (click)="setup()" [disabled]="saving()">
+        Standardkategorien anlegen
+      </button>
+    }
+    <app-field label="Datum">
+      <input id="booking-date" type="date" formControlName="date" aria-required="true" />
+    </app-field>
+    <app-field label="Notiz" [optional]="true">
+      <input id="booking-note" formControlName="note" maxlength="255" />
+    </app-field>
+  } @else if (editor() === 'budgets') {
+    <app-field label="Budgetmonat">
+      <input id="budget-month" type="month" formControlName="month" aria-required="true" />
+    </app-field>
+    <app-field label="Budgetbetrag in EUR">
+      <input id="budget-amount" inputmode="decimal" formControlName="amount" aria-required="true" />
+    </app-field>
+  } @else {
+    <app-field label="Titel">
+      <input id="goal-title" formControlName="title" maxlength="120" aria-required="true" />
+    </app-field>
+    <div class="field-row">
+      <app-field label="Zielbetrag in EUR">
+        <input id="goal-target" inputmode="decimal" formControlName="target_amount" aria-required="true" />
+      </app-field>
+      <app-field label="Bereits gespart in EUR">
+        <input id="goal-current" inputmode="decimal" formControlName="current_amount" aria-required="true" />
+      </app-field>
+    </div>
+    <div class="field-row">
+      <app-field label="Zieldatum" [optional]="true">
+        <input id="goal-date" type="date" formControlName="target_date" />
+      </app-field>
+      <app-field label="Status">
+        <select id="goal-status" formControlName="status">
+          <option value="ACTIVE">Aktiv</option>
+          <option value="COMPLETED">Erreicht</option>
+          <option value="PAUSED">Pausiert</option>
+        </select>
+      </app-field>
+    </div>
+  }
+</app-modal-form>

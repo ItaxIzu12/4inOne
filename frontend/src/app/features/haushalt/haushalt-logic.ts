@@ -101,7 +101,8 @@ export function relativeDay(iso: string, today: Date = new Date()): string {
   return `am ${day}.${month}.${year}`;
 }
 
-export function recurrenceLabel(days: number | null): string {
+export function recurrenceLabel(days: number | null, months: number | null = null): string {
+  if (months) return months === 1 ? 'monatlich' : `alle ${months} Monate`;
   if (!days) return 'einmalig';
   if (days === 1) return 'täglich';
   if (days === 7) return 'wöchentlich';

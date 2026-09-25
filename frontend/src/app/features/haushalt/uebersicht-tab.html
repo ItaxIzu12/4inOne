@@ -1,0 +1,98 @@
+@if (loadError()) {
+  <div class="load-error" role="alert">
+    <p>Die Übersicht konnte nicht geladen werden.</p>
+    <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
+  </div>
+} @else if (overview(); as data) {
+  <div class="stats">
+    <button type="button" class="stat" (click)="openTab.emit('aufgaben')">
+      <span class="stat__icon" aria-hidden="true"><app-icon name="check" /></span>
+      <span class="stat__value">{{ data.open_tasks }}</span>
+      <span class="stat__label">{{ data.open_tasks === 1 ? 'offene Aufgabe' : 'offene Aufgaben' }}</span>
+    </button>
+    <button type="button" class="stat" (click)="openTab.emit('ordner')">
+      <span class="stat__icon" aria-hidden="true"><app-icon name="device" /></span>
+      <span class="stat__value">{{ data.devices }}</span>
+      <span class="stat__label">{{ data.devices === 1 ? 'Gerät verwaltet' : 'Geräte verwaltet' }}</span>
+    </button>
+    <button type="button" class="stat" (click)="openTab.emit('einkauf')">
+      <span class="stat__icon" aria-hidden="true"><app-icon name="basket" /></span>
+      <span class="stat__value">{{ data.open_shopping_items }}</span>
+      <span class="stat__label">Einkaufsliste</span>
+    </button>
+  </div>
+
+  <section class="card" aria-labelledby="today-heading">
+    <div class="card-head">
+      <h2 id="today-heading">Aktuelle Aufgaben</h2>
+      <button type="button" class="btn-link" (click)="openTab.emit('aufgaben')">Alle anzeigen</button>
+    </div>
+
+    @if (actionError()) {
+      <p class="field-error" role="alert">{{ actionError() }}</p>
+    }
+
+    <ul class="list">
+      @for (task of current(); track task.id) {
+        <li class="row">
+          <button
+            type="button"
+            class="check"
+            [attr.aria-label]="task.title + ' als erledigt markieren'"
+            [disabled]="completing() === task.id"
+            (click)="complete(task)"
+          >
+            <span class="check__ring"></span>
+          </button>
+          <button type="button" class="task-open" (click)="openTab.emit('aufgaben')">
+            <span class="task-icon" aria-hidden="true"><app-icon name="household" /></span>
+            <span class="row__main">
+              <span class="row__title">{{ task.title }}</span>
+              <span class="row__meta" [class.row__meta--warn]="task.is_overdue">{{ subtitle(task) }}</span>
+            </span>
+            <app-icon class="chevron" name="arrow" />
+          </button>
+        </li>
+      } @empty {
+        <li class="empty">
+          <p class="muted">
+            @if (data.open_tasks === 0) {
+              Noch keine Aufgaben. Lege deine erste Aufgabe oder Routine an.
+            } @else {
+              Heute ist nichts fällig. Alles im Griff.
+            }
+          </p>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="devices-heading">
+    <div class="card-head">
+      <h2 id="devices-heading">Meine Geräte</h2>
+      <button type="button" class="btn-link" (click)="openTab.emit('ordner')">Alle anzeigen</button>
+    </div>
+    @if (data.device_list.length) {
+      <ul class="devices">
+        @for (device of data.device_list; track device.id) {
+          <li>
+            <button type="button" class="device" (click)="openTab.emit('ordner')">
+              <span class="device__icon" aria-hidden="true"><app-icon name="device" /></span>
+              <strong class="device__name">{{ device.name }}</strong>
+              @if (device.provider) {
+                <span class="device__provider">{{ device.provider }}</span>
+              }
+              @if (deviceHint(device)) {
+                <span class="device__hint">{{ deviceHint(device) }}</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="muted">Noch keine Geräte. Trage z. B. Waschmaschine oder Kühlschrank mit Garantie und Wartung ein.</p>
+    }
+  </section>
+} @else {
+  <p class="muted" aria-live="polite">Übersicht wird geladen …</p>
+}

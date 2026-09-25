@@ -2,6 +2,7 @@ import { InjectionToken } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   CompleteShoppingResult,
+  HaushaltOverviewDto,
   DeductionOptionDto,
   FolderEntryDto,
   FolderEntryInput,
@@ -13,6 +14,7 @@ import {
   ShoppingOverviewDto,
   TaskDto,
   TaskInput,
+  TaskStatus,
 } from './haushalt-api.service';
 
 /**
@@ -29,12 +31,14 @@ export interface HaushaltDataProvider {
   // amount null = Einkauf ohne Ausgabe abschließen.
   completeShopping(amount: number | null): Observable<CompleteShoppingResult>;
 
-  getTasks(): Observable<TaskDto[]>;
+  getOverview(): Observable<HaushaltOverviewDto>;
+  getTasks(status?: TaskStatus): Observable<TaskDto[]>;
   getTaskLoad(): Observable<MemberLoadDto[]>;
   createTask(input: TaskInput): Observable<TaskDto>;
   updateTask(id: Id, input: TaskInput): Observable<TaskDto>;
   deleteTask(id: Id): Observable<void>;
   completeTask(id: Id): Observable<TaskDto>;
+  reopenTask(id: Id): Observable<TaskDto>;
 
   getFolder(): Observable<FolderEntryDto[]>;
   getUnlinkedDeductions(): Observable<DeductionOptionDto[]>;

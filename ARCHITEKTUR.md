@@ -1,4 +1,6 @@
 # Architekturkonzept: All-in-One-Lebensmanagement-App
+
+> **Historisch (Stand vor 24.09.2026).** Maßgeblich sind `AGENTS.md` und `docs/`. Dieses Dokument bleibt als Hintergrund für die vielen Code-Kommentare erhalten, die darauf verweisen (z. B. Sicherheitsbegründungen in §3). Bei Widersprüchen gilt `docs/`.
 ## Finanzen · Organisation · Haushalt
 
 *Dieses Dokument ergänzt das `Gesamtkonzept_AllInOne_App.md` (Vision, Markt, Zielgruppen, Recht, Roadmap) um die technische Umsetzung: Tech-Stack, Architektur-Prinzipien, Security und Performance/Skalierung.*

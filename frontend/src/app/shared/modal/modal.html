@@ -3,6 +3,7 @@
   <div
     #panel
     class="modal-panel"
+    [class.modal-panel--flush]="flush()"
     role="dialog"
     aria-modal="true"
     [attr.aria-labelledby]="labelledBy()"

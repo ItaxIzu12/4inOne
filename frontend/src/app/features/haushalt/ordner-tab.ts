@@ -1,7 +1,9 @@
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, output, signal } from '@angular/core';
-import { Modal } from '../../shared/modal/modal';
+import { AppIcon } from '../../shared/icons/app-icon';
+import { Field } from '../../shared/form/field';
+import { ModalForm } from '../../shared/form/modal-form';
 import {
   DeadlineDto,
   DeductionOptionDto,
@@ -40,7 +42,7 @@ function formatDate(iso: string | null): string {
 @Component({
   selector: 'app-ordner-tab',
   standalone: true,
-  imports: [DecimalPipe, Modal],
+  imports: [DecimalPipe, AppIcon, Field, ModalForm],
   templateUrl: './ordner-tab.html',
   styleUrls: ['./haushalt-common.scss', './ordner-tab.scss'],
 })
@@ -202,13 +204,20 @@ export class OrdnerTab {
     return this.deductionOptions().find((o) => o.id === id) ?? null;
   }
 
+  protected deductionHint(): string {
+    const selected = this.selectedDeduction();
+    if (!selected) return 'Verknüpft ihr einen festen Abzug, stehen die Kosten automatisch hier.';
+    if (!selected.active) return 'Dieser feste Abzug ist in Finanzen pausiert und zählt deshalb gerade nicht zu den Kosten.';
+    const amount = Number(selected.amount).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return `Monatliche Kosten: ${amount} € – geändert wird der Betrag in Finanzen.`;
+  }
+
   private optionalInt(value: string): number | null {
     const parsed = Number.parseInt(value, 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
 
-  protected submit(event: Event): void {
-    event.preventDefault();
+  protected submit(): void {
     if (this.formSaving()) return;
     const name = this.formName().trim();
     if (!name) {

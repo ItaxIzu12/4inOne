@@ -1,39 +1,278 @@
-<main class="module-page m-organize">
-  <div class="module-inner">
-    <a class="back-link" routerLink="/" (click)="goHome()">← Zurück zum Start</a>
-
-    <header class="module-head" appReveal>
-      <span class="status-badge">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-        In Entwicklung
-      </span>
-      <div class="module-icon">
-        <icon-organisation />
-      </div>
-      <h1>Organisation</h1>
-      <p class="lede">
-        Ein gemeinsamer Kalender, der Termine aus Finanzen und Haushalt automatisch aufnimmt — verknüpft
-        statt als weiterer isolierter Kalender.
-      </p>
-    </header>
-
-    <section class="feature-grid" aria-label="Geplante Funktionen">
-      @for (feature of features; track feature.title) {
-        <div class="feature-card" appReveal>
-          <h2>{{ feature.title }}</h2>
-          <p>{{ feature.description }}</p>
+<app-shell
+  ><main id="main-content" class="organisation-page" tabindex="-1">
+    <header class="page-heading">
+      <div class="heading-copy">
+        <span class="heading-icon"><app-icon name="calendar" /></span>
+        <div>
+          <h1>Organisation</h1>
+          <p>Plane deinen Alltag. Behalte alles im Blick.</p>
         </div>
-      }
-    </section>
-
-    <div class="cross-link" appReveal>
-      <div class="cross-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
       </div>
-      <div>
-        <p class="cross-link-label">Verknüpft mit Finanzen & Haushalt</p>
-        <p>Fällige Zahlungen und wiederkehrende Haushaltsaufgaben erscheinen automatisch hier — ohne dass du sie doppelt einträgst.</p>
+      <button class="primary" (click)="open(tab() === 'tasks' ? 'task' : 'event')">
+        <app-icon name="plus" /><span>Neuer Eintrag</span>
+      </button>
+    </header>
+    <nav class="tabs" aria-label="Organisation Ansichten">
+      <button [attr.aria-current]="tab() === 'today' ? 'page' : null" (click)="tab.set('today')">
+        Heute</button
+      ><button
+        [attr.aria-current]="tab() === 'calendar' ? 'page' : null"
+        (click)="tab.set('calendar')"
+      >
+        Kalender</button
+      ><button [attr.aria-current]="tab() === 'tasks' ? 'page' : null" (click)="tab.set('tasks')">
+        Aufgaben
+      </button>
+    </nav>
+    @if (loading()) {
+      <p class="state" role="status">Deine Einträge werden geladen …</p>
+    } @else if (error()) {
+      <div class="state">
+        <p role="alert">{{ error() }}</p>
+        <button class="secondary" (click)="load()">Erneut versuchen</button>
       </div>
+    } @else {
+      <div
+        class="content-grid"
+        [class.tasks-view]="tab() === 'tasks'"
+        [class.calendar-view]="tab() === 'calendar'"
+      >
+        <section class="card main-card">
+          @if (tab() === 'today') {
+            <header class="card-heading">
+              <h2>Heute, {{ today()?.date | date: 'dd.MM.yyyy' }}</h2>
+              <span class="private">Nur für dich</span>
+            </header>
+            <div class="entries">
+              @for (item of today()?.items; track item.kind + item.id) {
+                <button class="entry" (click)="openToday(item)">
+                  <span class="entry-icon" [class.task-icon]="item.kind === 'task'"
+                    ><app-icon [name]="item.kind === 'event' ? 'calendar' : 'check'" /></span
+                  ><span class="entry-time">
+                    @if (item.overdue) {
+                      {{ item.at | date: 'dd.MM.' }}
+                    } @else if (item.all_day) {
+                      Heute
+                    } @else {
+                      {{ item.at | date: 'HH:mm' }}
+                    }</span
+                  ><span class="entry-copy"
+                    ><strong>{{ item.title }}</strong>
+                    @if (item.overdue) {
+                      <small class="overdue">Überfällig</small>
+                    } @else if (item.location) {
+                      <small>{{ item.location }}</small>
+                    }</span
+                  ><app-icon class="chevron" name="arrow" />
+                </button>
+              } @empty {
+                <div class="empty">
+                  <app-icon name="check" />
+                  <h3>Heute hast du frei geplant</h3>
+                  <p>Keine Termine oder fälligen Aufgaben. Zeit für das, was dir wichtig ist.</p>
+                  <button class="secondary" (click)="open('task')">Aufgabe erstellen</button>
+                </div>
+              }
+            </div>
+          } @else if (tab() === 'calendar') {
+            <header class="card-heading">
+              <h2>{{ dayLabel() }}</h2>
+            </header>
+            <button class="text-button" (click)="open('event')">
+              <app-icon name="plus" />Termin erstellen
+            </button>
+            @for (event of dayEvents(); track event.id) {
+              <button class="entry" (click)="open('event', event)">
+                <span class="entry-icon"><app-icon name="calendar" /></span
+                ><span class="entry-time">{{ event.starts_at | date: 'HH:mm' }}</span
+                ><span class="entry-copy"
+                  ><strong>{{ event.title }}</strong
+                  ><small>{{ event.location || 'Kein Ort angegeben' }}</small>
+                  @if (event.ends_at) {
+                    <small>Bis {{ event.ends_at | date: 'dd.MM. HH:mm' }}</small>
+                  }</span
+                ><app-icon class="chevron" name="arrow" />
+              </button>
+            } @empty {
+              <div class="empty">
+                <app-icon name="calendar" />
+                <h3>Noch keine Termine</h3>
+                <p>Für diesen Tag ist noch nichts eingetragen.</p>
+              </div>
+            }
+          } @else {
+            <header class="card-heading">
+              <h2>Deine Aufgaben</h2>
+              <button class="text-button" (click)="open('task')">
+                <app-icon name="plus" />Aufgabe erstellen
+              </button>
+            </header>
+            <label class="filter"
+              >Anzeigen<select [value]="filter()" (change)="filter.set($any($event.target).value)">
+                <option value="all">Alle Aufgaben</option>
+                <option value="active">Offene Aufgaben</option>
+                <option value="done">Erledigte Aufgaben</option>
+              </select></label
+            >
+            @for (task of visibleTasks(); track task.id) {
+              <div class="task-row">
+                <button
+                  class="completion"
+                  [class.done]="task.status === 'DONE'"
+                  [attr.aria-label]="
+                    task.title + (task.status === 'DONE' ? ' wieder öffnen' : ' erledigen')
+                  "
+                  [disabled]="saving()"
+                  (click)="toggle(task)"
+                >
+                  <app-icon [name]="task.status === 'DONE' ? 'check' : 'plus'" /></button
+                ><button class="entry task-entry" (click)="open('task', task)">
+                  <span class="entry-copy"
+                    ><strong [class.struck]="task.status === 'DONE'">{{ task.title }}</strong
+                    ><small
+                      >{{ statuses[task.status] }} · Priorität
+                      {{ priorities[task.priority] }}</small
+                    ><small [class.overdue]="isOverdue(task)">
+                      @if (task.due_date) {
+                        {{ task.due_date | date: 'dd.MM.yyyy' }} {{ task.due_time?.slice(0, 5) }}
+                        @if (isOverdue(task)) {
+                          · Überfällig
+                        }
+                      } @else {
+                        Ohne Fälligkeit
+                      }
+                    </small></span
+                  ><app-icon class="chevron" name="arrow" />
+                </button>
+              </div>
+            } @empty {
+              <div class="empty">
+                <app-icon name="check" />
+                <h3>Keine Aufgaben in dieser Ansicht</h3>
+                <p>Erstelle deine erste Aufgabe oder ändere den Filter.</p>
+              </div>
+            }
+          }
+        </section>
+        @if (tab() !== 'tasks') {
+          <aside class="side-column">
+            <section class="card calendar">
+              <header class="card-heading">
+                <h2>{{ monthLabel() }}</h2>
+                <div class="month-controls">
+                  <button aria-label="Vorheriger Monat" (click)="changeMonth(-1)">‹</button
+                  ><button aria-label="Nächster Monat" (click)="changeMonth(1)">›</button>
+                </div>
+              </header>
+              <div class="month-grid">
+                @for (day of weekdays; track day) {
+                  <span class="weekday" aria-hidden="true">{{ day }}</span>
+                }
+                @for (day of days(); track day.key) {
+                  <button
+                    [class.outside]="day.outside"
+                    [class.selected]="selectedDay() === day.key"
+                    [class.has-events]="day.hasEvents"
+                    [attr.aria-label]="day.label + (day.hasEvents ? ', mit Terminen' : '')"
+                    [attr.aria-pressed]="selectedDay() === day.key"
+                    [attr.aria-current]="day.today ? 'date' : null"
+                    (click)="selectedDay.set(day.key); tab.set('calendar')"
+                  >
+                    {{ day.number }}
+                  </button>
+                }
+              </div>
+            </section>
+            <section class="card upcoming">
+              <h2>Nächste Termine</h2>
+              @for (event of upcoming(); track event.id) {
+                <button class="upcoming-entry" (click)="open('event', event)">
+                  <small>{{ event.starts_at | date: 'dd.MM.yyyy · HH:mm' }}</small
+                  ><strong>{{ event.title }}</strong>
+                </button>
+              } @empty {
+                <p>Noch nichts geplant.</p>
+              }
+            </section>
+          </aside>
+        }
+      </div>
+      <div class="stats" aria-label="Dein Überblick">
+        <button (click)="selectToday()">
+          <app-icon name="calendar" /><strong>{{ today()?.event_count }}</strong
+          ><span>Termine heute</span></button
+        ><button (click)="tab.set('tasks'); filter.set('active')">
+          <app-icon name="check" /><strong>{{ today()?.open_task_count }}</strong
+          ><span>offene Aufgaben</span>
+        </button>
+        <div>
+          <app-icon name="bell" /><strong>{{ today()?.overdue_count }}</strong
+          ><span>überfällig</span>
+        </div>
+      </div>
+    }
+  </main></app-shell
+>
+<app-modal-form
+  icon="calendar"
+  [formGroup]="form"
+  [title]="(editor() === 'event' ? 'Termin' : 'Aufgabe') + (editId() ? ' bearbeiten' : ' erstellen')"
+  [open]="editor() !== null"
+  [saving]="saving()"
+  [error]="formError()"
+  [deleteLabel]="editId() ? (editor() === 'event' ? 'Termin' : 'Aufgabe') + ' löschen' : ''"
+  (submitted)="save()"
+  (closed)="close()"
+  (deleted)="remove()"
+>
+  @if (!editId()) {
+    <div class="entry-types">
+      <button type="button" [attr.aria-pressed]="editor() === 'event'" (click)="editor.set('event')">Termin</button>
+      <button type="button" [attr.aria-pressed]="editor() === 'task'" (click)="editor.set('task')">Aufgabe</button>
     </div>
-  </div>
-</main>
+  }
+  <app-field label="Titel">
+    <input id="entry-title" formControlName="title" maxlength="120" required />
+  </app-field>
+  @if (editor() === 'event') {
+    <div class="field-row">
+      <app-field label="Beginn">
+        <input id="event-start" type="datetime-local" formControlName="starts_at" required />
+      </app-field>
+      <app-field label="Ende" [optional]="true">
+        <input id="event-end" type="datetime-local" formControlName="ends_at" />
+      </app-field>
+    </div>
+    <app-field label="Ort" [optional]="true">
+      <input id="event-location" formControlName="location" maxlength="240" />
+    </app-field>
+  } @else {
+    <div class="field-row">
+      <app-field label="Fällig am" [optional]="true">
+        <input id="task-date" type="date" formControlName="due_date" />
+      </app-field>
+      <app-field label="Uhrzeit" [optional]="true">
+        <input id="task-time" type="time" formControlName="due_time" />
+      </app-field>
+    </div>
+    <div class="field-row">
+      <app-field label="Priorität">
+        <select id="task-priority" formControlName="priority">
+          <option value="LOW">Niedrig</option>
+          <option value="MEDIUM">Mittel</option>
+          <option value="HIGH">Hoch</option>
+        </select>
+      </app-field>
+      <app-field label="Status">
+        <select id="task-status" formControlName="status">
+          <option value="OPEN">Offen</option>
+          <option value="IN_PROGRESS">In Bearbeitung</option>
+          <option value="DONE">Erledigt</option>
+        </select>
+      </app-field>
+    </div>
+  }
+  <app-field label="Beschreibung" [optional]="true">
+    <textarea id="entry-description" formControlName="description" rows="3" maxlength="5000"></textarea>
+  </app-field>
+</app-modal-form>

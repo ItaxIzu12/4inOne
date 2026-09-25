@@ -12,7 +12,7 @@
 .field { display: flex; flex-direction: column; gap: var(--space-8); }
 .field label { font-size: 13px; font-weight: 700; color: var(--color-midnight-plum); }
 .field input[type='email'] {
-  min-height: 48px;
+  min-height: 44px;
   padding: 0 var(--space-16);
   border-radius: var(--radius-inputs);
   border: 1.5px solid var(--color-hairline);

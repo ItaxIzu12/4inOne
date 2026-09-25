@@ -31,8 +31,10 @@ urlpatterns = [
     # Finanzen — sonst wäre core/auth dauerhaft unversioniert geblieben,
     # während neuere Module schon versioniert sind.
     path('api/v1/auth/', include('core.auth_urls')),
+    path('api/v1/finanzen/private/', include('finanzen.private_urls')),
     path('api/v1/finanzen/', include('finanzen.urls')),
     path('api/v1/household/', include('core.household_urls')),
+    path('api/v1/organisation/', include('organisation.urls')),
     path('api/v1/haushalt/', include('haushalt.urls')),
     # OnboardingStatusView liegt in finanzen/views.py (braucht Transaction/
     # Category von dort), ist aber kein finanzen-spezifischer Endpunkt —
