@@ -44,6 +44,21 @@ Run:
 - migrations check;
 - responsive review.
 
+### Local database after model changes
+
+Tests run on a fresh database built from the models, so a missing migration only shows up on a real database (500 errors, empty screens). After every model change:
+
+```bash
+cd backend
+python manage.py makemigrations      # only when models changed
+python manage.py showmigrations      # nothing may show "[ ]"
+python manage.py migrate             # apply to your local db.sqlite3
+```
+
+`core/test_migrations.py` fails when a model change has no migration file. `runserver` also warns about unapplied migrations at start-up; if screens are empty or an API returns 500 right after pulling changes, run `migrate` first.
+
+Connections without an object (removed outside the normal signals, e.g. raw SQL) are cleaned with `python manage.py prune_connections` (`--dry-run` only counts).
+
 ### Step 6 — Screenshot comparison
 
 For UI changes:

@@ -79,7 +79,7 @@ for (const width of [390, 1440]) {
     ).toBeVisible();
     await page.getByRole('button', { name: /Buch zurückgeben In Bearbeitung/ }).click();
     await page.getByRole('button', { name: 'Aufgabe löschen', exact: true }).click();
-    await page.getByRole('button', { name: 'Endgültig löschen', exact: true }).click();
+    await page.getByRole('button', { name: 'Ja, löschen', exact: true }).click();
     await expect(
       page.getByRole('heading', { name: 'Keine Aufgaben in dieser Ansicht' }),
     ).toBeVisible();
@@ -114,7 +114,7 @@ for (const width of [390, 1440]) {
     await page.locator('.today-row').filter({ hasText: 'Kontrolle' }).click();
     await expect(page.getByRole('heading', { name: 'Termin bearbeiten' })).toBeVisible();
     await page.getByRole('button', { name: 'Termin löschen', exact: true }).click();
-    await page.getByRole('button', { name: 'Endgültig löschen', exact: true }).click();
+    await page.getByRole('button', { name: 'Ja, löschen', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Heute hast du frei geplant' })).toBeVisible();
   });
 }

@@ -275,4 +275,7 @@
   <app-field label="Beschreibung" [optional]="true">
     <textarea id="entry-description" formControlName="description" rows="3" maxlength="5000"></textarea>
   </app-field>
+  @if (editId()) {
+    <app-connections [objectType]="editor() === 'event' ? 'CALENDAR_EVENT' : 'TASK'" [objectId]="editId()!" />
+  }
 </app-modal-form>

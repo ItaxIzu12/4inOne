@@ -35,6 +35,7 @@ urlpatterns = [
     path('api/v1/finanzen/', include('finanzen.urls')),
     path('api/v1/household/', include('core.household_urls')),
     path('api/v1/organisation/', include('organisation.urls')),
+    path('api/v1/connections/', include('connections.urls')),
     path('api/v1/haushalt/', include('haushalt.urls')),
     # OnboardingStatusView liegt in finanzen/views.py (braucht Transaction/
     # Category von dort), ist aber kein finanzen-spezifischer Endpunkt —

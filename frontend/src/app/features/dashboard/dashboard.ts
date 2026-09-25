@@ -200,9 +200,10 @@ export class Dashboard {
     ];
   });
   financeProgress() {
-    const budget = Number(this.finance()?.budget || 0);
-    const expenses = Number(this.finance()?.expenses || 0);
-    return budget > 0 ? Math.min(100, (expenses / budget) * 100) : expenses > 0 ? 100 : 0;
+    // Gegen Budget + Einnahmen, wie in Finanzen selbst.
+    const total = Number(this.finance()?.total || 0);
+    const expenses = Number(this.finance()?.expenses || 0) + Number(this.finance()?.saved || 0);
+    return total > 0 ? Math.min(100, (expenses / total) * 100) : expenses > 0 ? 100 : 0;
   }
   togglePacking(index: number) {
     this.packing.update((values) => values.map((value, i) => (i === index ? !value : value)));

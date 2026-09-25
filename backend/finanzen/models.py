@@ -207,14 +207,54 @@ class Transaction(models.Model):
 
 
 class MonthlyBudget(models.Model):
+    """Ein Budget für einen Monat oder einen Zeitraum aus mehreren Monaten.
+
+    `month` ist der erste Monat. Wie lange es gilt:
+    - `end_month` leer und `open_ended` aus → nur dieser eine Monat (so waren alle
+      bisherigen Budgets, ohne Datenänderung),
+    - `end_month` gesetzt → bis einschließlich dieses Monats,
+    - `open_ended` an → bis auf Weiteres.
+
+    Für einen Monat gilt das Budget mit dem spätesten Start, das ihn abdeckt: ein
+    später beginnendes Budget überschreibt das ältere ab seinem Start, und fällt es
+    weg (z. B. ein Einzelmonat), gilt danach wieder das ältere."""
+
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='monthly_budgets')
     month = models.DateField()
+    end_month = models.DateField(null=True, blank=True)
+    open_ended = models.BooleanField(default=False)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, default='EUR')
 
     class Meta:
         ordering = ['-month']
-        constraints = [models.UniqueConstraint(fields=['owner', 'month', 'currency'], name='unique_owner_month_budget'), models.CheckConstraint(condition=models.Q(amount__gte=0), name='monthly_budget_nonnegative')]
+        constraints = [
+            models.UniqueConstraint(fields=['owner', 'month', 'currency'], name='unique_owner_month_budget'),
+            models.CheckConstraint(condition=models.Q(amount__gte=0), name='monthly_budget_nonnegative'),
+            models.CheckConstraint(
+                condition=models.Q(end_month__isnull=True) | models.Q(end_month__gte=models.F('month')),
+                name='monthly_budget_end_after_start',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(open_ended=False) | models.Q(end_month__isnull=True),
+                name='monthly_budget_open_or_end',
+            ),
+        ]
+
+    def covers(self, month_start) -> bool:
+        if month_start < self.month:
+            return False
+        if self.open_ended:
+            return True
+        return month_start <= (self.end_month or self.month)
+
+    @classmethod
+    def for_month(cls, owner, month_start, currency='EUR'):
+        """Das Budget, das für diesen Monat (erster Tag) gilt — oder None."""
+        candidates = cls.objects.filter(owner=owner, currency=currency, month__lte=month_start).filter(
+            models.Q(open_ended=True) | models.Q(end_month__gte=month_start) | models.Q(end_month__isnull=True, month=month_start)
+        )
+        return candidates.order_by('-month').first()
 
 
 class SavingsGoal(models.Model):
@@ -227,6 +267,55 @@ class SavingsGoal(models.Model):
     status = models.CharField(max_length=9, choices=[('ACTIVE', 'Aktiv'), ('COMPLETED', 'Erreicht'), ('PAUSED', 'Pausiert')], default='ACTIVE')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Sparrate: pro Monat zurücklegen, in einem Zeitraum aus Monaten (wie beim Budget).
+    # `plan_month` ist der erste Monat; ohne `plan_end_month` und ohne `plan_open_ended`
+    # gilt sie nur für diesen Monat, mit `plan_open_ended` bis das Ziel erreicht ist.
+    # Wirkung aufs Budget: finanzen/savings.py.
+    monthly_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    plan_month = models.DateField(null=True, blank=True)
+    plan_end_month = models.DateField(null=True, blank=True)
+    plan_open_ended = models.BooleanField(default=False)
+
     class Meta:
         ordering = ['-created_at', '-id']
-        constraints = [models.CheckConstraint(condition=models.Q(target_amount__gt=0, current_amount__gte=0), name='savings_goal_valid_amounts')]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(target_amount__gt=0, current_amount__gte=0), name='savings_goal_valid_amounts'),
+            models.CheckConstraint(
+                condition=models.Q(monthly_amount__isnull=True) | models.Q(monthly_amount__gt=0),
+                name='savings_goal_rate_positive',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(monthly_amount__isnull=True) | models.Q(plan_month__isnull=False),
+                name='savings_goal_rate_has_start',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(plan_end_month__isnull=True) | models.Q(plan_end_month__gte=models.F('plan_month')),
+                name='savings_goal_plan_end_after_start',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(plan_open_ended=False) | models.Q(plan_end_month__isnull=True),
+                name='savings_goal_plan_open_or_end',
+            ),
+        ]
+
+
+class SavingsContribution(models.Model):
+    """Eine Einzahlung in ein Sparziel (oder, negativ, eine Entnahme).
+
+    Der gesparte Betrag eines Ziels ist eine Summe über die Zeit, das Budget
+    gilt pro Monat. Damit Gespartes das Budget des richtigen Monats mindert,
+    hält dieser Eintrag fest, WANN sich der gesparte Betrag geändert hat:
+    Ändert jemand „Bereits gespart“ von 300 auf 350 €, entsteht eine
+    Einzahlung von +50 € am heutigen Tag. Wird das Ziel gelöscht, verschwinden
+    seine Einträge — das Geld ist wieder frei."""
+
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='savings_contributions')
+    goal = models.ForeignKey(SavingsGoal, on_delete=models.CASCADE, related_name='contributions')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date', '-id']
+        indexes = [models.Index(fields=['owner', 'date'])]
+        constraints = [models.CheckConstraint(condition=~models.Q(amount=0), name='savings_contribution_not_zero')]

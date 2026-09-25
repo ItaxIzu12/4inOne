@@ -1,11 +1,12 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, Observable } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon } from '../../shared/icons/app-icon';
+import { ConnectionsSection } from '../../shared/connections/connections-section';
 import { Field } from '../../shared/form/field';
 import { ModalForm } from '../../shared/form/modal-form';
 import {
@@ -26,7 +27,7 @@ function localInput(value: string): string {
 @Component({
   selector: 'app-organisation',
   standalone: true,
-  imports: [AppShell, AppIcon, Field, ModalForm, ReactiveFormsModule, DatePipe],
+  imports: [AppShell, AppIcon, ConnectionsSection, Field, ModalForm, ReactiveFormsModule, DatePipe],
   templateUrl: './organisation.html',
   styleUrl: './organisation.scss',
 })
@@ -35,6 +36,8 @@ export class Organisation {
   private destroy = inject(DestroyRef);
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private loaded = false;
   readonly tab = signal<'today' | 'calendar' | 'tasks'>('today');
   readonly events = signal<PersonalEvent[]>([]);
   readonly tasks = signal<PersonalTask[]>([]);
@@ -114,6 +117,10 @@ export class Organisation {
   });
   constructor() {
     this.load(true);
+    // Wechsel auf ein anderes Objekt derselben Seite (z. B. Aufgabe → verknüpfter Termin)
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(() => {
+      if (this.loaded) this.openFromQuery();
+    });
   }
   onDay(e: PersonalEvent, day: string) {
     const start = new Date(`${day}T00:00`);
@@ -135,18 +142,8 @@ export class Organisation {
           this.tasks.set(r.tasks);
           this.today.set(r.today);
           this.loading.set(false);
-          if (openRequested) {
-            const q = this.route.snapshot.queryParamMap;
-            const kind = q.get('kind');
-            const id = Number(q.get('id'));
-            if (kind === 'event' || kind === 'task') {
-              const item =
-                kind === 'event'
-                  ? r.events.find((e) => e.id === id)
-                  : r.tasks.find((t) => t.id === id);
-              if (item) this.open(kind, item);
-            }
-          }
+          this.loaded = true;
+          if (openRequested) this.openFromQuery();
         },
         error: () => {
           this.loading.set(false);
@@ -155,6 +152,22 @@ export class Organisation {
           );
         },
       });
+  }
+  /** Deep-Link (?kind=task|event&id=…): öffnet das Objekt und räumt die Adresse auf,
+   * damit derselbe Link später erneut wirkt. Kommt aus dem Dashboard und aus „Verknüpft“. */
+  private openFromQuery() {
+    const q = this.route.snapshot.queryParamMap;
+    const kind = q.get('kind');
+    const id = Number(q.get('id'));
+    if ((kind !== 'event' && kind !== 'task') || !id) return;
+    const item = kind === 'event' ? this.events().find((e) => e.id === id) : this.tasks().find((t) => t.id === id);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { kind: null, id: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    if (item) this.open(kind, item);
   }
   selectToday() {
     const date = this.today()?.date || localDay(new Date());

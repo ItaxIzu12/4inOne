@@ -1,0 +1,152 @@
+@if (enabled()) {
+  <section class="connections" [attr.aria-labelledby]="titleId" (keydown)="onKeydown($event)">
+    <h3 class="connections__title" [id]="titleId"><app-icon name="link" />Verknüpft</h3>
+
+    @switch (status()) {
+      @case ('loading') {
+        <p class="connections__note" role="status">Verknüpfungen werden geladen …</p>
+      }
+      @case ('error') {
+        <div class="connections__note" role="alert">
+          <p>Die Verknüpfungen konnten nicht geladen werden.</p>
+          <button type="button" class="c-link" (click)="load()">Erneut versuchen</button>
+        </div>
+      }
+      @default {
+        @if (rows().length) {
+          <ul class="connections__list">
+            @for (row of rows(); track row.item.id) {
+              <li class="connection">
+                <a class="connection__link" [routerLink]="row.link.path" [queryParams]="row.link.query">
+                  <span class="connection__icon" [class]="domainClass(row.other.domain)" aria-hidden="true">
+                    <app-icon [name]="typeOf(row.other).icon" />
+                  </span>
+                  <span class="connection__text">
+                    <span class="connection__kind">{{ typeOf(row.other).label }}</span>
+                    <span class="connection__title">{{ row.other.title }}</span>
+                    <span class="connection__sub">{{ row.other.subtitle }}</span>
+                  </span>
+                  <app-icon class="connection__chevron" name="arrow" />
+                </a>
+                <button
+                  type="button"
+                  class="connection__remove"
+                  [attr.aria-label]="'Verknüpfung mit „' + row.other.title + '“ lösen'"
+                  [disabled]="removingId() === row.item.id"
+                  (click)="remove(row.item)"
+                >
+                  Lösen
+                </button>
+              </li>
+            }
+          </ul>
+        } @else if (step() === null) {
+          <div class="connections__empty">
+            <p class="connections__empty-title">Noch nichts verknüpft.</p>
+            <p class="connections__note">
+              Verbinde passende Aufgaben, Termine, Sparziele oder andere Bereiche, damit 4inOne Zusammenhänge für dich
+              sichtbar machen kann.
+            </p>
+          </div>
+        }
+
+        @if (actionError()) {
+          <p class="connections__error" role="alert">{{ actionError() }}</p>
+        }
+
+        @switch (step()) {
+          @case ('type') {
+            <div class="wizard">
+              <h4 #stepHeading tabindex="-1">Was möchtest du verbinden?</h4>
+              @if (options() === null) {
+                <p class="connections__note" role="status">Wird geladen …</p>
+              } @else {
+                <ul class="wizard__choices">
+                  @for (option of options(); track option.type) {
+                    <li>
+                      <button type="button" class="choice" (click)="pickType(option)">
+                        <span class="connection__icon" [class]="domainClass(option.domain)" aria-hidden="true">
+                          <app-icon [name]="kind[option.type].icon" />
+                        </span>
+                        {{ option.label }}
+                      </button>
+                    </li>
+                  } @empty {
+                    <li class="connections__note">Für diese Art gibt es noch keine Verknüpfungen.</li>
+                  }
+                </ul>
+              }
+              <div class="wizard__actions">
+                <button type="button" class="c-btn c-btn--soft" (click)="cancel()">Abbrechen</button>
+              </div>
+            </div>
+          }
+          @case ('object') {
+            <div class="wizard">
+              <h4 #stepHeading tabindex="-1">{{ chosenType()?.label }} auswählen</h4>
+              @if (showSearch()) {
+                <label class="wizard__search">
+                  <span class="wizard__search-label">Suchen</span>
+                  <input type="search" autocomplete="off" [value]="query()" (input)="onSearch($any($event.target).value)" />
+                </label>
+              }
+              @if (candidates() === null) {
+                <p class="connections__note" role="status">Wird geladen …</p>
+              } @else if (candidatesError()) {
+                <p class="connections__error" role="alert">Die Liste konnte nicht geladen werden.</p>
+                <button type="button" class="c-link" (click)="loadCandidates()">Erneut versuchen</button>
+              } @else {
+                <ul class="wizard__choices">
+                  @for (candidate of candidates(); track candidate.id) {
+                    <li>
+                      <button type="button" class="choice choice--stacked" (click)="pickObject(candidate)">
+                        <span class="connection__title">{{ candidate.title }}</span>
+                        <span class="connection__sub">{{ candidate.subtitle }}</span>
+                      </button>
+                    </li>
+                  } @empty {
+                    <li class="connections__note">
+                      @if (query()) {
+                        Nichts gefunden für „{{ query() }}“.
+                      } @else {
+                        Es gibt nichts, was sich noch verknüpfen ließe.
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+              <div class="wizard__actions">
+                <button type="button" class="c-btn c-btn--soft" (click)="back()">Zurück</button>
+              </div>
+            </div>
+          }
+          @case ('confirm') {
+            <div class="wizard">
+              <h4 #stepHeading tabindex="-1">Verknüpfung bestätigen</h4>
+              <p>
+                Mit <strong>{{ chosen()?.title }}</strong> ({{ chosenType()?.label }}) verknüpfen? Beide bleiben unverändert,
+                sie gehören nur zusammen.
+              </p>
+              <div class="wizard__actions">
+                <button type="button" class="c-btn c-btn--soft" [disabled]="saving()" (click)="back()">Zurück</button>
+                <button type="button" class="c-btn c-btn--primary" [disabled]="saving()" (click)="confirm()">
+                  {{ saving() ? 'Wird verknüpft …' : 'Verknüpfen' }}
+                </button>
+              </div>
+            </div>
+          }
+          @default {
+            <button #addButton type="button" class="connections__add" (click)="start()">
+              @if (!rows().length) {
+                Verbindung hinzufügen
+              } @else {
+                <span aria-hidden="true">+</span> Verbindung hinzufügen
+              }
+            </button>
+          }
+        }
+      }
+    }
+    <p class="sr-only" aria-live="polite">{{ message() }}</p>
+  </section>
+}

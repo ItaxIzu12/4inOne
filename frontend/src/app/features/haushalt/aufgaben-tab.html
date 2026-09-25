@@ -253,4 +253,8 @@
   } @else if (formRecurrence() && members().length < 2) {
     <p class="field-hint">„Reihum wechseln“ gibt es, sobald mindestens zwei Personen im Haushalt sind.</p>
   }
+
+  @if (editingId() !== null) {
+    <app-connections objectType="HOUSEHOLD_TASK" [objectId]="editingId()" />
+  }
 </app-modal-form>

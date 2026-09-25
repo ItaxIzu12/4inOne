@@ -67,6 +67,7 @@ describe('ModalForm', () => {
     host.optional.set(true);
     fixture.detectChanges();
     expect(label.textContent).toContain('(optional)');
+    expect(label.textContent).toContain('Titel (optional)'); // echtes Leerzeichen für Screenreader
   });
 
   it('emits submitted on save and closed on cancel', () => {

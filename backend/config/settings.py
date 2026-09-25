@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'finanzen',
     'haushalt',
     'organisation',
+    'connections',
     'integrations',
 ]
 
@@ -273,6 +274,7 @@ REST_FRAMEWORK = {
         # Dasselbe für das Haushalt-Modul (haushalt/throttling.py) —
         # großzügiger, weil beim Einkaufen viele Einträge schnell
         # hintereinander abgehakt werden.
+        'connections_write': f"{env.int('RATE_LIMIT_CONNECTIONS_WRITE', default=60)}/min",
         'haushalt_write': f"{env.int('RATE_LIMIT_HAUSHALT_WRITE', default=120)}/min",
         # Berichte (CSV/PDF, finanzen/views.py) — enthalten vollständige
         # Haushaltsdaten über einen längeren Zeitraum, deshalb das strenge

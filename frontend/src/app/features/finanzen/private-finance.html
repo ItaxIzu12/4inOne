@@ -1,3 +1,4 @@
+<app-save-feedback [message]="notice()" (dismissed)="notice.set('')" />
 <app-shell
   ><main id="main-content" class="finance-page" tabindex="-1">
     <header class="page-head">
@@ -22,7 +23,7 @@
         [attr.aria-current]="tab() === 'transactions' ? 'page' : null"
         (click)="tab.set('transactions')"
       >
-        Ausgaben</button
+        Buchungen</button
       ><button
         [attr.aria-current]="tab() === 'budgets' ? 'page' : null"
         (click)="tab.set('budgets')"
@@ -58,16 +59,20 @@
             <h2 class="amount">{{ money(summary()?.available) }}</h2>
             @if (summary()?.budget !== null) {
               <p>
-                Von {{ money(summary()?.budget) }} geplant ·
-                {{ percent(summary()?.expenses, summary()?.budget) }} % ausgegeben
+                Von {{ money(summary()?.total) }} ·
+                {{ percent(used(), summary()?.total) }} % {{ hasSaved() ? 'ausgegeben oder gespart' : 'ausgegeben' }}
               </p>
               <progress
-                [value]="percent(summary()?.expenses, summary()?.budget)"
+                [value]="percent(used(), summary()?.total)"
                 max="100"
-                aria-label="Monatsbudget verbraucht"
+                aria-label="Verfügbares Budget verbraucht"
               ></progress>
+              <p class="breakdown">
+                Budget {{ money(summary()?.budget) }} + Einnahmen {{ money(summary()?.income) }} − Ausgaben
+                {{ money(summary()?.expenses) }}@if (hasSaved()) { − Gespart {{ money(summary()?.saved) }}@if (hasPlanned()) { (davon {{ money(summary()?.saved_planned) }} geplant)}}
+              </p>
               @if (summary()?.available?.startsWith('-')) {
-                <p class="negative">Deine Ausgaben liegen über dem Monatsbudget.</p>
+                <p class="negative">Deine Ausgaben liegen über Budget und Einnahmen.</p>
               }
             } @else {
               <p>Lege dein erstes Monatsbudget fest.</p>
@@ -199,22 +204,23 @@
           </header>
           @if (activeBudget(); as budget) {
             <h3 class="amount">{{ money(budget.amount) }}</h3>
+            <p class="breakdown">Gilt: {{ range(budget) }}</p>
             <p>
-              {{ money(summary()?.expenses) }} ausgegeben ·
-              {{ money(summary()?.available) }} verfügbar
+              Dazu {{ money(summary()?.income) }} Einnahmen · {{ money(summary()?.expenses) }} ausgegeben
+              @if (hasSaved()) {· {{ money(summary()?.saved) }} gespart }· {{ money(summary()?.available) }} verfügbar
             </p>
             <progress
-              [value]="percent(summary()?.expenses, budget.amount)"
+              [value]="percent(used(), summary()?.total)"
               max="100"
               aria-label="Budgetfortschritt"
             ></progress>
           } @else {
             <p class="empty">Für diesen Monat hast du noch kein Budget festgelegt.</p>
           }
-          <h3 class="subheading">Alle Monatsbudgets</h3>
+          <h3 class="subheading">Alle Budgets</h3>
           @for (budget of budgets(); track budget.id) {
             <button class="transaction" (click)="month.set(budget.month.slice(0, 7)); load()">
-              <span>{{ budget.month | date: 'MM.yyyy' }}</span
+              <span>{{ range(budget) }}</span
               ><strong>{{ money(budget.amount) }}</strong
               ><app-icon name="arrow" />
             </button>
@@ -246,6 +252,9 @@
                     · Bis {{ goal.target_date | date: 'dd.MM.yyyy' }}
                   }
                 </small>
+                @if (goal.monthly_amount) {
+                  <small class="plan">{{ money(goal.monthly_amount) }} pro Monat · {{ plan(goal) }}</small>
+                }
               </button>
             } @empty {
               <div class="empty">
@@ -309,6 +318,21 @@
     <app-field label="Budgetmonat">
       <input id="budget-month" type="month" formControlName="month" aria-required="true" />
     </app-field>
+    <app-field
+      label="Gilt für"
+      hint="Ein später beginnendes Budget ersetzt dieses ab seinem Startmonat."
+    >
+      <select id="budget-scope" formControlName="scope">
+        <option value="single">Nur diesen Monat</option>
+        <option value="until">Mehrere Monate</option>
+        <option value="open">Bis auf Weiteres</option>
+      </select>
+    </app-field>
+    @if (form.controls.scope.value === 'until') {
+      <app-field label="Bis einschließlich">
+        <input id="budget-end" type="month" formControlName="end_month" aria-required="true" [min]="form.controls.month.value" />
+      </app-field>
+    }
     <app-field label="Budgetbetrag in EUR">
       <input id="budget-amount" inputmode="decimal" formControlName="amount" aria-required="true" />
     </app-field>
@@ -320,7 +344,10 @@
       <app-field label="Zielbetrag in EUR">
         <input id="goal-target" inputmode="decimal" formControlName="target_amount" aria-required="true" />
       </app-field>
-      <app-field label="Bereits gespart in EUR">
+      <app-field
+        label="Bereits gespart in EUR"
+        hint="Höchstens der Zielbetrag. Eine Änderung mindert dein verfügbares Budget in diesem Monat."
+      >
         <input id="goal-current" inputmode="decimal" formControlName="current_amount" aria-required="true" />
       </app-field>
     </div>
@@ -336,5 +363,34 @@
         </select>
       </app-field>
     </div>
+    <app-field
+      label="Sparrate pro Monat"
+      [optional]="true"
+      hint="Wird in den gewählten Monaten von deinem verfügbaren Budget zurückgelegt, bis das Ziel erreicht ist."
+    >
+      <input id="goal-rate" inputmode="decimal" formControlName="rate" />
+    </app-field>
+    @if (form.controls.rate.value.trim()) {
+      <div class="field-row">
+        <app-field label="Ab Monat">
+          <input id="goal-plan-start" type="month" formControlName="plan_start" />
+        </app-field>
+        <app-field label="Gilt für">
+          <select id="goal-plan-scope" formControlName="plan_scope">
+            <option value="single">Nur diesen Monat</option>
+            <option value="until">Mehrere Monate</option>
+            <option value="open">Bis das Ziel erreicht ist</option>
+          </select>
+        </app-field>
+      </div>
+      @if (form.controls.plan_scope.value === 'until') {
+        <app-field label="Bis einschließlich">
+          <input id="goal-plan-end" type="month" formControlName="plan_end" [min]="form.controls.plan_start.value" />
+        </app-field>
+      }
+    }
+  }
+  @if (editor() === 'goals' && editId()) {
+    <app-connections objectType="SAVINGS_GOAL" [objectId]="editId()!" />
   }
 </app-modal-form>

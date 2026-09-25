@@ -1,6 +1,8 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AppIcon } from '../../shared/icons/app-icon';
+import { ConnectionsSection } from '../../shared/connections/connections-section';
 import { Field } from '../../shared/form/field';
 import { ModalForm } from '../../shared/form/modal-form';
 import { Effort, Id, MemberLoadDto, Recurrence, TaskDto, TaskInput } from './haushalt-api.service';
@@ -32,12 +34,14 @@ const EFFORT_LABELS: Record<Effort, string> = { 1: 'Klein', 2: 'Mittel', 3: 'Gro
 @Component({
   selector: 'app-aufgaben-tab',
   standalone: true,
-  imports: [AppIcon, Field, ModalForm],
+  imports: [AppIcon, ConnectionsSection, Field, ModalForm],
   templateUrl: './aufgaben-tab.html',
   styleUrls: ['./haushalt-common.scss', './aufgaben-tab.scss'],
 })
 export class AufgabenTab {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly saved = output<string>();
   /** „aufgaben“ zeigt alle offenen Aufgaben, „routinen“ nur wiederkehrende —
    * dieselben Daten und dasselbe Formular, keine zweite Aufgabenlogik. */
@@ -118,8 +122,34 @@ export class AufgabenTab {
         this.tasks.set(tasks);
         this.members.set(members);
         this.loadError.set(false);
+        this.openTaskFromQuery(tasks);
       },
       error: () => this.loadError.set(true),
+    });
+  }
+
+  /** Deep-Link (?task=<id>) aus „Verknüpft“: öffnet die Aufgabe, auch wenn sie schon erledigt ist. */
+  private openTaskFromQuery(open: TaskDto[]): void {
+    const id = Number(this.route.snapshot.queryParamMap.get('task'));
+    if (!id) return;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { task: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    const found = open.find((t) => t.id === id);
+    if (found) return this.openEdit(found);
+    this.provider.getTasks('done').subscribe({
+      next: (rows) => {
+        this.doneTasks.set(rows);
+        const done = rows.find((t) => t.id === id);
+        if (done) {
+          this.showDone.set(true);
+          this.openEdit(done);
+        }
+      },
+      error: () => undefined,
     });
   }
 

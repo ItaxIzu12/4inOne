@@ -15,7 +15,7 @@ import { Component, input } from '@angular/core';
   standalone: true,
   template: `
     <label class="field__control">
-      <span class="field__label">{{ label() }}@if (optional()) { <span class="field__optional">(optional)</span> }</span>
+      <span class="field__label">{{ optional() ? label() + ' ' : label() }}@if (optional()) {<span class="field__optional">(optional)</span>}</span>
       <ng-content />
     </label>
     @if (hint()) {
@@ -41,7 +41,6 @@ import { Component, input } from '@angular/core';
       color: var(--text);
     }
     .field__optional {
-      margin-left: 4px;
       font-weight: 400;
       color: var(--text-muted);
     }

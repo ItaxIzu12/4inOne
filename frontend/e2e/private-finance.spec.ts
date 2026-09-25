@@ -34,13 +34,29 @@ for (const width of [390, 1440]) {
         const income = rows
           .filter((t) => t.type === 'INCOME')
           .reduce((a, t) => a + Number(t.amount), 0);
-        const budget = data['budgets'].find((b) => b.month.startsWith(month));
+        // wie backend MonthlyBudget.for_month: später beginnendes Budget gewinnt, sofern es den Monat abdeckt
+        const budget = data['budgets']
+          .filter((b) => {
+            const start = b.month.slice(0, 7);
+            return month >= start && (b.open_ended || month <= (b.end_month ? b.end_month.slice(0, 7) : start));
+          })
+          .sort((a, b) => b.month.localeCompare(a.month))[0];
         return r.fulfill({
           json: {
             month,
             currency: 'EUR',
             budget: budget?.amount || null,
-            available: budget ? (Number(budget.amount) - expense).toFixed(2) : null,
+            total: budget ? (Number(budget.amount) + income).toFixed(2) : null,
+            // vereinfacht: das Gesparte aller Ziele zählt im laufenden Monat (das echte Backend rechnet über Einzahlungen)
+            saved: data['goals'].reduce((a, g) => a + Number(g.current_amount), 0).toFixed(2),
+            available: budget
+              ? (
+                  Number(budget.amount) +
+                  income -
+                  expense -
+                  data['goals'].reduce((a, g) => a + Number(g.current_amount), 0)
+                ).toFixed(2)
+              : null,
             income: income.toFixed(2),
             expenses: expense.toFixed(2),
             savings_target: data['goals']
@@ -88,9 +104,25 @@ for (const width of [390, 1440]) {
     await expect(page.getByText('Lege dein erstes Monatsbudget fest.')).toBeVisible();
     await page.getByRole('button', { name: 'Budget erstellen', exact: true }).click();
     await page.getByLabel('Budgetbetrag in EUR').fill('3000,00');
+    // Zeitraum: Endmonat vor dem Start wird abgelehnt, „bis auf Weiteres“ gilt auch im Folgemonat
+    await page.getByLabel('Gilt für').selectOption('until');
+    await page.getByLabel('Bis einschließlich').fill('2000-01');
+    await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await expect(page.getByRole('dialog')).toContainText('Endmonat, der nicht vor dem Startmonat liegt');
+    await page.getByLabel('Gilt für').selectOption('open');
+    await expect(page.getByLabel('Bis einschließlich')).toHaveCount(0);
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.locator('.month-card')).toContainText('3.000,00 €');
+    const today = new Date();
+    const following = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const nextMonth = `${following.getFullYear()}-${String(following.getMonth() + 1).padStart(2, '0')}`;
+    await page.locator('#finance-month').fill(nextMonth);
+    await expect(page.locator('.month-card')).toContainText('3.000,00 €');
+    await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+    await expect(page.getByText(/Gilt: Ab \d\d\.\d{4}, bis auf Weiteres/)).toBeVisible();
+    await page.locator('#finance-month').fill(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
+    await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
     await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('48,32');
     await page.getByRole('button', { name: 'Standardkategorien anlegen' }).click();
@@ -105,14 +137,39 @@ for (const width of [390, 1440]) {
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('3100');
     await page.getByLabel('Notiz (optional)').fill('Gehalt');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+    // Einnahme erhöht das verfügbare Budget und wird sichtbar bestätigt
+    await expect(page.locator('.month-card')).toContainText('6.050,00 €');
+    await expect(page.locator('.month-card .breakdown')).toContainText(
+      'Budget 3.000,00 € + Einnahmen 3.100,00 € − Ausgaben 50,00 €',
+    );
+    await expect(page.getByRole('status').filter({ hasText: 'Einnahme' })).toContainText(
+      'Einnahme von 3.100,00 € gespeichert. Verfügbar: 6.050,00 €.',
+    );
     await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
     await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
     await page.getByLabel('Titel', { exact: true }).fill('Neue Waschmaschine');
     await page.getByLabel('Zielbetrag in EUR').fill('700');
+    // Gespartes darf das Sparziel nicht überschreiten
+    await page.getByLabel('Bereits gespart in EUR').fill('800');
+    await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await expect(page.getByRole('dialog')).toContainText(
+      'Der gesparte Betrag darf das Sparziel nicht überschreiten. Erhöhe zuerst das Sparziel.',
+    );
     await page.getByLabel('Bereits gespart in EUR').fill('480');
+    // Sparrate mit Zeitraum: nicht höher als das Ziel, Zeitraum erscheint erst mit einer Rate
+    await expect(page.getByLabel('Ab Monat')).toHaveCount(0);
+    await page.getByLabel('Sparrate pro Monat').fill('800');
+    await expect(page.getByLabel('Ab Monat')).toBeVisible();
+    await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await expect(page.getByRole('dialog')).toContainText('Die Sparrate darf nicht höher sein als das Sparziel.');
+    await page.getByLabel('Sparrate pro Monat').fill('50');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(page.locator('.goal')).toContainText('69 % erreicht');
+    await expect(page.locator('.goal .plan')).toContainText(/50,00 € pro Monat · Ab \d\d\.\d{4}, bis das Ziel erreicht ist/);
     await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
+    // Gespartes mindert das verfügbare Budget und steht in der Aufschlüsselung
+    await expect(page.locator('.month-card')).toContainText('5.570,00 €');
+    await expect(page.locator('.month-card .breakdown')).toContainText('− Gespart 480,00 €');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -122,11 +179,12 @@ for (const width of [390, 1440]) {
     ).toEqual([]);
     await page.screenshot({ path: `test-results/finance-${width}.png`, fullPage: true });
     await page.goto('/app');
-    await expect(page.locator('.domain.finance')).toContainText('2.950,00 € verfügbar');
+    await expect(page.locator('.domain.finance')).toContainText('5.570,00 € verfügbar');
     await page.locator('.domain.finance').click();
     await page.getByRole('button', { name: /Supermarkt/ }).click();
     await page.getByRole('button', { name: 'Eintrag löschen', exact: true }).click();
-    await page.getByRole('button', { name: 'Löschen bestätigen', exact: true }).click();
-    await expect(page.locator('.month-card')).toContainText('3.000,00 €');
+    await page.getByRole('button', { name: 'Ja, löschen', exact: true }).click();
+    await expect(page.locator('.month-card')).toContainText('5.620,00 €');
+    await expect(page.getByRole('status').filter({ hasText: 'gelöscht' })).toContainText('Buchung gelöscht. Verfügbar: 5.620,00 €.');
   });
 }
