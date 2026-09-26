@@ -1,0 +1,170 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.dp__trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--border-strong, #b9c0ce);
+  border-radius: var(--radius-inputs, 10px);
+  background: var(--surface, #fff);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+.dp__trigger:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.dp__trigger:focus-visible,
+.dp__trigger[aria-expanded='true'] {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: -1.5px;
+}
+.dp__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dp__text--placeholder {
+  color: var(--text-muted);
+}
+.dp__icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dp__panel {
+  overscroll-behavior: contain; /* Scrollen im Kalender scrollt nicht die Seite dahinter */
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: 288px;
+  max-width: calc(100vw - 16px);
+  padding: 12px;
+  overflow-y: auto;
+  border: 1px solid var(--border, #dfe4ed);
+  border-radius: 16px;
+  background: var(--surface, #fff);
+  color: var(--text);
+  box-shadow: 0 16px 40px -12px rgb(41 55 78 / 0.35), 0 2px 6px rgb(41 55 78 / 0.08);
+}
+.dp__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.dp__title {
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+.dp__nav {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.dp__nav:hover {
+  background: var(--accent-soft, var(--lavender, #e9e5f6));
+}
+.dp__weekdays,
+.dp__grid--days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.dp__weekdays {
+  margin-bottom: 4px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.dp__grid--months {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.dp__cell {
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.dp__grid--months .dp__cell {
+  min-height: 48px;
+  font-size: 15px;
+}
+.dp__cell:hover:not(:disabled) {
+  background: var(--accent-soft, var(--lavender, #e9e5f6));
+}
+/* Tage des Vor-/Folgemonats: gedämpft, aber mit ausreichendem Kontrast (kein zusätzliches Ausblenden). */
+.dp__cell.is-outside {
+  color: var(--text-muted);
+}
+.dp__cell.is-today {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.dp__cell.is-selected,
+.dp__cell.is-selected:hover:not(:disabled) {
+  /* auch beim Hover: sonst gewinnt die Hover-Regel (höhere Spezifität) und weiße Schrift steht auf hellem Grund */
+  background: var(--accent);
+  color: var(--accent-ink, #fff);
+  font-weight: 700;
+  opacity: 1;
+}
+.dp__cell:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.dp__clear {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  border: 0;
+  border-top: 1px solid var(--border, #dfe4ed);
+  border-radius: 0 0 10px 10px;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dp__clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.dp__cell:focus-visible,
+.dp__nav:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}

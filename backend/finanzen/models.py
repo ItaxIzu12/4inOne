@@ -267,14 +267,40 @@ class SavingsGoal(models.Model):
     status = models.CharField(max_length=9, choices=[('ACTIVE', 'Aktiv'), ('COMPLETED', 'Erreicht'), ('PAUSED', 'Pausiert')], default='ACTIVE')
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # Sparrate: pro Monat zurücklegen, in einem Zeitraum aus Monaten (wie beim Budget).
-    # `plan_month` ist der erste Monat; ohne `plan_end_month` und ohne `plan_open_ended`
-    # gilt sie nur für diesen Monat, mit `plan_open_ended` bis das Ziel erreicht ist.
-    # Wirkung aufs Budget: finanzen/savings.py.
+    # ZEITRAUM des Ziels (wie beim Budget): in welchen Monaten es gilt, also angezeigt wird und
+    # seine Sparrate reserviert. `plan_month` ist der erste Monat; ohne `plan_end_month` und ohne
+    # `plan_open_ended` gilt es nur für diesen einen Monat, mit `plan_end_month` bis einschließlich
+    # dieses Monats, mit `plan_open_ended` bis auf Weiteres. Leer (nur Altdaten) = in jedem Monat.
+    # Sparrate: optional, pro Monat im Zeitraum; Wirkung aufs Budget in finanzen/savings.py.
     monthly_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     plan_month = models.DateField(null=True, blank=True)
     plan_end_month = models.DateField(null=True, blank=True)
     plan_open_ended = models.BooleanField(default=False)
+
+    def covers(self, month_start) -> bool:
+        """Gilt das Ziel in diesem Monat (erster Tag)? Ohne Zeitraum (Altdaten): immer."""
+        if self.plan_month is None:
+            return True
+        if month_start < self.plan_month:
+            return False
+        if self.plan_open_ended:
+            return True
+        return month_start <= (self.plan_end_month or self.plan_month)
+
+    @classmethod
+    def covering(cls, queryset, month_start):
+        """Die Ziele aus `queryset`, die in diesem Monat gelten (wie `covers`, aber als Abfrage)."""
+        return queryset.filter(
+            models.Q(plan_month__isnull=True)
+            | (
+                models.Q(plan_month__lte=month_start)
+                & (
+                    models.Q(plan_open_ended=True)
+                    | models.Q(plan_end_month__gte=month_start)
+                    | models.Q(plan_end_month__isnull=True, plan_month=month_start)
+                )
+            )
+        )
 
     class Meta:
         ordering = ['-created_at', '-id']

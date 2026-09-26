@@ -18,6 +18,22 @@ class HostComponent {
   protected readonly modalOpen = signal(false);
 }
 
+/** Ein Formular-Dialog: Klick auf den Hintergrund schließt ihn NICHT. */
+@Component({
+  standalone: true,
+  imports: [Modal],
+  template: `
+    <app-modal [open]="open()" [dismissOnBackdrop]="false" labelledBy="form-heading" (closed)="closes = closes + 1; open.set(false)">
+      <h2 id="form-heading">Formular</h2>
+      <input id="typed" type="text" />
+    </app-modal>
+  `,
+})
+class FormHostComponent {
+  protected readonly open = signal(true);
+  closes = 0;
+}
+
 describe('Modal', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [HostComponent] }).compileComponents();
@@ -117,5 +133,55 @@ describe('Modal', () => {
     dialog.dispatchEvent(tabEvent);
 
     expect(document.activeElement).toBe(firstField);
+  });
+
+  describe('with dismissOnBackdrop = false (form dialogs)', () => {
+    function setup() {
+      const fixture = TestBed.createComponent(FormHostComponent);
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      return { fixture, el, host: fixture.componentInstance };
+    }
+
+    it('a click on the backdrop keeps the dialog open and the typed input intact', () => {
+      const { fixture, el, host } = setup();
+      const input = el.querySelector('#typed') as HTMLInputElement;
+      input.value = 'wichtige Eingabe';
+      (el.querySelector('.modal-backdrop') as HTMLElement).click();
+      fixture.detectChanges();
+      expect(el.querySelector('[role="dialog"]')).not.toBeNull();
+      expect(host.closes).toBe(0);
+      expect((el.querySelector('#typed') as HTMLInputElement).value).toBe('wichtige Eingabe');
+    });
+
+    it('gives a short visual nudge instead, which fades again', async () => {
+      vi.useFakeTimers();
+      try {
+        const { fixture, el } = setup();
+        (el.querySelector('.modal-backdrop') as HTMLElement).click();
+        fixture.detectChanges();
+        expect(el.querySelector('.modal-panel')?.classList).toContain('modal-panel--nudge');
+        vi.advanceTimersByTime(450);
+        fixture.detectChanges();
+        expect(el.querySelector('.modal-panel')?.classList).not.toContain('modal-panel--nudge');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('can still be closed deliberately: with the close button and with Escape', () => {
+      const first = setup();
+      (first.el.querySelector('.modal-close') as HTMLButtonElement).click();
+      first.fixture.detectChanges();
+      expect(first.host.closes).toBe(1);
+      expect(first.el.querySelector('[role="dialog"]')).toBeNull();
+
+      const second = setup();
+      (second.el.querySelector('[role="dialog"]') as HTMLElement).dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+      );
+      second.fixture.detectChanges();
+      expect(second.host.closes).toBe(1);
+    });
   });
 });

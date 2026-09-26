@@ -1,6 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, computed, inject, output, signal } from '@angular/core';
 import { Field } from '../../shared/form/field';
+import { AppSelect, SelectOption } from '../../shared/form/select';
 import { Modal } from '../../shared/modal/modal';
 import { ModalForm } from '../../shared/form/modal-form';
 import { FinanzenStateService } from '../finanzen/finanzen-state.service';
@@ -42,7 +43,7 @@ function formatEuro(value: number): string {
 @Component({
   selector: 'app-einkauf-tab',
   standalone: true,
-  imports: [DecimalPipe, Field, Modal, ModalForm],
+  imports: [DecimalPipe, Field, Modal, ModalForm, AppSelect],
   templateUrl: './einkauf-tab.html',
   styleUrls: ['./haushalt-common.scss', './einkauf-tab.scss'],
 })
@@ -63,6 +64,10 @@ export class EinkaufTab {
   protected readonly sections = computed(() => this.data()?.sections ?? SECTIONS);
   private readonly settling = signal<ReadonlySet<ShoppingItemDto['id']>>(new Set());
   private readonly settleTimers = new Map<ShoppingItemDto['id'], ReturnType<typeof setTimeout>>();
+  protected setEditSection(value: string): void {
+    this.editSection.set(value as SectionKey);
+  }
+  protected readonly sectionOptions = computed<SelectOption[]>(() => this.sections().map((s) => ({ value: s.key, label: s.label })));
   protected readonly openGroups = computed(() =>
     groupOpenItems(this.data()?.items ?? [], this.sections(), this.settling()),
   );

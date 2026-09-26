@@ -1,0 +1,255 @@
+/* Zeitleiste der Budgets. Bewusst zurückhaltend: flache Flächen, feine Linien, Tabellenziffern —
+   keine Verläufe, Schatten oder Icons. Farben kommen aus den Tokens der Seite (Bereichsgrün). */
+:host {
+  display: block;
+  margin-top: 28px;
+}
+.tl__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.tl__year {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tl__year span {
+  min-width: 44px;
+  text-align: center;
+}
+.tl__year button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.tl__year button:hover {
+  background: var(--accent-soft);
+}
+
+/* 12 gleiche Spalten; Zeile 1 = Monatsnamen, danach je Zeile ein Balken (oder mehrere, die sich nicht überschneiden). */
+.tl__chart {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: 32px repeat(var(--rows, 1), 40px);
+  row-gap: 8px;
+}
+.tl__col {
+  grid-row: 1 / -1;
+  border-left: 1px solid #e3ede7;
+  pointer-events: none;
+}
+.tl__col:last-of-type {
+  border-right: 1px solid #e3ede7;
+}
+.tl__col.is-selected {
+  background: var(--accent-soft);
+  opacity: 0.7;
+  border-radius: 8px;
+}
+.tl__month {
+  grid-row: 1;
+  z-index: 1;
+  border: 0;
+  background: none;
+  color: #587062;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+.tl__month:hover {
+  color: var(--text, #162e29);
+}
+.tl__month.is-selected {
+  color: var(--accent);
+  font-weight: 700;
+}
+.tl__month-short {
+  display: none;
+}
+
+.tl__bar {
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 0 3px;
+  padding: 0 12px;
+  border: 0;
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  background: #e7f3ec;
+  color: #1c4a34;
+  font: inherit;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+.tl__bar.is-active {
+  background: var(--accent);
+  color: var(--accent-ink, #fff);
+  font-weight: 700;
+}
+/* Ein einzelner Monat ist schmal: weniger Innenabstand, damit der Betrag passt. */
+.tl__bar.is-short {
+  padding: 0 4px;
+  font-size: 12px;
+  justify-content: center;
+}
+/* „bis auf Weiteres“ bzw. über den Jahresrand hinaus: die Spitze zeigt, dass es weitergeht. */
+.tl__bar.is-open-end {
+  padding-right: 22px;
+  border-radius: 6px 0 0 6px;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+}
+/* beginnt vor dem angezeigten Jahr: kein Akzentstreifen, offener linker Rand */
+.tl__bar.is-cut-start {
+  margin-left: 0;
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
+}
+.tl__bar.is-cut-start.is-open-end {
+  border-radius: 0;
+}
+.tl__amount {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tl__month:focus-visible,
+.tl__year button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tl__empty {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: #587062;
+}
+.tl__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: #587062;
+}
+.tl__key {
+  width: 12px;
+  height: 12px;
+  margin-left: 12px;
+  border-radius: 3px;
+  background: #e7f3ec;
+  border-left: 3px solid var(--accent);
+}
+.tl__key:first-child {
+  margin-left: 0;
+}
+.tl__key--active {
+  background: var(--accent);
+}
+
+.tl__list {
+  display: none;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 560px) {
+  .tl__chart,
+  .tl__legend {
+    display: none;
+  }
+  .tl__list {
+    display: grid;
+    gap: 8px;
+  }
+  .tl__card {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #e3ede7;
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+  }
+  .tl__card.is-active {
+    background: var(--accent-soft);
+  }
+  .tl__card-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 2px 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .tl__card-top strong {
+    font-size: 16px;
+  }
+  .tl__card-top span {
+    font-size: 13px;
+    color: #587062;
+  }
+  .tl__track {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2px;
+  }
+  .tl__seg {
+    height: 8px;
+    border-radius: 2px;
+    background: #e3ede7;
+  }
+  .tl__seg.is-on {
+    background: var(--accent);
+    opacity: 0.55;
+  }
+  .tl__card.is-active .tl__seg.is-on {
+    opacity: 1;
+  }
+  /* gewählter Monat: kleine Marke unter dem Segment */
+  .tl__seg.is-now {
+    box-shadow: 0 4px 0 -1px var(--text, #162e29);
+  }
+  .tl__ticks {
+    display: none;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #587062;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

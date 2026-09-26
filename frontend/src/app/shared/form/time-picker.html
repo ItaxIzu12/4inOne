@@ -1,0 +1,66 @@
+<button
+  #trigger
+  type="button"
+  class="tp__trigger"
+  aria-haspopup="true"
+  [attr.id]="inputId()"
+  [attr.aria-labelledby]="labelledBy()"
+  [attr.aria-label]="ariaLabel()"
+  [attr.aria-expanded]="open()"
+  [disabled]="disabled()"
+  (click)="toggle()"
+>
+  @if (text(); as shown) {
+    <span class="tp__text">{{ shown }} Uhr</span>
+  } @else {
+    <span class="tp__text tp__text--placeholder">{{ placeholder() || 'Uhrzeit wählen' }}</span>
+  }
+  <svg class="tp__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z" /></svg>
+</button>
+<div #panel popover="manual" class="tp__panel" (click)="swallow($event)">
+  @if (open()) {
+    <div role="group" aria-label="Uhrzeit wählen">
+      <p class="tp__heading" [id]="titleId + '-h'">Stunde</p>
+      <div class="tp__grid tp__grid--hours" role="group" [attr.aria-labelledby]="titleId + '-h'">
+        @for (h of hours; track h) {
+          <button
+            type="button"
+            class="tp__cell"
+            data-group="hour"
+            [class.is-selected]="parts()?.h === h"
+            [attr.data-focus]="h === hourFocus()"
+            [attr.tabindex]="h === hourFocus() ? 0 : -1"
+            [attr.aria-label]="h + ' Uhr'"
+            [attr.aria-pressed]="parts()?.h === h"
+            (keydown)="onKeydown($event, 'hour')"
+            (click)="pickHour(h)"
+          >
+            {{ h < 10 ? '0' + h : h }}
+          </button>
+        }
+      </div>
+      <p class="tp__heading" [id]="titleId + '-m'">Minute</p>
+      <div class="tp__grid tp__grid--minutes" role="group" [attr.aria-labelledby]="titleId + '-m'">
+        @for (m of minutes; track m) {
+          <button
+            type="button"
+            class="tp__cell"
+            data-group="minute"
+            [class.is-selected]="parts()?.m === m"
+            [attr.data-focus]="m === minuteFocus()"
+            [attr.tabindex]="m === minuteFocus() ? 0 : -1"
+            [attr.aria-label]="m + ' Minuten'"
+            [attr.aria-pressed]="parts()?.m === m"
+            (keydown)="onKeydown($event, 'minute')"
+            (click)="pickMinute(m)"
+          >
+            {{ m < 10 ? '0' + m : m }}
+          </button>
+        }
+      </div>
+      @if (clearable() && value()) {
+        <button type="button" class="tp__clear" (click)="clear()">Entfernen</button>
+      }
+    </div>
+  }
+</div>

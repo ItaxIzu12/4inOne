@@ -7,7 +7,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
+import { AppDatePicker } from '../../shared/form/date-picker';
+import { AppDateTimePicker } from '../../shared/form/date-time-picker';
 import { Field } from '../../shared/form/field';
+import { AppSelect, SelectOption } from '../../shared/form/select';
+import { AppTimePicker } from '../../shared/form/time-picker';
 import { ModalForm } from '../../shared/form/modal-form';
 import {
   OrganisationApi,
@@ -27,7 +31,7 @@ function localInput(value: string): string {
 @Component({
   selector: 'app-organisation',
   standalone: true,
-  imports: [AppShell, AppIcon, ConnectionsSection, Field, ModalForm, ReactiveFormsModule, DatePipe],
+  imports: [AppShell, AppIcon, ConnectionsSection, Field, ModalForm, ReactiveFormsModule, DatePipe, AppSelect, AppDatePicker, AppDateTimePicker, AppTimePicker],
   templateUrl: './organisation.html',
   styleUrl: './organisation.scss',
 })
@@ -51,6 +55,21 @@ export class Organisation {
   readonly selectedDay = signal(localDay(new Date()));
   readonly month = signal(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   readonly filter = signal('all');
+  readonly filterOptions: SelectOption[] = [
+    { value: 'all', label: 'Alle Aufgaben' },
+    { value: 'active', label: 'Offene Aufgaben' },
+    { value: 'done', label: 'Erledigte Aufgaben' },
+  ];
+  readonly priorityOptions: SelectOption[] = [
+    { value: 'LOW', label: 'Niedrig' },
+    { value: 'MEDIUM', label: 'Mittel' },
+    { value: 'HIGH', label: 'Hoch' },
+  ];
+  readonly statusOptions: SelectOption[] = [
+    { value: 'OPEN', label: 'Offen' },
+    { value: 'IN_PROGRESS', label: 'In Bearbeitung' },
+    { value: 'DONE', label: 'Erledigt' },
+  ];
   readonly priorities = { LOW: 'Niedrig', MEDIUM: 'Mittel', HIGH: 'Hoch' };
   readonly statuses = { OPEN: 'Offen', IN_PROGRESS: 'In Bearbeitung', DONE: 'Erledigt' };
   readonly weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];

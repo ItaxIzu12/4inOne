@@ -2,7 +2,9 @@ import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, output, signal } from '@angular/core';
 import { AppIcon } from '../../shared/icons/app-icon';
+import { AppDatePicker } from '../../shared/form/date-picker';
 import { Field } from '../../shared/form/field';
+import { AppSelect, SelectOption } from '../../shared/form/select';
 import { ModalForm } from '../../shared/form/modal-form';
 import {
   DeadlineDto,
@@ -42,7 +44,7 @@ function formatDate(iso: string | null): string {
 @Component({
   selector: 'app-ordner-tab',
   standalone: true,
-  imports: [DecimalPipe, AppIcon, Field, ModalForm],
+  imports: [DecimalPipe, AppIcon, Field, ModalForm, AppSelect, AppDatePicker],
   templateUrl: './ordner-tab.html',
   styleUrls: ['./haushalt-common.scss', './ordner-tab.scss'],
 })
@@ -203,6 +205,14 @@ export class OrdnerTab {
     const id = this.formDeduction();
     return this.deductionOptions().find((o) => o.id === id) ?? null;
   }
+
+  protected readonly deductionSelectOptions = computed<SelectOption[]>(() => [
+    { value: '', label: 'Kein fester Abzug' },
+    ...this.deductionOptions().map((o) => {
+      const amount = Number(o.amount).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return { value: String(o.id), label: `${o.name} · ${amount} €${o.active ? '' : ' (pausiert)'}` };
+    }),
+  ]);
 
   protected deductionHint(): string {
     const selected = this.selectedDeduction();

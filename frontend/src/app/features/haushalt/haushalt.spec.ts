@@ -92,10 +92,15 @@ describe('Haushalt (Demo)', () => {
     expect(rows).not.toContain('Winterreifen-Termin vereinbaren'); // einmalig
     (compiled.querySelector('app-aufgaben-tab .card-head .btn-primary') as HTMLButtonElement).click();
     fixture.detectChanges();
-    const options = Array.from(compiled.querySelectorAll('#task-recurrence option')).map(text);
-    expect(options).toEqual(['Einmalig', 'Täglich', 'Wöchentlich', 'Monatlich']);
+    const trigger = Array.from(compiled.querySelectorAll('app-modal-form .select__trigger')).find((t) =>
+      text(compiled.querySelector('#' + t.getAttribute('aria-labelledby'))).startsWith('Wie oft?'),
+    ) as HTMLButtonElement;
     // Eine neue Routine startet wöchentlich, nicht einmalig
-    expect((compiled.querySelector('#task-recurrence') as HTMLSelectElement).value).toBe('weekly');
+    expect(text(trigger)).toContain('Wöchentlich');
+    trigger.click();
+    fixture.detectChanges();
+    const options = Array.from(compiled.querySelectorAll('app-modal-form [role="option"]')).map(text);
+    expect(options).toEqual(['Einmalig', 'Täglich', 'Wöchentlich', 'Monatlich']);
   });
 
   it('a one-off task can be completed and reopened from the done list', () => {

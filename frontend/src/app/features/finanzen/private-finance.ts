@@ -2,12 +2,16 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
+import { AppDatePicker } from '../../shared/form/date-picker';
+import { BudgetTimeline } from './budget-timeline';
+import { defaultDateInMonth, display } from '../../shared/form/date-utils';
 import { Field } from '../../shared/form/field';
+import { AppSelect, SelectOption } from '../../shared/form/select';
 import { SaveFeedback } from '../../shared/save-feedback/save-feedback';
 import { ModalForm } from '../../shared/form/modal-form';
 import {
@@ -20,8 +24,13 @@ import {
   financeMonth,
   budgetCovers,
   budgetRange,
+  budgetSpan,
+  budgetOverride,
   planRange,
+  goalCovers,
+  GoalPreview,
   euros,
+  UNCATEGORISED_COLOR,
 } from './private-finance-api.service';
 type Resource = 'transactions' | 'budgets' | 'goals';
 /** Die erste verständliche Fehlermeldung aus der API-Antwort (z. B. „gespart darf das Ziel nicht überschreiten“). */
@@ -33,13 +42,35 @@ function apiMessage(body: unknown): string | null {
   }
   return null;
 }
+/** „In diesem Monat“ / „Im 11.2026“ — nur wenn die Sparraten nicht reichen und nicht ohnehin das Budget überschritten ist. */
+function planAlertMessage(summary: FinanceSummary | null, shownMonth: string): string | null {
+  const alert = summary?.plan_alert;
+  if (!alert || summary?.available?.startsWith('-')) return null;
+  const when = alert.month === shownMonth ? 'In diesem Monat' : `Im ${alert.month.slice(5)}.${alert.month.slice(0, 4)}`;
+  return `${when} reichen Budget und Einnahmen nicht für alle Sparraten: Es fehlen ${euros(alert.over)}.`;
+}
+/** Die Sätze der Warnung vor dem Speichern eines Sparziels; leer = alles in Ordnung. */
+function goalWarningSentences(preview: GoalPreview): string[] {
+  const sentences: string[] = [];
+  if (preview.month_over)
+    sentences.push(
+      `${preview.month_over.month === new Date().toLocaleDateString('sv-SE').slice(0, 7) ? 'In diesem Monat' : `Im ${preview.month_over.month.slice(5)}.${preview.month_over.month.slice(0, 4)}`} reicht dein verfügbares Budget dafür nicht: Es fehlen ${euros(preview.month_over.over)}.`,
+    );
+  const alert = preview.plan_alert;
+  if (alert && !(preview.month_over && alert.month === preview.month_over.month)) {
+    sentences.push(
+      `Im ${alert.month.slice(5)}.${alert.month.slice(0, 4)} reichen Budget und Einnahmen nicht für alle Sparraten: Es fehlen ${euros(alert.over)}.`,
+    );
+  }
+  return sentences;
+}
 function payloadAmount(payload: object): string {
   return (payload as { current_amount?: string }).current_amount ?? '0';
 }
 @Component({
   selector: 'app-private-finance',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback],
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetTimeline],
   templateUrl: './private-finance.html',
   styleUrl: './private-finance.scss',
 })
@@ -59,6 +90,10 @@ export class PrivateFinance {
   readonly loading = signal(true);
   /** Bestätigung nach Speichern/Löschen — mit dem neuen verfügbaren Betrag. */
   readonly notice = signal('');
+  /** Gesetzt, wenn die Ausgabe im Dialog das verfügbare Budget überschreiten würde (wartet auf Bestätigung). */
+  /** Sätze der Warnung vor dem Speichern eines Sparziels (wartet auf Bestätigung), sonst null. */
+  readonly goalWarning = signal<string[] | null>(null);
+  readonly overrun = signal<{ available: string; over: string } | null>(null);
   private pending: { text: string; month: string | null } | null = null;
   private noticeTimer?: ReturnType<typeof setTimeout>;
   readonly error = signal('');
@@ -75,6 +110,13 @@ export class PrivateFinance {
   });
   /** Ausgaben + Zurückgelegtes: das, was vom verfügbaren Gesamtbetrag schon „weg“ ist. */
   readonly used = computed(() => String(Number(this.summary()?.expenses ?? 0) + Number(this.summary()?.saved ?? 0)));
+  /** Um wie viel das verfügbare Budget überschritten ist (positiver Betrag), sonst null. */
+  readonly overBudget = computed(() => {
+    const available = this.summary()?.available;
+    return available?.startsWith('-') ? available.slice(1) : null;
+  });
+  /** Hinweis, wenn die Sparraten zusammen mehr reservieren als Budget und Einnahmen hergeben. */
+  readonly planAlertText = computed(() => planAlertMessage(this.summary(), this.month()));
   readonly hasPlanned = computed(() => Number(this.summary()?.saved_planned ?? 0) > 0);
   readonly hasSaved = computed(() => Number(this.summary()?.saved ?? 0) !== 0);
   readonly rows = computed(() =>
@@ -90,7 +132,56 @@ export class PrivateFinance {
       .filter((b) => budgetCovers(b, this.month()))
       .sort((a, b) => b.month.localeCompare(a.month))[0],
   );
-  readonly range = budgetRange;
+  // Auswahllisten der Dropdowns; die Kategorien tragen ihre feste Farbe als Punkt.
+  readonly typeOptions: SelectOption[] = [
+    { value: 'EXPENSE', label: 'Ausgabe' },
+    { value: 'INCOME', label: 'Einnahme' },
+  ];
+  readonly filterOptions: SelectOption[] = [
+    { value: 'ALL', label: 'Alle Buchungen' },
+    { value: 'EXPENSE', label: 'Ausgaben' },
+    { value: 'INCOME', label: 'Einnahmen' },
+  ];
+  readonly scopeOptions: SelectOption[] = [
+    { value: 'single', label: 'Nur diesen Monat' },
+    { value: 'until', label: 'Mehrere Monate' },
+    { value: 'open', label: 'Bis auf Weiteres' },
+  ];
+  readonly statusOptions: SelectOption[] = [
+    { value: 'ACTIVE', label: 'Aktiv' },
+    { value: 'COMPLETED', label: 'Erreicht' },
+    { value: 'PAUSED', label: 'Pausiert' },
+  ];
+  readonly categoryOptions = computed<SelectOption[]>(() =>
+    this.categories().map((c) => ({ value: String(c.id), label: c.name, color: c.color })),
+  );
+  /** „September 2026“ für Überschriften, die den gewählten Monat nennen. */
+  readonly monthLabel = computed(() => display(this.month(), 'month'));
+  protected readonly Number = Number;
+  readonly span = budgetSpan;
+  /** Was am bearbeiteten Budget hängt (für den Hinweis vor dem Löschen); null, solange unbekannt oder nichts. */
+  readonly budgetImpact = signal<{ transactions: number; goals: number } | null>(null);
+  budgetImpactNote(): string | null {
+    const impact = this.budgetImpact();
+    if (!impact || (!impact.transactions && !impact.goals)) return null;
+    const parts = [
+      impact.transactions ? `${impact.transactions} ${impact.transactions === 1 ? 'Buchung' : 'Buchungen'}` : '',
+      impact.goals ? `${impact.goals} ${impact.goals === 1 ? 'Sparziel' : 'Sparziele'}` : '',
+    ].filter(Boolean);
+    return `Löschst du dieses Budget, gibt es für ${parts.join(' und ')} kein Budget mehr. Sie bleiben erhalten, aber es wird nichts verrechnet.`;
+  }
+  /** Hinweis im Budget-Dialog, wenn ein anderes, später beginnendes Budget einen Teil des Zeitraums übernimmt. */
+  budgetOverrideNote(): string | null {
+    const v = this.form.getRawValue();
+    if (this.editor() !== 'budgets' || !v.month) return null;
+    const others = this.budgets().filter((b) => b.id !== this.editId());
+    const found = budgetOverride({ start: v.month, end: v.scope === 'until' ? v.end_month : '', open: v.scope === 'open' }, others);
+    if (!found) return null;
+    const from = display(found.from, 'month');
+    const when = found.to === null ? `Ab ${from}` : found.to === found.from ? `Im ${from}` : `Von ${from} bis ${display(found.to, 'month')}`;
+    return `${when} gilt bereits ein anderes Budget und hat dort Vorrang. Dieses Budget zählt in diesem Zeitraum nicht.`;
+  }
+  range = budgetRange;
   readonly plan = planRange;
   readonly form = this.fb.nonNullable.group({
     amount: [''],
@@ -102,18 +193,22 @@ export class PrivateFinance {
     scope: ['single'],
     end_month: [''],
     rate: [''],
-    plan_scope: ['open'],
+    plan_scope: ['single'],
     plan_start: [''],
     plan_end: [''],
     title: ['', Validators.maxLength(120)],
     target_amount: [''],
     current_amount: ['0.00'],
-    target_date: [''],
     status: ['ACTIVE'],
   });
   constructor() {
     this.load();
     this.destroy.onDestroy(() => clearTimeout(this.noticeTimer));
+    // Ändert sich etwas im Dialog, gilt die Warnung nicht mehr.
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroy)).subscribe(() => {
+      this.overrun.set(null);
+      this.goalWarning.set(null);
+    });
   }
   load() {
     this.loading.set(true);
@@ -123,7 +218,7 @@ export class PrivateFinance {
       categories: this.api.categories(),
       transactions: this.api.transactions(),
       budgets: this.api.budgets(),
-      goals: this.api.goals(),
+      goals: this.api.goals(this.month()),
     })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
@@ -160,6 +255,11 @@ export class PrivateFinance {
         text += ` Verfügbar: ${euros(summary.available)}.`;
       }
     }
+    const alertText = planAlertMessage(summary, this.month());
+    if (alertText) text += ` Achtung: ${alertText}`;
+    if (pending.month === this.month() && summary.available?.startsWith('-')) {
+      text += ` Achtung: Du liegst ${euros(summary.available.slice(1))} über deinem verfügbaren Budget.`;
+    }
     clearTimeout(this.noticeTimer);
     this.notice.set(text);
     this.noticeTimer = setTimeout(() => this.notice.set(''), 6000);
@@ -193,27 +293,35 @@ export class PrivateFinance {
   categoryName(id: number) {
     return this.categories().find((c) => c.id === id)?.name || 'Sonstiges';
   }
+  /** Feste Farbe der Kategorie, überall gleich (Übersicht, Buchungen). */
+  categoryColor(id: number | null) {
+    return this.categories().find((c) => c.id === id)?.color || UNCATEGORISED_COLOR;
+  }
   open(resource: Resource, item?: FinanceTransaction | FinanceBudget | SavingsGoal) {
     this.form.reset({
       amount: '',
       type: 'EXPENSE',
       category: String(this.categories()[0]?.id || ''),
-      date: new Date().toLocaleDateString('sv-SE'),
+      date: defaultDateInMonth(this.month()),
       note: '',
       month: this.month(),
       scope: 'single',
       end_month: '',
       rate: '',
-      plan_scope: 'open',
-      plan_start: financeMonth(),
+      plan_scope: 'single',
+      plan_start: this.month(),
       plan_end: '',
       title: '',
       target_amount: '',
       current_amount: '0.00',
-      target_date: '',
       status: 'ACTIVE',
     });
     this.editor.set(resource);
+    this.budgetImpact.set(null);
+    if (resource === 'budgets' && item)
+      this.api.budgetImpact(item.id).pipe(takeUntilDestroyed(this.destroy)).subscribe({ next: (impact) => this.budgetImpact.set(impact), error: () => undefined });
+    this.overrun.set(null);
+    this.goalWarning.set(null);
     this.editId.set(item?.id);
     this.formError.set('');
     if (item) {
@@ -228,14 +336,13 @@ export class PrivateFinance {
       else
         this.form.patchValue({
           ...item,
-          target_date: item.target_date || '',
           rate: item.monthly_amount ?? '',
           plan_scope: item.plan_open_ended
             ? 'open'
             : item.plan_end_month && item.plan_end_month !== item.plan_month
               ? 'until'
               : 'single',
-          plan_start: item.plan_month ? item.plan_month.slice(0, 7) : financeMonth(),
+          plan_start: item.plan_month ? item.plan_month.slice(0, 7) : this.month(),
           plan_end: item.plan_end_month ? item.plan_end_month.slice(0, 7) : '',
         });
     }
@@ -326,7 +433,7 @@ export class PrivateFinance {
         this.formError.set('Die Sparrate darf nicht höher sein als das Sparziel.');
         return;
       }
-      if (rate !== null && (!v.plan_start || (v.plan_scope === 'until' && (!v.plan_end || v.plan_end < v.plan_start)))) {
+      if (!v.plan_start || (v.plan_scope === 'until' && (!v.plan_end || v.plan_end < v.plan_start))) {
         this.formError.set('Bitte wähle einen Startmonat und einen Endmonat, der nicht davor liegt.');
         return;
       }
@@ -334,19 +441,78 @@ export class PrivateFinance {
         title: v.title.trim(),
         target_amount: target,
         current_amount: current,
-        target_date: v.target_date || null,
         status: v.status,
         currency: 'EUR',
         monthly_amount: rate,
-        plan_month: rate !== null ? v.plan_start + '-01' : null,
-        plan_end_month: rate !== null && v.plan_scope === 'until' ? v.plan_end + '-01' : null,
-        plan_open_ended: rate !== null && v.plan_scope === 'open',
+        // Der Zeitraum gehört zum Ziel (wann es gilt und angezeigt wird) — unabhängig von einer Sparrate.
+        plan_month: v.plan_start + '-01',
+        plan_end_month: v.plan_scope === 'until' ? v.plan_end + '-01' : null,
+        plan_open_ended: v.plan_scope === 'open',
       };
     }
     if ((resource === 'transactions' && v.note.length > 255) || (resource === 'goals' && v.title.length > 120)) {
       this.formError.set('Bitte prüfe die Länge deiner Angaben.');
       return;
     }
+    if (resource === 'transactions' && v.type === 'EXPENSE' && !this.overrun()) {
+      this.checkOverrun(v.date.slice(0, 7), Number(amount), () => this.persist(resource, payload, v, amount));
+      return;
+    }
+    if (resource === 'goals' && !this.goalWarning()) {
+      this.checkGoal(payload, () => this.persist(resource, payload, v, amount));
+      return;
+    }
+    this.persist(resource, payload, v, amount);
+  }
+  /** Fragt VOR dem Speichern, ob das Sparziel (Gespartes oder Sparrate) das Budget sprengt; gespeichert wird erst nach Bestätigung. */
+  private checkGoal(payload: object, proceed: () => void) {
+    this.saving.set(true);
+    this.api
+      .previewGoal(payload, this.editId())
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (preview) => {
+          this.saving.set(false);
+          const sentences = goalWarningSentences(preview);
+          if (sentences.length) this.goalWarning.set(sentences);
+          else proceed();
+        },
+        error: (e) => {
+          this.saving.set(false);
+          // Ungültige Angaben meldet die Vorschau wie das Speichern; jede andere Störung hält das Speichern nicht auf.
+          if (e.status === 400) this.formError.set(apiMessage(e.error) ?? 'Bitte prüfe deine Angaben.');
+          else proceed();
+        },
+      });
+  }
+  /** Warnt vor dem Speichern, wenn die Ausgabe das verfügbare Budget ihres Monats überschreiten würde.
+   * Sie wird nicht verboten (das Geld ist ja ausgegeben), aber erst nach Bestätigung gebucht. */
+  private checkOverrun(month: string, amount: number, proceed: () => void) {
+    const editing = this.transactions().find((t) => t.id === this.editId());
+    // Beim Ändern zählt nur der Mehrbetrag gegenüber der alten Ausgabe im selben Monat.
+    const previous = editing && editing.type === 'EXPENSE' && editing.date.startsWith(month) ? Number(editing.amount) : 0;
+    const extra = amount - previous;
+    if (extra <= 0) return proceed();
+    this.saving.set(true);
+    const summary$ = month === this.month() && this.summary() ? of(this.summary()!) : this.api.summary(month);
+    summary$.pipe(takeUntilDestroyed(this.destroy)).subscribe({
+      next: (summary) => {
+        this.saving.set(false);
+        const after = summary.available === null ? null : Number(summary.available) - extra;
+        if (summary.available !== null && after !== null && after < 0) {
+          this.overrun.set({ available: summary.available, over: (-after).toFixed(2) });
+          return;
+        }
+        proceed();
+      },
+      // Die Prüfung ist eine Hilfe, keine Bedingung: schlägt sie fehl, wird normal gebucht.
+      error: () => {
+        this.saving.set(false);
+        proceed();
+      },
+    });
+  }
+  private persist(resource: Resource, payload: object, v: ReturnType<typeof this.form.getRawValue>, amount: string | null) {
     this.saving.set(true);
     this.formError.set('');
     this.api
@@ -358,7 +524,10 @@ export class PrivateFinance {
           this.editor.set(null);
           if (resource === 'transactions') {
             const what = v.type === 'INCOME' ? 'Einnahme' : 'Ausgabe';
-            this.remember(`${what} von ${euros(amount)} gespeichert.`, v.date.slice(0, 7));
+            // Liegt das Datum außerhalb des angezeigten Monats, taucht die Buchung hier nicht auf — das sagen wir dazu.
+            const elsewhere =
+              v.date.slice(0, 7) === this.month() ? '' : ` Sie liegt im ${display(v.date.slice(0, 7), 'month')} und steht deshalb nicht in der aktuellen Liste.`;
+            this.remember(`${what} von ${euros(amount)} gespeichert.${elsewhere}`, v.date.slice(0, 7));
           } else if (resource === 'budgets') {
             this.remember('Budget gespeichert.', this.month());
           } else {
@@ -366,12 +535,17 @@ export class PrivateFinance {
             const previous = Number(this.goals().find((g) => g.id === this.editId())?.current_amount ?? 0);
             const changed = Number(payloadAmount(payload)) !== previous;
             const hasPlan = !!(payload as { monthly_amount?: string | null }).monthly_amount;
+            const period = payload as { plan_month: string; plan_end_month: string | null; plan_open_ended: boolean };
+            const shown = goalCovers(period, this.month());
             this.remember(
-              hasPlan
+              (hasPlan
                 ? 'Sparziel gespeichert. Die Sparrate wird in den gewählten Monaten von deinem verfügbaren Budget zurückgelegt.'
                 : changed
                   ? 'Sparziel gespeichert. Das Gesparte mindert dein verfügbares Budget.'
-                  : 'Sparziel gespeichert.',
+                  : 'Sparziel gespeichert.') +
+                (shown
+                  ? ''
+                  : ` Es gilt nicht im angezeigten Monat und erscheint erst im Zeitraum: ${planRange({ ...(period as object), monthly_amount: null } as SavingsGoal)}.`),
               changed || hasPlan ? this.month() : null,
             );
           }

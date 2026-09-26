@@ -15,6 +15,12 @@ import {
 } from './finanzen-api.service';
 import { Finanzen } from './finanzen';
 
+/** „Heute“ als lokales Datum (JJJJ-MM-TT). `toISOString()` wäre UTC und läge zwischen 0 und 2 Uhr (MESZ) einen Tag zurück. */
+function localToday(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 describe('Finanzen', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -226,7 +232,7 @@ describe('Finanzen', () => {
     fixture.detectChanges();
     compiled = fixture.nativeElement as HTMLElement;
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localToday();
     expect((compiled.querySelector('#add-expense-datum') as HTMLInputElement).value).toBe(today);
   });
 
@@ -305,7 +311,7 @@ describe('Finanzen', () => {
     fixture.detectChanges();
     compiled = fixture.nativeElement as HTMLElement;
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localToday();
     expect((compiled.querySelector('#add-expense-datum') as HTMLInputElement).value).toBe(today);
   });
 

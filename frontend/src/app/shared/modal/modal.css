@@ -97,6 +97,17 @@
     }
   }
 }
+/* Klick neben einen Formular-Dialog: kurzes, leises Antippen statt Schließen. */
+@media (prefers-reduced-motion: no-preference) {
+  .modal-panel--nudge {
+    animation: modal-nudge 0.32s ease-out;
+  }
+}
+@keyframes modal-nudge {
+  30% {
+    transform: scale(1.012);
+  }
+}
 @keyframes modal-fade {
   from { opacity: 0; }
   to { opacity: 1; }

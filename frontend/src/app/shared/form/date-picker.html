@@ -1,0 +1,93 @@
+<button
+  #trigger
+  type="button"
+  class="dp__trigger"
+  aria-haspopup="true"
+  [attr.id]="inputId()"
+  [attr.aria-labelledby]="labelledBy()"
+  [attr.aria-label]="ariaLabel()"
+  [attr.aria-expanded]="open()"
+  [disabled]="disabled()"
+  (click)="toggle()"
+>
+  @if (text(); as shown) {
+    <span class="dp__text">{{ shown }}</span>
+  } @else {
+    <span class="dp__text dp__text--placeholder">{{ placeholder() || (mode() === 'month' ? 'Monat wählen' : 'Datum wählen') }}</span>
+  }
+  <svg class="dp__icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 5h16v16H4ZM8 3v4m8-4v4M4 10h16" />
+  </svg>
+</button>
+<div #panel popover="manual" class="dp__panel" (click)="swallow($event)">
+  @if (open()) {
+    <div role="group" [attr.aria-label]="mode() === 'month' ? 'Monat wählen' : 'Datum wählen'">
+      <div class="dp__head">
+        @if (mode() === 'date') {
+          <button type="button" class="dp__nav" aria-label="Vorheriges Jahr" (click)="shiftYear(-1)">«</button>
+          <button type="button" class="dp__nav" aria-label="Vorheriger Monat" (click)="shiftMonth(-1)">‹</button>
+          <span class="dp__title" [id]="titleId" aria-live="polite">{{ title() }}</span>
+          <button type="button" class="dp__nav" aria-label="Nächster Monat" (click)="shiftMonth(1)">›</button>
+          <button type="button" class="dp__nav" aria-label="Nächstes Jahr" (click)="shiftYear(1)">»</button>
+        } @else {
+          <button type="button" class="dp__nav" aria-label="Vorheriges Jahr" (click)="shiftYear(-1)">‹</button>
+          <span class="dp__title" [id]="titleId" aria-live="polite">{{ title() }}</span>
+          <button type="button" class="dp__nav" aria-label="Nächstes Jahr" (click)="shiftYear(1)">›</button>
+        }
+      </div>
+
+      @if (mode() === 'month') {
+        <div class="dp__grid dp__grid--months" (keydown)="onGridKeydown($event)">
+          @for (cell of months(); track cell.iso) {
+            <button
+              type="button"
+              class="dp__cell"
+              [class.is-selected]="cell.selected"
+              [class.is-today]="cell.today"
+              [attr.data-iso]="cell.iso"
+              [attr.data-focus]="cell.iso === focusIso()"
+              [attr.tabindex]="cell.iso === focusIso() ? 0 : -1"
+              [attr.aria-label]="cell.aria"
+              [attr.aria-pressed]="cell.selected"
+              [attr.aria-current]="cell.today ? 'date' : null"
+              [disabled]="cell.disabled"
+              (click)="pick(cell)"
+            >
+              {{ cell.label }}
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="dp__weekdays" aria-hidden="true">
+          @for (day of weekdays; track day) {
+            <span>{{ day }}</span>
+          }
+        </div>
+        <div class="dp__grid dp__grid--days" (keydown)="onGridKeydown($event)">
+          @for (cell of days(); track cell.iso) {
+            <button
+              type="button"
+              class="dp__cell"
+              [class.is-selected]="cell.selected"
+              [class.is-today]="cell.today"
+              [class.is-outside]="cell.outside"
+              [attr.data-iso]="cell.iso"
+              [attr.data-focus]="cell.iso === focusIso()"
+              [attr.tabindex]="cell.iso === focusIso() ? 0 : -1"
+              [attr.aria-label]="cell.aria"
+              [attr.aria-pressed]="cell.selected"
+              [attr.aria-current]="cell.today ? 'date' : null"
+              [disabled]="cell.disabled"
+              (click)="pick(cell)"
+            >
+              {{ cell.label }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+    @if (clearable() && value()) {
+      <button type="button" class="dp__clear" (click)="clear()">Entfernen</button>
+    }
+  }
+</div>

@@ -108,12 +108,9 @@
               </button>
             </header>
             <label class="filter"
-              >Anzeigen<select [value]="filter()" (change)="filter.set($any($event.target).value)">
-                <option value="all">Alle Aufgaben</option>
-                <option value="active">Offene Aufgaben</option>
-                <option value="done">Erledigte Aufgaben</option>
-              </select></label
-            >
+              >Anzeigen
+              <app-select [options]="filterOptions" [(value)]="filter" />
+            </label>
             @for (task of visibleTasks(); track task.id) {
               <div class="task-row">
                 <button
@@ -235,40 +232,31 @@
     <input id="entry-title" formControlName="title" maxlength="120" required />
   </app-field>
   @if (editor() === 'event') {
-    <div class="field-row">
-      <app-field label="Beginn">
-        <input id="event-start" type="datetime-local" formControlName="starts_at" required />
-      </app-field>
-      <app-field label="Ende" [optional]="true">
-        <input id="event-end" type="datetime-local" formControlName="ends_at" />
-      </app-field>
-    </div>
+    <!-- untereinander: Datum + Uhrzeit brauchen die volle Breite -->
+    <app-field label="Beginn">
+      <app-date-time-picker formControlName="starts_at" />
+    </app-field>
+    <app-field label="Ende" [optional]="true">
+      <app-date-time-picker formControlName="ends_at" [clearable]="true" />
+    </app-field>
     <app-field label="Ort" [optional]="true">
       <input id="event-location" formControlName="location" maxlength="240" />
     </app-field>
   } @else {
     <div class="field-row">
       <app-field label="Fällig am" [optional]="true">
-        <input id="task-date" type="date" formControlName="due_date" />
+        <app-date-picker mode="date" formControlName="due_date" [clearable]="true" />
       </app-field>
       <app-field label="Uhrzeit" [optional]="true">
-        <input id="task-time" type="time" formControlName="due_time" />
+        <app-time-picker formControlName="due_time" [clearable]="true" />
       </app-field>
     </div>
     <div class="field-row">
       <app-field label="Priorität">
-        <select id="task-priority" formControlName="priority">
-          <option value="LOW">Niedrig</option>
-          <option value="MEDIUM">Mittel</option>
-          <option value="HIGH">Hoch</option>
-        </select>
+        <app-select formControlName="priority" [options]="priorityOptions" />
       </app-field>
       <app-field label="Status">
-        <select id="task-status" formControlName="status">
-          <option value="OPEN">Offen</option>
-          <option value="IN_PROGRESS">In Bearbeitung</option>
-          <option value="DONE">Erledigt</option>
-        </select>
+        <app-select formControlName="status" [options]="statusOptions" />
       </app-field>
     </div>
   }

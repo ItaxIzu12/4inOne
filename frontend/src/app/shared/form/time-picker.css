@@ -1,0 +1,118 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.tp__trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--border-strong, #b9c0ce);
+  border-radius: var(--radius-inputs, 10px);
+  background: var(--surface, #fff);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+.tp__trigger:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.tp__trigger:focus-visible,
+.tp__trigger[aria-expanded='true'] {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: -1.5px;
+}
+.tp__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tp__text--placeholder {
+  color: var(--text-muted);
+}
+.tp__icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tp__panel {
+  overscroll-behavior: contain;
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: 264px;
+  max-width: calc(100vw - 16px);
+  padding: 12px;
+  overflow-y: auto;
+  border: 1px solid var(--border, #dfe4ed);
+  border-radius: 16px;
+  background: var(--surface, #fff);
+  color: var(--text);
+  box-shadow: 0 16px 40px -12px rgb(41 55 78 / 0.35), 0 2px 6px rgb(41 55 78 / 0.08);
+}
+.tp__heading {
+  margin: 4px 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tp__grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.tp__cell {
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.tp__cell:hover {
+  background: var(--accent-soft, var(--lavender, #e9e5f6));
+}
+.tp__cell.is-selected,
+.tp__cell.is-selected:hover {
+  background: var(--accent);
+  color: var(--accent-ink, #fff);
+  font-weight: 700;
+}
+.tp__cell:focus-visible,
+.tp__clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.tp__clear {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 4px;
+  border: 0;
+  border-top: 1px solid var(--border, #dfe4ed);
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}

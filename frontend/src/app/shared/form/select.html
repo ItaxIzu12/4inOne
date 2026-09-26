@@ -1,0 +1,50 @@
+<button
+  #trigger
+  type="button"
+  class="select__trigger"
+  role="combobox"
+  aria-haspopup="listbox"
+  [attr.id]="inputId()"
+  [attr.aria-labelledby]="labelledBy()"
+  [attr.aria-expanded]="open()"
+  [attr.aria-controls]="listId"
+  [attr.aria-activedescendant]="open() ? optionId(active()) : null"
+  [disabled]="disabled()"
+  (click)="toggle()"
+  (keydown)="onKeydown($event)"
+>
+  @if (selected(); as current) {
+    @if (current.color) {
+      <span class="select__dot" [style.background]="current.color" aria-hidden="true"></span>
+    }
+    <span class="select__text">{{ current.label }}</span>
+  } @else {
+    <span class="select__text select__text--placeholder">{{ placeholder() }}</span>
+  }
+  <svg class="select__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+</button>
+<div #panel popover="manual" class="select__panel" (click)="swallow($event)">
+  @if (open()) {
+    <div role="listbox" class="select__list" [id]="listId">
+      @for (option of options(); track option.value; let i = $index) {
+        <div
+          role="option"
+          class="select__option"
+          [id]="optionId(i)"
+          [class.is-active]="i === active()"
+          [attr.aria-selected]="option.value === value()"
+          (click)="choose(option)"
+          (mousemove)="active.set(i)"
+        >
+          @if (option.color) {
+            <span class="select__dot" [style.background]="option.color" aria-hidden="true"></span>
+          }
+          <span class="select__text">{{ option.label }}</span>
+          @if (option.value === value()) {
+            <svg class="select__check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

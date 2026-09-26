@@ -141,14 +141,7 @@
 >
   @if (formKind() === 'vertrag' && deductionOptions().length > 0) {
     <app-field label="Kosten aus Finanzen übernehmen" [hint]="deductionHint()">
-      <select id="folder-deduction" (change)="setDeduction($any($event.target).value)">
-        <option value="" [selected]="formDeduction() === null">Kein fester Abzug</option>
-        @for (option of deductionOptions(); track option.id) {
-          <option [value]="option.id" [selected]="option.id === formDeduction()">
-            {{ option.name }} · {{ option.amount | number: '1.2-2' : 'de' }} €{{ option.active ? '' : ' (pausiert)' }}
-          </option>
-        }
-      </select>
+      <app-select [options]="deductionSelectOptions()" [value]="formDeduction() === null ? '' : '' + formDeduction()" (valueChange)="setDeduction($event)" />
     </app-field>
   }
 
@@ -177,12 +170,7 @@
   @if (formKind() === 'vertrag') {
     <div class="field-row">
       <app-field label="Vertragsende">
-        <input
-          id="folder-end"
-          type="date"
-          [value]="formContractEnd()"
-          (change)="formContractEnd.set($any($event.target).value)"
-        />
+        <app-date-picker mode="date" [clearable]="true" [value]="formContractEnd()" (valueChange)="formContractEnd.set($event)" />
       </app-field>
       <app-field label="Kündigungsfrist (Monate)">
         <input
@@ -201,20 +189,10 @@
   } @else {
     <div class="field-row">
       <app-field label="Gekauft am">
-        <input
-          id="folder-purchase"
-          type="date"
-          [value]="formPurchase()"
-          (change)="formPurchase.set($any($event.target).value)"
-        />
+        <app-date-picker mode="date" [clearable]="true" [value]="formPurchase()" (valueChange)="formPurchase.set($event)" />
       </app-field>
       <app-field label="Garantie bis">
-        <input
-          id="folder-warranty"
-          type="date"
-          [value]="formWarranty()"
-          (change)="formWarranty.set($any($event.target).value)"
-        />
+        <app-date-picker mode="date" [clearable]="true" [value]="formWarranty()" (valueChange)="formWarranty.set($event)" />
       </app-field>
     </div>
     <div class="field-row">
@@ -231,12 +209,7 @@
         />
       </app-field>
       <app-field label="Nächste Wartung">
-        <input
-          id="folder-next"
-          type="date"
-          [value]="formNextMaintenance()"
-          (change)="formNextMaintenance.set($any($event.target).value)"
-        />
+        <app-date-picker mode="date" [clearable]="true" [value]="formNextMaintenance()" (valueChange)="formNextMaintenance.set($event)" />
       </app-field>
     </div>
     <p class="field-hint">Ohne Datum rechnet 4inOne die nächste Wartung aus Kaufdatum und Intervall aus.</p>

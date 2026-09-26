@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { choose, pickTime } from './helpers';
 import AxeBuilder from '@axe-core/playwright';
 
 for (const width of [390, 1440]) {
@@ -63,7 +64,7 @@ for (const width of [390, 1440]) {
     await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
     await page.getByRole('button', { name: 'Aufgabe erstellen', exact: true }).click();
     await page.getByLabel('Titel', { exact: true }).fill('Buch abholen');
-    await page.getByLabel('Priorität').selectOption('HIGH');
+    await choose(page, 'Priorität', 'Hoch');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByRole('button', { name: /Buch abholen Offen/ })).toBeVisible();
@@ -72,7 +73,7 @@ for (const width of [390, 1440]) {
     await page.getByRole('button', { name: 'Buch abholen wieder öffnen', exact: true }).click();
     await page.getByRole('button', { name: /Buch abholen Offen/ }).click();
     await page.getByLabel('Titel', { exact: true }).fill('Buch zurückgeben');
-    await page.getByRole('combobox', { name: 'Status', exact: true }).selectOption('IN_PROGRESS');
+    await choose(page, 'Status', 'In Bearbeitung');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(
       page.getByRole('button', { name: /Buch zurückgeben In Bearbeitung/ }),
@@ -89,7 +90,8 @@ for (const width of [390, 1440]) {
     await page.locator('.month-grid button[aria-current="date"]').click();
     await page.getByRole('button', { name: 'Termin erstellen', exact: true }).click();
     await page.getByLabel('Titel', { exact: true }).fill('Zahnarzt');
-    await page.getByLabel('Beginn', { exact: true }).fill(day + 'T10:00');
+    // Neuer Termin steht schon auf dem gewählten Tag um 09:00; hier auf 10:00 ändern
+    await pickTime(page, page.getByLabel('Beginn – Uhrzeit', { exact: true }), '10:00');
     await page.getByLabel('Ort (optional)', { exact: true }).fill('Praxis');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(page.getByRole('button', { name: /10:00 Zahnarzt Praxis/ })).toBeVisible();

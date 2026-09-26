@@ -227,17 +227,13 @@
       />
     </app-field>
     <app-field label="Bereich im Laden">
-      <select id="edit-item-section" [value]="editSection()" (change)="editSection.set($any($event.target).value)">
-        @for (section of sections(); track section.key) {
-          <option [value]="section.key" [selected]="section.key === editSection()">{{ section.label }}</option>
-        }
-      </select>
+      <app-select [options]="sectionOptions()" [value]="editSection()" (valueChange)="setEditSection($event)" />
     </app-field>
   </div>
   <p class="field-hint">Den Bereich merkt sich 4inOne für das nächste Mal.</p>
 </app-modal-form>
 
-<app-modal [open]="completeOpen()" labelledBy="complete-heading" closeLabel="Abschließen abbrechen" (closed)="closeComplete()">
+<app-modal [dismissOnBackdrop]="false" [open]="completeOpen()" labelledBy="complete-heading" closeLabel="Abschließen abbrechen" (closed)="closeComplete()">
   <div class="form">
     <h2 id="complete-heading">Einkauf abschließen</h2>
     <p class="muted">

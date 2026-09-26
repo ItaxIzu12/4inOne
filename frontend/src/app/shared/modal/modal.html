@@ -1,9 +1,11 @@
 @if (open()) {
-  <div class="modal-backdrop" (click)="requestClose()"></div>
+  <!-- mousedown nicht abbrechen zu lassen würde den Fokus aus dem Dialog nehmen (Escape ginge dann ins Leere) -->
+  <div class="modal-backdrop" (mousedown)="$event.preventDefault()" (click)="onBackdropClick()"></div>
   <div
     #panel
     class="modal-panel"
     [class.modal-panel--flush]="flush()"
+    [class.modal-panel--nudge]="nudge()"
     role="dialog"
     aria-modal="true"
     [attr.aria-labelledby]="labelledBy()"

@@ -375,16 +375,8 @@ textarea:focus-visible {
 .struck {
   text-decoration: line-through;
 }
-.filter select {
-  min-height: 44px;
-  border: 1px solid #cfc5de;
-  border-radius: 10px;
-  padding: 10px 12px;
-  background: #fff;
-  color: #221b39;
-}
-.filter select {
-  width: auto;
+.filter app-select {
+  width: min(240px, 100%);
 }
 .entry-types {
   display: flex;

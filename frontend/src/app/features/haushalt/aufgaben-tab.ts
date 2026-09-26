@@ -3,7 +3,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
+import { AppDatePicker } from '../../shared/form/date-picker';
 import { Field } from '../../shared/form/field';
+import { AppSelect, SelectOption } from '../../shared/form/select';
+import { AppTimePicker } from '../../shared/form/time-picker';
 import { ModalForm } from '../../shared/form/modal-form';
 import { Effort, Id, MemberLoadDto, Recurrence, TaskDto, TaskInput } from './haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
@@ -34,7 +37,7 @@ const EFFORT_LABELS: Record<Effort, string> = { 1: 'Klein', 2: 'Mittel', 3: 'Gro
 @Component({
   selector: 'app-aufgaben-tab',
   standalone: true,
-  imports: [AppIcon, ConnectionsSection, Field, ModalForm],
+  imports: [AppIcon, ConnectionsSection, Field, ModalForm, AppSelect, AppDatePicker, AppTimePicker],
   templateUrl: './aufgaben-tab.html',
   styleUrls: ['./haushalt-common.scss', './aufgaben-tab.scss'],
 })
@@ -60,6 +63,11 @@ export class AufgabenTab {
   protected readonly completing = signal<Id | null>(null);
 
   protected readonly recurrenceOptions = RECURRENCE_OPTIONS;
+  protected readonly recurrenceSelectOptions: SelectOption[] = RECURRENCE_OPTIONS.map((o) => ({ value: o.value ?? '', label: o.label }));
+  protected readonly assigneeOptions = computed<SelectOption[]>(() => [
+    { value: '', label: 'Alle / wer Zeit hat' },
+    ...this.members().map((m) => ({ value: String(m.user_id), label: m.name })),
+  ]);
   protected readonly effortOptions: Effort[] = [1, 2, 3];
   protected readonly effortLabels = EFFORT_LABELS;
   protected readonly relativeDay = relativeDay;

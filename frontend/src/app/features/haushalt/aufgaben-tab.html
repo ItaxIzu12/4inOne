@@ -180,27 +180,15 @@
 
   <div class="field-row">
     <app-field label="Wie oft?">
-      <select id="task-recurrence" (change)="setRecurrence($any($event.target).value)">
-        @for (option of recurrenceOptions; track option.label) {
-          <option [value]="option.value ?? ''" [selected]="option.value === formRecurrence()">
-            {{ option.label }}
-          </option>
-        }
-      </select>
+      <app-select [options]="recurrenceSelectOptions" [value]="formRecurrence() ?? ''" (valueChange)="setRecurrence($event)" />
     </app-field>
     <app-field [label]="formRecurrence() ? 'Nächstes Mal' : 'Fällig am'">
-      <input id="task-due" type="date" [value]="formDue()" (change)="formDue.set($any($event.target).value)" />
+      <app-date-picker mode="date" [clearable]="true" [value]="formDue()" (valueChange)="formDue.set($event)" />
     </app-field>
   </div>
 
   <app-field label="Uhrzeit" [optional]="true">
-    <input
-      id="task-time"
-      type="time"
-      [value]="formTime()"
-      [disabled]="!formDue()"
-      (change)="formTime.set($any($event.target).value)"
-    />
+    <app-time-picker [clearable]="true" [disabled]="!formDue()" [value]="formTime()" (valueChange)="formTime.set($event)" />
   </app-field>
 
   <fieldset class="field">
@@ -221,12 +209,7 @@
 
   @if (!formRotate() || !canRotate()) {
     <app-field label="Zuständig">
-      <select id="task-assignee" (change)="setAssignee($any($event.target).value)">
-        <option value="" [selected]="formAssignee() === null">Alle / wer Zeit hat</option>
-        @for (member of members(); track member.user_id) {
-          <option [value]="member.user_id" [selected]="member.user_id === formAssignee()">{{ member.name }}</option>
-        }
-      </select>
+      <app-select [options]="assigneeOptions()" [value]="formAssignee() === null ? '' : '' + formAssignee()" (valueChange)="setAssignee($event)" />
     </app-field>
   }
 

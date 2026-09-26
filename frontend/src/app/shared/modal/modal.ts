@@ -1,4 +1,4 @@
-import { Component, ElementRef, DestroyRef, effect, inject, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, DestroyRef, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { IconClose } from '../icons/icon-close';
 
 const FOCUSABLE_SELECTOR =
@@ -28,6 +28,11 @@ export class Modal {
   readonly closeLabel = input('Schließen');
   /** Ohne Innenabstand: der Inhalt (z. B. ModalForm) gestaltet Kopf, Körper und Fuß selbst. */
   readonly flush = input(false);
+  /** Schließt ein Klick auf den abgedunkelten Hintergrund den Dialog? Bei Formularen nein: ein versehentlicher
+   * Klick daneben würde sonst alle Eingaben verwerfen. Geschlossen wird dann nur bewusst (×, Abbrechen, Esc). */
+  readonly dismissOnBackdrop = input(true);
+  protected readonly nudge = signal(false);
+  private nudgeTimer?: ReturnType<typeof setTimeout>;
   readonly closed = output<void>();
 
   private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
@@ -62,6 +67,15 @@ export class Modal {
   private focusFirstElement(): void {
     const [first] = this.focusableElements();
     first?.focus();
+  }
+
+  /** Klick auf den Hintergrund: schließen — oder bei Formularen kurz „anstupsen“, damit klar ist, dass der Klick
+   * angekommen ist und der Dialog absichtlich offen bleibt. */
+  protected onBackdropClick(): void {
+    if (this.dismissOnBackdrop()) return this.requestClose();
+    this.nudge.set(true);
+    clearTimeout(this.nudgeTimer);
+    this.nudgeTimer = setTimeout(() => this.nudge.set(false), 400);
   }
 
   protected requestClose(): void {

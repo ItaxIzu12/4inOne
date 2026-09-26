@@ -1,18 +1,36 @@
 :host {
   display: block;
   color: #162e29;
+  // Bereichsfarbe Finanzen (grün): Dialoge, Dropdowns und Kalender erben sie. Kontrast: 5,3:1 auf Weiß,
+  // weiß auf dem Grün 5,3:1.
+  --accent: #1e7a4d;
+  --accent-glow: #1e7a4d;
+  --accent-hover: #186340;
+  --accent-soft: #e3f6ec;
+  --lavender: #e3f6ec;
 }
 .finance-page {
   max-width: 1200px;
   margin: auto;
   padding: 32px;
 }
-.page-head,
 .identity,
-.card header,
-.period,
-.identity {
+.period {
   justify-content: flex-start;
+}
+/* Icon links neben dem Titel — wie im Kopf von Haushalt und Organisation. */
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+/* Kopf wie in Organisation und Haushalt: Titel links, die Hauptaktion rechts. */
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 .wallet {
   width: 58px;
@@ -29,6 +47,7 @@
   height: 36px;
 }
 h1 {
+  margin: 0;
   font-size: 32px;
   letter-spacing: -1px;
 }
@@ -101,7 +120,7 @@ select:focus-visible {
   display: flex;
   gap: 4px;
   padding: 5px;
-  margin: 28px 0 16px;
+  margin: 16px 0 20px;
   border: 1px solid #dcece3;
   background: #f7fcf9;
   border-radius: 16px;
@@ -121,7 +140,8 @@ select:focus-visible {
   box-shadow: 0 3px 7px #34875510;
 }
 .period {
-  margin-bottom: 20px;
+  /* Steht über den Reitern: der Monat gilt für alle. */
+  margin: 24px 0 0;
   font-size: 13px;
   color: #587062;
 }
@@ -151,7 +171,33 @@ select:focus-visible {
   box-shadow: 0 6px 18px #4c775811;
 }
 .card header {
-  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+/* Karten, deren Titel schon der Reiter nennt: links die Kennzahl des Monats, rechts die Aktion. */
+.card header.card-actions {
+  justify-content: flex-end;
+}
+.card header .caption {
+  margin: 0;
+  font-size: 13px;
+  color: #587062;
+}
+.card header .amount {
+  margin: 4px 0 0;
+}
+/* „von 800,00 €“ hinter dem Betrag: kleiner und gedämpft, damit die Zeile nicht umbricht. */
+.amount-of {
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #587062;
+}
+.empty > .secondary {
+  margin-top: 14px;
 }
 .amount {
   font-size: 36px;
@@ -159,12 +205,53 @@ select:focus-visible {
   margin: 10px 0;
   font-variant-numeric: tabular-nums;
 }
+.overrun-note {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fbe9ec;
+  color: #8f2a3d;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.block {
+  display: block;
+}
 .plan {
   color: #56627a;
 }
 .breakdown {
   font-size: 13px;
   color: #56627a;
+}
+.calc {
+  display: grid;
+  gap: 2px;
+  max-width: 420px;
+  margin: 14px 0 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.calc > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 5px 0;
+  color: #56627a;
+}
+.calc dt,
+.calc dd {
+  margin: 0;
+}
+.calc dd {
+  white-space: nowrap;
+}
+.calc__sum {
+  margin-top: 4px;
+  padding-top: 8px !important;
+  border-top: 1px solid #dce7e0;
+  color: var(--text, #162e29) !important;
+  font-weight: 700;
 }
 .month-card {
   background: linear-gradient(135deg, #fff, #f0fcf5);
@@ -189,6 +276,13 @@ progress::-webkit-progress-value {
 progress::-moz-progress-bar {
   background: #26b966;
   border-radius: 10px;
+}
+/* Im Minus: roter Balken (zusätzlich zum Text „Budget überschritten“, nicht nur Farbe). */
+progress.over::-webkit-progress-value {
+  background: #c62f45;
+}
+progress.over::-moz-progress-bar {
+  background: #c62f45;
 }
 .totals {
   display: grid;
@@ -231,19 +325,45 @@ progress::-moz-progress-bar {
   min-height: 46px;
   font-size: 13px;
 }
-.category-row progress {
-  margin: 0;
-  height: 8px;
-}
 .category-row strong {
   text-align: right;
   font-weight: 600;
 }
-.category-row:nth-child(3n) progress::-webkit-progress-value {
-  background: #9f75dd;
+.category-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
-.category-row:nth-child(3n + 1) progress::-webkit-progress-value {
-  background: #61ade3;
+// Farbe kommt als --cat aus der Kategorie (backend category_colors.py) —
+// nie über :nth-child, sonst springt sie bei jeder Umsortierung.
+.cat-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 3px;
+  background: var(--cat, #8a93a3);
+  vertical-align: -1px;
+}
+.category-name .cat-dot {
+  margin-right: 0;
+}
+// Eigener Balken statt <progress>: färbt in allen Browsern gleich
+// (::-webkit-progress-value gilt nicht in Firefox).
+.cat-bar {
+  display: block;
+  height: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e6eee9;
+}
+.cat-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 8px;
+  background: var(--cat, #8a93a3);
 }
 .savings > strong {
   font-size: 26px;
@@ -304,19 +424,17 @@ progress::-moz-progress-bar {
 .empty p {
   margin-top: 10px;
 }
+.goal-grid > .empty {
+  grid-column: 1 / -1; /* mittig auf der ganzen Karte, ohne die zwei Spalten zu ändern */
+}
 .filter {
   display: flex;
   gap: 12px;
   align-items: center;
   margin-bottom: 15px;
 }
-.filter select {
-  padding: 10px;
-  border: 1px solid #ceddd4;
-  border-radius: 10px;
-  background: #fff;
-  min-height: 44px;
-  color: #294437;
+.filter app-select {
+  width: min(240px, 100%);
 }
 .subheading {
   margin: 28px 0 8px;
@@ -460,6 +578,17 @@ progress::-moz-progress-bar {
   .card header {
     flex-wrap: wrap;
     gap: 8px;
+  }
+  /* Mobil nur das Plus, der Name bleibt für Screenreader (wie in Organisation und Haushalt). */
+  .page-head > .primary {
+    padding: 10px;
+  }
+  .page-head > .primary span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    clip-path: inset(50%);
+    overflow: hidden;
   }
   .period {
     gap: 8px;

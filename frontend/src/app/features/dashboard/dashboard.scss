@@ -242,6 +242,12 @@ progress::-webkit-progress-value {
   background: linear-gradient(#63e69b, #21c362);
   border-radius: 20px;
 }
+progress.over::-webkit-progress-value {
+  background: #c62f45;
+}
+progress.over::-moz-progress-bar {
+  background: #c62f45;
+}
 progress::-moz-progress-bar {
   background: #21c362;
   border-radius: 20px;

@@ -1,0 +1,74 @@
+<section class="tl" aria-labelledby="tl-title">
+  <header class="tl__head">
+    <h3 id="tl-title">Budgetzeiträume</h3>
+    <div class="tl__year">
+      <button type="button" aria-label="Vorheriges Jahr" (click)="shift(-1)">‹</button>
+      <span aria-live="polite">{{ viewYear() }}</span>
+      <button type="button" aria-label="Nächstes Jahr" (click)="shift(1)">›</button>
+    </div>
+  </header>
+
+  <div class="tl__chart" [style.--rows]="rowCount()">
+    <!-- Spalten: Monatsname oben, feine Trennlinie, der gewählte Monat leicht getönt -->
+    @for (i of columns; track i) {
+      <div class="tl__col" [class.is-selected]="selectedIndex() === i" [style.grid-column]="i + 1"></div>
+      <button
+        type="button"
+        class="tl__month"
+        [class.is-selected]="selectedIndex() === i"
+        [style.grid-column]="i + 1"
+        [attr.aria-label]="names[i] + ' ' + viewYear() + ' anzeigen'"
+        [attr.aria-current]="selectedIndex() === i ? 'date' : null"
+        (click)="monthPick.emit(ym(i))"
+      >
+        <span class="tl__month-long" aria-hidden="true">{{ short[i] }}</span>
+        <span class="tl__month-short" aria-hidden="true">{{ short[i].charAt(0) }}</span>
+      </button>
+    }
+
+    <!-- Balken sind reine Anzeige: geklickt werden nur die Monate. Geändert wird über „Budget ändern“. -->
+    @for (bar of bars(); track bar.budget.id + '-' + bar.from) {
+      <div
+        class="tl__bar"
+        [class.is-active]="bar.active"
+        [class.is-cut-start]="bar.cutStart"
+        [class.is-short]="bar.to === bar.from"
+        [class.is-open-end]="bar.openEnd"
+        [style.grid-column]="bar.from + ' / ' + (bar.to + 1)"
+        [style.grid-row]="bar.row + 2"
+      >
+        <span class="tl__amount" aria-hidden="true">{{ bar.label }}</span>
+        <span class="sr-only">{{ bar.description }}{{ bar.active ? ', gilt im gewählten Monat' : '' }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- Schmale Bildschirme: zwölf Spalten wären zu eng, deshalb eine Karte je Budget mit Mini-Zeitleiste -->
+  <ul class="tl__list">
+    @for (card of cards(); track card.bar.budget.id) {
+      <li>
+        <div class="tl__card" [class.is-active]="card.bar.active">
+          <span class="tl__card-top">
+            <strong>{{ card.bar.label }}</strong>
+            <span>{{ card.bar.range }}</span>
+            @if (card.bar.active) { <span class="sr-only">gilt im gewählten Monat</span> }
+          </span>
+          <span class="tl__track" aria-hidden="true">
+            @for (i of columns; track i) {
+              <span class="tl__seg" [class.is-on]="card.months.has(i + 1)" [class.is-now]="selectedIndex() === i"></span>
+            }
+          </span>
+        </div>
+      </li>
+    }
+  </ul>
+
+  @if (!bars().length) {
+    <p class="tl__empty">In {{ viewYear() }} sind keine Budgets angelegt.</p>
+  }
+
+  <p class="tl__legend">
+    <span class="tl__key tl__key--active" aria-hidden="true"></span>gilt im gewählten Monat
+    <span class="tl__key" aria-hidden="true"></span>anderes Budget
+  </p>
+</section>

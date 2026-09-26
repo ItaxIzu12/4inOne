@@ -1,4 +1,4 @@
-<app-modal [open]="open()" [labelledBy]="titleId" [closeLabel]="closeLabel()" [flush]="true" (closed)="closed.emit()">
+<app-modal [dismissOnBackdrop]="false" [open]="open()" [labelledBy]="titleId" [closeLabel]="closeLabel()" [flush]="true" (closed)="closed.emit()">
   <form class="modal-form" novalidate (submit)="onSubmit($event)">
     <header class="modal-form__head">
       @if (icon(); as name) {

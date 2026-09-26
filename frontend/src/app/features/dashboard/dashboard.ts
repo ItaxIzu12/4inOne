@@ -159,7 +159,9 @@ export class Dashboard {
             : !this.finance()
               ? 'Wird geladen …'
               : this.finance()!.available !== null
-                ? `${euros(this.finance()!.available)} verfügbar`
+                ? this.finance()!.available!.startsWith('-')
+                  ? `${euros(this.finance()!.available!.slice(1))} über dem Budget`
+                  : `${euros(this.finance()!.available)} verfügbar`
                 : this.finance()!.has_data
                   ? `${euros(this.finance()!.expenses)} Ausgaben · Budget anlegen`
                   : 'Starte mit deinem Monatsbudget',

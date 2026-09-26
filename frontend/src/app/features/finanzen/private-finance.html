@@ -10,9 +10,15 @@
         </div>
       </div>
       <button class="primary" (click)="open('transactions')">
-        <app-icon name="plus" />Neue Buchung
+        <app-icon name="plus" /><span>Neue Buchung</span>
       </button>
     </header>
+    <div class="period">
+      <label for="finance-month"
+        >Monat
+        <app-date-picker mode="month" inputId="finance-month" [value]="month()" (valueChange)="setMonth($event)" />
+      </label>
+    </div>
     <nav class="tabs" aria-label="Finanzansichten">
       <button
         [attr.aria-current]="tab() === 'overview' ? 'page' : null"
@@ -33,17 +39,6 @@
         Sparziele
       </button>
     </nav>
-    <div class="period">
-      <span>Privat · EUR</span
-      ><label for="finance-month"
-        >Monat
-        <input
-          id="finance-month"
-          type="month"
-          [value]="month()"
-          (change)="setMonth($any($event.target).value)"
-      /></label>
-    </div>
     @if (loading()) {
       <p class="empty" role="status">Deine Finanzen werden geladen …</p>
     } @else if (error()) {
@@ -63,19 +58,37 @@
                 {{ percent(used(), summary()?.total) }} % {{ hasSaved() ? 'ausgegeben oder gespart' : 'ausgegeben' }}
               </p>
               <progress
+                [class.over]="overBudget() !== null"
                 [value]="percent(used(), summary()?.total)"
                 max="100"
-                aria-label="Verfügbares Budget verbraucht"
+                [attr.aria-label]="overBudget() !== null ? 'Verfügbares Budget überschritten' : 'Verfügbares Budget verbraucht'"
               ></progress>
-              <p class="breakdown">
-                Budget {{ money(summary()?.budget) }} + Einnahmen {{ money(summary()?.income) }} − Ausgaben
-                {{ money(summary()?.expenses) }}@if (hasSaved()) { − Gespart {{ money(summary()?.saved) }}@if (hasPlanned()) { (davon {{ money(summary()?.saved_planned) }} geplant)}}
-              </p>
-              @if (summary()?.available?.startsWith('-')) {
-                <p class="negative">Deine Ausgaben liegen über Budget und Einnahmen.</p>
+              <dl class="calc">
+                <div><dt>Budget</dt><dd>{{ money(summary()?.budget) }}</dd></div>
+                <div><dt>+ Einnahmen</dt><dd>{{ money(summary()?.income) }}</dd></div>
+                <div><dt>− Ausgaben</dt><dd>{{ money(summary()?.expenses) }}</dd></div>
+                @if (hasSaved()) {
+                  <div><dt>− Gespart{{ hasPlanned() ? ' (davon ' + money(summary()?.saved_planned) + ' geplant)' : '' }}</dt><dd>{{ money(summary()?.saved) }}</dd></div>
+                }
+                <div class="calc__sum"><dt>= Verfügbar</dt><dd>{{ money(summary()?.available) }}</dd></div>
+              </dl>
+              @if (overBudget(); as over) {
+                <p class="overrun-note" role="status">
+                  <strong>Budget überschritten:</strong> Du hast {{ money(over) }} mehr ausgegeben oder zurückgelegt,
+                  als dir zur Verfügung steht.
+                </p>
+              } @else if (planAlertText(); as alert) {
+                <p class="overrun-note" role="status"><strong>Sparraten zu hoch:</strong> {{ alert }}</p>
               }
             } @else {
-              <p>Lege dein erstes Monatsbudget fest.</p>
+              <p>
+                Für {{ monthLabel() }} gibt es kein Budget.
+                @if (Number(summary()?.income) + Number(summary()?.expenses) > 0) {
+                  Deine Einnahmen und Ausgaben bleiben gespeichert, es wird aber nichts verrechnet.
+                } @else {
+                  Lege eines fest, dann siehst du, was dir noch bleibt.
+                }
+              </p>
               <button class="text-button" (click)="open('budgets')">
                 Budget erstellen <app-icon name="arrow" />
               </button>
@@ -99,14 +112,19 @@
           </div>
           <section class="card categories">
             <header><h2>Ausgaben nach Kategorien</h2></header>
-            @for (category of summary()?.categories; track category.name) {
-              <div class="category-row">
-                <span>{{ category.name }}</span
-                ><progress
-                  [value]="percent(category.amount, summary()?.expenses)"
-                  max="100"
+            @for (category of summary()?.categories; track category.id ?? category.name) {
+              <!-- Farbe kommt aus der Kategorie selbst, nie aus der Listenposition:
+                   die Liste ist nach Betrag sortiert und ordnet sich ständig um. -->
+              <div class="category-row" [style.--cat]="category.color">
+                <span class="category-name"><i class="cat-dot" aria-hidden="true"></i>{{ category.name }}</span
+                ><span
+                  class="cat-bar"
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  [attr.aria-valuenow]="percent(category.amount, summary()?.expenses)"
                   [attr.aria-label]="category.name + ' Anteil an Ausgaben'"
-                ></progress
+                  ><span [style.width.%]="percent(category.amount, summary()?.expenses)"></span></span
                 ><strong>{{ money(category.amount) }}</strong>
               </div>
             } @empty {
@@ -151,6 +169,7 @@
               ><span class="transaction-copy"
                 ><strong>{{ row.note || categoryName(row.category) }}</strong
                 ><small
+                  ><i class="cat-dot" aria-hidden="true" [style.--cat]="categoryColor(row.category)"></i
                   >{{ categoryName(row.category) }} · {{ row.date | date: 'dd.MM.yyyy' }}</small
                 ></span
               ><strong
@@ -165,23 +184,17 @@
         </section>
       } @else if (tab() === 'transactions') {
         <section class="card">
-          <header><h2>Einnahmen und Ausgaben</h2></header>
+          <h2 class="sr-only">Buchungen</h2>
           <label class="filter" for="finance-filter"
-            >Anzeigen<select
-              id="finance-filter"
-              [value]="typeFilter()"
-              (change)="typeFilter.set($any($event.target).value)"
-            >
-              <option value="ALL">Alle Buchungen</option>
-              <option value="EXPENSE">Ausgaben</option>
-              <option value="INCOME">Einnahmen</option>
-            </select></label
-          >
+            >Anzeigen
+            <app-select inputId="finance-filter" [options]="filterOptions" [(value)]="typeFilter" />
+          </label>
           @for (row of rows(); track row.id) {
             <button class="transaction" (click)="open('transactions', row)">
               <span class="transaction-copy"
                 ><strong>{{ row.note || categoryName(row.category) }}</strong
                 ><small
+                  ><i class="cat-dot" aria-hidden="true" [style.--cat]="categoryColor(row.category)"></i
                   >{{ categoryName(row.category) }} · {{ row.date | date: 'dd.MM.yyyy' }}</small
                 ></span
               ><strong
@@ -196,44 +209,40 @@
         </section>
       } @else if (tab() === 'budgets') {
         <section class="card">
-          <header>
-            <h2>Monatsbudget</h2>
-            <button class="secondary" (click)="open('budgets', activeBudget())">
-              {{ activeBudget() ? 'Budget ändern' : 'Budget erstellen' }}
-            </button>
-          </header>
+          <h2 class="sr-only">Budgets</h2>
           @if (activeBudget(); as budget) {
-            <h3 class="amount">{{ money(budget.amount) }}</h3>
-            <p class="breakdown">Gilt: {{ range(budget) }}</p>
-            <p>
-              Dazu {{ money(summary()?.income) }} Einnahmen · {{ money(summary()?.expenses) }} ausgegeben
-              @if (hasSaved()) {· {{ money(summary()?.saved) }} gespart }· {{ money(summary()?.available) }} verfügbar
-            </p>
-            <progress
-              [value]="percent(used(), summary()?.total)"
-              max="100"
-              aria-label="Budgetfortschritt"
-            ></progress>
+            <!-- Kennzahl links, Aktion rechts: keine leere Leiste neben dem Button -->
+            <header>
+              <div>
+                <p class="caption">Budget im {{ monthLabel() }}</p>
+                <h3 class="amount">{{ money(budget.amount) }}</h3>
+              </div>
+              <button class="secondary" (click)="open('budgets', budget)">Budget ändern</button>
+            </header>
           } @else {
-            <p class="empty">Für diesen Monat hast du noch kein Budget festgelegt.</p>
+            <div class="empty">
+              <p>Für diesen Monat hast du noch kein Budget festgelegt.</p>
+              <button class="secondary" (click)="open('budgets')">Budget erstellen</button>
+            </div>
           }
-          <h3 class="subheading">Alle Budgets</h3>
-          @for (budget of budgets(); track budget.id) {
-            <button class="transaction" (click)="month.set(budget.month.slice(0, 7)); load()">
-              <span>{{ range(budget) }}</span
-              ><strong>{{ money(budget.amount) }}</strong
-              ><app-icon name="arrow" />
-            </button>
-          }
+          <app-budget-timeline [budgets]="budgets()" [month]="month()" (monthPick)="setMonth($event)" />
         </section>
       } @else {
         <section class="card">
-          <header>
-            <h2>Sparziele</h2>
-            <button class="secondary" (click)="open('goals')">
-              <app-icon name="plus" />Sparziel erstellen
-            </button>
-          </header>
+          <h2 class="sr-only">Sparziele</h2>
+          @if (goals().length) {
+            <!-- Zusammenfassung links, Aktion rechts: keine leere Leiste neben dem Button -->
+            <header>
+              <div>
+                <p class="caption">{{ goals().length }} {{ goals().length === 1 ? 'Sparziel' : 'Sparziele' }} im {{ monthLabel() }}</p>
+                <h3 class="amount">
+                  {{ money(summary()?.savings_current) }}
+                  <span class="amount-of">von {{ money(summary()?.savings_target) }}</span>
+                </h3>
+              </div>
+              <button class="secondary" (click)="open('goals')"><app-icon name="plus" />Sparziel erstellen</button>
+            </header>
+          }
           <div class="goal-grid">
             @for (goal of goals(); track goal.id) {
               <button class="goal" (click)="open('goals', goal)">
@@ -248,18 +257,16 @@
                 ></progress
                 ><small
                   >{{ percent(goal.current_amount, goal.target_amount) }} % erreicht
-                  @if (goal.target_date) {
-                    · Bis {{ goal.target_date | date: 'dd.MM.yyyy' }}
-                  }
                 </small>
-                @if (goal.monthly_amount) {
-                  <small class="plan">{{ money(goal.monthly_amount) }} pro Monat · {{ plan(goal) }}</small>
-                }
+                <small class="plan"
+                  >@if (goal.monthly_amount) {{{ money(goal.monthly_amount) }} pro Monat · }{{ plan(goal) }}</small
+                >
               </button>
             } @empty {
-              <div class="empty">
-                <h3>Dein nächstes Ziel beginnt hier</h3>
-                <p>Zum Beispiel eine neue Waschmaschine, ein Fahrrad oder eine Rücklage.</p>
+              <div class="empty text-align-center">
+                <h3>Für diesen Monat gibt es noch kein Sparziel</h3>
+                <p>Zum Beispiel eine neue Waschmaschine, ein Fahrrad oder eine Rücklage. Ein Ziel gilt nur für die Monate, die du dafür wählst.</p>
+                <button class="secondary" (click)="open('goals')"><app-icon name="plus" />Sparziel erstellen</button>
               </div>
             }
           </div>
@@ -280,27 +287,21 @@
   [saving]="saving()"
   [error]="formError()"
   [deleteLabel]="editId() ? 'Eintrag löschen' : ''"
+  [submitLabel]="overrun() ? 'Trotzdem buchen' : goalWarning() ? 'Trotzdem speichern' : 'Speichern'"
   (submitted)="save()"
   (closed)="close()"
   (deleted)="remove()"
 >
   @if (editor() === 'transactions') {
     <app-field label="Typ">
-      <select id="booking-type" formControlName="type">
-        <option value="EXPENSE">Ausgabe</option>
-        <option value="INCOME">Einnahme</option>
-      </select>
+      <app-select formControlName="type" [options]="typeOptions" />
     </app-field>
     <app-field label="Betrag in EUR">
       <input id="booking-amount" inputmode="decimal" formControlName="amount" aria-required="true" />
     </app-field>
     @if (categories().length) {
       <app-field label="Kategorie">
-        <select id="booking-category" formControlName="category">
-          @for (category of categories(); track category.id) {
-            <option [value]="category.id">{{ category.name }}</option>
-          }
-        </select>
+        <app-select formControlName="category" [options]="categoryOptions()" />
       </app-field>
     } @else {
       <p>Lege die sieben vorgeschlagenen Kategorien für deine privaten Buchungen an.</p>
@@ -309,33 +310,50 @@
       </button>
     }
     <app-field label="Datum">
-      <input id="booking-date" type="date" formControlName="date" aria-required="true" />
+      <app-date-picker mode="date" formControlName="date" />
     </app-field>
     <app-field label="Notiz" [optional]="true">
       <input id="booking-note" formControlName="note" maxlength="255" />
     </app-field>
+    @if (overrun(); as over) {
+      <p class="overrun-note" role="alert">
+        <strong>Diese Ausgabe überschreitet dein verfügbares Budget um {{ money(over.over) }}.</strong>
+        Verfügbar sind {{ money(over.available) }}. Du kannst sie trotzdem buchen oder den Betrag ändern.
+      </p>
+    }
   } @else if (editor() === 'budgets') {
-    <app-field label="Budgetmonat">
-      <input id="budget-month" type="month" formControlName="month" aria-required="true" />
+    <!-- Beim Ändern ist der Startmonat gesperrt (sonst verschiebt man das Budget aus seinem Monat); anderer Zeitraum = neues Budget. -->
+    <app-field
+      label="Startmonat"
+      [hint]="editId() ? 'Hier steht, ab wann dieses Budget gilt, nicht der angezeigte Monat.' : ''"
+    >
+      <app-date-picker mode="month" formControlName="month" [disabled]="!!editId()" />
     </app-field>
     <app-field
       label="Gilt für"
       hint="Ein später beginnendes Budget ersetzt dieses ab seinem Startmonat."
     >
-      <select id="budget-scope" formControlName="scope">
-        <option value="single">Nur diesen Monat</option>
-        <option value="until">Mehrere Monate</option>
-        <option value="open">Bis auf Weiteres</option>
-      </select>
+      <app-select formControlName="scope" [options]="scopeOptions" />
     </app-field>
     @if (form.controls.scope.value === 'until') {
       <app-field label="Bis einschließlich">
-        <input id="budget-end" type="month" formControlName="end_month" aria-required="true" [min]="form.controls.month.value" />
+        <app-date-picker mode="month" formControlName="end_month" [min]="form.controls.month.value" />
       </app-field>
     }
     <app-field label="Budgetbetrag in EUR">
       <input id="budget-amount" inputmode="decimal" formControlName="amount" aria-required="true" />
     </app-field>
+    @if (budgetOverrideNote(); as note) {
+      <p class="overrun-note" role="status">{{ note }}</p>
+    }
+    @if (budgetImpactNote(); as impact) {
+      <p class="plan" role="note">{{ impact }}</p>
+    }
+    @if (editId()) {
+      <button type="button" class="text-button" (click)="open('budgets')">
+        Stattdessen ab {{ monthLabel() }} ein neues Budget anlegen
+      </button>
+    }
   } @else {
     <app-field label="Titel">
       <input id="goal-title" formControlName="title" maxlength="120" aria-required="true" />
@@ -351,43 +369,37 @@
         <input id="goal-current" inputmode="decimal" formControlName="current_amount" aria-required="true" />
       </app-field>
     </div>
+    <app-field label="Status">
+      <app-select formControlName="status" [options]="statusOptions" />
+    </app-field>
     <div class="field-row">
-      <app-field label="Zieldatum" [optional]="true">
-        <input id="goal-date" type="date" formControlName="target_date" />
+      <app-field label="Ab Monat">
+        <app-date-picker mode="month" formControlName="plan_start" />
       </app-field>
-      <app-field label="Status">
-        <select id="goal-status" formControlName="status">
-          <option value="ACTIVE">Aktiv</option>
-          <option value="COMPLETED">Erreicht</option>
-          <option value="PAUSED">Pausiert</option>
-        </select>
+      <app-field label="Gilt für" hint="Ohne Auswahl gilt ein Sparziel nur für diesen einen Monat.">
+        <app-select formControlName="plan_scope" [options]="scopeOptions" />
       </app-field>
     </div>
+    @if (form.controls.plan_scope.value === 'until') {
+      <app-field label="Bis einschließlich">
+        <app-date-picker mode="month" formControlName="plan_end" [min]="form.controls.plan_start.value" />
+      </app-field>
+    }
     <app-field
       label="Sparrate pro Monat"
       [optional]="true"
-      hint="Wird in den gewählten Monaten von deinem verfügbaren Budget zurückgelegt, bis das Ziel erreicht ist."
+      hint="Wird in den Monaten des Zeitraums von deinem verfügbaren Budget zurückgelegt, bis das Ziel erreicht ist."
     >
       <input id="goal-rate" inputmode="decimal" formControlName="rate" />
     </app-field>
-    @if (form.controls.rate.value.trim()) {
-      <div class="field-row">
-        <app-field label="Ab Monat">
-          <input id="goal-plan-start" type="month" formControlName="plan_start" />
-        </app-field>
-        <app-field label="Gilt für">
-          <select id="goal-plan-scope" formControlName="plan_scope">
-            <option value="single">Nur diesen Monat</option>
-            <option value="until">Mehrere Monate</option>
-            <option value="open">Bis das Ziel erreicht ist</option>
-          </select>
-        </app-field>
+    @if (goalWarning(); as sentences) {
+      <div class="overrun-note" role="alert">
+        <strong>Das überschreitet dein Budget.</strong>
+        @for (sentence of sentences; track sentence) {
+          <span class="block">{{ sentence }}</span>
+        }
+        <span class="block">Du kannst trotzdem speichern oder die Beträge anpassen.</span>
       </div>
-      @if (form.controls.plan_scope.value === 'until') {
-        <app-field label="Bis einschließlich">
-          <input id="goal-plan-end" type="month" formControlName="plan_end" [min]="form.controls.plan_start.value" />
-        </app-field>
-      }
     }
   }
   @if (editor() === 'goals' && editId()) {
