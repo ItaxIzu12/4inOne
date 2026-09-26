@@ -124,3 +124,32 @@ test('organisation rejects unauthenticated navigation', async ({ page }) => {
   await page.goto('/app/organisation');
   await expect(page).toHaveURL(/\/login$/);
 });
+
+test('"Aufgabe erstellen" and "Termin erstellen" open a dialog for exactly that kind, only "Neuer Eintrag" offers the choice', async ({ page }) => {
+  await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 't' } }));
+  await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 't', user: { name: 'Mira', email: 'm@example.com' } } }));
+  await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
+  await page.route('**/api/v1/organisation/**', (r) => r.fulfill({ json: [] }));
+  await page.goto('/app/organisation');
+  const dialog = page.getByRole('dialog');
+  const choice = (name: string) => dialog.getByRole('button', { name, exact: true });
+
+  await page.getByRole('button', { name: 'Aufgabe erstellen', exact: true }).click();
+  await expect(dialog.getByRole('heading', { name: 'Aufgabe erstellen' })).toBeVisible();
+  await expect(choice('Termin')).toHaveCount(0);
+  await expect(choice('Aufgabe')).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Abbrechen' }).click();
+
+  await page.getByRole('button', { name: 'Kalender', exact: true }).click();
+  await page.getByRole('button', { name: 'Termin erstellen', exact: true }).click();
+  await expect(dialog.getByRole('heading', { name: 'Termin erstellen' })).toBeVisible();
+  await expect(choice('Aufgabe')).toHaveCount(0);
+  await expect(choice('Termin')).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Abbrechen' }).click();
+
+  await page.getByRole('button', { name: 'Neuer Eintrag', exact: true }).click();
+  await expect(choice('Termin')).toBeVisible();
+  await expect(choice('Aufgabe')).toBeVisible();
+  await choice('Aufgabe').click();
+  await expect(dialog.getByRole('heading', { name: 'Aufgabe erstellen' })).toBeVisible();
+});

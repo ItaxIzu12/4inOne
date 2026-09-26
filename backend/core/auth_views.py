@@ -16,10 +16,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.mfa_views import MfaVerifyRateThrottle, user_has_mfa_enabled, verify_mfa_code
-from core.models import Household, HouseholdMembership, PasswordResetToken
+from core.models import Household, HouseholdMembership, PasswordResetToken, UserSession
 from core.throttling import LocalCacheThrottle
 
 REFRESH_COOKIE_NAME = 'refresh_token'
@@ -50,6 +52,31 @@ def _set_refresh_cookie(response: Response, refresh: RefreshToken, *, remember: 
     if remember:
         cookie_kwargs['max_age'] = int(refresh.lifetime.total_seconds())
     response.set_cookie(REFRESH_COOKIE_NAME, str(refresh), **cookie_kwargs)
+
+
+def _start_session(request, user, refresh: RefreshToken) -> None:
+    """Merkt sich das angemeldete Gerät. Die Sitzungs-ID steckt als Claim im Refresh-Token und bleibt bei jeder
+    Rotation gleich; nur `current_jti` wandert mit (siehe RefreshView)."""
+    sid = secrets.token_hex(16)
+    refresh['sid'] = sid
+    UserSession.objects.create(
+        user=user,
+        sid=sid,
+        current_jti=str(refresh['jti']),
+        user_agent=(request.META.get('HTTP_USER_AGENT') or '')[:300],
+        last_seen=timezone.now(),
+    )
+
+
+def _session_id_from_cookie(request) -> str | None:
+    """Die `sid` des Geräts, von dem die Anfrage kommt — aus dem Refresh-Cookie (auch wenn es schon abgelaufen ist)."""
+    raw = request.COOKIES.get(REFRESH_COOKIE_NAME)
+    if not raw:
+        return None
+    try:
+        return RefreshToken(raw).payload.get('sid')
+    except TokenError:
+        return None
 
 
 def _user_payload(user) -> dict:
@@ -170,6 +197,7 @@ class RegisterView(APIView):
             )
 
         refresh = RefreshToken.for_user(user)
+        _start_session(request, user, refresh)
         response = Response(
             {'access': str(refresh.access_token), 'user': _user_payload(user)}, status=status.HTTP_201_CREATED
         )
@@ -239,6 +267,7 @@ class LoginView(APIView):
 
         remember = login_data['remember']
         refresh = RefreshToken(serializer.validated_data['refresh'])
+        _start_session(request, user, refresh)
         response = Response({'access': serializer.validated_data['access'], 'user': _user_payload(user)})
         _set_refresh_cookie(response, refresh, remember=remember)
         return response
@@ -288,6 +317,10 @@ class RefreshView(APIView):
             # das Profil-Icon, aber ohne Initialen.
             new_refresh = RefreshToken(new_refresh_str)
             user = get_user_model().objects.get(pk=new_refresh.payload.get('user_id'))
+            if new_refresh.payload.get('sid'):
+                UserSession.objects.filter(sid=new_refresh.payload['sid'], user=user).update(
+                    current_jti=str(new_refresh['jti']), last_seen=timezone.now()
+                )
             payload['user'] = _user_payload(user)
             remember = bool(new_refresh.get('remember', True))
 
@@ -307,7 +340,9 @@ class LogoutView(APIView):
         raw_token = request.COOKIES.get(REFRESH_COOKIE_NAME)
         if raw_token:
             try:
-                RefreshToken(raw_token).blacklist()
+                token = RefreshToken(raw_token)
+                UserSession.objects.filter(sid=token.payload.get('sid'), user_id=token.payload.get('user_id')).delete()
+                token.blacklist()
             except TokenError:
                 pass
 
@@ -404,3 +439,92 @@ class CsrfTokenView(APIView):
         response = Response({'csrfToken': get_token(request)})
         response['Cache-Control'] = 'no-store'
         return response
+
+
+def _revoke(session: UserSession) -> None:
+    """Sperrt das aktuelle Refresh-Token des Geräts (es kann sich nicht mehr erneuern) und vergisst die Sitzung.
+    Ein schon ausgestelltes Access-Token gilt noch bis zu seinem Ablauf (15 Minuten)."""
+    outstanding = OutstandingToken.objects.filter(jti=session.current_jti, user=session.user).first()
+    if outstanding:
+        BlacklistedToken.objects.get_or_create(token=outstanding)
+    session.delete()
+
+
+def _alive_sessions(user):
+    """Die Sitzungen des Nutzers, deren Refresh-Token noch gilt; abgelaufene oder gesperrte werden aufgeräumt."""
+    alive = []
+    for session in UserSession.objects.filter(user=user):
+        outstanding = OutstandingToken.objects.filter(jti=session.current_jti, user=user).first()
+        gone = (
+            outstanding is None
+            or outstanding.expires_at <= timezone.now()
+            or BlacklistedToken.objects.filter(token=outstanding).exists()
+        )
+        if gone:
+            session.delete()
+        else:
+            alive.append(session)
+    return alive
+
+
+class SessionListView(APIView):
+    """Aktive Sitzungen (Geräte) des angemeldeten Nutzers. `DELETE` meldet alle ANDEREN Geräte ab."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        current = _session_id_from_cookie(request)
+        sessions = _alive_sessions(request.user)
+        return Response(
+            [
+                {
+                    'id': s.sid,
+                    'device': s.user_agent,
+                    'created_at': s.created_at,
+                    'last_seen': s.last_seen,
+                    'current': s.sid == current,
+                }
+                for s in sorted(sessions, key=lambda s: s.last_seen, reverse=True)
+            ]
+        )
+
+    def delete(self, request):
+        current = _session_id_from_cookie(request)
+        for session in _alive_sessions(request.user):
+            if session.sid != current:
+                _revoke(session)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SessionDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, sid):
+        if sid == _session_id_from_cookie(request):
+            return Response({'detail': 'Dieses Gerät meldest du mit „Abmelden“ ab.'}, status=status.HTTP_400_BAD_REQUEST)
+        session = UserSession.objects.filter(user=request.user, sid=sid).first()
+        if session is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        _revoke(session)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProfileSerializer(serializers.Serializer):
+    name = serializers.CharField(min_length=2, max_length=150)
+
+
+class ProfileView(APIView):
+    """Eigener Name und E-Mail. Der Name ist änderbar; die E-Mail-Adresse ist zugleich der Benutzername und braucht
+    eine Bestätigung, deshalb nur lesbar."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(_user_payload(request.user))
+
+    def patch(self, request):
+        serializer = ProfileSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        request.user.first_name = serializer.validated_data['name'].strip()
+        request.user.save(update_fields=['first_name'])
+        return Response(_user_payload(request.user))

@@ -1,13 +1,19 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 import { Brand } from '../shared/brand/brand';
 import { AppIcon, IconName } from '../shared/icons/app-icon';
+import { IconInfo } from '../shared/icons/icon-info';
+import { IconLegal } from '../shared/icons/icon-legal';
+import { IconLogout } from '../shared/icons/icon-logout';
+import { IconProfile } from '../shared/icons/icon-profile';
+import { IconSettings } from '../shared/icons/icon-settings';
+import { IconTwoFactor } from '../shared/icons/icon-two-factor';
 import { Modal } from '../shared/modal/modal';
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, Brand, AppIcon, Modal],
+  imports: [RouterLink, RouterLinkActive, Brand, AppIcon, Modal, IconInfo, IconLegal, IconLogout, IconProfile, IconSettings, IconTwoFactor],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })
@@ -35,16 +41,51 @@ export class AppShell {
     ];
   });
   readonly panel = signal('');
-  readonly query = signal('');
+  readonly menuOpen = signal(false);
+  private readonly trigger = viewChild<ElementRef<HTMLButtonElement>>('trigger');
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
   readonly logoutError = signal('');
   readonly busy = signal(false);
-  readonly results = computed(() =>
-    this.links().filter((x) =>
-      x.label.toLocaleLowerCase('de').includes(this.query().trim().toLocaleLowerCase('de')),
-    ),
-  );
   close() {
     this.panel.set('');
+  }
+  toggleMenu() {
+    if (this.menuOpen()) return this.closeMenu(true);
+    this.logoutError.set('');
+    this.menuOpen.set(true);
+    // erst nach dem Rendern ist der Menüpunkt da
+    afterNextRender(() => this.menuItems()[0]?.focus(), { injector: this.injector });
+  }
+  closeMenu(returnFocus = false) {
+    if (!this.menuOpen()) return;
+    this.menuOpen.set(false);
+    if (returnFocus) this.trigger()?.nativeElement.focus();
+  }
+  private menuItems(): HTMLElement[] {
+    return Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('.account-menu [role=menuitem]:not([disabled])'));
+  }
+  /** Pfeiltasten wandern durch die Punkte, Escape schließt und gibt den Fokus zurück, Tab verlässt das Menü. */
+  onMenuKey(event: KeyboardEvent) {
+    const items = this.menuItems();
+    const index = items.indexOf(document.activeElement as HTMLElement);
+    const focus = (i: number) => {
+      event.preventDefault();
+      items[(i + items.length) % items.length]?.focus();
+    };
+    if (event.key === 'ArrowDown') focus(index + 1);
+    else if (event.key === 'ArrowUp') focus(index - 1);
+    else if (event.key === 'Home') focus(0);
+    else if (event.key === 'End') focus(items.length - 1);
+    else if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.closeMenu(true);
+    } else if (event.key === 'Tab') this.closeMenu();
+  }
+  @HostListener('document:pointerdown', ['$event'])
+  onDocumentPointerDown(event: PointerEvent) {
+    if (this.menuOpen() && !(event.target as HTMLElement).closest('.account')) this.closeMenu();
   }
   logout() {
     if (this.busy()) return;
@@ -53,6 +94,7 @@ export class AppShell {
     this.auth.logout().subscribe({
       next: () => {
         this.busy.set(false);
+        this.closeMenu();
         this.close();
         this.router.navigateByUrl('/login');
       },

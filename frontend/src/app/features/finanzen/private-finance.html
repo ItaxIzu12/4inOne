@@ -6,19 +6,21 @@
         <span class="wallet"><app-icon name="finance" /></span>
         <div>
           <h1>Finanzen</h1>
-          <p>Behalte deine Finanzen im Überblick.</p>
         </div>
       </div>
-      <button class="primary" (click)="open('transactions')">
-        <app-icon name="plus" /><span>Neue Buchung</span>
-      </button>
+      <!-- Monat und Hauptaktion rechts im Kopf; auf dem Handy rutscht der Monat als volle Zeile unter den Kopf. -->
+      <div class="head-actions">
+        <div class="period">
+          <label for="finance-month"
+            ><span class="sr-only">Monat</span>
+            <app-date-picker mode="month" inputId="finance-month" [value]="month()" (valueChange)="setMonth($event)" />
+          </label>
+        </div>
+        <button class="primary" (click)="open('transactions')">
+          <app-icon name="plus" /><span>Neue Buchung</span>
+        </button>
+      </div>
     </header>
-    <div class="period">
-      <label for="finance-month"
-        >Monat
-        <app-date-picker mode="month" inputId="finance-month" [value]="month()" (valueChange)="setMonth($event)" />
-      </label>
-    </div>
     <nav class="tabs" aria-label="Finanzansichten">
       <button
         [attr.aria-current]="tab() === 'overview' ? 'page' : null"
@@ -134,9 +136,6 @@
           <section class="card savings">
             <header>
               <h2>Deine Sparziele</h2>
-              <button class="text-button" (click)="tab.set('goals')">
-                Anzeigen <app-icon name="arrow" />
-              </button>
             </header>
             @if (goals().length) {
               <strong>{{ money(summary()?.savings_current) }}</strong>
@@ -147,8 +146,10 @@
                 aria-label="Sparziel-Fortschritt"
               ></progress>
             } @else {
-              <p class="empty">Wofür möchtest du sparen?</p>
-              <button class="secondary" (click)="open('goals')">Sparziel erstellen</button>
+              <div class="empty text-align-center">
+                <p>Wofür möchtest du sparen?</p>
+                <button class="secondary" (click)="open('goals')"><app-icon name="plus" />Sparziel erstellen</button>
+              </div>
             }
           </section>
         </div>

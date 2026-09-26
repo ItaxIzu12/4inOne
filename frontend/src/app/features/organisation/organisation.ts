@@ -201,7 +201,11 @@ export class Organisation {
     this.month.set(next);
     this.selectedDay.set(localDay(next));
   }
-  open(kind: 'event' | 'task', item?: PersonalEvent | PersonalTask) {
+  /** Zeigt die Auswahl Termin/Aufgabe im Dialog — nur beim allgemeinen „Neuer Eintrag“. „Aufgabe erstellen“ und
+   * „Termin erstellen“ öffnen den Dialog gleich für genau diese Art, ohne Auswahl. */
+  readonly typeChoice = signal(false);
+  open(kind: 'event' | 'task', item?: PersonalEvent | PersonalTask, choice = false) {
+    this.typeChoice.set(choice && !item);
     this.form.reset({
       title: '',
       description: '',

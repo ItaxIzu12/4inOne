@@ -265,6 +265,8 @@ REST_FRAMEWORK = {
         # teilen sich das Limit, sonst ließe es sich durch Rollenwechsel/
         # mehrere Admin-Konten umgehen.
         'household_invite': f"{env.int('RATE_LIMIT_HOUSEHOLD_INVITE', default=10)}/hour",
+        # Einladungen zu Familie & Freunde, pro Nutzer (core/contact_views.py).
+        'contact_invite': f"{env.int('RATE_LIMIT_CONTACT_INVITE', default=10)}/hour",
         # Schutz vor einem Frontend-Bug (z. B. einer Endlosschleife), der
         # versehentlich tausende Transaktionen anlegt/ändert/löscht — nicht
         # primär gegen böswillige Angreifer (finanzen/throttling.py
@@ -297,6 +299,13 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
 }
+
+# Basis-URL der Weboberfläche für Links in E-Mails (Einladungen, später Passwort-Reset).
+FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:4200').rstrip('/')
+
+# E-Mail-Versand: siehe MAILERS am Ende dieser Datei. Absender und Gültigkeit von Einladungen:
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='4inOne <no-reply@4inone.local>')
+CONTACT_INVITE_EXPIRY_DAYS = env.int('CONTACT_INVITE_EXPIRY_DAYS', default=14)
 
 # CORS
 # https://github.com/adamchainz/django-cors-headers
@@ -376,8 +385,25 @@ if not DEBUG:
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 # TODO (Backend, siehe ARCHITEKTUR.md §3.6): echten Mail-Versand konfigurieren,
 # sobald der Passwort-Reset-Flow den Versand tatsächlich auslöst.
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# Ohne EMAIL_HOST (lokal) landen Mails in der Konsole des Servers; mit EMAIL_HOST (Produktion) geht es per SMTP.
+# Zugangsdaten kommen ausschließlich aus der Umgebung: EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD,
+# EMAIL_USE_TLS.
+if env('EMAIL_HOST', default=''):
+    MAILERS = {
+        'default': {
+            'BACKEND': 'django.core.mail.backends.smtp.EmailBackend',
+            'OPTIONS': {
+                'host': env('EMAIL_HOST'),
+                'port': env.int('EMAIL_PORT', default=587),
+                'username': env('EMAIL_HOST_USER', default=''),
+                'password': env('EMAIL_HOST_PASSWORD', default=''),
+                'use_tls': env.bool('EMAIL_USE_TLS', default=True),
+            },
+        },
+    }
+else:
+    MAILERS = {
+        'default': {
+            'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+        },
+    }

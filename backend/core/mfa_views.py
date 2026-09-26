@@ -99,6 +99,15 @@ def _generate_backup_codes(user) -> list[str]:
     return plain_codes
 
 
+class MfaStatusView(APIView):
+    """Ist Zwei-Faktor-Authentifizierung für das eigene Konto aktiv? (nur Ja/Nein — nie Geheimnisse)"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({'enabled': user_has_mfa_enabled(request.user)})
+
+
 class MfaSetupView(APIView):
     """Schritt 1 der MFA-Einrichtung: Secret erzeugen + QR-Code
     zurückgeben. Aktiviert MFA noch NICHT — das passiert erst nach

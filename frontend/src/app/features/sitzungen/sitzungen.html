@@ -1,0 +1,61 @@
+<app-shell>
+  <main id="main-content" class="settings-page" tabindex="-1">
+    <a class="settings-back" routerLink="/einstellungen">‹ Einstellungen</a>
+    <header class="settings-page__head">
+      <h1>Aktive Sitzungen</h1>
+      <p>Hier siehst du, wo du angemeldet bist. Kennst du ein Gerät nicht, melde es ab.</p>
+    </header>
+
+    @if (notice()) {
+      <p class="sessions-notice" role="status">{{ notice() }}</p>
+    }
+
+    @if (loadError()) {
+      <div class="sessions-empty">
+        <p role="alert">Die Sitzungen konnten nicht geladen werden.</p>
+        <button type="button" class="sessions-button" (click)="load()">Erneut versuchen</button>
+      </div>
+    } @else if (sessions() === null) {
+      <p class="sessions-loading" role="status">Sitzungen werden geladen …</p>
+    } @else {
+      <ul class="settings-list" aria-label="Angemeldete Geräte">
+        @for (session of sessions(); track session.id) {
+          <li class="session-row">
+            <span class="settings-row__text">
+              <span class="settings-row__label">
+                {{ describe(session.device) }}
+                @if (session.current) {
+                  <span class="settings-row__badge">Dieses Gerät</span>
+                }
+              </span>
+              <span class="settings-row__hint">
+                Zuletzt aktiv {{ session.last_seen | date: 'dd.MM.yyyy, HH:mm' }} · angemeldet seit
+                {{ session.created_at | date: 'dd.MM.yyyy' }}
+              </span>
+            </span>
+            @if (!session.current) {
+              <button
+                type="button"
+                class="sessions-button"
+                [disabled]="busy() !== null"
+                [attr.aria-label]="describe(session.device) + ' abmelden'"
+                (click)="revoke(session)"
+              >
+                {{ busy() === session.id ? 'Wird abgemeldet …' : 'Abmelden' }}
+              </button>
+            }
+          </li>
+        }
+      </ul>
+
+      @if (others().length > 1) {
+        <button type="button" class="sessions-button sessions-button--wide" [disabled]="busy() !== null" (click)="revokeOthers()">
+          {{ busy() === 'all' ? 'Wird abgemeldet …' : 'Alle anderen Geräte abmelden' }}
+        </button>
+      }
+      @if (!others().length) {
+        <p class="sessions-empty-note">Du bist nur auf diesem Gerät angemeldet.</p>
+      }
+    }
+  </main>
+</app-shell>

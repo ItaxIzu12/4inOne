@@ -18,6 +18,11 @@ export interface MfaVerifyResponse {
 export class MfaApiService {
   private readonly http = inject(HttpClient);
 
+  /** Ist 2FA für das Konto aktiv? */
+  status(): Observable<{ enabled: boolean }> {
+    return this.http.get<{ enabled: boolean }>(`${API_BASE_URL}/auth/mfa/status/`);
+  }
+
   setup(): Observable<MfaSetupResponse> {
     return this.http.post<MfaSetupResponse>(`${API_BASE_URL}/auth/mfa/setup/`, {});
   }

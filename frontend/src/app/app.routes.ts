@@ -117,14 +117,8 @@ export const routes: Routes = [
       },
       {
         path: 'familie',
-        loadComponent: () =>
-          import('./features/area-preview/area-preview').then((m) => m.AreaPreview),
-        data: {
-          shell: 'bare',
-          sidebarNav: true,
-          title: 'Familie & Freunde',
-          description: 'Du entscheidest, was du mit wem teilst.',
-        },
+        loadComponent: () => import('./features/familie/familie').then((m) => m.Familie),
+        data: { shell: 'bare', sidebarNav: true },
       },
       {
         path: 'organisation',
@@ -133,6 +127,12 @@ export const routes: Routes = [
         data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
       },
     ],
+  },
+  {
+    // Link aus der Einladungs-E-Mail; ohne Anmeldung erklärt die Seite, was zu tun ist.
+    path: 'einladung/:token',
+    loadComponent: () => import('./features/einladung/einladung').then((m) => m.Einladung),
+    data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'login',
@@ -164,18 +164,14 @@ export const routes: Routes = [
     // Demo-Variante (kein Sinn ohne echtes Konto), daher eigener Guard statt
     // unter /app.
     canActivate: [authGuard],
-    data: { shell: 'bare' },
+    // Die Seite bringt ihren eigenen App-Rahmen (Seitenleiste, Kopfzeile) mit: kein globaler Header, kein Footer.
+    data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'einstellungen/profil',
-    loadComponent: () => import('./shared/coming-soon/coming-soon').then((m) => m.ComingSoon),
+    loadComponent: () => import('./features/profil/profil').then((m) => m.Profil),
     canActivate: [authGuard],
-    data: {
-      shell: 'bare',
-      title: 'Profil bearbeiten',
-      description:
-        'Name und E-Mail-Adresse ändern kannst du hier bald direkt — dieser Bereich wird gerade gebaut.',
-    },
+    data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'einstellungen/zwei-faktor',
@@ -183,18 +179,13 @@ export const routes: Routes = [
     // Oberfläche fehlte) — ersetzt den früheren ComingSoon-Platzhalter.
     loadComponent: () => import('./features/mfa-setup/mfa-setup').then((m) => m.MfaSetup),
     canActivate: [authGuard],
-    data: { shell: 'bare' },
+    data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'einstellungen/sitzungen',
-    loadComponent: () => import('./shared/coming-soon/coming-soon').then((m) => m.ComingSoon),
+    loadComponent: () => import('./features/sitzungen/sitzungen').then((m) => m.Sitzungen),
     canActivate: [authGuard],
-    data: {
-      shell: 'bare',
-      title: 'Aktive Sitzungen',
-      description:
-        'Die Übersicht deiner angemeldeten Geräte mit Möglichkeit zum Abmelden folgt hier, siehe ARCHITEKTUR.md §3.6.',
-    },
+    data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'impressum',

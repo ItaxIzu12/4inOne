@@ -138,3 +138,14 @@ def test_login_without_mfa_enabled_is_unaffected():
 
     assert response.status_code == 200
     assert 'access' in response.data
+
+
+def test_mfa_status_reports_only_yes_or_no_and_needs_a_login():
+    assert APIClient().get('/api/v1/auth/mfa/status/').status_code == 401
+    client = APIClient()
+    _register_and_login(client)
+    assert client.get('/api/v1/auth/mfa/status/').data == {'enabled': False}
+    setup = client.post('/api/v1/auth/mfa/setup/')
+    assert client.get('/api/v1/auth/mfa/status/').data == {'enabled': False}      # eingerichtet, aber noch nicht bestätigt
+    client.post('/api/v1/auth/mfa/verify/', {'code': pyotp.TOTP(setup.data['secret']).now()}, format='json')
+    assert client.get('/api/v1/auth/mfa/status/').data == {'enabled': True}

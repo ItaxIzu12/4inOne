@@ -149,8 +149,14 @@ class Transaction(models.Model):
     # angelegte Transaction bekommt created_by aber immer gesetzt (siehe
     # TransactionViewSet.perform_create(), finanzen/views.py) — in einer
     # frischen Produktions-DB wäre das Feld von Anfang an durchgehend befüllt.
+    #
+    # SET_NULL statt PROTECT: PROTECT verhinderte, dass ein Konto überhaupt
+    # gelöscht werden kann, sobald es eine Buchung erfasst hat (Recht auf
+    # Löschung, DSGVO Art. 17). Private Buchungen verschwinden ohnehin über
+    # owner (CASCADE); Haushaltsbuchungen bleiben für die übrigen Mitglieder
+    # erhalten, nur ohne Autor — wie bei updated_by unten.
     created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='transactions_created'
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions_created'
     )
     # Nachvollziehbarkeit bei Bearbeitungen (Sicherheitsprüfung PRÜFUNG 5):
     # created_by allein reicht seit Einführung von PATCH nicht mehr — sonst

@@ -1,0 +1,44 @@
+<app-shell>
+  <main id="main-content" class="settings-page" tabindex="-1">
+    <a class="settings-back" routerLink="/einstellungen">‹ Einstellungen</a>
+    <header class="settings-page__head">
+      <h1>Profil</h1>
+      <p>So erscheinst du in 4inOne.</p>
+    </header>
+
+    <form class="profile-form" (ngSubmit)="save()" novalidate>
+      <div class="profile-field">
+        <label for="profile-name">Name</label>
+        <input
+          id="profile-name"
+          name="name"
+          autocomplete="name"
+          maxlength="150"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event); saved.set(false)"
+          [attr.aria-invalid]="error() ? 'true' : null"
+          [attr.aria-describedby]="error() ? 'profile-error' : null"
+        />
+      </div>
+
+      <div class="profile-field">
+        <label for="profile-email">E-Mail-Adresse</label>
+        <input id="profile-email" name="email" [value]="email()" readonly aria-describedby="profile-email-hint" />
+        <p id="profile-email-hint" class="profile-hint">
+          Mit dieser Adresse meldest du dich an. Sie lässt sich hier noch nicht ändern.
+        </p>
+      </div>
+
+      @if (error()) {
+        <p id="profile-error" class="profile-error" role="alert">{{ error() }}</p>
+      }
+      @if (saved()) {
+        <p class="profile-saved" role="status">Gespeichert.</p>
+      }
+
+      <button type="submit" class="profile-save" [disabled]="saving() || !changed()">
+        {{ saving() ? 'Wird gespeichert …' : 'Speichern' }}
+      </button>
+    </form>
+  </main>
+</app-shell>

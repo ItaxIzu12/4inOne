@@ -1,0 +1,171 @@
+.fam-card {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid #e3e9f4;
+  border-radius: 20px;
+  background: #fff;
+}
+.fam-card--highlight {
+  border-color: #b9dfc9;
+  background: #f7fcf9;
+}
+.fam-card h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.fam-muted {
+  margin: 0;
+  color: #56627a;
+  font-size: 14px;
+}
+.fam-empty {
+  text-align: center;
+  padding: 8px 12px;
+}
+.fam-notice {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: #e8f3ec;
+  color: #1e5c3b;
+}
+.fam-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fam-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+}
+.fam-row + .fam-row {
+  border-top: 1px solid #edf0f6;
+}
+.fam-avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #d2f3e2, #daf0fc);
+  color: #315b46;
+  font-weight: 600;
+}
+.fam-avatar--pending {
+  background: #eef2fa;
+  color: #56627a;
+}
+.fam-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.fam-text strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fam-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fam-form {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+.fam-form .profile-field {
+  width: 100%;
+  max-width: 420px;
+}
+.fam-relation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.fam-relation legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.fam-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #cfd8e8;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+}
+.fam-chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.fam-chip.is-on {
+  border-color: #164ed0;
+  background: #eaf0ff;
+  color: #0f3aa0;
+  font-weight: 600;
+}
+.fam-chip:has(input:focus-visible) {
+  outline: 2px solid #164ed0;
+  outline-offset: 2px;
+}
+
+.fam-button {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid #164ed0;
+  border-radius: 12px;
+  background: #164ed0;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fam-button--ghost {
+  border-color: #cfd8e8;
+  background: #fff;
+  color: #142143;
+}
+.fam-button--danger {
+  border-color: #b3261e;
+  background: #b3261e;
+}
+.fam-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.fam-button:focus-visible {
+  outline: 2px solid #164ed0;
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .fam-row {
+    flex-wrap: wrap;
+  }
+  .fam-row > .fam-button,
+  .fam-actions {
+    width: 100%;
+  }
+  .fam-actions .fam-button {
+    flex: 1;
+  }
+  .fam-card {
+    padding: 18px;
+  }
+}

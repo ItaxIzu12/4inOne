@@ -37,17 +37,10 @@ describe('Dashboard', () => {
     f.detectChanges();
     expect(f.componentInstance.packing()[0]).toBe(true);
   });
-  it('opens search and filters navigation without accessing domain records', () => {
+  it('has no search bar any more', () => {
     const f = TestBed.createComponent(Dashboard);
     f.detectChanges();
-    f.nativeElement.querySelector('.search').click();
-    f.detectChanges();
-    const input = f.nativeElement.querySelector('#app-search');
-    input.value = 'Haushalt';
-    input.dispatchEvent(new Event('input'));
-    f.detectChanges();
-    const links = f.nativeElement.querySelectorAll('.dialog-body a');
-    expect(links.length).toBe(1);
-    expect(links[0].getAttribute('href')).toBe('/haushalt');
+    expect(f.nativeElement.querySelector('.search')).toBeNull();
+    expect(f.nativeElement.textContent).not.toContain('Suche in 4inOne');
   });
 });

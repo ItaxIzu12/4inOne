@@ -1,0 +1,141 @@
+<app-shell>
+  <main id="main-content" class="settings-page" tabindex="-1">
+    <header class="settings-page__head">
+      <h1>Familie &amp; Freunde</h1>
+      <p>Du entscheidest, was du mit wem teilst. Eine Verbindung teilt noch nichts: ihr seht euch nur mit Namen und E-Mail-Adresse.</p>
+    </header>
+
+    @if (notice()) {
+      <p class="fam-notice" role="status">{{ notice() }}</p>
+    }
+
+    @if (loadError()) {
+      <div class="fam-card">
+        <p role="alert">Deine Kontakte konnten nicht geladen werden.</p>
+        <button type="button" class="fam-button fam-button--ghost" (click)="load()">Erneut versuchen</button>
+      </div>
+    } @else if (data() === null) {
+      <p class="fam-muted" role="status">Wird geladen …</p>
+    } @else {
+      @if (data()!.received.length) {
+        <section class="fam-card fam-card--highlight" aria-labelledby="fam-received">
+          <h2 id="fam-received">Einladungen an dich</h2>
+          <ul class="fam-list">
+            @for (invite of data()!.received; track invite.token) {
+              <li class="fam-row">
+                <span class="fam-avatar" aria-hidden="true">{{ initial(invite.from_name) }}</span>
+                <span class="fam-text">
+                  <strong>{{ invite.from_name }}</strong>
+                  <span class="fam-muted">möchte dich als {{ label[invite.relation] }} hinzufügen</span>
+                </span>
+                <span class="fam-actions">
+                  <button type="button" class="fam-button" [disabled]="busy() !== null" (click)="answer(invite, true)">Annehmen</button>
+                  <button type="button" class="fam-button fam-button--ghost" [disabled]="busy() !== null" (click)="answer(invite, false)">Ablehnen</button>
+                </span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <section class="fam-card" aria-labelledby="fam-invite">
+        <h2 id="fam-invite">Person einladen</h2>
+        <form class="fam-form" (submit)="sendInvite($event)" novalidate>
+          <div class="profile-field">
+            <label for="fam-email">E-Mail-Adresse</label>
+            <input
+              id="fam-email"
+              name="email"
+              type="email"
+              autocomplete="off"
+              placeholder="name@beispiel.de"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
+              [attr.aria-invalid]="error() ? 'true' : null"
+              [attr.aria-describedby]="error() ? 'fam-error' : null"
+            />
+          </div>
+          <fieldset class="fam-relation">
+            <legend>Die Person ist</legend>
+            <label class="fam-chip" [class.is-on]="relation() === 'FAMILY'">
+              <input type="radio" name="relation" value="FAMILY" [checked]="relation() === 'FAMILY'" (change)="relation.set('FAMILY')" />Familie
+            </label>
+            <label class="fam-chip" [class.is-on]="relation() === 'FRIEND'">
+              <input type="radio" name="relation" value="FRIEND" [checked]="relation() === 'FRIEND'" (change)="relation.set('FRIEND')" />Freund:in
+            </label>
+          </fieldset>
+          @if (error()) {
+            <p id="fam-error" class="profile-error" role="alert">{{ error() }}</p>
+          }
+          <button type="submit" class="fam-button" [disabled]="busy() !== null">
+            {{ busy() === 'invite' ? 'Wird gesendet …' : 'Einladung senden' }}
+          </button>
+          <p class="fam-muted">Wir senden der Person eine E-Mail mit einem Link. Erst wenn sie annimmt, seid ihr verbunden.</p>
+        </form>
+      </section>
+
+      @if (family().length) {
+        <section class="fam-card" aria-labelledby="fam-family">
+          <h2 id="fam-family">Familie</h2>
+          <ng-container *ngTemplateOutlet="people; context: { $implicit: family() }" />
+        </section>
+      }
+      @if (friends().length) {
+        <section class="fam-card" aria-labelledby="fam-friends">
+          <h2 id="fam-friends">Freunde</h2>
+          <ng-container *ngTemplateOutlet="people; context: { $implicit: friends() }" />
+        </section>
+      }
+
+      @if (data()!.sent.length) {
+        <section class="fam-card" aria-labelledby="fam-sent">
+          <h2 id="fam-sent">Offene Einladungen</h2>
+          <ul class="fam-list">
+            @for (sent of data()!.sent; track sent.id) {
+              <li class="fam-row">
+                <span class="fam-avatar fam-avatar--pending" aria-hidden="true">{{ initial(sent.email) }}</span>
+                <span class="fam-text">
+                  <strong>{{ sent.email }}</strong>
+                  <span class="fam-muted">{{ label[sent.relation] }} · wartet auf Antwort bis {{ sent.expires_at | date: 'dd.MM.yyyy' }}</span>
+                </span>
+                <button type="button" class="fam-button fam-button--ghost" [disabled]="busy() !== null" [attr.aria-label]="'Einladung an ' + sent.email + ' zurückziehen'" (click)="cancel(sent.id)">
+                  Zurückziehen
+                </button>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      @if (isEmpty()) {
+        <p class="fam-muted fam-empty">
+          Noch niemand hier. Lade Menschen ein, mit denen du später Reisen planen oder einen Haushalt teilen möchtest.
+        </p>
+      }
+    }
+  </main>
+</app-shell>
+
+<ng-template #people let-list>
+  <ul class="fam-list">
+    @for (contact of list; track contact.id) {
+      <li class="fam-row">
+        <span class="fam-avatar" aria-hidden="true">{{ initial(contact.name) }}</span>
+        <span class="fam-text">
+          <strong>{{ contact.name }}</strong>
+          <span class="fam-muted">{{ contact.email }}</span>
+        </span>
+        @if (confirmRemove() === contact.id) {
+          <span class="fam-actions">
+            <button type="button" class="fam-button fam-button--danger" [disabled]="busy() !== null" (click)="remove(contact)">Ja, beenden</button>
+            <button type="button" class="fam-button fam-button--ghost" (click)="confirmRemove.set(null)">Abbrechen</button>
+          </span>
+        } @else {
+          <button type="button" class="fam-button fam-button--ghost" [attr.aria-label]="'Verbindung zu ' + contact.name + ' beenden'" (click)="confirmRemove.set(contact.id)">
+            Entfernen
+          </button>
+        }
+      </li>
+    }
+  </ul>
+</ng-template>

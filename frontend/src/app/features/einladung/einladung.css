@@ -1,0 +1,66 @@
+.inv-page {
+  min-height: 100dvh;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 28px;
+  padding: 48px 20px;
+  background: linear-gradient(160deg, #f6f9ff, #eefaf3);
+}
+.inv-brand {
+  font-size: 24px;
+  font-weight: 700;
+  color: #142143;
+  text-decoration: none;
+}
+.inv-card {
+  display: grid;
+  gap: 16px;
+  width: min(520px, 100%);
+  padding: 28px;
+  border: 1px solid #e3e9f4;
+  border-radius: 22px;
+  background: #fff;
+}
+.inv-card h1 {
+  margin: 0;
+  font-size: 24px;
+}
+.inv-card p {
+  margin: 0;
+  line-height: 1.55;
+}
+.inv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.inv-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 24px;
+  border: 1px solid #164ed0;
+  border-radius: 14px;
+  background: #164ed0;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.inv-button--ghost {
+  border-color: #cfd8e8;
+  background: #fff;
+  color: #142143;
+}
+.inv-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.inv-button:focus-visible,
+.inv-brand:focus-visible {
+  outline: 2px solid #164ed0;
+  outline-offset: 2px;
+}

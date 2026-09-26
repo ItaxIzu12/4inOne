@@ -8,6 +8,15 @@ export interface AuthUser {
   email: string;
 }
 
+/** Ein angemeldetes Gerät (siehe Einstellungen → Aktive Sitzungen). */
+export interface LoginSession {
+  id: string;
+  device: string;
+  created_at: string;
+  last_seen: string;
+  current: boolean;
+}
+
 export interface AuthResponse {
   access: string;
   user: AuthUser;
@@ -117,6 +126,26 @@ export class AuthService {
       token,
       password,
     });
+  }
+
+  /** Eigenen Namen ändern; die Anzeige (Menü, Begrüßung) folgt sofort. */
+  updateProfile(name: string): Observable<AuthUser> {
+    return this.http
+      .patch<AuthUser>(`${API_BASE_URL}/auth/me/`, { name })
+      .pipe(tap((user) => this._currentUser.set(user)));
+  }
+
+  // Mit Cookies: nur so erkennt das Backend, WELCHES der Geräte gerade fragt („Dieses Gerät“).
+  sessions(): Observable<LoginSession[]> {
+    return this.http.get<LoginSession[]>(`${API_BASE_URL}/auth/sessions/`, { withCredentials: true });
+  }
+
+  revokeSession(id: string): Observable<void> {
+    return this.http.delete<void>(`${API_BASE_URL}/auth/sessions/${id}/`, { withCredentials: true });
+  }
+
+  revokeOtherSessions(): Observable<void> {
+    return this.http.delete<void>(`${API_BASE_URL}/auth/sessions/`, { withCredentials: true });
   }
 
   private applySession(res: AuthResponse): void {

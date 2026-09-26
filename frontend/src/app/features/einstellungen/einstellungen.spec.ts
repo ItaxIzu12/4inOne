@@ -11,26 +11,37 @@ describe('Einstellungen', () => {
     }).compileComponents();
   });
 
-  it('has a skip-link, exactly one h1 and renders the account rows plus Abmelden', () => {
+  function render() {
     const fixture = TestBed.createComponent(Einstellungen);
     fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
+    return fixture.nativeElement as HTMLElement;
+  }
 
-    expect(compiled.querySelector('.skip-link')).toBeTruthy();
-    expect(compiled.querySelectorAll('h1').length).toBe(1);
-
-    const rows = compiled.querySelectorAll('.settings-row');
-    // 3 Konto-Zeilen + 1 Abmelden-Button — Rechtliches lebt im Footer, nicht hier.
-    expect(rows.length).toBe(4);
-    expect(compiled.textContent).toContain('Abmelden');
+  it('lives inside the app shell, has exactly one h1 and one skip-link', () => {
+    const el = render();
+    expect(el.querySelector('app-shell')).toBeTruthy();
+    expect(el.querySelectorAll('h1').length).toBe(1);
+    expect(el.querySelectorAll('.skip-link').length).toBe(1);
   });
 
-  it('does not duplicate the legal links as settings rows (they live in the global footer, see app.spec.ts)', () => {
-    const fixture = TestBed.createComponent(Einstellungen);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
+  it('groups the settings under headings and links every row', () => {
+    const el = render();
+    const titles = Array.from(el.querySelectorAll('.settings-group__title')).map((h) => h.textContent?.trim());
+    expect(titles).toEqual(['Konto', 'Sicherheit', 'Datenschutz und Rechtliches']);
+    const links = Array.from(el.querySelectorAll('a.settings-row')).map((a) => a.getAttribute('href'));
+    expect(links).toEqual([
+      '/einstellungen/profil',
+      '/einstellungen/zwei-faktor',
+      '/einstellungen/sitzungen',
+      '/datenschutz',
+      '/nutzungsbedingungen',
+      '/impressum',
+      '/barrierefreiheit',
+    ]);
+    expect(el.querySelectorAll('.settings-row--soon, .settings-row__badge').length).toBe(0); // nichts mehr „bald“
+  });
 
-    expect(compiled.textContent).not.toContain('Rechtliches');
-    expect(compiled.querySelector('app-footer')).toBeNull();
+  it('offers Abmelden', () => {
+    expect(render().textContent).toContain('Abmelden');
   });
 });

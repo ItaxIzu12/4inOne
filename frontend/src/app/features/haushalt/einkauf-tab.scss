@@ -7,13 +7,12 @@
   gap: 8px;
   min-height: 44px;
   padding: 0 14px;
-  border: 1.5px solid var(--border-strong);
-  border-radius: var(--radius-buttons);
-  background: var(--surface);
-  color: var(--text);
+  border: 1px solid #f2cadd;
+  border-radius: 13px;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
   font: inherit;
   font-size: 14px;
-  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -22,8 +21,8 @@
   height: 20px;
 }
 .mode-toggle.is-on {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: #a02b62;
+  background: linear-gradient(#c03c78, #a82d64);
   color: var(--accent-ink);
 }
 .mode-hint {
@@ -112,12 +111,11 @@
   white-space: nowrap;
 }
 .checkout-bar .btn-primary {
+  border: 0;
+  box-shadow: none;
   background: #fff;
   color: var(--accent);
   white-space: nowrap;
-}
-.checkout-bar .btn-primary:hover {
-  background: var(--lavender);
 }
 .suggest-intro {
   margin: 6px 0 14px;

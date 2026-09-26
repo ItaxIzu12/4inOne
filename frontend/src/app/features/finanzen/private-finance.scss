@@ -10,9 +10,9 @@
   --lavender: #e3f6ec;
 }
 .finance-page {
-  max-width: 1200px;
+  max-width: 1440px;
   margin: auto;
-  padding: 32px;
+  padding: 34px;
 }
 .identity,
 .period {
@@ -33,8 +33,8 @@
   gap: 16px;
 }
 .wallet {
-  width: 58px;
-  height: 58px;
+  width: 60px;
+  height: 60px;
   display: grid;
   place-items: center;
   color: #13b759;
@@ -120,7 +120,7 @@ select:focus-visible {
   display: flex;
   gap: 4px;
   padding: 5px;
-  margin: 16px 0 20px;
+  margin: 28px 0 22px; /* wie die Reiter in Organisation und Haushalt */
   border: 1px solid #dcece3;
   background: #f7fcf9;
   border-radius: 16px;
@@ -139,9 +139,14 @@ select:focus-visible {
   font-weight: 650;
   box-shadow: 0 3px 7px #34875510;
 }
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .period {
-  /* Steht über den Reitern: der Monat gilt für alle. */
-  margin: 24px 0 0;
+  /* Steht im Kopf, oberhalb der Reiter: der Monat gilt für alle. */
+  margin: 0;
   font-size: 13px;
   color: #587062;
 }
@@ -519,15 +524,24 @@ progress.over::-moz-progress-bar {
   }
   .identity {
     gap: 10px;
+    flex: 1 1 0; /* schrumpft, damit der Button auch auf sehr schmalen Bildschirmen oben rechts bleibt */
   }
   .identity p {
     font-size: 12px;
   }
-  .page-head > .primary {
+  /* Die Aktionen lösen sich auf: der Button bleibt oben rechts, der Monat wird eine volle Zeile darunter. */
+  .head-actions {
+    display: contents;
+  }
+  .head-actions > .primary {
     margin-left: auto;
   }
+  .head-actions > .period {
+    order: 3;
+    flex: 1 0 100%;
+  }
   .tabs {
-    margin-top: 20px;
+    margin-top: 16px;
   }
   .tabs button {
     font-size: 12px;
@@ -580,10 +594,10 @@ progress.over::-moz-progress-bar {
     gap: 8px;
   }
   /* Mobil nur das Plus, der Name bleibt für Screenreader (wie in Organisation und Haushalt). */
-  .page-head > .primary {
+  .head-actions > .primary {
     padding: 10px;
   }
-  .page-head > .primary span {
+  .head-actions > .primary span {
     position: absolute;
     width: 1px;
     height: 1px;

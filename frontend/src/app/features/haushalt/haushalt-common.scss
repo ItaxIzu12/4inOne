@@ -33,57 +33,53 @@
   gap: 12px;
   margin-bottom: 16px;
 }
+// Schrift wie in Finanzen und Organisation (h2 19 px, h3 17 px).
 h2 {
   margin: 0;
   font-size: 19px;
   line-height: 1.3;
+  letter-spacing: -0.3px;
 }
 h3 {
   margin: 0;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--text-muted);
+  font-size: 17px;
+  line-height: 1.4;
 }
 .muted {
   margin: 0;
   color: var(--text-muted);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 .small {
   font-size: 13px;
 }
 .btn-primary,
 .btn-secondary {
+  // Buttons wie in Finanzen und Organisation: 13 px Rundung, 14 px Schrift, dezenter Farbverlauf beim Hauptknopf.
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: 44px;
-  padding: 0 20px;
-  border-radius: var(--radius-buttons);
+  padding: 10px 16px;
+  border-radius: 13px;
   font: inherit;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
 }
 .btn-primary {
-  border: 0;
-  background: var(--accent);
+  border: 1px solid #a02b62;
+  background: linear-gradient(#c03c78, #a82d64);
   color: var(--accent-ink);
-}
-.btn-primary:hover {
-  background: var(--accent-hover);
+  box-shadow:
+    0 4px 9px #b8336f26,
+    inset 0 1px 1px #ffffff40;
 }
 .btn-secondary {
-  border: 1.5px solid var(--border-strong);
-  background: var(--surface);
-  color: var(--text);
-}
-.btn-secondary:hover {
-  border-color: var(--accent);
+  border: 1px solid #f2cadd;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
 }
 .btn-primary:disabled,
 .btn-secondary:disabled {
@@ -95,14 +91,10 @@ h3 {
   padding: 0 4px;
   border: 0;
   background: none;
-  color: var(--accent);
+  color: var(--accent-hover);
   font: inherit;
   font-size: 14px;
-  font-weight: 700;
   cursor: pointer;
-}
-.btn-link:hover {
-  text-decoration: underline;
 }
 .btn-danger-link {
   color: var(--danger);

@@ -9,7 +9,7 @@
       <div class="card-head">
         <h2 id="tasks-heading">{{ isRoutines() ? 'Deine Routinen' : 'Anstehende Aufgaben' }}</h2>
         <button type="button" class="btn-primary" (click)="openNew()">
-          <span aria-hidden="true">＋</span> {{ isRoutines() ? 'Routine' : 'Aufgabe' }}
+          <app-icon name="plus" />{{ isRoutines() ? 'Routine' : 'Aufgabe' }}
         </button>
       </div>
 

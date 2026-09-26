@@ -1,41 +1,48 @@
-<a class="skip-link" href="#main-content">Zum Hauptinhalt springen</a>
+<app-shell>
+  <main id="main-content" class="settings-page" tabindex="-1">
+    <header class="settings-page__head">
+      <h1>Einstellungen</h1>
+      <p>Dein Konto, deine Sicherheit und deine Daten.</p>
+    </header>
 
-<main id="main-content" class="settings-page">
-  <header class="settings-page__head">
-    <a class="settings-page__back" routerLink="/" aria-label="Zurück zum Dashboard">
-      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-    </a>
-    <h1>Einstellungen</h1>
-  </header>
+    <section class="settings-profile" aria-label="Dein Profil">
+      <span class="settings-profile__avatar" aria-hidden="true">{{ initials() }}</span>
+      <div class="settings-profile__text">
+        <strong>{{ name() }}</strong>
+        <span>{{ email() }}</span>
+      </div>
+    </section>
 
-  <h2 class="sr-only">Konto</h2>
-  <ul class="settings-list" aria-label="Konto">
-    @for (row of accountRows; track row.route) {
-      <li>
-        <a [routerLink]="row.route" class="settings-row">
-          <span class="settings-row__icon">
-            @switch (row.icon) {
-              @case ('profile') { <icon-profile /> }
-              @case ('two-factor') { <icon-two-factor /> }
-              @case ('sessions') { <icon-sessions /> }
-            }
-          </span>
-          <span class="settings-row__label">{{ row.label }}</span>
-          <icon-chevron class="settings-row__chevron" />
-        </a>
-      </li>
+    @for (group of groups; track group.title) {
+      <section class="settings-group" [attr.aria-labelledby]="'settings-' + group.id">
+        <h2 class="settings-group__title" [id]="'settings-' + group.id">{{ group.title }}</h2>
+        <ul class="settings-list">
+          @for (row of group.rows; track row.label) {
+            <li>
+              <a [routerLink]="row.route" class="settings-row">
+                <span class="settings-row__icon">
+                  @switch (row.icon) {
+                    @case ('profile') { <icon-profile /> }
+                    @case ('two-factor') { <icon-two-factor /> }
+                    @case ('sessions') { <icon-sessions /> }
+                    @case ('legal') { <icon-legal /> }
+                    @case ('info') { <icon-info /> }
+                  }
+                </span>
+                <span class="settings-row__text">
+                  <span class="settings-row__label">{{ row.label }}</span>
+                  <span class="settings-row__hint">{{ row.hint }}</span>
+                </span>
+                <icon-chevron class="settings-row__chevron" />
+              </a>
+            </li>
+          }
+        </ul>
+      </section>
     }
-  </ul>
 
-  <hr class="settings-divider" />
-
-  <button type="button" class="settings-row settings-row--button" (click)="logout()">
-    <span class="settings-row__icon"><icon-logout /></span>
-    <span class="settings-row__label">Abmelden</span>
-  </button>
-</main>
-
-<!-- Rechtliches (Impressum/Datenschutz/Nutzungsbedingungen/Barrierefreiheit)
-     steht bewusst nicht als Einstellungs-Zeilen hier, sondern im echten
-     Footer — der wird jetzt global von app.html gerendert (siehe app.ts),
-     nicht mehr hier einzeln eingebunden. -->
+    <button type="button" class="settings-logout" (click)="logout()">
+      <icon-logout />Abmelden
+    </button>
+  </main>
+</app-shell>

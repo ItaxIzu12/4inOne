@@ -1,137 +1,167 @@
-.skip-link {
-  position: absolute;
-  top: -60px;
-  left: var(--space-16);
-  z-index: 100;
-  background: var(--color-violet-ink);
-  color: #fff;
-  padding: var(--space-10) var(--space-16);
-  border-radius: var(--radius-inputs);
-  font-weight: 700;
-  text-decoration: none;
-  transition: top 0.15s ease;
-}
-.skip-link:focus { top: var(--space-16); }
-
+/* Einstellungen im App-Rahmen (Seitenleiste, Kopfzeile). Ruhig: weiße Karten, feine Linien, eine Spalte. */
 .settings-page {
-  max-width: 560px;
+  max-width: 680px;
   margin: 0 auto;
-  min-height: 100dvh;
-  padding: var(--space-20) var(--space-16) var(--space-56);
+  padding: 32px 20px 56px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-16);
-  background: var(--color-cloud-canvas);
+  gap: 28px;
+}
+.settings-page__head h1 {
+  margin: 0;
+  font-size: 30px;
+}
+.settings-page__head p {
+  margin: 6px 0 0;
+  color: #56627a;
 }
 
-.settings-page__head {
+.settings-profile {
   display: flex;
   align-items: center;
-  gap: var(--space-12);
-  padding: var(--space-8) 0;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #e3e9f4;
+  border-radius: 20px;
+  background: #fff;
 }
-
-.settings-page__back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
+.settings-profile__avatar {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
   border-radius: 50%;
-  color: var(--color-midnight-plum);
-  text-decoration: none;
-  transition: background-color 0.15s ease;
+  background: linear-gradient(145deg, #d2f3e2, #daf0fc);
+  font-size: 22px;
+  color: #315b46;
 }
-.settings-page__back:hover { background: var(--color-fog-surface); }
-
-.settings-page__head h1 {
-  font-size: var(--text-heading-sm);
+.settings-profile__text {
+  display: grid;
+  min-width: 0;
+}
+.settings-profile__text strong {
+  font-size: 18px;
+}
+.settings-profile__text span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #56627a;
 }
 
+.settings-group__title {
+  margin: 0 0 10px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #56627a;
+}
 .settings-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  background: var(--color-card-white);
-  border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-cards);
+  border: 1px solid #e3e9f4;
+  border-radius: 20px;
+  background: #fff;
   overflow: hidden;
 }
-.settings-list li + li { border-top: 1px solid var(--color-hairline); }
-
+.settings-list li + li {
+  border-top: 1px solid #edf0f6;
+}
 .settings-row {
   display: flex;
   align-items: center;
-  gap: var(--space-12);
-  min-height: 48px;
-  width: 100%;
-  padding: var(--space-10) var(--space-16);
-  background: var(--color-card-white);
-  border: none;
-  color: var(--color-midnight-plum);
-  font-size: 17px;
-  font-weight: 500;
-  font-family: var(--font-body);
+  gap: 14px;
+  min-height: 64px;
+  padding: 12px 18px;
+  color: #142143;
   text-decoration: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
 }
-.settings-row:hover,
-.settings-row:focus-visible { background: var(--color-fog-surface); }
-
+a.settings-row:hover {
+  background: #f6f8fc;
+}
+a.settings-row:focus-visible {
+  outline: 2px solid #164ed0;
+  outline-offset: -2px;
+}
 .settings-row__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 11px;
+  background: #eef2fa;
+  color: #3b4f7a;
+}
+.settings-row__icon .kompass-icon {
+  width: 20px;
+  height: 20px;
+}
+.settings-row__text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.settings-row__label {
+  font-size: 16px;
+  font-weight: 600;
+}
+.settings-row__hint {
+  font-size: 13px;
+  color: #56627a;
+}
+.settings-row__chevron {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #56627a;
+}
+.settings-row__badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef2fa;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3b4f7a;
+}
+
+.settings-logout {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  border-radius: 9px;
-  background: var(--color-fog-surface);
-  color: var(--color-violet-ink);
-  font-size: 17px;
+  gap: 10px;
+  min-height: 52px;
+  border: 1px solid #d7deec;
+  border-radius: 16px;
+  background: #fff;
+  color: #142143;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.settings-logout:hover {
+  background: #f6f8fc;
+}
+.settings-logout:focus-visible {
+  outline: 2px solid #164ed0;
+  outline-offset: 2px;
+}
+.settings-logout .kompass-icon {
+  width: 20px;
+  height: 20px;
 }
 
-.settings-row__label { flex: 1; }
-
-.settings-row__chevron {
-  flex-shrink: 0;
-  font-size: 16px;
-  color: var(--color-dusk-helper);
-}
-
-/* Abmelden ist kein Link (keine Chevron), bewusst NICHT
-   --color-danger-coral: Abmelden ist keine destruktive Aktion. */
-.settings-row--button {
-  border-radius: var(--radius-cards);
-  border: 1px solid var(--color-hairline);
-}
-.settings-row--button .settings-row__icon {
-  background: var(--color-fog-surface);
-  color: var(--color-dusk-helper);
-}
-
-.settings-divider {
-  border: none;
-  border-top: 1px solid var(--color-hairline);
-  margin: 0;
-}
-
-.settings-group__title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  font-size: var(--text-caption);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-dusk-helper);
-  margin-bottom: var(--space-10);
-}
-.settings-group__icon { font-size: 16px; }
-
-@media (min-width: 900px) {
-  .settings-page { padding-top: var(--space-40); }
+@media (max-width: 760px) {
+  .settings-page {
+    padding-top: 12px;
+  }
+  .settings-page__head h1 {
+    font-size: 26px;
+  }
+  .settings-row {
+    padding: 12px 14px;
+  }
 }

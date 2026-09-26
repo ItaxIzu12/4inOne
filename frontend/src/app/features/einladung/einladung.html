@@ -1,0 +1,46 @@
+<main id="main-content" class="inv-page" tabindex="-1">
+  <a class="inv-brand" routerLink="/">4inOne</a>
+  <section class="inv-card">
+    @switch (state()) {
+      @case ('loading') {
+        <p role="status">Einladung wird geladen …</p>
+      }
+      @case ('guest') {
+        <h1>Du wurdest zu 4inOne eingeladen</h1>
+        <p>
+          Melde dich an oder erstelle ein Konto, und zwar mit der E-Mail-Adresse, an die die Einladung gegangen ist. Danach
+          findest du sie unter „Familie &amp; Freunde“ und kannst sie annehmen.
+        </p>
+        <div class="inv-actions">
+          <a routerLink="/login" class="inv-button">Anmelden</a>
+          <a routerLink="/registrieren" class="inv-button inv-button--ghost">Konto erstellen</a>
+        </div>
+      }
+      @case ('ready') {
+        <h1>{{ invite()!.from_name }} lädt dich ein</h1>
+        <p>
+          {{ invite()!.from_name }} möchte dich als <strong>{{ relationLabel() }}</strong> hinzufügen. Mit der Verbindung teilt ihr noch
+          nichts, ihr seht euch nur mit Namen und E-Mail-Adresse. Die Einladung gilt bis
+          {{ invite()!.expires_at | date: 'dd.MM.yyyy' }}.
+        </p>
+        @if (error()) {
+          <p class="profile-error" role="alert">{{ error() }}</p>
+        }
+        <div class="inv-actions">
+          <button type="button" class="inv-button" [disabled]="busy()" (click)="answer(true)">Annehmen</button>
+          <button type="button" class="inv-button inv-button--ghost" [disabled]="busy()" (click)="answer(false)">Ablehnen</button>
+        </div>
+      }
+      @case ('invalid') {
+        <h1>Diese Einladung gilt nicht</h1>
+        <p>
+          Sie ist abgelaufen, wurde schon beantwortet oder gehört zu einer anderen E-Mail-Adresse. Prüfe, ob du mit dem richtigen
+          Konto angemeldet bist.
+        </p>
+        <div class="inv-actions">
+          <a routerLink="/app/familie" class="inv-button">Zu Familie &amp; Freunde</a>
+        </div>
+      }
+    }
+  </section>
+</main>

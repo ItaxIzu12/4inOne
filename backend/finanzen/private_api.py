@@ -16,6 +16,24 @@ from .savings import PLAN_HORIZON_MONTHS, SavingsPlanner, _next_month, contribut
 from .services import month_bounds
 
 ZERO = Decimal('0.00')
+# Grenzen gegen Tippfehler (eine Null zu viel, falsches Jahr) — wie im alten
+# Haushalts-Finanzmodell (finanzen/serializers.py _MAX_AMOUNT). Frontend:
+# private-finance-api.service.ts MAX_AMOUNT / bookingDateBounds.
+MAX_AMOUNT = Decimal('999999.99')
+BOOKING_YEARS_BACK = 10    # Aufbewahrungsfrist für Steuerunterlagen
+BOOKING_YEARS_AHEAD = 1    # geplante Ausgaben, z. B. die Miete nächsten Monat
+
+def booking_date_bounds(today=None):
+    today = today or timezone.localdate()
+    def shift(years):
+        try:
+            return today.replace(year=today.year + years)
+        except ValueError:  # 29. Februar
+            return today.replace(year=today.year + years, day=28)
+    return shift(-BOOKING_YEARS_BACK), shift(BOOKING_YEARS_AHEAD)
+
+MAX_AMOUNT_MESSAGES = {'max_value': 'Der Betrag darf höchstens 999.999,99 € betragen.'}
+
 def money(value):
     return format(value or ZERO, '.2f')
 
@@ -36,7 +54,7 @@ class PrivateTransactionSerializer(CurrencyMixin, serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.none())
     date = serializers.DateField(source='datum')
     note = serializers.CharField(source='description', max_length=255, allow_blank=True, required=False)
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('.01'))
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('.01'), max_value=MAX_AMOUNT, error_messages=MAX_AMOUNT_MESSAGES)
     class Meta:
         model = Transaction
         fields = ['id', 'amount', 'type', 'category', 'date', 'note', 'currency']
@@ -44,9 +62,16 @@ class PrivateTransactionSerializer(CurrencyMixin, serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['category'].queryset = Category.objects.filter(owner=self.context['request'].user)
+    def validate_date(self, value):
+        earliest, latest = booking_date_bounds()
+        if value < earliest:
+            raise ValidationError(f'Das Datum darf höchstens {BOOKING_YEARS_BACK} Jahre zurückliegen.')
+        if value > latest:
+            raise ValidationError('Das Datum darf höchstens ein Jahr in der Zukunft liegen.')
+        return value
 
 class MonthlyBudgetSerializer(CurrencyMixin, serializers.ModelSerializer):
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=ZERO)
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=ZERO, max_value=MAX_AMOUNT, error_messages=MAX_AMOUNT_MESSAGES)
     class Meta:
         model = MonthlyBudget
         fields = ['id', 'month', 'end_month', 'open_ended', 'amount', 'currency']
@@ -80,14 +105,14 @@ def _months_between(first, last):
     return months
 
 class SavingsGoalSerializer(CurrencyMixin, serializers.ModelSerializer):
-    target_amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('.01'))
-    current_amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=ZERO, default=ZERO)
+    target_amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('.01'), max_value=MAX_AMOUNT, error_messages=MAX_AMOUNT_MESSAGES)
+    current_amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=ZERO, max_value=MAX_AMOUNT, error_messages=MAX_AMOUNT_MESSAGES, default=ZERO)
     class Meta:
         model = SavingsGoal
         fields = ['id', 'title', 'target_amount', 'current_amount', 'target_date', 'status', 'currency',
                   'monthly_amount', 'plan_month', 'plan_end_month', 'plan_open_ended']
         read_only_fields = ['id']
-        extra_kwargs = {'monthly_amount': {'min_value': Decimal('.01'), 'allow_null': True, 'required': False}}
+        extra_kwargs = {'monthly_amount': {'min_value': Decimal('.01'), 'max_value': MAX_AMOUNT, 'error_messages': MAX_AMOUNT_MESSAGES, 'allow_null': True, 'required': False}}
     def validate_plan_month(self, value):
         return value.replace(day=1) if value else value
     def validate_plan_end_month(self, value):

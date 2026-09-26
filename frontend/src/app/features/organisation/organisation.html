@@ -5,10 +5,9 @@
         <span class="heading-icon"><app-icon name="calendar" /></span>
         <div>
           <h1>Organisation</h1>
-          <p>Plane deinen Alltag. Behalte alles im Blick.</p>
         </div>
       </div>
-      <button class="primary" (click)="open(tab() === 'tasks' ? 'task' : 'event')">
+      <button class="primary" (click)="open(tab() === 'tasks' ? 'task' : 'event', undefined, true)">
         <app-icon name="plus" /><span>Neuer Eintrag</span>
       </button>
     </header>
@@ -70,7 +69,7 @@
                   <app-icon name="check" />
                   <h3>Heute hast du frei geplant</h3>
                   <p>Keine Termine oder fälligen Aufgaben. Zeit für das, was dir wichtig ist.</p>
-                  <button class="secondary" (click)="open('task')">Aufgabe erstellen</button>
+                  <button class="secondary" (click)="open('task')"><app-icon name="plus" />Aufgabe erstellen</button>
                 </div>
               }
             </div>
@@ -78,7 +77,7 @@
             <header class="card-heading">
               <h2>{{ dayLabel() }}</h2>
             </header>
-            <button class="text-button" (click)="open('event')">
+            <button class="secondary" (click)="open('event')">
               <app-icon name="plus" />Termin erstellen
             </button>
             @for (event of dayEvents(); track event.id) {
@@ -103,7 +102,7 @@
           } @else {
             <header class="card-heading">
               <h2>Deine Aufgaben</h2>
-              <button class="text-button" (click)="open('task')">
+              <button class="secondary" (click)="open('task')">
                 <app-icon name="plus" />Aufgabe erstellen
               </button>
             </header>
@@ -193,18 +192,18 @@
             </section>
           </aside>
         }
-      </div>
-      <div class="stats" aria-label="Dein Überblick">
-        <button (click)="selectToday()">
-          <app-icon name="calendar" /><strong>{{ today()?.event_count }}</strong
-          ><span>Termine heute</span></button
-        ><button (click)="tab.set('tasks'); filter.set('active')">
-          <app-icon name="check" /><strong>{{ today()?.open_task_count }}</strong
-          ><span>offene Aufgaben</span>
-        </button>
-        <div>
-          <app-icon name="bell" /><strong>{{ today()?.overdue_count }}</strong
-          ><span>überfällig</span>
+        <div class="stats" aria-label="Dein Überblick">
+          <button (click)="selectToday()">
+            <app-icon name="calendar" /><strong>{{ today()?.event_count }}</strong
+            ><span>Termine heute</span></button
+          ><button (click)="tab.set('tasks'); filter.set('active')">
+            <app-icon name="check" /><strong>{{ today()?.open_task_count }}</strong
+            ><span>offene Aufgaben</span>
+          </button>
+          <div>
+            <app-icon name="bell" /><strong>{{ today()?.overdue_count }}</strong
+            ><span>überfällig</span>
+          </div>
         </div>
       </div>
     }
@@ -222,7 +221,7 @@
   (closed)="close()"
   (deleted)="remove()"
 >
-  @if (!editId()) {
+  @if (!editId() && typeChoice()) {
     <div class="entry-types">
       <button type="button" [attr.aria-pressed]="editor() === 'event'" (click)="editor.set('event')">Termin</button>
       <button type="button" [attr.aria-pressed]="editor() === 'task'" (click)="editor.set('task')">Aufgabe</button>

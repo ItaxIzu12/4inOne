@@ -8,8 +8,11 @@ from core.auth_views import (
     PasswordResetRequestView,
     RefreshView,
     RegisterView,
+    ProfileView,
+    SessionDetailView,
+    SessionListView,
 )
-from core.mfa_views import MfaSetupView, MfaVerifyView
+from core.mfa_views import MfaSetupView, MfaStatusView, MfaVerifyView
 
 urlpatterns = [
     path('csrf/', CsrfTokenView.as_view(), name='auth-csrf'),
@@ -19,6 +22,10 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='auth-logout'),
     path('password-reset/request/', PasswordResetRequestView.as_view(), name='auth-password-reset-request'),
     path('password-reset/confirm/', PasswordResetConfirmView.as_view(), name='auth-password-reset-confirm'),
+    path('me/', ProfileView.as_view(), name='auth-me'),
+    path('sessions/', SessionListView.as_view(), name='auth-sessions'),
+    path('sessions/<str:sid>/', SessionDetailView.as_view(), name='auth-session-detail'),
+    path('mfa/status/', MfaStatusView.as_view(), name='auth-mfa-status'),
     path('mfa/setup/', MfaSetupView.as_view(), name='auth-mfa-setup'),
     path('mfa/verify/', MfaVerifyView.as_view(), name='auth-mfa-verify'),
 ]

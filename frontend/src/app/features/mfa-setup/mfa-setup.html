@@ -1,71 +1,130 @@
-<main class="mfa-page">
-  <div class="mfa-inner">
-    <p class="mfa-eyebrow">Einstellungen</p>
-    <h1>Zwei-Faktor-Authentifizierung</h1>
+<app-shell>
+  <main id="main-content" class="settings-page" tabindex="-1">
+    <a class="settings-back" routerLink="/einstellungen">‹ Einstellungen</a>
+    <header class="settings-page__head">
+      <h1>Zwei-Faktor-Authentifizierung</h1>
+      <p>Ein zweiter Schritt bei der Anmeldung schützt dein Konto, auch wenn jemand dein Passwort kennt.</p>
+    </header>
 
-    @if (alreadyEnabled()) {
-      <p class="mfa-note">Zwei-Faktor-Authentifizierung ist für dein Konto bereits aktiv.</p>
-      <a routerLink="/app" class="btn-primary">Zurück zum Dashboard</a>
-    } @else if (step() === 'start') {
-      <p class="mfa-lede">
-        Zusätzlicher Schutz für deine Finanzdaten — dauert etwa eine Minute. Du brauchst eine
-        Authenticator-App (z. B. Google Authenticator, Authy).
-      </p>
-      @if (error()) {
-        <p class="field-error" role="alert">{{ error() }}</p>
-      }
-      <button type="button" class="btn-primary" (click)="startSetup()" [disabled]="loading()">
-        {{ loading() ? 'Wird vorbereitet …' : 'Einrichtung starten' }}
-      </button>
-    } @else if (step() === 'verify') {
-      <p class="mfa-lede">Scanne den QR-Code mit deiner Authenticator-App und gib den angezeigten 6-stelligen Code ein.</p>
-
-      @if (qrCode()) {
-        <img [src]="qrCode()" alt="QR-Code für die Authenticator-App-Einrichtung" class="mfa-qr" />
-      }
-      @if (secret()) {
-        <p class="mfa-secret">Manuelle Eingabe: <code>{{ secret() }}</code></p>
-      }
-
-      <form class="mfa-verify-form" (submit)="onVerifySubmit($event)">
-        <div class="field">
-          <label for="mfa-code">6-stelliger Code</label>
-          <input
-            id="mfa-code"
-            type="text"
-            inputmode="numeric"
-            autocomplete="one-time-code"
-            maxlength="6"
-            [value]="code()"
-            (input)="code.set($any($event.target).value)"
-          />
-        </div>
-
-        @if (error()) {
-          <p class="field-error" role="alert">{{ error() }}</p>
+    @if (stepIndex() >= 0) {
+      <ol class="mfa-steps" aria-label="Fortschritt der Einrichtung">
+        @for (label of steps; track label; let i = $index) {
+          <li [class.is-done]="i < stepIndex()" [class.is-current]="i === stepIndex()" [attr.aria-current]="i === stepIndex() ? 'step' : null">
+            <span class="mfa-steps__dot" aria-hidden="true">{{ i < stepIndex() ? '✓' : i + 1 }}</span>
+            <span class="mfa-steps__label">{{ label }}</span>
+          </li>
         }
-
-        <button type="submit" class="btn-primary" [disabled]="loading()">
-          {{ loading() ? 'Wird geprüft …' : 'Bestätigen' }}
-        </button>
-      </form>
-    } @else if (step() === 'done') {
-      <p class="mfa-note mfa-note--success">Zwei-Faktor-Authentifizierung ist jetzt aktiv.</p>
-
-      <div class="mfa-backup-codes">
-        <h2>Deine Backup-Codes</h2>
-        <p class="mfa-lede">
-          Sichere diese Codes jetzt an einem sicheren Ort — jeder Code funktioniert einmalig, falls du dein
-          Gerät verlierst. Sie werden dir nur dieses eine Mal angezeigt.
-        </p>
-        <ul class="mfa-backup-codes__list">
-          @for (backupCode of backupCodes(); track backupCode) {
-            <li><code>{{ backupCode }}</code></li>
-          }
-        </ul>
-      </div>
-
-      <button type="button" class="btn-primary" (click)="finish()">Fertig</button>
+      </ol>
     }
-  </div>
-</main>
+
+    @switch (step()) {
+      @case ('loading') {
+        <p class="mfa-muted" role="status">Wird geladen …</p>
+      }
+
+      @case ('active') {
+        <section class="mfa-card mfa-card--ok" aria-labelledby="mfa-active-title">
+          <span class="mfa-badge mfa-badge--ok">Aktiv</span>
+          <h2 id="mfa-active-title">Dein Konto ist zusätzlich geschützt</h2>
+          <p>
+            Bei jeder Anmeldung fragen wir nach einem Code aus deiner Authenticator-App. Hast du dein Gerät nicht dabei,
+            hilft einer deiner Backup-Codes.
+          </p>
+          <a routerLink="/einstellungen" class="mfa-button mfa-button--ghost">Zurück zu den Einstellungen</a>
+        </section>
+      }
+
+      @case ('start') {
+        <section class="mfa-card" aria-labelledby="mfa-start-title">
+          <span class="mfa-badge">Nicht aktiv</span>
+          <h2 id="mfa-start-title">Schritt 1: Lade eine Authenticator-App</h2>
+          <p>
+            Du brauchst eine App, die Einmal-Codes erzeugt, zum Beispiel Google Authenticator, Microsoft Authenticator
+            oder Authy. Die Einrichtung dauert etwa eine Minute.
+          </p>
+          @if (error()) {
+            <p class="profile-error" role="alert">{{ error() }}</p>
+          }
+          <button type="button" class="mfa-button" [disabled]="loading()" (click)="startSetup()">
+            {{ loading() ? 'Wird vorbereitet …' : 'Einrichtung starten' }}
+          </button>
+        </section>
+      }
+
+      @case ('scan') {
+        <section class="mfa-card" aria-labelledby="mfa-scan-title">
+          <h2 id="mfa-scan-title">Schritt 2: Code scannen und bestätigen</h2>
+          <div class="mfa-scan">
+            <div class="mfa-qr">
+              @if (qrCode()) {
+                <img [src]="qrCode()" alt="QR-Code zum Scannen mit der Authenticator-App" width="180" height="180" />
+              }
+              <p class="mfa-muted">Scanne den Code mit deiner App.</p>
+            </div>
+            <div class="mfa-manual">
+              <p class="mfa-muted">Geht das Scannen nicht? Gib diesen Schlüssel in der App von Hand ein:</p>
+              <code class="mfa-secret" aria-label="Geheimer Schlüssel">{{ readableSecret() }}</code>
+              <button type="button" class="mfa-button mfa-button--ghost mfa-button--small" (click)="copy('secret')">
+                {{ copied() === 'secret' ? 'Kopiert' : 'Schlüssel kopieren' }}
+              </button>
+            </div>
+          </div>
+
+          <form class="mfa-verify" (submit)="verify($event)" novalidate>
+            <label for="mfa-code">6-stelliger Code aus der App</label>
+            <input
+              id="mfa-code"
+              class="mfa-code-input"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              placeholder="000000"
+              [value]="code()"
+              (input)="onCode($any($event.target).value)"
+              [attr.aria-invalid]="error() ? 'true' : null"
+              [attr.aria-describedby]="error() ? 'mfa-error' : null"
+            />
+            @if (error()) {
+              <p id="mfa-error" class="profile-error" role="alert">{{ error() }}</p>
+            }
+            <button type="submit" class="mfa-button" [disabled]="loading()">
+              {{ loading() ? 'Wird geprüft …' : 'Bestätigen und aktivieren' }}
+            </button>
+          </form>
+        </section>
+      }
+
+      @case ('codes') {
+        <section class="mfa-card mfa-card--ok" aria-labelledby="mfa-codes-title">
+          <span class="mfa-badge mfa-badge--ok">Aktiv</span>
+          <h2 id="mfa-codes-title">Schritt 3: Sichere deine Backup-Codes</h2>
+          <p>
+            Verlierst du dein Gerät, kommst du mit diesen Codes wieder in dein Konto. Jeder funktioniert nur einmal, und wir
+            zeigen sie dir nur jetzt.
+          </p>
+          <ul class="mfa-codes" aria-label="Backup-Codes">
+            @for (backupCode of backupCodes(); track backupCode) {
+              <li><code>{{ backupCode }}</code></li>
+            }
+          </ul>
+          <div class="mfa-actions">
+            <button type="button" class="mfa-button mfa-button--ghost" (click)="copy('codes')">
+              {{ copied() === 'codes' ? 'Kopiert' : 'Alle kopieren' }}
+            </button>
+            <button type="button" class="mfa-button mfa-button--ghost" (click)="download()">Als Datei speichern</button>
+          </div>
+          @if (copied() === 'failed') {
+            <p class="profile-error" role="alert">Kopieren wird von deinem Browser blockiert. Nutze „Als Datei speichern“.</p>
+          }
+          <label class="mfa-confirm">
+            <input type="checkbox" [checked]="saved()" (change)="saved.set($any($event.target).checked)" />
+            Ich habe die Codes an einem sicheren Ort gespeichert.
+          </label>
+          <a routerLink="/einstellungen" class="mfa-button" [class.is-disabled]="!saved()" [attr.aria-disabled]="!saved()" [attr.tabindex]="saved() ? null : -1">
+            Fertig
+          </a>
+        </section>
+      }
+    }
+  </main>
+</app-shell>

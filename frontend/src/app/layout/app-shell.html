@@ -16,7 +16,7 @@
       <div class="nav-space"></div>
       <a routerLink="/app/familie" routerLinkActive="active" ariaCurrentWhenActive="page"
         ><app-icon name="people" />Familie &amp; Freunde</a
-      ><a routerLink="/einstellungen"><app-icon name="settings" />Einstellungen</a>
+      >
     </nav>
     <p class="sidebar-note">Alles Wichtige.<br />Ein guter Überblick.</p>
   </aside>
@@ -25,9 +25,6 @@
       <a class="mobile-brand" [routerLink]="links()[0].path" aria-label="4inOne – Startseite"
         ><app-brand
       /></a>
-      <button class="search" (click)="panel.set('Suche')">
-        <app-icon name="search" /><span>Suche in 4inOne …</span>
-      </button>
       <div class="profile">
         <button
           class="icon-button"
@@ -35,84 +32,80 @@
           (click)="panel.set('Benachrichtigungen')"
         >
           <app-icon name="bell" /></button
-        ><button
-          class="profile-button"
-          (click)="panel.set('Dein Konto')"
-          aria-label="Kontomenü öffnen"
         >
-          <span class="avatar">{{ initials() }}</span
-          ><span class="profile-name">{{ name() }}</span
-          ><span class="profile-name" aria-hidden="true">⌄</span>
-        </button>
+        <div class="account">
+          <button
+            #trigger
+            type="button"
+            class="profile-button"
+            aria-haspopup="menu"
+            aria-controls="account-menu"
+            [attr.aria-expanded]="menuOpen()"
+            aria-label="Kontomenü"
+            (click)="toggleMenu()"
+          >
+            <span class="avatar">{{ initials() }}</span
+            ><span class="profile-name">{{ name() }}</span
+            ><span class="profile-name chevron" aria-hidden="true">⌄</span>
+          </button>
+          @if (menuOpen()) {
+            <div id="account-menu" class="account-menu" role="menu" aria-label="Konto" (keydown)="onMenuKey($event)">
+              <div class="account-head">
+                <span class="avatar avatar--large" aria-hidden="true">{{ initials() }}</span>
+                <span class="account-id">
+                  <strong>{{ auth.isAuthenticated() ? name() : 'Vorschau' }}</strong>
+                  <small>{{ auth.isAuthenticated() ? auth.currentUser()?.email : 'Beispieldaten, kein Konto' }}</small>
+                </span>
+              </div>
+              @if (auth.isAuthenticated()) {
+                <div class="account-group" role="none">
+                  <a role="menuitem" routerLink="/app/familie" (click)="closeMenu()"><app-icon name="people" />Familie &amp; Freunde</a>
+                  <a role="menuitem" routerLink="/einstellungen" (click)="closeMenu()"><icon-settings />Einstellungen</a>
+                  <a role="menuitem" routerLink="/einstellungen/zwei-faktor" (click)="closeMenu()"><icon-two-factor />Zwei-Faktor-Authentifizierung</a>
+                </div>
+                <div class="account-group" role="none">
+                  <a role="menuitem" routerLink="/datenschutz" (click)="closeMenu()"><icon-legal />Datenschutz</a>
+                  <a role="menuitem" routerLink="/barrierefreiheit" (click)="closeMenu()"><icon-info />Barrierefreiheit</a>
+                </div>
+                <div class="account-group" role="none">
+                  <button type="button" role="menuitem" [disabled]="busy()" (click)="logout()">
+                    <icon-logout />{{ busy() ? 'Wird abgemeldet …' : 'Abmelden' }}
+                  </button>
+                </div>
+                @if (logoutError()) {
+                  <p class="account-error" role="alert">{{ logoutError() }}</p>
+                }
+              } @else {
+                <div class="account-group" role="none">
+                  <a role="menuitem" routerLink="/login" (click)="closeMenu()"><icon-profile />Anmelden</a>
+                  <a role="menuitem" routerLink="/registrieren" (click)="closeMenu()"><icon-settings />Konto erstellen</a>
+                </div>
+              }
+            </div>
+          }
+        </div>
       </div>
     </header>
     <ng-content />
   </div>
 </div>
 <nav class="mobile-nav" aria-label="Mobile Navigation">
-  <a
-    [routerLink]="links()[0].path"
-    routerLinkActive="active"
-    [routerLinkActiveOptions]="{ exact: true }"
-    ariaCurrentWhenActive="page"
-    ><app-icon name="home" />Start</a
-  ><a [routerLink]="links()[1].path"><app-icon name="bars" />Finanzen</a
-  ><button
-    class="add"
-    aria-label="Schnellaktion auswählen"
-    (click)="panel.set('Schnell hinzufügen')"
-  >
-    <app-icon name="plus" /></button
-  ><a routerLink="/app/familie"><app-icon name="people" />Familie</a
-  ><button (click)="panel.set('Alle Bereiche')"><app-icon name="more" />Mehr</button>
+  @for (link of links(); track link.label; let first = $first) {
+    <a
+      [routerLink]="link.path"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: first }"
+      ariaCurrentWhenActive="page"
+      ><app-icon [name]="link.icon" [class]="link.icon" />{{ first ? 'Start' : link.label }}</a
+    >
+  }
 </nav>
 <app-modal [open]="panel() !== ''" labelledBy="shell-dialog-title" (closed)="close()"
   ><h2 id="shell-dialog-title">{{ panel() }}</h2>
   <div class="dialog-body">
     @switch (panel()) {
-      @case ('Suche') {
-        <label for="app-search">Bereich suchen</label
-        ><input
-          id="app-search"
-          type="search"
-          [value]="query()"
-          (input)="query.set($any($event.target).value)"
-          autocomplete="off"
-        />
-        @for (link of results(); track link.label) {
-          <a [routerLink]="link.path" (click)="close()">{{ link.label }} →</a>
-        } @empty {
-          <p>Kein Bereich gefunden. Versuche „Haushalt“ oder „Reisen“.</p>
-        }
-      }
       @case ('Benachrichtigungen') {
         <p>Du hast noch keine Benachrichtigungen.</p>
-      }
-      @case ('Dein Konto') {
-        @if (auth.isAuthenticated()) {
-          <p>{{ name() }}</p>
-          <a routerLink="/einstellungen" (click)="close()">Einstellungen</a
-          ><button (click)="logout()" [disabled]="busy()">
-            {{ busy() ? 'Wird abgemeldet …' : 'Abmelden' }}
-          </button>
-          @if (logoutError()) {
-            <p role="alert">{{ logoutError() }}</p>
-          }
-        } @else {
-          <p>Du siehst die Vorschau mit Beispieldaten.</p>
-          <a routerLink="/login">Anmelden</a><a routerLink="/registrieren">Konto erstellen</a>
-        }
-      }
-      @case ('Schnell hinzufügen') {
-        <a [routerLink]="links()[1].path" [queryParams]="{ action: 'add' }">Ausgabe erfassen →</a
-        ><a [routerLink]="links()[2].path">Einkaufsliste öffnen →</a>
-      }
-      @default {
-        @for (link of links(); track link.label) {
-          <a [routerLink]="link.path" (click)="close()">{{ link.label }} →</a>
-        }
-        <a routerLink="/einstellungen">Einstellungen →</a
-        ><button (click)="panel.set('Suche')">Suche öffnen</button>
       }
     }
   </div></app-modal

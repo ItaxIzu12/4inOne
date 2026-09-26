@@ -3,9 +3,9 @@
   color: #18163f;
 }
 .organisation-page {
-  max-width: 1250px;
+  max-width: 1440px;
   margin: auto;
-  padding: 32px;
+  padding: 34px;
 }
 .page-heading,
 .heading-copy,
@@ -81,17 +81,18 @@ textarea:focus-visible {
   justify-content: center;
   gap: 8px;
   min-height: 44px;
-  border-radius: 14px;
-  padding: 10px 17px;
+  border-radius: 13px;
+  padding: 10px 16px;
   font-size: 14px;
 }
 .primary {
+  // Hauptknopf wie in Finanzen und Haushalt: 13 px Rundung, dezenter Verlauf, feiner Rand, weicher Schatten.
   color: white;
-  background: linear-gradient(#9655e3, #793bc4);
-  border: 1px solid #8c47d5;
+  background: linear-gradient(#8d4fda, #7a3ec4);
+  border: 1px solid #7538bd;
   box-shadow:
-    0 5px 10px #8951cf26,
-    inset 0 1px 1px #ffffff70;
+    0 4px 9px #7a3ec426,
+    inset 0 1px 1px #ffffff40;
 }
 .secondary {
   background: #f2edf9;
@@ -128,13 +129,32 @@ textarea:focus-visible {
   box-shadow: 0 3px 6px #9763d017;
 }
 .content-grid {
+  // Links die Hauptkarte mit den drei Kacheln direkt darunter, rechts Kalender und „Nächste Termine“: so entsteht
+  // unter der linken Karte keine Lücke, auch wenn die rechte Spalte höher ist.
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(290px, 1fr);
+  grid-template-areas:
+    'main side'
+    'stats side';
+  grid-template-rows: auto 1fr;
   gap: 22px;
   align-items: start;
 }
+.content-grid > .main-card {
+  grid-area: main;
+}
+.content-grid > .side-column {
+  grid-area: side;
+}
+.content-grid > .stats {
+  grid-area: stats;
+}
 .tasks-view {
   grid-template-columns: 1fr;
+  grid-template-areas:
+    'main'
+    'stats';
+  grid-template-rows: auto;
 }
 .card {
   padding: 22px;
@@ -293,8 +313,7 @@ textarea:focus-visible {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin-top: 20px;
-  max-width: 720px;
+  margin: 0;
 }
 .stats > button,
 .stats > div {
@@ -400,6 +419,11 @@ textarea:focus-visible {
   }
   .content-grid {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      'main'
+      'side'
+      'stats';
+    grid-template-rows: auto;
   }
   .side-column {
     grid-template-columns: 1fr 1fr;
@@ -505,8 +529,12 @@ textarea:focus-visible {
   .main-card {
     min-height: 220px;
   }
-  .calendar-view .side-column {
-    grid-row: 1;
+  // Kalender zuerst (über dem Tagesinhalt), darunter die Hauptkarte und die Kacheln.
+  .content-grid.calendar-view {
+    grid-template-areas:
+      'side'
+      'main'
+      'stats';
   }
   .calendar-view .upcoming {
     display: none;
