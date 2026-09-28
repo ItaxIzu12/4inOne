@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'finanzen',
     'haushalt',
     'organisation',
+    'reisen',
     'connections',
     'integrations',
 ]

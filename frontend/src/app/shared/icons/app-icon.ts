@@ -19,7 +19,8 @@ export type IconName =
   | 'bars'
   | 'trash'
   | 'basket'
-  | 'device';
+  | 'device'
+  | 'edit';
 let nextIconId = 0;
 @Component({
   selector: 'app-icon',
@@ -136,5 +137,6 @@ export class AppIcon {
     more: 'M5 12h.01M12 12h.01M19 12h.01',
     arrow: 'm9 5 7 7-7 7',
     leaf: 'M12 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM12 9l-4 5 4 3 4-3-4-5Zm-4 5-4 5q8 4 16 0l-4-5M12 9v8',
+    edit: 'M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z',
   };
 }

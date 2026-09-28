@@ -47,3 +47,14 @@ test('the preview links to Haushalt with demo data, never to the login screen', 
   await expect(page).not.toHaveURL(/\/login/);
   await expect(page.getByRole('heading', { name: 'Haushalt' })).toBeVisible();
 });
+
+test('the preview links to Reisen with demo data, never to the login screen', async ({ page }) => {
+  await blockBackend(page);
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Reisen' }).first().click();
+  await expect(page).toHaveURL(/\/reisen$/);
+  await expect(page).not.toHaveURL(/\/login/);
+  await expect(page.getByRole('heading', { name: 'Reisen', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Berlin Wochenende' })).toBeVisible(); // Demo-Reise
+  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+});

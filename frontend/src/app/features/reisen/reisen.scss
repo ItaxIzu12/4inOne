@@ -1,0 +1,494 @@
+// Gleiche Bausteine wie organisation.scss (Karten, Tabs, Zeilen), nur mit dem blauen "travel"-Akzent, der
+// bereits in app-shell.scss/dashboard.scss für Reisen verwendet wird (#2889ef-Familie), statt Organisations Lila.
+:host {
+  display: block;
+  color: #16233a;
+}
+.reisen-page {
+  max-width: 1100px;
+  margin: auto;
+  padding: 34px;
+}
+.page-heading,
+.heading-copy,
+.card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.heading-copy {
+  justify-content: flex-start;
+}
+.heading-icon {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #f1faff, #dcefff);
+  color: #2889ef;
+  box-shadow: 0 6px 15px #2889ef1a;
+}
+.heading-icon app-icon {
+  width: 36px;
+  height: 36px;
+}
+h1 {
+  font-size: 32px;
+  letter-spacing: -1px;
+}
+h2 {
+  font-size: 19px;
+  letter-spacing: -0.3px;
+}
+h3 {
+  font-size: 17px;
+}
+p,
+small {
+  color: #5b6b83;
+  line-height: 1.6;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #2889ef;
+  outline-offset: 3px;
+}
+.primary,
+.secondary,
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border-radius: 13px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+.primary,
+.btn-primary {
+  color: white;
+  background: linear-gradient(#3d97f5, #2277db);
+  border: 1px solid #1c6bc9;
+  box-shadow:
+    0 4px 9px #2277db26,
+    inset 0 1px 1px #ffffff40;
+}
+.secondary {
+  background: #edf5fe;
+  border: 1px solid #d7e8fb;
+  color: #1c5ca8;
+}
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 28px 0 22px;
+  border: 1px solid #e4eefb;
+  background: #f8fbfe;
+  border-radius: 16px;
+  padding: 5px;
+  gap: 5px;
+}
+.tabs button {
+  flex: 1;
+  min-width: 90px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  border-radius: 12px;
+  color: #4c5c72;
+}
+.tabs button[aria-current] {
+  background: linear-gradient(#e6f2ff, #d9ecff);
+  color: #1a5fac;
+  font-weight: 650;
+  box-shadow: 0 3px 6px #2889ef17;
+}
+.card {
+  padding: 22px;
+  border: 1px solid #e8f0fa;
+  border-radius: 22px;
+  background: #ffffffec;
+  box-shadow: 0 6px 16px #1c519b0a;
+  margin-bottom: 22px;
+}
+.card:last-child {
+  margin-bottom: 0;
+}
+.highlight {
+  background: linear-gradient(135deg, #f1faff, #e7f3ff);
+  border-color: #d9ecff;
+}
+.highlight-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.highlight-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #2277db;
+  margin-bottom: 6px;
+}
+.highlight-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+}
+.highlight-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #2a3a52;
+}
+.highlight-stats app-icon {
+  width: 16px;
+  height: 16px;
+  color: #2889ef;
+}
+.pill {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #eaf4ff;
+  color: #2277db;
+  font-size: 12px;
+  font-weight: 700;
+}
+.pill--accent {
+  background: #dcefff;
+  color: #1c5ca8;
+}
+.trip-row-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid #eef4fb;
+}
+.trip-row-wrap:first-child {
+  border-top: 0;
+}
+.trip-row {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px 4px;
+  border: 0;
+  border-top: 1px solid #eef4fb;
+  background: transparent;
+  text-align: left;
+  color: #16233a;
+  border-radius: 12px;
+}
+.trip-row-wrap > .trip-row {
+  border-top: 0;
+}
+.card > .trip-row:first-child {
+  border-top: 0;
+}
+.trip-row.is-selected {
+  background: #f1faff;
+}
+.trip-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 44px;
+  border-radius: 14px;
+  color: #2889ef;
+  background: #eaf4ff;
+}
+.row__main {
+  flex: 1;
+  min-width: 0;
+}
+.row__title {
+  display: block;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.row__title--done {
+  color: #8894a5;
+  text-decoration: line-through;
+}
+.row__meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: #5b6b83;
+}
+.chevron {
+  width: 15px;
+  flex-shrink: 0;
+  color: #94a3b8;
+  transition: transform 0.15s;
+}
+.chevron--open {
+  transform: rotate(90deg);
+}
+.trip-item {
+  border-top: 1px solid #eef4fb;
+}
+.card > .trip-item:first-child {
+  border-top: 0;
+}
+.trip-item > .trip-row {
+  border-top: 0;
+}
+.trip-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 4px 14px;
+}
+.trip-quick-links button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #d7e8fb;
+  border-radius: 999px;
+  background: #f4faff;
+  color: #1c5ca8;
+  font-size: 13px;
+}
+.trip-quick-links button:hover {
+  background: #eaf4ff;
+}
+.trip-quick-links app-icon {
+  width: 15px;
+  height: 15px;
+}
+.edit-btn {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #d7e8fb;
+  border-radius: 12px;
+  background: #f4faff;
+  color: #1c5ca8;
+  font-size: 14px;
+  font-weight: 600;
+}
+.edit-btn:hover {
+  background: #eaf4ff;
+}
+.edit-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid #1c6bc9;
+  border-radius: 12px;
+  background: linear-gradient(#3d97f5, #2277db);
+  color: #fff;
+}
+.edit-icon-btn:hover {
+  background: linear-gradient(#2f8bf0, #1c6bc9);
+}
+.edit-icon-btn app-icon {
+  width: 18px;
+  height: 18px;
+}
+.empty {
+  text-align: center;
+  padding: 40px 16px;
+}
+.empty > app-icon {
+  width: 34px;
+  height: 34px;
+  color: #2889ef;
+  margin-bottom: 14px;
+}
+.empty p {
+  max-width: 40ch;
+  margin: 10px auto 18px;
+}
+.state {
+  text-align: center;
+  padding: 40px 16px;
+}
+.task-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+.filter {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 0;
+}
+.filter app-select {
+  width: min(280px, 100%);
+}
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: #6c7c91;
+}
+.icon-btn:hover {
+  background: #f1f6fb;
+  color: #16233a;
+}
+.icon-btn app-icon {
+  width: 20px;
+  height: 20px;
+}
+.list {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 4px 0;
+  border-top: 1px solid #eef4fb;
+}
+.list > .row:first-child {
+  border-top: 0;
+}
+.completion {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid #c9def6;
+  border-radius: 14px;
+  background: #f4faff;
+  color: #2277db;
+}
+.completion.done {
+  background: #e6f7ee;
+  color: #22724c;
+  border-color: #a6d9bd;
+}
+.amount {
+  font-size: 14px;
+  white-space: nowrap;
+}
+.add-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+.add-form input[type='text'],
+.add-form input[type='number'] {
+  flex: 1 1 200px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid #d7e8fb;
+  border-radius: 13px;
+  background: #fff;
+  color: #16233a;
+  font-size: 15px;
+}
+.add-form input.qty {
+  flex: 0 1 100px;
+}
+.add-form app-date-picker {
+  flex: 1 1 160px;
+}
+.field-error {
+  margin: 0 0 12px;
+  color: #b3261e;
+  font-size: 13px;
+  font-weight: 700;
+}
+.budget-summary {
+  margin-top: 8px;
+}
+.budget-numbers {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+.progress {
+  height: 10px;
+  border-radius: 999px;
+  background: #eaf1fa;
+  overflow: hidden;
+}
+.progress__bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3d97f5, #2277db);
+  border-radius: 999px;
+}
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+.field-row > * {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 760px) {
+  .reisen-page {
+    padding: 14px 18px 26px;
+  }
+  .heading-icon {
+    width: 42px;
+    height: 44px;
+    border-radius: 13px;
+  }
+  .heading-icon app-icon {
+    width: 28px;
+    height: 28px;
+  }
+  h1 {
+    font-size: 24px;
+  }
+  .page-heading {
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .card {
+    padding: 18px;
+    border-radius: 19px;
+  }
+  .field-row {
+    flex-direction: column;
+  }
+}

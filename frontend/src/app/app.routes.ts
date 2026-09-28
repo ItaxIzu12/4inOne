@@ -12,6 +12,8 @@ import { DemoOrganisationApi } from './features/organisation/demo-organisation-a
 import { HAUSHALT_DATA_PROVIDER } from './features/haushalt/haushalt-data-provider';
 import { DemoHaushaltDataProvider } from './features/haushalt/demo-haushalt-data-provider';
 import { RealHaushaltDataProvider } from './features/haushalt/real-haushalt-data-provider';
+import { ReisenApi } from './features/reisen/reisen-api.service';
+import { DemoReisenApi } from './features/reisen/demo-reisen-api';
 
 // Dashboard und Finanzen sind JEWEILS EIN Component, das an zwei Stellen in
 // den Routen referenziert wird — einmal öffentlich (Demo-Daten), einmal
@@ -44,6 +46,7 @@ export const routes: Routes = [
       // eigene, unabhängige In-Memory-Datenquelle statt echter HTTP-Aufrufe.
       { provide: PrivateFinanceApi, useClass: DemoPrivateFinanceApi },
       { provide: OrganisationApi, useClass: DemoOrganisationApi },
+      { provide: ReisenApi, useClass: DemoReisenApi },
       FinanzenStateService,
     ],
     children: [
@@ -72,6 +75,13 @@ export const routes: Routes = [
         path: 'organisation',
         loadComponent: () =>
           import('./features/organisation/organisation').then((m) => m.Organisation),
+        data: { dashboardNav: true, sidebarNav: true },
+      },
+      {
+        // Wie oben bei Organisation: dieselbe Component wie /app/reisen, mit Demo-Daten (DemoReisenApi), ohne Login
+        // erreichbar. Feste Beispielreise statt echter Nutzer-Reisen (siehe demo-reisen-api.ts).
+        path: 'reisen',
+        loadComponent: () => import('./features/reisen/reisen').then((m) => m.Reisen),
         data: { dashboardNav: true, sidebarNav: true },
       },
     ],
@@ -121,14 +131,8 @@ export const routes: Routes = [
       },
       {
         path: 'reisen',
-        loadComponent: () =>
-          import('./features/area-preview/area-preview').then((m) => m.AreaPreview),
-        data: {
-          shell: 'bare',
-          sidebarNav: true,
-          title: 'Reisen',
-          description: 'Platz für deine nächsten Reisen und gemeinsamen Pläne.',
-        },
+        loadComponent: () => import('./features/reisen/reisen').then((m) => m.Reisen),
+        data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'familie',

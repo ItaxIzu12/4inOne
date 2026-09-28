@@ -1,0 +1,313 @@
+<app-shell
+  ><main id="main-content" class="reisen-page" tabindex="-1">
+    <header class="page-heading">
+      <div class="heading-copy">
+        <span class="heading-icon"><app-icon name="travel" /></span>
+        <div>
+          <h1>Reisen</h1>
+        </div>
+      </div>
+      <button class="primary" (click)="openTripEditor()">
+        <app-icon name="plus" /><span>Neue Reise</span>
+      </button>
+    </header>
+    <nav class="tabs" aria-label="Reisen Ansichten">
+      <button [attr.aria-current]="tab() === 'uebersicht' ? 'page' : null" (click)="tab.set('uebersicht')">
+        Übersicht</button
+      ><button [attr.aria-current]="tab() === 'reisen' ? 'page' : null" (click)="tab.set('reisen')">
+        Reisen</button
+      ><button [attr.aria-current]="tab() === 'packliste' ? 'page' : null" (click)="tab.set('packliste')">
+        Packliste</button
+      ><button [attr.aria-current]="tab() === 'aufgaben' ? 'page' : null" (click)="tab.set('aufgaben')">
+        Aufgaben</button
+      ><button [attr.aria-current]="tab() === 'budget' ? 'page' : null" (click)="tab.set('budget')">
+        Budget
+      </button>
+    </nav>
+
+    @if (loading()) {
+      <p class="state" role="status">Deine Reisen werden geladen …</p>
+    } @else if (error()) {
+      <div class="state">
+        <p role="alert">{{ error() }}</p>
+        <button class="secondary" (click)="load()">Erneut versuchen</button>
+      </div>
+    } @else if (tab() === 'uebersicht') {
+      @if (nextTrip(); as next) {
+        <section class="card highlight">
+          <div class="highlight-head">
+            <span class="highlight-label">Nächste Reise</span>
+            <button type="button" class="edit-btn" (click)="openTripEditor(next)">Bearbeiten</button>
+          </div>
+          <h2>{{ next.title }}</h2>
+          <p class="muted">{{ next.destination || 'Kein Reiseziel angegeben' }}</p>
+          <p class="muted">{{ tripDateRange(next) }}</p>
+          @if (daysUntil(next); as days) {
+            @if (days > 0) {
+              <span class="pill pill--accent">in {{ days }} {{ days === 1 ? 'Tag' : 'Tagen' }}</span>
+            } @else if (days === 0) {
+              <span class="pill pill--accent">Heute geht's los</span>
+            }
+          }
+          <div class="highlight-stats">
+            <span
+              ><app-icon name="basket" />{{ next.packing_packed }}/{{ next.packing_total }} gepackt</span
+            ><span><app-icon name="check" />{{ next.tasks_open }} offene Aufgaben</span
+            ><span
+              ><app-icon name="finance" />{{ next.budget_spent }} €
+              @if (next.budget_amount) {
+                / {{ next.budget_amount }} €
+              }
+            </span>
+          </div>
+        </section>
+      }
+      <section class="card" aria-labelledby="trips-heading">
+        <div class="card-heading">
+          <h2 id="trips-heading">Meine Reisen</h2>
+        </div>
+        @for (trip of trips(); track trip.id) {
+          <div class="trip-item">
+            <button
+              type="button"
+              class="trip-row"
+              [class.is-selected]="selectedTripId() === trip.id"
+              [attr.aria-expanded]="selectedTripId() === trip.id"
+              (click)="selectTrip(trip.id)"
+            >
+              <span class="trip-icon" aria-hidden="true"><app-icon name="travel" /></span>
+              <span class="row__main">
+                <span class="row__title">{{ trip.title }}</span>
+                <span class="row__meta">{{ tripDateRange(trip) }} · {{ statusLabels[trip.status] }}</span>
+              </span>
+              <app-icon class="chevron" [class.chevron--open]="selectedTripId() === trip.id" name="arrow" />
+            </button>
+            @if (selectedTripId() === trip.id) {
+              <div class="trip-quick-links">
+                <button type="button" (click)="tab.set('packliste')">
+                  <app-icon name="basket" />{{ trip.packing_packed }}/{{ trip.packing_total }} gepackt
+                </button>
+                <button type="button" (click)="tab.set('aufgaben')">
+                  <app-icon name="check" />{{ trip.tasks_open }} offene Aufgaben
+                </button>
+                <button type="button" (click)="tab.set('budget')">
+                  <app-icon name="finance" />{{ trip.budget_spent }} €
+                  @if (trip.budget_amount) {
+                    / {{ trip.budget_amount }} €
+                  }
+                </button>
+              </div>
+            }
+          </div>
+        } @empty {
+          <div class="empty">
+            <app-icon name="travel" />
+            <h3>Noch keine Reisen geplant</h3>
+            <p>Leg deine erste Reise an, um Packliste, Aufgaben und Budget an einem Ort zu haben.</p>
+            <button class="primary" (click)="openTripEditor()"><app-icon name="plus" />Neue Reise</button>
+          </div>
+        }
+      </section>
+    } @else if (tab() === 'reisen') {
+      <section class="card">
+        @for (trip of trips(); track trip.id) {
+          <div class="trip-row-wrap">
+            <button type="button" class="trip-row" (click)="selectTrip(trip.id)">
+              <span class="trip-icon" aria-hidden="true"><app-icon name="travel" /></span>
+              <span class="row__main">
+                <span class="row__title">{{ trip.title }}</span>
+                <span class="row__meta">{{ tripDateRange(trip) }} · {{ statusLabels[trip.status] }}</span>
+              </span>
+            </button>
+            <button type="button" class="edit-icon-btn" [attr.aria-label]="trip.title + ' bearbeiten'" (click)="openTripEditor(trip)">
+              <app-icon name="edit" />
+            </button>
+          </div>
+        } @empty {
+          <div class="empty">
+            <app-icon name="travel" />
+            <h3>Noch keine Reisen</h3>
+            <p>Erstelle deine erste Reise mit Zeitraum, Ziel und Budget.</p>
+          </div>
+        }
+      </section>
+    } @else if (!selectedTrip()) {
+      <div class="empty">
+        <app-icon name="travel" />
+        <h3>Wähle zuerst eine Reise</h3>
+        <p>Lege eine Reise an oder wähle eine bestehende aus, um Packliste, Aufgaben oder Budget zu sehen.</p>
+        <button class="secondary" (click)="tab.set('reisen')">Zu meinen Reisen</button>
+      </div>
+    } @else {
+      <div class="task-controls">
+        <label class="filter"
+          ><span id="reisen-trip-select-label" class="sr-only">Reise</span>
+          <app-select ariaLabelledby="reisen-trip-select-label" [options]="tripOptions()" [value]="selectedTripValue()" (valueChange)="selectTrip(+$event)" />
+        </label>
+      </div>
+      @if (actionError()) {
+        <p class="field-error" role="alert">{{ actionError() }}</p>
+      }
+      @if (detailLoading()) {
+        <p class="state" role="status">Wird geladen …</p>
+      } @else if (detailError()) {
+        <p class="field-error" role="alert">{{ detailError() }}</p>
+      } @else if (tab() === 'packliste') {
+        <section class="card">
+          <div class="card-heading">
+            <h2>Packliste – {{ selectedTrip()!.title }}</h2>
+            <span class="muted small">{{ packingProgress() }}% gepackt</span>
+          </div>
+          <form class="add-form" (submit)="$event.preventDefault(); addPacking()">
+            <label class="sr-only" for="packing-title">Gegenstand</label>
+            <input id="packing-title" type="text" maxlength="120" placeholder="Was muss mit? z. B. Reisepass" [value]="newPackingTitle()" (input)="newPackingTitle.set($any($event.target).value)" />
+            <label class="sr-only" for="packing-qty">Menge</label>
+            <input id="packing-qty" class="qty" type="number" min="1" max="99" [value]="newPackingQuantity()" (input)="newPackingQuantity.set($any($event.target).value)" />
+            <button type="submit" class="btn-primary" [disabled]="!newPackingTitle().trim() || packingAdding()">Hinzufügen</button>
+          </form>
+          <ul class="list">
+            @for (item of packing(); track item.id) {
+              <li class="row">
+                <button type="button" class="completion" [class.done]="item.is_packed" [attr.aria-label]="item.title + (item.is_packed ? ' als nicht gepackt markieren' : ' als gepackt markieren')" (click)="togglePacking(item)">
+                  <app-icon [name]="item.is_packed ? 'check' : 'plus'" />
+                </button>
+                <span class="row__main">
+                  <span class="row__title" [class.row__title--done]="item.is_packed">{{ item.title }}</span>
+                  @if (item.quantity > 1) {
+                    <span class="row__meta">{{ item.quantity }}×</span>
+                  }
+                </span>
+                <button type="button" class="icon-btn" [attr.aria-label]="item.title + ' entfernen'" (click)="removePacking(item)">
+                  <app-icon name="trash" />
+                </button>
+              </li>
+            } @empty {
+              <li class="empty">
+                <p class="muted">Noch nichts auf der Packliste. Trage ein, was mit muss.</p>
+              </li>
+            }
+          </ul>
+        </section>
+      } @else if (tab() === 'aufgaben') {
+        <section class="card">
+          <div class="card-heading">
+            <h2>Aufgaben – {{ selectedTrip()!.title }}</h2>
+          </div>
+          <form class="add-form" (submit)="$event.preventDefault(); addTask()">
+            <label class="sr-only" for="task-title">Aufgabe</label>
+            <input id="task-title" type="text" maxlength="120" placeholder="Was ist zu erledigen? z. B. Zugtickets buchen" [value]="newTaskTitle()" (input)="newTaskTitle.set($any($event.target).value)" />
+            <label class="sr-only" for="task-due">Fällig am</label>
+            <app-date-picker mode="date" ariaLabelledby="task-due" [value]="newTaskDue()" (valueChange)="newTaskDue.set($event)" [clearable]="true" />
+            <button type="submit" class="btn-primary" [disabled]="!newTaskTitle().trim() || taskAdding()">Hinzufügen</button>
+          </form>
+          <ul class="list">
+            @for (item of tasks(); track item.id) {
+              <li class="row">
+                <button type="button" class="completion" [class.done]="item.status === 'DONE'" [attr.aria-label]="item.title + (item.status === 'DONE' ? ' wieder öffnen' : ' als erledigt markieren')" (click)="toggleTask(item)">
+                  <app-icon [name]="item.status === 'DONE' ? 'check' : 'plus'" />
+                </button>
+                <span class="row__main">
+                  <span class="row__title" [class.row__title--done]="item.status === 'DONE'">{{ item.title }}</span>
+                  @if (item.due_date) {
+                    <span class="row__meta">Fällig am {{ item.due_date | date: 'dd.MM.yyyy' }}</span>
+                  }
+                </span>
+                <button type="button" class="icon-btn" [attr.aria-label]="item.title + ' entfernen'" (click)="removeTask(item)">
+                  <app-icon name="trash" />
+                </button>
+              </li>
+            } @empty {
+              <li class="empty">
+                <p class="muted">Noch keine Aufgaben für diese Reise.</p>
+              </li>
+            }
+          </ul>
+        </section>
+      } @else {
+        <section class="card">
+          <div class="card-heading">
+            <h2>Budget – {{ selectedTrip()!.title }}</h2>
+          </div>
+          <div class="budget-summary">
+            <p class="budget-numbers">
+              <strong>{{ budgetSpent() | number: '1.2-2' : 'de' }} €</strong>
+              @if (budgetTotal() > 0) {
+                <span class="muted"> von {{ budgetTotal() | number: '1.2-2' : 'de' }} €</span>
+              } @else {
+                <span class="muted"> ausgegeben · noch kein Budget festgelegt</span>
+              }
+            </p>
+            @if (budgetTotal() > 0) {
+              <div class="progress"><div class="progress__bar" [style.width.%]="budgetProgress()"></div></div>
+            }
+          </div>
+          <form class="add-form" (submit)="$event.preventDefault(); addExpense()">
+            <label class="sr-only" for="expense-title">Ausgabe</label>
+            <input id="expense-title" type="text" maxlength="120" placeholder="Wofür? z. B. Hotel" [value]="newExpenseTitle()" (input)="newExpenseTitle.set($any($event.target).value)" />
+            <label class="sr-only" for="expense-amount">Betrag</label>
+            <input id="expense-amount" class="qty" type="text" inputmode="decimal" placeholder="Betrag" [value]="newExpenseAmount()" (input)="newExpenseAmount.set($any($event.target).value)" />
+            <label class="sr-only" for="expense-date">Datum</label>
+            <app-date-picker mode="date" ariaLabelledby="expense-date" [value]="newExpenseDate()" (valueChange)="newExpenseDate.set($event)" />
+            <button type="submit" class="btn-primary" [disabled]="!newExpenseTitle().trim() || !newExpenseAmount().trim() || expenseAdding()">Hinzufügen</button>
+          </form>
+          <ul class="list">
+            @for (item of expenses(); track item.id) {
+              <li class="row">
+                <span class="row__main">
+                  <span class="row__title">{{ item.title }}</span>
+                  <span class="row__meta">{{ item.date | date: 'dd.MM.yyyy' }}</span>
+                </span>
+                <strong class="amount">{{ item.amount }} €</strong>
+                <button type="button" class="icon-btn" [attr.aria-label]="item.title + ' entfernen'" (click)="removeExpense(item)">
+                  <app-icon name="trash" />
+                </button>
+              </li>
+            } @empty {
+              <li class="empty">
+                <p class="muted">Noch keine Ausgaben erfasst.</p>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+  </main></app-shell
+>
+<app-modal-form
+  icon="travel"
+  [formGroup]="tripForm"
+  [title]="editTripId() ? 'Reise bearbeiten' : 'Neue Reise'"
+  [open]="tripEditor()"
+  [saving]="tripSaving()"
+  [error]="tripFormError()"
+  [deleteLabel]="editTripId() ? 'Reise löschen' : ''"
+  (submitted)="saveTrip()"
+  (closed)="closeTripEditor()"
+  (deleted)="removeTrip()"
+>
+  <app-field label="Titel">
+    <input id="trip-title" formControlName="title" maxlength="120" required />
+  </app-field>
+  <app-field label="Reiseziel" [optional]="true">
+    <input id="trip-destination" formControlName="destination" maxlength="160" />
+  </app-field>
+  <div class="field-row">
+    <app-field label="Beginn" [optional]="true">
+      <app-date-picker mode="date" formControlName="start_date" [clearable]="true" />
+    </app-field>
+    <app-field label="Ende" [optional]="true">
+      <app-date-picker mode="date" formControlName="end_date" [clearable]="true" />
+    </app-field>
+  </div>
+  <div class="field-row">
+    <app-field label="Status">
+      <app-select formControlName="status" [options]="statusOptions" />
+    </app-field>
+    <app-field label="Budget" [optional]="true" hint="In Euro, z. B. 350">
+      <input id="trip-budget" formControlName="budget_amount" type="text" inputmode="decimal" />
+    </app-field>
+  </div>
+  <app-field label="Notizen" [optional]="true">
+    <textarea id="trip-notes" formControlName="notes" rows="3" maxlength="5000"></textarea>
+  </app-field>
+</app-modal-form>

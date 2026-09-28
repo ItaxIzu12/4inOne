@@ -3,6 +3,7 @@ import { HaushaltOverviewDto } from '../haushalt/haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from '../haushalt/haushalt-data-provider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { OrganisationApi, TodayData, TodayItem } from '../organisation/organisation-api.service';
+import { ReisenApi, Trip } from '../reisen/reisen-api.service';
 import { Component, computed, inject, signal, DestroyRef } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AppShell } from '../../layout/app-shell';
@@ -24,10 +25,20 @@ export class Dashboard {
   // app.routes.ts) — dieselbe Instanz, die auch die Haushalt-Seite selbst benutzt, damit die Kachel hier und der
   // Reiter dort nie auseinanderlaufen.
   private haushaltApi = inject(HAUSHALT_DATA_PROVIDER);
+  private reisenApi = inject(ReisenApi);
   readonly household = signal<HaushaltOverviewDto | null>(null);
   readonly householdError = signal(false);
   readonly finance = signal<FinanceSummary | null>(null);
   readonly financeError = signal(false);
+  readonly trips = signal<Trip[]>([]);
+  readonly tripsError = signal(false);
+  readonly nextTrip = computed(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const upcoming = this.trips()
+      .filter((t) => t.status !== 'CANCELLED' && (!t.start_date || t.start_date >= today))
+      .sort((a, b) => (a.start_date || '9999').localeCompare(b.start_date || '9999'));
+    return upcoming[0] ?? null;
+  });
   private router = inject(Router);
   private destroy = inject(DestroyRef);
   readonly live = computed(() => this.auth.isAuthenticated());
@@ -52,6 +63,13 @@ export class Dashboard {
       .subscribe({
         next: (data) => this.finance.set(data),
         error: () => this.financeError.set(true),
+      });
+    this.reisenApi
+      .trips()
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (data) => this.trips.set(data),
+        error: () => this.tripsError.set(true),
       });
   }
   loadToday() {
@@ -197,11 +215,25 @@ export class Dashboard {
         name: 'Reisen',
         tone: 'travel',
         icon: 'travel' as IconName,
-        path: '/app/reisen',
-        summary: 'Berlin Wochenende',
+        path: live ? '/app/reisen' : '/reisen',
+        summary: this.tripsError()
+          ? 'Reisen konnten nicht geladen werden'
+          : this.nextTrip()
+            ? `${this.nextTrip()!.title} · ${this.tripDaysUntilLabel(this.nextTrip()!)}`
+            : this.trips().length
+              ? 'Keine bevorstehende Reise'
+              : 'Noch keine Reise geplant',
       },
     ];
   });
+  private tripDaysUntilLabel(trip: Trip): string {
+    if (!trip.start_date) return 'Kein Datum';
+    const days = Math.round(
+      (new Date(`${trip.start_date}T00:00`).getTime() - new Date(new Date().toDateString()).getTime()) / 86_400_000,
+    );
+    if (days <= 0) return "heute geht's los";
+    return days === 1 ? 'in 1 Tag' : `in ${days} Tagen`;
+  }
   financeProgress() {
     // Gegen Budget + Einnahmen, wie in Finanzen selbst.
     const total = Number(this.finance()?.total || 0);

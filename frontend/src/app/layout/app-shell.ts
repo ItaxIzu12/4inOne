@@ -37,7 +37,7 @@ export class AppShell {
         path: live ? '/app/haushalt' : '/haushalt',
       },
       { label: 'Organisation', icon: 'calendar' as IconName, path: live ? '/app/organisation' : '/organisation' },
-      { label: 'Reisen', icon: 'travel' as IconName, path: '/app/reisen' },
+      { label: 'Reisen', icon: 'travel' as IconName, path: live ? '/app/reisen' : '/reisen' },
     ];
   });
   readonly panel = signal('');
