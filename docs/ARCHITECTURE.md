@@ -1,38 +1,42 @@
-# 4inOne — Architecture Direction
+# 4inOne — Architecture Direction V2
 
 ## Current direction
 
 ```text
-Angular
-   ↓
-Django Backend
-   ↓
-SQLite (development / early MVP)
+Angular frontend
+      ↓
+Django backend/API
+      ↓
+SQLite (early development)
 ```
 
 Later:
 
 ```text
 Angular
-   ↓
+  ↓
 Django API
-   ↓
+  ↓
 PostgreSQL
 ```
 
-Later still:
+Later when deployment/reproducibility/background work justifies it:
 
 ```text
-Docker Compose
-├── frontend
+Docker / Compose
+├── frontend (if useful)
 ├── backend
 ├── postgres
-└── optional worker / queue
+└── optional worker/queue
 ```
 
-## Frontend feature direction
+## Do not rewrite for diagrams
 
-Suggested Angular structure:
+Folder/app structures below are guidance only. Preserve good existing architecture and migrate gradually.
+
+## Angular direction
+
+A possible feature-oriented structure:
 
 ```text
 src/app/
@@ -60,82 +64,88 @@ src/app/
     └── settings/
 ```
 
-This is a direction, not permission to rewrite a working structure. Codex must adapt to the existing repository.
+Guidance:
 
-## Angular guidance
+- avoid one giant dashboard component;
+- avoid meaningless micro-components;
+- preserve the project's current Angular best practices;
+- reactive forms for nontrivial forms;
+- Signals where they simplify local reactive UI state;
+- separate server state concerns from presentational state;
+- lazy-load larger areas where useful.
 
-- Prefer reusable domain components.
-- Avoid one giant dashboard component.
-- Avoid meaningless micro-components.
-- Use the project's established Angular patterns.
-- Prefer reactive forms for complex forms.
-- Use Signals where they improve local reactive UI state.
-- Keep server state and UI state conceptually separate.
-- Lazy-load larger feature areas when appropriate.
+## Django direction
 
-## Django guidance
-
-Suggested logical apps may include:
+Logical apps may include:
 
 ```text
 accounts
-households
 finance
+household/households
 organization
 travel
 connections
 ```
 
-Do not split an existing Django project merely to match this list. Choose boundaries based on current code and migration cost.
+Do not split working apps just to match this list.
 
-## Database migration strategy
+## Cross-domain architecture
 
-### Phase 1 — SQLite
+Cross-domain behavior must be explicit.
 
-Use Django ORM and migrations.
+Prefer:
 
-Avoid SQLite-only SQL, assumptions about weak concurrency and storing money as float.
+```text
+Domain A object
+      ↓
+Connection service/domain
+      ↓
+Domain B object
+```
 
-### Phase 2 — PostgreSQL test environment
+rather than hidden side effects between unrelated model save methods/signals.
+
+## API direction
+
+Use domain-oriented endpoints and explicit cross-domain actions.
+
+Avoid APIs where creating one object silently creates unrelated objects without explanation.
+
+## Database migration
+
+### SQLite phase
+
+- Django ORM;
+- normal migrations;
+- no SQLite-specific SQL assumptions;
+- Decimal for money;
+- test uniqueness/constraints.
+
+### PostgreSQL rehearsal
 
 Before production:
 
-1. run all migrations against PostgreSQL;
-2. load representative data;
-3. execute tests;
-4. verify datetime behavior;
-5. verify constraints;
-6. verify indexes;
-7. verify unique constraints;
-8. test concurrent workflows.
-
-### Phase 3 — PostgreSQL production
-
-Use backups and migration procedures.
-
-## Docker strategy
-
-Do not Dockerize merely for appearance.
-
-Introduce Docker when frontend/backend setup becomes difficult to reproduce, PostgreSQL is introduced, deployment begins or a worker service is needed.
+- run all migrations on PostgreSQL;
+- load representative data;
+- run tests;
+- verify timezone behavior;
+- verify indexes/constraints;
+- test critical concurrent workflows.
 
 ## Background work
 
-Future automations may require a worker/queue for recurring tasks, reminders, scheduled connection checks and notification generation.
+Do not introduce a queue merely because automations may exist later.
 
-Do not introduce Celery/Redis or another queue until a concrete background requirement exists.
+A worker becomes justified when the product has concrete recurring/scheduled tasks that cannot reliably run in request/response flows.
 
-## API design
+## AI architecture later
 
-Keep endpoints domain-oriented.
+If local/private AI is introduced, keep permissions and authoritative actions in Django.
 
-Cross-domain operations should be explicit.
-
-Example:
+Possible shape:
 
 ```text
-POST /connections/
-POST /suggestions/{id}/accept/
+Angular → Django → AI service/local model
 ```
 
-Avoid hidden side effects where creating one object silently creates many others without explanation.
+The model should not directly bypass backend authorization or mutate databases independently.

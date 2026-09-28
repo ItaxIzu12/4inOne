@@ -1,93 +1,75 @@
-# 4inOne — Current Product Decisions
+# 4inOne — Product Decisions V2
 
-This file records current decisions that supersede older ideas.
+This file records decisions that should not be repeatedly reopened without new evidence.
 
-## D-001 — Product structure
+## D1 — Four domains, one product
 
-4inOne contains Finanzen, Haushalt, Organisation and Reisen.
+Finanzen, Haushalt, Organisation and Reisen are independently useful domains inside one product.
 
-**Status:** Accepted
+The product is not marketed as “four apps in one”.
 
-## D-002 — Domains are independently usable
+## D2 — Connections are the key differentiating layer
 
-Finanzen, Haushalt and Organisation are fully usable privately. Reisen is also a standalone domain. Connections are optional enhancements.
+A Connection expresses that two real domain objects belong together.
 
-**Status:** Accepted
+Connections remain optional and do not replace the domain models.
 
-## D-003 — Connections are the differentiator
+## D3 — Build domains before intelligence
 
-4inOne is not positioned as "four apps in one."
+Current build order prioritizes finishing/testing all four areas and settings before Connection Engine V1.
 
-Preferred message:
+Suggestions come after Connections. Automations come after Suggestions.
 
-> **Dein Alltag. Alles verbunden.**
+## D4 — Private by default
 
-**Status:** Accepted
+Personal objects remain private unless the user explicitly shares the relevant scope/object.
 
-## D-004 — Private by default
+Membership does not equal universal visibility.
 
-The user decides what to share. Household or family membership must not automatically expose private finance or personal organization data.
+## D5 — Connections do not grant access
 
-**Status:** Accepted
+Connection visibility follows endpoint permissions. No metadata leaks.
 
-## D-005 — UI should be simpler
+## D6 — Demo data is not real user data
 
-Previous visually dense concepts were considered too overloaded / AI-looking.
+Demo/example content must be isolated and labelled.
 
-Current direction:
+Real accounts should not be silently seeded with fake finances, tasks, trips or appointments.
 
-- less information;
-- more whitespace;
-- smaller use of avatars;
-- minimal illustration;
-- pastel accents;
-- real product feel.
+## D7 — Short onboarding
 
-**Status:** Accepted
+Registration stays minimal. Onboarding personalizes the first experience but does not force detailed life data before value is shown.
 
-## D-006 — Web and mobile use the same system, different layouts
+## D8 — Today is focused
 
-Mobile and web must share typography, colors, components and product language, but they should not be pixel-identical layouts.
+The start screen shows a few things that matter now. It is not a KPI dashboard for every domain.
 
-**Status:** Accepted
+## D9 — Search is global and permission-aware
 
-## D-007 — Technical stack
+A future global search should search accessible data across domains. It must not be a decorative field.
 
-- Angular
-- Python
-- Django
-- SQLite initially
-- PostgreSQL later
-- Docker later
+## D10 — Product UI uses normal icons by default
 
-**Status:** Accepted
+Daily-use UI should use one consistent standard icon family.
 
-## D-008 — Existing project should be refactored
+3D/illustration is used selectively for onboarding, marketing, empty states and occasional hero content.
 
-Do not restart 4inOne from scratch unless a future technical audit proves the repository is unsalvageable.
+## D11 — Finances are visually restrained
 
-**Status:** Accepted
+Finances prioritizes trust, readability and clarity over playful decoration.
 
-## D-009 — Automation should begin as suggestions
+## D12 — Travel is not the center of 4inOne
 
-Start with:
+Travel is a useful domain and a strong cross-domain demonstration, but ordinary household/planning/purchase scenarios are equally important.
 
-> detect → explain → suggest → user confirms
+## D13 — Existing functionality is preserved during design refactors
 
-Later, users may enable trusted automations.
+Visual modernization should not trigger needless rewrites of stable Angular/Django logic.
 
-**Status:** Accepted
+## D14 — No speculative infrastructure
 
-## D-010 — Travel is an example, not the center of the product
+Do not add queues, event buses, graph databases or AI services before a concrete product requirement justifies them.
 
-Connections must also work for everyday finance, organization and household use.
+## D15 — AI remains optional and subordinate
 
-Examples include a washing-machine purchase, birthday, household routine, financial goal and appointment.
-
-**Status:** Accepted
-
-## D-011 — Eigentümerschaft über „Bereiche“ (persönlich, Haushalt, später Reise)
-
-Jeder Datensatz gehört genau einem Bereich. Persönliche Bereiche sind nicht teilbar; geteilt wird nur über ausdrücklich angelegte gemeinsame Bereiche. Details, Alternativen und Migrationsschritte: `ADR-001-OWNERSHIP.md`.
-
-**Status:** Proposed — wartet auf Entscheidung (offene Fragen in ADR-001 §7)
+If AI is added later, it supports workflows such as classification, extraction, summaries or suggestions. Django remains authoritative for permissions and actions.

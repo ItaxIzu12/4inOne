@@ -1,206 +1,201 @@
-# 4inOne — Product Requirements
+# 4inOne — Product Requirements V2
 
-## 1. Global requirements
+## 1. App shell and dashboard
 
-Users must be able to:
+The logged-in experience contains the four areas plus cross-domain entry points such as Today, search, profile/settings and later Connections.
 
-- register;
-- sign in;
-- sign out;
-- use the product privately;
-- create or join shared contexts where supported;
-- understand what is private and what is shared;
-- navigate between Finanzen, Haushalt, Organisation and Reisen;
-- see a personalized "Heute" view;
-- receive transparent suggestions;
-- create connections between related objects.
+The start screen should not be a wall of statistics.
 
-## 2. Dashboard
+### Today
 
-The dashboard answers:
+“Today” answers one question:
 
 > **Was ist heute wichtig?**
 
-### Required dashboard sections
+It may show a small number of relevant items such as:
 
-- Greeting
-- Today / relevant items
-- 4inOne suggestion
-- Connected item summary
-- Compact entry points to the four domains
+- an appointment;
+- a due task;
+- a household responsibility;
+- an upcoming bill/reminder;
+- a trip-related reminder;
+- later, one relevant suggestion.
 
-### Dashboard rules
+Today is a cross-domain presentation layer, not a fifth domain.
 
-- Do not show every statistic available.
-- Prefer a maximum of a few high-value items per section.
-- Use progressive disclosure.
-- The user should be able to reach detail views.
-- Mobile dashboard should be shorter than desktop.
+## 2. Finanzen
 
-## 3. Finanzen
+Must be useful privately and independently.
 
-Finanzen must be useful as a private product area.
+Core capabilities:
 
-### Core capabilities
+- income and expenses;
+- categories;
+- monthly budgets;
+- recurring costs where implemented;
+- savings goals;
+- overview of recent activity;
+- explicit currency handling;
+- money stored with Decimal semantics, never floating point.
 
-- income
-- expenses
-- categories
-- monthly budgets
-- savings goals
-- recurring costs
-- basic financial overview
-- optional shared budgets / costs later
+Finances should not be shared by default even when the user is part of a household or group.
 
-### Connections
+## 3. Haushalt
 
-Possible connections:
+Must work for one person as well as shared households.
 
-- savings goal ↔ trip
-- expense ↔ household purchase
-- budget ↔ event/project
-- recurring cost ↔ reminder
+Core capabilities:
 
-Finanzen must not require a trip or household.
+- household/personal chores;
+- due dates;
+- recurring routines;
+- status;
+- optional assignee in shared contexts;
+- shopping list;
+- rooms/devices only where they provide real value.
 
-## 4. Haushalt
+Do not force family terminology.
 
-Haushalt supports an individual or shared home.
+## 4. Organisation
 
-### Core capabilities
+Core capabilities:
 
-- tasks
-- recurring tasks
-- due dates
-- shopping lists
-- responsibility / assignee
-- routines
-- completion state
+- tasks;
+- calendar events;
+- reminders where supported;
+- notes or small personal projects where useful;
+- Today aggregation.
 
-### Connections
+Organisation should remain fully usable as a private calendar/task system.
 
-Possible connections:
+## 5. Reisen
 
-- household task ↔ calendar event
-- household task ↔ absence / trip
-- household purchase ↔ finance expense
-- routine ↔ reminder
+Core capabilities:
 
-A person living alone must be able to use Haushalt fully.
+- trips;
+- destination;
+- start/end dates;
+- participants where explicitly shared;
+- packing list;
+- trip tasks;
+- trip budget or budget reference;
+- travel events;
+- notes/documents later.
 
-## 5. Organisation
+Reisen is one of four equal areas. It must not become the product's only cross-domain example.
 
-Organisation is the personal planning layer.
+## 6. Demo experience
 
-### Core capabilities
+A public or pre-account demo may use example data to make the concept understandable.
 
-- tasks
-- calendar events
-- reminders
-- notes
-- personal projects
-- shared items where permissions allow
+Requirements:
 
-### Connections
+- visibly labelled as demo/example data;
+- isolated from real accounts;
+- safe to modify/reset;
+- no implication that fake financial records belong to a real user;
+- clear CTA to create/use a real account.
 
-Possible connections:
+Real accounts should not receive demo transactions/tasks/trips automatically.
 
-- calendar event ↔ task
-- event ↔ finance cost
-- event ↔ trip
-- project ↔ household work
+## 7. Onboarding
 
-Organisation must work as a private calendar/task system.
+Registration stays short.
 
-## 6. Reisen
+Onboarding should be brief and skippable where practical.
 
-Reisen is a full domain but may be implemented after the core domains.
+Recommended questions:
 
-### Core capabilities
+- use only for myself vs together with others;
+- which areas the user wants to start with;
+- optional name/avatar/profile basics;
+- whether to explore a demo or start with own data.
 
-- trip title
-- destination
-- start date
-- end date
-- participants
-- trip budget
-- travel tasks
-- packing list
-- travel events
-- notes / documents later
+Area selection personalizes the experience; it should not permanently disable other areas.
 
-### Connections
+## 8. Empty states
 
-Possible connections:
+Real accounts with no data should show useful guidance instead of fake content.
 
-- trip ↔ finance budget
-- trip ↔ savings goal
-- trip ↔ calendar events
-- trip ↔ tasks
-- trip ↔ household changes
-- trip ↔ participants
+Examples:
 
-## 7. Today
+- “Noch kein Budget angelegt. Starte mit deinem Monatsbudget.”
+- “Heute ist noch nichts geplant.”
+- “Erstelle deine erste Haushaltsaufgabe.”
+- “Noch keine Reise geplant. Wohin soll es als Nächstes gehen?”
 
-"Today" is a cross-domain view.
+## 9. Global search
 
-It can contain appointments, due tasks, household tasks, upcoming bills, relevant trip reminders and accepted automation results.
+Search should eventually cover accessible objects across domains.
 
-Today is a presentation layer, not a new domain.
+Examples:
 
-## 8. Suggestions
+- “Waschmaschine” → household task, savings goal, delivery event, connections;
+- “Berlin” → trip, tasks, events, expenses where applicable.
 
-A suggestion is a proposed action.
+Search must enforce permissions and must not reveal inaccessible object metadata.
 
-Example:
+## 10. Profile and settings
 
-> Deine Reise beginnt in 5 Tagen. Packliste öffnen?
+Profile entry is available from the app shell/top-right user control.
 
-A suggestion must have:
+Expected areas:
 
-- reason/context;
-- proposed action;
-- accept/dismiss where needed;
-- no hidden destructive side effect.
+- profile;
+- account;
+- people/groups;
+- notifications;
+- privacy;
+- app preferences;
+- help/support;
+- logout.
 
-## 9. Automations
+## 11. Connections
 
-Automations can be rule-based.
+Connections are explicit relationships between independently valid objects.
 
-Initial examples:
+V1 must support:
 
-- upcoming trip + missing packing list → suggest creating/opening packing list;
-- recurring household task falls during absence → suggest reschedule/reassign;
-- savings goal is behind schedule → recalculate suggested monthly contribution;
-- appointment approaching → reminder.
+- creating supported links;
+- listing links for an object;
+- viewing a small connection detail context;
+- deleting links;
+- strict permission checks.
 
-Automations must be auditable and reversible where practical.
+V1 does not need automation.
 
-## 10. Sharing
+## 12. Suggestions
 
-Sharing must be explicit.
+A suggestion proposes an action and explains its reason.
 
-Possible scopes:
+Examples:
 
-- personal
-- household
-- trip
-- group/project
+- trip starts soon and no packing list exists;
+- recurring chore overlaps a period of absence;
+- savings goal is behind schedule.
 
-A user may share one scope without exposing another.
+No hidden destructive side effects.
 
-Example: a friend may join a trip without seeing the user's finances or household.
+## 13. Automations
 
-## 11. Onboarding
+Automations come later and are user-controlled.
 
-Registration should remain short.
+High-impact actions such as deleting, sharing, inviting, changing permissions or financial movement require explicit confirmation.
 
-After registration, onboarding can ask:
+## 14. Responsive behavior
 
-- personal vs shared use;
-- whether to create a household;
-- which domains the user wants to start with;
-- optional preferences;
-- accessibility / comfort preferences later.
+Web and mobile should feel like the same product.
 
-Do not ask for unnecessary data during sign-up.
+Mobile is not a squeezed desktop. Navigation, touch targets, card density and form layouts must adapt.
+
+## 15. Accessibility
+
+Required:
+
+- semantic elements;
+- keyboard access;
+- visible focus;
+- labels for icon-only controls;
+- sufficient contrast;
+- readable status text in addition to color/icons;
+- sensible touch targets.

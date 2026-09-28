@@ -153,6 +153,17 @@ textarea:focus-visible {
 .check:hover .check__ring {
   border-color: var(--accent);
 }
+// Noch nicht fällig (siehe notYetDue() in aufgaben-tab.ts/uebersicht-tab.ts): sichtbar deaktiviert, sonst wirkt ein
+// Klick, der nichts tut, wie ein Fehler in der App statt einer bewussten Sperre.
+.check:disabled {
+  cursor: not-allowed;
+}
+.check:disabled .check__ring {
+  opacity: 0.35;
+}
+.check:disabled:hover .check__ring {
+  border-color: var(--border-strong);
+}
 .check.is-checked .check__ring {
   border-color: var(--accent);
   background: var(--accent);

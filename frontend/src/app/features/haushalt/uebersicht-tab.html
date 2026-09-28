@@ -38,8 +38,13 @@
           <button
             type="button"
             class="check"
-            [attr.aria-label]="task.title + ' als erledigt markieren'"
-            [disabled]="completing() === task.id"
+            [attr.aria-label]="
+              notYetDue(task)
+                ? task.title + ' – erst ' + relativeDay(task.due_date!) + ' fällig, noch nicht abhakbar'
+                : task.title + ' als erledigt markieren'
+            "
+            [attr.title]="notYetDue(task) ? 'Erst ' + relativeDay(task.due_date!) + ' fällig' : null"
+            [disabled]="completing() === task.id || notYetDue(task)"
             (click)="complete(task)"
           >
             <span class="check__ring"></span>

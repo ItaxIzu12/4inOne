@@ -1,97 +1,126 @@
-# 4inOne — Product Vision
+# 4inOne — Product Vision V2
 
 ## Product statement
 
 **4inOne — Dein Alltag. Alles verbunden.**
 
-4inOne is a personal life-management platform for people who want to manage important parts of everyday life without using many disconnected apps.
-
-Core domains:
+4inOne is a personal life-management app for four everyday areas:
 
 1. Finanzen
 2. Haushalt
 3. Organisation
 4. Reisen
 
-The app supports both individual and shared use.
+Each area must be useful independently. The product becomes distinctive when it can represent and later act on meaningful relationships between objects from different areas.
 
-## Problem
+## The problem
 
-Everyday information is fragmented.
+A single real-life situation often gets fragmented across several tools.
 
-A person may currently need separate tools for:
+Example: a trip may require:
 
-- budgets and savings goals;
-- household tasks;
-- calendars and personal tasks;
-- trips and travel planning;
-- shared family / partner organization.
+- a trip plan;
+- savings/budgeting;
+- calendar dates;
+- tasks;
+- a packing list;
+- household preparation;
+- coordination with another person.
 
-The same real-world event often needs to be entered multiple times.
-
-Example: a trip can require a travel plan, a savings goal, calendar events, a packing list, household preparation and shared responsibilities.
-
-4inOne should reduce that duplication.
+The user repeatedly enters the same context, but the tools do not understand that the records belong together.
 
 ## Core promise
 
-> **Eine Information. Einmal eingeben. Überall sinnvoll verbunden.**
+> **Eine Information. Einmal eingeben. Dort nutzen, wo sie relevant ist.**
 
-The product does not win by having the longest feature list. It should win by understanding when things belong together.
+The product should not compete by having the longest checklist of features. It should reduce duplicate work and make relationships between everyday responsibilities understandable.
+
+## The simplest explanation
+
+Use a concrete scenario before explaining the architecture.
+
+### Example: a new washing machine
+
+```text
+Sparziel 700 €
+↕
+Aufgabe: Angebote vergleichen
+↕
+Liefertermin
+↕
+Altgerät entsorgen
+```
+
+These things belong to one real-world situation even though they live in different areas.
 
 ## Product principles
 
-### 1. Every domain is useful alone
+### Every area works alone
 
-A single person must be able to use Finanzen without sharing, Organisation without a household, Haushalt without a family and Reisen without other modules.
+A user may use only Finanzen, only Organisation, only Haushalt or only Reisen.
 
-Connections enhance the experience but are not mandatory.
+No one must create a family/household to use the app.
 
-### 2. Private by default
+### Private by default
 
-Private information remains private unless the user deliberately shares it.
+Sharing is deliberate and scoped. Being connected to another person does not automatically reveal private finances, tasks, calendar events or trips.
 
-### 3. Connected when useful
+### Connections are optional
 
-The system can connect a budget with a trip, a task with a calendar event, a household responsibility with an absence, or a savings goal with a planned purchase.
+Connections enhance domain objects; they do not replace them.
 
-### 4. Automation must remain understandable
+### Suggestions, not surprises
 
-4inOne may suggest actions automatically. It should not silently make high-impact changes without user awareness.
+The system may detect useful relationships or consequences, but it should explain why and ask before consequential changes.
 
-### 5. Simple surface, powerful system
+Recommended interaction model:
 
-The internal product can be sophisticated. The visible interface must remain calm and understandable.
+```text
+detect → explain → suggest → user decides
+```
 
-## Intended audiences
+### Simple surface, capable system
 
-The product should work for individuals, couples, shared households, families and temporary groups such as travel groups.
+The interface should feel calm even when the underlying model is powerful.
 
-It should not require the user to identify as part of a family.
+## Intended audience
 
-## Positioning
+4inOne should work for:
 
-Avoid:
+- individuals;
+- couples;
+- families;
+- shared flats;
+- temporary groups such as travel companions.
 
-> Four apps in one.
+Marketing should not frame the product as “a family app that singles can also use”. It is a personal everyday platform that can become collaborative where the user chooses.
 
-Prefer:
+## Product hierarchy
 
-> **A personal everyday platform where finances, household, organization and travel can work together.**
+```text
+Four useful domains
+        ↓
+Connections
+        ↓
+Suggestions
+        ↓
+Automations
+```
 
-## Long-term product direction
+Connections are the first differentiating layer. Suggestions and automations should be built only after the underlying domains and permissions are reliable.
 
-Possible future capabilities:
+## Long-term direction
 
-- smart suggestions;
-- rule-based automation;
-- calendar synchronization;
+Possible later capabilities:
+
+- external calendar sync;
 - financial integrations;
-- booking / travel imports;
-- notifications;
-- AI-assisted natural-language planning;
-- reusable routines;
-- mobile notifications;
-- shared household workflows.
+- receipt/document capture;
+- travel imports;
+- shared routines;
+- smart suggestions;
+- user-enabled automations;
+- local/private AI assistance;
+- natural-language action creation.
 
-These are future directions, not MVP requirements.
+These are directions, not MVP promises.

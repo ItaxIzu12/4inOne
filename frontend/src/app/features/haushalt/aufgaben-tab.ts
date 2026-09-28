@@ -71,6 +71,12 @@ export class AufgabenTab {
   protected readonly effortOptions: Effort[] = [1, 2, 3];
   protected readonly effortLabels = EFFORT_LABELS;
   protected readonly relativeDay = relativeDay;
+  /** Noch nicht fällig: erst heute oder überfällig lässt sich abhaken — sonst könnte man eine wiederkehrende
+   * Aufgabe beliebig oft hintereinander „erledigen“ und sich Punkte/Fälligkeit vordatieren, ohne dass die Zeit
+   * dafür wirklich vergangen ist. Aufgaben ohne Datum sind davon nicht betroffen. */
+  protected notYetDue(task: TaskDto): boolean {
+    return !!task.due_date && task.due_date > todayIso();
+  }
   protected readonly recurrenceLabel = recurrenceLabel;
 
   private readonly visibleTasks = computed(() => {

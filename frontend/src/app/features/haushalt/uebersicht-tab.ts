@@ -2,7 +2,7 @@ import { Component, computed, inject, output, signal } from '@angular/core';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { HaushaltOverviewDto, Id, OverviewDeviceDto, TaskDto } from './haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
-import { relativeDay } from './haushalt-logic';
+import { relativeDay, todayIso } from './haushalt-logic';
 
 export type HaushaltTabKey = 'uebersicht' | 'aufgaben' | 'ordner' | 'einkauf' | 'routinen';
 
@@ -28,6 +28,10 @@ export class UebersichtTab {
   protected readonly actionError = signal<string | null>(null);
   protected readonly completing = signal<Id | null>(null);
   protected readonly relativeDay = relativeDay;
+  /** Wie im Aufgaben-Tab: erst heute oder überfällig lässt sich abhaken (siehe dort für die Begründung). */
+  protected notYetDue(task: TaskDto): boolean {
+    return !!task.due_date && task.due_date > todayIso();
+  }
 
   /** „Aktuelle Aufgaben“: erst überfällig/heute, dann die nächsten — vier
    * Zeilen reichen als Überblick, der Rest steht im Aufgaben-Tab. */

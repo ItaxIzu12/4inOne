@@ -1,100 +1,83 @@
-# 4inOne — Authentication & Permissions
+# 4inOne — Authentication and Permissions V2
 
-## Authentication UX
+## Registration
 
-Registration should be intentionally short.
+Keep registration intentionally short.
 
-Recommended registration fields:
+Typical fields:
 
-- first name
-- email
-- password
-- password confirmation
-- terms/privacy confirmation
+- first name or display name;
+- email;
+- password;
+- password confirmation;
+- terms/privacy consent as legally required.
 
-Do not ask for household, travel or financial details during registration. Use onboarding after account creation.
+Do not request financial, household or travel details during registration.
 
-## Login
+## Authentication
 
-Login should support:
+Use the security mechanisms already established in the Django/Angular project, provided they are safe.
 
-- email
-- password
-- password visibility toggle
-- forgot password
-- loading state
-- generic safe error message
+Prefer secure cookie/session or short-lived token patterns appropriate to the architecture. Do not store long-lived sensitive authentication secrets in insecure browser storage.
 
-## Session strategy
+## Ownership model
 
-Prefer secure server-managed authentication or secure HttpOnly cookies.
+Every persistent user object must have an unambiguous access scope.
 
-Do not place long-lived authentication secrets in localStorage.
+Typical scopes:
 
-The exact implementation must match the existing Django setup.
+- personal;
+- household/shared home;
+- trip;
+- group/project.
 
-## Password handling
+Do not assume that membership in one shared scope grants access to all other scopes.
 
-- Django must hash passwords using supported password hashers.
-- Never log passwords.
-- Never send passwords back to the frontend.
-- Rate-limit authentication endpoints when production hardening begins.
-- Add email verification if/when product requirements require it.
-
-## Ownership
-
-Every protected object needs clear ownership.
+## Private by default
 
 Examples:
 
-- personal budget → user owns it;
-- household task → household scope;
-- shared trip → trip/group scope.
-
-## Permission principle
-
-A frontend route guard is not security.
-
-Backend endpoints must verify access for every protected object.
-
-## Sharing examples
-
-### Partner
-
-Possible access:
-
-- Finance: view/edit only if explicitly shared
-- Household: edit
-- Organisation: edit
-- Travel: edit
-
-### Child / restricted member
-
-Possible access:
-
-- Finance: none
-- Household: limited
-- Organisation: limited
-- Travel: view
-
-### Friend
-
-Can be invited to one trip without receiving household or finance access.
+- A shared household does not automatically expose private finance records.
+- A travel companion does not automatically see household tasks.
+- A partner does not automatically see all private calendar events.
+- A connection does not expose the target object to someone who cannot already access it.
 
 ## Connection permissions
 
-A connection does not override object permissions.
+Before creating a connection, the backend must verify that the actor can view/use both endpoints as required by the action.
 
-If a user can see a trip but cannot see a private savings goal connected to it, do not expose the goal amount or other private details.
+Before listing a connection, verify access to the object being requested and avoid leaking inaccessible target metadata.
 
-## Future permission model
+A connection must never become an authorization shortcut.
 
-Start simple.
+## Search permissions
 
-Possible initial roles:
+Global search must apply the same access rules as direct object endpoints.
 
-- owner
-- member
-- viewer
+Do not return:
 
-Introduce domain-specific permissions only when real product use requires them.
+- titles;
+- amounts;
+- dates;
+- object existence hints;
+- connection metadata
+
+for inaccessible records.
+
+## Sharing
+
+Sharing must be explicit and understandable.
+
+Where possible, show the user what is being shared and with whom.
+
+Avoid vague “share everything” defaults.
+
+## Demo permissions
+
+Demo data belongs to the demo environment, not to arbitrary logged-in users.
+
+Do not make a demo dataset globally writable in a way that lets visitors affect one another unless the data is safely reset/isolate-per-session.
+
+## Logout
+
+Logout must invalidate/clear the relevant authentication state and return the user to an appropriate public/login view.

@@ -1,117 +1,132 @@
-# 4inOne — Codex Project Rules
+# 4inOne — Project Rules for Coding Agents
 
-## Purpose
+## Mission
 
-This repository contains **4inOne**, a personal life-management platform that connects:
+4inOne is a personal life-management app for **Finanzen, Haushalt, Organisation and Reisen**.
 
-- Finanzen
-- Haushalt
-- Organisation
-- Reisen
+Every area must work well on its own. The product becomes distinctive when it can represent that two or more things from different areas belong to the same real-life context.
 
-4inOne is **not** four unrelated applications inside one shell.
+Example:
 
-The core product idea is:
+```text
+Neue Waschmaschine
+├── Sparziel 700 €
+├── Aufgabe: Angebote vergleichen
+├── Liefertermin
+└── Aufgabe: Altgerät entsorgen
+```
 
-> **Jeder Bereich funktioniert eigenständig. Connections und Automatisierungen verbinden nur das, was sinnvoll zusammengehört.**
+These objects remain real domain objects. A Connection only expresses that they belong together.
 
-## Source of truth
+## Source-of-truth order
 
-When instructions conflict, use this priority:
+If implementation, old mockups or historical notes conflict, use this priority:
 
 1. `AGENTS.md`
 2. `docs/DECISIONS.md`
 3. `docs/PRODUCT_REQUIREMENTS.md`
-4. `docs/CONNECTION_ENGINE.md`
-5. `docs/DATA_MODEL.md`
-6. `docs/DESIGN_SYSTEM.md`
-7. `docs/ARCHITECTURE.md`
-8. `docs/SECURITY.md`
-9. `docs/ROADMAP.md`
-10. historical chat notes or old implementation details
+4. `docs/AUTH_AND_PERMISSIONS.md`
+5. `docs/CONNECTION_ENGINE.md`
+6. `docs/DATA_MODEL.md`
+7. `docs/DESIGN_SYSTEM.md`
+8. `docs/ARCHITECTURE.md`
+9. `docs/SECURITY.md`
+10. `docs/ROADMAP.md`
+11. current code, where it does not conflict with the above
 
-Do not treat old code as product truth when it conflicts with the documents above. Do not delete working code merely because it looks different from the target design.
-
-## Existing technology direction
+## Technology direction
 
 - Frontend: Angular
 - Backend: Python + Django
 - Database now: SQLite
 - Database later: PostgreSQL
 - Infrastructure later: Docker
-- The currently installed project versions are authoritative.
-- Do not upgrade Angular, Django, Python or other major dependencies unless explicitly required.
+- Optional future worker/queue only when an actual background requirement exists
 
-## Required workflow before changing code
+The versions already installed in the repository are authoritative. Do not upgrade major dependencies without a concrete reason.
 
-Before every substantial implementation:
+## Required workflow before substantial changes
 
-1. Inspect the existing repository.
-2. Identify reusable components, services, models and APIs.
-3. Check whether an equivalent feature already exists.
-4. Explain the smallest safe change.
-5. Preserve working behavior unless the requirement explicitly changes it.
-6. Implement in small, reviewable steps.
-7. Add or update tests for behavior that changes.
+1. Inspect the existing codebase.
+2. Read relevant project documentation.
+3. Identify reusable components, services, APIs and models.
+4. Check whether the requested behavior already exists.
+5. Propose the smallest safe implementation.
+6. Preserve working functionality unless the requirement explicitly changes it.
+7. Implement in small, reviewable steps.
+8. Add or update tests.
+9. Run build/typecheck/tests relevant to the change.
 
-For large requests, first provide a short implementation plan before editing.
+Do not rewrite the project only to make it resemble a theoretical architecture diagram.
 
-## Architecture principles
+## Product principles
 
-- Prefer feature boundaries over one giant application layer.
-- Avoid circular dependencies between Finanzen, Haushalt, Organisation and Reisen.
-- Cross-domain behavior must go through explicit Connections / Automations instead of hidden coupling.
-- Keep domain models understandable.
-- Do not create generic abstractions before there is a real need.
-- Use Django ORM rather than database-specific SQL unless there is a documented reason.
-- Keep SQLite compatibility during the early phase, but avoid SQLite-specific design choices.
-- Design all persistent models with a future PostgreSQL migration in mind.
-
-## Privacy principles
-
-- Personal data is private by default.
-- Sharing must be explicit.
-- A user must never gain access to another user's finance, household, calendar or travel data merely because both belong to the same application.
-- Shared households, groups and trips require explicit membership and permissions.
-- Sensitive permissions must be enforced in the backend, not only hidden in the UI.
-
-## UX principles
-
+- Every domain is useful alone.
+- Private by default.
+- Sharing is explicit and granular.
+- Connections do not grant permissions.
+- Suggestions explain themselves.
+- High-impact changes require user confirmation.
+- “Today” shows what matters now, not a wall of statistics.
 - Complex underneath, simple on top.
-- Show the user what matters now.
-- Avoid overloaded dashboards.
-- Mobile-first, but provide a strong desktop/web experience.
-- Use whitespace, concise copy and clear hierarchy.
-- Color is an orientation aid, not decoration.
-- Accessibility is a product requirement, not a later enhancement.
+- Do not add a feature merely because competitors have it.
 
-## Design references
+## Domain independence
 
-The images in `docs/references/` are **visual references**, not assets to be placed as screenshots/backgrounds in the application.
+Avoid direct cross-domain coupling such as hard-wiring finance models to travel models for every use case.
 
-Rebuild the UI using real Angular components.
+Prefer:
 
-## Product check for every new feature
+```text
+domain object → explicit Connection → domain object
+```
 
-Before adding a feature, ask:
+rather than hidden creation or cascades across apps.
 
-1. Does it solve a real user problem?
-2. Is it useful on its own?
-3. Can it connect meaningfully with another domain?
-4. Does the connection reduce duplicate work for the user?
-5. Can the UI remain simple?
-6. Is privacy preserved?
+## Privacy rules
 
-If the feature adds complexity without clear value, do not add it.
+A user must never gain access to another user's object simply because both users belong to the same app, household, group or trip.
+
+Backend authorization is mandatory for:
+
+- reads
+- writes
+- search results
+- connection creation
+- connection listing
+- suggestions
+- sharing
+- file/media access
+
+Never rely on hidden UI elements as authorization.
+
+## Demo rules
+
+Demo data and real user data must be clearly separated.
+
+- Do not silently seed fake transactions, trips or tasks into a real account.
+- A demo environment must be visibly labelled.
+- Users may deliberately adopt templates, but templates are not disguised demo records.
+
+## Design rules
+
+The production UI should be calm, modern, adult and friendly.
+
+- Use one consistent icon family.
+- Prefer regular UI icons over 3D icons in daily-use screens.
+- Use 3D/illustration mainly for onboarding, marketing, empty states and occasional hero moments.
+- Domain colors are orientation aids, not full-screen decoration.
+- Finances should be the most restrained visual area.
 
 ## Important non-goals
 
 Do not:
 
-- build four separate mini-apps that happen to share navigation;
-- expose every possible metric on the dashboard;
-- create an AI chatbot merely to claim the product has AI;
-- automatically mutate user data without transparency;
-- share private data by default;
-- store authentication secrets in insecure browser storage;
-- add speculative infrastructure before it is needed.
+- create four unrelated mini-apps inside one navigation shell;
+- introduce AI as a novelty tab;
+- silently modify user data;
+- store long-lived secrets in insecure browser storage;
+- implement Celery/Redis/Neo4j/event buses before a concrete need exists;
+- build a huge generic permissions framework before the product requires it;
+- copy demo data into real accounts by default;
+- add broad cross-domain foreign keys that make future evolution difficult.

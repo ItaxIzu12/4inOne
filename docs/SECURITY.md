@@ -1,106 +1,118 @@
-# 4inOne — Security Requirements
+# 4inOne — Security Requirements V2
 
-Security is especially important because the product may contain financial, household, calendar and travel information.
+4inOne may contain financial, household, calendar, travel and relationship data. Security and privacy are product requirements.
 
 ## Core rules
 
 - Private by default.
-- Enforce authorization server-side.
-- Validate all input server-side.
-- Treat frontend validation as UX only.
+- Authorization is enforced server-side.
+- Validate input server-side.
+- Frontend validation is UX, not security.
 - Use HTTPS in production.
-- Keep secrets out of the repository.
-- Never commit production credentials.
-- Use environment variables for secrets/configuration.
+- Keep secrets out of source control.
+- Use environment configuration for secrets.
 - Keep dependencies maintained.
 
 ## Django
 
-- Keep `DEBUG=False` in production.
-- Configure `ALLOWED_HOSTS`.
-- Use CSRF protection correctly.
-- Use secure cookies in production.
-- Use Django's password hashing.
-- Use ORM query parameters; avoid unsafe raw SQL.
-- Protect object-level access.
-- Avoid mass assignment patterns that allow unauthorized field changes.
-- Limit error details exposed to clients.
+- `DEBUG=False` in production.
+- correct `ALLOWED_HOSTS`/origin configuration;
+- CSRF protection where applicable;
+- secure cookies in production;
+- Django password hashing;
+- ORM over unsafe raw SQL;
+- object-level access checks;
+- safe serializer/form field exposure;
+- avoid exposing internal exception details.
 
 ## Angular
 
-- Do not inject untrusted HTML.
-- Avoid bypassing Angular sanitization unless absolutely justified.
-- Do not store sensitive long-lived secrets in localStorage.
-- Use HTTP interceptors only for appropriate transport concerns.
-- Handle auth failure centrally.
-- Do not hide authorization mistakes with UI-only controls.
+- do not render untrusted HTML unsafely;
+- do not bypass sanitization without necessity;
+- do not store sensitive long-lived secrets in localStorage;
+- centralize auth failure handling;
+- do not treat hidden buttons/routes as authorization.
 
-## API
+## Endpoint checklist
 
 For every endpoint ask:
 
-1. Is the user authenticated?
-2. Who owns the requested object?
-3. Is the user a permitted member of that scope?
-4. Are they allowed to perform this action?
-5. Could the response leak information about an object they cannot access?
+1. Is the actor authenticated where required?
+2. Who owns the object?
+3. What shared scope applies?
+4. Is the actor permitted to read/write/delete?
+5. Could the response reveal existence or metadata of inaccessible data?
+
+## Connections
+
+A Connection never grants permission.
+
+Connection APIs must avoid metadata leaks from inaccessible endpoints.
+
+## Search
+
+Global search is a high-risk aggregation point.
+
+Never fetch all objects and filter authorization in the browser.
+
+Search results must already be permission-filtered on the backend.
 
 ## Financial data
 
-For MVP:
-
-- treat values as sensitive;
-- do not log transaction payloads unnecessarily;
+- treat amounts and transaction details as sensitive;
+- do not log full finance payloads by default;
 - use Decimal;
-- require explicit sharing;
-- do not expose another household member's private finance records.
+- explicit sharing only;
+- shared household membership does not imply shared finances.
 
-## File uploads (future)
+## Demo environment
 
-If adding receipts, travel documents or avatars:
+Prevent demo users from affecting each other's persistent data unless the demo architecture deliberately isolates/resets state.
 
-- validate MIME/type;
-- set size limits;
-- use randomized storage names;
+Do not reuse a real user's data in a public demo.
+
+## File uploads later
+
+For receipts, travel documents, avatars or photos:
+
+- validate MIME/content type;
+- enforce size limits;
+- randomize storage names;
 - do not trust original filenames;
-- scan or isolate where appropriate;
-- store documents using private access controls when sensitive.
+- use private access controls for sensitive files;
+- consider scanning/isolation as deployment requirements grow.
 
 ## Automation safety
 
-Automations should not silently:
+Automations must not silently perform high-impact actions such as:
 
-- delete records;
-- move money;
-- share private data;
-- invite people;
-- change permissions.
+- deleting records;
+- sharing private data;
+- inviting people;
+- changing permissions;
+- initiating/moving money.
 
-High-impact actions require explicit confirmation.
+Use explicit confirmation where impact is meaningful.
 
 ## Logging
-
-Logs should help diagnose problems without collecting unnecessary personal data.
 
 Never log:
 
 - passwords;
 - auth tokens;
 - secret keys;
-- full sensitive financial payloads by default.
+- unnecessary full financial payloads.
 
-## Future production hardening
+## Before public launch
 
-Before public launch:
+Plan for:
 
-- PostgreSQL
-- production deployment configuration
-- backups
-- restore testing
-- rate limiting
-- monitoring
-- audit logs for permissions/sharing
-- dependency scanning
-- security headers
-- privacy review
-- data deletion/export flows
+- PostgreSQL;
+- backups + restore testing;
+- rate limiting;
+- monitoring;
+- permission/sharing audit logs where justified;
+- dependency/security scanning;
+- security headers;
+- data export/deletion flows;
+- privacy review.

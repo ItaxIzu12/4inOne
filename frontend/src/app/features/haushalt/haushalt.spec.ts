@@ -46,10 +46,10 @@ describe('Haushalt (Demo)', () => {
     // Demo: 2 fällige Aufgaben (gestern + heute), Zähler aus derselben Antwort
     expect(text(compiled.querySelector('app-uebersicht-tab .stat__value'))).toBe('4');
     expect(text(compiled.querySelector('app-uebersicht-tab .stat__label'))).toBe('offene Aufgaben');
-    // „Aktuelle Aufgaben“: überfällig, heute, dann die nächsten (vier Zeilen)
+    // „Aktuelle Aufgaben“: überfällig, dann heute (zwei fällig heute), dann die nächsten (vier Zeilen)
     expect(compiled.querySelectorAll('app-uebersicht-tab .row').length).toBe(4);
     const subtitles = Array.from(compiled.querySelectorAll('app-uebersicht-tab .row__meta')).map(text);
-    expect(subtitles.slice(0, 3)).toEqual(['Überfällig', 'Heute', 'Morgen']);
+    expect(subtitles).toEqual(['Überfällig', 'Heute', 'Heute', 'Morgen']);
     expect(compiled.querySelector('app-uebersicht-tab .device')).not.toBeNull(); // „Meine Geräte“
     expect(text(compiled.querySelector('.page-head__action'))).toBe('Neue Aufgabe');
     expect(compiled.querySelector('button[aria-label="Bad putzen als erledigt markieren"]')).not.toBeNull();
@@ -63,9 +63,11 @@ describe('Haushalt (Demo)', () => {
     (compiled.querySelector('button[aria-label="Bad putzen als erledigt markieren"]') as HTMLButtonElement).click();
     fixture.detectChanges();
 
-    // wiederkehrend: rückt weiter, bleibt offen, ist aber nicht mehr heute fällig
-    const subtitles = Array.from(compiled.querySelectorAll('app-uebersicht-tab .row__meta')).map(text);
-    expect(subtitles).not.toContain('Heute');
+    // wiederkehrend: rückt weiter, bleibt offen, ist aber nicht mehr heute fällig (Winterreifen bleibt „Heute“,
+    // das ist eine andere, einmalige Aufgabe)
+    const rows = Array.from(compiled.querySelectorAll('app-uebersicht-tab .row'));
+    const badPutzenRow = rows.find((row) => text(row.querySelector('.row__title')) === 'Bad putzen');
+    expect(text(badPutzenRow?.querySelector('.row__meta') ?? null)).not.toBe('Heute');
     expect(text(compiled.querySelector('app-uebersicht-tab .stat__value'))).toBe('4');
   });
 
@@ -118,6 +120,35 @@ describe('Haushalt (Demo)', () => {
     (compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren wieder öffnen"]') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren als erledigt markieren"]')).not.toBeNull();
+  });
+
+  it('a task that is not yet due cannot be marked done, on the tab or the overview, but can still be edited', () => {
+    const fixture = TestBed.createComponent(Haushalt);
+    fixture.detectChanges();
+    let compiled = fixture.nativeElement as HTMLElement;
+
+    // Übersicht: „Müll rausbringen“ ist erst morgen fällig
+    const overviewCheck = compiled.querySelector(
+      'app-uebersicht-tab button[aria-label*="Müll rausbringen"]',
+    ) as HTMLButtonElement;
+    expect(overviewCheck.disabled).toBe(true);
+    expect(overviewCheck.getAttribute('aria-label')).toContain('noch nicht abhakbar');
+    expect(overviewCheck.getAttribute('title')).toContain('Erst');
+
+    openTab(fixture, 'aufgaben');
+    compiled = fixture.nativeElement as HTMLElement;
+    const taskCheck = compiled.querySelector('button[aria-label*="Müll rausbringen"]') as HTMLButtonElement;
+    expect(taskCheck.disabled).toBe(true);
+    taskCheck.click();
+    fixture.detectChanges();
+    // Ein Klick auf den deaktivierten Haken ändert nichts — die Aufgabe bleibt unter „Nächste 7 Tage“
+    expect(text(compiled.querySelector('.group h3'))).not.toBe('Erledigt');
+    expect(compiled.querySelector('button[aria-label="Bad putzen als erledigt markieren"]')).not.toBeNull();
+
+    // Bearbeiten bleibt jederzeit möglich, nur das Abhaken ist gesperrt
+    (compiled.querySelector('button[aria-label*="Müll rausbringen"] ~ .row__edit') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(text(compiled.querySelector('app-modal-form h2'))).toBe('Aufgabe bearbeiten');
   });
 
   it('shows the shopping list grouped by shop section with accessible check buttons', () => {

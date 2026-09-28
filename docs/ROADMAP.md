@@ -1,149 +1,147 @@
-# 4inOne — Roadmap
+# 4inOne — Roadmap V2
 
-The roadmap is ordered to reduce architectural rework.
+This roadmap reflects the current strategy: make the four domains reliable first, then add cross-domain intelligence.
 
-## Stand (24.09.2026)
-
-| Phase | Stand |
-|---|---|
-| 0 Audit | erledigt (Grundlage für Phase 1) |
-| 1 Auth & App-Grundlage | erledigt, siehe `IMPLEMENTATION_PHASE1.md`; offen: echter E-Mail-Versand für Passwort-Reset |
-| 2 Eigentümerschaft | **offen, blockiert weitere geteilte Funktionen** – Vorschlag: `ADR-001-OWNERSHIP.md` |
-| 3 Organisation | in Arbeit (persönliche Termine/Aufgaben, Heute-Ansicht) |
-| 4 Finanzen | großteils vorhanden (Ausgaben, Einkommen, Kategorien mit Monatslimit, feste Kosten, Analyse, Berichte); fehlt: Sparziele; noch auf Haushalts-Eigentum |
-| 5 Haushalt | vorhanden (Einkaufsliste mit Einkaufsmodus, wiederkehrende Aufgaben mit Rotation, Haushaltsordner); noch auf Haushalts-Eigentum |
-| 6 Connection Engine | nicht begonnen; bisher feste Verknüpfungen: Aufgabe → Termin, Einkauf → Ausgabe, Vertrag → fester Abzug, Ordnerfrist → Termin |
-| 7–12 | offen |
-
-Phasen 4 und 5 sind vor Phase 2 entstanden. Deshalb sollte Phase 2 vor jeder weiteren geteilten Funktion kommen.
+Existing completed work should not be rebuilt just to match phase numbering.
 
 ## Phase 0 — Repository audit
 
-- inspect Angular structure;
-- inspect Django structure;
-- inspect existing authentication;
-- inspect existing models;
-- inspect existing APIs;
-- inspect current design system;
-- identify reusable code.
+- inspect Angular/Django structure;
+- identify current auth, ownership, APIs and tests;
+- identify already-finished features;
+- record blockers and technical debt.
 
-No large rewrite.
+## Phase 1 — Foundation stabilization
 
-## Phase 1 — Authentication & app foundation
+Where not already stable:
 
-- registration
-- login
-- logout
-- password reset flow
-- app shell
-- routing
-- protected routes
-- loading/error states
-- responsive auth layout
+- registration/login/logout;
+- protected routes;
+- app shell;
+- responsive navigation;
+- loading/error states;
+- base profile identity;
+- ownership/privacy basics.
 
-## Phase 2 — User & ownership model
+## Phase 2 — Organisation
 
-- personal scope
-- optional household
-- membership
-- simple permissions
-- onboarding
+Finish and test:
 
-This phase is critical before shared features.
+- tasks;
+- calendar events;
+- Today aggregation;
+- CRUD/error/empty states;
+- responsive behavior.
 
-## Phase 3 — Organisation MVP
+## Phase 3 — Finanzen
 
-- tasks
-- calendar events
-- Today aggregation
-- reminders model if needed
+Finish and test:
 
-Organisation provides useful cross-domain anchors.
+- income/expenses;
+- categories;
+- budgets;
+- savings goals;
+- Decimal/currency handling;
+- privacy.
 
-## Phase 4 — Finanzen MVP
+## Phase 4 — Haushalt
 
-- income
-- expenses
-- categories
-- monthly budget
-- savings goals
+Finish and test:
 
-Keep it private by default.
+- chores/routines;
+- due dates/status;
+- optional assignments;
+- shopping list;
+- solo and shared behavior.
 
-## Phase 5 — Haushalt MVP
+## Phase 5 — Reisen
 
-- household/personal tasks
-- recurring tasks
-- assignee
-- due dates
-- basic shopping list if needed
+Finish and test:
 
-## Phase 6 — Connection Engine V1
+- trips;
+- dates;
+- packing/tasks;
+- participants where allowed;
+- budget reference;
+- calendar-related data where implemented.
 
-Implement only concrete useful relations first.
+## Phase 6 — Profile, settings and onboarding polish
 
-Suggested V1:
+- profile menu;
+- account settings;
+- people/groups;
+- notification/privacy/app preferences;
+- onboarding flow;
+- demo-vs-real-data behavior;
+- empty states.
 
-- task ↔ calendar event
-- savings goal ↔ planned purchase/project
-- household task ↔ calendar event
+## Phase 7 — End-to-end stabilization
 
-Create connection UI and backend permission checks.
+Before Connections:
 
-## Phase 7 — Suggestions V1
+- fix known bugs;
+- verify permissions;
+- test mobile/desktop;
+- verify forms and validation;
+- run frontend/backend tests;
+- reduce duplicate UI patterns;
+- document remaining debt.
+
+## Phase 8 — Connection Engine V1
+
+Start small:
+
+- supported typed relationships;
+- create/list/delete;
+- backend permission checks;
+- connected-items UI;
+- duplicate/self/invalid validation;
+- security tests.
+
+No automation yet.
+
+## Phase 9 — Suggestions V1
+
+Only after Connections are reliable.
 
 Examples:
 
-- upcoming due task;
-- conflicting household task;
-- linked goal needs attention.
+- missing packing list before a trip;
+- household routine overlaps absence;
+- savings goal needs attention;
+- useful proposed connection.
 
-Suggestion first; automatic mutation later.
+Suggestions explain why and let the user decide.
 
-## Phase 8 — Reisen MVP
+## Phase 10 — Automations
 
-- trip
-- dates
-- participants
-- packing/tasks
-- trip budget reference
-- calendar connection
+- explicit rules;
+- user enable/disable;
+- auditability;
+- safe confirmation for impactful actions;
+- worker/queue only if scheduling/background requirements justify it.
 
-Travel is where multiple connections become highly visible, but it is not the only connected domain.
+## Phase 11 — PostgreSQL and deployment hardening
 
-## Phase 9 — PostgreSQL
+Can move earlier if deployment requires it.
 
-- set up PostgreSQL dev/test;
-- migration rehearsal;
-- tests;
-- data transfer plan;
-- switch primary DB.
+- PostgreSQL rehearsal/migration;
+- backup strategy;
+- production config;
+- monitoring;
+- optional Docker.
 
-## Phase 10 — Docker
+## Phase 12 — Integrations, media and AI
 
-- backend container
-- frontend container if useful
-- PostgreSQL container for local/dev
-- environment configuration
-
-## Phase 11 — Automation Engine
-
-- rule definitions
-- safe triggers
-- audit trail
-- user enable/disable
-- background processing where required
-
-## Phase 12 — Integrations / AI
-
-Only after product fundamentals are stable.
+Only after core product value is stable.
 
 Possible:
 
-- external calendars
-- email/booking import
-- financial providers
-- AI natural-language planning
-- intelligent classification
+- calendar sync;
+- receipt/document capture;
+- object storage;
+- booking imports;
+- natural-language task/action extraction;
+- local/private AI classification and summaries.
 
-AI should improve workflows, not become a separate novelty tab.
+AI is an enhancement, not the product identity.

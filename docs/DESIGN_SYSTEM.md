@@ -1,156 +1,179 @@
-# 4inOne — Design System
+# 4inOne — Design System Direction V2
 
-## Direction
+## Design goal
 
-The interface should be:
+The real product should feel:
 
-- calm
-- modern
-- friendly
-- light
-- accessible
-- slightly playful
-- not childish
-- not visually overloaded
+- calm;
+- modern;
+- adult;
+- friendly;
+- trustworthy;
+- understandable;
+- not overly “AI-mockup-like”.
 
-Primary design rule:
+The interface should support long-term daily use rather than optimizing every screen for visual wow.
 
-> **Complex underneath. Simple on top.**
+## Visual balance
 
-## Brand statement
+Recommended product balance:
 
-**4inOne — Dein Alltag. Alles verbunden.**
+- approximately 80–85% normal product UI;
+- approximately 15–20% illustration/3D/emotional visual accents.
+
+Marketing material may use more expressive imagery than the daily product.
 
 ## Domain colors
 
-Colors should mainly help orientation.
+Use a consistent orientation system:
 
-- Finanzen: soft green
-- Haushalt: soft pink / warm red
-- Organisation: soft purple
-- Reisen: soft blue
+- Finanzen — green
+- Haushalt — pink/coral
+- Organisation — purple
+- Reisen — blue
 
-Avoid filling the entire UI with saturated colors. Most surfaces should remain neutral/white.
+Domain colors are accents, not backgrounds for entire dense screens.
 
-## Layout
+Preferred pattern:
 
-### Mobile
+```text
+white/light card
++ very light domain-tinted icon container
++ domain-colored icon/accent
++ neutral text
+```
 
-Priority order:
-
-1. Header / greeting
-2. Heute
-3. 4inOne Vorschlag
-4. Automatisch verbunden
-5. Domain entry points
-6. Bottom navigation
-
-Mobile should never attempt to show the full desktop dashboard.
-
-### Desktop/Web
-
-Suggested structure:
-
-- left sidebar
-- top search/profile bar
-- greeting
-- Today card
-- Connected card
-- suggestion card
-- compact domain cards
-- detail areas only when relevant
-
-## Spacing
-
-Use generous whitespace. Prefer fewer, clearer cards over many small widgets.
-
-## Cards
-
-Cards should have:
-
-- subtle border;
-- moderate radius;
-- minimal shadow;
-- clear heading;
-- concise content;
-- one obvious action when possible.
-
-Avoid nested cards inside nested cards unless necessary.
-
-## Typography
-
-Use the existing project font if appropriate. Otherwise choose a highly readable modern sans-serif.
-
-Rules:
-
-- large clear headings;
-- readable body sizes;
-- avoid tiny labels;
-- no decorative handwritten font for functional UI;
-- decorative lettering only in optional marketing surfaces.
-
-## Icons
-
-Use a consistent icon system. Do not mix several icon styles. Icons support labels; they do not replace important text.
-
-## Avatars
-
-Use small avatars only when people are relevant. Avoid large AI-looking family illustrations in the product UI. Initials are acceptable fallbacks.
-
-## Waves / organic shapes
-
-Waves are a brand accent.
-
-Use them sparingly in auth/marketing backgrounds, empty states or section accents.
-
-Do not place decorative waves behind critical data.
-
-## Dashboard content rules
-
-Avoid:
-
-- quotes of the day;
-- unnecessary motivational cards;
-- giant illustrations;
-- too many metrics;
-- showing every domain detail simultaneously.
+## Base surfaces
 
 Prefer:
 
-- 3–4 Today items;
-- 1 suggestion;
-- 1 connection summary;
-- 4 compact domain cards.
+- white or warm off-white main surfaces;
+- dark navy/charcoal primary text/navigation;
+- restrained borders;
+- subtle shadows;
+- consistent card radius;
+- generous spacing.
 
-## States
+Avoid excessive gradients, glow effects and floating decorative objects in functional views.
 
-Every component should consider:
+## Icon system
 
-- default
-- hover (desktop)
-- focus
-- active
-- loading
-- empty
-- error
-- disabled
+Use one consistent icon family already available in the project where possible.
+
+If Angular Material/Material Symbols is already established, prefer **Material Symbols Rounded**.
+
+If a coherent family such as Lucide is already established, keep it rather than adding another library.
+
+### Domain icons
+
+Use stable concepts across the entire product:
+
+- Finanzen — wallet/savings
+- Haushalt — home
+- Organisation — calendar/task
+- Reisen — flight/travel
+
+Do not change the main domain symbol between screens.
+
+### Icon sizes
+
+Suggested scale:
+
+- utility: 16 px
+- list: 20 px
+- navigation: 22–24 px
+- cards: 24–28 px
+- section headers: 28–32 px
+
+Do not use oversized 3D icons for ordinary data cards.
+
+## 3D and illustration
+
+Good uses:
+
+- onboarding;
+- landing/marketing;
+- empty states;
+- app-store imagery;
+- occasional travel/hero moments.
+
+Avoid as primary controls in:
+
+- sidebar/bottom navigation;
+- settings;
+- finance transactions;
+- task lists;
+- calendars;
+- forms;
+- tables.
+
+## Finanzen
+
+Finances should be the most restrained domain.
+
+Prioritize:
+
+- clear numbers;
+- readable charts;
+- trust;
+- minimal decoration;
+- green as accent rather than full-page theme.
+
+## Haushalt
+
+Can feel warm and friendly, but tasks/information stay primary.
+
+Device imagery may be used sparingly. Prefer normal device icons or small thumbnails over large decorative 3D appliances.
+
+## Organisation
+
+Should feel especially clean and productive.
+
+Use simple calendar/task/reminder icons and restrained purple accents.
+
+## Reisen
+
+May be the most emotional domain.
+
+Allowed:
+
+- destination cover imagery;
+- light illustrations;
+- travel hero imagery.
+
+Functional controls still use the same normal icon system as the rest of the product.
+
+## Navigation
+
+Inactive navigation:
+
+- neutral navy/gray.
+
+Active navigation:
+
+- domain accent and/or light domain background.
+
+Do not rely only on color; preserve text/shape/state cues.
+
+## Profile menu
+
+The top-right profile entry may open a compact menu with:
+
+- Mein Profil
+- Konto
+- Personen & Gruppen
+- Benachrichtigungen
+- Datenschutz
+- Einstellungen
+- Hilfe
+- Abmelden
+
+The menu should feel simple rather than becoming a second sidebar.
 
 ## Accessibility
 
-- semantic HTML;
-- keyboard navigation;
-- visible focus;
-- labels for form fields;
-- sufficient contrast;
-- touch targets suitable for mobile;
-- do not rely on color alone;
-- support larger text without breaking layouts.
-
-## Visual references
-
-- `references/mockup-mobile.png`
-- `references/mockup-web.png`
-
-These define direction, not pixel-perfect requirements.
-
-Codex should preserve the spirit while implementing a real responsive UI.
+- icon-only buttons require accessible labels;
+- state must not be communicated only by color;
+- focus states remain visible;
+- text and controls require sufficient contrast;
+- touch targets should be comfortable on mobile.

@@ -334,10 +334,13 @@ test.describe('mobile order and visibility', () => {
     await page.setViewportSize({ width: 390, height: 900 });
     await page.goto('/organisation');
     await page.getByRole('button', { name: 'Kalender', exact: true }).click();
+    const today = new Date();
+    const monthLabel = today.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+    const dayLabel = new RegExp(`${today.getDate()}\\. ${today.toLocaleDateString('de-DE', { month: 'long' })} ${today.getFullYear()}`);
     const tops = await Promise.all(
       [
-        page.getByRole('heading', { name: 'September 2026', exact: true }),
-        page.getByRole('heading', { name: /27\. September 2026/ }),
+        page.getByRole('heading', { name: monthLabel, exact: true }),
+        page.getByRole('heading', { name: dayLabel }),
         page.getByRole('heading', { name: 'Nächste Termine' }),
       ].map(async (l) => (await l.boundingBox())!.y),
     );

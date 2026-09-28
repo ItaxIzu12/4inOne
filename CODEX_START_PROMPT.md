@@ -1,49 +1,55 @@
-# First Codex Prompt
+# First Repository Audit Prompt
 
-Read the following files completely before changing code:
+Read these files completely before modifying code:
 
-- AGENTS.md
-- docs/DECISIONS.md
-- docs/PRODUCT_VISION.md
-- docs/PRODUCT_REQUIREMENTS.md
-- docs/CONNECTION_ENGINE.md
-- docs/DATA_MODEL.md
-- docs/DESIGN_SYSTEM.md
-- docs/ARCHITECTURE.md
-- docs/AUTH_AND_PERMISSIONS.md
-- docs/SECURITY.md
-- docs/ROADMAP.md
+- `AGENTS.md`
+- `CLAUDE.md`
+- `docs/DECISIONS.md`
+- `docs/PRODUCT_VISION.md`
+- `docs/PRODUCT_REQUIREMENTS.md`
+- `docs/DEMO_AND_ONBOARDING.md`
+- `docs/DESIGN_SYSTEM.md`
+- `docs/AUTH_AND_PERMISSIONS.md`
+- `docs/CONNECTION_ENGINE.md`
+- `docs/GLOBAL_SEARCH.md`
+- `docs/PROFILE_AND_SETTINGS.md`
+- `docs/DATA_MODEL.md`
+- `docs/ARCHITECTURE.md`
+- `docs/SECURITY.md`
+- `docs/ROADMAP.md`
 
 Then inspect the complete existing repository.
 
 Technology direction:
+
 - Angular frontend
-- Python / Django backend
-- SQLite currently
+- Python/Django backend
+- SQLite now
 - PostgreSQL later
 - Docker later
 
 Important:
-- Do NOT create a new project.
-- Do NOT replace working architecture without evidence.
-- Reuse existing components, services, models and APIs when appropriate.
-- Keep each domain independently usable.
-- Cross-domain behavior must use explicit Connections / Automations.
-- Personal data is private by default.
-- The UI must be simple, calm, modern and responsive.
-- The images in docs/references are visual references only.
-- Do not embed the reference screenshots in the product.
 
-Your first task is analysis only.
+- Do not create a new project.
+- Preserve stable functionality.
+- Adapt the architecture to the repository rather than forcing theoretical folder structures.
+- Every domain must remain useful independently.
+- Cross-domain behavior must be explicit and permission-safe.
+- Demo data and real user data must remain distinct.
+
+First task: analysis only.
 
 Produce:
-1. Current repository architecture.
-2. What already matches the target architecture.
-3. Technical debt or blockers.
-4. Missing authentication / permission pieces.
-5. Missing domain boundaries.
-6. Where a Connection Engine can be introduced safely.
-7. A proposed migration/refactoring plan in small phases.
-8. Files you expect to modify in Phase 1.
+
+1. Current frontend/backend architecture.
+2. Existing auth and ownership model.
+3. Current state of Organisation, Finanzen, Haushalt and Reisen.
+4. Existing profile/settings capabilities.
+5. Current test/build status.
+6. Security or permission gaps.
+7. Design-system inconsistencies, including icons/3D assets.
+8. Whether the code is ready for Connection Engine V1.
+9. A phased plan with the smallest safe next steps.
+10. Files likely to change in Phase 1.
 
 Do not modify code yet.

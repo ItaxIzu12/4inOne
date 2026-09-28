@@ -102,7 +102,9 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     task({ id: 'demo-task-1', title: 'Pflanzen gießen', recurrence: 'daily', recurrence_days: 1, due_date: addDaysIso(-1), is_overdue: true }),
     task({ id: 'demo-task-2', title: 'Bad putzen', recurrence: 'weekly', recurrence_days: 7, effort: 3, due_date: todayIso() }),
     task({ id: 'demo-task-3', title: 'Müll rausbringen', recurrence: 'weekly', recurrence_days: 7, due_date: addDaysIso(1) }),
-    task({ id: 'demo-task-4', title: 'Winterreifen-Termin vereinbaren', effort: 2, due_date: addDaysIso(9) }),
+    // Heute statt weit in der Zukunft: sonst wäre die einzige einmalige Demo-Aufgabe erst in 9 Tagen abhakbar
+    // (siehe aufgaben-tab.ts notYetDue()) und ein Besuch der Demo könnte sie nie ausprobieren.
+    task({ id: 'demo-task-4', title: 'Winterreifen-Termin vereinbaren', effort: 2, due_date: todayIso() }),
   ];
   private load: MemberLoadDto = { ...ANNA, points: 5, count: 3 };
 
