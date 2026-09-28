@@ -6,12 +6,11 @@ import { Header } from './shared/header/header';
 import { Footer } from './shared/footer/footer';
 import { BackToTop } from './shared/back-to-top/back-to-top';
 import { BottomNav } from './shared/bottom-nav/bottom-nav';
-import { DemoBanner } from './shared/demo-banner/demo-banner';
 import { HouseholdInviteModal } from './shared/household-invite-modal/household-invite-modal';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Header, Footer, BackToTop, BottomNav, DemoBanner, HouseholdInviteModal],
+  imports: [RouterOutlet, Header, Footer, BackToTop, BottomNav, HouseholdInviteModal],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -50,12 +49,5 @@ export class App {
   // Zurück-Link haben (siehe app.routes.ts data: { hideHeader: true }).
   protected readonly showHeader = computed(
     () => this.currentRouteData()['hideHeader'] !== true && !this.currentRouteData()['sidebarNav'],
-  );
-
-  // Kompakte Erklär-Kopfzeile NUR auf den öffentlichen Demo-Routen (data:
-  // { isDemo: true } auf der Root-Routengruppe, siehe app.routes.ts) —
-  // niemals unter /app, wo echte Nutzerdaten laufen.
-  protected readonly showDemoBanner = computed(
-    () => this.currentRouteData()['isDemo'] === true && !this.currentRouteData()['ownPreviewLabel'],
   );
 }

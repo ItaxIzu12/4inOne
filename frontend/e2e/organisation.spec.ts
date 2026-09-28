@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { choose, pickTime } from './helpers';
+import { choose, pickDate, pickTime } from './helpers';
 import AxeBuilder from '@axe-core/playwright';
 
 for (const width of [390, 1440]) {
@@ -134,6 +134,10 @@ test('"Aufgabe erstellen" and "Termin erstellen" open a dialog for exactly that 
   const dialog = page.getByRole('dialog');
   const choice = (name: string) => dialog.getByRole('button', { name, exact: true });
 
+  // „Heute“ bietet keinen eigenen Button mehr an: dafür gibt es „Neuer Eintrag“ und die Reiter
+  await expect(page.getByRole('heading', { name: 'Heute hast du frei geplant' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Aufgabe erstellen', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
   await page.getByRole('button', { name: 'Aufgabe erstellen', exact: true }).click();
   await expect(dialog.getByRole('heading', { name: 'Aufgabe erstellen' })).toBeVisible();
   await expect(choice('Termin')).toHaveCount(0);
@@ -152,4 +156,192 @@ test('"Aufgabe erstellen" and "Termin erstellen" open a dialog for exactly that 
   await expect(choice('Aufgabe')).toBeVisible();
   await choice('Aufgabe').click();
   await expect(dialog.getByRole('heading', { name: 'Aufgabe erstellen' })).toBeVisible();
+});
+
+test('tasks: search filters the list, and only 5 show at first with "weitere anzeigen" for the rest', async ({ page }) => {
+  await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 'test' } }));
+  await page.route('**/api/v1/auth/refresh/', (r) =>
+    r.fulfill({ json: { access: 'test', user: { name: 'Mira', email: 'mira@example.com' } } }),
+  );
+  await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
+  const tasks = Array.from({ length: 8 }, (_, i) => ({
+    id: i + 1,
+    title: i === 3 ? 'Stromrechnung bezahlen' : `Aufgabe ${i + 1}`,
+    description: '',
+    due_date: null,
+    due_time: null,
+    priority: 'MEDIUM',
+    status: 'OPEN',
+  }));
+  await page.route('**/api/v1/organisation/**', async (r) => {
+    const url = new URL(r.request().url());
+    if (url.pathname.endsWith('/today/'))
+      return r.fulfill({ json: { date: '2026-09-27', items: [], event_count: 0, open_task_count: tasks.length, overdue_count: 0 } });
+    if (url.pathname.includes('/events/')) return r.fulfill({ json: [] });
+    return r.fulfill({ json: tasks });
+  });
+  await page.goto('/app/organisation');
+  await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
+
+  const rows = page.locator('.task-row');
+  await expect(rows).toHaveCount(5);
+  await expect(page.getByRole('button', { name: '3 weitere Aufgaben anzeigen' })).toBeVisible();
+  await page.getByRole('button', { name: '3 weitere Aufgaben anzeigen' }).click();
+  await expect(rows).toHaveCount(8);
+  await expect(page.getByRole('button', { name: /weitere Aufgabe/ })).toHaveCount(0);
+
+  // Suche filtert sofort und setzt die Begrenzung zurück
+  await page.getByPlaceholder('Aufgabe suchen …').fill('stromrechnung');
+  await expect(rows).toHaveCount(1);
+  await expect(rows).toContainText('Stromrechnung bezahlen');
+
+  await page.getByPlaceholder('Aufgabe suchen …').fill('nichts passt hier');
+  await expect(page.getByRole('heading', { name: 'Keine Aufgabe gefunden' })).toBeVisible();
+  await expect(page.getByText('Für „nichts passt hier“ gibt es keinen Treffer.')).toBeVisible();
+
+  // Filterwechsel setzt die Begrenzung ebenfalls zurück
+  await page.getByPlaceholder('Aufgabe suchen …').fill('');
+  await expect(rows).toHaveCount(5);
+});
+
+test.describe('demo preview: task list stays live', () => {
+  test('creating a task shows it (and "weitere anzeigen") immediately, no tab switch needed', async ({ page }) => {
+    await page.goto('/organisation');
+    await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
+    await expect(page.locator('.task-row')).toHaveCount(5);
+    await page.getByRole('button', { name: 'Aufgabe erstellen', exact: true }).click();
+    await page.getByLabel('Titel', { exact: true }).fill('Neue Testaufgabe');
+    await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.locator('.task-row')).toHaveCount(5); // weiterhin begrenzt …
+    await expect(page.getByRole('button', { name: '1 weitere Aufgabe anzeigen' })).toBeVisible(); // … aber sichtbar
+    await page.getByRole('button', { name: '1 weitere Aufgabe anzeigen' }).click();
+    await expect(page.locator('.task-row')).toHaveCount(6);
+    await expect(page.getByText('Neue Testaufgabe')).toBeVisible();
+  });
+
+  test('marking a task done/open updates the "offene Aufgaben" filter and count immediately', async ({ page }) => {
+    await page.goto('/organisation');
+    await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
+    await choose(page, 'Anzeigen', 'Offene Aufgaben');
+    await expect(page.locator('.task-row')).toHaveCount(4);
+    await page.getByRole('button', { name: /Wocheneinkauf erledigen/ }).click();
+    await expect(page.locator('.task-row')).toHaveCount(3); // sofort raus aus „Offene Aufgaben“, kein Tab-Wechsel nötig
+    await choose(page, 'Anzeigen', 'Erledigte Aufgaben');
+    await expect(page.getByText('Wocheneinkauf')).toBeVisible();
+  });
+});
+
+test.describe('calendar day: search and limit work like tasks, "Nächste Termine" shows on mobile', () => {
+  test('the day list is searchable and limited to 5, with the button next to the date', async ({ page }) => {
+    await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 'test' } }));
+    await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 'test', user: { name: 'Mira', email: 'mira@example.com' } } }));
+    await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
+    const today = new Date();
+    const day = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const events = Array.from({ length: 7 }, (_, i) => ({
+      id: i + 1,
+      title: i === 4 ? 'Zahnarzttermin' : `Termin ${i + 1}`,
+      starts_at: `${day}T${String(8 + i).padStart(2, '0')}:00:00`,
+      ends_at: null,
+      location: '',
+      description: '',
+    }));
+    await page.route('**/api/v1/organisation/**', (r) => {
+      const url = new URL(r.request().url());
+      if (url.pathname.endsWith('/today/')) return r.fulfill({ json: { date: day, items: [], event_count: events.length, open_task_count: 0, overdue_count: 0 } });
+      if (url.pathname.includes('/tasks/')) return r.fulfill({ json: [] });
+      return r.fulfill({ json: events });
+    });
+    await page.goto('/app/organisation');
+    await page.getByRole('button', { name: 'Kalender', exact: true }).click();
+
+    // Button steht im selben Kopf wie das Datum, rechts daneben
+    const header = page.locator('.card-heading').filter({ hasText: 'Termin erstellen' });
+    await expect(header.getByRole('heading')).toBeVisible();
+    await expect(header.getByRole('button', { name: 'Termin erstellen' })).toBeVisible();
+
+    const rows = page.locator('.entry');
+    await expect(rows).toHaveCount(5);
+    await expect(page.getByRole('button', { name: '2 weitere Termine anzeigen' })).toBeVisible();
+    await page.getByRole('button', { name: '2 weitere Termine anzeigen' }).click();
+    await expect(rows).toHaveCount(7);
+
+    await page.getByPlaceholder('Termin suchen …').fill('zahnarzt');
+    await expect(rows).toHaveCount(1);
+    await expect(rows).toContainText('Zahnarzttermin');
+
+    await page.getByPlaceholder('Termin suchen …').fill('nichts passt');
+    await expect(page.getByRole('heading', { name: 'Kein Termin gefunden' })).toBeVisible();
+  });
+
+  test('"Nächste Termine" is visible on mobile too', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.goto('/organisation');
+    await page.getByRole('button', { name: 'Kalender', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Nächste Termine' })).toBeVisible();
+  });
+});
+
+test.describe('the three tiles (Termine heute/offene Aufgaben/überfällig) only belong to "Heute"', () => {
+  test('they show on Heute, not on Kalender or Aufgaben; the calendar grid stays out of Heute', async ({ page }) => {
+    await page.goto('/organisation');
+    const stats = page.locator('.stats[aria-label="Dein Überblick"]');
+    await expect(stats).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'September 2026' })).toHaveCount(0); // Monatsraster nicht im Heute-Tab
+    await expect(page.getByRole('heading', { name: 'Nächste Termine' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Kalender', exact: true }).click();
+    await expect(stats).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'September 2026', exact: true })).toBeVisible(); // hier weiterhin da
+
+    await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
+    await expect(stats).toHaveCount(0);
+  });
+});
+
+test('calendar: the date filter jumps straight to that day\'s events, and the mini month follows', async ({ page }) => {
+  await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 'test' } }));
+  await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 'test', user: { name: 'Mira', email: 'mira@example.com' } } }));
+  await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
+  const events = [
+    { id: 1, title: 'Weihnachtsfeier', starts_at: '2026-12-15T18:00:00', ends_at: null, location: '', description: '' },
+  ];
+  await page.route('**/api/v1/organisation/**', (r) => {
+    const url = new URL(r.request().url());
+    if (url.pathname.endsWith('/today/')) return r.fulfill({ json: { date: '2026-09-27', items: [], event_count: 0, open_task_count: 0, overdue_count: 0 } });
+    if (url.pathname.includes('/tasks/')) return r.fulfill({ json: [] });
+    return r.fulfill({ json: events });
+  });
+  await page.goto('/app/organisation');
+  await page.getByRole('button', { name: 'Kalender', exact: true }).click();
+  await expect(page.getByText('Noch keine Termine')).toBeVisible();
+
+  await pickDate(page, page.getByLabel('Datum', { exact: true }), '2026-12-15');
+  await expect(page.getByRole('heading', { name: /15\. Dezember 2026/ })).toBeVisible();
+  await expect(page.locator('.entry').getByText('Weihnachtsfeier')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Dezember 2026', exact: true })).toBeVisible(); // Monatsraster folgt
+});
+
+test.describe('mobile order and visibility', () => {
+  test('"Nächste Termine" is visible on Heute (mobile), stacked after the day card', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.goto('/organisation');
+    await expect(page.getByRole('heading', { name: 'Nächste Termine' })).toBeVisible();
+  });
+
+  test('on Kalender (mobile) the order is: month grid, then the selected day, then "Nächste Termine"', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.goto('/organisation');
+    await page.getByRole('button', { name: 'Kalender', exact: true }).click();
+    const tops = await Promise.all(
+      [
+        page.getByRole('heading', { name: 'September 2026', exact: true }),
+        page.getByRole('heading', { name: /27\. September 2026/ }),
+        page.getByRole('heading', { name: 'Nächste Termine' }),
+      ].map(async (l) => (await l.boundingBox())!.y),
+    );
+    expect(tops[0]).toBeLessThan(tops[1]);
+    expect(tops[1]).toBeLessThan(tops[2]);
+  });
 });

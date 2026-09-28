@@ -1,5 +1,6 @@
 import { PrivateFinanceApi, FinanceSummary, euros } from '../finanzen/private-finance-api.service';
-import { HaushaltApiService, HaushaltOverviewDto } from '../haushalt/haushalt-api.service';
+import { HaushaltOverviewDto } from '../haushalt/haushalt-api.service';
+import { HAUSHALT_DATA_PROVIDER } from '../haushalt/haushalt-data-provider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { OrganisationApi, TodayData, TodayItem } from '../organisation/organisation-api.service';
 import { Component, computed, inject, signal, DestroyRef } from '@angular/core';
@@ -19,7 +20,10 @@ export class Dashboard {
   private auth = inject(AuthService);
   private api = inject(OrganisationApi);
   private financeApi = inject(PrivateFinanceApi);
-  private haushaltApi = inject(HaushaltApiService);
+  // Token statt konkreter Klasse: liefert je Routengruppe die Demo- oder die echte Implementierung (siehe
+  // app.routes.ts) — dieselbe Instanz, die auch die Haushalt-Seite selbst benutzt, damit die Kachel hier und der
+  // Reiter dort nie auseinanderlaufen.
+  private haushaltApi = inject(HAUSHALT_DATA_PROVIDER);
   readonly household = signal<HaushaltOverviewDto | null>(null);
   readonly householdError = signal(false);
   readonly finance = signal<FinanceSummary | null>(null);
@@ -31,23 +35,24 @@ export class Dashboard {
   readonly todayLoading = signal(false);
   readonly todayError = signal('');
   constructor() {
-    if (this.live()) {
-      this.loadToday();
-      this.haushaltApi
-        .getOverview()
-        .pipe(takeUntilDestroyed(this.destroy))
-        .subscribe({
-          next: (data) => this.household.set(data),
-          error: () => this.householdError.set(true),
-        });
-      this.financeApi
-        .summary()
-        .pipe(takeUntilDestroyed(this.destroy))
-        .subscribe({
-          next: (data) => this.finance.set(data),
-          error: () => this.financeError.set(true),
-        });
-    }
+    // Ohne Anmeldung liefern dieselben Aufrufe die Demo-Daten der Routengruppe (siehe app.routes.ts) — die vier
+    // Kacheln unten zeigen dadurch echte Zahlen aus den jeweiligen Demo-Reitern, statt erfundener Beispielwerte,
+    // die von dort abweichen konnten.
+    this.loadToday();
+    this.haushaltApi
+      .getOverview()
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (data) => this.household.set(data),
+        error: () => this.householdError.set(true),
+      });
+    this.financeApi
+      .summary()
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (data) => this.finance.set(data),
+        error: () => this.financeError.set(true),
+      });
   }
   loadToday() {
     this.todayLoading.set(true);
@@ -146,51 +151,47 @@ export class Dashboard {
   ];
   readonly domains = computed(() => {
     const live = this.auth.isAuthenticated();
+    // Dieselbe Berechnung für Demo und echtes Konto: beide beziehen ihre Daten aus derselben Routengruppe
+    // (app.routes.ts), nur einmal von der Demo-, einmal von der echten Datenquelle.
     return [
       {
         name: 'Finanzen',
         tone: 'finance',
         icon: 'finance' as IconName,
         path: live ? '/app/finanzen' : '/finanzen',
-        summary: !live
-          ? '2.340 € von 3.000 €'
-          : this.financeError()
-            ? 'Finanzen konnten nicht geladen werden'
-            : !this.finance()
-              ? 'Wird geladen …'
-              : this.finance()!.available !== null
-                ? this.finance()!.available!.startsWith('-')
-                  ? `${euros(this.finance()!.available!.slice(1))} über dem Budget`
-                  : `${euros(this.finance()!.available)} verfügbar`
-                : this.finance()!.has_data
-                  ? `${euros(this.finance()!.expenses)} Ausgaben · Budget anlegen`
-                  : 'Starte mit deinem Monatsbudget',
+        summary: this.financeError()
+          ? 'Finanzen konnten nicht geladen werden'
+          : !this.finance()
+            ? 'Wird geladen …'
+            : this.finance()!.available !== null
+              ? this.finance()!.available!.startsWith('-')
+                ? `${euros(this.finance()!.available!.slice(1))} über dem Budget`
+                : `${euros(this.finance()!.available)} verfügbar`
+              : this.finance()!.has_data
+                ? `${euros(this.finance()!.expenses)} Ausgaben · Budget anlegen`
+                : 'Starte mit deinem Monatsbudget',
       },
       {
         name: 'Haushalt',
         tone: 'household',
         icon: 'household' as IconName,
         path: live ? '/app/haushalt' : '/haushalt',
-        summary: !live
-          ? '2 offene Aufgaben'
-          : this.householdError()
-            ? 'Haushalt konnte nicht geladen werden'
-            : !this.household()
-              ? 'Wird geladen …'
-              : this.household()!.open_tasks === 0
-                ? 'Keine offenen Aufgaben'
-                : `${this.household()!.open_tasks} ${this.household()!.open_tasks === 1 ? 'offene Aufgabe' : 'offene Aufgaben'}`,
+        summary: this.householdError()
+          ? 'Haushalt konnte nicht geladen werden'
+          : !this.household()
+            ? 'Wird geladen …'
+            : this.household()!.open_tasks === 0
+              ? 'Keine offenen Aufgaben'
+              : `${this.household()!.open_tasks} ${this.household()!.open_tasks === 1 ? 'offene Aufgabe' : 'offene Aufgaben'}`,
       },
       {
         name: 'Organisation',
         tone: 'organisation',
         icon: 'calendar' as IconName,
-        path: '/app/organisation',
-        summary: this.live()
-          ? this.organisationToday()
-            ? `${this.organisationToday()!.event_count} Termine heute`
-            : 'Dein Kalender & Aufgaben'
-          : '2 Termine heute',
+        path: live ? '/app/organisation' : '/organisation',
+        summary: this.organisationToday()
+          ? `${this.organisationToday()!.event_count} ${this.organisationToday()!.event_count === 1 ? 'Termin heute' : 'Termine heute'}`
+          : 'Dein Kalender & Aufgaben',
       },
       {
         name: 'Reisen',

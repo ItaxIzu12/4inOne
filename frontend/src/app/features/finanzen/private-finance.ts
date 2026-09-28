@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
@@ -119,13 +119,35 @@ export class PrivateFinance {
   readonly planAlertText = computed(() => planAlertMessage(this.summary(), this.month()));
   readonly hasPlanned = computed(() => Number(this.summary()?.saved_planned ?? 0) > 0);
   readonly hasSaved = computed(() => Number(this.summary()?.saved ?? 0) !== 0);
-  readonly rows = computed(() =>
-    this.transactions().filter(
+  readonly categoryFilter = signal('');
+  readonly transactionSearch = signal('');
+  /** Wie viele der gefilterten/gesuchten Buchungen aktuell sichtbar sind — „Weitere anzeigen“ erhöht ihn um 5,
+   * ein Wechsel von Monat, Filter, Kategorie oder Suche setzt ihn zurück. */
+  readonly rowLimit = signal(5);
+  readonly matchingRows = computed(() => {
+    const query = this.transactionSearch().trim().toLocaleLowerCase('de');
+    const category = this.categoryFilter();
+    return this.transactions().filter(
       (t) =>
         t.date.startsWith(this.month()) &&
-        (this.typeFilter() === 'ALL' || t.type === this.typeFilter()),
-    ),
-  );
+        (this.typeFilter() === 'ALL' || t.type === this.typeFilter()) &&
+        (!category || String(t.category) === category) &&
+        (!query || (t.note || this.categoryName(t.category)).toLocaleLowerCase('de').includes(query)),
+    );
+  });
+  readonly rows = computed(() => this.matchingRows().slice(0, this.rowLimit()));
+  readonly moreRowsCount = computed(() => Math.max(0, this.matchingRows().length - this.rowLimit()));
+  /** Kategorien-Filter der Buchungen: nur Kategorien, die im Monat tatsächlich vorkommen — eine leere Auswahl
+   * (Kategorie ohne Buchungen im Monat) wäre nur verwirrend. */
+  readonly categoryFilterOptions = computed<SelectOption[]>(() => {
+    const used = new Set(this.transactions().filter((t) => t.date.startsWith(this.month())).map((t) => t.category));
+    return [
+      { value: '', label: 'Alle Kategorien' },
+      ...this.categories()
+        .filter((c) => used.has(c.id))
+        .map((c) => ({ value: String(c.id), label: c.name, color: c.color })),
+    ];
+  });
   /** Das Budget, das für den angezeigten Monat gilt: bei Überschneidung das mit dem späteren Start. */
   readonly activeBudget = computed(() =>
     this.budgets()
@@ -201,6 +223,16 @@ export class PrivateFinance {
     current_amount: ['0.00'],
     status: ['ACTIVE'],
   });
+  private readonly resetRowLimit = effect(() => {
+    this.month();
+    this.typeFilter();
+    this.categoryFilter();
+    this.transactionSearch();
+    untracked(() => this.rowLimit.set(5));
+  });
+  protected showMoreRows(): void {
+    this.rowLimit.update((n) => n + 5);
+  }
   constructor() {
     this.load();
     this.destroy.onDestroy(() => clearTimeout(this.noticeTimer));

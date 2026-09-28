@@ -432,14 +432,77 @@ progress.over::-moz-progress-bar {
 .goal-grid > .empty {
   grid-column: 1 / -1; /* mittig auf der ganzen Karte, ohne die zwei Spalten zu ändern */
 }
+/* Reiter Buchungen: Filter, Kategorie und Suche in einer Zeile; bricht auf dem Handy um. */
+.transaction-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-bottom: 15px;
+}
 .filter {
   display: flex;
   gap: 12px;
   align-items: center;
-  margin-bottom: 15px;
+  margin: 0;
 }
 .filter app-select {
-  width: min(240px, 100%);
+  width: min(200px, 100%);
+}
+.transaction-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
+  flex: 1 1 200px;
+  max-width: 320px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #cbddd2;
+  border-radius: 13px;
+  background: #fff;
+  color: #587062;
+}
+.transaction-search app-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.transaction-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: #294b3a;
+}
+.transaction-search input::placeholder {
+  color: #8ba396;
+}
+.transaction-search input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+.show-more {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px dashed #cbddd2;
+  border-radius: 13px;
+  background: none;
+  color: #1e7a4d;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.show-more:hover {
+  background: #f2faf5;
+}
+.show-more:focus-visible {
+  outline: 2px solid #1e7a4d;
+  outline-offset: 2px;
 }
 .subheading {
   margin: 28px 0 8px;

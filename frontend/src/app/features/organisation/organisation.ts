@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -105,24 +105,42 @@ export class Organisation {
   readonly dayEvents = computed(() =>
     this.events().filter((e) => this.onDay(e, this.selectedDay())),
   );
+  readonly eventSearch = signal('');
+  /** Wie viele der Termine des gewählten Tages sichtbar sind — „weitere anzeigen“ erhöht ihn um 5, ein Wechsel des
+   * Tages oder der Suche setzt ihn zurück (siehe effect() im Konstruktor, wie bei den Aufgaben). */
+  readonly dayEventLimit = signal(5);
+  readonly matchingDayEvents = computed(() => {
+    const query = this.eventSearch().trim().toLocaleLowerCase('de');
+    return this.dayEvents().filter((e) => !query || e.title.toLocaleLowerCase('de').includes(query));
+  });
+  readonly visibleDayEvents = computed(() => this.matchingDayEvents().slice(0, this.dayEventLimit()));
+  readonly moreDayEventsCount = computed(() => Math.max(0, this.matchingDayEvents().length - this.dayEventLimit()));
   readonly upcoming = computed(() =>
     this.events()
       .filter((e) => new Date(e.starts_at) >= new Date())
       .slice(0, 3),
   );
-  readonly visibleTasks = computed(() =>
-    this.tasks()
+  readonly taskSearch = signal('');
+  /** Wie viele der gefilterten/gesuchten Aufgaben aktuell sichtbar sind — „Weitere anzeigen“ erhöht ihn um 5,
+   * ein Wechsel von Filter oder Suche setzt ihn zurück (siehe effect() im Konstruktor). */
+  readonly taskLimit = signal(5);
+  readonly matchingTasks = computed(() => {
+    const query = this.taskSearch().trim().toLocaleLowerCase('de');
+    return this.tasks()
       .filter(
         (t) =>
           this.filter() === 'all' ||
           (this.filter() === 'active' ? t.status !== 'DONE' : t.status === 'DONE'),
       )
+      .filter((t) => !query || t.title.toLocaleLowerCase('de').includes(query))
       .sort(
         (a, b) =>
           (a.due_date || '9999').localeCompare(b.due_date || '9999') ||
           (a.due_time || '').localeCompare(b.due_time || ''),
-      ),
-  );
+      );
+  });
+  readonly visibleTasks = computed(() => this.matchingTasks().slice(0, this.taskLimit()));
+  readonly moreTasksCount = computed(() => Math.max(0, this.matchingTasks().length - this.taskLimit()));
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(120)]],
     description: ['', Validators.maxLength(5000)],
@@ -136,6 +154,19 @@ export class Organisation {
   });
   constructor() {
     this.load(true);
+    // Filter oder Suchbegriff geändert: wieder nur die ersten 5 Treffer zeigen, sonst bliebe ein hoher Zähler von
+    // der vorherigen Suche stehen und „Weitere anzeigen“ würde beim Öffnen sofort viele Aufgaben auf einmal zeigen.
+    effect(() => {
+      this.filter();
+      this.taskSearch();
+      untracked(() => this.taskLimit.set(5));
+    });
+    // Derselbe Grund für die Termine des gewählten Tages: ein anderer Tag oder eine neue Suche zeigt wieder nur 5.
+    effect(() => {
+      this.selectedDay();
+      this.eventSearch();
+      untracked(() => this.dayEventLimit.set(5));
+    });
     // Wechsel auf ein anderes Objekt derselben Seite (z. B. Aufgabe → verknüpfter Termin)
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(() => {
       if (this.loaded) this.openFromQuery();
@@ -194,6 +225,20 @@ export class Organisation {
     this.month.set(new Date(day.getFullYear(), day.getMonth(), 1));
     this.selectedDay.set(date);
     this.tab.set('calendar');
+  }
+  /** Datumsfilter im Kalender-Reiter: springt direkt zum gewählten Tag, ohne sich per Monatspfeil dorthin
+   * durchzuklicken — das kleine Monatsraster folgt automatisch. */
+  protected pickDate(day: string): void {
+    if (!day) return;
+    const d = new Date(`${day}T12:00`);
+    this.month.set(new Date(d.getFullYear(), d.getMonth(), 1));
+    this.selectedDay.set(day);
+  }
+  protected showMoreTasks(): void {
+    this.taskLimit.update((n) => n + 5);
+  }
+  protected showMoreDayEvents(): void {
+    this.dayEventLimit.update((n) => n + 5);
   }
   changeMonth(delta: number) {
     const m = this.month();

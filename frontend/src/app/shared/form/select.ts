@@ -32,6 +32,10 @@ export class AppSelect implements ControlValueAccessor, AfterViewInit {
   readonly options = input.required<SelectOption[]>();
   readonly placeholder = input('Auswählen …');
   readonly inputId = input<string | null>(null);
+  /** Explizite Beschriftung, wenn kein <app-field> drumherum liegt (z. B. ein einfaches Filter-Label): die id
+   * eines Elements mit dem Beschriftungstext. Native `<label for>` allein reicht bei role="combobox" in Chromium
+   * nicht zuverlässig für den barrierefreien Namen — deshalb explizit statt implizit. */
+  readonly ariaLabelledby = input<string | null>(null);
   readonly disabledInput = input(false, { alias: 'disabled' });
   readonly value = model('');
 
@@ -55,7 +59,7 @@ export class AppSelect implements ControlValueAccessor, AfterViewInit {
   protected readonly selected = () => this.options().find((o) => o.value === this.value()) ?? null;
 
   ngAfterViewInit(): void {
-    this.labelledBy.set(fieldLabelId(this.host.nativeElement));
+    this.labelledBy.set(this.ariaLabelledby() ?? fieldLabelId(this.host.nativeElement));
   }
 
   constructor() {

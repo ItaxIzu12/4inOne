@@ -5,6 +5,10 @@ import { FINANZEN_DATA_PROVIDER } from './features/finanzen/finanzen-data-provid
 import { DemoFinanzenDataProvider } from './features/finanzen/demo-finanzen-data-provider';
 import { RealFinanzenDataProvider } from './features/finanzen/real-finanzen-data-provider';
 import { FinanzenStateService } from './features/finanzen/finanzen-state.service';
+import { PrivateFinanceApi } from './features/finanzen/private-finance-api.service';
+import { DemoPrivateFinanceApi } from './features/finanzen/demo-private-finance-api';
+import { OrganisationApi } from './features/organisation/organisation-api.service';
+import { DemoOrganisationApi } from './features/organisation/demo-organisation-api';
 import { HAUSHALT_DATA_PROVIDER } from './features/haushalt/haushalt-data-provider';
 import { DemoHaushaltDataProvider } from './features/haushalt/demo-haushalt-data-provider';
 import { RealHaushaltDataProvider } from './features/haushalt/real-haushalt-data-provider';
@@ -21,8 +25,7 @@ export const routes: Routes = [
     path: '',
     // Öffentliche Demo-Gruppe (KEIN authGuard): Dashboard + Finanzen mit
     // DemoFinanzenDataProvider — feste Beispieldaten, keine HTTP-Aufrufe
-    // (siehe demo-finanzen-data-provider.ts). isDemo:true blendet die
-    // Erklär-Kopfzeile ein (siehe app.ts/app.html, shared/demo-banner).
+    // (siehe demo-finanzen-data-provider.ts).
     // FinanzenStateService HIER (nicht providedIn:'root') registriert: pro
     // Routengruppe entsteht dadurch genau eine Instanz, korrekt an
     // DemoFinanzenDataProvider gebunden und zwischen Dashboard + Finanzen
@@ -32,8 +35,15 @@ export const routes: Routes = [
     // bucht über den Demo-Finanzen-Provider DIESER Gruppe, komplett im
     // Speicher.
     providers: [
+      // Ältere Demo-Datenquelle: hält weiterhin den Einkauf-zu-Ausgabe-Moment von Haushalt am Laufen
+      // (DemoHaushaltDataProvider bucht darüber, siehe dortiger Docstring) — das ältere Finanzen-Design selbst
+      // wird über die Demo-Route nicht mehr gezeigt (siehe 'finanzen' unten).
       { provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider },
       { provide: HAUSHALT_DATA_PROVIDER, useClass: DemoHaushaltDataProvider },
+      // Aktuelles Finanzen-Design (PrivateFinance) und Organisation bekommen in der Demo-Gruppe jeweils ihre
+      // eigene, unabhängige In-Memory-Datenquelle statt echter HTTP-Aufrufe.
+      { provide: PrivateFinanceApi, useClass: DemoPrivateFinanceApi },
+      { provide: OrganisationApi, useClass: DemoOrganisationApi },
       FinanzenStateService,
     ],
     children: [
@@ -41,23 +51,28 @@ export const routes: Routes = [
         path: '',
         pathMatch: 'full',
         loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
-        data: {
-          shell: 'bare',
-          dashboardNav: true,
-          sidebarNav: true,
-          isDemo: true,
-          ownPreviewLabel: true,
-        },
+        data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
       },
       {
+        // Aktuelles Design (dasselbe Component wie /app/finanzen), nur mit Demo-Daten statt echten API-Aufrufen —
+        // vorher zeigte diese Route noch das ältere, abweichende Finanzen-Design (features/finanzen/finanzen.ts).
         path: 'finanzen',
-        loadComponent: () => import('./features/finanzen/finanzen').then((m) => m.Finanzen),
-        data: { dashboardNav: true, sidebarNav: true, isDemo: true },
+        loadComponent: () =>
+          import('./features/finanzen/private-finance').then((m) => m.PrivateFinance),
+        data: { dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'haushalt',
         loadComponent: () => import('./features/haushalt/haushalt').then((m) => m.Haushalt),
-        data: { dashboardNav: true, sidebarNav: true, isDemo: true },
+        data: { dashboardNav: true, sidebarNav: true },
+      },
+      {
+        // Ohne Login erreichbar (vorher gab es hier gar keine Demo-Route — ein Klick auf „Organisation“ in der
+        // Vorschau landete auf der Anmeldemaske): dieselbe Component wie /app/organisation, mit Demo-Daten.
+        path: 'organisation',
+        loadComponent: () =>
+          import('./features/organisation/organisation').then((m) => m.Organisation),
+        data: { dashboardNav: true, sidebarNav: true },
       },
     ],
   },

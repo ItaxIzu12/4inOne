@@ -186,10 +186,26 @@
       } @else if (tab() === 'transactions') {
         <section class="card">
           <h2 class="sr-only">Buchungen</h2>
-          <label class="filter" for="finance-filter"
-            >Anzeigen
-            <app-select inputId="finance-filter" [options]="filterOptions" [(value)]="typeFilter" />
-          </label>
+          <div class="transaction-controls">
+            <label class="filter"
+              ><span id="finance-filter-label" class="sr-only">Anzeigen</span>
+              <app-select ariaLabelledby="finance-filter-label" [options]="filterOptions" [(value)]="typeFilter" />
+            </label>
+            <label class="filter"
+              ><span id="finance-category-filter-label" class="sr-only">Kategorie</span>
+              <app-select ariaLabelledby="finance-category-filter-label" [options]="categoryFilterOptions()" [(value)]="categoryFilter" />
+            </label>
+            <label class="transaction-search">
+              <span class="sr-only">Buchungen durchsuchen</span>
+              <app-icon name="search" />
+              <input
+                type="search"
+                placeholder="Buchung suchen …"
+                [value]="transactionSearch()"
+                (input)="transactionSearch.set($any($event.target).value)"
+              />
+            </label>
+          </div>
           @for (row of rows(); track row.id) {
             <button class="transaction" (click)="open('transactions', row)">
               <span class="transaction-copy"
@@ -205,7 +221,16 @@
               ><app-icon name="arrow" />
             </button>
           } @empty {
-            <p class="empty">Für diesen Monat und Filter gibt es noch keine Buchungen.</p>
+            @if (transactionSearch().trim() || categoryFilter()) {
+              <p class="empty">Keine Buchung gefunden. Prüfe die Schreibweise, die Kategorie oder den Filter.</p>
+            } @else {
+              <p class="empty">Für diesen Monat und Filter gibt es noch keine Buchungen.</p>
+            }
+          }
+          @if (moreRowsCount(); as more) {
+            <button type="button" class="show-more" (click)="showMoreRows()">
+              {{ more === 1 ? '1 weitere Buchung anzeigen' : more + ' weitere Buchungen anzeigen' }}
+            </button>
           }
         </section>
       } @else if (tab() === 'budgets') {
@@ -223,7 +248,7 @@
           } @else {
             <div class="empty">
               <p>Für diesen Monat hast du noch kein Budget festgelegt.</p>
-              <button class="secondary" (click)="open('budgets')">Budget erstellen</button>
+              <button class="secondary" (click)="open('budgets')"><app-icon name="plus" />Budget erstellen</button>
             </div>
           }
           <app-budget-timeline [budgets]="budgets()" [month]="month()" (monthPick)="setMonth($event)" />

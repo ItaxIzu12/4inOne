@@ -119,14 +119,12 @@
             </header>
             <p>{{ domain.summary }}</p>
             <app-icon class="domain-decoration" [name]="domain.icon" aria-hidden="true" />
-            @if (domain.name === 'Finanzen' && (!live() || finance()?.budget != null)) {
+            @if (domain.name === 'Finanzen' && finance()?.budget != null) {
               <progress
-                [class.over]="live() && !!finance()?.available?.startsWith('-')"
-                [value]="live() ? financeProgress() : 78"
+                [class.over]="!!finance()?.available?.startsWith('-')"
+                [value]="financeProgress()"
                 max="100"
-                [attr.aria-label]="
-                  live() ? 'Monatsbudget verbraucht' : 'Beispielbudget: 2.340 Euro von 3.000 Euro'
-                "
+                aria-label="Monatsbudget verbraucht"
               ></progress>
             }
           </a>

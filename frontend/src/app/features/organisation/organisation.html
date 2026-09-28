@@ -69,18 +69,38 @@
                   <app-icon name="check" />
                   <h3>Heute hast du frei geplant</h3>
                   <p>Keine Termine oder fälligen Aufgaben. Zeit für das, was dir wichtig ist.</p>
-                  <button class="secondary" (click)="open('task')"><app-icon name="plus" />Aufgabe erstellen</button>
                 </div>
               }
             </div>
           } @else if (tab() === 'calendar') {
             <header class="card-heading">
               <h2>{{ dayLabel() }}</h2>
+              <button class="secondary" (click)="open('event')">
+                <app-icon name="plus" />Termin erstellen
+              </button>
             </header>
-            <button class="secondary" (click)="open('event')">
-              <app-icon name="plus" />Termin erstellen
-            </button>
-            @for (event of dayEvents(); track event.id) {
+            <div class="task-controls">
+              <label class="filter"
+                ><span id="calendar-date-filter-label" class="sr-only">Datum</span>
+                <app-date-picker
+                  mode="date"
+                  ariaLabelledby="calendar-date-filter-label"
+                  [value]="selectedDay()"
+                  (valueChange)="pickDate($event)"
+                />
+              </label>
+              <label class="task-search">
+                <span class="sr-only">Termine dieses Tages durchsuchen</span>
+                <app-icon name="search" />
+                <input
+                  type="search"
+                  placeholder="Termin suchen …"
+                  [value]="eventSearch()"
+                  (input)="eventSearch.set($any($event.target).value)"
+                />
+              </label>
+            </div>
+            @for (event of visibleDayEvents(); track event.id) {
               <button class="entry" (click)="open('event', event)">
                 <span class="entry-icon"><app-icon name="calendar" /></span
                 ><span class="entry-time">{{ event.starts_at | date: 'HH:mm' }}</span
@@ -95,9 +115,19 @@
             } @empty {
               <div class="empty">
                 <app-icon name="calendar" />
-                <h3>Noch keine Termine</h3>
-                <p>Für diesen Tag ist noch nichts eingetragen.</p>
+                @if (eventSearch().trim()) {
+                  <h3>Kein Termin gefunden</h3>
+                  <p>Für „{{ eventSearch() }}“ gibt es an diesem Tag keinen Treffer.</p>
+                } @else {
+                  <h3>Noch keine Termine</h3>
+                  <p>Für diesen Tag ist noch nichts eingetragen.</p>
+                }
               </div>
+            }
+            @if (moreDayEventsCount(); as more) {
+              <button type="button" class="show-more" (click)="showMoreDayEvents()">
+                {{ more === 1 ? '1 weiteren Termin anzeigen' : more + ' weitere Termine anzeigen' }}
+              </button>
             }
           } @else {
             <header class="card-heading">
@@ -106,10 +136,22 @@
                 <app-icon name="plus" />Aufgabe erstellen
               </button>
             </header>
-            <label class="filter"
-              >Anzeigen
-              <app-select [options]="filterOptions" [(value)]="filter" />
-            </label>
+            <div class="task-controls">
+              <label class="filter"
+                ><span id="task-filter-label" class="sr-only">Anzeigen</span>
+                <app-select ariaLabelledby="task-filter-label" [options]="filterOptions" [(value)]="filter" />
+              </label>
+              <label class="task-search">
+                <span class="sr-only">Aufgaben durchsuchen</span>
+                <app-icon name="search" />
+                <input
+                  type="search"
+                  placeholder="Aufgabe suchen …"
+                  [value]="taskSearch()"
+                  (input)="taskSearch.set($any($event.target).value)"
+                />
+              </label>
+            </div>
             @for (task of visibleTasks(); track task.id) {
               <div class="task-row">
                 <button
@@ -144,41 +186,53 @@
             } @empty {
               <div class="empty">
                 <app-icon name="check" />
-                <h3>Keine Aufgaben in dieser Ansicht</h3>
-                <p>Erstelle deine erste Aufgabe oder ändere den Filter.</p>
+                @if (taskSearch().trim()) {
+                  <h3>Keine Aufgabe gefunden</h3>
+                  <p>Für „{{ taskSearch() }}“ gibt es keinen Treffer. Prüfe die Schreibweise oder den Filter.</p>
+                } @else {
+                  <h3>Keine Aufgaben in dieser Ansicht</h3>
+                  <p>Erstelle deine erste Aufgabe oder ändere den Filter.</p>
+                }
               </div>
+            }
+            @if (moreTasksCount(); as more) {
+              <button type="button" class="show-more" (click)="showMoreTasks()">
+                {{ more === 1 ? '1 weitere Aufgabe anzeigen' : more + ' weitere Aufgaben anzeigen' }}
+              </button>
             }
           }
         </section>
         @if (tab() !== 'tasks') {
           <aside class="side-column">
-            <section class="card calendar">
-              <header class="card-heading">
-                <h2>{{ monthLabel() }}</h2>
-                <div class="month-controls">
-                  <button aria-label="Vorheriger Monat" (click)="changeMonth(-1)">‹</button
-                  ><button aria-label="Nächster Monat" (click)="changeMonth(1)">›</button>
+            @if (tab() === 'calendar') {
+              <section class="card calendar">
+                <header class="card-heading">
+                  <h2>{{ monthLabel() }}</h2>
+                  <div class="month-controls">
+                    <button aria-label="Vorheriger Monat" (click)="changeMonth(-1)">‹</button
+                    ><button aria-label="Nächster Monat" (click)="changeMonth(1)">›</button>
+                  </div>
+                </header>
+                <div class="month-grid">
+                  @for (day of weekdays; track day) {
+                    <span class="weekday" aria-hidden="true">{{ day }}</span>
+                  }
+                  @for (day of days(); track day.key) {
+                    <button
+                      [class.outside]="day.outside"
+                      [class.selected]="selectedDay() === day.key"
+                      [class.has-events]="day.hasEvents"
+                      [attr.aria-label]="day.label + (day.hasEvents ? ', mit Terminen' : '')"
+                      [attr.aria-pressed]="selectedDay() === day.key"
+                      [attr.aria-current]="day.today ? 'date' : null"
+                      (click)="selectedDay.set(day.key); tab.set('calendar')"
+                    >
+                      {{ day.number }}
+                    </button>
+                  }
                 </div>
-              </header>
-              <div class="month-grid">
-                @for (day of weekdays; track day) {
-                  <span class="weekday" aria-hidden="true">{{ day }}</span>
-                }
-                @for (day of days(); track day.key) {
-                  <button
-                    [class.outside]="day.outside"
-                    [class.selected]="selectedDay() === day.key"
-                    [class.has-events]="day.hasEvents"
-                    [attr.aria-label]="day.label + (day.hasEvents ? ', mit Terminen' : '')"
-                    [attr.aria-pressed]="selectedDay() === day.key"
-                    [attr.aria-current]="day.today ? 'date' : null"
-                    (click)="selectedDay.set(day.key); tab.set('calendar')"
-                  >
-                    {{ day.number }}
-                  </button>
-                }
-              </div>
-            </section>
+              </section>
+            }
             <section class="card upcoming">
               <h2>Nächste Termine</h2>
               @for (event of upcoming(); track event.id) {
@@ -192,19 +246,21 @@
             </section>
           </aside>
         }
-        <div class="stats" aria-label="Dein Überblick">
-          <button (click)="selectToday()">
-            <app-icon name="calendar" /><strong>{{ today()?.event_count }}</strong
-            ><span>Termine heute</span></button
-          ><button (click)="tab.set('tasks'); filter.set('active')">
-            <app-icon name="check" /><strong>{{ today()?.open_task_count }}</strong
-            ><span>offene Aufgaben</span>
-          </button>
-          <div>
-            <app-icon name="bell" /><strong>{{ today()?.overdue_count }}</strong
-            ><span>überfällig</span>
+        @if (tab() === 'today') {
+          <div class="stats" aria-label="Dein Überblick">
+            <button (click)="selectToday()">
+              <app-icon name="calendar" /><strong>{{ today()?.event_count }}</strong
+              ><span>Termine heute</span></button
+            ><button (click)="tab.set('tasks'); filter.set('active')">
+              <app-icon name="check" /><strong>{{ today()?.open_task_count }}</strong
+              ><span>offene Aufgaben</span>
+            </button>
+            <div>
+              <app-icon name="bell" /><strong>{{ today()?.overdue_count }}</strong
+              ><span>überfällig</span>
+            </div>
           </div>
-        </div>
+        }
       </div>
     }
   </main></app-shell

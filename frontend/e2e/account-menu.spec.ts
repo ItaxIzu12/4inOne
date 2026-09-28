@@ -239,3 +239,13 @@ test('on the phone the account menu leads to Familie & Freunde', async ({ page }
   await expect(page).toHaveURL(/\/app\/familie$/);
   await expect(page.getByRole('heading', { name: 'Familie & Freunde', level: 1 })).toBeVisible();
 });
+
+test('the preview (guest) account menu offers only "Anmelden", not "Konto erstellen"', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Kontomenü' }).click();
+  const menu = page.getByRole('menu', { name: 'Konto' });
+  await expect(menu).toContainText('Vorschau');
+  await expect(menu).toContainText('Beispieldaten, kein Konto');
+  await expect(menu.getByRole('menuitem', { name: 'Anmelden' })).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: 'Konto erstellen' })).toHaveCount(0);
+});

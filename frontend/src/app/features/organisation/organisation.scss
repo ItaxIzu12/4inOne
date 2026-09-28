@@ -149,11 +149,18 @@ textarea:focus-visible {
 .content-grid > .stats {
   grid-area: stats;
 }
-.tasks-view {
+/* Zusammengesetzter Selektor (.content-grid + Modifier), damit er unabhängig von der Reihenfolge im Stylesheet
+   IMMER gegen das generische .content-grid gewinnt (2 Klassen schlagen 1 Klasse) — auch innerhalb der schmaleren
+   Breakpoints unten, die sonst denselben (0,0,1,0)-Vorrang wie .tasks-view/.calendar-view allein hätten. */
+.content-grid.tasks-view {
   grid-template-columns: 1fr;
-  grid-template-areas:
-    'main'
-    'stats';
+  grid-template-areas: 'main';
+  grid-template-rows: auto;
+}
+/* Keine „stats“-Zeile: Kalender-Reiter zeigt die drei Kacheln nicht mehr (die stehen nur im Reiter „Heute“),
+   sonst bliebe hier eine leere Fläche in Höhe der freien Zeile stehen. */
+.content-grid.calendar-view {
+  grid-template-areas: 'main side';
   grid-template-rows: auto;
 }
 .card {
@@ -361,12 +368,75 @@ textarea:focus-visible {
 .overdue {
   color: #a22c49 !important;
 }
+.task-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0;
+}
 .filter {
   display: flex;
   gap: 12px;
   align-items: center;
-  margin: 18px 0;
   font-size: 14px;
+  margin: 0;
+}
+.task-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px;
+  flex: 1 1 220px;
+  max-width: 320px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #e4ddf3;
+  border-radius: 13px;
+  background: #faf8fe;
+  color: #6a6486;
+}
+.task-search app-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.task-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: #18163f;
+}
+.task-search input::placeholder {
+  color: #9089ab;
+}
+.task-search input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+.show-more {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px dashed #d9d0ee;
+  border-radius: 13px;
+  background: none;
+  color: #7a3ec4;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.show-more:hover {
+  background: #faf8fe;
+}
+.show-more:focus-visible {
+  outline: 2px solid #7a3ec4;
+  outline-offset: 2px;
 }
 .task-row {
   display: flex;
@@ -425,6 +495,12 @@ textarea:focus-visible {
       'stats';
     grid-template-rows: auto;
   }
+  .content-grid.calendar-view,
+  .content-grid.tasks-view {
+    grid-template-areas:
+      'main'
+      'side';
+  }
   .side-column {
     grid-template-columns: 1fr 1fr;
   }
@@ -478,9 +554,15 @@ textarea:focus-visible {
   h2 {
     font-size: 17px;
   }
+  // Lange Titel (z. B. das Datum im Kalender-Reiter) drücken den Button in die zweite Zeile — dort soll er die
+  // volle Breite nutzen (klar erkennbar, leichter zu treffen), statt als schmale Pille links zu hängen.
   .card-heading {
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
+  }
+  .card-heading > button {
+    flex: 1 1 100%;
+    justify-content: center;
   }
   .side-column {
     grid-template-columns: 1fr;
@@ -523,20 +605,27 @@ textarea:focus-visible {
 }
 
 @media (max-width: 760px) {
-  .content-grid:not(.calendar-view) .side-column {
-    display: none;
-  }
   .main-card {
     min-height: 220px;
   }
-  // Kalender zuerst (über dem Tagesinhalt), darunter die Hauptkarte und die Kacheln.
+  // Reiter „Kalender“: Monat zuerst (Orientierung/Navigation), dann der gewählte Tag (das Ziel, wenn man einen Tag
+  // antippt oder das Datumsfeld benutzt), „Nächste Termine“ zuletzt als ergänzender Ausblick. Dafür löst sich
+  // .side-column auf (display: contents) und seine beiden Karten reihen sich direkt in .content-grid ein — sonst
+  // ließen sie sich nicht unabhängig vom Tageskern einsortieren.
   .content-grid.calendar-view {
+    grid-template-columns: 1fr;
     grid-template-areas:
-      'side'
+      'calendar'
       'main'
-      'stats';
+      'upcoming';
+  }
+  .calendar-view .side-column {
+    display: contents;
+  }
+  .calendar-view .calendar {
+    grid-area: calendar;
   }
   .calendar-view .upcoming {
-    display: none;
+    grid-area: upcoming;
   }
 }

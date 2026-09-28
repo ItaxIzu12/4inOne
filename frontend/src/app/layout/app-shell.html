@@ -76,9 +76,10 @@
                   <p class="account-error" role="alert">{{ logoutError() }}</p>
                 }
               } @else {
+                <!-- Vorschau (Demo-Konto „Sophie“, siehe name()-Fallback oben): kein zweiter Registrieren-Weg im Menü,
+                     die Startseite bietet „Konto erstellen“ schon prominent an. -->
                 <div class="account-group" role="none">
                   <a role="menuitem" routerLink="/login" (click)="closeMenu()"><icon-profile />Anmelden</a>
-                  <a role="menuitem" routerLink="/registrieren" (click)="closeMenu()"><icon-settings />Konto erstellen</a>
                 </div>
               }
             </div>

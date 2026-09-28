@@ -748,3 +748,53 @@ test('without a budget the overview keeps bookings and says so', async ({ page }
   await page.goto('/app/finanzen');
   await expect(page.locator('.month-card')).toContainText('gibt es kein Budget. Deine Einnahmen und Ausgaben bleiben gespeichert');
 });
+
+test('bookings: category filter, search by title, and 5-at-a-time with "weitere anzeigen"', async ({ page }) => {
+  await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 't' } }));
+  await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 't', user: { name: 'Mira', email: 'm@example.com' } } }));
+  await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
+  const categories = [
+    { id: 1, name: 'Wohnen', color: '#164c49' },
+    { id: 2, name: 'Lebensmittel', color: '#8a5a23' },
+  ];
+  const tx = [
+    { id: 1, amount: '850.00', type: 'EXPENSE', category: 1, date: '2026-09-03', note: 'Miete', currency: 'EUR' },
+    { id: 2, amount: '65.00', type: 'EXPENSE', category: 1, date: '2026-09-04', note: 'Versicherung', currency: 'EUR' },
+    { id: 3, amount: '12.00', type: 'EXPENSE', category: 2, date: '2026-09-05', note: 'Supermarkt Ecke', currency: 'EUR' },
+    { id: 4, amount: '20.00', type: 'EXPENSE', category: 2, date: '2026-09-06', note: 'Bäckerei', currency: 'EUR' },
+    { id: 5, amount: '30.00', type: 'EXPENSE', category: 2, date: '2026-09-07', note: 'Supermarkt Markt', currency: 'EUR' },
+    { id: 6, amount: '2800.00', type: 'INCOME', category: 1, date: '2026-09-01', note: 'Gehalt', currency: 'EUR' },
+    { id: 7, amount: '15.00', type: 'EXPENSE', category: 2, date: '2026-09-08', note: 'Kiosk', currency: 'EUR' },
+    { id: 8, amount: '8.00', type: 'EXPENSE', category: 2, date: '2026-09-09', note: 'Supermarkt Spät', currency: 'EUR' },
+  ];
+  await page.route('**/api/v1/finanzen/private/**', (r) => {
+    const path = new URL(r.request().url()).pathname;
+    if (path.endsWith('/summary/')) return r.fulfill({ json: { month: '2026-09', currency: 'EUR', budget: null, total: null, saved: '0.00', saved_planned: '0.00', available: null, plan_alert: null, income: '0.00', expenses: '0.00', savings_target: '0.00', savings_current: '0.00', has_data: true, categories: [], recent: [] } });
+    if (path.endsWith('/transactions/')) return r.fulfill({ json: tx });
+    if (path.endsWith('/categories/')) return r.fulfill({ json: categories });
+    return r.fulfill({ json: [] });
+  });
+  await page.goto('/app/finanzen');
+  await page.getByRole('button', { name: 'Buchungen', exact: true }).click();
+
+  const rows = page.locator('.transaction');
+  await expect(rows).toHaveCount(5); // von 8 zunächst nur 5
+  await expect(page.getByRole('button', { name: '3 weitere Buchungen anzeigen' })).toBeVisible();
+  await page.getByRole('button', { name: '3 weitere Buchungen anzeigen' }).click();
+  await expect(rows).toHaveCount(8);
+
+  // Kategorie-Filter: nur „Wohnen“ (3 Buchungen) — die Begrenzung greift danach wieder
+  await choose(page, 'Kategorie', 'Wohnen');
+  await expect(rows).toHaveCount(3);
+  await expect(rows).toContainText(['Miete', 'Versicherung', 'Gehalt']);
+  await choose(page, 'Kategorie', 'Alle Kategorien');
+  await expect(rows).toHaveCount(5); // Begrenzung wieder auf 5 zurückgesetzt, nicht die vorherigen 8
+
+  // Suche nach Titel, auch über Kategorien hinweg
+  await page.getByPlaceholder('Buchung suchen …').fill('supermarkt');
+  await expect(rows).toHaveCount(3);
+  await expect(rows).toContainText(['Supermarkt Ecke', 'Supermarkt Markt', 'Supermarkt Spät']);
+
+  await page.getByPlaceholder('Buchung suchen …').fill('nichts passt');
+  await expect(page.getByText('Keine Buchung gefunden. Prüfe die Schreibweise, die Kategorie oder den Filter.')).toBeVisible();
+});

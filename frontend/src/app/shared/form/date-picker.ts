@@ -41,6 +41,9 @@ export class AppDatePicker implements ControlValueAccessor, AfterViewInit {
   readonly max = input('');
   readonly placeholder = input('');
   readonly inputId = input<string | null>(null);
+  /** Explizite Beschriftung ohne umgebendes <app-field> (siehe select.ts, dieselbe Korrektur: natives
+   * `<label for>` allein reicht bei diesem Auslöser-Button in Chromium nicht zuverlässig für den Namen). */
+  readonly ariaLabelledby = input<string | null>(null);
   /** Zeigt „Entfernen“, damit ein optionales Feld wieder leer werden kann. */
   readonly clearable = input(false);
   /** Für die signalbasierten Formulare (ohne Reactive Forms): sperrt das Feld. */
@@ -75,7 +78,7 @@ export class AppDatePicker implements ControlValueAccessor, AfterViewInit {
   ngAfterViewInit(): void {
     const label = fieldLabel(this.host.nativeElement);
     if (label && this.partLabel()) this.ariaLabel.set(`${label.text} – ${this.partLabel()}`);
-    else this.labelledBy.set(label?.id ?? null);
+    else this.labelledBy.set(this.ariaLabelledby() ?? label?.id ?? null);
   }
 
   constructor() {

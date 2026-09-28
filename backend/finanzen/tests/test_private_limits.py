@@ -60,12 +60,14 @@ def test_an_account_with_data_in_every_area_can_be_deleted():
                                        added_by=leaving, checked_by=leaving)
     event = CalendarEvent.objects.create(household=home, title='Putzen', starts_at=now, created_by=leaving)
 
+    leaving_id = leaving.pk  # nach delete() ist pk None
     leaving.delete()
 
-    # Private Daten sind weg …
-    assert not Transaction.all_objects.filter(owner_id=leaving.pk).exists()
-    assert not SavingsGoal.objects.filter(owner_id=leaving.pk).exists()
-    assert not PersonalEvent.objects.filter(owner_id=leaving.pk).exists()
+    # Private Daten sind weg (auch weich gelöschte Buchungen) …
+    assert not Transaction.all_objects.filter(owner_id=leaving_id).exists()
+    assert not SavingsGoal.objects.filter(owner_id=leaving_id).exists()
+    assert not SavingsContribution.objects.filter(owner_id=leaving_id).exists()
+    assert not PersonalEvent.objects.filter(owner_id=leaving_id).exists()
     # … gemeinsame bleiben für die anderen, nur ohne Autor.
     shared.refresh_from_db(); task.refresh_from_db(); item.refresh_from_db(); event.refresh_from_db()
     assert shared.created_by is None and shared.updated_by is None
