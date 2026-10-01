@@ -31,7 +31,7 @@ describe('AppShell', () => {
     return fixture;
   }
 
-  it('shows a clear "Demo-Modus" banner with a link to create a real account on a public demo route', async () => {
+  it('shows a clear "Demo-Modus" non-interactive badge on a public demo route', async () => {
     const fixture = await renderAt('/demo/reisen', new FakeAuthService());
     const el = fixture.nativeElement as HTMLElement;
 
@@ -39,8 +39,8 @@ describe('AppShell', () => {
     expect(banner).toBeTruthy();
     expect(banner?.textContent).toContain('Demo-Modus');
     expect(banner?.textContent).toContain('Beispieldaten');
-    const cta = el.querySelector('.demo-banner__cta') as HTMLAnchorElement;
-    expect(cta.getAttribute('href')).toBe('/registrieren');
+    expect(banner?.querySelector('a, button, [tabindex]')).toBeNull();
+    expect(banner?.querySelector('.demo-badge')).toBeTruthy();
   });
 
   it('shows no demo banner on a real /app route, even while a session is held in memory', async () => {

@@ -22,10 +22,21 @@
     <p class="sidebar-note">Alles Wichtige.<br />Ein guter Überblick.</p>
   </aside>
   <div class="workspace">
-    <header class="topbar">
+    <header class="topbar" [class.topbar--demo]="isDemoRoute()">
+      <div class="brand-group">
       <a class="mobile-brand" [routerLink]="links()[0].path" aria-label="4inOne – Startseite"
         ><app-brand
       /></a>
+        @if (isDemoRoute()) {
+          <div class="demo-banner">
+            <span class="demo-badge"
+              title="Demo mit Beispieldaten. Änderungen werden beim Neuladen zurückgesetzt.">
+              <span class="demo-badge__dot" aria-hidden="true"></span>
+              Demo-Modus · Beispieldaten
+            </span>
+          </div>
+        }
+      </div>
       <div class="profile">
         <button
           class="icon-button"
@@ -88,17 +99,6 @@
         </div>
       </div>
     </header>
-    @if (isDemoRoute()) {
-      <div class="demo-banner" role="status">
-        <span class="demo-banner__label"><app-icon name="bulb" />Demo-Modus · Beispieldaten</span>
-        <span class="demo-banner__hint">Du kannst hier alles gefahrlos ausprobieren — eine Seite neu laden setzt die Demo zurück.</span>
-        @if (auth.isAuthenticated()) {
-          <a routerLink="/" class="demo-banner__cta">Zu meinen Daten</a>
-        } @else {
-          <a routerLink="/registrieren" class="demo-banner__cta">Eigenes Konto erstellen</a>
-        }
-      </div>
-    }
     <ng-content />
   </div>
 </div>

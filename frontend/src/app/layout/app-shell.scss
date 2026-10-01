@@ -603,3 +603,76 @@ input:focus-visible {
 .sidebar-note, .demo-banner { color: #53627a; background: #f1f5fa; box-shadow: none; }
 .sidebar, .topbar { background: #fff; border-color: #e7ebf1; }
 a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offset: 3px; }
+
+// Persistent navigation; the demo label belongs to the product chrome.
+:host { --shell-header-height: 56px; }
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--shell-header-height);
+  border-radius: 0;
+  background: #fff;
+  border-bottom: 1px solid #e7ebf1;
+}
+.brand-group { display: grid; gap: 2px; }
+.demo-banner {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.demo-banner .demo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  color: #465875;
+  background: #eef3f9;
+  font-size: 10px;
+  line-height: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.demo-badge__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #607596;
+}
+@media (min-width: 761px) {
+  .topbar {
+    padding: 4px 24px;
+    background: #f8fafd;
+    border: 0;
+    box-shadow: inset 0 -1px #e7ebf1;
+  }
+  .topbar--demo {
+    margin-inline: 34px;
+    padding-inline: 20px;
+    border: 1px solid #e7ebf1;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: none;
+  }
+  .demo-banner .demo-badge {
+    font-size: 12px;
+    padding: 5px 9px;
+  }
+  .profile-button,
+  .icon-button {
+    min-height: 40px;
+    box-shadow: none;
+    border-color: #e7ebf1;
+    background: #fff;
+  }
+  .avatar { width: 32px; height: 32px; }
+}
+@media (max-width: 760px) {
+  :host { --shell-header-height: 82px; }
+  .topbar { padding: 8px 18px; gap: 8px; }
+  .profile { gap: 8px; }
+}

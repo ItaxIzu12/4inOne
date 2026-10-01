@@ -34,6 +34,21 @@ for (const width of [320, 360, 390]) {
         await tabs.filter({ hasText: 'Budget' }).click();
         await expect(tabs.filter({ hasText: 'Budget' })).toHaveAttribute('aria-current');
       }
+      const sticky = page.locator('.domain-sticky');
+      await expect(sticky).toHaveCSS('box-shadow', 'none');
+      await expect(sticky).toHaveCSS('border-radius', '20px');
+      if (domain === 'finanzen') {
+        const card = await sticky.boundingBox();
+        const period = await page.locator('.finance-page > .period').boundingBox();
+        expect(period!.y - (card!.y + card!.height)).toBeGreaterThanOrEqual(24);
+      }
+      await page.evaluate(() => window.scrollTo(0, 350));
+      await expect(page.locator('.topbar')).toBeInViewport();
+      await expect(button).toBeInViewport();
+      await expect(page.locator('.domain-tabs')).toBeInViewport();
+      expect(await page.locator('.domain-sticky').evaluate(el =>
+        el.getBoundingClientRect().top >= 82,
+      )).toBe(true);
       await page.screenshot({ path: `test-results/mobile-controls-${domain}-${width}.png` });
     }
   });

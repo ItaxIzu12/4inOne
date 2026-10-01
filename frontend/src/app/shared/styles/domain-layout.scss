@@ -1,9 +1,32 @@
 // Shared geometry; each domain keeps its own colours and content.
 @mixin layout {
+  .domain-sticky {
+    position: sticky;
+    top: var(--shell-header-height, 72px);
+    z-index: 20;
+    padding: 20px;
+    margin-bottom: 32px;
+    border: 1px solid #e7ebf1;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: none;
+  }
+  // The card has inner padding; the following content gets a separate outer gap.
+  .domain-sticky > .domain-tabs {
+    margin-bottom: 0;
+  }
   .domain-page {
     max-width: 1440px;
   }
+  @media (min-width: 761px) {
+    .domain-page { padding-top: 16px; }
+  }
   @media (max-width: 760px) {
+    .domain-sticky {
+      padding: 12px 10px;
+      margin-bottom: 24px;
+      border-radius: 20px;
+    }
     .domain-page {
       padding: 14px 18px 26px;
     }

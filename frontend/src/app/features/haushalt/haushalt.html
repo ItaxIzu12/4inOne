@@ -1,7 +1,8 @@
 <app-save-feedback [message]="saveMessage()" (dismissed)="dismissSaved()" />
 <app-shell>
   <main id="main-content" class="hh-main domain-page" tabindex="-1">
-      <header class="page-head domain-heading">
+      <div class="domain-sticky">
+    <header class="page-head domain-heading">
         <span class="page-head__icon domain-icon" aria-hidden="true"><app-icon name="household" /></span>
         <div class="page-head__text">
           <h1>Haushalt</h1>
@@ -29,6 +30,8 @@
         }
       </div>
 
+
+    </div>
       <div id="hh-panel" role="tabpanel" [attr.aria-labelledby]="'hh-tab-' + activeTab()">
         @switch (activeTab()) {
           @case ('uebersicht') {
