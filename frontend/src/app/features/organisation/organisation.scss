@@ -1,3 +1,4 @@
+@use '../../shared/styles/domain-layout' as domain;
 :host {
   display: block;
   color: #18163f;
@@ -530,20 +531,24 @@ textarea:focus-visible {
   }
   .page-heading {
     gap: 8px;
-    align-items: flex-start;
+    flex-wrap: wrap;
+    align-items: center;
   }
   .page-heading > .primary {
-    padding: 10px;
-  }
-  .page-heading > .primary span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    clip-path: inset(50%);
-    overflow: hidden;
+    margin-left: auto;
+    white-space: nowrap;
+    padding: 10px 16px;
   }
   .tabs {
     margin: 22px 0 16px;
+    padding: 4px;
+    gap: 0;
+  }
+  .tabs button {
+    min-width: 0;
+    padding: 0 4px;
+    font-size: 13px;
+    white-space: nowrap;
   }
   .card {
     padding: 18px;
@@ -627,3 +632,5 @@ textarea:focus-visible {
     grid-area: upcoming;
   }
 }
+
+@include domain.layout;

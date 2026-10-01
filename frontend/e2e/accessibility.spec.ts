@@ -12,7 +12,8 @@ import { expect, test } from '@playwright/test';
  */
 
 const PAGES = [
-  { path: '/', name: 'Dashboard' },
+  { path: '/', name: 'Startseite' },
+  { path: '/demo', name: 'Dashboard' },
   { path: '/login', name: 'Login' },
   { path: '/registrieren', name: 'Registrieren' },
   { path: '/passwort-vergessen', name: 'Passwort vergessen' },

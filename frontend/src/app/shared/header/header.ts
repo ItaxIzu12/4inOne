@@ -68,16 +68,16 @@ export class Header {
   // Nutzer:innen zum echten Dashboard führen (/app), nicht zur öffentlichen
   // Demo-Startseite (/) — beide rendern dieselbe Dashboard-Komponente, nur
   // mit unterschiedlichem FinanzenDataProvider (siehe app.routes.ts).
-  protected readonly homeLink = computed(() => (this.auth.isAuthenticated() ? '/app' : '/'));
+  protected readonly homeLink = computed(() => '/');
 
   // Finanzen hat ebenfalls eine öffentliche Demo-Variante (/finanzen) und
   // eine echte (/app/finanzen) — Haushalt/Organisation haben aktuell keine
   // Demo-Variante (rein statische Feature-Listen ohne Datenanbindung) und
   // zeigen daher immer auf /app/..., der Guard dort leitet im ausgeloggten
   // Zustand zu /login weiter.
-  protected readonly finanzenLink = computed(() => (this.auth.isAuthenticated() ? '/app/finanzen' : '/finanzen'));
+  protected readonly finanzenLink = computed(() => (this.auth.isAuthenticated() ? '/finanzen' : '/demo/finanzen'));
   // Haushalt hat seit dem Haushalt-Modul ebenfalls eine öffentliche Demo.
-  protected readonly haushaltLink = computed(() => (this.auth.isAuthenticated() ? '/app/haushalt' : '/haushalt'));
+  protected readonly haushaltLink = computed(() => (this.auth.isAuthenticated() ? '/haushalt' : '/demo/haushalt'));
 
   // Mobiles Hamburger-Menü: bündelt auf schmalen Viewports dieselben Inhalte,
   // die ab 900px direkt im Header stehen (Modul-Reiter + Anmelden/Profil),

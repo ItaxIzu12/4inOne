@@ -106,7 +106,7 @@ describe('Dashboard', () => {
         a.textContent?.includes('Termin oder Aufgabe hinzufügen'),
       );
       expect(cta).toBeTruthy();
-      expect(cta?.getAttribute('href')).toBe('/app/organisation');
+      expect(cta?.getAttribute('href')).toBe('/organisation');
     });
   });
 });

@@ -51,7 +51,7 @@ describe('App', () => {
 
   it('uses the app navigation and hides the marketing chrome on the dashboard', async () => {
     fixture.detectChanges();
-    await router.navigateByUrl('/');
+    await router.navigateByUrl('/demo');
     fixture.detectChanges();
     await fixture.whenStable();
 

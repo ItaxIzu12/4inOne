@@ -32,7 +32,7 @@ describe('AppShell', () => {
   }
 
   it('shows a clear "Demo-Modus" banner with a link to create a real account on a public demo route', async () => {
-    const fixture = await renderAt('/reisen', new FakeAuthService());
+    const fixture = await renderAt('/demo/reisen', new FakeAuthService());
     const el = fixture.nativeElement as HTMLElement;
 
     const banner = el.querySelector('.demo-banner');
@@ -46,7 +46,7 @@ describe('AppShell', () => {
   it('shows no demo banner on a real /app route, even while a session is held in memory', async () => {
     const auth = new FakeAuthService();
     auth.isAuthenticated.set(true);
-    const fixture = await renderAt('/app/reisen', auth);
+    const fixture = await renderAt('/reisen', auth);
     const el = fixture.nativeElement as HTMLElement;
 
     expect(el.querySelector('.demo-banner')).toBeNull();
@@ -55,7 +55,7 @@ describe('AppShell', () => {
   it('still shows the demo banner on a public route even for an authenticated session (e.g. via "4inOne entdecken")', async () => {
     const auth = new FakeAuthService();
     auth.isAuthenticated.set(true);
-    const fixture = await renderAt('/finanzen', auth);
+    const fixture = await renderAt('/demo/finanzen', auth);
     const el = fixture.nativeElement as HTMLElement;
 
     expect(el.querySelector('.demo-banner')).toBeTruthy();

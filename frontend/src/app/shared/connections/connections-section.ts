@@ -27,15 +27,15 @@ const KIND: Record<ConnectionObjectType, { label: string; icon: IconName }> = {
 function linkFor(object: ConnectedObject): { path: string[]; query: Record<string, string | number> } {
   switch (object.type) {
     case 'TASK':
-      return { path: ['/app/organisation'], query: { kind: 'task', id: object.id } };
+      return { path: ['/organisation'], query: { kind: 'task', id: object.id } };
     case 'CALENDAR_EVENT':
-      return { path: ['/app/organisation'], query: { kind: 'event', id: object.id } };
+      return { path: ['/organisation'], query: { kind: 'event', id: object.id } };
     case 'HOUSEHOLD_TASK':
-      return { path: ['/app/haushalt'], query: { tab: 'aufgaben', task: object.id } };
+      return { path: ['/haushalt'], query: { tab: 'aufgaben', task: object.id } };
     case 'SAVINGS_GOAL':
-      return { path: ['/app/finanzen'], query: { goal: object.id } };
+      return { path: ['/finanzen'], query: { goal: object.id } };
     default:
-      return { path: ['/app'], query: {} };
+      return { path: ['/'], query: {} };
   }
 }
 

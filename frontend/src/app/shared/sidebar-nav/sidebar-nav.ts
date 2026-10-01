@@ -36,9 +36,9 @@ export class SidebarNav {
   // header.ts) und in Dashboard (features/dashboard/dashboard.ts) — Start,
   // Finanzen und Haushalt haben eine öffentliche Demo-Variante,
   // Organisation zeigt immer auf /app/... (siehe dort für die Begründung).
-  protected readonly homeLink = computed(() => (this.auth.isAuthenticated() ? '/app' : '/'));
-  protected readonly finanzenLink = computed(() => (this.auth.isAuthenticated() ? '/app/finanzen' : '/finanzen'));
-  protected readonly haushaltLink = computed(() => (this.auth.isAuthenticated() ? '/app/haushalt' : '/haushalt'));
+  protected readonly homeLink = computed(() => '/');
+  protected readonly finanzenLink = computed(() => (this.auth.isAuthenticated() ? '/finanzen' : '/finanzen'));
+  protected readonly haushaltLink = computed(() => (this.auth.isAuthenticated() ? '/haushalt' : '/haushalt'));
 
   protected readonly householdName = computed(() => this.financeState.uebersicht()?.household_name ?? '');
   protected readonly members = computed(() => this.financeState.uebersicht()?.members ?? []);

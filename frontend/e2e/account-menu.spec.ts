@@ -14,7 +14,7 @@ async function signedIn(page: import('@playwright/test').Page) {
 
 test('the profile button opens an account menu with name, email and the account actions', async ({ page }) => {
   await signedIn(page);
-  await page.goto('/app');
+  await page.goto('/');
   const trigger = page.getByRole('button', { name: 'Kontomenü' });
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
   await trigger.click();
@@ -220,28 +220,28 @@ test.describe('two-factor page', () => {
 test('the mobile bottom bar has only Start and the four areas', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await signedIn(page);
-  await page.goto('/app');
+  await page.goto('/');
   const nav = page.getByRole('navigation', { name: 'Mobile Navigation' });
   await expect(nav.getByRole('link')).toHaveText(['Start', 'Finanzen', 'Haushalt', 'Organisation', 'Reisen']);
   await expect(nav.getByRole('button')).toHaveCount(0); // kein „+“, kein „Mehr“
   await expect(nav.getByRole('link', { name: 'Start' })).toHaveAttribute('aria-current', 'page');
   await nav.getByRole('link', { name: 'Finanzen' }).click();
-  await expect(page).toHaveURL(/\/app\/finanzen$/);
+  await expect(page).toHaveURL(/\/finanzen$/);
 });
 
 test('on the phone the account menu leads to Familie & Freunde', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await signedIn(page);
   await page.route('**/api/v1/contacts/', (r) => r.fulfill({ json: { contacts: [], sent: [], received: [] } }));
-  await page.goto('/app');
+  await page.goto('/');
   await page.getByRole('button', { name: 'Kontomenü' }).click();
   await page.getByRole('menuitem', { name: 'Familie & Freunde' }).click();
-  await expect(page).toHaveURL(/\/app\/familie$/);
+  await expect(page).toHaveURL(/\/familie$/);
   await expect(page.getByRole('heading', { name: 'Familie & Freunde', level: 1 })).toBeVisible();
 });
 
 test('the preview (guest) account menu offers only "Anmelden", not "Konto erstellen"', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/demo');
   await page.getByRole('button', { name: 'Kontomenü' }).click();
   const menu = page.getByRole('menu', { name: 'Konto' });
   await expect(menu).toContainText('Vorschau');

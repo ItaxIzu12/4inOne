@@ -30,31 +30,29 @@ export class AppShell {
     this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)),
     { initialValue: null },
   );
-  // Explizite Liste statt "alles außer /app": z. B. /einstellungen/* ist ebenfalls real-only (angemeldet,
-  // keine Demo-Variante, siehe app.routes.ts) und läge sonst fälschlich außerhalb von /app.
-  private static readonly DEMO_PATHS = new Set(['/', '/finanzen', '/haushalt', '/organisation', '/reisen']);
+  // Die explizite Demo-URL bestimmt den Modus, auch bei bestehender Anmeldung.
   readonly isDemoRoute = computed(() => {
     const url = (this.currentUrl()?.urlAfterRedirects ?? this.router.url).split('?')[0].split('#')[0];
-    return AppShell.DEMO_PATHS.has(url);
+    return url === '/demo' || url.startsWith('/demo/');
   });
-  readonly name = computed(() => this.auth.currentUser()?.name || 'Sophie');
+  readonly name = computed(() => this.isDemoRoute() ? 'Sophie' : this.auth.currentUser()?.name || 'Mein Konto');
   readonly initials = computed(() => this.name().slice(0, 1).toUpperCase());
   readonly links = computed(() => {
-    const live = this.auth.isAuthenticated();
+    const live = !this.isDemoRoute();
     return [
-      { label: 'Startseite', icon: 'home' as IconName, path: live ? '/app' : '/' },
+      { label: 'Startseite', icon: 'home' as IconName, path: live ? '/' : '/demo' },
       {
         label: 'Finanzen',
         icon: 'finance' as IconName,
-        path: live ? '/app/finanzen' : '/finanzen',
+        path: live ? '/finanzen' : '/demo/finanzen',
       },
       {
         label: 'Haushalt',
         icon: 'household' as IconName,
-        path: live ? '/app/haushalt' : '/haushalt',
+        path: live ? '/haushalt' : '/demo/haushalt',
       },
-      { label: 'Organisation', icon: 'calendar' as IconName, path: live ? '/app/organisation' : '/organisation' },
-      { label: 'Reisen', icon: 'travel' as IconName, path: live ? '/app/reisen' : '/reisen' },
+      { label: 'Organisation', icon: 'calendar' as IconName, path: live ? '/organisation' : '/demo/organisation' },
+      { label: 'Reisen', icon: 'travel' as IconName, path: live ? '/reisen' : '/demo/reisen' },
     ];
   });
   readonly panel = signal('');
@@ -113,7 +111,7 @@ export class AppShell {
         this.busy.set(false);
         this.closeMenu();
         this.close();
-        this.router.navigateByUrl('/login');
+        this.router.navigateByUrl('/', { onSameUrlNavigation: 'reload', replaceUrl: true });
       },
       error: () => {
         this.busy.set(false);

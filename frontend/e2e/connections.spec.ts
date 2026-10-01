@@ -54,7 +54,7 @@ for (const width of [390, 1280]) {
   test(`connect and disconnect a task with an event ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await mockApi(page, []);
-    await page.goto('/app/organisation?kind=task&id=5');
+    await page.goto('/organisation?kind=task&id=5');
     const dialog = page.getByRole('dialog');
     await expect(dialog.getByRole('heading', { name: 'Aufgabe bearbeiten' })).toBeVisible();
 
@@ -81,7 +81,7 @@ for (const width of [390, 1280]) {
 
 test('escape closes only the assistant, the surrounding dialog stays open', async ({ page }) => {
   await mockApi(page, []);
-  await page.goto('/app/organisation?kind=task&id=5');
+  await page.goto('/organisation?kind=task&id=5');
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('button', { name: 'Verbindung hinzufügen' }).click();
   await expect(dialog.getByRole('heading', { name: 'Was möchtest du verbinden?' })).toBeVisible();
@@ -93,7 +93,7 @@ test('escape closes only the assistant, the surrounding dialog stays open', asyn
 
 test('a connected object opens directly: same page hop and other page', async ({ page }) => {
   await mockApi(page, [{ id: 1, other: asEvent }, { id: 2, other: asGoal }]);
-  await page.goto('/app/organisation?kind=task&id=5');
+  await page.goto('/organisation?kind=task&id=5');
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('heading', { name: 'Aufgabe bearbeiten' })).toBeVisible();
   await expect(page).not.toHaveURL(/kind=/); // Adresse bleibt sauber
@@ -104,7 +104,7 @@ test('a connected object opens directly: same page hop and other page', async ({
   await expect(dialog.getByLabel('Titel')).toHaveValue('Lieferung');
 
   // andere Seite: Sparziel
-  await page.goto('/app/finanzen?goal=7');
+  await page.goto('/finanzen?goal=7');
   await expect(page.getByRole('dialog').getByRole('heading', { name: 'Sparziel bearbeiten' })).toBeVisible();
   await expect(page).not.toHaveURL(/goal=/);
 });

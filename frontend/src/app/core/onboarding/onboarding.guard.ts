@@ -7,8 +7,8 @@ export const onboardingGuard: CanActivateFn = () => {
   return inject(OnboardingApiService)
     .getProfile()
     .pipe(
-      map((status) => (status.needs_onboarding ? router.parseUrl('/app/onboarding') : true)),
+      map((status) => (status.needs_onboarding ? router.parseUrl('/onboarding') : true)),
       // The onboarding page offers retry; failures are never interpreted as an empty account.
-      catchError(() => of(router.parseUrl('/app/onboarding'))),
+      catchError(() => of(router.parseUrl('/onboarding'))),
     );
 };

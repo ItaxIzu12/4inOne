@@ -180,7 +180,7 @@ export class Login {
           return;
         }
         this.submitting.set(false);
-        this.router.navigateByUrl('/app');
+        this.router.navigateByUrl('/');
       },
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
@@ -214,7 +214,7 @@ export class Login {
       .subscribe({
         next: () => {
           this.submitting.set(false);
-          this.router.navigateByUrl('/app');
+          this.router.navigateByUrl('/');
         },
         error: (err: HttpErrorResponse) => {
           this.submitting.set(false);

@@ -1,17 +1,17 @@
 <app-shell
-  ><main id="main-content" class="reisen-page" tabindex="-1">
-    <header class="page-heading">
+  ><main id="main-content" class="reisen-page domain-page" tabindex="-1">
+    <header class="page-heading domain-heading">
       <div class="heading-copy">
-        <span class="heading-icon"><app-icon name="travel" /></span>
+        <span class="heading-icon domain-icon"><app-icon name="travel" /></span>
         <div>
           <h1>Reisen</h1>
         </div>
       </div>
-      <button class="primary" (click)="openTripEditor()">
+      <button class="primary" aria-label="Neue Reise" (click)="openTripEditor()">
         <app-icon name="plus" /><span>Neue Reise</span>
       </button>
     </header>
-    <nav class="tabs" aria-label="Reisen Ansichten">
+    <nav class="tabs domain-tabs" aria-label="Reisen Ansichten">
       <button [attr.aria-current]="tab() === 'uebersicht' ? 'page' : null" (click)="tab.set('uebersicht')">
         Übersicht</button
       ><button [attr.aria-current]="tab() === 'reisen' ? 'page' : null" (click)="tab.set('reisen')">

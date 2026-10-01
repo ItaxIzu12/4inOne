@@ -110,7 +110,7 @@ for (const width of [390, 1440]) {
       }
       return r.fulfill({ json: rows });
     });
-    await page.goto('/app/finanzen');
+    await page.goto('/finanzen');
     await expect(page.getByRole('heading', { name: 'Finanzen', exact: true })).toBeVisible();
     await expect(page.getByText(/gibt es kein Budget\.\s+Lege eines fest/)).toBeVisible();
     await page.getByRole('button', { name: 'Budget erstellen', exact: true }).click();
@@ -210,7 +210,7 @@ for (const width of [390, 1440]) {
         .violations,
     ).toEqual([]);
     await page.screenshot({ path: `test-results/finance-${width}.png`, fullPage: true });
-    await page.goto('/app');
+    await page.goto('/');
     await expect(page.locator('.domain.finance')).toContainText('5.570,00 € verfügbar');
     await page.locator('.domain.finance').click();
     await page.getByRole('button', { name: /Supermarkt/ }).click();
@@ -248,7 +248,7 @@ test('warns before an expense exceeds the available budget and books it only aft
     return r.fulfill({ json: [] });
   });
 
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await expect(page.locator('.month-card')).toContainText('100,00 €');
   await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
   const dialog = page.getByRole('dialog');
@@ -301,7 +301,7 @@ test('an income never triggers the overrun warning', async ({ page }) => {
     if (path.endsWith('/transactions/') && r.request().method() === 'POST') { posted++; return r.fulfill({ status: 201, json: { id: 1 } }); }
     return r.fulfill({ json: [] });
   });
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await choose(page, 'Typ', 'Einnahme');
@@ -312,6 +312,8 @@ test('an income never triggers the overrun warning', async ({ page }) => {
 });
 
 test('warns when the savings rates together exceed the budget, even in a later month', async ({ page }) => {
+  // These fixtures describe September; keep browser time independent of the execution date.
+  await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
   await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 't' } }));
   await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 't', user: { name: 'Mira', email: 'm@example.com' } } }));
   await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
@@ -324,7 +326,7 @@ test('warns when the savings rates together exceed the budget, even in a later m
     if (path.endsWith('/budgets/')) return r.fulfill({ json: [{ id: 1, month: '2026-09-01', end_month: null, open_ended: true, amount: '100.00', currency: 'EUR' }] });
     return r.fulfill({ json: [] });
   });
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   const note = page.locator('.month-card .overrun-note');
   await expect(note).toContainText('Sparraten zu hoch');
   await expect(note).toContainText('Im 11.2026 reichen Budget und Einnahmen nicht für alle Sparraten: Es fehlen 30,00 €.');
@@ -353,6 +355,8 @@ test('warns when the savings rates together exceed the budget, even in a later m
 
 
 test('warns BEFORE saving a savings goal that exceeds the budget and saves only after confirmation', async ({ page }) => {
+  // These fixtures describe September; keep browser time independent of the execution date.
+  await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
   await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 't' } }));
   await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 't', user: { name: 'Mira', email: 'm@example.com' } } }));
   await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
@@ -382,7 +386,7 @@ test('warns BEFORE saving a savings goal that exceeds the budget and saves only 
     return r.fulfill({ json: [] });
   });
 
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
   await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
   const dialog = page.getByRole('dialog');
@@ -442,7 +446,7 @@ test('a goal for another month is saved but not shown, and says so', async ({ pa
       return r.fulfill({ json: { month: '2026-09', currency: 'EUR', budget: null, total: null, saved: '0.00', saved_planned: '0.00', available: null, plan_alert: null, income: '0.00', expenses: '0.00', savings_target: '0.00', savings_current: '0.00', has_data: true, categories: [], recent: [] } });
     return r.fulfill({ json: [] });
   });
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
   await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
   const dialog = page.getByRole('dialog');
@@ -509,8 +513,10 @@ async function mockTwoMonths(page: import('@playwright/test').Page) {
 }
 
 test('there is exactly one month selector and every tab follows it', async ({ page }) => {
+  // These fixtures describe September; keep browser time independent of the execution date.
+  await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
   await mockTwoMonths(page);
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   const selector = page.locator('#finance-month');
   await expect(selector).toHaveCount(1);
   await expect(page.locator('.month-card')).toContainText('90,00 €'); // September: 100 − 10
@@ -551,7 +557,7 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
 
 test('an empty goal list is centered on the whole card without touching the two-column grid', async ({ page }) => {
   await mockTwoMonths(page);
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
   await pickMonth(page, page.locator('#finance-month'), '2027-05'); // kein Ziel gilt hier mehr? „Ab Oktober“ gilt offen → 2026-08 ist leer
   await pickMonth(page, page.locator('#finance-month'), '2026-08');
@@ -564,9 +570,11 @@ test('an empty goal list is centered on the whole card without touching the two-
 });
 
 test('month picker: the selected month stays readable on hover, presses that slip outside do not close it, scrolling closes it', async ({ page }) => {
+  // These fixtures describe September; keep browser time independent of the execution date.
+  await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
   await page.setViewportSize({ width: 1100, height: 420 }); // niedrig, damit die Seite scrollbar ist
   await mockTwoMonths(page);
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await page.locator('#finance-month').click();
   const panel = page.locator('.dp__panel:has(.dp__title)');
   await expect(panel).toBeVisible();
@@ -604,7 +612,7 @@ test('month picker: the selected month stays readable on hover, presses that sli
 
 test('budget timeline replaces the list: bar spans its months, click on the active bar edits, a dialog survives a click outside', async ({ page }) => {
   await mockTwoMonths(page);
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
   const timeline = page.locator('app-budget-timeline');
   await expect(timeline).toBeVisible();
@@ -629,7 +637,7 @@ test('budget timeline replaces the list: bar spans its months, click on the acti
 
 test('a new booking proposes a date inside the selected month', async ({ page }) => {
   await mockTwoMonths(page);
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   const selector = page.locator('#finance-month');
   for (const [month, expected] of [['2099-03', '01.03.2099'], ['2020-02', '29.02.2020']]) {
     await pickMonth(page, selector, month);
@@ -642,7 +650,7 @@ test('a new booking proposes a date inside the selected month', async ({ page })
 
 test('saving a booking dated outside the shown month says where it went, inside the month it stays quiet', async ({ page }) => {
   await mockTwoMonths(page);
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await pickMonth(page, page.locator('#finance-month'), '2099-03');
   const notice = page.locator('app-save-feedback');
 
@@ -670,7 +678,7 @@ test('a savings goal without a budget for its months is refused with a clear mes
     }
     return r.fallback();
   });
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
   await page.getByRole('button', { name: 'Neues Sparziel', exact: true }).or(page.getByRole('button', { name: 'Sparziel erstellen', exact: true })).first().click();
   const dialog = page.getByRole('dialog');
@@ -684,8 +692,10 @@ test('a savings goal without a budget for its months is refused with a clear mes
 });
 
 test('changing a budget keeps its start month locked, and a new budget can be started from the dialog', async ({ page }) => {
+  // These fixtures describe September; keep browser time independent of the execution date.
+  await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
   await mockTwoMonths(page);
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Budget erstellen', exact: true })).toHaveCount(0); // ein Button genügt
   await page.getByRole('button', { name: 'Budget ändern', exact: true }).click();
@@ -713,7 +723,7 @@ test('a budget that another budget overrides warns in the dialog and shows one v
         ] })
       : r.fallback(),
   );
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await pickMonth(page, page.locator('#finance-month'), '2099-04');
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
 
@@ -734,7 +744,7 @@ test('a budget that another budget overrides warns in the dialog and shows one v
 test('the budget dialog says what stays without a budget, and the overview names the missing budget', async ({ page }) => {
   await mockTwoMonths(page);
   await page.route('**/api/v1/finanzen/private/budgets/1/impact/', (r) => r.fulfill({ json: { transactions: 12, goals: 1 } }));
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
   await page.getByRole('button', { name: 'Budget ändern', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Löschst du dieses Budget, gibt es für 12 Buchungen und 1 Sparziel kein Budget mehr. Sie bleiben erhalten, aber es wird nichts verrechnet.');
@@ -745,11 +755,13 @@ test('without a budget the overview keeps bookings and says so', async ({ page }
   await page.route('**/api/v1/finanzen/private/summary/**', (r) =>
     r.fulfill({ json: { month: '2026-09', currency: 'EUR', budget: null, total: null, saved: '0.00', saved_planned: '0.00', available: null, plan_alert: null, income: '0.00', expenses: '10.00', savings_target: '0.00', savings_current: '0.00', has_data: true, categories: [], recent: [] } }),
   );
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await expect(page.locator('.month-card')).toContainText('gibt es kein Budget. Deine Einnahmen und Ausgaben bleiben gespeichert');
 });
 
 test('bookings: category filter, search by title, and 5-at-a-time with "weitere anzeigen"', async ({ page }) => {
+  // These fixtures describe September; keep browser time independent of the execution date.
+  await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
   await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 't' } }));
   await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 't', user: { name: 'Mira', email: 'm@example.com' } } }));
   await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
@@ -774,7 +786,7 @@ test('bookings: category filter, search by title, and 5-at-a-time with "weitere 
     if (path.endsWith('/categories/')) return r.fulfill({ json: categories });
     return r.fulfill({ json: [] });
   });
-  await page.goto('/app/finanzen');
+  await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Buchungen', exact: true }).click();
 
   const rows = page.locator('.transaction');

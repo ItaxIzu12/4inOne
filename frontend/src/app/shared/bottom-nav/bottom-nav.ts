@@ -27,6 +27,6 @@ export class BottomNav {
     { route: '/', label: 'Start' },
     { route: '/finanzen', label: 'Finanzen', accent: 'finance' },
     { route: '/haushalt', label: 'Haushalt', accent: 'household' },
-    { route: '/app/organisation', label: 'Organisation', accent: 'organize' },
+    { route: '/organisation', label: 'Organisation', accent: 'organize' },
   ];
 }

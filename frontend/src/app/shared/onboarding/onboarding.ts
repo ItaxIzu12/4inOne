@@ -68,7 +68,7 @@ export class Onboarding {
         title: 'Erste Ausgabe erfassen',
         subtitle: 'Leg direkt los und sieh, wie Kompass deine Ausgaben ordnet.',
         actionLabel: 'Ausgabe erfassen',
-        action: () => this.router.navigateByUrl('/app/finanzen'),
+        action: () => this.router.navigateByUrl('/finanzen'),
       });
     }
     if (!s.has_category) {

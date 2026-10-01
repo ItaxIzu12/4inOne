@@ -97,10 +97,10 @@ describe('ConnectionsSection', () => {
     ]);
     const hrefs = Array.from(el.querySelectorAll('a.connection__link')).map((a) => a.getAttribute('href'));
     expect(hrefs).toEqual([
-      '/app/organisation?kind=task&id=5',
-      '/app/organisation?kind=event&id=9',
-      '/app/haushalt?tab=aufgaben&task=12',
-      '/app/finanzen?goal=3',
+      '/organisation?kind=task&id=5',
+      '/organisation?kind=event&id=9',
+      '/haushalt?tab=aufgaben&task=12',
+      '/finanzen?goal=3',
     ]);
   });
 

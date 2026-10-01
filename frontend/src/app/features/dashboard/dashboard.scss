@@ -718,4 +718,9 @@ a:focus-visible {
 .connections button { background: #fff; box-shadow: none; border: 1px solid #e7ebf1; }
 .connections button > app-icon { width: 28px; height: 28px; }
 
-.connections button:nth-child(3) > app-icon { color: #235bb5; background: #edf3fc; }
+.connections button:nth-child(3) > app-icon { color: #7541b5; background: #f4effb; }
+
+.icon-disc.finance app-icon { color: #1e7a4d; }
+.icon-disc.household app-icon { color: #ad3169; }
+.icon-disc.organisation app-icon { color: #7541b5; }
+.icon-disc.travel app-icon { color: #246db8; }

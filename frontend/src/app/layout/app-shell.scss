@@ -592,13 +592,13 @@ input:focus-visible {
   }
 }
 
-/* Navigation uses color only for the selected domain; labels and aria-current remain. */
+/* Domain icons remain colored; selected links also tint their label and background. */
 .sidebar nav a, .mobile-nav a { --nav-accent: #235bb5; --nav-soft: #edf3fc; color: #566176; }
 .sidebar nav a[data-domain="finance"], .mobile-nav a[data-domain="finance"] { --nav-accent: #1e7a4d; --nav-soft: #edf7f1; }
 .sidebar nav a[data-domain="household"], .mobile-nav a[data-domain="household"] { --nav-accent: #ad3169; --nav-soft: #fcf0f5; }
 .sidebar nav a[data-domain="calendar"], .mobile-nav a[data-domain="calendar"] { --nav-accent: #7541b5; --nav-soft: #f4effb; }
 .sidebar nav a[data-domain="travel"], .mobile-nav a[data-domain="travel"] { --nav-accent: #246db8; --nav-soft: #edf4fc; }
-.sidebar nav a app-icon, .mobile-nav a app-icon { color: inherit; filter: none; width: 24px; height: 24px; }
+.sidebar nav a app-icon, .mobile-nav a app-icon { color: var(--nav-accent); filter: none; width: 24px; height: 24px; }
 .sidebar nav a.active, .mobile-nav a.active { color: var(--nav-accent); background: var(--nav-soft); box-shadow: none; border-color: transparent; }
 .sidebar-note, .demo-banner { color: #53627a; background: #f1f5fa; box-shadow: none; }
 .sidebar, .topbar { background: #fff; border-color: #e7ebf1; }

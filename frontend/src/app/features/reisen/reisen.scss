@@ -1,3 +1,4 @@
+@use '../../shared/styles/domain-layout' as domain;
 // Gleiche Bausteine wie organisation.scss (Karten, Tabs, Zeilen), nur mit dem blauen "travel"-Akzent, der
 // bereits in app-shell.scss/dashboard.scss für Reisen verwendet wird (#2889ef-Familie), statt Organisations Lila.
 :host {
@@ -839,7 +840,8 @@ textarea:focus-visible {
   }
   .page-heading {
     gap: 8px;
-    align-items: flex-start;
+    flex-wrap: wrap;
+    align-items: center;
   }
   .card {
     padding: 18px;
@@ -870,3 +872,43 @@ textarea:focus-visible {
 .overlap-warning .muted {
   color: #6e5527;
 }
+
+// Gleiche kompakte, einzeilige Navigation wie im Haushalt.
+@media (max-width: 959px) {
+  .tabs {
+    flex-wrap: nowrap;
+    margin: 22px 0 16px;
+    padding: 4px;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tabs button {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 4px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .page-heading > .primary {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 760px) {
+  .page-heading > .primary {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .page-heading > .primary span {
+    display: none;
+  }
+}
+
+@include domain.layout;

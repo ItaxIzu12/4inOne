@@ -58,7 +58,7 @@ for (const width of [390, 1440]) {
       }
       return r.fulfill({ json: list });
     });
-    await page.goto('/app/organisation');
+    await page.goto('/organisation');
     await expect(page.getByRole('heading', { name: 'Organisation', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Heute hast du frei geplant' })).toBeVisible();
     await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
@@ -110,7 +110,7 @@ for (const width of [390, 1440]) {
         .violations,
     ).toEqual([]);
     await page.screenshot({ path: `test-results/organisation-${width}.png`, fullPage: true });
-    await page.goto('/app');
+    await page.goto('/');
     await expect(page.locator('.today-row').filter({ hasText: 'Kontrolle' })).toBeVisible();
     await expect(page.locator('.today-row').filter({ hasText: 'Yoga' })).toHaveCount(0);
     await page.locator('.today-row').filter({ hasText: 'Kontrolle' }).click();
@@ -121,7 +121,7 @@ for (const width of [390, 1440]) {
   });
 }
 test('organisation rejects unauthenticated navigation', async ({ page }) => {
-  await page.goto('/app/organisation');
+  await page.goto('/organisation');
   await expect(page).toHaveURL(/\/login$/);
 });
 
@@ -130,7 +130,7 @@ test('"Aufgabe erstellen" and "Termin erstellen" open a dialog for exactly that 
   await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 't', user: { name: 'Mira', email: 'm@example.com' } } }));
   await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
   await page.route('**/api/v1/organisation/**', (r) => r.fulfill({ json: [] }));
-  await page.goto('/app/organisation');
+  await page.goto('/organisation');
   const dialog = page.getByRole('dialog');
   const choice = (name: string) => dialog.getByRole('button', { name, exact: true });
 
@@ -180,7 +180,7 @@ test('tasks: search filters the list, and only 5 show at first with "weitere anz
     if (url.pathname.includes('/events/')) return r.fulfill({ json: [] });
     return r.fulfill({ json: tasks });
   });
-  await page.goto('/app/organisation');
+  await page.goto('/organisation');
   await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
 
   const rows = page.locator('.task-row');
@@ -206,7 +206,7 @@ test('tasks: search filters the list, and only 5 show at first with "weitere anz
 
 test.describe('demo preview: task list stays live', () => {
   test('creating a task shows it (and "weitere anzeigen") immediately, no tab switch needed', async ({ page }) => {
-    await page.goto('/organisation');
+    await page.goto('/demo/organisation');
     await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
     await expect(page.locator('.task-row')).toHaveCount(5);
     await page.getByRole('button', { name: 'Aufgabe erstellen', exact: true }).click();
@@ -221,7 +221,7 @@ test.describe('demo preview: task list stays live', () => {
   });
 
   test('marking a task done/open updates the "offene Aufgaben" filter and count immediately', async ({ page }) => {
-    await page.goto('/organisation');
+    await page.goto('/demo/organisation');
     await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
     await choose(page, 'Anzeigen', 'Offene Aufgaben');
     await expect(page.locator('.task-row')).toHaveCount(4);
@@ -253,7 +253,7 @@ test.describe('calendar day: search and limit work like tasks, "Nächste Termine
       if (url.pathname.includes('/tasks/')) return r.fulfill({ json: [] });
       return r.fulfill({ json: events });
     });
-    await page.goto('/app/organisation');
+    await page.goto('/organisation');
     await page.getByRole('button', { name: 'Kalender', exact: true }).click();
 
     // Button steht im selben Kopf wie das Datum, rechts daneben
@@ -277,7 +277,7 @@ test.describe('calendar day: search and limit work like tasks, "Nächste Termine
 
   test('"Nächste Termine" is visible on mobile too', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 900 });
-    await page.goto('/organisation');
+    await page.goto('/demo/organisation');
     await page.getByRole('button', { name: 'Kalender', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Nächste Termine' })).toBeVisible();
   });
@@ -285,7 +285,8 @@ test.describe('calendar day: search and limit work like tasks, "Nächste Termine
 
 test.describe('the three tiles (Termine heute/offene Aufgaben/überfällig) only belong to "Heute"', () => {
   test('they show on Heute, not on Kalender or Aufgaben; the calendar grid stays out of Heute', async ({ page }) => {
-    await page.goto('/organisation');
+    await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
+    await page.goto('/demo/organisation');
     const stats = page.locator('.stats[aria-label="Dein Überblick"]');
     await expect(stats).toBeVisible();
     await expect(page.getByRole('heading', { name: 'September 2026' })).toHaveCount(0); // Monatsraster nicht im Heute-Tab
@@ -313,7 +314,7 @@ test('calendar: the date filter jumps straight to that day\'s events, and the mi
     if (url.pathname.includes('/tasks/')) return r.fulfill({ json: [] });
     return r.fulfill({ json: events });
   });
-  await page.goto('/app/organisation');
+  await page.goto('/organisation');
   await page.getByRole('button', { name: 'Kalender', exact: true }).click();
   await expect(page.getByText('Noch keine Termine')).toBeVisible();
 
@@ -326,13 +327,13 @@ test('calendar: the date filter jumps straight to that day\'s events, and the mi
 test.describe('mobile order and visibility', () => {
   test('"Nächste Termine" is visible on Heute (mobile), stacked after the day card', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 900 });
-    await page.goto('/organisation');
+    await page.goto('/demo/organisation');
     await expect(page.getByRole('heading', { name: 'Nächste Termine' })).toBeVisible();
   });
 
   test('on Kalender (mobile) the order is: month grid, then the selected day, then "Nächste Termine"', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 900 });
-    await page.goto('/organisation');
+    await page.goto('/demo/organisation');
     await page.getByRole('button', { name: 'Kalender', exact: true }).click();
     const today = new Date();
     const monthLabel = today.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });

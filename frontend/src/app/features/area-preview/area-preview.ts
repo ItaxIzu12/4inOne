@@ -10,7 +10,7 @@ import { AppShell } from '../../layout/app-shell';
       <h1>{{ title }}</h1>
       <p>{{ description }}</p>
       <p>Dieser Bereich wird in einer späteren Phase ergänzt.</p>
-      <a routerLink="/app">Zur Startseite →</a>
+      <a routerLink="/">Zur Startseite →</a>
     </main></app-shell
   >`,
   styles: `

@@ -48,7 +48,7 @@ export class Einladung {
     this.busy.set(true);
     this.error.set('');
     (accept ? this.api.accept(this.token).pipe(map(() => undefined)) : this.api.decline(this.token)).subscribe({
-      next: () => this.router.navigateByUrl('/app/familie'),
+      next: () => this.router.navigateByUrl('/familie'),
       error: () => {
         this.busy.set(false);
         this.error.set('Das hat nicht geklappt. Bitte versuche es noch einmal.');

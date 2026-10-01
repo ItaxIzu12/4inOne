@@ -9,7 +9,7 @@ import { LogoKompass } from '../icons/logo-kompass';
   template: ` <div class="context">
     <span class="household">{{ household() }}</span
     ><span class="members">{{ members() }}</span>
-    <a class="brand" [routerLink]="auth.isAuthenticated() ? '/app' : '/'"
+    <a class="brand" routerLink="/"
       ><logo-kompass />Kompass</a
     >
     <a

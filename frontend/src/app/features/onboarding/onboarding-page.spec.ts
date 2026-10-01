@@ -40,7 +40,7 @@ describe('OnboardingPage', () => {
     const nav = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     const f = TestBed.createComponent(OnboardingPage);
     f.detectChanges();
-    expect(nav).toHaveBeenCalledWith('/app', { replaceUrl: true });
+    expect(nav).toHaveBeenCalledWith('/', { replaceUrl: true });
     expect(f.componentInstance.allowed()).toBe(false);
   });
   it('shows a retry state rather than treating a failed status call as empty data', () => {
@@ -56,13 +56,13 @@ describe('OnboardingPage', () => {
     const c = TestBed.createComponent(OnboardingPage).componentInstance;
     c.usage.set('personal');
     c.toggle('haushalt');
-    c.finish('/app');
+    c.finish('/');
     expect(nav).not.toHaveBeenCalled();
     expect(c.error()).toContain('nicht gespeichert');
     api.complete.mockReturnValue(of({ completed: true }));
-    c.finish('/app');
+    c.finish('/');
     expect(api.complete).toHaveBeenLastCalledWith('personal', ['haushalt']);
-    expect(nav).toHaveBeenCalledWith('/app', { replaceUrl: true });
+    expect(nav).toHaveBeenCalledWith('/', { replaceUrl: true });
   });
 
   it('"4inOne entdecken" saves the same preferences but lands on the public demo, not /app', () => {
@@ -71,9 +71,9 @@ describe('OnboardingPage', () => {
     const c = TestBed.createComponent(OnboardingPage).componentInstance;
     c.usage.set('personal');
     c.toggle('reisen');
-    c.finish('/');
+    c.finish('/demo');
     expect(api.complete).toHaveBeenCalledWith('personal', ['reisen']);
-    expect(nav).toHaveBeenCalledWith('/', { replaceUrl: true });
+    expect(nav).toHaveBeenCalledWith('/demo', { replaceUrl: true });
   });
 
   it('the final step offers both "4inOne entdecken" and "Mit meinen Daten starten"', () => {

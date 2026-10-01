@@ -15,7 +15,7 @@
         >
       }
       <div class="nav-space"></div>
-      <a routerLink="/app/familie" routerLinkActive="active" ariaCurrentWhenActive="page"
+      <a routerLink="/familie" routerLinkActive="active" ariaCurrentWhenActive="page"
         ><app-icon name="people" />Familie &amp; Freunde</a
       >
     </nav>
@@ -60,7 +60,7 @@
               </div>
               @if (auth.isAuthenticated()) {
                 <div class="account-group" role="none">
-                  <a role="menuitem" routerLink="/app/familie" (click)="closeMenu()"><app-icon name="people" />Familie &amp; Freunde</a>
+                  <a role="menuitem" routerLink="/familie" (click)="closeMenu()"><app-icon name="people" />Familie &amp; Freunde</a>
                   <a role="menuitem" routerLink="/einstellungen" (click)="closeMenu()"><icon-settings />Einstellungen</a>
                   <a role="menuitem" routerLink="/einstellungen/zwei-faktor" (click)="closeMenu()"><icon-two-factor />Zwei-Faktor-Authentifizierung</a>
                 </div>
@@ -92,7 +92,11 @@
       <div class="demo-banner" role="status">
         <span class="demo-banner__label"><app-icon name="bulb" />Demo-Modus · Beispieldaten</span>
         <span class="demo-banner__hint">Du kannst hier alles gefahrlos ausprobieren — eine Seite neu laden setzt die Demo zurück.</span>
-        <a routerLink="/registrieren" class="demo-banner__cta">Eigenes Konto erstellen</a>
+        @if (auth.isAuthenticated()) {
+          <a routerLink="/" class="demo-banner__cta">Zu meinen Daten</a>
+        } @else {
+          <a routerLink="/registrieren" class="demo-banner__cta">Eigenes Konto erstellen</a>
+        }
       </div>
     }
     <ng-content />

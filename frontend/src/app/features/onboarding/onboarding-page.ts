@@ -63,7 +63,7 @@ export class OnboardingPage {
         next: (status) => {
           this.loading.set(false);
           if (!status.needs_onboarding) {
-            this.router.navigateByUrl('/app', { replaceUrl: true });
+            this.router.navigateByUrl('/', { replaceUrl: true });
             return;
           }
           this.allowed.set(true);
@@ -100,7 +100,7 @@ export class OnboardingPage {
   /** Beide Wege speichern dieselbe Auswahl (needs_onboarding wird serverseitig erst dadurch false, siehe
    * onboarding.guard.ts) — nur das Ziel danach unterscheidet sich: „4inOne entdecken“ führt zur öffentlichen
    * Demo (Beispieldaten, siehe app.routes.ts), „Mit meinen Daten starten“ in den eigenen, leeren Arbeitsbereich. */
-  finish(destination: '/' | '/app') {
+  finish(destination: '/demo' | '/') {
     if (this.saving()) return;
     const usage = this.usage();
     if (!usage || !this.selected().length) return;

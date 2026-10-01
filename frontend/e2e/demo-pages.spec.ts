@@ -11,7 +11,7 @@ async function blockBackend(page: import('@playwright/test').Page) {
 
 test('the preview links to the new Finanzen design (not the older one) with demo data for the current month', async ({ page }) => {
   await blockBackend(page);
-  await page.goto('/');
+  await page.goto('/demo');
   await page.getByRole('link', { name: 'Finanzen' }).first().click();
   await expect(page).toHaveURL(/\/finanzen$/);
   // Reiter des AKTUELLEN Designs (private-finance.html) — die ältere Demo-Seite hatte andere Bezeichner.
@@ -23,7 +23,7 @@ test('the preview links to the new Finanzen design (not the older one) with demo
 
 test('the preview links to Organisation with demo data, never to the login screen', async ({ page }) => {
   await blockBackend(page);
-  await page.goto('/');
+  await page.goto('/demo');
   await page.getByRole('link', { name: 'Organisation' }).first().click();
   await expect(page).toHaveURL(/\/organisation$/);
   await expect(page).not.toHaveURL(/\/login/);
@@ -34,14 +34,14 @@ test('the preview links to Organisation with demo data, never to the login scree
 
 test('visiting the organisation preview directly (no navigation) also works without a login', async ({ page }) => {
   await blockBackend(page);
-  await page.goto('/organisation');
+  await page.goto('/demo/organisation');
   await expect(page).not.toHaveURL(/\/login/);
   await expect(page.getByRole('heading', { name: 'Organisation' })).toBeVisible();
 });
 
 test('the preview links to Haushalt with demo data, never to the login screen', async ({ page }) => {
   await blockBackend(page);
-  await page.goto('/');
+  await page.goto('/demo');
   await page.getByRole('link', { name: 'Haushalt' }).first().click();
   await expect(page).toHaveURL(/\/haushalt$/);
   await expect(page).not.toHaveURL(/\/login/);
@@ -50,7 +50,7 @@ test('the preview links to Haushalt with demo data, never to the login screen', 
 
 test('the preview links to Reisen with demo data, never to the login screen', async ({ page }) => {
   await blockBackend(page);
-  await page.goto('/');
+  await page.goto('/demo');
   await page.getByRole('link', { name: 'Reisen' }).first().click();
   await expect(page).toHaveURL(/\/reisen$/);
   await expect(page).not.toHaveURL(/\/login/);

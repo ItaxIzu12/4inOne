@@ -5,7 +5,7 @@ for (const width of [390, 820, 1440]) {
   test(`domain screens and profile menu remain usable at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.route('http://localhost:8000/api/**', (route) => route.abort());
-    for (const path of ['/', '/finanzen', '/haushalt', '/organisation', '/reisen']) {
+    for (const path of ['/demo', '/demo/finanzen', '/demo/haushalt', '/demo/organisation', '/demo/reisen']) {
       await page.goto(path);
       await expect(page.locator('h1').first()).toBeVisible();
       await expect(page.getByRole('button', { name: 'Kontomenü', exact: true })).toBeVisible();

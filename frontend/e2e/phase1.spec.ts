@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 for (const width of [360, 390, 768, 1440]) {
   test(`phase 1 dashboard at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
-    await page.goto('/');
+    await page.goto('/demo');
     await expect(page.getByRole('heading', { name: 'Hallo Sophie!' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -46,6 +46,6 @@ for (const path of ['/login', '/registrieren']) {
   });
 }
 test('protected dashboard redirects without a session', async ({ page }) => {
-  await page.goto('/app');
+  await page.goto('/finanzen');
   await expect(page).toHaveURL(/\/login$/);
 });

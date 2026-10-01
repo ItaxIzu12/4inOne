@@ -1,3 +1,4 @@
+@use '../../shared/styles/domain-layout' as domain;
 :host {
   display: block;
   color: #162e29;
@@ -585,7 +586,7 @@ progress.over::-moz-progress-bar {
   }
   .identity {
     gap: 10px;
-    flex: 1 1 0; /* schrumpft, damit der Button auch auf sehr schmalen Bildschirmen oben rechts bleibt */
+    flex: 1 0 auto;
   }
   .identity p {
     font-size: 12px;
@@ -654,16 +655,8 @@ progress.over::-moz-progress-bar {
     flex-wrap: wrap;
     gap: 8px;
   }
-  /* Mobil nur das Plus, der Name bleibt für Screenreader (wie in Organisation und Haushalt). */
   .head-actions > .primary {
-    padding: 10px;
-  }
-  .head-actions > .primary span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    clip-path: inset(50%);
-    overflow: hidden;
+    white-space: nowrap;
   }
   .period {
     gap: 8px;
@@ -678,3 +671,5 @@ progress.over::-moz-progress-bar {
     flex-wrap: wrap;
   }
 }
+
+@include domain.layout;

@@ -47,7 +47,7 @@ test('empty state explains the idea; inviting adds an open invite, cancelling re
   await signedIn(page);
   const state: Overview = { contacts: [], sent: [], received: [] };
   const calls = await mockContacts(page, state);
-  await page.goto('/app/familie');
+  await page.goto('/familie');
   await expect(page.getByRole('heading', { name: 'Familie & Freunde', level: 1 })).toBeVisible();
   await expect(page.getByText('Eine Verbindung teilt noch nichts')).toBeVisible();
   await expect(page.getByText('Noch niemand hier.')).toBeVisible();
@@ -75,7 +75,7 @@ test('a received invite can be accepted; contacts are grouped and removal asks f
   await signedIn(page);
   const state: Overview = { contacts: [], sent: [], received: [{ token: 'abc', from_name: 'Tom', relation: 'FRIEND', expires_at: '2026-10-10T00:00:00Z' }] };
   const calls = await mockContacts(page, state);
-  await page.goto('/app/familie');
+  await page.goto('/familie');
   await expect(page.getByRole('heading', { name: 'Einladungen an dich' })).toBeVisible();
   await expect(page.getByText('möchte dich als Freund:in hinzufügen')).toBeVisible();
   await page.getByRole('button', { name: 'Annehmen' }).click();
@@ -113,7 +113,7 @@ test('the invite link for the invited account shows the sender and accepts', asy
   await expect(page.getByText('als Familie hinzufügen')).toBeVisible();
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Annehmen' }).click();
-  await expect(page).toHaveURL(/\/app\/familie$/);
+  await expect(page).toHaveURL(/\/familie$/);
   expect(calls).toContain('POST /invites/abc/accept/');
 });
 

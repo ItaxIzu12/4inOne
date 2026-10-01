@@ -1,8 +1,8 @@
 <app-save-feedback [message]="saveMessage()" (dismissed)="dismissSaved()" />
 <app-shell>
-  <main id="main-content" class="hh-main" tabindex="-1">
-      <header class="page-head">
-        <span class="page-head__icon" aria-hidden="true"><app-icon name="household" /></span>
+  <main id="main-content" class="hh-main domain-page" tabindex="-1">
+      <header class="page-head domain-heading">
+        <span class="page-head__icon domain-icon" aria-hidden="true"><app-icon name="household" /></span>
         <div class="page-head__text">
           <h1>Haushalt</h1>
         </div>
@@ -11,7 +11,7 @@
         </button>
       </header>
 
-      <div class="subtabs" role="tablist" aria-label="Bereiche im Haushalt" (keydown)="onTabKeydown($event)">
+      <div class="subtabs domain-tabs" role="tablist" aria-label="Bereiche im Haushalt" (keydown)="onTabKeydown($event)">
         @for (tab of tabs; track tab.key) {
           <button
             [id]="'hh-tab-' + tab.key"

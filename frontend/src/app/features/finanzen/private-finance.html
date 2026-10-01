@@ -1,27 +1,20 @@
 <app-save-feedback [message]="notice()" (dismissed)="notice.set('')" />
 <app-shell
-  ><main id="main-content" class="finance-page" tabindex="-1">
-    <header class="page-head">
+  ><main id="main-content" class="finance-page domain-page" tabindex="-1">
+    <header class="page-head domain-heading">
       <div class="identity">
-        <span class="wallet"><app-icon name="finance" /></span>
+        <span class="wallet domain-icon"><app-icon name="finance" /></span>
         <div>
           <h1>Finanzen</h1>
         </div>
       </div>
-      <!-- Monat und Hauptaktion rechts im Kopf; auf dem Handy rutscht der Monat als volle Zeile unter den Kopf. -->
       <div class="head-actions">
-        <div class="period">
-          <label for="finance-month"
-            ><span class="sr-only">Monat</span>
-            <app-date-picker mode="month" inputId="finance-month" [value]="month()" (valueChange)="setMonth($event)" />
-          </label>
-        </div>
-        <button class="primary" (click)="open('transactions')">
+        <button class="primary" aria-label="Neue Buchung" (click)="open('transactions')">
           <app-icon name="plus" /><span>Neue Buchung</span>
         </button>
       </div>
     </header>
-    <nav class="tabs" aria-label="Finanzansichten">
+    <nav class="tabs domain-tabs" aria-label="Finanzansichten">
       <button
         [attr.aria-current]="tab() === 'overview' ? 'page' : null"
         (click)="tab.set('overview')"
@@ -41,6 +34,13 @@
         Sparziele
       </button>
     </nav>
+        <div class="period">
+          <label for="finance-month"
+            ><span class="sr-only">Monat</span>
+            <app-date-picker mode="month" inputId="finance-month" [value]="month()" (valueChange)="setMonth($event)" />
+          </label>
+        </div>
+
     @if (loading()) {
       <p class="empty" role="status">Deine Finanzen werden geladen …</p>
     } @else if (error()) {
@@ -300,7 +300,7 @@
       }
     }
     <p class="legacy">
-      <a routerLink="/app/haushaltsfinanzen">Bisherige Haushaltsfinanzen öffnen</a> · Separater
+      <a routerLink="/haushaltsfinanzen">Bisherige Haushaltsfinanzen öffnen</a> · Separater
       Haushaltsbereich
     </p>
   </main></app-shell

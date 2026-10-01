@@ -1,3 +1,4 @@
+import { DEMO_MODE } from '../../core/demo-context';
 import { PrivateFinanceApi, FinanceSummary, euros } from '../finanzen/private-finance-api.service';
 import { HaushaltOverviewDto } from '../haushalt/haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from '../haushalt/haushalt-data-provider';
@@ -41,7 +42,8 @@ export class Dashboard {
   });
   private router = inject(Router);
   private destroy = inject(DestroyRef);
-  readonly live = computed(() => this.auth.isAuthenticated());
+  private readonly demo = inject(DEMO_MODE);
+  readonly live = computed(() => this.auth.isAuthenticated() && !this.demo);
   readonly organisationToday = signal<TodayData | null>(null);
   readonly todayLoading = signal(false);
   readonly todayError = signal('');
@@ -107,17 +109,17 @@ export class Dashboard {
   }
   openItem(item: { title: string; source?: TodayItem }) {
     if (this.live() && item.source)
-      this.router.navigate(['/app/organisation'], {
+      this.router.navigate(['/organisation'], {
         queryParams: { kind: item.source.kind, id: item.source.id },
       });
     else this.detail.set(item.title);
   }
   showDay() {
-    if (this.live()) this.router.navigateByUrl('/app/organisation');
+    if (this.live()) this.router.navigateByUrl('/organisation');
     else this.detail.set('Dein Tag');
   }
 
-  readonly name = computed(() => this.auth.currentUser()?.name || 'Sophie');
+  readonly name = computed(() => this.demo ? 'Sophie' : this.auth.currentUser()?.name || 'Sophie');
   readonly date = new Intl.DateTimeFormat('de-DE', {
     weekday: 'long',
     day: 'numeric',
@@ -168,7 +170,7 @@ export class Dashboard {
     },
   ];
   readonly domains = computed(() => {
-    const live = this.auth.isAuthenticated();
+    const live = this.live();
     // Dieselbe Berechnung für Demo und echtes Konto: beide beziehen ihre Daten aus derselben Routengruppe
     // (app.routes.ts), nur einmal von der Demo-, einmal von der echten Datenquelle.
     return [
@@ -176,7 +178,7 @@ export class Dashboard {
         name: 'Finanzen',
         tone: 'finance',
         icon: 'finance' as IconName,
-        path: live ? '/app/finanzen' : '/finanzen',
+        path: live ? '/finanzen' : '/demo/finanzen',
         summary: this.financeError()
           ? 'Finanzen konnten nicht geladen werden'
           : !this.finance()
@@ -193,7 +195,7 @@ export class Dashboard {
         name: 'Haushalt',
         tone: 'household',
         icon: 'household' as IconName,
-        path: live ? '/app/haushalt' : '/haushalt',
+        path: live ? '/haushalt' : '/demo/haushalt',
         summary: this.householdError()
           ? 'Haushalt konnte nicht geladen werden'
           : !this.household()
@@ -206,7 +208,7 @@ export class Dashboard {
         name: 'Organisation',
         tone: 'organisation',
         icon: 'calendar' as IconName,
-        path: live ? '/app/organisation' : '/organisation',
+        path: live ? '/organisation' : '/demo/organisation',
         summary: this.organisationToday()
           ? `${this.organisationToday()!.event_count} ${this.organisationToday()!.event_count === 1 ? 'Termin heute' : 'Termine heute'}`
           : 'Dein Kalender & Aufgaben',
@@ -215,7 +217,7 @@ export class Dashboard {
         name: 'Reisen',
         tone: 'travel',
         icon: 'travel' as IconName,
-        path: live ? '/app/reisen' : '/reisen',
+        path: live ? '/reisen' : '/demo/reisen',
         summary: this.tripsError()
           ? 'Reisen konnten nicht geladen werden'
           : this.nextTrip()

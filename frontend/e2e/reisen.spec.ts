@@ -12,7 +12,7 @@ function iso(offsetDays: number): string {
 for (const width of [390, 1440]) {
   test(`reisen CRUD lifecycle ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
-    await page.goto('/reisen');
+    await page.goto('/demo/reisen');
     await page.waitForLoadState('networkidle');
 
     // CREATE
@@ -56,7 +56,7 @@ for (const width of [390, 1440]) {
 
 test('packing list at mobile width: grouped by category, big touch targets, full add/check/edit/delete', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/reisen');
+  await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Packliste', exact: true }).click();
 
@@ -97,7 +97,7 @@ test('packing list at mobile width: grouped by category, big touch targets, full
 
 test('trip tasks at mobile width: big touch targets, full add/complete/reopen/edit/delete', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/reisen');
+  await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
 
@@ -139,7 +139,7 @@ test('trip tasks at mobile width: big touch targets, full add/complete/reopen/ed
 
 test('trip budget at mobile width: plan amounts per category, currency-aware, big touch targets', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/reisen');
+  await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Budget', exact: true }).click();
   await page.locator('.budget-category-label').first().waitFor();
@@ -166,7 +166,7 @@ test('trip budget at mobile width: plan amounts per category, currency-aware, bi
 });
 
 test('a trip budget can use a different currency than euro, without touching private finances', async ({ page }) => {
-  await page.goto('/reisen');
+  await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Neue Reise' }).click();
   await page.locator('#trip-title').fill('USA-Reise');
@@ -184,7 +184,7 @@ test('a trip budget can use a different currency than euro, without touching pri
 });
 
 test('creating a trip without dates fails with a clear message, nothing is saved', async ({ page }) => {
-  await page.goto('/reisen');
+  await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Neue Reise' }).click();
   await page.locator('#trip-title').fill('Ohne Datum');
@@ -195,7 +195,7 @@ test('creating a trip without dates fails with a clear message, nothing is saved
 });
 
 test('smart setup: a flight with hand luggage suggests check-in tasks and a compact-packing hint, and lets you deselect one before accepting', async ({ page }) => {
-  await page.goto('/reisen');
+  await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Neue Reise' }).click();
   await page.locator('#trip-title').fill('Flug nach Rom');
@@ -225,7 +225,7 @@ test('smart setup: a flight with hand luggage suggests check-in tasks and a comp
 });
 
 test('participants: a solo trip starts owned by its creator alone, and the owner can add/remove a contact', async ({ page }) => {
-  await page.goto('/reisen');
+  await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Reisen', exact: true }).click();
 
@@ -258,7 +258,7 @@ test('participants: a solo trip starts owned by its creator alone, and the owner
 });
 
 test('trip detail overview: header, countdown/status and readiness checklist reflect the real trip data', async ({ page }) => {
-  await page.goto('/reisen');
+  await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
 
   const detail = page.locator('.trip-detail');
@@ -285,7 +285,7 @@ test('trip detail overview: header, countdown/status and readiness checklist ref
 });
 
 test('readiness reaches 100% once a brand-new trip is fully packed, tasked and budgeted', async ({ page }) => {
-  await page.goto('/reisen');
+  await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
 
   await page.getByRole('button', { name: 'Neue Reise' }).click();
@@ -325,7 +325,7 @@ test('readiness reaches 100% once a brand-new trip is fully packed, tasked and b
 // einspaltig. Desktop darf die vier Karten nebeneinander anordnen (kein strikter 1-Spalten-Zwang).
 test('trip detail overview: mobile stacks sections in the prescribed order, desktop may use a multi-column grid', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 1000 });
-  await page.goto('/reisen');
+  await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
 
   const aufgabenCard = page.locator('.trip-cards__item--aufgaben');
@@ -367,7 +367,7 @@ test('a real account with zero trips gets the empty state, never a demo trip', a
     r.fulfill({ json: { needs_onboarding: false, completed: true } }),
   );
   await page.route('**/api/v1/reisen/trips/**', (r) => r.fulfill({ json: [] }));
-  await page.goto('/app/reisen');
+  await page.goto('/reisen');
   await page.waitForLoadState('networkidle');
 
   await expect(page.getByRole('heading', { name: 'Noch keine Reise geplant.' })).toBeVisible();

@@ -16,10 +16,10 @@ import { AnalysenDto, OverviewDto } from './finanzen-api.service';
  * veralteten Stand, sobald man zu ihm wechselt.
  *
  * BEWUSST NICHT `providedIn: 'root'`: FINANZEN_DATA_PROVIDER wird PRO ROUTE
- * bereitgestellt (Demo auf '', Real auf '/app', siehe app.routes.ts) — ein
+ * bereitgestellt (Demo auf '/demo', Real auf '/', siehe app.routes.ts) — ein
  * echter Root-Singleton würde beim ersten inject() dauerhaft an die zu
  * diesem Zeitpunkt aktive Implementierung gebunden bleiben (z. B. für immer
- * am Demo-Provider hängen, wenn zuerst '/' besucht wurde, selbst nach einem
+ * am Demo-Provider hängen, wenn zuerst '/demo' besucht wurde, selbst nach einem
  * späteren Login). Stattdessen wird DIESER Service selbst in den
  * `providers`-Arrays BEIDER Routengruppen registriert (siehe
  * app.routes.ts) — dadurch entsteht pro Routengruppe genau eine Instanz,

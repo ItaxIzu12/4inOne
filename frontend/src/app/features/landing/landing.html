@@ -1,0 +1,169 @@
+<a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+<header class="site-head">
+  <a routerLink="/" aria-label="4inOne – Startseite"><app-brand /></a>
+  <nav aria-label="Hauptnavigation">
+    <a routerLink="/login">Anmelden</a>
+    <a routerLink="/registrieren" class="button small">Konto erstellen</a>
+  </nav>
+</header>
+<main id="inhalt">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <p class="eyebrow">DEIN ALLTAG. ALLES VERBUNDEN.</p>
+      <h1 id="hero-title">Dein Alltag.<br /><em>An einem Ort organisiert.</em></h1>
+      <p class="intro">
+        Behalte Ausgaben im Blick, organisiere deinen Haushalt, plane Termine und bereite Reisen
+        vor. 4inOne bringt deine alltäglichen Pläne an einem Ort zusammen.
+      </p>
+      <div class="actions">
+        <a routerLink="/registrieren" class="button">Konto erstellen <app-icon name="arrow" /></a>
+        <a routerLink="/demo" class="button secondary">Demo entdecken</a>
+      </div>
+      <p class="reassurance">
+        Ohne Anmeldung ausprobieren. Mit eigenen Daten starten, wenn du bereit bist.
+      </p>
+    </div>
+  </section>
+
+  <section class="areas-section" aria-labelledby="areas-title">
+    <div class="section-intro">
+      <p class="eyebrow">4INONE IM ALLTAG</p>
+      <h2 id="areas-title">Was du mit 4inOne erledigen kannst.</h2>
+      <p>
+        Vier eigenständig nutzbare Bereiche. Hier siehst du beispielhaft, wie sie dich im Alltag
+        unterstützen.
+      </p>
+    </div>
+    <div class="area-grid">
+      @for (area of areas; track area.name) {
+        <article [class]="'area-card ' + area.tone">
+          <header class="area-heading">
+            <span class="icon-tile"><app-icon [name]="area.icon" /></span>
+            <h3>{{ area.name }}</h3>
+          </header>
+          <p class="area-description">{{ area.description }}</p>
+          <div class="example" [attr.aria-label]="area.name + ': veranschaulichendes Beispiel'">
+            <div class="example-heading">
+              <strong>{{ area.exampleTitle }}</strong
+              ><span>Beispiel</span>
+            </div>
+            @switch (area.tone) {
+              @case ('finance') {
+                <dl class="budget-example">
+                  <div>
+                    <dt>Monatsbudget</dt>
+                    <dd>1.200 €</dd>
+                  </div>
+                  <div>
+                    <dt>Ausgaben</dt>
+                    <dd>420 €</dd>
+                  </div>
+                  <div class="remaining">
+                    <dt>Vom Budget übrig</dt>
+                    <dd>780 €</dd>
+                  </div>
+                </dl>
+                <div class="budget-track" aria-hidden="true"><span></span></div>
+              }
+              @case ('household') {
+                <ul class="example-list">
+                  <li>
+                    <span class="status-mark" aria-hidden="true"></span
+                    ><span>Lebensmittel einkaufen<small>Einkaufsliste · noch offen</small></span>
+                  </li>
+                  <li>
+                    <span class="status-mark" aria-hidden="true"></span
+                    ><span>Bad putzen<small>Haushaltsaufgabe · noch offen</small></span>
+                  </li>
+                  <li>
+                    <app-icon name="check" /><span>Wäsche waschen<small>Erledigt</small></span>
+                  </li>
+                </ul>
+              }
+              @case ('organisation') {
+                <ul class="example-list agenda">
+                  <li>
+                    <span class="time">09:00</span
+                    ><span>Zahnarzttermin<small>Termin · Stadtpraxis</small></span>
+                  </li>
+                  <li>
+                    <span class="time">Heute</span
+                    ><span>Unterlagen abgeben<small>Aufgabe · heute fällig</small></span>
+                  </li>
+                  <li>
+                    <span class="time">18:00</span
+                    ><span>Abendessen mit Freunden<small>Termin</small></span>
+                  </li>
+                </ul>
+              }
+              @case ('travel') {
+                <div class="trip-example">
+                  <app-icon name="travel" />
+                  <div>
+                    <strong>Wochenende in Berlin</strong><span>Deine Reisevorbereitung</span>
+                  </div>
+                </div>
+                <dl class="travel-example">
+                  <div>
+                    <dt>Packliste</dt>
+                    <dd>6 von 10 gepackt</dd>
+                  </div>
+                  <div>
+                    <dt>Aufgaben</dt>
+                    <dd>2 noch offen</dd>
+                  </div>
+                  <div>
+                    <dt>Reisebudget</dt>
+                    <dd>350 € geplant</dd>
+                  </div>
+                </dl>
+              }
+            }
+          </div>
+          <p class="capabilities">{{ area.tags.join(' · ') }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="connection-story" aria-labelledby="connections-title">
+    <div class="connection-copy">
+      <p class="eyebrow">WAS ZUSAMMENGEHÖRT, BLEIBT ZUSAMMEN</p>
+      <h2 id="connections-title">Ein Vorhaben. Mehrere Bereiche.</h2>
+      <p>
+        Für eine neue Waschmaschine sparst du Geld, vergleichst Angebote und planst einen Termin.
+        Mit Verbindungen verknüpfst du passende Einträge, damit du sie im Zusammenhang
+        wiederfindest.
+      </p>
+      <p class="connection-note">
+        Du wählst selbst, was du verbindest. Die Einträge bleiben in ihren Bereichen. Eine
+        Verbindung teilt keine Daten und verändert keine Berechtigungen.
+      </p>
+    </div>
+    <div class="connection-example" aria-label="Beispiel: neue Waschmaschine">
+      <div class="example-heading"><strong>Neue Waschmaschine</strong><span>Beispiel</span></div>
+      <ol class="connection-items">
+        <li class="finance">
+          <span class="icon-tile"><app-icon name="finance" /></span>
+          <div><strong>700 € zurücklegen</strong><span>Sparziel · Finanzen</span></div>
+        </li>
+        <li class="organisation">
+          <span class="icon-tile"><app-icon name="check" /></span>
+          <div><strong>Angebote vergleichen</strong><span>Aufgabe · Organisation</span></div>
+        </li>
+        <li class="organisation">
+          <span class="icon-tile"><app-icon name="calendar" /></span>
+          <div><strong>Beratungstermin planen</strong><span>Termin · Organisation</span></div>
+        </li>
+      </ol>
+      <p>Verknüpft: Sparziel mit Aufgabe, Aufgabe mit Termin.</p>
+    </div>
+  </section>
+</main>
+<footer class="site-foot">
+  <span>4inOne · Dein Alltag. Alles verbunden.</span>
+  <nav aria-label="Rechtliche Informationen">
+    <a routerLink="/datenschutz">Datenschutz</a><a routerLink="/impressum">Impressum</a
+    ><a routerLink="/barrierefreiheit">Barrierefreiheit</a>
+  </nav>
+</footer>

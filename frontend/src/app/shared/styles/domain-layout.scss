@@ -1,0 +1,90 @@
+// Shared geometry; each domain keeps its own colours and content.
+@mixin layout {
+  .domain-page {
+    max-width: 1440px;
+  }
+  @media (max-width: 760px) {
+    .domain-page {
+      padding: 14px 18px 26px;
+    }
+    .domain-heading {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+    }
+    .domain-heading .heading-copy,
+    .domain-heading .identity {
+      gap: 10px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .domain-heading .page-head__text {
+      flex: 1 1 auto;
+    }
+    .domain-heading h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.25;
+      letter-spacing: -0.5px;
+    }
+    .domain-heading .domain-icon {
+      flex: 0 0 44px;
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+    }
+    .domain-icon app-icon {
+      width: 28px;
+      height: 28px;
+    }
+    .domain-heading .head-actions {
+      display: contents;
+    }
+    .domain-heading button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 44px;
+      width: 44px;
+      height: 44px;
+      min-height: 44px;
+      padding: 0;
+      margin-left: auto;
+      border-radius: 13px;
+    }
+    .domain-heading button span {
+      display: none;
+    }
+    .domain-heading button app-icon {
+      width: 20px;
+      height: 20px;
+    }
+    .domain-tabs {
+      display: flex;
+      flex-wrap: nowrap;
+      margin: 22px 0 16px;
+      padding: 4px;
+      gap: 0;
+      min-height: 54px;
+      border-radius: 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .domain-tabs button {
+      flex: 1 0 auto;
+      min-width: 0;
+      min-height: 44px;
+      padding: 0 8px;
+      border-radius: 12px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+  }
+  .domain-page > .period {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16px;
+  }
+}
