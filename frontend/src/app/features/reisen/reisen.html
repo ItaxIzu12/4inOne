@@ -33,33 +33,116 @@
         <button class="secondary" (click)="load()">Erneut versuchen</button>
       </div>
     } @else if (tab() === 'uebersicht') {
-      @if (nextTrip(); as next) {
-        <section class="card highlight">
-          <div class="highlight-head">
-            <span class="highlight-label">Nächste Reise</span>
-            <button type="button" class="edit-btn" (click)="openTripEditor(next)">Bearbeiten</button>
-          </div>
-          <h2>{{ next.title }}</h2>
-          <p class="muted">{{ next.destination || 'Kein Reiseziel angegeben' }}</p>
-          <p class="muted">{{ tripDateRange(next) }}</p>
-          @if (daysUntil(next); as days) {
-            @if (days > 0) {
-              <span class="pill pill--accent">in {{ days }} {{ days === 1 ? 'Tag' : 'Tagen' }}</span>
-            } @else if (days === 0) {
-              <span class="pill pill--accent">Heute geht's los</span>
-            }
-          }
-          <div class="highlight-stats">
-            <span
-              ><app-icon name="basket" />{{ next.packing_packed }}/{{ next.packing_total }} gepackt</span
-            ><span><app-icon name="check" />{{ next.tasks_open }} offene Aufgaben</span
-            ><span
-              ><app-icon name="finance" />{{ next.budget_spent }} €
-              @if (next.budget_amount) {
-                / {{ next.budget_amount }} €
+      @if (selectedTrip(); as trip) {
+        <section class="card trip-detail" aria-labelledby="trip-detail-heading">
+          <div class="trip-detail__cover" aria-hidden="true"><app-icon name="travel" /></div>
+          <div class="trip-detail__header">
+            <div class="trip-detail__heading-row">
+              <div>
+                <h2 id="trip-detail-heading">{{ trip.destination || trip.title }}</h2>
+                @if (trip.destination && trip.destination !== trip.title) {
+                  <p class="muted small">{{ trip.title }}</p>
+                }
+              </div>
+              <button type="button" class="edit-btn" (click)="openTripEditor(trip)">Bearbeiten</button>
+            </div>
+            <p class="trip-detail__dates">{{ tripDateRangeShort(trip) }}</p>
+            <div class="trip-detail__pills">
+              @if (tripDaysLabel(trip); as label) {
+                <span class="pill pill--accent">{{ label }}</span>
               }
-            </span>
+              <span class="pill">{{ statusLabels[trip.status] }}</span>
+              <button type="button" class="pill pill--link" [attr.aria-label]="'Teilnehmer: ' + participantsSummary(trip)" (click)="openParticipantsEditor(trip)">
+                <app-icon name="people" />{{ participantsSummary(trip) }}
+              </button>
+            </div>
           </div>
+
+          @if (detailLoading()) {
+            <p class="state" role="status">Wird geladen …</p>
+          } @else if (detailError()) {
+            <div class="state">
+              <p class="field-error" role="alert">{{ detailError() }}</p>
+              <button class="secondary" (click)="retryTripDetail()">Erneut versuchen</button>
+            </div>
+          } @else {
+            @if (readiness(); as r) {
+              <div class="readiness">
+                <div class="readiness__head">
+                  <span class="readiness__label">Reisebereitschaft</span>
+                  <span class="readiness__percent">{{ r.percent }} %</span>
+                </div>
+                <div class="progress"><div class="progress__bar" [style.width.%]="r.percent"></div></div>
+                <ul class="readiness__list">
+                  @for (item of r.items; track item.label) {
+                    <li class="readiness__item" [class.is-done]="item.state === 'done'" [class.is-partial]="item.state === 'partial'">
+                      <span class="readiness__dot" aria-hidden="true"></span>{{ item.label }}
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+
+            <div class="trip-cards">
+              <div class="trip-cards__item trip-cards__item--aufgaben">
+                <div class="trip-cards__head">
+                  <h3>Aufgaben</h3>
+                  <button type="button" class="btn-link" (click)="tab.set('aufgaben')">Alle ansehen</button>
+                </div>
+                @if (readinessTopOpenTasks().length) {
+                  <ul class="list compact">
+                    @for (t of readinessTopOpenTasks(); track t.id) {
+                      <li class="row">
+                        <span class="row__main">
+                          <span class="row__title">{{ t.title }}</span>
+                          @if (t.due_date) {
+                            <span class="row__meta">Fällig am {{ t.due_date | date: 'dd.MM.yyyy' }}</span>
+                          }
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="muted small">Keine offenen Aufgaben.</p>
+                }
+              </div>
+
+              <div class="trip-cards__item trip-cards__item--packliste">
+                <div class="trip-cards__head">
+                  <h3>Packliste</h3>
+                  <button type="button" class="btn-link" (click)="tab.set('packliste')">Alle ansehen</button>
+                </div>
+                <p class="trip-cards__stat">{{ packingPackedCount() }} von {{ packing().length }} gepackt</p>
+                <div class="progress progress--small"><div class="progress__bar" [style.width.%]="packingProgress()"></div></div>
+              </div>
+
+              <div class="trip-cards__item trip-cards__item--budget">
+                <div class="trip-cards__head">
+                  <h3>Budget</h3>
+                  <button type="button" class="btn-link" (click)="tab.set('budget')">Alle ansehen</button>
+                </div>
+                <p class="trip-cards__stat">
+                  {{ formatMoney(budgetSpent(), trip.currency) }}
+                  @if (trip.budget_amount) {
+                    von {{ formatMoney(budgetTotal(), trip.currency) }}
+                  } @else {
+                    · kein Budget festgelegt
+                  }
+                </p>
+                @if (trip.budget_amount) {
+                  <div class="progress progress--small"><div class="progress__bar" [style.width.%]="budgetProgress()"></div></div>
+                }
+              </div>
+
+              <div class="trip-cards__item trip-cards__item--teilnehmer">
+                <div class="trip-cards__head">
+                  <h3>Teilnehmer</h3>
+                  <button type="button" class="btn-link" (click)="openParticipantsEditor(trip)">Verwalten</button>
+                </div>
+                <p class="trip-cards__stat">{{ participantsSummary(trip) }}</p>
+              </div>
+            </div>
+          }
         </section>
       }
       <section class="card" aria-labelledby="trips-heading">
@@ -102,9 +185,9 @@
         } @empty {
           <div class="empty">
             <app-icon name="travel" />
-            <h3>Noch keine Reisen geplant</h3>
-            <p>Leg deine erste Reise an, um Packliste, Aufgaben und Budget an einem Ort zu haben.</p>
-            <button class="primary" (click)="openTripEditor()"><app-icon name="plus" />Neue Reise</button>
+            <h3>Noch keine Reise geplant.</h3>
+            <p>Wohin soll es als Nächstes gehen?</p>
+            <button class="primary" (click)="openTripEditor()"><app-icon name="plus" />Erste Reise planen</button>
           </div>
         }
       </section>
@@ -118,6 +201,9 @@
                 <span class="row__title">{{ trip.title }}</span>
                 <span class="row__meta">{{ tripDateRange(trip) }} · {{ statusLabels[trip.status] }}</span>
               </span>
+            </button>
+            <button type="button" class="icon-btn" [attr.aria-label]="trip.title + ': Teilnehmer verwalten'" (click)="openParticipantsEditor(trip)">
+              <app-icon name="people" />
             </button>
             <button type="button" class="edit-icon-btn" [attr.aria-label]="trip.title + ' bearbeiten'" (click)="openTripEditor(trip)">
               <app-icon name="edit" />
@@ -151,69 +237,99 @@
       @if (detailLoading()) {
         <p class="state" role="status">Wird geladen …</p>
       } @else if (detailError()) {
-        <p class="field-error" role="alert">{{ detailError() }}</p>
+        <div class="state">
+          <p class="field-error" role="alert">{{ detailError() }}</p>
+          <button class="secondary" (click)="retryTripDetail()">Erneut versuchen</button>
+        </div>
       } @else if (tab() === 'packliste') {
         <section class="card">
           <div class="card-heading">
-            <h2>Packliste – {{ selectedTrip()!.title }}</h2>
-            <span class="muted small">{{ packingProgress() }}% gepackt</span>
+            <div>
+              <h2>Packliste – {{ selectedTrip()!.title }}</h2>
+              @if (packing().length) {
+                <span class="muted small">{{ packingPackedCount() }} von {{ packing().length }} gepackt ({{ packingProgress() }}%)</span>
+              }
+            </div>
+            <button type="button" class="secondary" (click)="openPackingEditor()">
+              <app-icon name="plus" />Artikel hinzufügen
+            </button>
           </div>
-          <form class="add-form" (submit)="$event.preventDefault(); addPacking()">
-            <label class="sr-only" for="packing-title">Gegenstand</label>
-            <input id="packing-title" type="text" maxlength="120" placeholder="Was muss mit? z. B. Reisepass" [value]="newPackingTitle()" (input)="newPackingTitle.set($any($event.target).value)" />
-            <label class="sr-only" for="packing-qty">Menge</label>
-            <input id="packing-qty" class="qty" type="number" min="1" max="99" [value]="newPackingQuantity()" (input)="newPackingQuantity.set($any($event.target).value)" />
-            <button type="submit" class="btn-primary" [disabled]="!newPackingTitle().trim() || packingAdding()">Hinzufügen</button>
-          </form>
-          <ul class="list">
-            @for (item of packing(); track item.id) {
-              <li class="row">
-                <button type="button" class="completion" [class.done]="item.is_packed" [attr.aria-label]="item.title + (item.is_packed ? ' als nicht gepackt markieren' : ' als gepackt markieren')" (click)="togglePacking(item)">
-                  <app-icon [name]="item.is_packed ? 'check' : 'plus'" />
-                </button>
-                <span class="row__main">
-                  <span class="row__title" [class.row__title--done]="item.is_packed">{{ item.title }}</span>
-                  @if (item.quantity > 1) {
-                    <span class="row__meta">{{ item.quantity }}×</span>
-                  }
-                </span>
-                <button type="button" class="icon-btn" [attr.aria-label]="item.title + ' entfernen'" (click)="removePacking(item)">
-                  <app-icon name="trash" />
-                </button>
-              </li>
-            } @empty {
-              <li class="empty">
-                <p class="muted">Noch nichts auf der Packliste. Trage ein, was mit muss.</p>
-              </li>
-            }
-          </ul>
+          @for (group of packingGroups(); track group.category) {
+            <div class="group">
+              <h3>{{ group.label }}</h3>
+              <ul class="list">
+                @for (item of group.items; track item.id) {
+                  <li class="row">
+                    <button
+                      type="button"
+                      class="completion"
+                      [class.done]="item.is_packed"
+                      [attr.aria-label]="item.title + (item.is_packed ? ' als nicht gepackt markieren' : ' als gepackt markieren')"
+                      (click)="togglePacking(item)"
+                    >
+                      <app-icon [name]="item.is_packed ? 'check' : 'plus'" />
+                    </button>
+                    <button type="button" class="row__link" (click)="openPackingEditor(item)">
+                      <span class="row__main">
+                        <span class="row__title" [class.row__title--done]="item.is_packed">{{ item.title }}</span>
+                        @if (item.quantity > 1 || item.note) {
+                          <span class="row__meta">
+                            @if (item.quantity > 1) {
+                              {{ item.quantity }}×
+                            }
+                            @if (item.quantity > 1 && item.note) {
+                              ·
+                            }
+                            {{ item.note }}
+                          </span>
+                        }
+                      </span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+          } @empty {
+            <div class="empty">
+              <p class="muted">Noch nichts auf der Packliste. Füge einen Artikel hinzu oder nutze die Vorschläge aus dem Smart Setup.</p>
+            </div>
+          }
         </section>
       } @else if (tab() === 'aufgaben') {
         <section class="card">
           <div class="card-heading">
             <h2>Aufgaben – {{ selectedTrip()!.title }}</h2>
+            <button type="button" class="secondary" (click)="openTaskEditor()">
+              <app-icon name="plus" />Aufgabe hinzufügen
+            </button>
           </div>
-          <form class="add-form" (submit)="$event.preventDefault(); addTask()">
-            <label class="sr-only" for="task-title">Aufgabe</label>
-            <input id="task-title" type="text" maxlength="120" placeholder="Was ist zu erledigen? z. B. Zugtickets buchen" [value]="newTaskTitle()" (input)="newTaskTitle.set($any($event.target).value)" />
-            <label class="sr-only" for="task-due">Fällig am</label>
-            <app-date-picker mode="date" ariaLabelledby="task-due" [value]="newTaskDue()" (valueChange)="newTaskDue.set($event)" [clearable]="true" />
-            <button type="submit" class="btn-primary" [disabled]="!newTaskTitle().trim() || taskAdding()">Hinzufügen</button>
-          </form>
           <ul class="list">
             @for (item of tasks(); track item.id) {
               <li class="row">
-                <button type="button" class="completion" [class.done]="item.status === 'DONE'" [attr.aria-label]="item.title + (item.status === 'DONE' ? ' wieder öffnen' : ' als erledigt markieren')" (click)="toggleTask(item)">
+                <button
+                  type="button"
+                  class="completion"
+                  [class.done]="item.status === 'DONE'"
+                  [attr.aria-label]="item.title + (item.status === 'DONE' ? ' wieder öffnen' : ' als erledigt markieren')"
+                  (click)="toggleTask(item)"
+                >
                   <app-icon [name]="item.status === 'DONE' ? 'check' : 'plus'" />
                 </button>
-                <span class="row__main">
-                  <span class="row__title" [class.row__title--done]="item.status === 'DONE'">{{ item.title }}</span>
-                  @if (item.due_date) {
-                    <span class="row__meta">Fällig am {{ item.due_date | date: 'dd.MM.yyyy' }}</span>
-                  }
-                </span>
-                <button type="button" class="icon-btn" [attr.aria-label]="item.title + ' entfernen'" (click)="removeTask(item)">
-                  <app-icon name="trash" />
+                <button type="button" class="row__link" (click)="openTaskEditor(item)">
+                  <span class="row__main">
+                    <span class="row__title" [class.row__title--done]="item.status === 'DONE'">{{ item.title }}</span>
+                    @if (item.due_date || item.note) {
+                      <span class="row__meta">
+                        @if (item.due_date) {
+                          Fällig am {{ item.due_date | date: 'dd.MM.yyyy' }}
+                        }
+                        @if (item.due_date && item.note) {
+                          ·
+                        }
+                        {{ item.note }}
+                      </span>
+                    }
+                  </span>
                 </button>
               </li>
             } @empty {
@@ -230,9 +346,9 @@
           </div>
           <div class="budget-summary">
             <p class="budget-numbers">
-              <strong>{{ budgetSpent() | number: '1.2-2' : 'de' }} €</strong>
+              <strong>{{ formatMoney(budgetSpent(), selectedTrip()!.currency) }}</strong>
               @if (budgetTotal() > 0) {
-                <span class="muted"> von {{ budgetTotal() | number: '1.2-2' : 'de' }} €</span>
+                <span class="muted"> von {{ formatMoney(budgetTotal(), selectedTrip()!.currency) }}</span>
               } @else {
                 <span class="muted"> ausgegeben · noch kein Budget festgelegt</span>
               }
@@ -241,6 +357,32 @@
               <div class="progress"><div class="progress__bar" [style.width.%]="budgetProgress()"></div></div>
             }
           </div>
+
+          <h3 class="budget-section-heading">Geplant je Kategorie</h3>
+          <p class="muted small">Nur die Planung — nicht dasselbe wie dein privates Finanzkonto und nicht automatisch mit Finanzen verbunden.</p>
+          <ul class="budget-category-list">
+            @for (entry of budgetCategoryRows(); track entry.category) {
+              <li class="budget-category-row">
+                <span class="budget-category-label">{{ entry.label }}</span>
+                <label class="budget-category-input">
+                  <span class="sr-only">{{ entry.label }}, geplanter Betrag</span>
+                  <input
+                    type="text"
+                    inputmode="decimal"
+                    placeholder="0"
+                    [value]="entry.row?.planned_amount ?? ''"
+                    (change)="saveBudgetCategoryAmount(entry.category, $any($event.target).value)"
+                  />
+                  <span class="budget-category-currency">{{ selectedTrip()!.currency }}</span>
+                </label>
+              </li>
+            }
+          </ul>
+          @if (budgetCategoryTotal() > 0) {
+            <p class="muted small budget-category-sum">Geplant gesamt: {{ formatMoney(budgetCategoryTotal(), selectedTrip()!.currency) }}</p>
+          }
+
+          <h3 class="budget-section-heading">Ausgaben</h3>
           <form class="add-form" (submit)="$event.preventDefault(); addExpense()">
             <label class="sr-only" for="expense-title">Ausgabe</label>
             <input id="expense-title" type="text" maxlength="120" placeholder="Wofür? z. B. Hotel" [value]="newExpenseTitle()" (input)="newExpenseTitle.set($any($event.target).value)" />
@@ -257,7 +399,7 @@
                   <span class="row__title">{{ item.title }}</span>
                   <span class="row__meta">{{ item.date | date: 'dd.MM.yyyy' }}</span>
                 </span>
-                <strong class="amount">{{ item.amount }} €</strong>
+                <strong class="amount">{{ formatMoney(item.amount, selectedTrip()!.currency) }}</strong>
                 <button type="button" class="icon-btn" [attr.aria-label]="item.title + ' entfernen'" (click)="removeExpense(item)">
                   <app-icon name="trash" />
                 </button>
@@ -276,38 +418,228 @@
 <app-modal-form
   icon="travel"
   [formGroup]="tripForm"
-  [title]="editTripId() ? 'Reise bearbeiten' : 'Neue Reise'"
+  [title]="tripOverlaps().length ? 'Terminüberschneidung' : editTripId() ? 'Reise bearbeiten' : 'Neue Reise'"
   [open]="tripEditor()"
   [saving]="tripSaving()"
-  [error]="tripFormError()"
-  [deleteLabel]="editTripId() ? 'Reise löschen' : ''"
+  [error]="tripOverlaps().length ? '' : tripFormError()"
+  [deleteLabel]="!tripOverlaps().length && editTripId() ? 'Reise löschen' : ''"
+  [cancelLabel]="tripOverlaps().length ? 'Daten ändern' : 'Abbrechen'"
+  [submitLabel]="tripOverlaps().length ? 'Trotzdem erstellen' : 'Speichern'"
   (submitted)="saveTrip()"
   (closed)="closeTripEditor()"
   (deleted)="removeTrip()"
 >
-  <app-field label="Titel">
-    <input id="trip-title" formControlName="title" maxlength="120" required />
-  </app-field>
-  <app-field label="Reiseziel" [optional]="true">
-    <input id="trip-destination" formControlName="destination" maxlength="160" />
+  @if (tripOverlaps().length) {
+    <div class="overlap-warning" role="alert">
+      <p>Diese Reise überschneidet sich mit:</p>
+      <ul>
+        @for (o of tripOverlaps(); track o.id) {
+          <li>{{ o.title }} vom {{ o.start_date | date: 'dd.MM.yyyy' }} bis {{ o.end_date | date: 'dd.MM.yyyy' }}</li>
+        }
+      </ul>
+      <p class="muted small">Das kann gewollt sein, z. B. bei einer Teilreise oder einem Geschäftstermin während einer längeren Reise.</p>
+    </div>
+  } @else {
+    <app-field label="Titel">
+      <input id="trip-title" formControlName="title" maxlength="120" required />
+    </app-field>
+    <app-field label="Reiseziel" [optional]="true">
+      <input id="trip-destination" formControlName="destination" maxlength="160" />
+    </app-field>
+    <div class="field-row">
+      <app-field label="Beginn">
+        <app-date-picker mode="date" formControlName="start_date" [min]="minStartDate()" />
+      </app-field>
+      <app-field label="Ende">
+        <app-date-picker mode="date" formControlName="end_date" [min]="tripForm.controls.start_date.value" />
+      </app-field>
+    </div>
+    <div class="field-row">
+      <app-field label="Status">
+        <app-select formControlName="status" [options]="statusOptions" />
+      </app-field>
+      <app-field label="Budget" [optional]="true" hint="Geplante Gesamtsumme, z. B. 1500">
+        <input id="trip-budget" formControlName="budget_amount" type="text" inputmode="decimal" />
+      </app-field>
+    </div>
+    <app-field label="Währung">
+      <app-select formControlName="currency" [options]="currencyOptions" />
+    </app-field>
+    <p class="setup-hint">Hilft bei passenden Packvorschlägen und Aufgaben — ganz optional.</p>
+    <div class="field-row">
+      <app-field label="Reisetyp" [optional]="true">
+        <app-select formControlName="travel_type" [options]="travelTypeOptions" />
+      </app-field>
+      <app-field label="Transportart" [optional]="true">
+        <app-select formControlName="transport_type" [options]="transportTypeOptions" />
+      </app-field>
+    </div>
+    <app-field label="Gepäck" [optional]="true">
+      <app-select formControlName="baggage_type" [options]="baggageTypeOptions" />
+    </app-field>
+    <app-field label="Notizen" [optional]="true">
+      <textarea id="trip-notes" formControlName="notes" rows="3" maxlength="5000"></textarea>
+    </app-field>
+  }
+</app-modal-form>
+
+<app-modal-form
+  icon="basket"
+  [formGroup]="packingForm"
+  [title]="editPackingId() ? 'Artikel bearbeiten' : 'Artikel hinzufügen'"
+  [open]="packingEditor()"
+  [saving]="packingSaving()"
+  [error]="packingFormError()"
+  [deleteLabel]="editPackingId() ? 'Artikel löschen' : ''"
+  (submitted)="savePackingForm()"
+  (closed)="closePackingEditor()"
+  (deleted)="removePackingFromEditor()"
+>
+  <app-field label="Name">
+    <input id="packing-item-title" formControlName="title" maxlength="120" required />
   </app-field>
   <div class="field-row">
-    <app-field label="Beginn" [optional]="true">
-      <app-date-picker mode="date" formControlName="start_date" [clearable]="true" />
+    <app-field label="Kategorie">
+      <app-select formControlName="category" [options]="packingCategoryOptions" />
     </app-field>
-    <app-field label="Ende" [optional]="true">
-      <app-date-picker mode="date" formControlName="end_date" [clearable]="true" />
-    </app-field>
-  </div>
-  <div class="field-row">
-    <app-field label="Status">
-      <app-select formControlName="status" [options]="statusOptions" />
-    </app-field>
-    <app-field label="Budget" [optional]="true" hint="In Euro, z. B. 350">
-      <input id="trip-budget" formControlName="budget_amount" type="text" inputmode="decimal" />
+    <app-field label="Menge">
+      <input id="packing-item-quantity" formControlName="quantity" type="number" min="1" max="99" />
     </app-field>
   </div>
-  <app-field label="Notizen" [optional]="true">
-    <textarea id="trip-notes" formControlName="notes" rows="3" maxlength="5000"></textarea>
+  <app-field label="Notiz" [optional]="true">
+    <input id="packing-item-note" formControlName="note" maxlength="240" />
   </app-field>
 </app-modal-form>
+
+<app-modal-form
+  icon="check"
+  [formGroup]="taskForm"
+  [title]="editTaskId() ? 'Aufgabe bearbeiten' : 'Aufgabe hinzufügen'"
+  [open]="taskEditor()"
+  [saving]="taskSaving()"
+  [error]="taskFormError()"
+  [deleteLabel]="editTaskId() ? 'Aufgabe löschen' : ''"
+  (submitted)="saveTaskForm()"
+  (closed)="closeTaskEditor()"
+  (deleted)="removeTaskFromEditor()"
+>
+  <app-field label="Titel">
+    <input id="task-item-title" formControlName="title" maxlength="120" required />
+  </app-field>
+  <app-field label="Fällig am" [optional]="true">
+    <app-date-picker mode="date" formControlName="due_date" [clearable]="true" />
+  </app-field>
+  <app-field label="Notiz" [optional]="true">
+    <input id="task-item-note" formControlName="note" maxlength="240" />
+  </app-field>
+</app-modal-form>
+
+<app-modal [open]="!!participantsEditorTrip()" labelledBy="participants-heading" closeLabel="Schließen" (closed)="closeParticipantsEditor()">
+  <div class="form participants-editor">
+    <h2 id="participants-heading">Teilnehmer – {{ participantsEditorTrip()?.title }}</h2>
+    <p class="muted small">Teilnehmer sehen nur diese Reise — nie deine privaten Finanzen, Haushaltsaufgaben, Organisation oder andere Reisen.</p>
+    @if (participantsError()) {
+      <p class="field-error" role="alert">{{ participantsError() }}</p>
+    }
+    <ul class="list">
+      @for (p of participantsEditorTrip()?.participants ?? []; track p.id) {
+        <li class="row participant-row">
+          <span class="row__main">
+            <span class="row__title">{{ p.display_name }}{{ p.is_self ? ' (Du)' : '' }}</span>
+          </span>
+          @if (canManageParticipants() && !p.is_self) {
+            <span class="sr-only" [attr.id]="'participant-role-' + p.id">Rolle von {{ p.display_name }}</span>
+            <app-select
+              [ariaLabelledby]="'participant-role-' + p.id"
+              [options]="participantRoleOptions"
+              [value]="p.role"
+              (valueChange)="changeParticipantRole(p, $any($event))"
+            />
+          } @else {
+            <span class="row__meta">{{ participantRoleLabels[p.role] }}</span>
+          }
+          @if (canManageParticipants() || p.is_self) {
+            <button type="button" class="icon-btn" [attr.aria-label]="(p.is_self ? 'Reise verlassen' : p.display_name + ' entfernen')" (click)="removeParticipant(p)">
+              <app-icon name="trash" />
+            </button>
+          }
+        </li>
+      }
+    </ul>
+
+    @if (canManageParticipants()) {
+      <h3>Teilnehmer hinzufügen</h3>
+      @if (!contacts().length) {
+        <p class="muted small">Du hast noch keine Kontakte zum Hinzufügen. Lege zuerst eine Verbindung unter Familie &amp; Freunde an.</p>
+      } @else {
+        <form class="add-form" (submit)="$event.preventDefault(); addParticipant()">
+          <span id="participant-contact-label" class="sr-only">Person</span>
+          <app-select ariaLabelledby="participant-contact-label" [options]="contactOptions()" [value]="newParticipantContactValue()" (valueChange)="newParticipantContactId.set(+$event)" />
+          <span id="participant-role-label" class="sr-only">Rolle</span>
+          <app-select ariaLabelledby="participant-role-label" [options]="participantRoleOptions" [value]="newParticipantRole()" (valueChange)="newParticipantRole.set($any($event))" />
+          <button type="submit" class="btn-primary" [disabled]="newParticipantContactId() === null || participantsSaving()">Hinzufügen</button>
+        </form>
+      }
+    }
+  </div>
+</app-modal>
+
+<app-modal [open]="!!smartSetupTrip() && !smartSetupReview()" labelledBy="smart-setup-heading" closeLabel="Vorschläge überspringen" (closed)="skipSmartSetup()">
+  <div class="form smart-setup">
+    <span class="smart-setup-icon" aria-hidden="true"><app-icon name="bulb" /></span>
+    <h2 id="smart-setup-heading">Deine Reise ist vorbereitet.</h2>
+    <p class="muted">Wir haben passende Packvorschläge und Aufgaben für deine Reise vorbereitet.</p>
+    <div class="smart-setup-actions">
+      <button type="button" class="secondary" (click)="reviewSmartSetup()">Vorschläge prüfen</button>
+      <button type="button" class="primary" [disabled]="smartSetupSaving()" (click)="acceptAllSmartSetup()">Alles passende übernehmen</button>
+      <button type="button" class="btn-link" (click)="skipSmartSetup()">Überspringen</button>
+    </div>
+  </div>
+</app-modal>
+
+<app-modal [open]="!!smartSetupTrip() && smartSetupReview()" labelledBy="smart-setup-review-heading" closeLabel="Zurück" (closed)="smartSetupReview.set(false)">
+  <div class="form smart-setup-review">
+    <h2 id="smart-setup-review-heading">Vorschläge für {{ smartSetupTrip()?.title }}</h2>
+    @if (smartSetupError()) {
+      <p class="field-error" role="alert">{{ smartSetupError() }}</p>
+    }
+    @if (smartSetupSuggestions().packing.length) {
+      <h3>Packliste</h3>
+      @for (group of smartSetupPackingGroups(); track group.category) {
+        <p class="suggestion-group-label">{{ group.label }}</p>
+        <ul class="suggestion-list">
+          @for (entry of group.entries; track entry.index) {
+            <li>
+              <label class="checkbox">
+                <input type="checkbox" [checked]="smartSetupPackingChecked()[entry.index]" (change)="togglePackingSuggestion(entry.index)" />
+                {{ entry.item.title }}
+              </label>
+            </li>
+          }
+        </ul>
+      }
+    }
+    @if (smartSetupSuggestions().tasks.length) {
+      <h3>Aufgaben</h3>
+      <ul class="suggestion-list">
+        @for (task of smartSetupSuggestions().tasks; track task.title; let i = $index) {
+          <li>
+            <label class="checkbox">
+              <input type="checkbox" [checked]="smartSetupTasksChecked()[i]" (change)="toggleTaskSuggestion(i)" />
+              {{ task.title }}
+            </label>
+          </li>
+        }
+      </ul>
+    }
+    <div class="smart-setup-actions">
+      <button type="button" class="btn-link" [disabled]="smartSetupSaving()" (click)="skipSmartSetup()">Überspringen</button>
+      <button type="button" class="primary" [disabled]="smartSetupSaving()" (click)="acceptSelectedSmartSetup()">
+        @if (smartSetupSaving()) {
+          <span class="save-spinner" aria-hidden="true"></span>
+        }
+        Übernehmen
+      </button>
+    </div>
+  </div>
+</app-modal>

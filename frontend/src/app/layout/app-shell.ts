@@ -1,5 +1,7 @@
 import { Component, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
 import { Brand } from '../shared/brand/brand';
 import { AppIcon, IconName } from '../shared/icons/app-icon';
@@ -20,6 +22,21 @@ import { Modal } from '../shared/modal/modal';
 export class AppShell {
   readonly auth = inject(AuthService);
   private router = inject(Router);
+  // Eigenes Signal statt nur auth.isAuthenticated(): wer über "4inOne entdecken" (Onboarding) oder einen
+  // direkten Link auf eine öffentliche Vorschau-Route (siehe app.routes.ts) navigiert, sieht dort Demo-Daten,
+  // auch während die eigene Sitzung (Token im Speicher) weiterhin angemeldet bleibt — der Demo-Hinweis unten
+  // muss sich deshalb nach der tatsächlich angezeigten Route richten, nicht nur nach dem Anmeldestatus.
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)),
+    { initialValue: null },
+  );
+  // Explizite Liste statt "alles außer /app": z. B. /einstellungen/* ist ebenfalls real-only (angemeldet,
+  // keine Demo-Variante, siehe app.routes.ts) und läge sonst fälschlich außerhalb von /app.
+  private static readonly DEMO_PATHS = new Set(['/', '/finanzen', '/haushalt', '/organisation', '/reisen']);
+  readonly isDemoRoute = computed(() => {
+    const url = (this.currentUrl()?.urlAfterRedirects ?? this.router.url).split('?')[0].split('#')[0];
+    return AppShell.DEMO_PATHS.has(url);
+  });
   readonly name = computed(() => this.auth.currentUser()?.name || 'Sophie');
   readonly initials = computed(() => this.name().slice(0, 1).toUpperCase());
   readonly links = computed(() => {

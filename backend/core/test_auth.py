@@ -144,6 +144,39 @@ def test_register_creates_household_with_registering_user_as_admin():
     assert membership.household.name == 'Haushalt von Rita'
 
 
+def test_register_never_seeds_fake_finance_haushalt_organisation_or_reisen_data():
+    """AGENTS.md Demo-Regeln: ein echtes, frisch registriertes Konto startet komplett leer — keine automatischen
+    Einnahmen/Ausgaben/Budgets/Sparziele/Aufgaben/Termine/Reisen/Packlisten. Die drei Standard-Kategorien
+    (finanzen/signals.py) sind die einzige zulässige Ausnahme: reine, leere Taxonomie ohne monatliches Ziel,
+    keine Transaktion."""
+    from finanzen.models import Budget, Category, SavingsGoal, Transaction
+    from haushalt.models import Task as HaushaltTask
+    from organisation.models import CalendarEvent, PersonalEvent, PersonalTask
+    from reisen.models import Trip
+
+    response = Client().post(
+        '/api/v1/auth/register/',
+        {'confirm_password': 'Sicher123!x', 'accept_privacy': True, 'email': 'leer@example.com', 'password': 'Sicher123!x', 'name': 'Nora'},
+        content_type='application/json',
+    )
+    assert response.status_code == 201
+    user = get_user_model().objects.get(email='leer@example.com')
+    household = HouseholdMembership.objects.get(user=user).household
+
+    categories = list(Category.objects.filter(household=household))
+    assert {c.name for c in categories} == {'Fixkosten', 'Haushalt', 'Sonstiges'}
+    assert all(c.monthly_goal is None for c in categories)
+
+    assert Transaction.objects.filter(account__household=household).count() == 0
+    assert Budget.objects.filter(household=household).count() == 0
+    assert SavingsGoal.objects.filter(owner=user).count() == 0
+    assert HaushaltTask.objects.filter(household=household).count() == 0
+    assert CalendarEvent.objects.filter(household=household).count() == 0
+    assert PersonalTask.objects.filter(owner=user).count() == 0
+    assert PersonalEvent.objects.filter(owner=user).count() == 0
+    assert Trip.objects.filter(owner=user).count() == 0
+
+
 def test_register_without_household_name_uses_fallback():
     response = Client().post(
         '/api/v1/auth/register/',

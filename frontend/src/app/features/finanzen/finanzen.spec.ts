@@ -640,13 +640,13 @@ describe('Finanzen', () => {
     const instance = fixture.componentInstance as unknown as ReportDownloadInternals;
     instance.selectTab('analysen');
     fixture.detectChanges();
-    // Alle Demo-Transaktionen liegen im aktuellen Monat (daysAgo(0..2), siehe
-    // demo-finanzen-data-provider.ts) — ein Bericht für den VORMONAT muss
-    // deshalb leer sein, keine der Demo-Beschreibungen enthalten.
+    // Demo-Transaktionen liegen höchstens daysAgo(2) zurück (siehe demo-finanzen-data-provider.ts) — das
+    // kann an den ersten Tagen eines Monats in den VORmonat hineinreichen. Zwei Monate zurück ist davon in
+    // jedem Fall unberührt und bleibt deshalb garantiert leer, egal an welchem Tag der Test läuft.
     const today = new Date();
-    const vormonat = new Date(today.getFullYear(), today.getMonth() - 1, 15);
-    const vormonatSlug = `${vormonat.getFullYear()}-${String(vormonat.getMonth() + 1).padStart(2, '0')}`;
-    instance.reportMonat.set(vormonatSlug);
+    const leererMonat = new Date(today.getFullYear(), today.getMonth() - 2, 15);
+    const leererMonatSlug = `${leererMonat.getFullYear()}-${String(leererMonat.getMonth() + 1).padStart(2, '0')}`;
+    instance.reportMonat.set(leererMonatSlug);
 
     const createUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});

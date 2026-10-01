@@ -3,10 +3,9 @@
 jeder neue Haushalt bekommt automatisch drei Standard-Kategorien
 (finanzen/signals.py)."""
 
-from datetime import datetime, timezone as dt_timezone
-
 import pytest
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from core.models import Household, HouseholdMembership
@@ -53,7 +52,9 @@ def test_fairness_field_appears_and_sums_to_100_percent_with_two_members():
     account = Account.objects.create(household=household, name='Haushaltskasse')
     category = Category.objects.get(household=household, name='Fixkosten')
 
-    now = datetime(2026, 9, 5, tzinfo=dt_timezone.utc)
+    # Fairness wird nur für den laufenden Monat berechnet (finanzen/services.py month_transactions) — ein
+    # fest codiertes Datum würde brechen, sobald der Testlauf in einen anderen Monat fällt.
+    now = timezone.now()
     Transaction.objects.create(account=account, category=category, amount='75.00', datum=now, created_by=user_a)
     Transaction.objects.create(account=account, category=category, amount='25.00', datum=now, created_by=user_b)
 

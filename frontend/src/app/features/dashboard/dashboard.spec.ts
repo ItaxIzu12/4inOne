@@ -1,11 +1,18 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { Dashboard } from './dashboard';
 import { HAUSHALT_DATA_PROVIDER, HaushaltDataProvider } from '../haushalt/haushalt-data-provider';
 import { HaushaltOverviewDto } from '../haushalt/haushalt-api.service';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { AuthService, AuthUser } from '../../core/auth/auth.service';
+
+class FakeAuthService {
+  readonly isAuthenticated = signal(true);
+  readonly currentUser = signal<AuthUser | null>({ name: 'Mira', email: 'mira@example.com' });
+}
 
 // Wie in app.routes.ts (Demo-Route): eine eigene Datenquelle statt echter HTTP-Aufrufe für Haushalt — die
 // Finanzen-/Organisation-Aufrufe unten laufen bewusst über den echten HttpClient (HttpClientTesting fängt sie ab),
@@ -62,5 +69,44 @@ describe('Dashboard', () => {
     f.detectChanges();
     expect(f.nativeElement.querySelector('.search')).toBeNull();
     expect(f.nativeElement.textContent).not.toContain('Suche in 4inOne');
+  });
+
+  describe('real account', () => {
+    beforeEach(() =>
+      TestBed.configureTestingModule({
+        imports: [Dashboard],
+        providers: [
+          provideRouter([]),
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          { provide: HAUSHALT_DATA_PROVIDER, useValue: HAUSHALT_STUB },
+          { provide: AuthService, useValue: new FakeAuthService() },
+        ],
+      }),
+    );
+
+    it('never claims that Haushalt/Reisen still contain example data — that was true only before both were wired to real data', () => {
+      const f = TestBed.createComponent(Dashboard);
+      f.detectChanges();
+      const note = f.nativeElement.querySelector('.preview-note').textContent;
+      expect(note).toContain('eigenen, privaten Daten');
+      expect(note).not.toContain('Beispieldaten');
+    });
+
+    it('an empty "Heute" list offers a CTA to add something, instead of a dead end', () => {
+      const f = TestBed.createComponent(Dashboard);
+      f.detectChanges();
+      const http = TestBed.inject(HttpTestingController);
+      http.expectOne((req) => req.url.includes('/finanzen/private/summary/')).flush({ available: null, budget: '0', has_data: false });
+      http.expectOne((req) => req.url.includes('/organisation') && req.url.includes('/today/')).flush({ items: [], event_count: 0 });
+      f.detectChanges();
+
+      expect(f.nativeElement.textContent).toContain('Heute ist noch nichts geplant.');
+      const cta = (Array.from(f.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[]).find((a) =>
+        a.textContent?.includes('Termin oder Aufgabe hinzufügen'),
+      );
+      expect(cta).toBeTruthy();
+      expect(cta?.getAttribute('href')).toBe('/app/organisation');
+    });
   });
 });

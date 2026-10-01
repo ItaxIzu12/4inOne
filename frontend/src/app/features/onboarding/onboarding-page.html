@@ -101,7 +101,7 @@
           <div class="finish">
             <div class="success" aria-hidden="true"><app-icon name="check" /></div>
             <h1 #heading tabindex="-1">Dein 4inOne ist bereit</h1>
-            <p>Dein Alltag, dein Überblick. Starte mit dem, was dir wichtig ist.</p>
+            <p>Wie möchtest du starten?</p>
             <div class="summary">
               <app-brand />
               <h2>Deine Auswahl</h2>
@@ -136,12 +136,20 @@
         </button>
       } @else {
         <button
-          class="primary"
-          (click)="finish()"
+          class="secondary"
+          (click)="finish('/')"
           [disabled]="saving()"
           [attr.aria-busy]="saving()"
         >
-          {{ saving() ? 'Wird gespeichert …' : 'Zum Dashboard' }} <app-icon name="arrow" />
+          4inOne entdecken
+        </button>
+        <button
+          class="primary"
+          (click)="finish('/app')"
+          [disabled]="saving()"
+          [attr.aria-busy]="saving()"
+        >
+          {{ saving() ? 'Wird gespeichert …' : 'Mit meinen Daten starten' }} <app-icon name="arrow" />
         </button>
       }
     </footer>

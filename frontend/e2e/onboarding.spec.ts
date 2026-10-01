@@ -20,11 +20,33 @@ for(const width of [390,1440]){
   await page.screenshot({path:`test-results/onboarding-domains-${width}.png`,fullPage:true});
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
   await page.getByRole('button',{name:'Weiter'}).click();await expect(page.getByRole('heading',{name:'Dein 4inOne ist bereit'})).toBeVisible();
-  await page.getByRole('button',{name:/Zum Dashboard/}).click();await expect(page).toHaveURL(/\/app$/);
+  await expect(page.getByRole('button',{name:'4inOne entdecken'})).toBeVisible();
+  await page.getByRole('button',{name:/Mit meinen Daten starten/}).click();await expect(page).toHaveURL(/\/app$/);
   await page.reload();await expect(page).toHaveURL(/\/app$/);
   await page.goto('/app/onboarding');await expect(page).toHaveURL(/\/app$/);
  });
 }
+
+// "4inOne entdecken" speichert dieselbe Auswahl, landet aber in der öffentlichen Demo statt im echten,
+// leeren Arbeitsbereich (siehe onboarding-page.ts finish()).
+test('"4inOne entdecken" on the final step saves the choice but opens the public demo, not the real app', async ({ page }) => {
+ let completed = false;
+ await page.route('**/api/v1/auth/csrf/', r => r.fulfill({ json: { csrfToken: 'test-csrf' } }));
+ await page.route('**/api/v1/auth/refresh/', r => r.fulfill({ json: { access: 'test-access', user: { name: 'Sophie', email: 'sophie@example.com' } } }));
+ await page.route('**/api/v1/onboarding/profile/', async r => {
+  if (r.request().method() === 'PUT') { completed = true; }
+  await r.fulfill({ json: { needs_onboarding: !completed, completed, usage: null, domains: [] } });
+ });
+ await page.goto('/app');
+ await page.getByRole('button', { name: /Los geht/ }).click();
+ await page.getByRole('button', { name: /Nur für mich/ }).click();
+ await page.getByRole('button', { name: 'Weiter' }).click();
+ await page.getByRole('button', { name: /Reisen/ }).click();
+ await page.getByRole('button', { name: 'Weiter' }).click();
+ await page.getByRole('button', { name: '4inOne entdecken' }).click();
+ await expect(page).toHaveURL('/');
+ await expect(page.locator('.demo-banner')).toBeVisible();
+});
 test('existing data bypasses onboarding',async({page})=>{
  await page.route('**/api/v1/auth/csrf/',r=>r.fulfill({json:{csrfToken:'test'}}));
  await page.route('**/api/v1/auth/refresh/',r=>r.fulfill({json:{access:'test',user:{name:'Mira',email:'mira@example.com'}}}));

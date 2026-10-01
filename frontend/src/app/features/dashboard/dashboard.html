@@ -11,8 +11,8 @@
     <p class="preview-note">
       {{
         live()
-          ? 'Heute zeigt deine privaten Organisationseinträge. Haushalt und Reiseverbindungen enthalten noch Beispieldaten.'
-          : 'Vorschau · Die folgenden Termine, Beträge und Verbindungen sind Beispieldaten.'
+          ? 'Heute zeigt ausschließlich deine eigenen, privaten Daten aus allen Bereichen.'
+          : 'Die folgenden Termine, Beträge und Verbindungen sind Beispieldaten (siehe Demo-Hinweis oben).'
       }}
     </p>
     <div class="dashboard-grid">
@@ -34,7 +34,8 @@
             <button class="text-button" (click)="loadToday()">Erneut versuchen</button>
           }
           @if (live() && !todayLoading() && !todayError() && !items.length) {
-            <p>Heute stehen keine Termine oder fälligen Aufgaben an.</p>
+            <p>Heute ist noch nichts geplant.</p>
+            <a routerLink="/app/organisation" class="text-button">Termin oder Aufgabe hinzufügen <app-icon name="arrow" /></a>
           }
           @for (item of items; track $index; let first = $first) {
             <button class="today-row" [class.optional-row]="first" (click)="openItem(item)">
@@ -118,7 +119,6 @@
               <app-icon class="chevron" name="arrow" />
             </header>
             <p>{{ domain.summary }}</p>
-            <app-icon class="domain-decoration" [name]="domain.icon" aria-hidden="true" />
             @if (domain.name === 'Finanzen' && finance()?.budget != null) {
               <progress
                 [class.over]="!!finance()?.available?.startsWith('-')"

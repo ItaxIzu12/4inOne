@@ -55,6 +55,8 @@ test('the preview links to Reisen with demo data, never to the login screen', as
   await expect(page).toHaveURL(/\/reisen$/);
   await expect(page).not.toHaveURL(/\/login/);
   await expect(page.getByRole('heading', { name: 'Reisen', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Berlin Wochenende' })).toBeVisible(); // Demo-Reise
+  // Demo-Reise: der Detail-Header zeigt das Reiseziel als Überschrift, den Titel darunter (siehe reisen.html).
+  await expect(page.getByRole('heading', { name: 'Berlin, Deutschland' })).toBeVisible();
+  await expect(page.locator('.trip-detail')).toContainText('Berlin Wochenende');
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 });

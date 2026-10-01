@@ -33,7 +33,7 @@
   border-radius: 16px;
   background: var(--accent-soft);
   color: var(--accent);
-  box-shadow: 0 6px 14px -8px var(--accent);
+  box-shadow: none;
 }
 .page-head__icon app-icon {
   width: 28px;
@@ -60,11 +60,9 @@
   padding: 10px 16px;
   border: 1px solid #a02b62;
   border-radius: 13px;
-  background: linear-gradient(#c03c78, #a82d64);
+  background: #c03c78;
   color: var(--accent-ink);
-  box-shadow:
-    0 4px 9px #b8336f26,
-    inset 0 1px 1px #ffffff40;
+  box-shadow: none;
   font: inherit;
   font-size: 14px;
   cursor: pointer;
@@ -111,10 +109,10 @@
   cursor: pointer;
 }
 .subtab.is-active {
-  background: linear-gradient(#fdeef5, #fbe3ee);
+  background: #fdeef5;
   color: var(--accent-hover);
   font-weight: 650;
-  box-shadow: 0 3px 6px #b8336f17;
+  box-shadow: none;
 }
 .subtab:focus-visible {
   outline: 3px solid var(--accent);

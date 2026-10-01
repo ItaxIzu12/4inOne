@@ -90,6 +90,43 @@ input:focus-visible {
 .workspace {
   min-width: 0;
 }
+.demo-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  padding: 10px 36px;
+  background: #edf5ff;
+  color: #1c519b;
+  border-bottom: 1px solid #d7e8fb;
+  font-size: 14px;
+}
+.demo-banner__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.demo-banner__label app-icon {
+  width: 18px;
+  height: 18px;
+}
+.demo-banner__hint {
+  color: #3b5f8f;
+}
+.demo-banner__cta {
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #1c519b;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+.demo-banner__cta:hover {
+  background: #163f78;
+}
 .topbar {
   height: 88px;
   background: #fff;
@@ -195,6 +232,16 @@ input:focus-visible {
   .profile {
     gap: 5px;
   }
+  .demo-banner {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  .demo-banner__hint {
+    display: none;
+  }
+  .demo-banner__cta {
+    margin-left: 0;
+  }
   .mobile-nav {
     display: flex;
     align-items: center;
@@ -256,10 +303,7 @@ input:focus-visible {
 /* Soft, floating surfaces shared by the dashboard and domain navigation. */
 :host {
   --text: #111344;
-  background:
-    radial-gradient(ellipse at 70% 10%, #f9eefa80, transparent 40%),
-    radial-gradient(ellipse at 85% 65%, #d9f1ff90, transparent 50%),
-    radial-gradient(ellipse at 25% 90%, #ece5fb90, transparent 50%), #f2f8fd;
+  background: #f6f8fb;
 }
 .shell {
   grid-template-columns: 280px minmax(0, 1fr);
@@ -288,9 +332,9 @@ input:focus-visible {
   box-shadow: 0 6px 12px #718ebb0c;
 }
 .sidebar nav app-icon {
-  width: 31px;
-  height: 31px;
-  filter: drop-shadow(0 3px 2px #6579a322);
+  width: 24px;
+  height: 24px;
+  filter: none;
 }
 .home {
   color: #237eea;
@@ -325,6 +369,14 @@ input:focus-visible {
   border-radius: 26px;
   box-shadow: 0 8px 20px #7590b515;
 }
+.demo-banner {
+  margin: 0 16px 12px;
+  padding: 10px 20px;
+  background: linear-gradient(110deg, #deefff, #eaf6ff);
+  border: 1px solid #fff;
+  border-radius: 18px;
+  box-shadow: 0 6px 12px #718ebb0c;
+}
 .avatar {
   width: 44px;
   height: 44px;
@@ -351,8 +403,8 @@ input:focus-visible {
     font-size: 14px;
   }
   .sidebar nav app-icon {
-    width: 27px;
-    height: 27px;
+    width: 24px;
+    height: 24px;
   }
   .topbar {
     padding: 12px 20px;
@@ -370,6 +422,9 @@ input:focus-visible {
     border: 0;
     border-radius: 0;
     box-shadow: none;
+  }
+  .demo-banner {
+    margin: 0 12px 10px;
   }
   .profile-button {
     padding-left: 8px;
@@ -536,3 +591,15 @@ input:focus-visible {
     padding-left: 0;
   }
 }
+
+/* Navigation uses color only for the selected domain; labels and aria-current remain. */
+.sidebar nav a, .mobile-nav a { --nav-accent: #235bb5; --nav-soft: #edf3fc; color: #566176; }
+.sidebar nav a[data-domain="finance"], .mobile-nav a[data-domain="finance"] { --nav-accent: #1e7a4d; --nav-soft: #edf7f1; }
+.sidebar nav a[data-domain="household"], .mobile-nav a[data-domain="household"] { --nav-accent: #ad3169; --nav-soft: #fcf0f5; }
+.sidebar nav a[data-domain="calendar"], .mobile-nav a[data-domain="calendar"] { --nav-accent: #7541b5; --nav-soft: #f4effb; }
+.sidebar nav a[data-domain="travel"], .mobile-nav a[data-domain="travel"] { --nav-accent: #246db8; --nav-soft: #edf4fc; }
+.sidebar nav a app-icon, .mobile-nav a app-icon { color: inherit; filter: none; width: 24px; height: 24px; }
+.sidebar nav a.active, .mobile-nav a.active { color: var(--nav-accent); background: var(--nav-soft); box-shadow: none; border-color: transparent; }
+.sidebar-note, .demo-banner { color: #53627a; background: #f1f5fa; box-shadow: none; }
+.sidebar, .topbar { background: #fff; border-color: #e7ebf1; }
+a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offset: 3px; }

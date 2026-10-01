@@ -21,7 +21,7 @@
 }
 .greeting p {
   font-size: 26px;
-  color: #657294;
+  color: #596987;
   margin-top: 5px;
 }
 .greeting time {
@@ -79,6 +79,7 @@
   padding: 0;
   font-size: 14px;
   white-space: nowrap;
+  text-decoration: none;
 }
 .text-button app-icon {
   width: 16px;
@@ -397,15 +398,7 @@ progress::-moz-progress-bar {
 .domain progress {
   height: 10px;
 }
-.domain-decoration {
-  position: absolute;
-  right: 5px;
-  bottom: -8px;
-  width: 80px;
-  height: 80px;
-  opacity: 0.13;
-  transform: rotate(12deg);
-}
+
 .mobile-copy {
   display: none;
 }
@@ -671,10 +664,7 @@ a:focus-visible {
     line-height: 1.5;
     margin: 15px 0 8px;
   }
-  .domain-decoration {
-    width: 55px;
-    height: 55px;
-  }
+
   .domain progress {
     height: 8px;
   }
@@ -710,3 +700,22 @@ a:focus-visible {
     transition: none;
   }
 }
+
+/* Daily-use cards: white surfaces, small domain accents, no decorative watermark. */
+.card, .domain { background: #fff; border-color: #e7ebf1; box-shadow: 0 3px 12px #23365b08; }
+.domain:hover { transform: translateY(-1px); box-shadow: 0 5px 14px #23365b10; }
+.domain header > app-icon:first-child { width: 28px; height: 28px; padding: 7px; box-sizing: content-box; border-radius: 12px; background: #f4f6f9; filter: none; }
+.domain.finance header > app-icon:first-child { background: #edf7f1; color: #1e7a4d; }
+.domain.household header > app-icon:first-child { background: #fcf0f5; color: #ad3169; }
+.domain.organisation header > app-icon:first-child { background: #f4effb; color: #7541b5; }
+.domain.travel header > app-icon:first-child { background: #edf4fc; color: #246db8; }
+.icon-disc { box-shadow: none; }
+.icon-disc app-icon, .connections button > app-icon { filter: none; }
+.domain:focus-visible { outline: 2px solid #235bb5; outline-offset: 3px; }
+
+.suggestion { background: #f4f7fc; border-color: #e7ebf1; box-shadow: none; }
+.suggestion button { background: #235bb5; box-shadow: none; border-color: transparent; }
+.connections button { background: #fff; box-shadow: none; border: 1px solid #e7ebf1; }
+.connections button > app-icon { width: 28px; height: 28px; }
+
+.connections button:nth-child(3) > app-icon { color: #235bb5; background: #edf3fc; }

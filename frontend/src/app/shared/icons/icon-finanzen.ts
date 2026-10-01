@@ -1,3 +1,4 @@
+import { DOMAIN_ICON_PATHS } from './domain-icon-paths';
 import { Component } from '@angular/core';
 
 /**
@@ -17,12 +18,11 @@ import { Component } from '@angular/core';
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      stroke-width="1.65"
+      stroke-width="1.8"
       stroke-linecap="round"
       stroke-linejoin="round"
     >
-      <rect x="3" y="5" width="18" height="15" rx="3" />
-      <path d="M3 9h18m-6 5h6M6 5V3h12" />
+      <path [attr.d]="path" />
     </svg>
   `,
   host: { class: 'kompass-icon', 'aria-hidden': 'true' },
@@ -38,4 +38,6 @@ import { Component } from '@angular/core';
     }
   `,
 })
-export class IconFinanzen {}
+export class IconFinanzen {
+  readonly path = DOMAIN_ICON_PATHS.finance;
+}

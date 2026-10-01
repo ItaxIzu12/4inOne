@@ -7,6 +7,7 @@
       @for (link of links(); track link.label) {
         <a
           [routerLink]="link.path"
+          [attr.data-domain]="link.icon"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: true }"
           ariaCurrentWhenActive="page"
@@ -87,6 +88,13 @@
         </div>
       </div>
     </header>
+    @if (isDemoRoute()) {
+      <div class="demo-banner" role="status">
+        <span class="demo-banner__label"><app-icon name="bulb" />Demo-Modus · Beispieldaten</span>
+        <span class="demo-banner__hint">Du kannst hier alles gefahrlos ausprobieren — eine Seite neu laden setzt die Demo zurück.</span>
+        <a routerLink="/registrieren" class="demo-banner__cta">Eigenes Konto erstellen</a>
+      </div>
+    }
     <ng-content />
   </div>
 </div>
@@ -94,6 +102,7 @@
   @for (link of links(); track link.label; let first = $first) {
     <a
       [routerLink]="link.path"
+          [attr.data-domain]="link.icon"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: first }"
       ariaCurrentWhenActive="page"

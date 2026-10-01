@@ -35,8 +35,8 @@ export class Dashboard {
   readonly nextTrip = computed(() => {
     const today = new Date().toISOString().slice(0, 10);
     const upcoming = this.trips()
-      .filter((t) => t.status !== 'CANCELLED' && (!t.start_date || t.start_date >= today))
-      .sort((a, b) => (a.start_date || '9999').localeCompare(b.start_date || '9999'));
+      .filter((t) => t.status !== 'CANCELLED' && t.start_date >= today)
+      .sort((a, b) => a.start_date.localeCompare(b.start_date));
     return upcoming[0] ?? null;
   });
   private router = inject(Router);
@@ -227,7 +227,6 @@ export class Dashboard {
     ];
   });
   private tripDaysUntilLabel(trip: Trip): string {
-    if (!trip.start_date) return 'Kein Datum';
     const days = Math.round(
       (new Date(`${trip.start_date}T00:00`).getTime() - new Date(new Date().toDateString()).getTime()) / 86_400_000,
     );

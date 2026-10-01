@@ -56,12 +56,36 @@ describe('OnboardingPage', () => {
     const c = TestBed.createComponent(OnboardingPage).componentInstance;
     c.usage.set('personal');
     c.toggle('haushalt');
-    c.finish();
+    c.finish('/app');
     expect(nav).not.toHaveBeenCalled();
     expect(c.error()).toContain('nicht gespeichert');
     api.complete.mockReturnValue(of({ completed: true }));
-    c.finish();
+    c.finish('/app');
     expect(api.complete).toHaveBeenLastCalledWith('personal', ['haushalt']);
     expect(nav).toHaveBeenCalledWith('/app', { replaceUrl: true });
+  });
+
+  it('"4inOne entdecken" saves the same preferences but lands on the public demo, not /app', () => {
+    api.complete.mockReturnValue(of({ completed: true }));
+    const nav = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const c = TestBed.createComponent(OnboardingPage).componentInstance;
+    c.usage.set('personal');
+    c.toggle('reisen');
+    c.finish('/');
+    expect(api.complete).toHaveBeenCalledWith('personal', ['reisen']);
+    expect(nav).toHaveBeenCalledWith('/', { replaceUrl: true });
+  });
+
+  it('the final step offers both "4inOne entdecken" and "Mit meinen Daten starten"', () => {
+    const f = TestBed.createComponent(OnboardingPage);
+    f.detectChanges();
+    const c = f.componentInstance;
+    c.usage.set('personal');
+    c.toggle('reisen');
+    c.move(4);
+    f.detectChanges();
+    const buttons = Array.from((f.nativeElement as HTMLElement).querySelectorAll('footer button')).map((b) => b.textContent?.trim());
+    expect(buttons.some((t) => t?.includes('4inOne entdecken'))).toBe(true);
+    expect(buttons.some((t) => t?.includes('Mit meinen Daten starten'))).toBe(true);
   });
 });

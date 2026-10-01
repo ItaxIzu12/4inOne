@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Field } from './field';
 import { AppDateTimePicker } from './date-time-picker';
+import { todayIso } from './date-utils';
 
 @Component({
   standalone: true,
@@ -70,9 +71,11 @@ describe('AppDateTimePicker', () => {
     expect(endTime.disabled).toBe(true);
     endDate.click();
     await flush();
-    (el.querySelector('.dp__cell[data-iso="2026-09-25"]') as HTMLButtonElement).click();
+    // Ein leeres Feld öffnet den Kalender auf dem laufenden Monat (siehe date-picker.ts viewMonth0) — daher
+    // "heute" anklicken statt ein fest codiertes Datum, das nur am Tag des Schreibens dieses Tests zutraf.
+    (el.querySelector('.dp__cell.is-today') as HTMLButtonElement).click();
     await flush();
-    expect(host.end.value).toBe('2026-09-25T09:00');
+    expect(host.end.value).toBe(`${todayIso()}T09:00`);
     expect(endTime.disabled).toBe(false);
   });
 
