@@ -94,6 +94,25 @@ test('a received invite can be accepted; contacts are grouped and removal asks f
   expect(calls).toEqual(['POST /invites/abc/accept/', 'DELETE /1/']);
 });
 
+test('from the public demo, "Familie & Freunde" works without signing in and shows example data plus a short explanation', async ({ page }) => {
+  await page.goto('/demo');
+  await page.getByRole('link', { name: 'Familie & Freunde' }).click();
+  await expect(page).toHaveURL(/\/demo\/familie$/);
+  await expect(page).not.toHaveURL(/\/login/);
+
+  await expect(page.getByRole('heading', { name: 'Familie & Freunde', level: 1 })).toBeVisible();
+  // Kurze Erklärung, was die Verbindung bedeutet (und nicht bedeutet) — nur im Demo-Modus sichtbar.
+  await expect(page.getByText('ist die Grundlage, um später gezielt eine Reise')).toBeVisible();
+
+  // Testdaten statt leerem Zustand: bestehende Verbindungen, eine offene eigene Einladung, eine eingehende.
+  await expect(page.getByText('max@beispiel.de')).toBeVisible();
+  await expect(page.getByText('lena@beispiel.de')).toBeVisible();
+  await expect(page.getByText('möchte dich als Freund:in hinzufügen')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Offene Einladungen' })).toBeVisible();
+
+  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+});
+
 test('the invite link: guests are told to sign in, the invited account can accept, others see a neutral message', async ({ page }) => {
   // ohne Anmeldung
   await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 't' } }));

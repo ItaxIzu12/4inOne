@@ -17,6 +17,8 @@ import { DemoHaushaltDataProvider } from './features/haushalt/demo-haushalt-data
 import { RealHaushaltDataProvider } from './features/haushalt/real-haushalt-data-provider';
 import { ReisenApi } from './features/reisen/reisen-api.service';
 import { DemoReisenApi } from './features/reisen/demo-reisen-api';
+import { ContactsApiService } from './core/contacts/contacts-api.service';
+import { DemoContactsApiService } from './core/contacts/demo-contacts-api.service';
 // Public landing and authenticated dashboard share /; session initialization runs before matching.
 // Demo providers are scoped exclusively to /demo, independently of the current session.
 export const routes: Routes = [
@@ -60,6 +62,7 @@ export const routes: Routes = [
       { provide: PrivateFinanceApi, useClass: DemoPrivateFinanceApi },
       { provide: OrganisationApi, useClass: DemoOrganisationApi },
       { provide: ReisenApi, useClass: DemoReisenApi },
+      { provide: ContactsApiService, useClass: DemoContactsApiService },
       FinanzenStateService,
     ],
     children: [
@@ -90,6 +93,14 @@ export const routes: Routes = [
         path: 'reisen',
         loadComponent: () => import('./features/reisen/reisen').then((m) => m.Reisen),
         data: { dashboardNav: true, sidebarNav: true },
+      },
+      {
+        // Dieselbe Komponente wie die echte Seite, nur mit DemoContactsApiService (siehe oben) statt echtem
+        // Backend-Aufruf — zuvor fehlte diese Route komplett, wodurch "Familie & Freunde" aus der Demo heraus
+        // zur Anmeldung zwang, obwohl der Rest der Demo ohne Login auskommt.
+        path: 'familie',
+        loadComponent: () => import('./features/familie/familie').then((m) => m.Familie),
+        data: { shell: 'bare', sidebarNav: true },
       },
     ],
   },

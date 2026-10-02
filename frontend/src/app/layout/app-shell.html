@@ -15,7 +15,7 @@
         >
       }
       <div class="nav-space"></div>
-      <a routerLink="/familie" routerLinkActive="active" ariaCurrentWhenActive="page"
+      <a [routerLink]="isDemoRoute() ? '/demo/familie' : '/familie'" routerLinkActive="active" ariaCurrentWhenActive="page"
         ><app-icon name="people" />Familie &amp; Freunde</a
       >
     </nav>

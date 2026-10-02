@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { map } from 'rxjs';
 import { AppShell } from '../../layout/app-shell';
 import { ContactDto, ContactsApiService, ContactsOverview, ReceivedInviteDto, Relation } from '../../core/contacts/contacts-api.service';
+import { DEMO_MODE } from '../../core/demo-context';
 
 const RELATION_LABEL: Record<Relation, string> = { FAMILY: 'Familie', FRIEND: 'Freund:in' };
 
@@ -19,6 +20,7 @@ const RELATION_LABEL: Record<Relation, string> = { FAMILY: 'Familie', FRIEND: 'F
 })
 export class Familie {
   private readonly api = inject(ContactsApiService);
+  protected readonly demo = inject(DEMO_MODE);
 
   protected readonly data = signal<ContactsOverview | null>(null);
   protected readonly loadError = signal(false);
