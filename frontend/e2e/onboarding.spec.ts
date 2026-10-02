@@ -28,8 +28,9 @@ for(const width of [390,1440]){
 }
 
 // "4inOne entdecken" speichert dieselbe Auswahl, landet aber in der öffentlichen Demo statt im echten,
-// leeren Arbeitsbereich (siehe onboarding-page.ts finish()).
-test('"4inOne entdecken" on the final step saves the choice but opens the public demo, not the real app', async ({ page }) => {
+// leeren Arbeitsbereich (siehe onboarding-page.ts finish()). Mit genau einem gewählten Bereich geht es direkt
+// zu dessen Demo-Seite statt zum generischen Demo-Dashboard (kürzester Weg vom Interesse zum Ergebnis).
+test('"4inOne entdecken" with exactly one chosen area opens that area\'s demo page directly, not the generic demo dashboard', async ({ page }) => {
  let completed = false;
  await page.route('**/api/v1/auth/csrf/', r => r.fulfill({ json: { csrfToken: 'test-csrf' } }));
  await page.route('**/api/v1/auth/refresh/', r => r.fulfill({ json: { access: 'test-access', user: { name: 'Sophie', email: 'sophie@example.com' } } }));
@@ -44,12 +45,45 @@ test('"4inOne entdecken" on the final step saves the choice but opens the public
  await page.getByRole('button', { name: /Reisen/ }).click();
  await page.getByRole('button', { name: 'Weiter' }).click();
  await page.getByRole('button', { name: '4inOne entdecken' }).click();
- await expect(page).toHaveURL('/demo');
+ await expect(page).toHaveURL('/demo/reisen');
  await expect(page.locator('.demo-banner')).toBeVisible();
+});
+
+// Mit mehreren gewählten Bereichen gibt es keine eindeutige Priorität, also geht es zum (echten) Dashboard —
+// das die Auswahl aber nicht verwirft, sondern die gewählten Kacheln vorne/hervorgehoben zeigt (dashboard.ts).
+test('"Mit meinen Daten starten" with two chosen areas lands on the dashboard, which highlights exactly those two', async ({ page }) => {
+ let completed = false;
+ let savedDomains: string[] = [];
+ await page.route('**/api/v1/auth/csrf/', r => r.fulfill({ json: { csrfToken: 'test-csrf' } }));
+ await page.route('**/api/v1/auth/refresh/', r => r.fulfill({ json: { access: 'test-access', user: { name: 'Mira', email: 'mira@example.com' } } }));
+ await page.route('**/api/v1/onboarding/profile/', async r => {
+  if (r.request().method() === 'PUT') {
+   completed = true;
+   savedDomains = (r.request().postDataJSON() as { domains: string[] }).domains;
+  }
+  await r.fulfill({ json: { needs_onboarding: !completed, completed, usage: null, domains: savedDomains } });
+ });
+ await page.goto('/');
+ await page.getByRole('button', { name: /Los geht/ }).click();
+ await page.getByRole('button', { name: /Nur für mich/ }).click();
+ await page.getByRole('button', { name: 'Weiter' }).click();
+ await page.getByRole('button', { name: /Reisen/ }).click();
+ await page.getByRole('button', { name: /Finanzen/ }).click();
+ await page.getByRole('button', { name: 'Weiter' }).click();
+ await page.getByRole('button', { name: /Mit meinen Daten starten/ }).click();
+ await expect(page).toHaveURL('/');
+ await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+ const highlighted = page.locator('.domain--highlighted h2');
+ await expect(highlighted).toHaveCount(2);
+ await expect(highlighted.nth(0)).toContainText('Reisen');
+ await expect(highlighted.nth(1)).toContainText('Finanzen');
 });
 test('existing data bypasses onboarding',async({page})=>{
  await page.route('**/api/v1/auth/csrf/',r=>r.fulfill({json:{csrfToken:'test'}}));
  await page.route('**/api/v1/auth/refresh/',r=>r.fulfill({json:{access:'test',user:{name:'Mira',email:'mira@example.com'}}}));
  await page.route('**/api/v1/onboarding/profile/',r=>r.fulfill({json:{needs_onboarding:false,completed:false,usage:null,domains:[]}}));
- await page.goto('/');await expect(page.getByRole('heading',{name:'Hallo Mira!'})).toBeVisible();await expect(page).toHaveURL(/\/$/);
+ // Die Begrüßung ("Guten Morgen"/"Hallo"/"Guten Abend") hängt von der Tageszeit ab (siehe dashboard.ts
+ // greeting) — hier geht es nur darum, dass die echte Dashboard-Seite mit dem echten Namen erscheint.
+ await page.goto('/');await expect(page.getByRole('heading', { level: 1 })).toContainText('Mira!');await expect(page).toHaveURL(/\/$/);
 });

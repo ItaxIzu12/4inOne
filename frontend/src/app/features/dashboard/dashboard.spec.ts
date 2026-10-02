@@ -52,17 +52,26 @@ describe('Dashboard', () => {
     // app.routes.ts zwischen Demo- und echter Datenquelle.
     expect(f.nativeElement.textContent).toContain('3 offene Aufgaben');
   });
-  it('offers four domain destinations and a working local packing preview', () => {
+  it('shows four compact destinations before Today without a static travel image or connection blocks', () => {
     const f = TestBed.createComponent(Dashboard);
     f.detectChanges();
-    expect(f.nativeElement.querySelectorAll('.domain').length).toBe(4);
-    f.nativeElement.querySelector('.suggestion button').click();
+    const el = f.nativeElement as HTMLElement;
+    expect(el.querySelectorAll('.domain').length).toBe(4);
+    expect(el.querySelector('.domains')!.compareDocumentPosition(el.querySelector('.today')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(el.querySelector('img, .connected, .suggestion')).toBeNull();
+  });
+  it('uses the actual upcoming trip and skips completed or cancelled trips', () => {
+    const f = TestBed.createComponent(Dashboard);
     f.detectChanges();
-    expect(f.nativeElement.querySelector('[role="dialog"]').textContent).toContain('Packliste');
-    const checkbox = f.nativeElement.querySelector('.packing-row input');
-    checkbox.click();
+    TestBed.inject(HttpTestingController).expectOne(req => req.url.endsWith('/reisen/trips/')).flush([
+      { title: 'Fertig', status: 'DONE', start_date: '2099-01-01', end_date: '2099-01-05' },
+      { title: 'Abgesagt', status: 'CANCELLED', start_date: '2099-01-02', end_date: '2099-01-05' },
+      { title: 'Wien entdecken', destination: 'Wien', status: 'PLANNED', start_date: '2099-02-01', end_date: '2099-02-03', packing_total: 4, packing_packed: 2, tasks_total: 2, tasks_open: 1 },
+    ]);
     f.detectChanges();
-    expect(f.componentInstance.packing()[0]).toBe(true);
+    expect(f.componentInstance.nextTrip()?.title).toBe('Wien entdecken');
+    expect(f.nativeElement.querySelector('.next-trip').textContent).toContain('50 %');
+    expect(f.nativeElement.querySelector('.next-trip').textContent).toContain('2 von 4 gepackt');
   });
   it('has no search bar any more', () => {
     const f = TestBed.createComponent(Dashboard);
@@ -107,6 +116,52 @@ describe('Dashboard', () => {
       );
       expect(cta).toBeTruthy();
       expect(cta?.getAttribute('href')).toBe('/organisation');
+      http.expectOne(req => req.url.endsWith('/reisen/trips/')).flush([]);
+      f.detectChanges();
+      expect(f.nativeElement.querySelector('.next-trip').textContent).toContain('Noch keine bevorstehende Reise');
+      expect(f.nativeElement.textContent).not.toContain('Berlin Wochenende');
+    });
+
+    it('with two or more areas chosen during onboarding, those tiles move first and are visibly marked — not just reordered', () => {
+      const f = TestBed.createComponent(Dashboard);
+      f.detectChanges();
+      const http = TestBed.inject(HttpTestingController);
+      http.expectOne((req) => req.url.includes('/onboarding/profile/')).flush({
+        needs_onboarding: false,
+        completed: true,
+        usage: 'personal',
+        domains: ['reisen', 'finanzen'],
+      });
+      f.detectChanges();
+
+      // Reihenfolge folgt der Auswahlreihenfolge im Onboarding (['reisen', 'finanzen']), nicht der
+      // Standardreihenfolge der Kacheln (Finanzen/Haushalt/Organisation/Reisen).
+      const tiles = Array.from(f.nativeElement.querySelectorAll('.domain h2')) as HTMLElement[];
+      expect(tiles.slice(0, 2).map((t) => t.textContent)).toEqual([
+        expect.stringContaining('Reisen'),
+        expect.stringContaining('Finanzen'),
+      ]);
+      expect(tiles[0].textContent).toContain('für dich ausgewählt');
+      expect(tiles[1].textContent).toContain('für dich ausgewählt');
+      expect(tiles[2].textContent).not.toContain('für dich ausgewählt');
+      expect(f.nativeElement.querySelectorAll('.domain--highlighted').length).toBe(2);
+    });
+
+    it('with only one area ever chosen, the dashboard keeps the default order — onboarding already redirected there directly', () => {
+      const f = TestBed.createComponent(Dashboard);
+      f.detectChanges();
+      const http = TestBed.inject(HttpTestingController);
+      http.expectOne((req) => req.url.includes('/onboarding/profile/')).flush({
+        needs_onboarding: false,
+        completed: true,
+        usage: 'personal',
+        domains: ['reisen'],
+      });
+      f.detectChanges();
+
+      expect(f.nativeElement.querySelectorAll('.domain--highlighted').length).toBe(0);
+      const tiles = Array.from(f.nativeElement.querySelectorAll('.domain h2')) as HTMLElement[];
+      expect(tiles[0].textContent).toContain('Finanzen');
     });
   });
 });

@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { DEMO_MODE } from '../../core/demo-context';
 import { PrivateFinanceApi, FinanceSummary, euros } from '../finanzen/private-finance-api.service';
 import { HaushaltOverviewDto } from '../haushalt/haushalt-api.service';
@@ -11,10 +12,11 @@ import { AppShell } from '../../layout/app-shell';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
 import { Modal } from '../../shared/modal/modal';
 import { AuthService } from '../../core/auth/auth.service';
+import { OnboardingApiService } from '../../core/onboarding/onboarding-api.service';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [AppShell, AppIcon, Modal, RouterLink],
+  imports: [AppShell, AppIcon, Modal, RouterLink, DatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -27,16 +29,24 @@ export class Dashboard {
   // Reiter dort nie auseinanderlaufen.
   private haushaltApi = inject(HAUSHALT_DATA_PROVIDER);
   private reisenApi = inject(ReisenApi);
+  private onboardingApi = inject(OnboardingApiService);
+  /** Im Onboarding gewählte Bereiche (siehe onboarding-page.ts) — nur bei echtem, angemeldetem Konto abgefragt,
+   * nie in der Demo (dort gibt es kein Onboarding-Profil zu einer echten Person). Bei genau einem gewählten
+   * Bereich leitet das Onboarding selbst schon direkt dorthin weiter; hier geht es um den Fall mit mehreren
+   * gewählten Bereichen, die auf dem Dashboard dafür hervorgehoben werden statt die Auswahl zu verwerfen. */
+  readonly preferredDomains = signal<string[]>([]);
   readonly household = signal<HaushaltOverviewDto | null>(null);
   readonly householdError = signal(false);
   readonly finance = signal<FinanceSummary | null>(null);
   readonly financeError = signal(false);
   readonly trips = signal<Trip[]>([]);
   readonly tripsError = signal(false);
+  readonly tripsLoading = signal(true);
   readonly nextTrip = computed(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const upcoming = this.trips()
-      .filter((t) => t.status !== 'CANCELLED' && t.start_date >= today)
+      .filter((t) => t.status !== 'CANCELLED' && t.status !== 'DONE' && t.end_date >= today)
       .sort((a, b) => a.start_date.localeCompare(b.start_date));
     return upcoming[0] ?? null;
   });
@@ -70,9 +80,20 @@ export class Dashboard {
       .trips()
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
-        next: (data) => this.trips.set(data),
-        error: () => this.tripsError.set(true),
+        next: (data) => { this.trips.set(data); this.tripsLoading.set(false); },
+        error: () => { this.tripsError.set(true); this.tripsLoading.set(false); },
       });
+    if (this.live()) {
+      this.onboardingApi
+        .getProfile()
+        .pipe(takeUntilDestroyed(this.destroy))
+        .subscribe({
+          // Personalisierung ist eine Kür, kein kritischer Ladezustand — ein Fehler hier lässt die
+          // Kachel-Reihenfolge einfach bei der Standardreihenfolge, zeigt aber keine Fehlermeldung an.
+          next: (profile) => this.preferredDomains.set(profile.domains ?? []),
+          error: () => undefined,
+        });
+    }
   }
   loadToday() {
     this.todayLoading.set(true);
@@ -127,7 +148,6 @@ export class Dashboard {
     year: 'numeric',
   }).format(new Date());
   readonly detail = signal('');
-  readonly packing = signal([false, false, false]);
   readonly demoItems: {
     title: string;
     mobile: string;
@@ -173,8 +193,9 @@ export class Dashboard {
     const live = this.live();
     // Dieselbe Berechnung für Demo und echtes Konto: beide beziehen ihre Daten aus derselben Routengruppe
     // (app.routes.ts), nur einmal von der Demo-, einmal von der echten Datenquelle.
-    return [
+    const tiles = [
       {
+        key: 'finanzen',
         name: 'Finanzen',
         tone: 'finance',
         icon: 'finance' as IconName,
@@ -192,6 +213,7 @@ export class Dashboard {
                 : 'Starte mit deinem Monatsbudget',
       },
       {
+        key: 'haushalt',
         name: 'Haushalt',
         tone: 'household',
         icon: 'household' as IconName,
@@ -205,6 +227,7 @@ export class Dashboard {
               : `${this.household()!.open_tasks} ${this.household()!.open_tasks === 1 ? 'offene Aufgabe' : 'offene Aufgaben'}`,
       },
       {
+        key: 'organisation',
         name: 'Organisation',
         tone: 'organisation',
         icon: 'calendar' as IconName,
@@ -214,6 +237,7 @@ export class Dashboard {
           : 'Dein Kalender & Aufgaben',
       },
       {
+        key: 'reisen',
         name: 'Reisen',
         tone: 'travel',
         icon: 'travel' as IconName,
@@ -227,12 +251,30 @@ export class Dashboard {
               : 'Noch keine Reise geplant',
       },
     ];
+    // Nur ab zwei im Onboarding gewählten Bereichen sortieren/hervorheben — bei genau einem leitet das
+    // Onboarding bereits direkt dorthin weiter (siehe onboarding-page.ts finish()), ein Dashboard-Besuch
+    // danach ist dann ein bewusster Rückweg zur Übersicht, der nicht erneut einseitig gefärbt sein soll.
+    const preferred = this.preferredDomains();
+    if (preferred.length < 2) return tiles.map((t) => ({ ...t, highlighted: false }));
+    // Reihenfolge der gewählten Kacheln folgt der Auswahlreihenfolge aus dem Onboarding (preferred), nicht der
+    // Standardreihenfolge — wer dort zuerst Reisen und dann Finanzen antippte, sieht Reisen auch hier zuerst.
+    return [...tiles]
+      .map((t) => ({ ...t, highlighted: preferred.includes(t.key) }))
+      .sort((a, b) => {
+        const ai = preferred.indexOf(a.key);
+        const bi = preferred.indexOf(b.key);
+        if (ai !== -1 && bi !== -1) return ai - bi;
+        if (ai !== -1) return -1;
+        if (bi !== -1) return 1;
+        return 0;
+      });
   });
-  private tripDaysUntilLabel(trip: Trip): string {
+  tripDaysUntilLabel(trip: Trip): string {
     const days = Math.round(
       (new Date(`${trip.start_date}T00:00`).getTime() - new Date(new Date().toDateString()).getTime()) / 86_400_000,
     );
-    if (days <= 0) return "heute geht's los";
+    if (days < 0) return 'Gerade unterwegs';
+    if (days === 0) return "Heute geht's los";
     return days === 1 ? 'in 1 Tag' : `in ${days} Tagen`;
   }
   financeProgress() {
@@ -241,7 +283,14 @@ export class Dashboard {
     const expenses = Number(this.finance()?.expenses || 0) + Number(this.finance()?.saved || 0);
     return total > 0 ? Math.min(100, (expenses / total) * 100) : expenses > 0 ? 100 : 0;
   }
-  togglePacking(index: number) {
-    this.packing.update((values) => values.map((value, i) => (i === index ? !value : value)));
+  readonly greeting = (() => {
+    const hour = new Date().getHours();
+    return hour < 11 ? 'Guten Morgen' : hour < 18 ? 'Hallo' : 'Guten Abend';
+  })();
+  readonly travelPath = computed(() => this.live() ? '/reisen' : '/demo/reisen');
+  readonly organisationPath = computed(() => this.live() ? '/organisation' : '/demo/organisation');
+  tripProgress(trip: Trip) {
+    const total = trip.packing_total + trip.tasks_total;
+    return total > 0 ? Math.round((trip.packing_packed + trip.tasks_total - trip.tasks_open) / total * 100) : 0;
   }
 }

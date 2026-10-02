@@ -1,195 +1,99 @@
-<app-shell
-  ><main id="main-content" class="dashboard" tabindex="-1">
+<app-shell>
+  <main id="main-content" class="dashboard" tabindex="-1">
     <header class="greeting">
       <div>
-        <h1>Hallo {{ name() }}!</h1>
-        <p class="desktop-copy">Hier ist dein Tag.</p>
-        <p class="mobile-copy">Was ist heute wichtig?</p>
+        <h1>{{ greeting }}, {{ name() }}!</h1>
+        <p>Schön, dass du da bist. Hier ist dein Überblick für heute.</p>
       </div>
       <time>{{ date }}</time>
     </header>
-    <p class="preview-note">
-      {{
-        live()
-          ? 'Heute zeigt ausschließlich deine eigenen, privaten Daten aus allen Bereichen.'
-          : 'Die folgenden Termine, Beträge und Verbindungen sind Beispieldaten (siehe Demo-Hinweis oben).'
-      }}
-    </p>
+    <p class="preview-note sr-only">{{ live() ? 'Heute zeigt ausschließlich deine eigenen, privaten Daten.' : 'Vorschau mit Beispieldaten.' }}</p>
+
+    <section class="domains" aria-label="Deine vier Bereiche">
+      @for (domain of domains(); track domain.name) {
+        <a [routerLink]="domain.path" [class]="'domain ' + domain.tone" [class.domain--highlighted]="domain.highlighted">
+          <span class="domain-icon"><app-icon [name]="domain.icon" /></span>
+          <h2>{{ domain.name }}@if (domain.highlighted) {<span class="domain-pick"> · für dich ausgewählt</span>}</h2>
+          <app-icon class="chevron" name="arrow" />
+          <p>{{ domain.summary }}</p>
+          @if (domain.name === 'Finanzen' && finance()?.budget != null) {
+            <progress [class.over]="!!finance()?.available?.startsWith('-')" [value]="financeProgress()" max="100" aria-label="Monatsbudget verbraucht"></progress>
+          }
+        </a>
+      }
+    </section>
+
     <div class="dashboard-grid">
-      <section class="card today">
-        <header>
-          <h2>
-            <span class="desktop-copy">Heute</span><span class="mobile-copy">Heute für dich</span>
-          </h2>
-          <button class="text-button" (click)="showDay()">
-            Alle anzeigen <app-icon name="arrow" />
-          </button>
+      <section class="card today" aria-labelledby="today-title">
+        <header class="card-heading">
+          <h2 id="today-title"><span class="section-icon organisation"><app-icon name="calendar" /></span>Heute</h2>
+          <button class="text-button" (click)="showDay()">Alle anzeigen <app-icon name="arrow" /></button>
         </header>
-        <div class="today-list">
-          @if (todayLoading()) {
-            <p role="status">Dein Tag wird geladen …</p>
-          }
-          @if (todayError()) {
-            <p role="alert">{{ todayError() }}</p>
-            <button class="text-button" (click)="loadToday()">Erneut versuchen</button>
-          }
-          @if (live() && !todayLoading() && !todayError() && !items.length) {
-            <p>Heute ist noch nichts geplant.</p>
-            <a routerLink="/organisation" class="text-button">Termin oder Aufgabe hinzufügen <app-icon name="arrow" /></a>
-          }
-          @for (item of items; track $index; let first = $first) {
-            <button class="today-row" [class.optional-row]="first" (click)="openItem(item)">
-              <span class="icon-disc" [class]="'icon-disc ' + item.tone"
-                ><app-icon [name]="item.icon" /></span
-              ><span class="time">{{ item.time }}</span
-              ><span class="item-copy"
-                ><strong class="desktop-copy">{{ item.title }}</strong
-                ><strong class="mobile-copy">{{ item.mobile }}</strong
-                ><small class="mobile-copy">{{
-                  live() || item.title === 'Arzttermin' || item.tone === 'household'
-                    ? item.note
-                    : ''
-                }}</small></span
-              ><app-icon class="chevron" name="arrow" />
-            </button>
-          }
-        </div>
-      </section>
-      <section class="card connected">
-        <header>
-          <h2><app-icon name="link" />Automatisch verbunden</h2>
-          <button
-            class="text-button"
-            aria-label="Verbindung im Beispiel ansehen"
-            (click)="detail.set('Berlin Wochenende')"
-          >
-            <span class="desktop-copy">Details anzeigen</span><app-icon name="arrow" />
-          </button>
-        </header>
-        <div class="trip">
-          <div class="berlin" aria-hidden="true">
-            <img
-              src="/images/dashboard/berlin-sunset.jpg"
-              alt=""
-              width="1536"
-              height="1024"
-              decoding="async"
-            />
-          </div>
-          <div class="trip-copy">
-            <h3>Berlin Wochenende</h3>
-            <p>Fr, 16. Mai – So, 18. Mai · Beispiel</p>
-            <div class="trip-progress">
-              <progress value="4" max="6" aria-label="4 von 6 Aufgaben erledigt"></progress
-              ><small>4 von 6 Aufgaben erledigt</small>
-            </div>
-          </div>
-        </div>
-        <div class="connections" aria-label="Verbundene Bereiche">
-          @for (
-            connection of ['Budget', 'Kalender', 'Aufgaben'];
-            track connection;
-            let i = $index
-          ) {
-            <button (click)="detail.set(connection)">
-              <app-icon [name]="i === 0 ? 'finance' : i === 1 ? 'calendar' : 'check'" /><span>{{
-                connection
-              }}</span
-              ><span class="connection-check" aria-label="verbunden">✓</span>
-            </button>
-          }
-        </div>
-      </section>
-      <section class="suggestion">
-        <span class="icon-disc family"><app-icon name="bulb" /></span>
-        <div>
-          <h2>4inOne Vorschlag</h2>
-          <p>Dein Wochenendtrip nach Berlin rückt näher. Möchtest du die Packliste öffnen?</p>
-        </div>
-        <button class="primary" (click)="detail.set('Packliste')">
-          Zur Packliste <app-icon name="arrow" />
-        </button>
-      </section>
-      <div class="domains">
-        @for (domain of domains(); track domain.name) {
-          <a [routerLink]="domain.path" [class]="'domain ' + domain.tone"
-            ><header>
-              <app-icon [name]="domain.icon" />
-              <h2>{{ domain.name }}</h2>
-              <app-icon class="chevron" name="arrow" />
-            </header>
-            <p>{{ domain.summary }}</p>
-            @if (domain.name === 'Finanzen' && finance()?.budget != null) {
-              <progress
-                [class.over]="!!finance()?.available?.startsWith('-')"
-                [value]="financeProgress()"
-                max="100"
-                aria-label="Monatsbudget verbraucht"
-              ></progress>
+        @if (todayLoading()) {
+          <p class="state" role="status">Dein Tag wird geladen …</p>
+        } @else if (todayError()) {
+          <div class="state"><p role="alert">{{ todayError() }}</p><button class="text-button" (click)="loadToday()">Erneut versuchen</button></div>
+        } @else if (!items.length) {
+          <div class="state"><span class="empty-icon"><app-icon name="calendar" /></span><h3>Heute ist noch nichts geplant.</h3><p>Platz für das, was dir wichtig ist.</p><a [routerLink]="organisationPath()" class="text-button">Termin oder Aufgabe hinzufügen <app-icon name="arrow" /></a></div>
+        } @else {
+          <div class="today-list">
+            @for (item of items; track $index) {
+              <button class="today-row" (click)="openItem(item)">
+                <span class="time">{{ item.time }}</span>
+                <span [class]="'icon-disc ' + item.tone"><app-icon [name]="item.icon" /></span>
+                <span class="item-copy"><strong>{{ item.title }}</strong><small>{{ item.note }}</small></span>
+                <app-icon class="chevron" name="arrow" />
+              </button>
             }
-          </a>
+          </div>
         }
-      </div>
+      </section>
+
+      <section class="card next-trip" aria-labelledby="trip-title">
+        <header class="card-heading">
+          <h2 id="trip-title"><span class="section-icon travel"><app-icon name="travel" /></span>{{ nextTrip()?.status === 'ACTIVE' ? 'Deine Reise' : 'Nächste Reise' }}</h2>
+          <a class="text-button" [routerLink]="travelPath()">Reisen <app-icon name="arrow" /></a>
+        </header>
+        @if (tripsLoading()) {
+          <p class="state" role="status">Deine Reisen werden geladen …</p>
+        } @else if (tripsError()) {
+          <div class="state"><p>Deine Reisen konnten nicht geladen werden.</p><a class="text-button" [routerLink]="travelPath()">Zum Reisebereich <app-icon name="arrow" /></a></div>
+        } @else if (nextTrip(); as trip) {
+          <div class="trip-copy">
+            <span class="trip-countdown">{{ tripDaysUntilLabel(trip) }}</span>
+            <h3>{{ trip.title }}</h3>
+            <p class="destination">{{ trip.destination }}</p>
+            <p class="trip-dates"><app-icon name="calendar" />{{ trip.start_date | date:'dd.MM.yyyy' }} – {{ trip.end_date | date:'dd.MM.yyyy' }}</p>
+            <dl class="trip-facts">
+              <div><dt>Packliste</dt><dd>{{ trip.packing_packed }} von {{ trip.packing_total }} gepackt</dd></div>
+              <div><dt>Aufgaben</dt><dd>{{ trip.tasks_open }} offen</dd></div>
+            </dl>
+            @if (trip.packing_total + trip.tasks_total > 0) {
+              <div class="trip-progress"><span>Vorbereitung</span><strong>{{ tripProgress(trip) }} %</strong></div>
+              <progress [value]="tripProgress(trip)" max="100" aria-label="Reisevorbereitung erledigt"></progress>
+            }
+            <a [routerLink]="travelPath()" class="trip-link">Reisebereich öffnen <app-icon name="arrow" /></a>
+          </div>
+        } @else {
+          <div class="state"><span class="empty-icon travel"><app-icon name="travel" /></span><h3>Wohin geht es als Nächstes?</h3><p>Noch keine bevorstehende Reise. Plane dein nächstes Ziel mit Packliste, Aufgaben und Budget.</p><a class="text-button" [routerLink]="travelPath()">Reise planen <app-icon name="arrow" /></a></div>
+        }
+      </section>
     </div>
-  </main></app-shell
->
-<app-modal [open]="detail() !== ''" labelledBy="dashboard-detail" (closed)="detail.set('')"
-  ><h2 id="dashboard-detail">{{ detail() }}</h2>
+  </main>
+</app-shell>
+<app-modal [open]="detail() !== ''" labelledBy="dashboard-detail" (closed)="detail.set('')">
+  <h2 id="dashboard-detail">{{ detail() }}</h2>
   <div class="detail-body">
-    <p class="muted">Beispielansicht · Keine Änderung an deinen persönlichen Daten.</p>
-    @switch (detail()) {
-      @case ('Packliste') {
-        <p>Für das Wochenende in Berlin.</p>
-        @for (
-          label of ['Ausweis & Tickets', 'Kleidung fürs Wochenende', 'Ladegerät'];
-          track label;
-          let i = $index
-        ) {
-          <label class="packing-row"
-            ><input type="checkbox" [checked]="packing()[i]" (change)="togglePacking(i)" />{{
-              label
-            }}</label
-          >
-        }
-        <p class="muted">Die Häkchen bleiben nur während dieser Vorschau erhalten.</p>
+    <p>Beispielansicht · Keine Änderung an deinen persönlichen Daten.</p>
+    @if (detail() === 'Dein Tag') {
+      @for (item of items; track $index) {
+        <button class="text-button" (click)="openItem(item)">{{ item.time }} · {{ item.title }} <app-icon name="arrow" /></button>
       }
-      @case ('Dein Tag') {
-        @for (item of items; track $index) {
-          <button (click)="openItem(item)">{{ item.time }} · {{ item.title }} →</button>
-        }
-      }
-      @case ('Berlin Wochenende') {
-        <p>
-          Eine Reise, drei verbundene Bereiche: Budget, Kalender und Aufgaben. Hier siehst du, wie
-          sie später zusammenarbeiten können.
-        </p>
-        <progress value="4" max="6" aria-label="4 von 6 Aufgaben erledigt"></progress
-        ><button (click)="detail.set('Packliste')">Packliste öffnen →</button>
-      }
-      @case ('Budget') {
-        <p>
-          Für Berlin sind beispielhaft 700 € geplant, davon 420 € vorgesehen. Diese Vorschau bucht
-          keine Ausgabe.
-        </p>
-      }
-      @case ('Kalender') {
-        <p>
-          Anreise am Freitag, Rückreise am Sonntag. In dieser Vorschau werden keine Kalendereinträge
-          angelegt.
-        </p>
-      }
-      @case ('Aufgaben') {
-        <p>4 von 6 Vorbereitungen sind im Beispiel erledigt.</p>
-        <button (click)="detail.set('Packliste')">Packliste öffnen →</button>
-      }
-      @default {
-        @for (item of items; track $index) {
-          @if (item.title === detail()) {
-            <p>{{ item.time }} · {{ item.note }}</p>
-            <p>Dieser Eintrag zeigt beispielhaft, wie dein Tag in 4inOne aussehen kann.</p>
-          }
-        }
+    } @else {
+      @for (item of items; track $index) {
+        @if (item.title === detail()) { <p>{{ item.time }} · {{ item.note }}</p> }
       }
     }
-  </div></app-modal
->
+    <a class="text-button" [routerLink]="organisationPath()">Zur Organisation <app-icon name="arrow" /></a>
+  </div>
+</app-modal>

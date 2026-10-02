@@ -98,21 +98,30 @@ export class OnboardingPage {
     this.move(this.step() + 1);
   }
   /** Beide Wege speichern dieselbe Auswahl (needs_onboarding wird serverseitig erst dadurch false, siehe
-   * onboarding.guard.ts) — nur das Ziel danach unterscheidet sich: „4inOne entdecken“ führt zur öffentlichen
-   * Demo (Beispieldaten, siehe app.routes.ts), „Mit meinen Daten starten“ in den eigenen, leeren Arbeitsbereich. */
+   * onboarding.guard.ts) — „4inOne entdecken“ führt zur öffentlichen Demo (Beispieldaten, siehe app.routes.ts),
+   * „Mit meinen Daten starten“ in den eigenen, leeren Arbeitsbereich.
+   *
+   * Zielseite danach: bei GENAU einem gewählten Bereich direkt dorthin (kürzester Weg vom Interesse zum
+   * Ergebnis) — die Domain-Keys ('finanzen'/'haushalt'/'organisation'/'reisen') sind bereits die Routennamen,
+   * keine Übersetzungstabelle nötig. Bei mehreren gewählten Bereichen gibt es keine eindeutige Priorität, daher
+   * zum Dashboard, das diese Auswahl selbst wieder ausliest und die gewählten Kacheln hervorhebt (siehe
+   * dashboard.ts preferredDomains()) statt sie zu verwerfen. */
   finish(destination: '/demo' | '/') {
     if (this.saving()) return;
     const usage = this.usage();
-    if (!usage || !this.selected().length) return;
+    const selected = this.selected();
+    if (!usage || !selected.length) return;
     this.saving.set(true);
     this.error.set('');
     this.api
-      .complete(usage, this.selected())
+      .complete(usage, selected)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: () => {
           this.saving.set(false);
-          this.router.navigateByUrl(destination, { replaceUrl: true });
+          const base = destination === '/' ? '' : destination;
+          const target = selected.length === 1 ? `${base}/${selected[0]}` : destination;
+          this.router.navigateByUrl(target, { replaceUrl: true });
         },
         error: () => {
           this.saving.set(false);

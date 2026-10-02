@@ -62,10 +62,11 @@ describe('OnboardingPage', () => {
     api.complete.mockReturnValue(of({ completed: true }));
     c.finish('/');
     expect(api.complete).toHaveBeenLastCalledWith('personal', ['haushalt']);
-    expect(nav).toHaveBeenCalledWith('/', { replaceUrl: true });
+    // Genau ein gewählter Bereich → direkt dorthin statt zum generischen Dashboard (siehe finish()-Docstring).
+    expect(nav).toHaveBeenCalledWith('/haushalt', { replaceUrl: true });
   });
 
-  it('"4inOne entdecken" saves the same preferences but lands on the public demo, not /app', () => {
+  it('"4inOne entdecken" saves the same preferences and lands directly on that one area\'s demo page', () => {
     api.complete.mockReturnValue(of({ completed: true }));
     const nav = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     const c = TestBed.createComponent(OnboardingPage).componentInstance;
@@ -73,7 +74,19 @@ describe('OnboardingPage', () => {
     c.toggle('reisen');
     c.finish('/demo');
     expect(api.complete).toHaveBeenCalledWith('personal', ['reisen']);
-    expect(nav).toHaveBeenCalledWith('/demo', { replaceUrl: true });
+    expect(nav).toHaveBeenCalledWith('/demo/reisen', { replaceUrl: true });
+  });
+
+  it('with more than one chosen area, there is no single obvious destination, so it goes to the dashboard instead', () => {
+    api.complete.mockReturnValue(of({ completed: true }));
+    const nav = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const c = TestBed.createComponent(OnboardingPage).componentInstance;
+    c.usage.set('personal');
+    c.toggle('reisen');
+    c.toggle('finanzen');
+    c.finish('/');
+    expect(api.complete).toHaveBeenCalledWith('personal', ['reisen', 'finanzen']);
+    expect(nav).toHaveBeenCalledWith('/', { replaceUrl: true });
   });
 
   it('the final step offers both "4inOne entdecken" and "Mit meinen Daten starten"', () => {
