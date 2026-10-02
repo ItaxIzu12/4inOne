@@ -145,6 +145,8 @@
                 <p class="trip-cards__stat">{{ participantsSummary(trip) }}</p>
               </div>
             </div>
+
+            <app-trip-plan [tripId]="trip.id" (openTab)="tab.set($event)" />
           }
         </section>
       }

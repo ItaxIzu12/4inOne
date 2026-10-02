@@ -24,10 +24,6 @@ from finanzen.models import Account, Category, RecurringDeduction, Transaction
 
 ZERO = Decimal('0')
 
-# Name der Standard-Kategorie, in die ein abgeschlossener Einkauf gebucht
-# wird, wenn keine andere gewählt wurde (siehe finanzen/signals.py — sie
-# ist is_default und kann deshalb weder umbenannt noch gelöscht werden).
-SHOPPING_DEFAULT_CATEGORY = 'Haushalt'
 
 
 def household_account(household: Household) -> Account:
@@ -44,25 +40,33 @@ def household_account(household: Household) -> Account:
     return account
 
 
-def create_transaction_from_shopping_list(
-    household: Household,
-    user,
-    amount: Decimal,
-    item_count: int,
-    category: Category | None = None,
-) -> Transaction:
-    """Der Einkauf-zu-Ausgabe-Moment (GESAMTKONZEPT.md §5.1,
-    ARCHITEKTUR.md §2.1): ein abgeschlossener Einkauf wird zu einer ganz
-    normalen Ausgabe von heute — sie erscheint sofort in Budget, Kategorien
-    und "Verfügbares Einkommen", ohne doppelte Eingabe.
+PRIVATE_SHOPPING_CATEGORY = 'Lebensmittel'
 
-    `category` muss, falls übergeben, bereits vom Aufrufer gegen den
-    Haushalt geprüft sein (IDOR); sonst wird die Standard-Kategorie
-    "Haushalt" verwendet."""
+
+def book_shopping_expense(user, amount: Decimal, item_count: int, category: Category | None = None) -> Transaction:
+    """Der Einkauf-zu-Ausgabe-Moment: ein abgeschlossener Einkauf wird eine
+    ganz normale Ausgabe von heute in den PRIVATEN Finanzen der Person, die
+    eingekauft hat (ADR-001: Finanzen gehören einer Person). Sie erscheint
+    sofort in Budget, Kategorien und „verfügbar“ — ohne doppelte Eingabe.
+
+    Die bisherigen Haushaltsfinanzen sind eingefroren und bekommen keine
+    neuen Buchungen mehr.
+
+    `category` muss, falls übergeben, bereits vom Aufrufer gegen die Person
+    geprüft sein (IDOR); sonst wird ihre Kategorie „Lebensmittel“ verwendet
+    und bei Bedarf mit fester Farbe angelegt."""
+    from finanzen.category_colors import color_for_name
+
     if category is None:
-        category = Category.objects.filter(household=household, name=SHOPPING_DEFAULT_CATEGORY).first()
+        category, _ = Category.objects.get_or_create(
+            owner=user,
+            name=PRIVATE_SHOPPING_CATEGORY,
+            defaults={'color': color_for_name(PRIVATE_SHOPPING_CATEGORY)},
+        )
     return Transaction.objects.create(
-        account=household_account(household),
+        owner=user,
+        type='EXPENSE',
+        currency='EUR',
         category=category,
         amount=amount,
         description=f'Einkauf ({item_count} Artikel)',

@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   CompleteShoppingResult,
-  DeductionOptionDto,
   FolderEntryDto,
   FolderEntryInput,
   HaushaltApiService,
@@ -67,9 +66,6 @@ export class RealHaushaltDataProvider implements HaushaltDataProvider {
 
   getFolder(): Observable<FolderEntryDto[]> {
     return this.api.getFolder();
-  }
-  getUnlinkedDeductions(): Observable<DeductionOptionDto[]> {
-    return this.api.getUnlinkedDeductions();
   }
   createFolderEntry(input: FolderEntryInput): Observable<FolderEntryDto> {
     return this.api.createFolderEntry(input);

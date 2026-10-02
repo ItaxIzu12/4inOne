@@ -3,7 +3,6 @@ import { Observable } from 'rxjs';
 import {
   CompleteShoppingResult,
   HaushaltOverviewDto,
-  DeductionOptionDto,
   FolderEntryDto,
   FolderEntryInput,
   Id,
@@ -41,7 +40,6 @@ export interface HaushaltDataProvider {
   reopenTask(id: Id): Observable<TaskDto>;
 
   getFolder(): Observable<FolderEntryDto[]>;
-  getUnlinkedDeductions(): Observable<DeductionOptionDto[]>;
   createFolderEntry(input: FolderEntryInput): Observable<FolderEntryDto>;
   updateFolderEntry(id: Id, input: FolderEntryInput): Observable<FolderEntryDto>;
   deleteFolderEntry(id: Id): Observable<void>;

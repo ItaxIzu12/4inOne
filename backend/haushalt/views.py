@@ -9,7 +9,6 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from core.permissions import HouseholdScopedPermission
-from finanzen.models import RecurringDeduction
 from haushalt import services
 from haushalt.models import FolderEntry, Section, ShoppingItem, Task
 from haushalt.serializers import (
@@ -181,15 +180,7 @@ class TaskViewSet(_WriteThrottleMixin, ModelViewSet):
         household = _require_membership(self.request).household
         if Task.objects.filter(household=household, is_done=False).count() >= services.MAX_OPEN_TASKS:
             raise ValidationError(f'Maximal {services.MAX_OPEN_TASKS} offene Aufgaben pro Haushalt.')
-        task = serializer.save(household=household, created_by=self.request.user)
-        services.sync_task_event(task)
-
-    def perform_update(self, serializer):
-        services.sync_task_event(serializer.save())
-
-    def perform_destroy(self, instance):
-        services.remove_task_event(instance)
-        instance.delete()
+        serializer.save(household=household, created_by=self.request.user)
 
     @action(detail=True, methods=['post'], url_path='erledigt')
     def complete(self, request, pk=None):
@@ -299,7 +290,7 @@ class FolderEntryViewSet(_WriteThrottleMixin, ModelViewSet):
 
     def get_queryset(self):
         return (
-            FolderEntry.objects.select_related('recurring_deduction', 'household')
+            FolderEntry.objects.select_related('household')
             .filter(household__members=self.request.user)
             .order_by('kind', 'name')
         )
@@ -308,14 +299,7 @@ class FolderEntryViewSet(_WriteThrottleMixin, ModelViewSet):
         household = _require_membership(self.request).household
         if FolderEntry.objects.filter(household=household).count() >= services.MAX_FOLDER_ENTRIES:
             raise ValidationError(f'Maximal {services.MAX_FOLDER_ENTRIES} Einträge im Haushaltsordner.')
-        services.sync_folder_events(serializer.save(household=household, created_by=self.request.user))
-
-    def perform_update(self, serializer):
-        services.sync_folder_events(serializer.save())
-
-    def perform_destroy(self, instance):
-        services.remove_folder_events(instance)
-        instance.delete()
+        serializer.save(household=household, created_by=self.request.user)
 
     @action(detail=True, methods=['post'], url_path='wartung-erledigt')
     def maintenance_done(self, request, pk=None):
@@ -323,19 +307,3 @@ class FolderEntryViewSet(_WriteThrottleMixin, ModelViewSet):
         if entry.kind != FolderEntry.Kind.DEVICE:
             raise ValidationError('Nur Geräte haben Wartungstermine.')
         return Response(self.get_serializer(services.complete_maintenance(entry)).data)
-
-    @action(detail=False, methods=['get'], url_path='abzuege')
-    def unlinked_deductions(self, request):
-        """Feste Abzüge aus Finanzen, die noch keinem Vertrag zugeordnet sind
-        — Vorschläge für "Aus Finanzen übernehmen"."""
-        household = _require_membership(request).household
-        linked = FolderEntry.objects.filter(household=household, recurring_deduction__isnull=False).values_list(
-            'recurring_deduction_id', flat=True
-        )
-        deductions = RecurringDeduction.objects.filter(household=household).exclude(pk__in=linked).order_by('name')
-        return Response(
-            [
-                {'id': deduction.id, 'name': deduction.name, 'amount': str(deduction.amount), 'active': deduction.active}
-                for deduction in deductions
-            ]
-        )

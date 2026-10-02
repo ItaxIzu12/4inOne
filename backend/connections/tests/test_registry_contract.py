@@ -21,6 +21,7 @@ from core.models import Household, HouseholdMembership
 from finanzen.models import SavingsGoal
 from haushalt.models import Task as HouseholdTask
 from organisation.models import PersonalEvent, PersonalTask
+from reisen.models import Trip, TripParticipant
 
 pytestmark = pytest.mark.django_db
 
@@ -30,6 +31,7 @@ DOMAIN_DETAIL_URL = {
     ObjectType.CALENDAR_EVENT: '/api/v1/organisation/events/{pk}/',
     ObjectType.SAVINGS_GOAL: '/api/v1/finanzen/private/goals/{pk}/',
     ObjectType.HOUSEHOLD_TASK: '/api/v1/haushalt/aufgaben/{pk}/',
+    ObjectType.TRIP: '/api/v1/reisen/trips/{pk}/',
 }
 
 
@@ -58,7 +60,17 @@ def _make(kind, people):
             owner=owner, title='G', target_amount=Decimal('10.00')
         ),
         ObjectType.HOUSEHOLD_TASK: lambda: HouseholdTask.objects.create(household=people['home'], title='H'),
+        ObjectType.TRIP: lambda: _trip_shared_with(owner, people['stranger']),
     }[kind]()
+
+
+def _trip_shared_with(owner, viewer):
+    """Eine Reise, die mit einer Person AUSSERHALB des Haushalts geteilt ist:
+    Mitbewohnende sehen sie trotzdem nicht, die Teilnehmerin schon."""
+    today = timezone.localdate()
+    trip = Trip.objects.create(owner=owner, title='R', start_date=today, end_date=today + timedelta(days=3))
+    TripParticipant.objects.create(trip=trip, user=viewer, role=TripParticipant.Role.VIEWER)
+    return trip
 
 
 def test_every_connectable_type_is_covered_by_the_contract():

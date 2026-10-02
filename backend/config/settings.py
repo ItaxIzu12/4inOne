@@ -286,6 +286,12 @@ REST_FRAMEWORK = {
     },
 }
 
+# ADR-001: Die alten Haushaltsfinanzen (/api/v1/finanzen/ außer private/)
+# sind eingefroren — lesbar, aber nicht mehr beschreibbar. Finanzen gehören
+# einer Person (/api/v1/finanzen/private/). Nur die Tests des eingefrorenen
+# Codes schalten das Schreiben gezielt wieder ein (finanzen/tests/conftest.py).
+LEGACY_HOUSEHOLD_FINANCE_WRITABLE = False
+
 # Ablaufzeit für Haushaltseinladungs-Token in Tagen (ARCHITEKTUR.md §3.9),
 # siehe core/household_views.py.
 HOUSEHOLD_INVITE_EXPIRY_DAYS = env.int('HOUSEHOLD_INVITE_EXPIRY_DAYS', default=7)

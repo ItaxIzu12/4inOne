@@ -296,11 +296,16 @@ def test_limit_per_object(a, monkeypatch):
 
 def test_options_list_only_supported_partners(a):
     client = _client(a)
-    assert [o['type'] for o in client.get(URL + 'options/', {'object_type': 'SAVINGS_GOAL'}).data] == ['TASK']
+    assert sorted(o['type'] for o in client.get(URL + 'options/', {'object_type': 'SAVINGS_GOAL'}).data) == [
+        'TASK', 'TRIP',
+    ]
+    assert sorted(o['type'] for o in client.get(URL + 'options/', {'object_type': 'TRIP'}).data) == [
+        'HOUSEHOLD_TASK', 'SAVINGS_GOAL',
+    ]
     assert sorted(o['type'] for o in client.get(URL + 'options/', {'object_type': 'TASK'}).data) == [
         'CALENDAR_EVENT', 'SAVINGS_GOAL',
     ]
-    assert client.get(URL + 'options/', {'object_type': 'TRIP'}).data == []
+    assert client.get(URL + 'options/', {'object_type': 'BUDGET'}).data == []
     assert client.get(URL + 'options/', {'object_type': 'NOPE'}).status_code == 400
 
 

@@ -38,6 +38,12 @@ h1 { margin: 0; font-size: clamp(25px, 2.5vw, 34px); letter-spacing: -1px; line-
 .item-copy strong { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 .item-copy small { font-size: 12px; color: #566780; line-height: 1.5; }
 .today-row > .chevron { width: 16px; height: 16px; color: #65758b; }
+.today-suggestions { margin-top: 14px; padding-top: 14px; border-top: 1px solid #edf1f6; }
+.today-suggestions__title { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 13px; color: #566780; font-weight: 600; }
+.today-suggestions__title app-icon { width: 16px; height: 16px; color: #a45a13; }
+.today-suggestion { display: grid; grid-template-columns: minmax(0, 1fr) 16px; gap: 12px; align-items: center; padding: 12px 14px; margin-top: 8px; border-radius: 14px; background: #fff8ee; color: inherit; text-decoration: none; }
+.today-suggestion:hover strong { color: #245fb0; }
+.today-suggestion .chevron { width: 16px; height: 16px; color: #65758b; }
 .trip-copy { padding-top: 4px; }
 .trip-countdown { display: inline-block; padding: 6px 10px; border-radius: 8px; background: #edf4fc; color: #245f9f; font-size: 12px; font-weight: 600; }
 .trip-copy h3 { font-size: 23px; letter-spacing: -.6px; line-height: 1.3; margin: 16px 0 5px; overflow-wrap: anywhere; }

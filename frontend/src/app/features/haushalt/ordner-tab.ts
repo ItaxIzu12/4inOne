@@ -1,14 +1,13 @@
+import { AmountInput } from '../../shared/directives/amount-input';
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, output, signal } from '@angular/core';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { AppDatePicker } from '../../shared/form/date-picker';
 import { Field } from '../../shared/form/field';
-import { AppSelect, SelectOption } from '../../shared/form/select';
 import { ModalForm } from '../../shared/form/modal-form';
 import {
   DeadlineDto,
-  DeductionOptionDto,
   FolderEntryDto,
   FolderEntryInput,
   FolderKind,
@@ -33,9 +32,10 @@ function formatDate(iso: string | null): string {
 
 /**
  * Haushaltsordner: Verträge (mit Kündigungsfrist) und Geräte (Garantie,
- * Wartung). Alle Fristen landen automatisch als ganztägige Termine im
- * gemeinsamen Kalender; die Kosten eines Vertrags kommen aus dem
- * verknüpften festen Abzug in Finanzen — eine Zahl, eine Quelle.
+ * Wartung). Die Fristen erscheinen automatisch unter „Heute“; die
+ * monatlichen Kosten eines Vertrags gehören dem Haushalt und stehen direkt
+ * am Eintrag (ADR-001 — keine Verknüpfung zu den eingefrorenen
+ * Haushaltsfinanzen).
  *
  * Kind-Konten haben keinen Zugriff (Vertragskosten sind Finanzdaten), das
  * Backend antwortet mit 403 — hier als verständlicher Hinweis statt als
@@ -44,7 +44,7 @@ function formatDate(iso: string | null): string {
 @Component({
   selector: 'app-ordner-tab',
   standalone: true,
-  imports: [DecimalPipe, AppIcon, Field, ModalForm, AppSelect, AppDatePicker],
+  imports: [AmountInput, DecimalPipe, AppIcon, Field, ModalForm, AppDatePicker],
   templateUrl: './ordner-tab.html',
   styleUrls: ['./haushalt-common.scss', './ordner-tab.scss'],
 })
@@ -78,7 +78,7 @@ export class OrdnerTab {
   protected readonly formName = signal('');
   protected readonly formProvider = signal('');
   protected readonly formNotes = signal('');
-  protected readonly formDeduction = signal<Id | null>(null);
+  protected readonly formCost = signal('');
   protected readonly formContractEnd = signal('');
   protected readonly formNotice = signal('');
   protected readonly formPurchase = signal('');
@@ -87,7 +87,6 @@ export class OrdnerTab {
   protected readonly formNextMaintenance = signal('');
   protected readonly formError = signal<string | null>(null);
   protected readonly formSaving = signal(false);
-  protected readonly deductionOptions = signal<DeductionOptionDto[]>([]);
 
   constructor() {
     this.load();
@@ -134,7 +133,7 @@ export class OrdnerTab {
       name: '',
       provider: '',
       notes: '',
-      recurring_deduction_id: null,
+      monthly_cost: null,
       contract_end: null,
       notice_period_months: null,
       purchase_date: null,
@@ -154,7 +153,7 @@ export class OrdnerTab {
     this.formName.set(entry.name);
     this.formProvider.set(entry.provider);
     this.formNotes.set(entry.notes);
-    this.formDeduction.set(entry.recurring_deduction_id);
+    this.formCost.set(entry.monthly_cost ? entry.monthly_cost.replace('.', ',') : '');
     this.formContractEnd.set(entry.contract_end ?? '');
     this.formNotice.set(entry.notice_period_months?.toString() ?? '');
     this.formPurchase.set(entry.purchase_date ?? '');
@@ -163,63 +162,19 @@ export class OrdnerTab {
     this.formNextMaintenance.set(entry.next_maintenance ?? '');
     this.formError.set(null);
     this.formOpen.set(true);
-    this.loadDeductionOptions(entry.recurring_deduction_id);
-  }
-
-  /** Noch nicht verknüpfte feste Abzüge — plus der aktuell verknüpfte,
-   * damit er beim Bearbeiten auswählbar bleibt. */
-  private loadDeductionOptions(current: Id | null): void {
-    this.provider.getUnlinkedDeductions().subscribe({
-      next: (options) => {
-        const linked = this.entries()
-          ?.find((e) => e.recurring_deduction_id === current && current !== null);
-        const withCurrent =
-          current !== null && linked && !options.some((o) => o.id === current)
-            ? [
-                {
-                  id: current,
-                  name: linked.name,
-                  amount: linked.monthly_cost ?? '0',
-                  active: linked.deduction_active !== false,
-                },
-                ...options,
-              ]
-            : options;
-        this.deductionOptions.set(withCurrent);
-      },
-      error: () => this.deductionOptions.set([]),
-    });
   }
 
   protected closeForm(): void {
     this.formOpen.set(false);
   }
 
-  protected setDeduction(value: string): void {
-    const option = this.deductionOptions().find((o) => String(o.id) === value) ?? null;
-    this.formDeduction.set(option ? option.id : null);
-    if (option && !this.formName().trim()) this.formName.set(option.name);
-  }
-
-  protected selectedDeduction(): DeductionOptionDto | null {
-    const id = this.formDeduction();
-    return this.deductionOptions().find((o) => o.id === id) ?? null;
-  }
-
-  protected readonly deductionSelectOptions = computed<SelectOption[]>(() => [
-    { value: '', label: 'Kein fester Abzug' },
-    ...this.deductionOptions().map((o) => {
-      const amount = Number(o.amount).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      return { value: String(o.id), label: `${o.name} · ${amount} €${o.active ? '' : ' (pausiert)'}` };
-    }),
-  ]);
-
-  protected deductionHint(): string {
-    const selected = this.selectedDeduction();
-    if (!selected) return 'Verknüpft ihr einen festen Abzug, stehen die Kosten automatisch hier.';
-    if (!selected.active) return 'Dieser feste Abzug ist in Finanzen pausiert und zählt deshalb gerade nicht zu den Kosten.';
-    const amount = Number(selected.amount).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return `Monatliche Kosten: ${amount} € – geändert wird der Betrag in Finanzen.`;
+  /** "39,99" oder "39.99" → "39.99"; leer → null; ungültig → undefined. */
+  private parseCost(value: string): string | null | undefined {
+    const trimmed = value.trim().replace(/\s|€/g, '');
+    if (!trimmed) return null;
+    const normalized = trimmed.includes(',') ? trimmed.replace(/\./g, '').replace(',', '.') : trimmed;
+    if (!/^\d{1,5}(\.\d{1,2})?$/.test(normalized)) return undefined;
+    return Number(normalized).toFixed(2);
   }
 
   private optionalInt(value: string): number | null {
@@ -235,12 +190,17 @@ export class OrdnerTab {
       return;
     }
     const isContract = this.formKind() === 'vertrag';
+    const cost = isContract ? this.parseCost(this.formCost()) : null;
+    if (cost === undefined) {
+      this.formError.set('Bitte die monatlichen Kosten als Betrag eingeben, z. B. 39,99.');
+      return;
+    }
     const input: FolderEntryInput = {
       kind: this.formKind(),
       name,
       provider: this.formProvider().trim(),
       notes: this.formNotes().trim(),
-      recurring_deduction_id: isContract ? this.formDeduction() : null,
+      monthly_cost: cost,
       contract_end: isContract ? this.formContractEnd() || null : null,
       notice_period_months: isContract ? this.optionalInt(this.formNotice()) : null,
       purchase_date: isContract ? null : this.formPurchase() || null,

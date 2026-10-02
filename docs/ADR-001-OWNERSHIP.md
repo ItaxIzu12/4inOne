@@ -1,8 +1,36 @@
 # ADR-001 — Eigentümerschaft und Freigaben
 
-**Status:** Vorschlag, wartet auf Entscheidung
-**Datum:** 24. September 2026
+**Status:** Entschieden (2. Oktober 2026), anders als ursprünglich empfohlen, siehe §0
+**Datum:** 24. September 2026 (Vorschlag) · 2. Oktober 2026 (Entscheidung)
 **Betrifft:** D-002, D-004, `DATA_MODEL.md` („owner_scope“), `AUTH_AND_PERMISSIONS.md`, Roadmap Phase 2
+
+## 0. Entscheidung
+
+Statt eines verallgemeinerten „Bereichs“ (Option C) gilt das Modell, das inzwischen im Code steht. Es ist bewusst klein: **drei Arten von Eigentum, jede mit genau einer Regel.**
+
+| Art | Wer sieht es | Modelle |
+|---|---|---|
+| **Privat** über `owner` (Person) | nur diese Person | `finanzen`: Transaction, Category, MonthlyBudget, SavingsGoal, SavingsContribution · `organisation`: PersonalEvent, PersonalTask |
+| **Haushalt** über Mitgliedschaft | alle Mitglieder des Haushalts (Kind-Konten eingeschränkt) | `haushalt`: Einkauf, Aufgaben, Routinen, Haushaltsordner |
+| **Reise** über Teilnahme | Eigentümer:in und Teilnehmende (OWNER/EDITOR/VIEWER) | `reisen`: Trip und alles darin |
+
+Regeln:
+
+1. **Geld ist privat.** Ein abgeschlossener Einkauf im Haushalt wird eine Ausgabe in den *privaten* Finanzen der Person, die eingekauft hat. Die Preisschätzung des Haushalts nutzt nur den Einkaufsbetrag selbst und nie eine private Buchung.
+2. **Die alten Haushaltsfinanzen sind eingefroren.** Das betrifft Account, die Haushalts-Category, RecurringDeduction, Übersicht und Analysen. Sie bleiben lesbar (`/haushaltsfinanzen`). Jede Änderung lehnt das Backend ab (`finanzen/views.py LegacyHouseholdFinanceFrozen`). Gelöscht wird nichts.
+3. **Der Haushalt hängt nicht mehr an Finanzen oder dem alten Kalender.** Vertragskosten stehen am Ordner-Eintrag (`FolderEntry.monthly_cost`). Aufgaben und Ordnerfristen werden nicht mehr in `CalendarEvent` kopiert, „Heute“ liest sie direkt. Migration `haushalt/0004` übernimmt die Beträge und löscht nur die automatisch erzeugten Kalenderkopien.
+4. **Eine Reise gibt keinen Zugang zu anderem.** Teilnahme schaltet weder Haushalt noch Finanzen frei.
+5. **Verbindungen geben nie Zugang.** Jede Seite einer Connection wird beim Lesen einzeln gegen ihre eigene Regel geprüft (`connections/registry.py`).
+
+Damit sind die offenen Fragen aus §7 vorerst beantwortet:
+- **Name:** kein Oberbegriff in der Oberfläche.
+- **Finanzen teilen:** nicht als gemeinsame Buchungen. Geteilte Kosten gibt es nur im Reisebudget.
+- **Mehrere Haushalte:** im Modell möglich, in der Oberfläche vorerst einer.
+- **Kind-Konten:** keine Finanzen und kein Haushaltsordner.
+
+**Später, nicht jetzt:** Eine gemeinsame Haushaltskasse wäre ein neues, ausdrücklich geteiltes Objekt. Die alten Haushaltsfinanzen werden dafür nicht wiederbelebt.
+
+Die Abschnitte 1 bis 8 unten sind der ursprüngliche Vorschlag. Sie bleiben als Begründung stehen.
 
 ## 1. Warum jetzt
 

@@ -1,9 +1,10 @@
 from decimal import Decimal
 
 from django.db.models import Q, Sum
+from django.conf import settings
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import CursorPagination
-from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
+from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAuthenticated
 from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -49,6 +50,20 @@ class TransactionCursorPagination(CursorPagination):
     cursor_query_param = 'cursor'
 
 
+class LegacyHouseholdFinanceFrozen(BasePermission):
+    """ADR-001: Die alten Haushaltsfinanzen bleiben lesbar, nehmen aber keine
+    Änderungen mehr an. Daten werden nicht gelöscht; neue Buchungen gehören
+    in die privaten Finanzen (/api/v1/finanzen/private/)."""
+
+    message = (
+        'Die Haushaltsfinanzen sind eingefroren und nur noch lesbar. '
+        'Neue Buchungen gehören in deine privaten Finanzen.'
+    )
+
+    def has_permission(self, request, view):
+        return request.method in SAFE_METHODS or settings.LEGACY_HOUSEHOLD_FINANCE_WRITABLE
+
+
 class TransactionViewSet(ModelViewSet):
     """Beispielhafte Anwendung von HouseholdScopedPermission
     (ARCHITEKTUR.md §3.2/§4 aus Schritt 4).
@@ -65,7 +80,7 @@ class TransactionViewSet(ModelViewSet):
     """
 
     serializer_class = TransactionSerializer
-    permission_classes = [IsAuthenticated, HouseholdScopedPermission]
+    permission_classes = [IsAuthenticated, LegacyHouseholdFinanceFrozen, HouseholdScopedPermission]
     household_field = 'account__household'
     pagination_class = TransactionCursorPagination
 
@@ -128,7 +143,7 @@ class CategoryViewSet(ModelViewSet):
     """
 
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated, HouseholdScopedPermission]
+    permission_classes = [IsAuthenticated, LegacyHouseholdFinanceFrozen, HouseholdScopedPermission]
     household_field = 'household'
 
     def get_queryset(self):
@@ -328,22 +343,14 @@ class OnboardingStatusView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # ADR-001: „erste Buchung“ und „erste Kategorie“ zählen in den
+        # PRIVATEN Finanzen der Person — die Haushaltsfinanzen sind eingefroren.
         household = request.user.households.first()
-        if household is None:
-            return Response(
-                {
-                    'has_transaction': False,
-                    'has_category': False,
-                    'member_count': 1,
-                    'mfa_enabled': user_has_mfa_enabled(request.user),
-                }
-            )
-
         return Response(
             {
-                'has_transaction': Transaction.objects.filter(account__household=household).exists(),
-                'has_category': Category.objects.filter(household=household).exists(),
-                'member_count': household.members.count(),
+                'has_transaction': Transaction.objects.filter(owner=request.user).exists(),
+                'has_category': Category.objects.filter(owner=request.user).exists(),
+                'member_count': household.members.count() if household is not None else 1,
                 'mfa_enabled': user_has_mfa_enabled(request.user),
             }
         )
@@ -419,7 +426,7 @@ class SetOwnIncomeView(APIView):
     zeigen könnte, ein Nutzer kann also strukturell nie das Einkommen eines
     anderen Mitglieds setzen."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, LegacyHouseholdFinanceFrozen]
 
     def patch(self, request):
         household = request.user.households.first()
@@ -437,7 +444,7 @@ class SetHouseholdBufferView(APIView):
     Mitglied wie monthly_income), jedes Mitglied darf ihn ändern, dieselbe
     Offenheit wie beim gemeinsamen Budget/den Kategorien oben."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, LegacyHouseholdFinanceFrozen]
 
     def patch(self, request):
         household = request.user.households.first()
@@ -457,7 +464,7 @@ class RecurringDeductionViewSet(ModelViewSet):
     finanzen/models.py RecurringDeduction-Docstring)."""
 
     serializer_class = RecurringDeductionSerializer
-    permission_classes = [IsAuthenticated, HouseholdScopedPermission]
+    permission_classes = [IsAuthenticated, LegacyHouseholdFinanceFrozen, HouseholdScopedPermission]
     household_field = 'household'
 
     def get_queryset(self):

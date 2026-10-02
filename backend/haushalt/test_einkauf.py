@@ -87,12 +87,39 @@ def test_completing_with_amount_books_an_expense_in_finance(anna, client_for):
     assert response.data['item_count'] == 3
     transaction = Transaction.objects.get(pk=response.data['transaction_id'])
     assert transaction.amount == Decimal('18.40')
-    assert transaction.category.name == 'Haushalt'
+    # ADR-001: privat bei der Person, die eingekauft hat — nicht im Haushaltskonto.
+    assert transaction.owner == anna and transaction.account is None
+    assert transaction.type == 'EXPENSE'
+    assert transaction.category.name == 'Lebensmittel' and transaction.category.owner == anna
     assert transaction.created_by == anna
     assert transaction.description == 'Einkauf (3 Artikel)'
-    # Die Ausgabe fließt sofort ins Budget ein.
-    assert finanzen_services.transactions_total(anna.households.first()) == Decimal('18.40')
+    # Die Ausgabe erscheint sofort in Annas privater Übersicht.
+    summary = client.get('/api/v1/finanzen/private/summary/?month=' + transaction.datum.strftime('%Y-%m')).data
+    assert summary['expenses'] == '18.40'
     assert list(ShoppingItem.objects.values_list('name', flat=True)) == ['Butter']
+
+
+def test_shopping_expense_stays_private_to_the_shopper(anna, ben, client_for):
+    """Ben ist im selben Haushalt, sieht Annas Einkaufsbuchung aber nicht."""
+    client = client_for(anna)
+    item = _add(client, 'Milch')
+    client.patch(f'{ITEMS}{item["id"]}/', {'is_checked': True}, format='json')
+    client.post(COMPLETE, {'amount': '7.50'}, format='json')
+
+    ben_client = client_for(ben)
+    assert ben_client.get('/api/v1/finanzen/private/transactions/').data == []
+    month = Transaction.objects.get().datum.strftime('%Y-%m')
+    assert ben_client.get(f'/api/v1/finanzen/private/summary/?month={month}').data['expenses'] == '0.00'
+
+
+def test_shopping_reuses_the_existing_groceries_category(anna, client_for):
+    client = client_for(anna)
+    own = Category.objects.create(owner=anna, name='Lebensmittel', color='#eb6834')
+    item = _add(client, 'Milch')
+    client.patch(f'{ITEMS}{item["id"]}/', {'is_checked': True}, format='json')
+    response = client.post(COMPLETE, {'amount': '3.00'}, format='json')
+    assert Transaction.objects.get(pk=response.data['transaction_id']).category == own
+    assert Category.objects.filter(owner=anna, name='Lebensmittel').count() == 1
 
 
 def test_completing_without_amount_creates_no_expense(anna, client_for):
@@ -115,9 +142,7 @@ def test_completing_with_nothing_checked_is_rejected(anna, client_for):
 
 
 def _booked_trip(household, user, item_count, amount):
-    transaction = finanzen_services.create_transaction_from_shopping_list(
-        household, user, Decimal(amount), item_count
-    )
+    transaction = finanzen_services.book_shopping_expense(user, Decimal(amount), item_count)
     return ShoppingTrip.objects.create(
         household=household, item_count=item_count, amount=Decimal(amount), transaction=transaction
     )
@@ -130,20 +155,16 @@ def test_price_estimate_learns_from_previous_trips(anna, household):
     assert services.price_per_item(household) == (Decimal('3.00'), True)
 
 
-def test_price_estimate_follows_corrections_made_in_finance(anna, household, client_for):
+def test_private_corrections_do_not_leak_into_the_household_estimate(anna, household, client_for):
+    """Die Buchung ist privat (ADR-001). Korrigiert oder löscht Anna sie in
+    ihren Finanzen, bleibt das privat — die Schätzung aller nutzt weiter den
+    Betrag, der beim Abschließen im Haushalt angegeben wurde."""
     trip = _booked_trip(household, anna, 4, '64.00')
-    response = client_for(anna).patch(
-        f'/api/v1/finanzen/transaktionen/{trip.transaction_id}/', {'amount': '46.00'}, format='json'
-    )
-    assert response.status_code == 200, response.data
-    assert services.price_per_item(household) == (Decimal('11.50'), True)
-
-
-def test_price_estimate_ignores_expenses_deleted_in_finance(anna, household, client_for):
-    _booked_trip(household, anna, 4, '10.00')
-    wrong = _booked_trip(household, anna, 2, '200.00')
-    assert client_for(anna).delete(f'/api/v1/finanzen/transaktionen/{wrong.transaction_id}/').status_code == 204
-    assert services.price_per_item(household) == (Decimal('2.50'), True)
+    client = client_for(anna)
+    assert client.patch(f'/api/v1/finanzen/private/transactions/{trip.transaction_id}/', {'amount': '46.00'}, format='json').status_code == 200
+    assert services.price_per_item(household) == (Decimal('16.00'), True)
+    assert client.delete(f'/api/v1/finanzen/private/transactions/{trip.transaction_id}/').status_code == 204
+    assert services.price_per_item(household) == (Decimal('16.00'), True)
 
 
 def test_trip_without_expense_does_not_affect_the_estimate(anna, household):
@@ -166,11 +187,14 @@ def test_foreign_category_cannot_be_used_as_booking_target(anna, fremd, client_f
     client = client_for(anna)
     item = _add(client, 'Milch')
     client.patch(f'{ITEMS}{item["id"]}/', {'is_checked': True}, format='json')
-    foreign_category = Category.objects.get(household=fremd.households.first(), name='Haushalt')
-
-    response = client.post(COMPLETE, {'amount': '5.00', 'category_id': foreign_category.id}, format='json')
-
-    assert response.status_code == 400
+    others = [
+        Category.objects.create(owner=fremd, name='Fremd'),                               # andere Person
+        Category.objects.get(household=fremd.households.first(), name='Haushalt'),        # alte Haushaltsfinanzen
+        Category.objects.get(household=anna.households.first(), name='Haushalt'),         # sogar Annas eigener Haushalt
+    ]
+    for category in others:
+        response = client.post(COMPLETE, {'amount': '5.00', 'category_id': category.id}, format='json')
+        assert response.status_code == 400, category
     assert Transaction.objects.count() == 0
 
 

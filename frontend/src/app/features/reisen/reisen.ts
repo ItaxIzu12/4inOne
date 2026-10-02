@@ -1,6 +1,8 @@
+import { AmountInput } from '../../shared/directives/amount-input';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
@@ -13,6 +15,7 @@ import { Modal } from '../../shared/modal/modal';
 import { BudgetCategory, ContactOption, PackingCategory, PackingItem, ReisenApi, Trip, TripBudgetCategory, TripExpense, TripParticipant, TripTask } from './reisen-api.service';
 import { buildTripSuggestions, SuggestedPackingItem, SuggestedTask } from './trip-suggestions';
 import { buildTripReadiness, TripReadiness } from './trip-readiness';
+import { TripPlan } from './trip-plan';
 
 export function localDay(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -38,7 +41,7 @@ export function formatMoney(value: string | number, currency: Trip['currency']):
 @Component({
   selector: 'app-reisen',
   standalone: true,
-  imports: [AppShell, AppIcon, Field, ModalForm, Modal, ReactiveFormsModule, AppSelect, AppDatePicker, DatePipe],
+  imports: [AmountInput, AppShell, AppIcon, Field, ModalForm, Modal, ReactiveFormsModule, AppSelect, AppDatePicker, DatePipe, TripPlan],
   templateUrl: './reisen.html',
   styleUrl: './reisen.scss',
 })
@@ -46,6 +49,7 @@ export class Reisen {
   private api = inject(ReisenApi);
   private destroy = inject(DestroyRef);
   private fb = inject(FormBuilder);
+  private route = inject(ActivatedRoute);
   protected readonly formatMoney = formatMoney;
 
   readonly tab = signal<'uebersicht' | 'reisen' | 'packliste' | 'aufgaben' | 'budget'>('uebersicht');
@@ -302,6 +306,13 @@ export class Reisen {
         next: (trips) => {
           this.trips.set(trips);
           this.loading.set(false);
+          // Deep-Link aus einer Verknüpfung (?trip=), z. B. vom Sparziel in Finanzen.
+          const linked = Number(this.route.snapshot.queryParamMap.get('trip'));
+          if (linked && trips.some((t) => t.id === linked)) {
+            this.selectedTripId.set(linked);
+            this.tab.set('uebersicht');
+            return;
+          }
           const current = this.selectedTripId();
           if (current === null || !trips.some((t) => t.id === current)) {
             this.selectedTripId.set(this.nextTrip()?.id ?? trips[0]?.id ?? null);

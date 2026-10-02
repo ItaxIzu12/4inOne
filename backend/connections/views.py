@@ -3,12 +3,16 @@ from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from connections import services
+from connections import services, suggestions
+from connections.today import today_overview
 from connections.serializers import (
     CandidateQuerySerializer,
     ConnectionCreateSerializer,
     ObjectQuerySerializer,
     OptionsQuerySerializer,
+    SuggestionAcceptSerializer,
+    SuggestionKeySerializer,
+    SuggestionQuerySerializer,
 )
 from connections.throttling import ConnectionsWriteRateThrottle
 
@@ -77,3 +81,38 @@ class ConnectionCandidatesView(ConnectionsView):
         return Response(
             services.candidates_for(request.user, data['object_type'], data['object_id'], data['target_type'], data['q'])
         )
+
+
+class SuggestionListView(ConnectionsView):
+    """Vorschläge zu einer Reise (?trip=) oder zu allen anstehenden Reisen."""
+
+    def get(self, request):
+        query = SuggestionQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        trip_id = query.validated_data.get('trip')
+        if trip_id is not None:
+            return Response(suggestions.for_trip(request.user, trip_id))
+        return Response(suggestions.for_user(request.user))
+
+
+class SuggestionAcceptView(ConnectionsView):
+    def post(self, request):
+        body = SuggestionAcceptSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        data = body.validated_data
+        return Response(suggestions.accept(request.user, data['key'], data['action'], data.get('member_id')))
+
+
+class SuggestionDismissView(ConnectionsView):
+    def post(self, request):
+        body = SuggestionKeySerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        suggestions.dismiss(request.user, body.validated_data['key'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TodayOverviewView(ConnectionsView):
+    """GET /api/v1/today/?timezone=Europe/Berlin — „Heute“ aus allen Bereichen."""
+
+    def get(self, request):
+        return Response(today_overview(request.user, request.query_params.get('timezone', 'Europe/Berlin')))

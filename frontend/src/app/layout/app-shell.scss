@@ -2,7 +2,8 @@
   display: block;
   --text: #142143;
   --text-body: #142143;
-  --text-muted: #64728c;
+  // #64728c erreichte auf --canvas (#f4f5fa) nur 4,46:1 — knapp unter WCAG AA.
+  --text-muted: #5f6d87;
   color: var(--text);
   background: #f8fafd;
   min-height: 100dvh;

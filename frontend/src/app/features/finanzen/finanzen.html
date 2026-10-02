@@ -11,6 +11,7 @@
             <h1>Eure Finanzen</h1>
             <p class="page-subtitle">Gemeinsam planen. Wissen, was bleibt.</p>
           </div>
+          @if (!frozen) {
           <button type="button" class="btn-primary" (click)="openAddModal()">
             <svg
               aria-hidden="true"
@@ -27,7 +28,17 @@
             </svg>
             {{ t.addExpense }}
           </button>
+          } @else {
+            <a class="btn-primary" routerLink="/finanzen">Zu meinen Finanzen</a>
+          }
         </header>
+        @if (frozen) {
+          <p class="frozen-note" role="note">
+            <strong>Nur noch lesbar.</strong> Die gemeinsamen Haushaltsfinanzen sind eingefroren – nichts wurde gelöscht.
+            Neue Ausgaben, Kategorien und Budgets führst du in deinen privaten Finanzen. Einkäufe aus dem Haushalt
+            landen automatisch dort.
+          </p>
+        }
 
         <div class="tabs-row">
           <div class="subtabs" role="tablist" [attr.aria-label]="t.tablistLabel">
@@ -108,7 +119,9 @@
             <section class="category-section" aria-labelledby="cat-heading">
               <div class="category-heading">
                 <h2 id="cat-heading">Kategorien</h2>
-                <span>Limits ändern</span>
+                @if (!frozen) {
+                  <span>Limits ändern</span>
+                }
               </div>
               <ul class="category-list">
                 @for (slice of categories(); track slice.id; let i = $index) {
@@ -161,9 +174,9 @@
                 }
               </ul>
               <div class="category-actions">
-                <button type="button" (click)="openNewCategoryModal()">
-                  ＋ Kategorie erstellen</button
-                ><button type="button" class="view-transactions" (click)="openModal()">
+                @if (!frozen) {
+                  <button type="button" (click)="openNewCategoryModal()">＋ Kategorie erstellen</button>
+                }<button type="button" class="view-transactions" (click)="openModal()">
                   Alle Ausgaben ansehen →
                 </button>
               </div>
@@ -262,6 +275,7 @@
                     <div class="inline-field-form__row">
                       <input
                         id="own-income-input"
+                        [disabled]="frozen"
                         type="number"
                         inputmode="decimal"
                         min="0"
@@ -272,7 +286,7 @@
                       <button
                         type="submit"
                         class="btn-secondary"
-                        [disabled]="ownIncomeSubmitting()"
+                        [disabled]="frozen || ownIncomeSubmitting()"
                        [attr.aria-busy]="ownIncomeSubmitting()">
  @if (ownIncomeSubmitting()) { <span class="save-spinner" aria-hidden="true"></span> }
                         {{ ownIncomeSubmitting() ? t.ownIncomeSaving : t.ownIncomeSave }}
@@ -296,6 +310,7 @@
                     <div class="inline-field-form__row">
                       <input
                         id="buffer-input"
+                        [disabled]="frozen"
                         type="number"
                         inputmode="decimal"
                         min="0"
@@ -303,7 +318,7 @@
                         [value]="bufferInput()"
                         (input)="bufferInput.set($any($event.target).value)"
                       />
-                      <button type="submit" class="btn-secondary" [disabled]="bufferSubmitting()" [attr.aria-busy]="bufferSubmitting()">
+                      <button type="submit" class="btn-secondary" [disabled]="frozen || bufferSubmitting()" [attr.aria-busy]="bufferSubmitting()">
  @if (bufferSubmitting()) { <span class="save-spinner" aria-hidden="true"></span> }
                         {{ bufferSubmitting() ? t.bufferSaving : t.bufferSave }}
                       </button>
@@ -324,13 +339,15 @@
                 </p>
                 <div class="section-head">
                   <h2 id="deductions-heading">{{ t.deductionsHeading }}</h2>
-                  <button
-                    type="button"
-                    class="section-head__view-all"
-                    (click)="openAddDeductionModal()"
-                  >
-                    {{ t.addDeduction }}
-                  </button>
+                  @if (!frozen) {
+                    <button
+                      type="button"
+                      class="section-head__view-all"
+                      (click)="openAddDeductionModal()"
+                    >
+                      {{ t.addDeduction }}
+                    </button>
+                  }
                 </div>
                 <ul class="deductions-list">
                   @for (deduction of deductions(); track deduction.id) {

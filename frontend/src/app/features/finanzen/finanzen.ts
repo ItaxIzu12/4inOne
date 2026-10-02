@@ -1,7 +1,8 @@
+import { AmountInput } from '../../shared/directives/amount-input';
 import { SaveFeedback } from '../../shared/save-feedback/save-feedback';
 import { FinanceSettings } from './finance-settings';
 import { ContextBar } from '../../shared/context-bar/context-bar';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe, DecimalPipe, NgComponentOutlet } from '@angular/common';
 import {
   Component,
@@ -28,6 +29,7 @@ import {
   RecurringDeductionDto,
   TransactionDto,
 } from './finanzen-api.service';
+import { DemoFinanzenDataProvider } from './demo-finanzen-data-provider';
 import { FINANZEN_DATA_PROVIDER } from './finanzen-data-provider';
 import { FinanzenStateService } from './finanzen-state.service';
 import { FINANZEN_I18N } from './finanzen.i18n';
@@ -118,7 +120,7 @@ function initialsFor(name: string): string {
 @Component({
   selector: 'app-finanzen',
   standalone: true,
-  imports: [SaveFeedback,
+  imports: [AmountInput, SaveFeedback,
     FinanceSettings,
     DecimalPipe,
     DatePipe,
@@ -126,6 +128,7 @@ function initialsFor(name: string): string {
     Modal,
     SidebarNav,
     ContextBar,
+    RouterLink,
   ],
   templateUrl: './finanzen.html',
   styleUrl: './finanzen.scss',
@@ -142,6 +145,12 @@ export class Finanzen {
   protected readonly financeState = inject(FinanzenStateService);
 
   protected readonly t = FINANZEN_I18N;
+
+  // ADR-001: Die echten Haushaltsfinanzen sind eingefroren — das Backend
+  // lehnt jede Änderung ab (finanzen/views.py LegacyHouseholdFinanceFrozen).
+  // Die Seite bleibt lesbar, alle Schreibwege sind hier zu. Die lokale Demo
+  // schreibt nie ins Backend und bleibt deshalb bedienbar.
+  protected readonly frozen = !(this.provider instanceof DemoFinanzenDataProvider);
 
   // Ersetzt das früher hartkodierte "August" in Seitentitel/Budget-Label —
   // läuft mit, statt im nächsten Monat falsch stehen zu bleiben.
@@ -541,6 +550,7 @@ export class Finanzen {
   }
 
   protected openAddModal(): void {
+    if (this.frozen) return;
     this.editingTransactionId.set(null);
     this.addDatum.set(heuteIso());
     this.addModalOpen.set(true);
@@ -552,6 +562,7 @@ export class Finanzen {
    * editingTransactionId/isEditing) — von den Transaktionszeilen der
    * Hauptseite UND des Historie-Modals aus aufrufbar. */
   protected openEditModal(tx: TransactionDto): void {
+    if (this.frozen) return;
     this.editingTransactionId.set(tx.id);
     this.addAmount.set(tx.amount);
     this.addDescription.set(tx.description);
@@ -693,6 +704,7 @@ export class Finanzen {
 
   // ---------- Kategorie-Budgetziel ändern ----------
   protected openCategoryGoalModal(slice: CategorySlice): void {
+    if (this.frozen) return;
     this.categoryGoalCategoryId.set(slice.id);
     this.categoryGoalCategoryLabel.set(slice.label);
     this.categoryGoalInput.set(slice.monthlyGoal !== null ? String(slice.monthlyGoal) : '');
@@ -754,6 +766,7 @@ export class Finanzen {
   // ---------- "Kategorie hinzufügen" ----------
 
   protected openNewCategoryModal(): void {
+    if (this.frozen) return;
     this.newCategoryName.set('');
     this.newCategoryIconKey.set(null);
     this.newCategoryColor.set(null);
@@ -840,6 +853,7 @@ export class Finanzen {
   }
 
   protected submitOwnIncome(): void {
+    if (this.frozen) return;
     if (this.ownIncomeSubmitting()) return;
     const raw = this.ownIncomeInput().trim();
     // Leeres Feld = Einkommen entfernen (monthly_income ist optional, siehe
@@ -878,6 +892,7 @@ export class Finanzen {
   }
 
   protected submitBuffer(): void {
+    if (this.frozen) return;
     if (this.bufferSubmitting()) return;
     const raw = this.bufferInput().trim();
     const monthlyBuffer = raw === '' ? 0 : Number(raw.replace(',', '.'));
@@ -905,6 +920,7 @@ export class Finanzen {
   // ---------- Analysen: feste Abzüge ----------
 
   protected openAddDeductionModal(): void {
+    if (this.frozen) return;
     this.editingDeductionId.set(null);
     this.deductionName.set('');
     this.deductionAmount.set('');
@@ -916,6 +932,7 @@ export class Finanzen {
   }
 
   protected openEditDeductionModal(deduction: RecurringDeductionDto): void {
+    if (this.frozen) return;
     this.editingDeductionId.set(deduction.id);
     this.deductionName.set(deduction.name);
     this.deductionAmount.set(deduction.amount);

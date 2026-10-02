@@ -4,7 +4,6 @@ from django.db.models.functions import Lower
 from django.utils import timezone
 
 from core.models import Household
-from organisation.models import CalendarEvent
 
 
 class Section(models.TextChoices):
@@ -139,9 +138,6 @@ class Task(models.Model):
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
     )
-    calendar_event = models.ForeignKey(
-        CalendarEvent, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks'
-    )
     is_done = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
@@ -201,11 +197,11 @@ class FolderEntry(models.Model):
     """Ein Eintrag im Haushaltsordner: ein Vertrag (Strom, Internet,
     Versicherung …) oder ein Gerät (Heizung, Waschmaschine, Rauchmelder …).
 
-    Die Fristen (Kündigung, Garantieende, nächste Wartung) werden von
-    haushalt/services.py als ganztägige Termine in den gemeinsamen Kalender
-    übertragen. Kosten eines Vertrags kommen, wenn verknüpft, immer aus dem
-    festen Abzug in Finanzen — eine einzige Quelle statt zweier Zahlen, die
-    auseinanderlaufen können."""
+    Die Fristen (Kündigung, Garantieende, nächste Wartung) werden NICHT als
+    Kopie in einen Kalender geschrieben, sondern von „Heute“ direkt gelesen
+    (services.folder_deadlines). Die monatlichen Kosten gehören dem Haushalt
+    und stehen hier selbst — die alten Haushaltsfinanzen (feste Abzüge) sind
+    eingefroren (ADR-001)."""
 
     class Kind(models.TextChoices):
         CONTRACT = 'vertrag', 'Vertrag'
@@ -222,9 +218,7 @@ class FolderEntry(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     # --- Vertrag ---
-    recurring_deduction = models.ForeignKey(
-        'finanzen.RecurringDeduction', on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
-    )
+    monthly_cost = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     contract_end = models.DateField(null=True, blank=True)
     notice_period_months = models.PositiveSmallIntegerField(null=True, blank=True)
 

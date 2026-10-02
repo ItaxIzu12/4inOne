@@ -29,6 +29,19 @@
 .page-head h1 {
   margin-top: 6px;
 }
+.page-head a.btn-primary {
+  text-decoration: none;
+}
+.frozen-note {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--color-hairline);
+  background: var(--color-fog-surface);
+  color: var(--color-midnight-plum);
+  font-size: 14px;
+  line-height: 1.45;
+}
 .btn-primary {
   display: inline-flex;
   align-items: center;

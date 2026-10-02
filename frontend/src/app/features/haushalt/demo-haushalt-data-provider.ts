@@ -1,13 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { RecurringDeductionDto } from '../finanzen/finanzen-api.service';
-import { DemoFinanzenDataProvider } from '../finanzen/demo-finanzen-data-provider';
-import { FINANZEN_DATA_PROVIDER } from '../finanzen/finanzen-data-provider';
+import { DemoPrivateFinanceApi } from '../finanzen/demo-private-finance-api';
+import { FinanceTransaction, PrivateFinanceApi } from '../finanzen/private-finance-api.service';
 import {
   HaushaltOverviewDto,
   CompleteShoppingResult,
-  DeductionOptionDto,
   FolderEntryDto,
   FolderEntryInput,
   Id,
@@ -24,17 +22,18 @@ import {
 import { HaushaltDataProvider } from './haushalt-data-provider';
 import { SECTIONS, addDaysIso, addMonthsIso, guessSectionDemo, todayIso } from './haushalt-logic';
 
-// Sicherheitskritisch wie demo-finanzen-data-provider.ts: diese Datei
-// importiert KEINEN HttpClient. Einzige Abhängigkeit ist der Demo-
-// Finanzen-Provider derselben Routengruppe — über ihn bucht der
-// Einkauf-zu-Ausgabe-Moment in der Demo live ins Demo-Budget
-// (GESAMTKONZEPT.md §5.4: "muss ein Demo-Besucher … live sehen"). Der
-// Konstruktor prüft, dass es wirklich der Demo-Provider ist; eine
-// Fehlregistrierung in app.routes.ts fällt dadurch sofort auf, statt
-// stillschweigend echte Daten zu schreiben.
+// Sicherheitskritisch wie demo-private-finance-api.ts: diese Datei
+// importiert KEINEN HttpClient. Einzige Abhängigkeit sind die privaten
+// Demo-Finanzen derselben Routengruppe — dorthin bucht der Einkauf in der
+// Demo, genau wie im Backend in die PRIVATEN Finanzen der Person, die
+// eingekauft hat (ADR-001). Der Konstruktor prüft, dass es wirklich die
+// Demo-Implementierung ist; eine Fehlregistrierung in app.routes.ts fällt
+// dadurch sofort auf, statt stillschweigend echte Daten zu schreiben.
 
 const ANNA: MemberLoadDto = { user_id: 'demo-member-anna', name: 'Anna', points: 0, count: 0 };
 const DEMO_DEFAULT_PRICE = 3.5;
+// „Lebensmittel“ in demo-private-finance-api.ts CATEGORIES.
+const DEMO_GROCERIES_CATEGORY = 2;
 
 function item(id: string, name: string, section: SectionKey, quantity = ''): ShoppingItemDto {
   return {
@@ -74,7 +73,7 @@ function task(partial: Partial<TaskDto> & Pick<TaskDto, 'id' | 'title'>): TaskDt
 
 @Injectable()
 export class DemoHaushaltDataProvider implements HaushaltDataProvider {
-  private readonly finanzen = inject(FINANZEN_DATA_PROVIDER);
+  private readonly finanzen = inject(PrivateFinanceApi);
 
   private nextId = 1;
   private items: ShoppingItemDto[] = [
@@ -93,10 +92,10 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     { id: 'demo-mem-5', name: 'Toilettenpapier', section: 'haushalt', use_count: 4 },
     { id: 'demo-mem-6', name: 'Tomaten', section: 'obst_gemuese', use_count: 3 },
   ];
-  // Nur Artikelzahl und Buchungs-ID — der Betrag wird wie im Backend
-  // (haushalt/services.py price_per_item) jedes Mal aus der Buchung in den
-  // Demo-Finanzen gelesen, damit Korrekturen und Löschungen dort zählen.
-  private trips: { transactionId: Id; count: number }[] = [];
+  // Wie im Backend (haushalt/services.py price_per_item): die Schätzung nutzt
+  // nur den Betrag des Einkaufs selbst, nie die private Buchung — sonst würden
+  // private Korrekturen einer Person den ganzen Haushalt beeinflussen.
+  private trips: { amount: number; count: number }[] = [];
 
   private tasks: TaskDto[] = [
     task({ id: 'demo-task-1', title: 'Pflanzen gießen', recurrence: 'daily', recurrence_days: 1, due_date: addDaysIso(-1), is_overdue: true }),
@@ -108,9 +107,8 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
   ];
   private load: MemberLoadDto = { ...ANNA, points: 5, count: 3 };
 
-  // Gespeichert werden nur die Eingaben; Kosten, Kündigungsdatum und Fristen
-  // berechnet folderEntry() bei jedem Lesen — die Kosten aus den festen
-  // Abzügen der Demo-Finanzen, genau wie im Backend.
+  // Gespeichert werden nur die Eingaben; Kündigungsdatum und Fristen
+  // berechnet folderEntry() bei jedem Lesen, genau wie im Backend.
   private folder: (FolderEntryInput & { id: Id })[] = [
     {
       id: 'demo-folder-1',
@@ -118,7 +116,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
       name: 'Hausratversicherung',
       provider: 'Beispiel-Versicherung',
       notes: '',
-      recurring_deduction_id: 'demo-deduction-versicherung',
+      monthly_cost: '65.00',
       contract_end: addMonthsIso(todayIso(), 4),
       notice_period_months: 3,
       purchase_date: null,
@@ -132,7 +130,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
       name: 'Heizung',
       provider: 'Gastherme',
       notes: 'Wartungsfirma: Beispiel GmbH',
-      recurring_deduction_id: null,
+      monthly_cost: null,
       contract_end: null,
       notice_period_months: null,
       purchase_date: null,
@@ -146,7 +144,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
       name: 'Waschmaschine',
       provider: '',
       notes: '',
-      recurring_deduction_id: null,
+      monthly_cost: null,
       contract_end: null,
       notice_period_months: null,
       purchase_date: addMonthsIso(todayIso(), -14),
@@ -157,8 +155,8 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
   ];
 
   constructor() {
-    if (!(this.finanzen instanceof DemoFinanzenDataProvider)) {
-      throw new Error('DemoHaushaltDataProvider darf nur zusammen mit DemoFinanzenDataProvider verwendet werden.');
+    if (!(this.finanzen instanceof DemoPrivateFinanceApi)) {
+      throw new Error('DemoHaushaltDataProvider darf nur zusammen mit DemoPrivateFinanceApi verwendet werden.');
     }
   }
 
@@ -166,26 +164,20 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
 
   getShopping(): Observable<ShoppingOverviewDto> {
     const open = new Set(this.items.filter((i) => !i.is_checked).map((i) => i.name.toLowerCase()));
-    return this.finanzen.searchTransactions('').pipe(
-      map((page) => {
-        const amounts = new Map(page.results.map((tx) => [tx.id, Number(tx.amount)]));
-        // Gelöschte Buchungen fehlen in der Liste und zählen damit nicht mehr.
-        const booked = this.trips.filter((trip) => amounts.has(trip.transactionId)).slice(-10);
-        const totalAmount = booked.reduce((sum, trip) => sum + amounts.get(trip.transactionId)!, 0);
-        const totalCount = booked.reduce((sum, trip) => sum + trip.count, 0);
-        return {
-          items: this.items.map((i) => ({ ...i })),
-          suggestions: [...this.memory]
-            .sort((a, b) => b.use_count - a.use_count)
-            .filter((m) => !open.has(m.name.toLowerCase()))
-            .slice(0, 12),
-          sections: SECTIONS,
-          price_per_item: (totalCount ? totalAmount / totalCount : DEMO_DEFAULT_PRICE).toFixed(2),
-          price_from_history: totalCount > 0,
-          can_book_expense: true,
-        };
-      }),
-    );
+    const booked = this.trips.slice(-10);
+    const totalAmount = booked.reduce((sum, trip) => sum + trip.amount, 0);
+    const totalCount = booked.reduce((sum, trip) => sum + trip.count, 0);
+    return of({
+      items: this.items.map((i) => ({ ...i })),
+      suggestions: [...this.memory]
+        .sort((a, b) => b.use_count - a.use_count)
+        .filter((m) => !open.has(m.name.toLowerCase()))
+        .slice(0, 12),
+      sections: SECTIONS,
+      price_per_item: (totalCount ? totalAmount / totalCount : DEMO_DEFAULT_PRICE).toFixed(2),
+      price_from_history: totalCount > 0,
+      can_book_expense: true,
+    });
   }
 
   addItem(name: string, quantity: string, section: SectionKey | null): Observable<ShoppingItemDto> {
@@ -234,19 +226,19 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
       transaction_id: transactionId,
     });
     if (amount === null) return of(result(null));
+    this.trips.push({ amount, count: checked.length });
+    // Kategorie „Lebensmittel“ der privaten Demo-Finanzen — wie
+    // finanzen/services.py book_shopping_expense im Backend.
     return this.finanzen
-      .addTransaction({
-        amount,
-        description: `Einkauf (${checked.length} Artikel)`,
-        categoryId: 'demo-haushalt',
-        datum: todayIso(),
+      .save('transactions', {
+        amount: amount.toFixed(2),
+        type: 'EXPENSE',
+        category: DEMO_GROCERIES_CATEGORY,
+        date: todayIso(),
+        note: `Einkauf (${checked.length} Artikel)`,
+        currency: 'EUR',
       })
-      .pipe(
-        map((transaction) => {
-          this.trips.push({ transactionId: transaction.id, count: checked.length });
-          return result(transaction.id);
-        }),
-      );
+      .pipe(map((transaction) => result((transaction as FinanceTransaction).id)));
   }
 
   // ---------- Aufgaben ----------
@@ -358,42 +350,25 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
 
   // ---------- Haushaltsordner ----------
 
-  private deductions(): Observable<RecurringDeductionDto[]> {
-    return this.finanzen.getAnalysen().pipe(map((analysen) => analysen.recurring_deductions));
-  }
-
   getFolder(): Observable<FolderEntryDto[]> {
-    return this.deductions().pipe(
-      map((deductions) =>
-        this.folder
-          .map((entry) => this.folderEntry(entry, deductions))
-          .sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name, 'de')),
-      ),
-    );
-  }
-
-  getUnlinkedDeductions(): Observable<DeductionOptionDto[]> {
-    const linked = new Set(this.folder.map((e) => e.recurring_deduction_id).filter((id) => id !== null));
-    return this.deductions().pipe(
-      map((deductions) =>
-        deductions
-          .filter((d) => !linked.has(d.id))
-          .map((d) => ({ id: d.id, name: d.name, amount: d.amount, active: d.active })),
-      ),
+    return of(
+      this.folder
+        .map((entry) => this.folderEntry(entry))
+        .sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name, 'de')),
     );
   }
 
   createFolderEntry(input: FolderEntryInput): Observable<FolderEntryDto> {
     const stored = { ...input, id: `demo-folder-new-${this.nextId++}` };
     this.folder.push(stored);
-    return this.deductions().pipe(map((deductions) => this.folderEntry(stored, deductions)));
+    return of(this.folderEntry(stored));
   }
 
   updateFolderEntry(id: Id, input: FolderEntryInput): Observable<FolderEntryDto> {
     const index = this.folder.findIndex((e) => e.id === id);
     if (index === -1) return throwError(() => new Error('Demo-Eintrag nicht gefunden.'));
     this.folder[index] = { ...input, id };
-    return this.deductions().pipe(map((deductions) => this.folderEntry(this.folder[index], deductions)));
+    return of(this.folderEntry(this.folder[index]));
   }
 
   deleteFolderEntry(id: Id): Observable<void> {
@@ -407,16 +382,14 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     found.next_maintenance = found.maintenance_interval_months
       ? addMonthsIso(todayIso(), found.maintenance_interval_months)
       : null;
-    return this.deductions().pipe(map((deductions) => this.folderEntry(found, deductions)));
+    return of(this.folderEntry(found));
   }
 
-  /** Baut einen Eintrag inklusive der abgeleiteten Felder (Kosten,
-   * Kündigungsdatum, Fristen) — dieselben Regeln wie backend
-   * haushalt/services.py folder_deadlines() und FolderEntrySerializer:
-   * Kosten nur von einem AKTIVEN festen Abzug. */
-  private folderEntry(input: FolderEntryInput & { id: Id }, deductions: RecurringDeductionDto[]): FolderEntryDto {
+  /** Baut einen Eintrag inklusive der abgeleiteten Felder (Kündigungsdatum,
+   * Fristen) — dieselben Regeln wie backend haushalt/services.py
+   * folder_deadlines() und FolderEntrySerializer. */
+  private folderEntry(input: FolderEntryInput & { id: Id }): FolderEntryDto {
     const isContract = input.kind === 'vertrag';
-    const deduction = isContract ? (deductions.find((d) => d.id === input.recurring_deduction_id) ?? null) : null;
     const cancelBy =
       isContract && input.contract_end ? addMonthsIso(input.contract_end, -(input.notice_period_months ?? 0)) : null;
     const nextMaintenance =
@@ -437,11 +410,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     return {
       ...input,
       name: input.name.trim(),
-      // Wurde der feste Abzug in Finanzen gelöscht, fällt auch die
-      // Verknüpfung weg (Backend: SET_NULL).
-      recurring_deduction_id: deduction ? deduction.id : null,
-      monthly_cost: deduction?.active ? deduction.amount : null,
-      deduction_active: deduction ? deduction.active : null,
+      monthly_cost: isContract ? input.monthly_cost : null,
       next_maintenance: isContract ? null : nextMaintenance,
       cancel_by: cancelBy,
       deadlines,

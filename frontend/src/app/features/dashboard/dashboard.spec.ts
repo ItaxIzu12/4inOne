@@ -8,6 +8,7 @@ import { HAUSHALT_DATA_PROVIDER, HaushaltDataProvider } from '../haushalt/hausha
 import { HaushaltOverviewDto } from '../haushalt/haushalt-api.service';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { AuthService, AuthUser } from '../../core/auth/auth.service';
+import { TodayOverview } from './today-api.service';
 
 class FakeAuthService {
   readonly isAuthenticated = signal(true);
@@ -20,6 +21,17 @@ class FakeAuthService {
 const HAUSHALT_STUB: Pick<HaushaltDataProvider, 'getOverview'> = {
   getOverview: () => of({ open_tasks: 3 } as HaushaltOverviewDto),
 };
+
+const overview = (over: Partial<TodayOverview> = {}): TodayOverview => ({
+  date: '2026-10-02',
+  timezone: 'Europe/Berlin',
+  organisation: { date: '2026-10-02', timezone: 'Europe/Berlin', items: [], event_count: 0, open_task_count: 0, overdue_count: 0 },
+  haushalt: null,
+  reisen: { current: null, upcoming: null, events: [] },
+  finanzen: { month: '2026-10', budget: null, expenses: '0.00', available: null, spent_today: '0.00' },
+  suggestions: [],
+  ...over,
+});
 
 describe('Dashboard', () => {
   beforeEach(() =>
@@ -107,7 +119,7 @@ describe('Dashboard', () => {
       f.detectChanges();
       const http = TestBed.inject(HttpTestingController);
       http.expectOne((req) => req.url.includes('/finanzen/private/summary/')).flush({ available: null, budget: '0', has_data: false });
-      http.expectOne((req) => req.url.includes('/organisation') && req.url.includes('/today/')).flush({ items: [], event_count: 0 });
+      http.expectOne((req) => req.url.endsWith('/api/v1/today/')).flush(overview());
       f.detectChanges();
 
       expect(f.nativeElement.textContent).toContain('Heute ist noch nichts geplant.');
@@ -120,6 +132,57 @@ describe('Dashboard', () => {
       f.detectChanges();
       expect(f.nativeElement.querySelector('.next-trip').textContent).toContain('Noch keine bevorstehende Reise');
       expect(f.nativeElement.textContent).not.toContain('Berlin Wochenende');
+    });
+
+    it('fills „Heute“ from every area in one list — overdue first, then by time', () => {
+      const f = TestBed.createComponent(Dashboard);
+      f.detectChanges();
+      const http = TestBed.inject(HttpTestingController);
+      http.expectOne((req) => req.url.endsWith('/api/v1/today/')).flush(
+        overview({
+          organisation: {
+            date: '2026-10-02', timezone: 'Europe/Berlin', event_count: 1, open_task_count: 0, overdue_count: 0,
+            items: [{ kind: 'event', id: 1, title: 'Zahnarzt', at: '2026-10-02T14:00:00+02:00', overdue: false, location: 'Praxis' }],
+          },
+          haushalt: {
+            task_count: 2, shopping_open: 3,
+            tasks: [
+              { id: 7, title: 'Müll rausbringen', due_date: '2026-09-30', due_time: null, overdue: true, mine: true },
+              { id: 8, title: 'Blumen gießen', due_date: '2026-10-02', due_time: null, overdue: false, mine: false },
+            ],
+            deadlines: [{ entry_id: 3, art: 'kuendigung', title: 'Kündigen bis: Strom', date: '2026-10-09', days: 7 }],
+          },
+          reisen: {
+            current: null, upcoming: null,
+            events: [{ id: 4, trip_id: 9, trip_title: 'Wien', title: 'Zug nach Wien', at: '2026-10-02T09:00:00+02:00', location: '' }],
+          },
+        }),
+      );
+      f.detectChanges();
+
+      const rows = Array.from(f.nativeElement.querySelectorAll('.today-row strong') as NodeListOf<HTMLElement>).map((r) => r.textContent);
+      expect(rows).toEqual([
+        'Müll rausbringen', 'Zug nach Wien', 'Zahnarzt', 'Blumen gießen', 'Kündigen bis: Strom', '3 Sachen auf der Einkaufsliste',
+      ]);
+      expect(f.nativeElement.textContent).toContain('Haushalt · überfällig');
+      expect(f.nativeElement.textContent).toContain('Frist in 7 Tagen');
+    });
+
+    it('shows at most two suggestions and links each to its trip', () => {
+      const f = TestBed.createComponent(Dashboard);
+      f.detectChanges();
+      const suggestion = (key: string, title: string) => ({
+        key, kind: 'TRIP_PACKING' as const, title, reason: 'Begründung', trip: { id: 9, title: 'Wien' }, actions: [], detail: {},
+      });
+      TestBed.inject(HttpTestingController).expectOne((req) => req.url.endsWith('/api/v1/today/')).flush(
+        overview({ suggestions: [suggestion('a', 'Packliste anlegen'), suggestion('b', 'Für „Wien“ sparen'), suggestion('c', 'Dritter')] }),
+      );
+      f.detectChanges();
+
+      const links = Array.from(f.nativeElement.querySelectorAll('.today-suggestion') as NodeListOf<HTMLAnchorElement>);
+      expect(links.length).toBe(2);
+      expect(links[0].getAttribute('href')).toBe('/reisen?trip=9');
+      expect(f.nativeElement.textContent).not.toContain('Dritter');
     });
 
     it('with two or more areas chosen during onboarding, those tiles move first and are visibly marked — not just reordered', () => {

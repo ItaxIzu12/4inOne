@@ -1,9 +1,10 @@
 """Welche Objekte sich wie verbinden lassen — der EINZIGE Ort, der die
 Domains kennt. Neue Typen kommen hier dazu, nicht in Views oder Serializern.
 
-Sichtbarkeit (`visible`) ist dieselbe Regel wie in den Domain-APIs:
-Organisation und Finanzen gehören einer Person (`owner`), Haushaltsaufgaben
-dem Haushalt (Mitgliedschaft). Eine Verbindung erweitert diese Regeln nie."""
+Sichtbarkeit (`visible`) ist dieselbe Regel wie in den Domain-APIs
+(ADR-001): Organisation und Finanzen gehören einer Person (`owner`),
+Haushaltsaufgaben dem Haushalt (Mitgliedschaft), Reisen ihrer Eigentümer:in
+und den Teilnehmenden. Eine Verbindung erweitert diese Regeln nie."""
 
 from dataclasses import dataclass
 from decimal import Decimal
@@ -16,6 +17,15 @@ from connections.models import ObjectType, RelationType
 from finanzen.models import SavingsGoal
 from haushalt.models import Task as HouseholdTask
 from organisation.models import PersonalEvent, PersonalTask
+from reisen.models import Trip
+
+
+def _visible_trips(user):
+    # Dieselbe Regel wie die Reisen-API — bewusst von dort importiert statt
+    # nachgebaut, damit beide nie auseinanderlaufen.
+    from reisen.views import trips_visible_to
+
+    return trips_visible_to(user)
 
 
 def _date(value) -> str:
@@ -49,6 +59,11 @@ def _household_task_subtitle(task: HouseholdTask) -> str:
     if task.is_done:
         return 'Erledigt'
     return f'Fällig {_date(task.due_date)}' if task.due_date else 'Ohne Datum'
+
+
+def _trip_subtitle(trip: Trip) -> str:
+    when = f'{_date(trip.start_date)} – {_date(trip.end_date)}'
+    return f'{trip.destination}, {when}' if trip.destination else when
 
 
 @dataclass(frozen=True)
@@ -87,14 +102,20 @@ KINDS: dict[str, Kind] = {
         ObjectType.HOUSEHOLD_TASK, 'Haushaltsaufgabe', 'haushalt', HouseholdTask,
         lambda user: HouseholdTask.objects.filter(household__members=user), _household_task_subtitle,
     ),
+    ObjectType.TRIP: Kind(
+        ObjectType.TRIP, 'Reise', 'reisen', Trip, _visible_trips, _trip_subtitle,
+    ),
 }
 
 # Erlaubte Paare in der festen Richtung (Quelle, Ziel) → erlaubte Relationen,
-# die erste ist der Standard. V1: bewusst nur drei konkrete Beziehungen.
+# die erste ist der Standard. Bewusst nur wenige konkrete Beziehungen.
 ALLOWED_PAIRS: dict[tuple[str, str], tuple[str, ...]] = {
     (ObjectType.SAVINGS_GOAL, ObjectType.TASK): (RelationType.TASK_FOR, RelationType.RELATED_TO),
     (ObjectType.TASK, ObjectType.CALENDAR_EVENT): (RelationType.SCHEDULED_AS, RelationType.RELATED_TO),
     (ObjectType.HOUSEHOLD_TASK, ObjectType.CALENDAR_EVENT): (RelationType.SCHEDULED_AS, RelationType.RELATED_TO),
+    # „Reise planen“: Wovon wird sie bezahlt, und was im Haushalt betrifft sie?
+    (ObjectType.TRIP, ObjectType.SAVINGS_GOAL): (RelationType.FUNDED_BY, RelationType.RELATED_TO),
+    (ObjectType.TRIP, ObjectType.HOUSEHOLD_TASK): (RelationType.AFFECTS, RelationType.RELATED_TO),
 }
 
 

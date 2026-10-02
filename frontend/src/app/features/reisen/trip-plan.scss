@@ -1,0 +1,169 @@
+// Ruhig wie der Rest der Reiseseite: eine Liste, keine Karten-Kaskade. Die
+// Bereichsfarbe (Haushalt/Finanzen) erscheint nur als kleiner Akzent im Icon.
+:host {
+  display: block;
+  // Innerhalb der Reise-Karte (.trip-detail hat selbst kein Padding) wie
+  // .trip-cards eingerückt.
+  padding: 0 22px 22px;
+}
+.trip-plan__title {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+.trip-plan__list {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.trip-plan__muted {
+  margin: 0;
+  color: #4c5c72;
+  font-size: 14px;
+}
+.trip-plan__done {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #edf8f1;
+  color: #1d6b3f;
+  font-size: 14px;
+}
+.trip-plan__done app-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.trip-plan__error {
+  margin: 0 0 12px;
+  color: #b3261e;
+  font-size: 14px;
+}
+.suggestion {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e4eefb;
+  border-radius: 16px;
+  background: #fbfdff;
+}
+.suggestion__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: #e6f2ff;
+  color: #1c5ca8;
+}
+.suggestion[data-kind='TRIP_HOUSEHOLD_TASK'] .suggestion__icon {
+  background: #fdeaf3;
+  color: #a3245f;
+}
+.suggestion[data-kind='TRIP_SAVINGS_GOAL'] .suggestion__icon,
+.suggestion[data-kind='TRIP_BUDGET'] .suggestion__icon {
+  background: #e7f6ec;
+  color: #17703a;
+}
+.suggestion__icon app-icon {
+  width: 18px;
+  height: 18px;
+}
+.suggestion__body {
+  min-width: 0;
+  flex: 1;
+}
+.suggestion__title {
+  margin: 0;
+  font-weight: 700;
+  color: #1d2a3d;
+}
+.suggestion__reason {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #4c5c72;
+}
+.suggestion__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 12px;
+}
+// Dieselben Knöpfe wie auf der Reiseseite (reisen.scss .primary/.secondary/.btn-link),
+// hier wiederholt, weil Komponentenstile gekapselt sind.
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 13px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.primary {
+  color: white;
+  background: #246db8;
+  border: 1px solid #1c6bc9;
+}
+.secondary {
+  background: #edf5fe;
+  border: 1px solid #d7e8fb;
+  color: #1c5ca8;
+}
+.primary:disabled,
+.secondary:disabled,
+.btn-link:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.btn-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  min-height: 32px;
+  color: #1c5ca8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+button:focus-visible {
+  outline: 3px solid #2889ef;
+  outline-offset: 3px;
+}
+.suggestion__choose {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+  max-width: 320px;
+}
+.suggestion__choose-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d2a3d;
+}
+@media (max-width: 760px) {
+  :host {
+    padding: 0 16px 16px;
+  }
+}
+@media (max-width: 480px) {
+  .suggestion {
+    padding: 12px;
+  }
+  .suggestion__actions .primary,
+  .suggestion__actions .secondary {
+    width: 100%;
+  }
+}

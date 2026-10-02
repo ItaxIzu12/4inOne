@@ -6,13 +6,14 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from core.models import HouseholdMembership
-from finanzen.models import Category, RecurringDeduction
+from finanzen.models import Category
 from haushalt import services
 from haushalt.models import FolderEntry, ItemMemory, Section, ShoppingItem, Task
 
 # Wie in finanzen/serializers.py: deutlich unter dem technisch Möglichen,
 # fängt Tippfehler (eine Null zu viel) ab.
 _MAX_AMOUNT = Decimal('1000000')
+MAX_MONTHLY_COST = Decimal('99999.99')
 
 
 def _display_name(user) -> str | None:
@@ -100,11 +101,12 @@ class CompleteShoppingSerializer(serializers.Serializer):
         return value
 
     def validate(self, attrs):
-        # IDOR-Schutz: eine Kategorie aus einem fremden Haushalt darf nicht
-        # als Buchungsziel dienen.
+        # Gebucht wird in die PRIVATEN Finanzen der Person, die einkauft
+        # (ADR-001). IDOR-Schutz: nur eigene Kategorien sind erlaubt — weder
+        # die einer anderen Person noch die der eingefrorenen Haushaltsfinanzen.
         category = attrs.get('category')
-        if category is not None and category.household_id != _household(self).pk:
-            raise serializers.ValidationError({'category_id': 'Diese Kategorie gehört nicht zu deinem Haushalt.'})
+        if category is not None and category.owner_id != self.context['request'].user.pk:
+            raise serializers.ValidationError({'category_id': 'Diese Kategorie gehört nicht zu dir.'})
         return attrs
 
 
@@ -249,21 +251,7 @@ class TaskSerializer(serializers.ModelSerializer):
 # ---------------------------------------------------------------------------
 
 
-class _RecurringDeductionField(serializers.PrimaryKeyRelatedField):
-    def get_queryset(self):
-        request = self.context['request']
-        membership = services.membership_for(request.user)
-        if membership is None:
-            return RecurringDeduction.objects.none()
-        return RecurringDeduction.objects.filter(household=membership.household)
-
-
 class FolderEntrySerializer(serializers.ModelSerializer):
-    recurring_deduction_id = _RecurringDeductionField(
-        source='recurring_deduction', required=False, allow_null=True
-    )
-    monthly_cost = serializers.SerializerMethodField()
-    deduction_active = serializers.SerializerMethodField()
     cancel_by = serializers.SerializerMethodField()
     deadlines = serializers.SerializerMethodField()
 
@@ -275,9 +263,7 @@ class FolderEntrySerializer(serializers.ModelSerializer):
             'name',
             'provider',
             'notes',
-            'recurring_deduction_id',
             'monthly_cost',
-            'deduction_active',
             'contract_end',
             'notice_period_months',
             'cancel_by',
@@ -287,23 +273,7 @@ class FolderEntrySerializer(serializers.ModelSerializer):
             'next_maintenance',
             'deadlines',
         ]
-        read_only_fields = ['id', 'monthly_cost', 'deduction_active', 'cancel_by', 'deadlines']
-
-    def get_monthly_cost(self, obj) -> str | None:
-        # Kosten kommen ausschließlich aus dem verknüpften festen Abzug —
-        # eine Quelle, keine zweite Zahl, die auseinanderlaufen kann. Ein
-        # pausierter Abzug kostet laut Finanzen gerade nichts (fließt nicht
-        # ins Verfügbare Einkommen ein), also auch hier nicht.
-        deduction = obj.recurring_deduction
-        if deduction is None or not deduction.active:
-            return None
-        return str(deduction.amount)
-
-    def get_deduction_active(self, obj) -> bool | None:
-        """None = kein fester Abzug verknüpft; False = verknüpft, aber in
-        Finanzen pausiert (das Frontend zeigt dann "pausiert")."""
-        deduction = obj.recurring_deduction
-        return None if deduction is None else deduction.active
+        read_only_fields = ['id', 'cancel_by', 'deadlines']
 
     def get_cancel_by(self, obj) -> str | None:
         day = services.cancel_by(obj) if obj.kind == FolderEntry.Kind.CONTRACT else None
@@ -317,6 +287,11 @@ class FolderEntrySerializer(serializers.ModelSerializer):
 
     def validate_name(self, value):
         return _clean_name(value)
+
+    def validate_monthly_cost(self, value):
+        if value is not None and not Decimal('0') <= value <= MAX_MONTHLY_COST:
+            raise serializers.ValidationError('Die monatlichen Kosten müssen zwischen 0 und 99.999,99 € liegen.')
+        return value
 
     def validate_notice_period_months(self, value):
         if value is not None and value > 36:
@@ -335,7 +310,7 @@ class FolderEntrySerializer(serializers.ModelSerializer):
 
         # Felder der jeweils anderen Art werden verworfen, statt stillschweigend
         # gespeichert zu werden (ein Gerät hat keine Kündigungsfrist).
-        contract_fields = ('recurring_deduction', 'contract_end', 'notice_period_months')
+        contract_fields = ('monthly_cost', 'contract_end', 'notice_period_months')
         device_fields = ('purchase_date', 'warranty_until', 'maintenance_interval_months', 'next_maintenance')
         foreign = device_fields if kind == FolderEntry.Kind.CONTRACT else contract_fields
         for field in foreign:
@@ -349,13 +324,4 @@ class FolderEntrySerializer(serializers.ModelSerializer):
                 base = attrs.get('purchase_date', getattr(self.instance, 'purchase_date', None))
                 attrs['next_maintenance'] = services.first_maintenance(base or timezone.localdate(), interval)
 
-        deduction = attrs.get('recurring_deduction')
-        if deduction is not None:
-            linked = FolderEntry.objects.filter(recurring_deduction=deduction)
-            if self.instance is not None:
-                linked = linked.exclude(pk=self.instance.pk)
-            if linked.exists():
-                raise serializers.ValidationError(
-                    {'recurring_deduction_id': 'Dieser feste Abzug ist bereits mit einem anderen Vertrag verknüpft.'}
-                )
         return attrs

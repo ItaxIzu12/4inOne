@@ -39,8 +39,6 @@
               </button>
               @if (entry.monthly_cost) {
                 <span class="amount">{{ entry.monthly_cost | number: '1.2-2' : 'de' }} €</span>
-              } @else if (entry.deduction_active === false) {
-                <span class="pill" title="Der verknüpfte feste Abzug ist in Finanzen pausiert">pausiert</span>
               }
             </li>
           } @empty {
@@ -119,7 +117,7 @@
         } @else {
           <p class="muted upcoming-empty">In den nächsten drei Monaten steht keine Frist an.</p>
         }
-        <p class="muted small upcoming-note">Alle Fristen stehen automatisch im gemeinsamen Kalender.</p>
+        <p class="muted small upcoming-note">Alle Fristen erscheinen rechtzeitig unter „Heute“.</p>
       </section>
     </div>
   </div>
@@ -139,12 +137,6 @@
   (closed)="closeForm()"
   (deleted)="deleteEditing()"
 >
-  @if (formKind() === 'vertrag' && deductionOptions().length > 0) {
-    <app-field label="Kosten aus Finanzen übernehmen" [hint]="deductionHint()">
-      <app-select [options]="deductionSelectOptions()" [value]="formDeduction() === null ? '' : '' + formDeduction()" (valueChange)="setDeduction($event)" />
-    </app-field>
-  }
-
   <div class="field-row">
     <app-field label="Name">
       <input
@@ -168,6 +160,18 @@
   </div>
 
   @if (formKind() === 'vertrag') {
+    <app-field label="Monatliche Kosten" [optional]="true" hint="Gilt für den ganzen Haushalt. Wer was bezahlt, bucht jede Person privat in Finanzen.">
+      <input
+        id="folder-cost"
+        type="text"
+        inputmode="decimal"
+        maxlength="10"
+        placeholder="z. B. 39,99"
+        [value]="formCost()"
+        (input)="formCost.set($any($event.target).value)"
+      />
+    </app-field>
+
     <div class="field-row">
       <app-field label="Vertragsende">
         <app-date-picker mode="date" [clearable]="true" [value]="formContractEnd()" (valueChange)="formContractEnd.set($event)" />
@@ -185,7 +189,7 @@
         />
       </app-field>
     </div>
-    <p class="field-hint">4inOne trägt den letzten Kündigungstag in euren Kalender ein.</p>
+    <p class="field-hint">4inOne erinnert euch unter „Heute“ rechtzeitig an den letzten Kündigungstag.</p>
   } @else {
     <div class="field-row">
       <app-field label="Gekauft am">

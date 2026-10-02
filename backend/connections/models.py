@@ -13,8 +13,8 @@ class ObjectType(models.TextChoices):
     CALENDAR_EVENT = 'CALENDAR_EVENT', 'Termin'
     SAVINGS_GOAL = 'SAVINGS_GOAL', 'Sparziel'
     HOUSEHOLD_TASK = 'HOUSEHOLD_TASK', 'Haushaltsaufgabe'
-    # Für Reisen vorgesehen, in V1 noch in keinem erlaubten Paar.
     TRIP = 'TRIP', 'Reise'
+    # Vorgesehen, noch in keinem erlaubten Paar.
     BUDGET = 'BUDGET', 'Budget'
 
 
@@ -79,3 +79,20 @@ class Connection(models.Model):
 
     def __str__(self) -> str:
         return f'{self.source_type}#{self.source_id} → {self.target_type}#{self.target_id} ({self.relation_type})'
+
+
+class SuggestionDismissal(models.Model):
+    """„Diesen Vorschlag will ich nicht.“ Vorschläge selbst werden nie
+    gespeichert — sie werden bei jedem Aufruf aus den echten Daten berechnet
+    (connections/suggestions.py). Gespeichert wird nur, was die Person
+    abgelehnt hat, damit derselbe Vorschlag nicht wiederkommt."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    key = models.CharField(max_length=80)
+    dismissed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user', 'key'], name='unique_suggestion_dismissal')]
+
+    def __str__(self) -> str:
+        return f'{self.user_id}: {self.key}'

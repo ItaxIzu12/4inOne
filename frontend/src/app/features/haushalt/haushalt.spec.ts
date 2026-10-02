@@ -1,10 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { DemoFinanzenDataProvider } from '../finanzen/demo-finanzen-data-provider';
-import { FINANZEN_DATA_PROVIDER } from '../finanzen/finanzen-data-provider';
-import { RealFinanzenDataProvider } from '../finanzen/real-finanzen-data-provider';
-import { FinanzenStateService } from '../finanzen/finanzen-state.service';
+import { DemoPrivateFinanceApi } from '../finanzen/demo-private-finance-api';
+import { PrivateFinanceApi } from '../finanzen/private-finance-api.service';
 import { DemoHaushaltDataProvider } from './demo-haushalt-data-provider';
 import { EinkaufTab } from './einkauf-tab';
 import { Haushalt } from './haushalt';
@@ -18,9 +16,8 @@ describe('Haushalt (Demo)', () => {
       // beide Provider rein im Speicher, keine HTTP-Aufrufe.
       providers: [
         provideRouter([]),
-        { provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider },
+        { provide: PrivateFinanceApi, useClass: DemoPrivateFinanceApi },
         { provide: HAUSHALT_DATA_PROVIDER, useClass: DemoHaushaltDataProvider },
-        FinanzenStateService,
       ],
     }).compileComponents();
   });
@@ -163,14 +160,13 @@ describe('Haushalt (Demo)', () => {
     expect(compiled.querySelector('[role="tab"][aria-selected="true"]')?.id).toBe('hh-tab-einkauf');
   });
 
-  it('checking items shows the checkout bar, completing books an expense in the demo finances', async () => {
+  it('checking items shows the checkout bar, completing books a private expense in the demo finances', async () => {
     const fixture = TestBed.createComponent(Haushalt);
     fixture.detectChanges();
     openTab(fixture, 'einkauf');
     const compiled = fixture.nativeElement as HTMLElement;
-    const finanzen = TestBed.inject(FINANZEN_DATA_PROVIDER);
-    const before = await firstValueFrom(finanzen.getOverview());
-    const haushaltBefore = Number(before.categories.find((c) => c.name === 'Haushalt')!.amount);
+    const finanzen = TestBed.inject(PrivateFinanceApi);
+    const before = Number((await firstValueFrom(finanzen.summary())).expenses);
 
     (compiled.querySelector('button[aria-label="Bananen abhaken"]') as HTMLButtonElement).click();
     (compiled.querySelector('button[aria-label="Milch, 2 l abhaken"]') as HTMLButtonElement).click();
@@ -187,9 +183,9 @@ describe('Haushalt (Demo)', () => {
     tab['complete'](true);
     fixture.detectChanges();
 
-    const after = await firstValueFrom(finanzen.getOverview());
-    const haushaltAfter = Number(after.categories.find((c) => c.name === 'Haushalt')!.amount);
-    expect(haushaltAfter - haushaltBefore).toBeCloseTo(7.5);
+    const after = await firstValueFrom(finanzen.summary());
+    expect(Number(after.expenses) - before).toBeCloseTo(7.5);
+    expect(after.categories.find((c) => c.name === 'Lebensmittel')).toBeTruthy();
     expect(compiled.querySelector('button[aria-label="Bananen abhaken"]')).toBeNull();
     expect(text(compiled.querySelector('app-save-feedback'))).toContain('7,50');
   });
@@ -222,7 +218,7 @@ describe('Haushalt (Demo)', () => {
     expect(text(compiled.querySelector('.load-list'))).toContain('6 Punkte');
   });
 
-  it('lists upcoming folder deadlines including the contract cost from finance', () => {
+  it('lists upcoming folder deadlines including the contract cost', () => {
     const fixture = TestBed.createComponent(Haushalt);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
@@ -238,12 +234,9 @@ describe('Haushalt (Demo)', () => {
 describe('DemoHaushaltDataProvider', () => {
   function setup() {
     TestBed.configureTestingModule({
-      providers: [
-        { provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider },
-        DemoHaushaltDataProvider,
-      ],
+      providers: [{ provide: PrivateFinanceApi, useClass: DemoPrivateFinanceApi }, DemoHaushaltDataProvider],
     });
-    return { haushalt: TestBed.inject(DemoHaushaltDataProvider), finanzen: TestBed.inject(FINANZEN_DATA_PROVIDER) };
+    return { haushalt: TestBed.inject(DemoHaushaltDataProvider), finanzen: TestBed.inject(PrivateFinanceApi) };
   }
 
   async function bookTrip(haushalt: DemoHaushaltDataProvider, amount: number) {
@@ -253,48 +246,38 @@ describe('DemoHaushaltDataProvider', () => {
     return firstValueFrom(haushalt.completeShopping(amount));
   }
 
-  it('the price estimate follows corrections and deletions made in finance', async () => {
+  it('the price estimate uses the shopping amounts, never the private booking', async () => {
     const { haushalt, finanzen } = setup();
     const trip = await bookTrip(haushalt, 20);
     expect((await firstValueFrom(haushalt.getShopping())).price_per_item).toBe('10.00');
 
-    await firstValueFrom(
-      finanzen.updateTransaction(trip.transaction_id!, {
-        amount: 8,
-        description: 'Einkauf (2 Artikel)',
-        categoryId: 'demo-haushalt',
-        datum: new Date().toISOString().slice(0, 10),
-      }),
-    );
-    expect((await firstValueFrom(haushalt.getShopping())).price_per_item).toBe('4.00');
-
-    await firstValueFrom(finanzen.deleteTransaction(trip.transaction_id!));
-    const afterDelete = await firstValueFrom(haushalt.getShopping());
-    expect(afterDelete.price_from_history).toBe(false);
+    // Eine private Korrektur bleibt privat (ADR-001) und ändert die Schätzung des Haushalts nicht.
+    await firstValueFrom(finanzen.save('transactions', { amount: '8.00' }, Number(trip.transaction_id)));
+    await firstValueFrom(finanzen.delete('transactions', Number(trip.transaction_id)));
+    const after = await firstValueFrom(haushalt.getShopping());
+    expect(after.price_per_item).toBe('10.00');
+    expect(after.price_from_history).toBe(true);
   });
 
-  it('contract costs come from the finance deduction and vanish while it is paused', async () => {
-    const { haushalt, finanzen } = setup();
+  it('contract costs belong to the household entry, not to the frozen household finances', async () => {
+    const { haushalt } = setup();
     const insurance = () =>
       firstValueFrom(haushalt.getFolder()).then((entries) => entries.find((e) => e.name === 'Hausratversicherung')!);
-    expect((await insurance()).monthly_cost).toBe('65');
+    const entry = await insurance();
+    expect(entry.monthly_cost).toBe('65.00');
 
-    await firstValueFrom(finanzen.updateRecurringDeduction('demo-deduction-versicherung', 'Versicherung', 70, null, true));
-    expect((await insurance()).monthly_cost).toBe('70');
-
-    await firstValueFrom(finanzen.updateRecurringDeduction('demo-deduction-versicherung', 'Versicherung', 70, null, false));
-    const paused = await insurance();
-    expect(paused.monthly_cost).toBeNull();
-    expect(paused.deduction_active).toBe(false);
+    await firstValueFrom(haushalt.updateFolderEntry(entry.id, { ...entry, monthly_cost: '70.00' }));
+    expect((await insurance()).monthly_cost).toBe('70.00');
+    expect('recurring_deduction_id' in (await insurance())).toBe(false);
   });
 
   it('refuses to run next to the real finance provider (never writes real data)', () => {
     TestBed.configureTestingModule({
       providers: [
-        { provide: FINANZEN_DATA_PROVIDER, useValue: Object.create(RealFinanzenDataProvider.prototype) },
+        { provide: PrivateFinanceApi, useValue: Object.create(PrivateFinanceApi.prototype) },
         DemoHaushaltDataProvider,
       ],
     });
-    expect(() => TestBed.inject(DemoHaushaltDataProvider)).toThrowError(/DemoFinanzenDataProvider/);
+    expect(() => TestBed.inject(DemoHaushaltDataProvider)).toThrowError(/DemoPrivateFinanceApi/);
   });
 });

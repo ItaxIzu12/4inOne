@@ -34,6 +34,8 @@ function linkFor(object: ConnectedObject): { path: string[]; query: Record<strin
       return { path: ['/haushalt'], query: { tab: 'aufgaben', task: object.id } };
     case 'SAVINGS_GOAL':
       return { path: ['/finanzen'], query: { goal: object.id } };
+    case 'TRIP':
+      return { path: ['/reisen'], query: { trip: object.id } };
     default:
       return { path: ['/'], query: {} };
   }

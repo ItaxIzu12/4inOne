@@ -150,12 +150,9 @@ export interface FolderEntryDto {
   name: string;
   provider: string;
   notes: string;
-  recurring_deduction_id: Id | null;
-  // null, wenn kein fester Abzug verknüpft ist ODER er in Finanzen pausiert
-  // ist — ein pausierter Abzug kostet gerade nichts.
+  // Monatliche Kosten eines Vertrags — gehören dem Haushalt (ADR-001),
+  // keine Verknüpfung mehr zu den eingefrorenen Haushaltsfinanzen.
   monthly_cost: string | null;
-  // null = nicht verknüpft; false = verknüpft, aber pausiert.
-  deduction_active: boolean | null;
   contract_end: string | null;
   notice_period_months: number | null;
   cancel_by: string | null;
@@ -171,20 +168,13 @@ export interface FolderEntryInput {
   name: string;
   provider: string;
   notes: string;
-  recurring_deduction_id: Id | null;
+  monthly_cost: string | null;
   contract_end: string | null;
   notice_period_months: number | null;
   purchase_date: string | null;
   warranty_until: string | null;
   maintenance_interval_months: number | null;
   next_maintenance: string | null;
-}
-
-export interface DeductionOptionDto {
-  id: Id;
-  name: string;
-  amount: string;
-  active: boolean;
 }
 
 /** Die echten /api/v1/haushalt/-Endpunkte (backend/haushalt/urls.py). */
@@ -253,10 +243,6 @@ export class HaushaltApiService {
 
   getFolder(): Observable<FolderEntryDto[]> {
     return this.http.get<FolderEntryDto[]>(`${this.base}/ordner/`);
-  }
-
-  getUnlinkedDeductions(): Observable<DeductionOptionDto[]> {
-    return this.http.get<DeductionOptionDto[]>(`${this.base}/ordner/abzuege/`);
   }
 
   createFolderEntry(input: FolderEntryInput): Observable<FolderEntryDto> {

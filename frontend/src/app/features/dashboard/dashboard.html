@@ -47,6 +47,17 @@
             }
           </div>
         }
+        @if (suggestions().length) {
+          <div class="today-suggestions">
+            <h3 class="today-suggestions__title"><app-icon name="bulb" />Vorschlag</h3>
+            @for (s of suggestions(); track s.key) {
+              <a class="today-suggestion" [routerLink]="['/reisen']" [queryParams]="{ trip: s.trip.id }">
+                <span class="item-copy"><strong>{{ s.title }}</strong><small>{{ s.reason }}</small></span>
+                <app-icon class="chevron" name="arrow" />
+              </a>
+            }
+          </div>
+        }
       </section>
 
       <section class="card next-trip" aria-labelledby="trip-title">

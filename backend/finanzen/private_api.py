@@ -298,6 +298,21 @@ class SetupCategoriesView(PrivateMixin, APIView):
                     Category.objects.create(owner=request.user, name=name, color=color_for_name(name))
         return Response(PrivateCategorySerializer(Category.objects.filter(owner=request.user).order_by('name'), many=True).data)
 
+def month_figures(user, start, end) -> dict:
+    """Die Kennzahlen eines Monats der PRIVATEN Finanzen — eine Stelle für
+    die Finanzübersicht und „Heute“ (connections/today.py), damit beide nie
+    auseinanderlaufen. verfügbar = Budget + Einnahmen − Ausgaben − Gespartes."""
+    rows = Transaction.objects.filter(owner=user, datum__gte=start, datum__lt=end, currency='EUR')
+    income = rows.filter(type='INCOME').aggregate(total=Sum('amount'))['total'] or ZERO
+    expense = rows.filter(type='EXPENSE').aggregate(total=Sum('amount'))['total'] or ZERO
+    budget = MonthlyBudget.for_month(user, start)
+    planner = SavingsPlanner(user)
+    saved, saved_planned = planner.for_month(start)
+    available = budget.amount + income - expense - saved if budget else None
+    return {'rows': rows, 'income': income, 'expense': expense, 'budget': budget, 'planner': planner,
+            'saved': saved, 'saved_planned': saved_planned, 'available': available}
+
+
 class PrivateSummaryView(PrivateMixin, APIView):
     def get(self, request):
         raw = request.query_params.get('month', timezone.localdate().strftime('%Y-%m'))
@@ -306,16 +321,13 @@ class PrivateSummaryView(PrivateMixin, APIView):
             start, end = month_bounds(selected)
         except (ValueError, OverflowError):
             raise ValidationError({'month': 'Bitte einen Monat im Format JJJJ-MM angeben.'})
-        rows = Transaction.objects.filter(owner=request.user, datum__gte=start, datum__lt=end, currency='EUR')
-        income = rows.filter(type='INCOME').aggregate(total=Sum('amount'))['total'] or ZERO
-        expense = rows.filter(type='EXPENSE').aggregate(total=Sum('amount'))['total'] or ZERO
-        budget = MonthlyBudget.for_month(request.user, start)
+        figures = month_figures(request.user, start, end)
+        rows, income, expense, budget = figures['rows'], figures['income'], figures['expense'], figures['budget']
         # Nach Betrag sortiert, deshalb gehört die Farbe zur Kategorie selbst
         # (category__color) und nie zur Position in dieser Liste.
         categories = (rows.filter(type='EXPENSE').values('category_id', 'category__name', 'category__color')
                       .annotate(amount=Sum('amount')).order_by('-amount', 'category__name'))
-        planner = SavingsPlanner(request.user)
-        saved, saved_planned = planner.for_month(start)
+        planner, saved, saved_planned = figures['planner'], figures['saved'], figures['saved_planned']
         goals = SavingsGoal.covering(SavingsGoal.objects.filter(owner=request.user, currency='EUR'), start)  # nur Ziele dieses Monats
         total = goals.exclude(status='PAUSED').aggregate(target=Sum('target_amount'), current=Sum('current_amount'))
         return Response({'month':raw, 'currency':'EUR', 'budget':money(budget.amount) if budget else None,
@@ -324,7 +336,7 @@ class PrivateSummaryView(PrivateMixin, APIView):
                          'saved':money(saved),'saved_planned':money(saved_planned),
                          # Erster Monat (ab hier, 12 Monate voraus), in dem die Sparraten das Budget sprengen — sonst null.
                          'plan_alert':plan_alert(request.user,start,planner),
-                         'available':money(budget.amount+income-expense-saved) if budget else None,
+                         'available':money(figures['available']) if budget else None,
                          'income':money(income),'expenses':money(expense),
                          'categories':[{'id':c['category_id'],'name':c['category__name'] or 'Sonstiges',
                                         'color':c['category__color'] or UNCATEGORISED_COLOR,'amount':money(c['amount'])} for c in categories],

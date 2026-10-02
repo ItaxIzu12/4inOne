@@ -1,0 +1,78 @@
+@if (enabled()) {
+  <section class="trip-plan" aria-labelledby="trip-plan-heading">
+    <h3 id="trip-plan-heading" class="trip-plan__title">Nächste Schritte</h3>
+
+    @if (message(); as text) {
+      <p class="trip-plan__done" role="status">
+        <app-icon name="check" />{{ text }}
+      </p>
+    }
+    @if (actionError(); as text) {
+      <p class="trip-plan__error" role="alert">{{ text }}</p>
+    }
+
+    @if (status() === 'loading') {
+      <p class="trip-plan__muted" role="status">Wird geprüft …</p>
+    } @else if (status() === 'error') {
+      <p class="trip-plan__muted">
+        Die Vorschläge konnten nicht geladen werden.
+        <button type="button" class="btn-link" (click)="reload()">Erneut versuchen</button>
+      </p>
+    } @else {
+      <ul class="trip-plan__list">
+        @for (s of items(); track s.key) {
+          <li class="suggestion" [attr.data-kind]="s.kind">
+            <span class="suggestion__icon" aria-hidden="true"><app-icon [name]="kindIcon[s.kind]" /></span>
+            <div class="suggestion__body">
+              <p class="suggestion__title">{{ s.title }}</p>
+              <p class="suggestion__reason">{{ s.reason }}</p>
+
+              @if (choosingFor() === s.key) {
+                <div class="suggestion__choose">
+                  <span [id]="'member-label-' + s.key" class="suggestion__choose-label">Wer übernimmt?</span>
+                  <app-select
+                    [options]="memberOptions(s)"
+                    [value]="chosenMember()"
+                    [ariaLabelledby]="'member-label-' + s.key"
+                    placeholder="Person auswählen"
+                    (valueChange)="chosenMember.set($event)"
+                  />
+                  <div class="suggestion__actions">
+                    <button type="button" class="primary" [disabled]="busyKey() === s.key" (click)="confirmHandOver(s)">
+                      Übergeben
+                    </button>
+                    <button type="button" class="btn-link" (click)="cancelHandOver()">Abbrechen</button>
+                  </div>
+                </div>
+              } @else {
+                <div class="suggestion__actions">
+                  @for (a of s.actions; track a.action; let first = $first) {
+                    <button
+                      type="button"
+                      [class.primary]="first"
+                      [class.secondary]="!first"
+                      [disabled]="busyKey() === s.key"
+                      [attr.aria-busy]="busyKey() === s.key"
+                      (click)="run(s, a)"
+                    >
+                      {{ a.label }}
+                    </button>
+                  }
+                  <button type="button" class="btn-link" [disabled]="busyKey() === s.key" (click)="dismiss(s)">
+                    Nicht vorschlagen
+                  </button>
+                </div>
+              }
+            </div>
+          </li>
+        } @empty {
+          <li class="trip-plan__muted">Alles im Blick – für diese Reise gibt es gerade nichts zu tun.</li>
+        }
+      </ul>
+    }
+
+    @for (v of [connectionsVersion()]; track v) {
+      <app-connections objectType="TRIP" [objectId]="tripId()" />
+    }
+  </section>
+}

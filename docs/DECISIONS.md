@@ -73,3 +73,10 @@ Do not add queues, event buses, graph databases or AI services before a concrete
 ## D15 — AI remains optional and subordinate
 
 If AI is added later, it supports workflows such as classification, extraction, summaries or suggestions. Django remains authoritative for permissions and actions.
+
+## D16 — Ownership: private owner, shared household, trip participants
+
+Decided 2 October 2026 (ADR-001 §0). Money belongs to a person (`owner`). Household lists, tasks and the folder belong to household membership. Trips belong to their owner and participants.
+
+The legacy shared household finances are frozen: readable, never written, nothing deleted. A shared household budget, if it ever comes, is a new explicit object.
+

@@ -1,3 +1,4 @@
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py", "tests.py"]
+markers = ["legacy_frozen: prüft die Schreibsperre der eingefrorenen Haushaltsfinanzen (ADR-001)"]

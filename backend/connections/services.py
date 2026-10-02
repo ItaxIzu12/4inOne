@@ -125,7 +125,10 @@ def user_can_view_connected_object(user, object_type: str, object_id: int) -> bo
     return get_visible_object(user, object_type, object_id) is not None
 
 
-def create_connection(user, type_a: str, id_a: int, type_b: str, id_b: int, relation_type: str | None = None) -> dict:
+def create_connection(
+    user, type_a: str, id_a: int, type_b: str, id_b: int, relation_type: str | None = None,
+    origin: str = Origin.MANUAL,
+) -> dict:
     if (type_a, id_a) == (type_b, id_b):
         raise ConnectionRuleError('Ein Objekt lässt sich nicht mit sich selbst verknüpfen.')
     pair = canonical_pair(type_a, type_b)
@@ -161,7 +164,7 @@ def create_connection(user, type_a: str, id_a: int, type_b: str, id_b: int, rela
                 target_type=target_type,
                 target_id=target_id,
                 relation_type=relation,
-                origin=Origin.MANUAL,
+                origin=origin,
                 created_by=user,
             )
     except IntegrityError:  # zwei gleichzeitige Anfragen

@@ -13,6 +13,30 @@ import { AppIcon, IconName } from '../../shared/icons/app-icon';
 import { Modal } from '../../shared/modal/modal';
 import { AuthService } from '../../core/auth/auth.service';
 import { OnboardingApiService } from '../../core/onboarding/onboarding-api.service';
+import { TodayApi, TodayOverview } from './today-api.service';
+
+/** Eine Zeile unter „Heute“ — aus welchem Bereich auch immer. */
+export interface TodayRow {
+  title: string;
+  mobile: string;
+  time: string;
+  note: string;
+  icon: IconName;
+  tone: string;
+  source?: TodayItem;
+  link?: { path: string[]; query: Record<string, string | number> };
+}
+
+/** Heute fokussiert halten (D8): lieber wenige Zeilen, der Rest liegt in den Bereichen. */
+const TODAY_ROWS = 6;
+
+function hhmm(iso: string): string {
+  return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+}
+function ddmm(isoDate: string): string {
+  const [, month, day] = isoDate.split('-');
+  return `${day}.${month}.`;
+}
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -23,6 +47,7 @@ import { OnboardingApiService } from '../../core/onboarding/onboarding-api.servi
 export class Dashboard {
   private auth = inject(AuthService);
   private api = inject(OrganisationApi);
+  private todayApi = inject(TodayApi);
   private financeApi = inject(PrivateFinanceApi);
   // Token statt konkreter Klasse: liefert je Routengruppe die Demo- oder die echte Implementierung (siehe
   // app.routes.ts) — dieselbe Instanz, die auch die Haushalt-Seite selbst benutzt, damit die Kachel hier und der
@@ -55,6 +80,10 @@ export class Dashboard {
   private readonly demo = inject(DEMO_MODE);
   readonly live = computed(() => this.auth.isAuthenticated() && !this.demo);
   readonly organisationToday = signal<TodayData | null>(null);
+  /** Nur bei echtem Konto: „Heute“ aus allen Bereichen (backend/connections/today.py). */
+  readonly overview = signal<TodayOverview | null>(null);
+  /** Höchstens zwei Vorschläge — vollständig und mit Aktionen stehen sie in der jeweiligen Reise. */
+  readonly suggestions = computed(() => (this.live() ? (this.overview()?.suggestions ?? []).slice(0, 2) : []));
   readonly todayLoading = signal(false);
   readonly todayError = signal('');
   constructor() {
@@ -98,6 +127,23 @@ export class Dashboard {
   loadToday() {
     this.todayLoading.set(true);
     this.todayError.set('');
+    if (this.live()) {
+      this.todayApi
+        .overview()
+        .pipe(takeUntilDestroyed(this.destroy))
+        .subscribe({
+          next: (data) => {
+            this.overview.set(data);
+            this.organisationToday.set(data.organisation);
+            this.todayLoading.set(false);
+          },
+          error: () => {
+            this.todayError.set('Dein Tag konnte nicht geladen werden.');
+            this.todayLoading.set(false);
+          },
+        });
+      return;
+    }
     this.api
       .today()
       .pipe(takeUntilDestroyed(this.destroy))
@@ -112,24 +158,98 @@ export class Dashboard {
         },
       });
   }
-  get items() {
+  get items(): TodayRow[] {
     if (!this.live()) return this.demoItems;
-    return (this.organisationToday()?.items || []).slice(0, 4).map((item) => ({
-      title: item.title,
-      mobile: item.title,
-      time: item.overdue
-        ? new Date(item.at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
-        : item.all_day
-          ? 'Heute'
-          : new Date(item.at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
-      note: item.overdue ? 'Überfällig' : item.location || '',
-      icon: (item.kind === 'event' ? 'calendar' : 'check') as IconName,
-      tone: 'organisation',
-      source: item,
-    }));
+    return this.liveRows();
   }
-  openItem(item: { title: string; source?: TodayItem }) {
-    if (this.live() && item.source)
+  /** Alle Bereiche in einer Liste: Überfälliges zuerst, dann nach Uhrzeit, Ganztägiges und Fristen danach. */
+  private readonly liveRows = computed<TodayRow[]>(() => {
+    const data = this.overview();
+    const rows: { order: string; row: TodayRow }[] = [];
+    for (const item of this.organisationToday()?.items ?? []) {
+      const timed = !item.overdue && !item.all_day;
+      rows.push({
+        order: item.overdue ? `0${item.at}` : timed ? `1${hhmm(item.at)}` : '2',
+        row: {
+          title: item.title,
+          mobile: item.title,
+          time: item.overdue
+            ? new Date(item.at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+            : timed
+              ? hhmm(item.at)
+              : 'Heute',
+          note: item.overdue ? 'Überfällig' : item.location || '',
+          icon: (item.kind === 'event' ? 'calendar' : 'check') as IconName,
+          tone: 'organisation',
+          source: item,
+        },
+      });
+    }
+    for (const task of data?.haushalt?.tasks ?? []) {
+      rows.push({
+        order: task.overdue ? `0${task.due_date}` : task.due_time ? `1${task.due_time}` : '2',
+        row: {
+          title: task.title,
+          mobile: task.title,
+          time: task.overdue ? ddmm(task.due_date) : task.due_time ?? 'Heute',
+          note: task.overdue ? 'Haushalt · überfällig' : task.mine ? 'Haushalt · du bist dran' : 'Haushalt · noch niemand zugeteilt',
+          icon: 'household',
+          tone: 'household',
+          link: { path: ['/haushalt'], query: { tab: 'aufgaben', task: task.id } },
+        },
+      });
+    }
+    for (const event of data?.reisen.events ?? []) {
+      rows.push({
+        order: `1${hhmm(event.at)}`,
+        row: {
+          title: event.title,
+          mobile: event.title,
+          time: hhmm(event.at),
+          note: event.location ? `${event.trip_title} · ${event.location}` : event.trip_title,
+          icon: 'travel',
+          tone: 'travel',
+          link: { path: ['/reisen'], query: { trip: event.trip_id } },
+        },
+      });
+    }
+    for (const deadline of data?.haushalt?.deadlines ?? []) {
+      rows.push({
+        order: `3${deadline.date}`,
+        row: {
+          title: deadline.title,
+          mobile: deadline.title,
+          time: deadline.days === 0 ? 'Heute' : ddmm(deadline.date),
+          note: deadline.days === 0 ? 'Frist im Haushaltsordner' : `Frist in ${deadline.days} ${deadline.days === 1 ? 'Tag' : 'Tagen'}`,
+          icon: 'device',
+          tone: 'household',
+          link: { path: ['/haushalt'], query: { tab: 'ordner' } },
+        },
+      });
+    }
+    const shopping = data?.haushalt?.shopping_open ?? 0;
+    if (shopping > 0) {
+      rows.push({
+        order: '4',
+        row: {
+          title: shopping === 1 ? '1 Sache auf der Einkaufsliste' : `${shopping} Sachen auf der Einkaufsliste`,
+          mobile: 'Einkaufsliste',
+          time: '',
+          note: 'Haushalt',
+          icon: 'basket',
+          tone: 'household',
+          link: { path: ['/haushalt'], query: { tab: 'einkauf' } },
+        },
+      });
+    }
+    return rows
+      .sort((a, b) => a.order.localeCompare(b.order))
+      .slice(0, TODAY_ROWS)
+      .map((r) => r.row);
+  });
+  openItem(item: TodayRow) {
+    if (this.live() && item.link) this.router.navigate(item.link.path, { queryParams: item.link.query });
+    else if (this.live() && item.source)
       this.router.navigate(['/organisation'], {
         queryParams: { kind: item.source.kind, id: item.source.id },
       });
@@ -148,14 +268,7 @@ export class Dashboard {
     year: 'numeric',
   }).format(new Date());
   readonly detail = signal('');
-  readonly demoItems: {
-    title: string;
-    mobile: string;
-    time: string;
-    note: string;
-    icon: IconName;
-    tone: string;
-  }[] = [
+  readonly demoItems: TodayRow[] = [
     {
       title: 'Yoga',
       mobile: 'Yoga',

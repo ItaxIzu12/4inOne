@@ -1,12 +1,16 @@
 """Fachlogik des Haushalt-Moduls: Einkaufsliste, Einkauf-zu-Ausgabe,
 wiederkehrende Aufgaben mit Rotation und der Haushaltsordner.
 
-Views bleiben dünn und rufen nur diese Funktionen auf. Querverbindungen zu
-Finanzen und Organisation laufen über direkte Service-Aufrufe
-(ARCHITEKTUR.md §2.1), nicht über Signale."""
+Views bleiben dünn und rufen nur diese Funktionen auf.
+
+Bereichsübergreifend (ADR-001): Ein abgeschlossener Einkauf wird eine Ausgabe
+in den PRIVATEN Finanzen der Person, die eingekauft hat. Aufgaben und
+Ordnerfristen schreiben NICHT mehr in einen Kalender — „Heute“ und der Kalender
+lesen sie direkt (connections/today.py), ohne Kopie, die auseinanderlaufen
+kann."""
 
 import calendar
-from datetime import date, datetime, time, timedelta
+from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.db import IntegrityError
@@ -28,7 +32,6 @@ from haushalt.models import (
     Task,
     TaskCompletion,
 )
-from organisation.models import CalendarEvent
 
 # Solange ein Haushalt noch keinen Einkauf mit Betrag abgeschlossen hat,
 # gibt es keine eigene Erfahrung — dann gilt dieser Durchschnittspreis pro
@@ -106,38 +109,6 @@ def add_months(value: date, months: int) -> date:
     month = month_index % 12 + 1
     day = min(value.day, calendar.monthrange(year, month)[1])
     return date(year, month, day)
-
-
-def _start_of_day(value: date) -> datetime:
-    return timezone.make_aware(datetime.combine(value, time.min))
-
-
-def upsert_all_day_event(
-    household: Household, source: str, source_key: str, title: str, day: date | None, user=None
-) -> CalendarEvent | None:
-    """Legt einen ganztägigen Termin an, aktualisiert ihn oder entfernt ihn
-    (day=None). Der source_key macht den Aufruf wiederholbar: dieselbe Frist
-    erzeugt nie einen zweiten Termin."""
-    existing = CalendarEvent.objects.filter(household=household, source_key=source_key).first()
-    if day is None:
-        if existing is not None:
-            existing.delete()
-        return None
-    if existing is None:
-        return CalendarEvent.objects.create(
-            household=household,
-            created_by=user,
-            title=title[:120],
-            starts_at=_start_of_day(day),
-            all_day=True,
-            source=source,
-            source_key=source_key,
-        )
-    existing.title = title[:120]
-    existing.starts_at = _start_of_day(day)
-    existing.all_day = True
-    existing.save(update_fields=['title', 'starts_at', 'all_day'])
-    return existing
 
 
 # ---------------------------------------------------------------------------
@@ -221,26 +192,19 @@ def suggestions(household: Household, shopping_list: ShoppingList, limit: int = 
 
 
 def price_per_item(household: Household) -> tuple[Decimal, bool]:
-    """Durchschnittlicher Preis pro Artikel aus den letzten gebuchten
-    Einkäufen. Zweiter Wert: ob die Zahl aus eigenen Einkäufen stammt (sonst
+    """Durchschnittlicher Preis pro Artikel aus den letzten Einkäufen mit
+    Betrag. Zweiter Wert: ob die Zahl aus eigenen Einkäufen stammt (sonst
     Startwert).
 
-    Der Betrag kommt aus der Buchung in Finanzen, nicht aus
-    ShoppingTrip.amount: wer die Ausgabe dort korrigiert, korrigiert damit
-    auch die Schätzung. Weich gelöschte Buchungen zählen nicht mehr mit
-    (select_related lädt sie trotzdem, weil Django dafür den Basis-Manager
-    ohne Soft-Delete-Filter nimmt — daher der explizite Filter)."""
-    trips = (
-        ShoppingTrip.objects.filter(
-            household=household,
-            item_count__gt=0,
-            transaction__isnull=False,
-            transaction__deleted_at__isnull=True,
-        )
-        .select_related('transaction')
-        .order_by('-completed_at')[:ESTIMATE_TRIP_WINDOW]
-    )
-    totals = [(trip.transaction.amount, trip.item_count) for trip in trips]
+    Gerechnet wird mit ShoppingTrip.amount — dem Betrag, den jemand beim
+    Abschließen IM HAUSHALT angegeben hat — und bewusst nicht mit der Buchung:
+    die liegt seit ADR-001 in den privaten Finanzen der Person, die eingekauft
+    hat. Eine spätere Korrektur oder Löschung dort ist privat und darf die
+    Schätzung der anderen Haushaltsmitglieder nicht beeinflussen."""
+    trips = ShoppingTrip.objects.filter(
+        household=household, item_count__gt=0, amount__isnull=False
+    ).order_by('-completed_at')[:ESTIMATE_TRIP_WINDOW]
+    totals = [(trip.amount, trip.item_count) for trip in trips]
     if not totals:
         return DEFAULT_PRICE_PER_ITEM, False
     amount = sum((a for a, _ in totals), Decimal('0'))
@@ -262,8 +226,9 @@ def complete_shopping(
 ) -> tuple[ShoppingTrip, list[ShoppingItem]]:
     """Schließt den Einkauf ab: alle abgehakten Einträge verlassen die Liste,
     werden als ShoppingTrip festgehalten und — wenn ein Betrag angegeben ist
-    — als Ausgabe in Finanzen gebucht. Offene Einträge bleiben stehen (das
-    ist, was beim nächsten Mal noch fehlt)."""
+    — als Ausgabe in den privaten Finanzen der Person gebucht, die eingekauft
+    hat. Offene Einträge bleiben stehen (das ist, was beim nächsten Mal noch
+    fehlt)."""
     shopping_list = active_shopping_list(household)
     checked = list(shopping_list.items.select_for_update().filter(is_checked=True))
     if not checked:
@@ -271,9 +236,7 @@ def complete_shopping(
 
     transaction = None
     if amount is not None:
-        transaction = finanzen_services.create_transaction_from_shopping_list(
-            household, user, amount, len(checked), category
-        )
+        transaction = finanzen_services.book_shopping_expense(user, amount, len(checked), category)
 
     trip = ShoppingTrip.objects.create(
         household=household,
@@ -297,29 +260,6 @@ def sort_items(items):
 # ---------------------------------------------------------------------------
 # Aufgaben
 # ---------------------------------------------------------------------------
-
-
-def task_source_key(task: Task) -> str:
-    return f'aufgabe:{task.pk}'
-
-
-def sync_task_event(task: Task) -> None:
-    """Hält den Kalendertermin einer Aufgabe aktuell: offene Aufgaben mit
-    Fälligkeitsdatum stehen als ganztägiger Termin im gemeinsamen Kalender,
-    erledigte oder undatierte nicht."""
-    day = task.due_date if (task.due_date and not task.is_done) else None
-    title = task.title
-    if task.assigned_to_id:
-        name = task.assigned_to.first_name or task.assigned_to.email
-        title = f'{task.title} ({name})'
-    event = upsert_all_day_event(task.household, CalendarEvent.Source.TASK, task_source_key(task), title, day)
-    if task.calendar_event_id != (event.pk if event else None):
-        task.calendar_event = event
-        task.save(update_fields=['calendar_event'])
-
-
-def remove_task_event(task: Task) -> None:
-    upsert_all_day_event(task.household, CalendarEvent.Source.TASK, task_source_key(task), task.title, None)
 
 
 def next_assignee(task: Task):
@@ -359,7 +299,6 @@ def complete_task(task: Task, user) -> Task:
     else:
         task.is_done = True
     task.save()
-    sync_task_event(task)
     return task
 
 
@@ -375,7 +314,6 @@ def reopen_task(task: Task) -> Task:
     task.last_done_at = None
     task.last_done_by = None
     task.save()
-    sync_task_event(task)
     return task
 
 
@@ -439,24 +377,6 @@ def folder_deadlines(entry: FolderEntry) -> list[dict]:
 FOLDER_DEADLINE_KINDS = ('kuendigung', 'garantie', 'wartung')
 
 
-def sync_folder_events(entry: FolderEntry) -> None:
-    by_kind = {deadline['art']: deadline for deadline in folder_deadlines(entry)}
-    for kind in FOLDER_DEADLINE_KINDS:
-        deadline = by_kind.get(kind)
-        upsert_all_day_event(
-            entry.household,
-            CalendarEvent.Source.FOLDER,
-            f'ordner:{entry.pk}:{kind}',
-            deadline['titel'] if deadline else entry.name,
-            deadline['datum'] if deadline else None,
-            entry.created_by,
-        )
-
-
-def remove_folder_events(entry: FolderEntry) -> None:
-    CalendarEvent.objects.filter(household=entry.household, source_key__startswith=f'ordner:{entry.pk}:').delete()
-
-
 def first_maintenance(base: date, interval_months: int) -> date:
     """Erster Wartungstermin: ein Intervall nach `base` (Kaufdatum), aber nie
     in der Vergangenheit — bei einem vor Jahren gekauften Gerät der nächste
@@ -478,5 +398,4 @@ def complete_maintenance(entry: FolderEntry) -> FolderEntry:
     else:
         entry.next_maintenance = None
     entry.save(update_fields=['next_maintenance'])
-    sync_folder_events(entry)
     return entry

@@ -23,3 +23,16 @@ class CandidateQuerySerializer(ObjectQuerySerializer):
 
 class OptionsQuerySerializer(serializers.Serializer):
     object_type = serializers.ChoiceField(choices=ObjectType.choices)
+
+
+class SuggestionQuerySerializer(serializers.Serializer):
+    trip = serializers.IntegerField(min_value=1, required=False)
+
+
+class SuggestionKeySerializer(serializers.Serializer):
+    key = serializers.CharField(max_length=80)
+
+
+class SuggestionAcceptSerializer(SuggestionKeySerializer):
+    action = serializers.CharField(max_length=20)
+    member_id = serializers.IntegerField(min_value=1, required=False)

@@ -1,10 +1,10 @@
+import { AmountInput } from '../../shared/directives/amount-input';
 import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, computed, inject, output, signal } from '@angular/core';
 import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
 import { Modal } from '../../shared/modal/modal';
 import { ModalForm } from '../../shared/form/modal-form';
-import { FinanzenStateService } from '../finanzen/finanzen-state.service';
 import { ItemSuggestionDto, SectionKey, ShoppingItemDto, ShoppingOverviewDto } from './haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
 import { SECTIONS, estimateAmount, groupOpenItems, sliderMax } from './haushalt-logic';
@@ -43,13 +43,12 @@ function formatEuro(value: number): string {
 @Component({
   selector: 'app-einkauf-tab',
   standalone: true,
-  imports: [DecimalPipe, Field, Modal, ModalForm, AppSelect],
+  imports: [AmountInput, DecimalPipe, Field, Modal, ModalForm, AppSelect],
   templateUrl: './einkauf-tab.html',
   styleUrls: ['./haushalt-common.scss', './einkauf-tab.scss'],
 })
 export class EinkaufTab {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
-  private readonly financeState = inject(FinanzenStateService);
   readonly saved = output<string>();
 
   protected readonly data = signal<ShoppingOverviewDto | null>(null);
@@ -319,9 +318,6 @@ export class EinkaufTab {
         this.completeOpen.set(false);
         this.load();
         if (result.amount !== null) {
-          // Budget, Kategorien und "Verfügbares Einkommen" sofort neu laden —
-          // Sidebar/Dashboard zeigen den Einkauf damit ohne Umweg.
-          this.financeState.invalidieren();
           this.saved.emit(`Einkauf abgeschlossen · ${formatEuro(Number(result.amount))} in Finanzen gebucht.`);
         } else {
           this.saved.emit(`Einkauf abgeschlossen · ${result.item_count} Artikel.`);
