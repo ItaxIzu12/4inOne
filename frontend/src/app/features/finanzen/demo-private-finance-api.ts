@@ -140,9 +140,9 @@ export class DemoPrivateFinanceApi {
       ? this.goalList.map((g) => (g.id === id ? { ...g, ...draft } : g))
       : [...this.goalList, { ...draft, id: -1, title: '', target_amount: '0', currency: 'EUR', target_date: null } as SavingsGoal];
     const month = ym(0, 1).slice(0, 7);
-    const before = Number(this.buildSummary(month, this.goalList).available ?? 0);
-    const after = Number(this.buildSummary(month, goals).available ?? 0);
-    const month_over = after < 0 && after < before ? { month, over: money(-after) } : null;
+    const before = this.savingsRoom(month, this.goalList);
+    const after = this.savingsRoom(month, goals);
+    const month_over = after !== null && before !== null && after < 0 && after < before ? { month, over: money(-after) } : null;
     return of({ month_over, plan_alert: null });
   }
   save(resource: 'transactions' | 'budgets' | 'goals', payload: object, id?: number): Observable<unknown> {
@@ -165,13 +165,18 @@ export class DemoPrivateFinanceApi {
     return of(undefined);
   }
 
+  private savingsRoom(month: string, goals: SavingsGoal[]): number | null {
+    const summary = this.buildSummary(month, goals);
+    return summary.available === null ? null : Number(summary.available);
+  }
+
   private listFor(resource: 'transactions' | 'budgets' | 'goals') {
     if (resource === 'transactions') return this.txs;
     if (resource === 'budgets') return this.budgetList;
     return this.goalList;
   }
 
-  /** Rechnet wie das Backend: verfügbar = Budget + Einnahmen − Ausgaben − Gehaltenes. „Gehaltenes“ vereinfacht die
+  /** Rechnet wie das Backend: Restbudget = Monatsbudget − Ausgaben − Sparreservierungen. „Gehaltenes“ vereinfacht die
    * Sparraten-Simulation von savings.py auf den bisher gesparten Betrag jedes Ziels, das den Monat abdeckt und nicht
    * pausiert ist — für die Demo genau genug, ohne die ganze Backend-Engine nachzubauen. */
   private buildSummary(month: string, goals: SavingsGoal[] = this.goalList): FinanceSummary {
@@ -191,11 +196,11 @@ export class DemoPrivateFinanceApi {
       month,
       currency: 'EUR',
       budget: budget ? budget.amount : null,
-      total: budget ? money(Number(budget.amount) + income) : null,
+      total: budget ? money(Number(budget.amount)) : null,
       saved: money(saved),
       saved_planned: '0.00',
       plan_alert: null,
-      available: budget ? money(Number(budget.amount) + income - expense - saved) : null,
+      available: budget ? money(Number(budget.amount) - expense - saved) : null,
       income: money(income),
       expenses: money(expense),
       savings_target: money(target),

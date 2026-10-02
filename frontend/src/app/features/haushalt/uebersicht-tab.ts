@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { Component, computed, inject, output, signal } from '@angular/core';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { HaushaltOverviewDto, Id, OverviewDeviceDto, TaskDto } from './haushalt-api.service';
@@ -14,7 +15,7 @@ export type HaushaltTabKey = 'uebersicht' | 'aufgaben' | 'ordner' | 'einkauf' | 
 @Component({
   selector: 'app-uebersicht-tab',
   standalone: true,
-  imports: [AppIcon],
+  imports: [ErrorNoticeDirective, AppIcon],
   templateUrl: './uebersicht-tab.html',
   styleUrls: ['./haushalt-common.scss', './uebersicht-tab.scss'],
 })

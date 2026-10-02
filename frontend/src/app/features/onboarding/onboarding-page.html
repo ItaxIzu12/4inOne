@@ -26,7 +26,7 @@
     <p class="status" role="status">Dein Konto wird vorbereitet …</p>
   } @else if (!allowed()) {
     <div class="status">
-      <p role="alert">{{ error() }}</p>
+      <p  [appErrorNotice]="error()">{{ error() }}</p>
       <button class="primary" (click)="load()">Erneut versuchen</button>
     </div>
   } @else {
@@ -122,7 +122,7 @@
       }
     </section>
     @if (error()) {
-      <p class="error" role="alert">{{ error() }}</p>
+      <p class="error"  [appErrorNotice]="error()">{{ error() }}</p>
     }
     <footer>
       @if (step() > 1) {

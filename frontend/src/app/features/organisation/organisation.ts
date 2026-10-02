@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -31,7 +32,7 @@ function localInput(value: string): string {
 @Component({
   selector: 'app-organisation',
   standalone: true,
-  imports: [AppShell, AppIcon, ConnectionsSection, Field, ModalForm, ReactiveFormsModule, DatePipe, AppSelect, AppDatePicker, AppDateTimePicker, AppTimePicker],
+  imports: [ErrorNoticeDirective, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, ReactiveFormsModule, DatePipe, AppSelect, AppDatePicker, AppDateTimePicker, AppTimePicker],
   templateUrl: './organisation.html',
   styleUrl: './organisation.scss',
 })

@@ -24,7 +24,7 @@
           {{ invite()!.expires_at | date: 'dd.MM.yyyy' }}.
         </p>
         @if (error()) {
-          <p class="profile-error" role="alert">{{ error() }}</p>
+          <p class="profile-error"  [appErrorNotice]="error()">{{ error() }}</p>
         }
         <div class="inv-actions">
           <button type="button" class="inv-button" [disabled]="busy()" (click)="answer(true)">Annehmen</button>

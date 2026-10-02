@@ -7,14 +7,13 @@
       <h2 [id]="titleId">{{ title() }}</h2>
     </header>
 
+    <div class="modal-form__warnings"><ng-content select="[modalWarning]" /></div>
+
     <div class="modal-form__body">
       <ng-content />
     </div>
 
     <footer class="modal-form__foot">
-      @if (error()) {
-        <p class="modal-form__error" role="alert">{{ error() }}</p>
-      }
       @if (confirmingDelete()) {
         <div class="modal-form__confirm">
           <p>Wirklich löschen? Das lässt sich nicht rückgängig machen.</p>

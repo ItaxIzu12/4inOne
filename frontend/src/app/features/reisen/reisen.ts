@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
@@ -41,7 +42,7 @@ export function formatMoney(value: string | number, currency: Trip['currency']):
 @Component({
   selector: 'app-reisen',
   standalone: true,
-  imports: [AmountInput, AppShell, AppIcon, Field, ModalForm, Modal, ReactiveFormsModule, AppSelect, AppDatePicker, DatePipe, TripPlan],
+  imports: [ErrorNoticeDirective, AmountInput, AppShell, AppIcon, Field, ModalForm, Modal, ReactiveFormsModule, AppSelect, AppDatePicker, DatePipe, TripPlan],
   templateUrl: './reisen.html',
   styleUrl: './reisen.scss',
 })

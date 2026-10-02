@@ -44,13 +44,13 @@ export interface FinanceSummary {
   month: string;
   currency: string;
   budget: string | null;
-  /** Budget + Einnahmen des Monats; null ohne Monatsbudget. */
+  /** Monatsbudget des Monats; null ohne Monatsbudget. */
   total: string | null;
-  /** In diesem Monat zurückgelegt (Änderungen des gesparten Betrags), mindert das verfügbare Budget. */
+  /** Für Sparziele reserviert; reduziert das Restbudget. */
   saved: string;
   /** Davon nur geplant (Sparrate), noch nicht als gespart gebucht. */
   saved_planned: string;
-  /** Erster Monat (12 Monate voraus), in dem die Sparraten das Budget sprengen — sonst null. */
+  /** Erster Monat (12 Monate voraus), in dem die Sparraten das Monatsbudget nach Ausgaben überschreiten — sonst null. */
   plan_alert: { month: string; over: string; planned: string } | null;
   available: string | null;
   income: string;
@@ -63,9 +63,9 @@ export interface FinanceSummary {
   recent: FinanceTransaction[];
 }
 export interface GoalPreview {
-  /** Im laufenden Monat reicht das verfügbare Budget nach der Änderung nicht. */
+  /** Das Monatsbudget nach Ausgaben reicht für die Sparplanung nicht. */
   month_over: { month: string; over: string } | null;
-  /** In einem der nächsten Monate reichen Budget und Einnahmen nicht für alle Sparraten. */
+  /** In einem der nächsten Monate reicht das Monatsbudget nach Ausgaben nicht für alle Sparraten. */
   plan_alert: { month: string; over: string; planned: string } | null;
 }
 /** Farbe für Ausgaben ohne Kategorie (erscheinen als „Sonstiges“) — wie backend category_colors.UNCATEGORISED_COLOR. */

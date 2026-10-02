@@ -59,7 +59,7 @@ describe('Dashboard', () => {
     const request = TestBed.inject(HttpTestingController).expectOne((req) => req.url.includes('/finanzen/private/summary/'));
     request.flush({ available: '250.00', budget: '3000.00', has_data: true });
     f.detectChanges();
-    expect(f.nativeElement.textContent).toContain('250,00 € verfügbar');
+    expect(f.nativeElement.textContent).toContain('250,00 € vom Budget übrig');
     // Haushalt kommt über HAUSHALT_DATA_PROVIDER (der Stub oben), nicht über HttpClient — dieselbe Weiche wie in
     // app.routes.ts zwischen Demo- und echter Datenquelle.
     expect(f.nativeElement.textContent).toContain('3 offene Aufgaben');

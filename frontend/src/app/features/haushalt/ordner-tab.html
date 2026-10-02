@@ -3,8 +3,8 @@
     <p>Der Haushaltsordner enthält Vertragskosten und ist deshalb nur für Erwachsene im Haushalt sichtbar.</p>
   </div>
 } @else if (loadError()) {
-  <div class="load-error" role="alert">
-    <p>Der Haushaltsordner konnte nicht geladen werden.</p>
+  <div class="load-error">
+    <p [appErrorNotice]="'Der Haushaltsordner konnte nicht geladen werden.'">Der Haushaltsordner konnte nicht geladen werden.</p>
     <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
   </div>
 } @else if (entries()) {
@@ -97,7 +97,7 @@
       <section class="card card--lavender" aria-labelledby="upcoming-heading">
         <h2 id="upcoming-heading">Demnächst</h2>
         @if (actionError()) {
-          <p class="field-error" role="alert">{{ actionError() }}</p>
+          <p class="field-error"  [appErrorNotice]="actionError()">{{ actionError() }}</p>
         }
         @if (upcoming().length > 0) {
           <ul class="deadlines">

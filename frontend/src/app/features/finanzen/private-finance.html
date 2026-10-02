@@ -48,48 +48,49 @@
       <p class="empty" role="status">Deine Finanzen werden geladen …</p>
     } @else if (error()) {
       <div class="empty">
-        <p role="alert">{{ error() }}</p>
+        <p  [appErrorNotice]="error()">{{ error() }}</p>
         <button class="secondary" (click)="load()">Erneut versuchen</button>
       </div>
     } @else {
       @if (tab() === 'overview') {
         <div class="overview-grid">
           <section class="card month-card">
-            <p>Verfügbares Monatsbudget</p>
+            <p>Vom Monatsbudget übrig</p>
             <h2 class="amount">{{ money(summary()?.available) }}</h2>
             @if (summary()?.budget !== null) {
               <p>
                 Von {{ money(summary()?.total) }} ·
-                {{ percent(used(), summary()?.total) }} % {{ hasSaved() ? 'ausgegeben oder gespart' : 'ausgegeben' }}
+                {{ percent(used(), summary()?.total) }} % ausgegeben oder für Sparziele zurückgelegt
               </p>
               <progress
                 [class.over]="overBudget() !== null"
                 [value]="percent(used(), summary()?.total)"
                 max="100"
-                [attr.aria-label]="overBudget() !== null ? 'Verfügbares Budget überschritten' : 'Verfügbares Budget verbraucht'"
+                [attr.aria-label]="overBudget() !== null ? 'Monatsbudget überschritten' : 'Monatsbudget verbraucht'"
               ></progress>
-              <dl class="calc">
-                <div><dt>Budget</dt><dd>{{ money(summary()?.budget) }}</dd></div>
-                <div><dt>+ Einnahmen</dt><dd>{{ money(summary()?.income) }}</dd></div>
-                <div><dt>− Ausgaben</dt><dd>{{ money(summary()?.expenses) }}</dd></div>
-                @if (hasSaved()) {
-                  <div><dt>− Gespart{{ hasPlanned() ? ' (davon ' + money(summary()?.saved_planned) + ' geplant)' : '' }}</dt><dd>{{ money(summary()?.saved) }}</dd></div>
-                }
-                <div class="calc__sum"><dt>= Verfügbar</dt><dd>{{ money(summary()?.available) }}</dd></div>
-              </dl>
+              <details class="budget-explanation">
+                <summary>So berechnet sich dein Budgetrest</summary>
+                <dl class="calc">
+                  <div><dt>Monatsbudget</dt><dd>{{ money(summary()?.budget) }}</dd></div>
+                  <div><dt>− Ausgaben</dt><dd>{{ money(summary()?.expenses) }}</dd></div>
+                  <div><dt>− Für Sparziele zurückgelegt</dt><dd>{{ money(summary()?.saved) }}</dd></div>
+                  <div class="calc__sum"><dt>= Übrig</dt><dd>{{ money(summary()?.available) }}</dd></div>
+                </dl>
+                <p>Einnahmen erhöhen dein Monatsbudget nicht automatisch. Bereits gesparte Beträge werden im Zeitraum des Sparziels zurückgelegt. Eine Sparrate wird dabei nicht doppelt gezählt.</p>
+              </details>
               @if (overBudget(); as over) {
                 <p class="overrun-note" role="status">
-                  <strong>Budget überschritten:</strong> Du hast {{ money(over) }} mehr ausgegeben oder zurückgelegt,
-                  als dir zur Verfügung steht.
+                  <strong>Budget überschritten:</strong> Du hast {{ money(over) }} mehr ausgegeben oder für Sparziele zurückgelegt, als dein Monatsbudget vorsieht.
                 </p>
-              } @else if (planAlertText(); as alert) {
-                <p class="overrun-note" role="status"><strong>Sparraten zu hoch:</strong> {{ alert }}</p>
+              }
+              @if (planAlertText(); as alert) {
+                <p class="overrun-note" role="status"><strong>Sparplanung prüfen:</strong> {{ alert }}</p>
               }
             } @else {
               <p>
                 Für {{ monthLabel() }} gibt es kein Budget.
                 @if (Number(summary()?.income) + Number(summary()?.expenses) > 0) {
-                  Deine Einnahmen und Ausgaben bleiben gespeichert, es wird aber nichts verrechnet.
+                  Deine Einnahmen und Ausgaben bleiben gespeichert, ein Budgetrest kann erst mit einem Monatsbudget angezeigt werden.
                 } @else {
                   Lege eines fest, dann siehst du, was dir noch bleibt.
                 }
@@ -140,6 +141,7 @@
             <header>
               <h2>Deine Sparziele</h2>
             </header>
+            <p class="savings-note">Bereits gesparte Beträge reduzieren dein Restbudget im gewählten Zeitraum.</p>
             @if (goals().length) {
               <strong>{{ money(summary()?.savings_current) }}</strong>
               <p>Von {{ money(summary()?.savings_target) }} · aktive und erreichte Ziele</p>
@@ -321,6 +323,23 @@
   (closed)="close()"
   (deleted)="remove()"
 >
+  <div modalWarning>
+    @if (overrun(); as over) {
+      <p class="overrun-note" role="alert">
+        <strong>Diese Ausgabe überschreitet dein Monatsbudget um {{ money(over.over) }}.</strong>
+        Verfügbar sind {{ money(over.available) }}. Du kannst sie trotzdem buchen oder den Betrag ändern.
+      </p>
+    }
+    @if (goalWarning(); as sentences) {
+      <div class="overrun-note" role="alert">
+        <strong>Bitte prüfe die Finanzierung deines Sparziels.</strong>
+        @for (sentence of sentences; track sentence) {
+          <span class="block">{{ sentence }}</span>
+        }
+        <span class="block">Du kannst trotzdem speichern oder die Beträge anpassen.</span>
+      </div>
+    }
+  </div>
   @if (editor() === 'transactions') {
     <app-field label="Typ">
       <app-select formControlName="type" [options]="typeOptions" />
@@ -344,12 +363,7 @@
     <app-field label="Notiz" [optional]="true">
       <input id="booking-note" formControlName="note" maxlength="255" />
     </app-field>
-    @if (overrun(); as over) {
-      <p class="overrun-note" role="alert">
-        <strong>Diese Ausgabe überschreitet dein verfügbares Budget um {{ money(over.over) }}.</strong>
-        Verfügbar sind {{ money(over.available) }}. Du kannst sie trotzdem buchen oder den Betrag ändern.
-      </p>
-    }
+
   } @else if (editor() === 'budgets') {
     <!-- Beim Ändern ist der Startmonat gesperrt (sonst verschiebt man das Budget aus seinem Monat); anderer Zeitraum = neues Budget. -->
     <app-field
@@ -369,7 +383,7 @@
         <app-date-picker mode="month" formControlName="end_month" [min]="form.controls.month.value" />
       </app-field>
     }
-    <app-field label="Budgetbetrag in EUR">
+    <app-field label="Monatsbudget in EUR" hint="Dein Gesamtbetrag für Ausgaben und Sparziele. Einnahmen erhöhen ihn nicht automatisch.">
       <input id="budget-amount" inputmode="decimal" formControlName="amount" aria-required="true" />
     </app-field>
     @if (budgetOverrideNote(); as note) {
@@ -393,7 +407,7 @@
       </app-field>
       <app-field
         label="Bereits gespart in EUR"
-        hint="Höchstens der Zielbetrag. Eine Änderung mindert dein verfügbares Budget in diesem Monat."
+        hint="Höchstens der Zielbetrag. Dieser Betrag wird im Zeitraum des Sparziels vom Restbudget abgezogen."
       >
         <input id="goal-current" inputmode="decimal" formControlName="current_amount" aria-required="true" />
       </app-field>
@@ -417,19 +431,11 @@
     <app-field
       label="Sparrate pro Monat"
       [optional]="true"
-      hint="Wird in den Monaten des Zeitraums von deinem verfügbaren Budget zurückgelegt, bis das Ziel erreicht ist."
+      hint="Wird im Restbudget des gewählten Zeitraums berücksichtigt, bis das Ziel erreicht ist. Bereits gespartes Geld und Sparrate werden nicht doppelt abgezogen."
     >
       <input id="goal-rate" inputmode="decimal" formControlName="rate" />
     </app-field>
-    @if (goalWarning(); as sentences) {
-      <div class="overrun-note" role="alert">
-        <strong>Das überschreitet dein Budget.</strong>
-        @for (sentence of sentences; track sentence) {
-          <span class="block">{{ sentence }}</span>
-        }
-        <span class="block">Du kannst trotzdem speichern oder die Beträge anpassen.</span>
-      </div>
-    }
+
   }
   @if (editor() === 'goals' && editId()) {
     <app-connections objectType="SAVINGS_GOAL" [objectId]="editId()!" />

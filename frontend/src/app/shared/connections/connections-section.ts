@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../error-notice/error-notice';
 import { Component, computed, effect, ElementRef, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -59,7 +60,7 @@ const SEARCH_FROM = 8;
 @Component({
   selector: 'app-connections',
   standalone: true,
-  imports: [AppIcon, RouterLink],
+  imports: [ErrorNoticeDirective, AppIcon, RouterLink],
   templateUrl: './connections-section.html',
   styleUrl: './connections-section.css',
 })

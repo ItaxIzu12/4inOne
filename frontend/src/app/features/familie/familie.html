@@ -18,7 +18,7 @@
 
     @if (loadError()) {
       <div class="fam-card">
-        <p role="alert">Deine Kontakte konnten nicht geladen werden.</p>
+        <p  [appErrorNotice]="'Deine Kontakte konnten nicht geladen werden.'">Deine Kontakte konnten nicht geladen werden.</p>
         <button type="button" class="fam-button fam-button--ghost" (click)="load()">Erneut versuchen</button>
       </div>
     } @else if (data() === null) {
@@ -72,7 +72,7 @@
             </label>
           </fieldset>
           @if (error()) {
-            <p id="fam-error" class="profile-error" role="alert">{{ error() }}</p>
+            <p id="fam-error" class="profile-error"  [appErrorNotice]="error()">{{ error() }}</p>
           }
           <button type="submit" class="fam-button" [disabled]="busy() !== null">
             {{ busy() === 'invite' ? 'Wird gesendet …' : 'Einladung senden' }}

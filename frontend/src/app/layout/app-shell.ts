@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../shared/error-notice/error-notice';
 import { Component, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -15,7 +16,7 @@ import { Modal } from '../shared/modal/modal';
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, Brand, AppIcon, Modal, IconInfo, IconLegal, IconLogout, IconProfile, IconSettings, IconTwoFactor],
+  imports: [ErrorNoticeDirective, RouterLink, RouterLinkActive, Brand, AppIcon, Modal, IconInfo, IconLegal, IconLogout, IconProfile, IconSettings, IconTwoFactor],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })

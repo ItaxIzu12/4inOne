@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/auth/auth.service';
@@ -31,7 +32,7 @@ const KIND_ICON: Record<SuggestionKind, IconName> = {
 @Component({
   selector: 'app-trip-plan',
   standalone: true,
-  imports: [AppIcon, AppSelect, ConnectionsSection],
+  imports: [ErrorNoticeDirective, AppIcon, AppSelect, ConnectionsSection],
   templateUrl: './trip-plan.html',
   styleUrl: './trip-plan.scss',
 })

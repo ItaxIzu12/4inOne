@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -15,7 +16,7 @@ const STEPS = ['App holen', 'Code scannen', 'Bestätigen'];
 @Component({
   selector: 'app-mfa-setup',
   standalone: true,
-  imports: [AppShell, RouterLink],
+  imports: [ErrorNoticeDirective, AppShell, RouterLink],
   templateUrl: './mfa-setup.html',
   styleUrls: ['../einstellungen/einstellungen.css', '../profil/profil.css', './mfa-setup.css'],
 })

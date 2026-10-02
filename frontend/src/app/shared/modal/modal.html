@@ -9,7 +9,7 @@
     role="dialog"
     aria-modal="true"
     [attr.aria-labelledby]="labelledBy()"
-    (keydown)="onKeydown($event)"
+    [attr.aria-owns]="notices.message() ? 'global-error-notice' : null"
   >
     <ng-content />
     <button type="button" class="modal-close" [attr.aria-label]="closeLabel()" (click)="requestClose()">

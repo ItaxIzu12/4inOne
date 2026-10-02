@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../error-notice/error-notice';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CategoryApiService } from '../../features/finanzen/category-api.service';
@@ -25,7 +26,7 @@ interface OnboardingStep {
 @Component({
   selector: 'app-onboarding',
   standalone: true,
-  imports: [Modal],
+  imports: [ErrorNoticeDirective, Modal],
   templateUrl: './onboarding.html',
   styleUrl: './onboarding.css',
 })

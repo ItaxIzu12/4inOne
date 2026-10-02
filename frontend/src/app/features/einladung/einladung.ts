@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { map } from 'rxjs';
@@ -10,7 +11,7 @@ import { ContactsApiService, Relation } from '../../core/contacts/contacts-api.s
 @Component({
   selector: 'app-einladung',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [ErrorNoticeDirective, RouterLink, DatePipe],
   templateUrl: './einladung.html',
   styleUrls: ['../profil/profil.css', './einladung.css'],
 })

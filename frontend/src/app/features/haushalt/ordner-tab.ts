@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -44,7 +45,7 @@ function formatDate(iso: string | null): string {
 @Component({
   selector: 'app-ordner-tab',
   standalone: true,
-  imports: [AmountInput, DecimalPipe, AppIcon, Field, ModalForm, AppDatePicker],
+  imports: [ErrorNoticeDirective, AmountInput, DecimalPipe, AppIcon, Field, ModalForm, AppDatePicker],
   templateUrl: './ordner-tab.html',
   styleUrls: ['./haushalt-common.scss', './ordner-tab.scss'],
 })

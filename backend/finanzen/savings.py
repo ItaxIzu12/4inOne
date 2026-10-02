@@ -1,4 +1,4 @@
-"""Was Sparziele in einem Monat vom verfügbaren Budget zurücklegen.
+"""Was Sparziele in einem Monat vom Restbudget reservieren.
 
 Zwei Quellen:
 - tatsächlich Gespartes (`SavingsContribution`, datiert),
@@ -12,11 +12,11 @@ Die Rate endet von selbst, sobald das Ziel erreicht wäre: es wird nie mehr
 reserviert als noch fehlt. Das rechnen wir Monat für Monat ab dem Planstart nach
 (`_simulate`), so bleiben auch vergangene Monate stabil und ändern sich nicht,
 wenn das Ziel später erreicht wird. Erreichte Ziele reservieren nichts mehr
-(nur tatsächlich Gespartes zählt). Pausierte Ziele mindern das Budget gar nicht:
+(nur tatsächlich Gespartes zählt). Pausierte Ziele zählen in der Sparplanung gar nicht:
 Gespartes und Rate sind frei, bis das Ziel wieder aktiv ist.
 
 Ziele OHNE Rate halten ihr bisher Gespartes in jedem Monat ihres Zeitraums zurück: 450 € gespart,
-gültig ab September bis auf Weiteres, mindern das Budget von September, Oktober, November … je um 450 €.
+gültig ab September bis auf Weiteres, zählen in der Sparplanung von September, Oktober, November … je um 450 €.
 Endet der Zeitraum, wird das Ziel pausiert oder gelöscht, ist das Geld wieder frei.
 
 Es wird nichts automatisch in „Bereits gespart“ gebucht — die Rate ist eine
@@ -49,7 +49,7 @@ def _in_period(goal: SavingsGoal, month: date) -> bool:
 
 def contribution_date(goal: SavingsGoal, today: date) -> date:
     """Wann eine Einzahlung ins Ziel zählt: heute — aber innerhalb des Zeitraums, für den das Ziel gilt.
-    Ein Ziel für Oktober mindert das Budget im Oktober, auch wenn du es schon im September anlegst."""
+    Ein Ziel für Oktober zählt in der Sparplanung im Oktober, auch wenn du es schon im September anlegst."""
     if goal.plan_month is None:
         return today
     if today < goal.plan_month:
@@ -112,7 +112,7 @@ class SavingsPlanner:
         total, planned_part = ZERO, ZERO
         for goal in self.goals:
             if goal.status == 'PAUSED':
-                continue  # pausiert: das Geld ist frei, weder Gespartes noch Rate mindern das Budget
+                continue  # pausiert: das Geld ist frei, weder Gespartes noch Rate zählen in der Sparplanung
             by_month = self.monthly.get(goal.pk, {})
             if goal.monthly_amount and goal.status == 'ACTIVE':
                 effect, planned_only = _simulate(goal, by_month, month_start)
@@ -135,8 +135,7 @@ PLAN_HORIZON_MONTHS = 12
 
 
 def available_for_month(owner, month: date, planner: 'SavingsPlanner | None' = None):
-    """(verfügbar, davon nur geplant) für den Monat; verfügbar ist None, wenn kein Budget gilt.
-    verfügbar = Budget + Einnahmen − Ausgaben − Zurückgelegtes."""
+    """Restbudget nach Ausgaben und Sparreservierungen; Einnahmen erhöhen es nicht."""
     from .models import MonthlyBudget, Transaction
     from .services import month_bounds
 
@@ -147,16 +146,15 @@ def available_for_month(owner, month: date, planner: 'SavingsPlanner | None' = N
         return None, planned
     first, last = month_bounds(month)
     rows = Transaction.objects.filter(owner=owner, datum__gte=first, datum__lt=last, currency='EUR')
-    income = rows.filter(type='INCOME').aggregate(t=Sum('amount'))['t'] or ZERO
     expense = rows.filter(type='EXPENSE').aggregate(t=Sum('amount'))['t'] or ZERO
-    return budget.amount + income - expense - saved, planned
+    return budget.amount - expense - saved, planned
 
 
 def plan_alert(owner, start: date, planner: SavingsPlanner | None = None, months: int = PLAN_HORIZON_MONTHS):
-    """Der erste Monat (ab `start`, höchstens `months` Monate weit), in dem Budget und Einnahmen nicht
-    für alle Sparraten reichen — sonst None.
+    """Der erste Monat (ab `start`, höchstens `months` Monate weit), in dem das Monatsbudget nicht
+    für alle Sparraten reicht — sonst None.
 
-    Nur Monate, in denen wirklich eine Rate reserviert ist und ein Budget gilt; ein Minus allein durch
+    Nur Monate, in denen wirklich eine Rate reserviert ist und ein Monatsbudget existiert; ein Minus allein durch
     Ausgaben ist Sache der normalen Überschreitungs-Meldung. Rein zur Warnung: es wird nichts verändert."""
     planner = planner or SavingsPlanner(owner)
     cursor = start
@@ -175,9 +173,9 @@ def goal_change_warning(owner, apply):
     Transaktion, die danach IMMER zurückgerollt wird: es bleibt nichts in der Datenbank zurück.
 
     Gewarnt wird nur, wenn die Änderung die Lage verschlechtert:
-    - `month_over`: in einem der nächsten Monate (ab heute) reicht das verfügbare Budget danach nicht,
-    - `plan_alert`: in einem der nächsten Monate reichen Budget und Einnahmen nicht für alle Sparraten.
-    Ohne Budget gibt es nichts zu vergleichen."""
+    - `month_over`: in einem der nächsten Monate (ab heute) reicht das Restbudget danach nicht,
+    - `plan_alert`: in einem der nächsten Monate reicht das Monatsbudget nicht für alle Sparraten.
+    Ohne Monatsbudget gibt es keine Deckungsprüfung."""
     from django.db import transaction
     from django.utils import timezone
 

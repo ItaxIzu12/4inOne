@@ -70,9 +70,9 @@
 
     <div class="fin-inner">
       @if (overviewError()) {
-        <div class="load-error" role="alert">
+        <div class="load-error">
           <h2>{{ t.loadErrorHeading }}</h2>
-          <p>{{ t.loadErrorMessage }}</p>
+          <p [appErrorNotice]="t.loadErrorMessage">{{ t.loadErrorMessage }}</p>
           <button type="button" class="btn-primary" (click)="retryLoadOverview()">
             {{ t.loadErrorRetry }}
           </button>
@@ -205,9 +205,9 @@
           </div>
         } @else if (activeTab() === 'analysen') {
           @if (analysenError()) {
-            <div class="load-error" role="alert">
+            <div class="load-error">
               <h2>{{ t.loadErrorHeading }}</h2>
-              <p>{{ t.loadErrorMessage }}</p>
+              <p [appErrorNotice]="t.loadErrorMessage">{{ t.loadErrorMessage }}</p>
               <button type="button" class="btn-primary" (click)="retryLoadOverview()">
                 {{ t.loadErrorRetry }}
               </button>
@@ -294,7 +294,7 @@
                     </div>
                   </div>
                   @if (ownIncomeError()) {
-                    <p class="field-error" role="alert">{{ ownIncomeError() }}</p>
+                    <p class="field-error"  [appErrorNotice]="ownIncomeError()">{{ ownIncomeError() }}</p>
                   }
                 </form>
               </section>
@@ -325,7 +325,7 @@
                     </div>
                   </div>
                   @if (bufferError()) {
-                    <p class="field-error" role="alert">{{ bufferError() }}</p>
+                    <p class="field-error"  [appErrorNotice]="bufferError()">{{ bufferError() }}</p>
                   }
                 </form>
               </section>
@@ -463,7 +463,7 @@
                 </div>
 
                 @if (reportError()) {
-                  <p class="field-error" role="alert">{{ reportError() }}</p>
+                  <p class="field-error"  [appErrorNotice]="reportError()">{{ reportError() }}</p>
                 }
               </section>
               <section
@@ -708,7 +708,7 @@
       </div>
 
       @if (addError()) {
-        <p class="field-error" role="alert">{{ addError() }}</p>
+        <p class="field-error"  [appErrorNotice]="addError()">{{ addError() }}</p>
       }
 
       <button type="submit" class="btn-primary" [disabled]="addSubmitting()" [attr.aria-busy]="addSubmitting()">
@@ -759,7 +759,7 @@
     </div>
 
     @if (categoryGoalError()) {
-      <p class="field-error" role="alert">{{ categoryGoalError() }}</p>
+      <p class="field-error"  [appErrorNotice]="categoryGoalError()">{{ categoryGoalError() }}</p>
     }
 
     <button type="submit" class="btn-primary" [disabled]="categoryGoalSubmitting()" [attr.aria-busy]="categoryGoalSubmitting()">
@@ -873,7 +873,7 @@
       </label>
 
       @if (deductionError()) {
-        <p class="field-error" role="alert">{{ deductionError() }}</p>
+        <p class="field-error"  [appErrorNotice]="deductionError()">{{ deductionError() }}</p>
       }
 
       <button type="submit" class="btn-primary" [disabled]="deductionSubmitting()" [attr.aria-busy]="deductionSubmitting()">
@@ -961,7 +961,7 @@
     </fieldset>
 
     @if (newCategoryError()) {
-      <p class="field-error" role="alert">{{ newCategoryError() }}</p>
+      <p class="field-error"  [appErrorNotice]="newCategoryError()">{{ newCategoryError() }}</p>
     }
 
     <button type="submit" class="btn-primary" [disabled]="newCategorySubmitting()" [attr.aria-busy]="newCategorySubmitting()">

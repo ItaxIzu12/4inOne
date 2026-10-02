@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { Brand } from '../../shared/brand/brand';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -40,7 +41,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [AppIcon, Brand, ReactiveFormsModule, RouterLink, IconArrowLeft],
+  imports: [ErrorNoticeDirective, AppIcon, Brand, ReactiveFormsModule, RouterLink, IconArrowLeft],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
@@ -160,6 +161,7 @@ export class Login {
 
   protected submitLogin(): void {
     if (this.submitting()) return;
+    this.clearSubmitError();
     if (this.mfaRequired() && !this.mfaCode().trim()) {
       this.submitError.set('Bitte gib deinen Bestätigungscode ein.');
       return;
@@ -168,7 +170,6 @@ export class Login {
       this.loginForm.markAllAsTouched();
       return;
     }
-    this.clearSubmitError();
     this.submitting.set(true);
     const { email, password, remember } = this.loginForm.getRawValue();
 
@@ -200,11 +201,11 @@ export class Login {
 
   protected submitRegister(): void {
     if (this.submitting()) return;
+    this.clearSubmitError();
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       return;
     }
-    this.clearSubmitError();
     this.submitting.set(true);
     const { name, email, password, confirmPassword, acceptPrivacy } =
       this.registerForm.getRawValue();

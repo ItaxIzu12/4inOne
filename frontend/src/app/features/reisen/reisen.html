@@ -32,7 +32,7 @@
       <p class="state" role="status">Deine Reisen werden geladen …</p>
     } @else if (error()) {
       <div class="state">
-        <p role="alert">{{ error() }}</p>
+        <p  [appErrorNotice]="error()">{{ error() }}</p>
         <button class="secondary" (click)="load()">Erneut versuchen</button>
       </div>
     } @else if (tab() === 'uebersicht') {
@@ -65,7 +65,7 @@
             <p class="state" role="status">Wird geladen …</p>
           } @else if (detailError()) {
             <div class="state">
-              <p class="field-error" role="alert">{{ detailError() }}</p>
+              <p class="field-error"  [appErrorNotice]="detailError()">{{ detailError() }}</p>
               <button class="secondary" (click)="retryTripDetail()">Erneut versuchen</button>
             </div>
           } @else {
@@ -237,13 +237,13 @@
         </label>
       </div>
       @if (actionError()) {
-        <p class="field-error" role="alert">{{ actionError() }}</p>
+        <p class="field-error"  [appErrorNotice]="actionError()">{{ actionError() }}</p>
       }
       @if (detailLoading()) {
         <p class="state" role="status">Wird geladen …</p>
       } @else if (detailError()) {
         <div class="state">
-          <p class="field-error" role="alert">{{ detailError() }}</p>
+          <p class="field-error"  [appErrorNotice]="detailError()">{{ detailError() }}</p>
           <button class="secondary" (click)="retryTripDetail()">Erneut versuchen</button>
         </div>
       } @else if (tab() === 'packliste') {
@@ -544,7 +544,7 @@
     <h2 id="participants-heading">Teilnehmer – {{ participantsEditorTrip()?.title }}</h2>
     <p class="muted small">Teilnehmer sehen nur diese Reise — nie deine privaten Finanzen, Haushaltsaufgaben, Organisation oder andere Reisen.</p>
     @if (participantsError()) {
-      <p class="field-error" role="alert">{{ participantsError() }}</p>
+      <p class="field-error"  [appErrorNotice]="participantsError()">{{ participantsError() }}</p>
     }
     <ul class="list">
       @for (p of participantsEditorTrip()?.participants ?? []; track p.id) {
@@ -606,7 +606,7 @@
   <div class="form smart-setup-review">
     <h2 id="smart-setup-review-heading">Vorschläge für {{ smartSetupTrip()?.title }}</h2>
     @if (smartSetupError()) {
-      <p class="field-error" role="alert">{{ smartSetupError() }}</p>
+      <p class="field-error"  [appErrorNotice]="smartSetupError()">{{ smartSetupError() }}</p>
     }
     @if (smartSetupSuggestions().packing.length) {
       <h3>Packliste</h3>

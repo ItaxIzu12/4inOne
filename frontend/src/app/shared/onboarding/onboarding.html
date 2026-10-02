@@ -50,7 +50,7 @@
     </div>
 
     @if (categoryError()) {
-      <p class="field-error" role="alert">{{ categoryError() }}</p>
+      <p class="field-error"  [appErrorNotice]="categoryError()">{{ categoryError() }}</p>
     }
 
     <button type="submit" class="onboarding__action onboarding__action--submit" [disabled]="categorySubmitting()">

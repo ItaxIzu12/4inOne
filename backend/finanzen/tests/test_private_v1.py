@@ -69,7 +69,7 @@ def test_summary_exact_decimals_month_boundaries(ctx):
     MonthlyBudget.objects.create(owner=a,amount=Decimal('1.00'),month=date(2026,9,1))
     SavingsGoal.objects.create(owner=a,title='Ziel',target_amount=Decimal('700'),current_amount=Decimal('480'))
     r=c.get(BASE+'summary/?month=2026-09')
-    assert r.data['expenses']=='0.30' and r.data['income']=='10.00' and r.data['available']=='10.70' and r.data['total']=='11.00'
+    assert r.data['expenses']=='0.30' and r.data['income']=='10.00' and r.data['available']=='0.70' and r.data['total']=='1.00'
     assert r.data['savings_current']=='480.00'
     # id und color gehören seit den festen Kategorie-Farben dazu (test_private_category_colors.py).
     assert [{k:row[k] for k in ('name','amount')} for row in r.data['categories']]==[{'name':'Lebensmittel','amount':'0.30'}]
@@ -102,7 +102,7 @@ def test_auth_required(resource):
     assert APIClient().get(BASE+resource+'/').status_code==401
 
 
-def test_income_raises_available_budget_and_expense_lowers_it(ctx):
+def test_income_does_not_raise_spending_limit_but_expense_lowers_remaining(ctx):
     a,b,home,c=ctx
     category=Category.objects.create(owner=a,name='Lebensmittel')
     MonthlyBudget.objects.create(owner=a,amount=Decimal('3000.00'),month=date(2026,9,1))
@@ -111,12 +111,12 @@ def test_income_raises_available_budget_and_expense_lowers_it(ctx):
 
     r=c.post(BASE+'transactions/',{'amount':'100.00','type':'INCOME','category':category.id,'date':'2026-09-10'},format='json')
     assert r.status_code==201
-    s=summary(); assert (s['income'],s['total'],s['available'])==('100.00','3100.00','3100.00')
+    s=summary(); assert (s['income'],s['total'],s['available'])==('100.00','3000.00','3000.00')
 
     c.post(BASE+'transactions/',{'amount':'48.32','type':'EXPENSE','category':category.id,'date':'2026-09-11'},format='json')
-    s=summary(); assert (s['expenses'],s['available'])==('48.32','3051.68')
+    s=summary(); assert (s['expenses'],s['available'])==('48.32','2951.68')
 
-    # Einnahme wieder löschen → Budget sinkt zurück
+    # Einnahme löschen verändert den Budgetrest nicht
     c.delete(f"{BASE}transactions/{r.data['id']}/")
     assert summary()['available']=='2951.68'
 
@@ -176,7 +176,7 @@ def test_target_cannot_be_lowered_below_the_saved_amount(ctx):
     assert c.patch(url,{'target_amount':'480'},format='json').status_code==200
     assert SavingsGoal.objects.get(pk=g['id']).target_amount==Decimal('480.00')
 
-def test_saving_reduces_available_budget_in_the_month_it_happens(budget_ctx):
+def test_already_saved_amount_reduces_remaining_monthly_budget(budget_ctx):
     a,b,home,c=budget_ctx
     assert _summary(c)['available']=='3000.00' and _summary(c)['saved']=='0.00'
 
@@ -204,7 +204,7 @@ def test_saving_combines_with_income_and_expenses(budget_ctx):
     Transaction.objects.create(owner=a,category=cat,amount=Decimal('50'),type='EXPENSE',datum=today)
     c.post(BASE+'goals/',{'title':'G','target_amount':'700','current_amount':'100'},format='json')
     s=_summary(c)
-    assert (s['total'],s['expenses'],s['saved'],s['available'])==('3200.00','50.00','100.00','3050.00')
+    assert (s['total'],s['expenses'],s['saved'],s['available'])==('3000.00','50.00','100.00','2850.00')
 
 def test_saving_does_not_touch_other_months_or_other_users(budget_ctx):
     a,b,home,c=budget_ctx
@@ -304,7 +304,7 @@ def test_range_budget_together_with_income_expense_and_saving(ctx):
     Transaction.objects.create(owner=a,category=cat,amount=Decimal('100'),type='INCOME',datum='2026-11-05')
     Transaction.objects.create(owner=a,category=cat,amount=Decimal('40'),type='EXPENSE',datum='2026-11-06')
     s=c.get(BASE+'summary/?month=2026-11').data
-    assert (s['budget'],s['total'],s['available'])==('3000.00','3100.00','3060.00')
+    assert (s['budget'],s['total'],s['available'])==('3000.00','3000.00','2960.00')
 
 def test_database_rejects_impossible_budget_ranges(ctx):
     a,*_=ctx
@@ -457,10 +457,18 @@ def test_plan_calculation_is_bounded_and_fast_for_far_future_months(ctx):
 
 from finanzen.savings import plan_alert
 
+def _fund_savings(owner, start, amount='100', months=12):
+    category, _ = Category.objects.get_or_create(owner=owner, name='Einnahmen zur Sparplanung')
+    for index in range(months):
+        n = start.year * 12 + start.month - 1 + index
+        Transaction.objects.create(owner=owner, category=category, type='INCOME',
+                                   amount=Decimal(amount), datum=date(n // 12, n % 12 + 1, 1))
+
 def _alert_for(c,month): return c.get(BASE+f'summary/?month={month}').data['plan_alert']
 
 def test_two_rates_together_exceed_the_budget_and_raise_an_alert(ctx):
     a,b,home,c=ctx
+    _fund_savings(a, D(2026,9))
     MonthlyBudget.objects.create(owner=a,amount=Decimal('100'),month=D(2026,9),open_ended=True)
     _plan_goal(a,target='1000',rate='60',open_ended=True,title='Reisen')
     assert _alert_for(c,'2026-09') is None          # allein passt es (60 von 100)
@@ -470,6 +478,7 @@ def test_two_rates_together_exceed_the_budget_and_raise_an_alert(ctx):
 
 def test_alert_looks_ahead_and_names_the_first_problem_month(ctx):
     a,b,home,c=ctx
+    _fund_savings(a, D(2026,9))
     MonthlyBudget.objects.create(owner=a,amount=Decimal('100'),month=D(2026,9),open_ended=True)
     _plan_goal(a,target='1000',rate='60',open_ended=True,title='Reisen')
     _plan_goal(a,target='1000',rate='70',start=D(2026,12),end=D(2027,1),title='Auto')  # ab Dezember zu viel
@@ -477,15 +486,16 @@ def test_alert_looks_ahead_and_names_the_first_problem_month(ctx):
     assert _alert_for(c,'2027-02') is None            # danach endet die zweite Rate
     assert _alert_for(c,'2028-01') is None            # außerhalb des Vorausblicks nichts
 
-def test_no_alert_when_it_fits_or_income_covers_it(ctx):
+def test_income_does_not_cover_a_savings_budget_overrun(ctx):
     a,b,home,c=ctx
+    _fund_savings(a, D(2026,9))
     MonthlyBudget.objects.create(owner=a,amount=Decimal('100'),month=D(2026,9),end_month=D(2026,9))
     _plan_goal(a,target='1000',rate='60',start=D(2026,9),title='A')
     _plan_goal(a,target='1000',rate='70',start=D(2026,9),title='B')
     assert _alert_for(c,'2026-09') is not None
     cat=Category.objects.create(owner=a,name='X')
     Transaction.objects.create(owner=a,category=cat,amount=Decimal('30'),type='INCOME',datum='2026-09-10')
-    assert _alert_for(c,'2026-09') is None            # Einnahme deckt die Lücke
+    assert _alert_for(c,'2026-09')['over'] == '30.00'  # Einnahmen erhöhen das Budget nicht
 
 def test_no_alert_without_budget_without_rate_or_for_plain_overspending(ctx):
     a,b,home,c=ctx
@@ -500,6 +510,7 @@ def test_no_alert_without_budget_without_rate_or_for_plain_overspending(ctx):
 
 def test_alert_ignores_paused_goals_and_other_users(ctx):
     a,b,home,c=ctx
+    _fund_savings(a, D(2026,9))
     MonthlyBudget.objects.create(owner=a,amount=Decimal('100'),month=D(2026,9),open_ended=True)
     _plan_goal(a,target='1000',rate='90',open_ended=True,title='Aktiv')
     _plan_goal(a,target='1000',rate='90',open_ended=True,status='PAUSED',title='Pausiert')
@@ -508,6 +519,7 @@ def test_alert_ignores_paused_goals_and_other_users(ctx):
 
 def test_alert_uses_the_goal_cap_so_finished_plans_do_not_alarm(ctx):
     a,b,home,c=ctx
+    _fund_savings(a, D(2026,9))
     MonthlyBudget.objects.create(owner=a,amount=Decimal('100'),month=D(2026,9),open_ended=True)
     _plan_goal(a,target='60',rate='60',open_ended=True,title='Klein')      # nur im September
     _plan_goal(a,target='1000',rate='60',open_ended=True,title='Groß')
@@ -516,6 +528,7 @@ def test_alert_uses_the_goal_cap_so_finished_plans_do_not_alarm(ctx):
 
 def test_alert_is_recomputed_after_the_rate_is_lowered(ctx):
     *_,c=ctx
+    _fund_savings(ctx[0], D(2026,9))
     r=c.post(BASE+'budgets/',{'month':'2026-09-01','open_ended':True,'amount':'100'},format='json')
     assert r.status_code==201
     g1=c.post(BASE+'goals/',{'title':'A','target_amount':'1000','monthly_amount':'60','plan_month':'2026-09-01','plan_open_ended':True},format='json').data
@@ -541,6 +554,7 @@ def _preview(c,payload,goal_id=None):
 def small_budget(ctx):
     a,b,home,c=ctx
     MonthlyBudget.objects.create(owner=a,amount=Decimal('100.00'),month=_this_month(),open_ended=True)
+    _fund_savings(a, _this_month())
     return ctx
 
 def test_preview_warns_when_the_saved_amount_exceeds_the_available_budget_and_saves_nothing(small_budget):
@@ -597,26 +611,24 @@ def test_two_goals_together_are_judged_together_in_the_preview(small_budget):
     assert _preview(c,{'title':'Zweites','target_amount':'5000','current_amount':'20'}).data['month_over'] is None
     assert _preview(c,{'title':'Zweites','target_amount':'5000','current_amount':'40'}).data['month_over']['over']=='10.00'
 
-def test_goal_that_holds_money_needs_a_budget_for_every_month(ctx):
+def test_saving_and_preview_work_without_a_spending_limit(ctx):
     a,*_,c=ctx
-    r=_preview(c,{'title':'X','target_amount':'5000','current_amount':'400','plan_month':'2099-10-01','plan_end_month':'2099-12-01'})
-    assert r.status_code==400 and 'Oktober 2099 bis Dezember 2099 gibt es noch kein Budget' in str(r.data['plan_month'])
-    assert c.post(BASE+'goals/',{'title':'X','target_amount':'5000','current_amount':'400','plan_month':'2099-10-01'},format='json').status_code==400
+    payload = {'title':'X','target_amount':'5000','current_amount':'400','plan_month':'2099-10-01','plan_end_month':'2099-12-01'}
+    preview = _preview(c, payload)
+    assert preview.status_code == 200
+    assert preview.data == {'month_over': None, 'plan_alert': None}
     assert not SavingsGoal.objects.exists()
-    MonthlyBudget.objects.create(owner=a,amount=Decimal('1000'),month=date(2099,10,1),end_month=date(2099,11,1))   # nur bis November
-    r=c.post(BASE+'goals/',{'title':'X','target_amount':'5000','current_amount':'400','plan_month':'2099-10-01','plan_end_month':'2099-12-01'},format='json')
-    assert r.status_code==400 and 'Für Dezember 2099 gibt es noch kein Budget' in str(r.data['plan_month'])
-    ok=c.post(BASE+'goals/',{'title':'X','target_amount':'5000','current_amount':'400','plan_month':'2099-10-01','plan_end_month':'2099-11-01'},format='json')
-    assert ok.status_code==201
+    assert c.post(BASE+'goals/', payload, format='json').status_code == 201
+    assert not MonthlyBudget.objects.exists()
+    assert _avail(c, '2099-10') is None
 
-def test_open_ended_goal_checks_the_next_twelve_months_and_empty_goals_need_no_budget(ctx):
+
+def test_open_ended_saving_does_not_require_future_spending_limits(ctx):
     a,*_,c=ctx
-    assert c.post(BASE+'goals/',{'title':'Leer','target_amount':'500','plan_month':'2099-10-01','plan_open_ended':True},format='json').status_code==201   # hält nichts zurück
-    MonthlyBudget.objects.create(owner=a,amount=Decimal('1000'),month=date(2099,10,1),end_month=date(2099,12,1))
-    r=c.post(BASE+'goals/',{'title':'Dauer','target_amount':'500','current_amount':'100','plan_month':'2099-10-01','plan_open_ended':True},format='json')
-    assert r.status_code==400 and 'Januar 2100 bis September 2100' in str(r.data['plan_month'])
-    paused=c.post(BASE+'goals/',{'title':'Pause','target_amount':'500','current_amount':'100','plan_month':'2099-10-01','status':'PAUSED'},format='json')
-    assert paused.status_code==201   # pausiert: hält nichts zurück
+    payload = {'title':'Dauer','target_amount':'500','current_amount':'100','monthly_amount':'50',
+               'plan_month':'2099-10-01','plan_open_ended':True}
+    assert c.post(BASE+'goals/', payload, format='json').status_code == 201
+    assert not MonthlyBudget.objects.exists()
 
 def test_preview_validates_like_saving_and_is_private(small_budget):
     a,b,home,c=small_budget
@@ -798,3 +810,23 @@ def test_budget_impact_is_private(ctx):
     a,b,home,c=ctx
     other=MonthlyBudget.objects.create(owner=b,amount=Decimal('1'),month=date(2026,9,1))
     assert c.get(f'{BASE}budgets/{other.pk}/impact/').status_code==404
+
+
+def test_spending_limit_zero_and_no_limit_are_distinct(ctx):
+    a,b,home,c = ctx
+    category = Category.objects.create(owner=a, name='Test')
+    MonthlyBudget.objects.create(owner=a, amount=Decimal('0'), month=D(2026,9))
+    Transaction.objects.create(owner=a, category=category, amount=Decimal('1000'), type='INCOME', datum=D(2026,9))
+    Transaction.objects.create(owner=a, category=category, amount=Decimal('12.34'), type='EXPENSE', datum=D(2026,9))
+    summary = c.get(BASE+'summary/?month=2026-09').data
+    assert (summary['total'], summary['available']) == ('0.00', '-12.34')
+    assert _avail(c, '2026-10') is None
+
+
+def test_savings_warning_needs_budget_even_if_income_is_recorded(ctx):
+    a,b,home,c = ctx
+    _fund_savings(a, _this_month(), '100', months=1)
+    result = _preview(c, {'title':'Reise','target_amount':'500','current_amount':'120'})
+    assert result.status_code == 200
+    assert result.data['month_over'] is None
+    assert not SavingsGoal.objects.exists()

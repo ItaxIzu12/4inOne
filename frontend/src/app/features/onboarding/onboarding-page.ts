@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -7,7 +8,7 @@ import { AppIcon, IconName } from '../../shared/icons/app-icon';
 @Component({
   selector: 'app-onboarding-page',
   standalone: true,
-  imports: [Brand, AppIcon],
+  imports: [ErrorNoticeDirective, Brand, AppIcon],
   templateUrl: './onboarding-page.html',
   styleUrl: './onboarding-page.scss',
 })

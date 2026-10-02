@@ -85,7 +85,7 @@
                   </button>
                 </div>
                 @if (logoutError()) {
-                  <p class="account-error" role="alert">{{ logoutError() }}</p>
+                  <p class="account-error"  [appErrorNotice]="logoutError()">{{ logoutError() }}</p>
                 }
               } @else {
                 <!-- Vorschau (Demo-Konto „Sophie“, siehe name()-Fallback oben): kein zweiter Registrieren-Weg im Menü,

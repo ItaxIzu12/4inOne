@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../error-notice/error-notice';
 import { Component, input } from '@angular/core';
 
 /**
@@ -13,6 +14,7 @@ import { Component, input } from '@angular/core';
 @Component({
   selector: 'app-field',
   standalone: true,
+  imports: [ErrorNoticeDirective],
   template: `
     <label class="field__control">
       <span class="field__label">{{ optional() ? label() + ' ' : label() }}@if (optional()) {<span class="field__optional">(optional)</span>}</span>
@@ -22,7 +24,7 @@ import { Component, input } from '@angular/core';
       <p class="field__hint">{{ hint() }}</p>
     }
     @if (error()) {
-      <p class="field__error" role="alert">{{ error() }}</p>
+      <p class="field__error" [appErrorNotice]="error()">{{ error() }}</p>
     }
   `,
   styles: `

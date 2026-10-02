@@ -43,7 +43,7 @@
             oder Authy. Die Einrichtung dauert etwa eine Minute.
           </p>
           @if (error()) {
-            <p class="profile-error" role="alert">{{ error() }}</p>
+            <p class="profile-error"  [appErrorNotice]="error()">{{ error() }}</p>
           }
           <button type="button" class="mfa-button" [disabled]="loading()" (click)="startSetup()">
             {{ loading() ? 'Wird vorbereitet …' : 'Einrichtung starten' }}
@@ -85,7 +85,7 @@
               [attr.aria-describedby]="error() ? 'mfa-error' : null"
             />
             @if (error()) {
-              <p id="mfa-error" class="profile-error" role="alert">{{ error() }}</p>
+              <p id="mfa-error" class="profile-error"  [appErrorNotice]="error()">{{ error() }}</p>
             }
             <button type="submit" class="mfa-button" [disabled]="loading()">
               {{ loading() ? 'Wird geprüft …' : 'Bestätigen und aktivieren' }}
@@ -114,7 +114,7 @@
             <button type="button" class="mfa-button mfa-button--ghost" (click)="download()">Als Datei speichern</button>
           </div>
           @if (copied() === 'failed') {
-            <p class="profile-error" role="alert">Kopieren wird von deinem Browser blockiert. Nutze „Als Datei speichern“.</p>
+            <p class="profile-error"  [appErrorNotice]="'Kopieren wird von deinem Browser blockiert. Nutze „Als Datei speichern“.'">Kopieren wird von deinem Browser blockiert. Nutze „Als Datei speichern“.</p>
           }
           <label class="mfa-confirm">
             <input type="checkbox" [checked]="saved()" (change)="saved.set($any($event.target).checked)" />

@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
 import { SaveFeedback } from '../../shared/save-feedback/save-feedback';
 import { FinanceSettings } from './finance-settings';
@@ -120,7 +121,7 @@ function initialsFor(name: string): string {
 @Component({
   selector: 'app-finanzen',
   standalone: true,
-  imports: [AmountInput, SaveFeedback,
+  imports: [ErrorNoticeDirective, AmountInput, SaveFeedback,
     FinanceSettings,
     DecimalPipe,
     DatePipe,

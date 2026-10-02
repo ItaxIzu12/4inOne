@@ -1,4 +1,5 @@
-import { Component, ElementRef, DestroyRef, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { ErrorNoticeService } from '../error-notice/error-notice';
+import { Component, HostListener, ElementRef, DestroyRef, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { IconClose } from '../icons/icon-close';
 
 const FOCUSABLE_SELECTOR =
@@ -23,6 +24,7 @@ const FOCUSABLE_SELECTOR =
   styleUrl: './modal.css',
 })
 export class Modal {
+  protected readonly notices = inject(ErrorNoticeService);
   readonly open = input.required<boolean>();
   readonly labelledBy = input.required<string>();
   readonly closeLabel = input('Schließen');
@@ -61,7 +63,10 @@ export class Modal {
   private focusableElements(): HTMLElement[] {
     const panelEl = this.panel()?.nativeElement;
     if (!panelEl) return [];
-    return Array.from(panelEl.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    return [
+      ...Array.from(panelEl.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)),
+      ...Array.from(document.querySelectorAll<HTMLElement>('app-error-notice button')),
+    ];
   }
 
   private focusFirstElement(): void {
@@ -82,7 +87,11 @@ export class Modal {
     this.closed.emit();
   }
 
+  @HostListener('document:keydown', ['$event'])
   protected onKeydown(event: KeyboardEvent): void {
+    if (!this.open()) return;
+    const panels = document.querySelectorAll('.modal-panel');
+    if (panels[panels.length - 1] !== this.panel()?.nativeElement) return;
     if (event.key === 'Escape') {
       event.stopPropagation();
       this.requestClose();
@@ -97,16 +106,11 @@ export class Modal {
     const elements = this.focusableElements();
     if (elements.length === 0) return;
 
-    const first = elements[0];
-    const last = elements[elements.length - 1];
-    const active = document.activeElement;
-
-    if (event.shiftKey && active === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
+    const index = elements.indexOf(document.activeElement as HTMLElement);
+    event.preventDefault();
+    const next = event.shiftKey
+      ? (index <= 0 ? elements.length - 1 : index - 1)
+      : (index + 1) % elements.length;
+    elements[next].focus();
   }
 }

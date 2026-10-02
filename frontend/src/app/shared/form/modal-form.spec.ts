@@ -1,3 +1,5 @@
+import { ErrorNoticeService, ErrorNotice } from '../error-notice/error-notice';
+import { vi } from 'vitest';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -6,7 +8,7 @@ import { ModalForm } from './modal-form';
 
 @Component({
   standalone: true,
-  imports: [ModalForm, Field],
+  imports: [ModalForm, Field, ErrorNotice],
   template: `
     <app-modal-form
       title="Sparziel erstellen"
@@ -14,14 +16,14 @@ import { ModalForm } from './modal-form';
       [saving]="saving()"
       [error]="error()"
       [deleteLabel]="canDelete() ? 'Eintrag löschen' : ''"
-      (submitted)="submits = submits + 1"
+      (submitted)="submit()"
       (closed)="closes = closes + 1"
       (deleted)="deletes = deletes + 1"
     >
       <app-field label="Titel" hint="Kurz halten" [optional]="optional()">
         <input id="t" />
       </app-field>
-    </app-modal-form>
+    </app-modal-form><app-error-notice />
   `,
 })
 class Host {
@@ -30,6 +32,11 @@ class Host {
   error = signal('');
   canDelete = signal(false);
   optional = signal(false);
+  nextError: string | null = null;
+  submit() {
+    this.submits++;
+    if (this.nextError !== null) this.error.set(this.nextError);
+  }
   submits = 0;
   closes = 0;
   deletes = 0;
@@ -94,8 +101,67 @@ describe('ModalForm', () => {
     const { fixture, host, el } = setup();
     host.error.set('Bitte Betrag prüfen.');
     fixture.detectChanges();
-    expect(el.querySelector('.modal-form__error')?.getAttribute('role')).toBe('alert');
-    expect(el.querySelector('.modal-form__error')?.textContent).toBe('Bitte Betrag prüfen.');
+    expect(el.querySelector('app-error-notice [role="alert"]')?.getAttribute('role')).toBe('alert');
+    expect(el.querySelector('app-error-notice [role="alert"]')?.textContent).toBe('Bitte Betrag prüfen.');
+  });
+
+  it('dismisses the notice after five seconds without clearing the form error', () => {
+    vi.useFakeTimers();
+    try {
+      const { fixture, host, el } = setup();
+      host.error.set('Bitte Betrag prüfen.');
+      fixture.detectChanges();
+      vi.advanceTimersByTime(4999);
+      fixture.detectChanges();
+      expect(el.querySelector('app-error-notice aside')).not.toBeNull();
+      vi.advanceTimersByTime(1);
+      fixture.detectChanges();
+      expect(el.querySelector('app-error-notice aside')).toBeNull();
+      expect(host.error()).toBe('Bitte Betrag prüfen.');
+      fixture.destroy();
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('closes only the notice and shows the same error on another submission', async () => {
+    const { fixture, host, el, click } = setup();
+    host.error.set('Bitte Betrag prüfen.');
+    fixture.detectChanges();
+    (el.querySelector('[aria-label="Fehlermeldung schließen"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('app-error-notice aside')).toBeNull();
+    expect(host.closes).toBe(0);
+    click('Speichern');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.querySelector('app-error-notice [role="alert"]')?.textContent).toBe('Bitte Betrag prüfen.');
+  });
+
+  it('never replays the old error after successful revalidation', async () => {
+    const { fixture, host, el, click } = setup();
+    host.error.set('Pflichtfeld fehlt');
+    fixture.detectChanges();
+    const notices = TestBed.inject(ErrorNoticeService);
+    const show = vi.spyOn(notices, 'show');
+    show.mockClear();
+    host.nextError = '';
+    click('Speichern');
+    await fixture.whenStable();
+    expect(show).not.toHaveBeenCalled();
+    expect(el.querySelector('app-error-notice aside')).toBeNull();
+  });
+
+  it('replaces an obsolete error with the current validation result', async () => {
+    const { fixture, host, click } = setup();
+    host.error.set('Titel fehlt');
+    fixture.detectChanges();
+    const notices = TestBed.inject(ErrorNoticeService);
+    const show = vi.spyOn(notices, 'show');
+    show.mockClear();
+    host.nextError = 'Datum fehlt';
+    click('Speichern');
+    await fixture.whenStable();
+    expect(notices.message()).toBe('Datum fehlt');
+    expect(show.mock.calls.every(([message]) => message === 'Datum fehlt')).toBe(true);
   });
 
   it('offers no delete button unless a delete label is given', () => {
@@ -153,6 +219,18 @@ class ReactiveHost {
 }
 
 describe('ModalForm with reactive forms', () => {
+  it('focuses the first invalid control after submission', async () => {
+    const fixture = TestBed.createComponent(ReactiveHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.componentInstance.form.controls.title.setValue('');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(document.activeElement).toBe(el.querySelector('#rt'));
+  });
+
   it('binds formControlName inside the dialog in both directions and submits with Enter/Save', () => {
     const fixture = TestBed.createComponent(ReactiveHost);
     fixture.detectChanges();

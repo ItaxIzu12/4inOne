@@ -80,3 +80,11 @@ Decided 2 October 2026 (ADR-001 §0). Money belongs to a person (`owner`). House
 
 The legacy shared household finances are frozen: readable, never written, nothing deleted. A shared household budget, if it ever comes, is a new explicit object.
 
+
+## D17 — Monatsbudget und Sparziele (korrigiert durch Nutzerentscheidung)
+
+Das Monatsbudget ist der festgelegte Gesamtbetrag für Ausgaben und Sparziele. **Restbudget = Monatsbudget − Ausgaben − Sparreservierungen.** Einnahmen erhöhen das festgelegte Monatsbudget nicht automatisch. Die vorherige Interpretation als reines Ausgabenlimit ohne Sparabzug ist ausdrücklich verworfen.
+
+Der vom Nutzer bei einem Sparziel eingetragene Betrag „bereits gespart“ wird im Zeitraum des Ziels vom Restbudget abgezogen. Ohne Sparrate bleibt dieser Betrag in jedem gültigen Monat reserviert, nicht als wiederholte Buchung. Mit Sparrate gelten die bestehenden Reservierungsregeln: geplante und tatsächliche Beträge werden nicht doppelt gezählt. Pausierte Ziele reservieren nichts. Änderungen und Löschen berechnen die Reservierung neu; es werden keine Transaktionen automatisch erstellt.
+
+`summary.total` entspricht dem Monatsbudget; `summary.available` ist das Restbudget. Dashboard, Demo, Fortschritt und Warnungen berücksichtigen Sparreservierungen. Ohne Monatsbudget bleibt das Restbudget unbekannt; Sparziele können trotzdem gespeichert werden. Bestehende Beträge bleiben unverändert. Keine Datenmigration erforderlich.

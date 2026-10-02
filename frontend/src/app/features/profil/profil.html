@@ -30,7 +30,7 @@
       </div>
 
       @if (error()) {
-        <p id="profile-error" class="profile-error" role="alert">{{ error() }}</p>
+        <p id="profile-error" class="profile-error"  [appErrorNotice]="error()">{{ error() }}</p>
       }
       @if (saved()) {
         <p class="profile-saved" role="status">Gespeichert.</p>

@@ -1,6 +1,6 @@
 @if (loadError()) {
-  <div class="load-error" role="alert">
-    <p>Die Übersicht konnte nicht geladen werden.</p>
+  <div class="load-error">
+    <p [appErrorNotice]="'Die Übersicht konnte nicht geladen werden.'">Die Übersicht konnte nicht geladen werden.</p>
     <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
   </div>
 } @else if (overview(); as data) {
@@ -29,7 +29,7 @@
     </div>
 
     @if (actionError()) {
-      <p class="field-error" role="alert">{{ actionError() }}</p>
+      <p class="field-error"  [appErrorNotice]="actionError()">{{ actionError() }}</p>
     }
 
     <ul class="list">

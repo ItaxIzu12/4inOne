@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -37,7 +38,7 @@ const EFFORT_LABELS: Record<Effort, string> = { 1: 'Klein', 2: 'Mittel', 3: 'Gro
 @Component({
   selector: 'app-aufgaben-tab',
   standalone: true,
-  imports: [AppIcon, ConnectionsSection, Field, ModalForm, AppSelect, AppDatePicker, AppTimePicker],
+  imports: [ErrorNoticeDirective, AppIcon, ConnectionsSection, Field, ModalForm, AppSelect, AppDatePicker, AppTimePicker],
   templateUrl: './aufgaben-tab.html',
   styleUrls: ['./haushalt-common.scss', './aufgaben-tab.scss'],
 })

@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../error-notice/error-notice';
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -16,7 +17,7 @@ type Role = 'ADMIN' | 'MEMBER' | 'CHILD_ACCOUNT';
 @Component({
   selector: 'app-household-invite-modal',
   standalone: true,
-  imports: [Modal, DatePipe],
+  imports: [ErrorNoticeDirective, Modal, DatePipe],
   templateUrl: './household-invite-modal.html',
   styleUrl: './household-invite-modal.css',
 })

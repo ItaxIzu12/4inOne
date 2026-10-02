@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -10,7 +11,7 @@ import { AppShell } from '../../layout/app-shell';
 @Component({
   selector: 'app-profil',
   standalone: true,
-  imports: [AppShell, RouterLink, FormsModule],
+  imports: [ErrorNoticeDirective, AppShell, RouterLink, FormsModule],
   templateUrl: './profil.html',
   styleUrls: ['../einstellungen/einstellungen.css', './profil.css'],
 })

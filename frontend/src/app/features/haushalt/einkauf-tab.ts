@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
 import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, computed, inject, output, signal } from '@angular/core';
@@ -43,7 +44,7 @@ function formatEuro(value: number): string {
 @Component({
   selector: 'app-einkauf-tab',
   standalone: true,
-  imports: [AmountInput, DecimalPipe, Field, Modal, ModalForm, AppSelect],
+  imports: [ErrorNoticeDirective, AmountInput, DecimalPipe, Field, Modal, ModalForm, AppSelect],
   templateUrl: './einkauf-tab.html',
   styleUrls: ['./haushalt-common.scss', './einkauf-tab.scss'],
 })
@@ -228,6 +229,7 @@ export class EinkaufTab {
       this.editError.set('Bitte einen Namen eingeben.');
       return;
     }
+    this.editError.set(null);
     this.editSaving.set(true);
     this.provider
       .updateItem(item.id, { name, quantity: this.editQuantity().trim(), section: this.editSection() })

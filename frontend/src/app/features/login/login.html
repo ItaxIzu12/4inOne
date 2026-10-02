@@ -59,7 +59,7 @@
               "
             />
             @if (loginForm.controls.email.invalid && loginForm.controls.email.touched) {
-              <p class="field-error" id="login-email-error">
+              <p class="field-error" id="login-email-error" [appErrorNotice]="loginForm.controls.email.errors?.['required'] ? 'Bitte gib deine E-Mail-Adresse ein.' : 'Das sieht nicht wie eine gültige E-Mail-Adresse aus.'">
                 @if (loginForm.controls.email.errors?.['required']) {
                   Bitte gib deine E-Mail-Adresse ein.
                 } @else {
@@ -124,10 +124,10 @@
               </button>
             </div>
             @if (loginForm.controls.password.invalid && loginForm.controls.password.touched) {
-              <p class="field-error" id="login-password-hint">Bitte gib dein Passwort ein.</p>
+              <p class="field-error" id="login-password-hint" [appErrorNotice]="'Bitte gib dein Passwort ein.'">Bitte gib dein Passwort ein.</p>
             }
             @if (submitError()) {
-              <p class="field-error" role="alert">{{ submitError() }}</p>
+              <p class="field-error"  [appErrorNotice]="submitError()">{{ submitError() }}</p>
             }
           </div>
 
@@ -198,7 +198,7 @@
               "
             />
             @if (registerForm.controls.name.invalid && registerForm.controls.name.touched) {
-              <p class="field-error" id="register-name-error">Bitte gib deinen Namen ein.</p>
+              <p class="field-error" id="register-name-error" [appErrorNotice]="'Bitte gib deinen Namen ein.'">Bitte gib deinen Namen ein.</p>
             }
           </div>
 
@@ -219,7 +219,7 @@
               "
             />
             @if (registerForm.controls.email.invalid && registerForm.controls.email.touched) {
-              <p class="field-error" id="register-email-error">
+              <p class="field-error" id="register-email-error" [appErrorNotice]="registerForm.controls.email.errors?.['required'] ? 'Bitte gib deine E-Mail-Adresse ein.' : registerForm.controls.email.errors?.['backend'] || 'Das sieht nicht wie eine gültige E-Mail-Adresse aus.'">
                 @if (registerForm.controls.email.errors?.['required']) {
                   Bitte gib deine E-Mail-Adresse ein.
                 } @else if (registerForm.controls.email.errors?.['backend']) {
@@ -296,12 +296,12 @@
               registerForm.controls.password.touched &&
               registerForm.controls.password.errors?.['required']
             ) {
-              <p class="field-error">Bitte gib ein Passwort ein.</p>
+              <p class="field-error" [appErrorNotice]="'Bitte gib ein Passwort ein.'">Bitte gib ein Passwort ein.</p>
             } @else if (
               registerForm.controls.password.touched &&
               registerForm.controls.password.errors?.['backend']
             ) {
-              <p class="field-error">{{ registerForm.controls.password.errors?.['backend'] }}</p>
+              <p class="field-error" [appErrorNotice]="registerForm.controls.password.errors?.['backend']">{{ registerForm.controls.password.errors?.['backend'] }}</p>
             }
           </div>
 
@@ -368,11 +368,11 @@
               registerForm.controls.confirmPassword.touched &&
               registerForm.controls.confirmPassword.errors?.['required']
             ) {
-              <p class="field-error" id="register-confirm-error">Bitte bestätige dein Passwort.</p>
+              <p class="field-error" id="register-confirm-error" [appErrorNotice]="'Bitte bestätige dein Passwort.'">Bitte bestätige dein Passwort.</p>
             } @else if (
               registerForm.controls.confirmPassword.touched && registerForm.errors?.['mismatch']
             ) {
-              <p class="field-error" id="register-confirm-error">
+              <p class="field-error" id="register-confirm-error" [appErrorNotice]="'Die Passwörter stimmen nicht überein.'">
                 Die Passwörter stimmen nicht überein.
               </p>
             }
@@ -388,12 +388,12 @@
             registerForm.controls.acceptPrivacy.invalid &&
             registerForm.controls.acceptPrivacy.touched
           ) {
-            <p class="field-error">
+            <p class="field-error" [appErrorNotice]="'Bitte stimme den Nutzungsbedingungen und der Datenschutzerklärung zu.'">
               Bitte stimme den Nutzungsbedingungen und der Datenschutzerklärung zu.
             </p>
           }
           @if (submitError()) {
-            <p class="field-error" role="alert">{{ submitError() }}</p>
+            <p class="field-error"  [appErrorNotice]="submitError()">{{ submitError() }}</p>
           }
 
           <button

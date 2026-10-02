@@ -1,6 +1,6 @@
 @if (loadError()) {
-  <div class="load-error" role="alert">
-    <p>Die Einkaufsliste konnte nicht geladen werden.</p>
+  <div class="load-error">
+    <p [appErrorNotice]="'Die Einkaufsliste konnte nicht geladen werden.'">Die Einkaufsliste konnte nicht geladen werden.</p>
     <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
   </div>
 } @else if (data()) {
@@ -64,7 +64,7 @@
       }
 
       @if (actionError()) {
-        <p class="field-error action-error" role="alert">{{ actionError() }}</p>
+        <p class="field-error action-error"  [appErrorNotice]="actionError()">{{ actionError() }}</p>
       }
 
       @for (group of openGroups(); track group.section.key) {
@@ -271,7 +271,7 @@
         </div>
       </div>
       @if (completeError()) {
-        <p class="field-error" role="alert">{{ completeError() }}</p>
+        <p class="field-error"  [appErrorNotice]="completeError()">{{ completeError() }}</p>
       }
       <button type="button" class="btn-primary book-btn" [disabled]="completeSubmitting()" (click)="complete(true)">
         @if (completeSubmitting()) {
@@ -285,7 +285,7 @@
       </button>
     } @else {
       @if (completeError()) {
-        <p class="field-error" role="alert">{{ completeError() }}</p>
+        <p class="field-error"  [appErrorNotice]="completeError()">{{ completeError() }}</p>
       }
       <button type="button" class="btn-primary book-btn" [disabled]="completeSubmitting()" (click)="complete(false)">
         Einkauf abschließen

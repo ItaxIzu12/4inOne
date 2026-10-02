@@ -12,7 +12,7 @@
 
     @if (loadError()) {
       <div class="sessions-empty">
-        <p role="alert">Die Sitzungen konnten nicht geladen werden.</p>
+        <p  [appErrorNotice]="'Die Sitzungen konnten nicht geladen werden.'">Die Sitzungen konnten nicht geladen werden.</p>
         <button type="button" class="sessions-button" (click)="load()">Erneut versuchen</button>
       </div>
     } @else if (sessions() === null) {

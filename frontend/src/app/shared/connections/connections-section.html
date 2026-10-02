@@ -7,8 +7,8 @@
         <p class="connections__note" role="status">Verknüpfungen werden geladen …</p>
       }
       @case ('error') {
-        <div class="connections__note" role="alert">
-          <p>Die Verknüpfungen konnten nicht geladen werden.</p>
+        <div class="connections__note">
+          <p [appErrorNotice]="'Die Verknüpfungen konnten nicht geladen werden.'">Die Verknüpfungen konnten nicht geladen werden.</p>
           <button type="button" class="c-link" (click)="load()">Erneut versuchen</button>
         </div>
       }
@@ -51,7 +51,7 @@
         }
 
         @if (actionError()) {
-          <p class="connections__error" role="alert">{{ actionError() }}</p>
+          <p class="connections__error"  [appErrorNotice]="actionError()">{{ actionError() }}</p>
         }
 
         @switch (step()) {
@@ -93,7 +93,7 @@
               @if (candidates() === null) {
                 <p class="connections__note" role="status">Wird geladen …</p>
               } @else if (candidatesError()) {
-                <p class="connections__error" role="alert">Die Liste konnte nicht geladen werden.</p>
+                <p class="connections__error"  [appErrorNotice]="'Die Liste konnte nicht geladen werden.'">Die Liste konnte nicht geladen werden.</p>
                 <button type="button" class="c-link" (click)="loadCandidates()">Erneut versuchen</button>
               } @else {
                 <ul class="wizard__choices">

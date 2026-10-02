@@ -1,6 +1,6 @@
 @if (loadError()) {
-  <div class="load-error" role="alert">
-    <p>Die Aufgaben konnten nicht geladen werden.</p>
+  <div class="load-error">
+    <p [appErrorNotice]="'Die Aufgaben konnten nicht geladen werden.'">Die Aufgaben konnten nicht geladen werden.</p>
     <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
   </div>
 } @else if (tasks()) {
@@ -14,7 +14,7 @@
       </div>
 
       @if (actionError()) {
-        <p class="field-error" role="alert">{{ actionError() }}</p>
+        <p class="field-error"  [appErrorNotice]="actionError()">{{ actionError() }}</p>
       }
 
       @for (group of groups(); track group.key) {

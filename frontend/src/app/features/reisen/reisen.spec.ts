@@ -1,3 +1,4 @@
+import { ErrorNoticeService } from '../../shared/error-notice/error-notice';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -462,7 +463,7 @@ describe('Reisen (Demo)', () => {
     fixture.detectChanges();
     compiled = fixture.nativeElement as HTMLElement;
 
-    expect(text(compiled.querySelector('.modal-form__error'))).toBe('Das Ende darf nicht vor dem Beginn liegen.');
+    expect(TestBed.inject(ErrorNoticeService).message()).toBe('Das Ende darf nicht vor dem Beginn liegen.');
     const rows = Array.from(compiled.querySelectorAll('.trip-row .row__title')).map(text);
     expect(rows).not.toContain('Falsche Reihenfolge');
   });

@@ -30,7 +30,7 @@
       <p class="state" role="status">Deine Einträge werden geladen …</p>
     } @else if (error()) {
       <div class="state">
-        <p role="alert">{{ error() }}</p>
+        <p  [appErrorNotice]="error()">{{ error() }}</p>
         <button class="secondary" (click)="load()">Erneut versuchen</button>
       </div>
     } @else {

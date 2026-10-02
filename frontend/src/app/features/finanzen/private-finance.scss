@@ -673,3 +673,11 @@ progress.over::-moz-progress-bar {
 }
 
 @include domain.layout;
+
+// Compact overview: explain calculations on demand, keep the limit prominent.
+.budget-explanation { margin-top: 20px; font-size: 13px; color: #4c6559; }
+.budget-explanation summary { cursor: pointer; padding: 8px 0; min-height: 44px; }
+.budget-explanation summary:focus-visible { outline: 3px solid #20734f; outline-offset: 3px; }
+.budget-explanation p, .savings-note { line-height: 1.6; font-size: 13px; }
+.totals { align-content: start; }
+.totals .card { min-height: 108px; }

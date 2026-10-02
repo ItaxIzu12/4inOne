@@ -1,4 +1,5 @@
-import { Component, effect, input, output, signal } from '@angular/core';
+import { ErrorNoticeService } from '../error-notice/error-notice';
+import { afterNextRender, Injector, Component, DestroyRef, ElementRef, effect, inject, input, output, signal } from '@angular/core';
 import { AppIcon, IconName } from '../icons/app-icon';
 import { Modal } from '../modal/modal';
 
@@ -46,7 +47,18 @@ export class ModalForm {
   protected readonly titleId = `modal-form-title-${nextId++}`;
   protected readonly confirmingDelete = signal(false);
 
+  private readonly notices = inject(ErrorNoticeService);
+  private readonly injector = inject(Injector);
+  private readonly element: ElementRef<HTMLElement> = inject(ElementRef);
+
+
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.notices.clear(this));
+    effect(() => {
+      const message = this.error();
+      if (this.open() && message) this.notices.show(message, this);
+      else this.notices.clear(this);
+    });
     // Die Rückfrage gilt nur für den aktuellen Dialog, nie für den nächsten.
     effect(() => {
       if (!this.open()) this.confirmingDelete.set(false);
@@ -55,7 +67,20 @@ export class ModalForm {
 
   protected onSubmit(event: Event): void {
     event.preventDefault();
-    if (!this.saving()) this.submitted.emit();
+    if (!this.saving()) {
+      this.submitted.emit();
+      // Wait for parent validation and input bindings before repeating an error.
+      afterNextRender(() => {
+        if (!this.open()) return;
+        if (this.error()) this.notices.show(this.error(), this);
+        else this.notices.clear(this);
+        const invalid = this.element.nativeElement.querySelector<HTMLElement>(
+          'input.ng-invalid, select.ng-invalid, textarea.ng-invalid, input:invalid, select:invalid, textarea:invalid, [aria-invalid="true"]',
+        );
+        invalid?.focus({ preventScroll: true });
+        invalid?.scrollIntoView?.({ block: 'center', behavior: 'instant' });
+      }, { injector: this.injector });
+    }
   }
 
   protected confirmDelete(): void {

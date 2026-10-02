@@ -177,3 +177,18 @@ The menu should feel simple rather than becoming a second sidebar.
 - focus states remain visible;
 - text and controls require sufficient contrast;
 - touch targets should be comfortable on mobile.
+
+
+## Fehler und Bestätigungswarnungen
+
+- Fehler beim Speichern, Validieren und Laden erscheinen über die gemeinsame
+  globale Fehleranzeige außerhalb des Modals. Sie sind per X schließbar und
+  verschwinden nach fünf Sekunden; Maus- und Tastaturinteraktion pausiert die Zeit.
+- Die Anzeige liegt über Dialogen und gehört zu deren Tastatur-Fokusfolge.
+  Erneutes Absenden muss auch denselben Fehler erneut anzeigen können.
+- Bestehende Fehlerbeschreibungen für `aria-describedby` bleiben unsichtbar
+  verfügbar. Wiederholen-Aktionen und Hinweise zu fehlenden Berechtigungen bleiben
+  im jeweiligen Seitenkontext.
+- Warnungen mit einer bewussten Entscheidung, etwa „Trotzdem speichern“ bei
+  Budgetüberschreitung, bleiben oben im Modal sichtbar. Sie verschwinden nicht
+  automatisch. Gemeinsame Formulare nutzen dafür den `modalWarning`-Bereich.

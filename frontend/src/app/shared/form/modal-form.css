@@ -54,7 +54,7 @@ h2 {
   background: var(--canvas, #f4f5fa);
 }
 .modal-form__error {
-  margin: 0 0 12px;
+  margin: 0;
   padding: 10px 12px;
   border-radius: 10px;
   background: color-mix(in srgb, var(--danger) 10%, #fff);
@@ -184,3 +184,5 @@ h2 {
     flex: 1;
   }
 }
+
+.modal-form__warnings { flex-shrink: 0; max-height: 30dvh; overflow: auto; padding: 0 24px; }

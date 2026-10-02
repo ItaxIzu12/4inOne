@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -9,7 +10,7 @@ import { describeDevice } from '../../shared/device/describe-device';
 @Component({
   selector: 'app-sitzungen',
   standalone: true,
-  imports: [AppShell, RouterLink, DatePipe],
+  imports: [ErrorNoticeDirective, AppShell, RouterLink, DatePipe],
   templateUrl: './sitzungen.html',
   styleUrls: ['../einstellungen/einstellungen.css', '../profil/profil.css', './sitzungen.css'],
 })

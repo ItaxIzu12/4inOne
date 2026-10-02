@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .category_colors import UNCATEGORISED_COLOR, color_for_name
 from .models import Category, Transaction, MonthlyBudget, SavingsGoal, SavingsContribution
-from .savings import PLAN_HORIZON_MONTHS, SavingsPlanner, _next_month, contribution_date, goal_change_warning, plan_alert
+from .savings import SavingsPlanner, _next_month, contribution_date, goal_change_warning, plan_alert
 from .services import month_bounds
 
 ZERO = Decimal('0.00')
@@ -95,15 +95,6 @@ class MonthlyBudgetSerializer(CurrencyMixin, serializers.ModelSerializer):
         if qs.exists(): raise ValidationError('In diesem Monat beginnt bereits ein Budget.')
         return attrs
 
-MONTH_NAMES = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember']
-
-def _months_between(first, last):
-    months, cursor = [], first
-    while cursor <= last:
-        months.append(cursor)
-        cursor = _next_month(cursor)
-    return months
-
 class SavingsGoalSerializer(CurrencyMixin, serializers.ModelSerializer):
     target_amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('.01'), max_value=MAX_AMOUNT, error_messages=MAX_AMOUNT_MESSAGES)
     current_amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=ZERO, max_value=MAX_AMOUNT, error_messages=MAX_AMOUNT_MESSAGES, default=ZERO)
@@ -120,7 +111,7 @@ class SavingsGoalSerializer(CurrencyMixin, serializers.ModelSerializer):
     def validate(self, attrs):
         attrs = self._validate_plan(attrs)
         attrs = self._validate_cap(attrs)
-        return self._validate_budget(attrs)
+        return attrs
     def _validate_plan(self, attrs):
         """Jedes Ziel hat einen Zeitraum (Standard: nur der laufende Monat); die Sparrate ist optional."""
         def current(field, default=None):
@@ -136,31 +127,6 @@ class SavingsGoalSerializer(CurrencyMixin, serializers.ModelSerializer):
         if rate is not None and target is not None and rate > target:
             raise ValidationError({'monthly_amount': 'Die Sparrate darf nicht höher sein als das Sparziel.'})
         attrs.update(plan_month=start, plan_end_month=end, plan_open_ended=open_ended)
-        return attrs
-    def _validate_budget(self, attrs):
-        """Ein Ziel, das etwas zurückhält (Gespartes oder Sparrate), braucht in JEDEM Monat seines Zeitraums ein Budget —
-        sonst wüsste niemand, wovon das Geld zurückgelegt wird. Bei „bis auf Weiteres“ prüfen wir die nächsten 12 Monate."""
-        def current(field, default=None):
-            return attrs[field] if field in attrs else getattr(self.instance, field, default)
-        holds = (current('current_amount', ZERO) or ZERO) > ZERO or current('monthly_amount') is not None
-        if not holds or current('status', 'ACTIVE') == 'PAUSED':
-            return attrs
-        start, end = attrs['plan_month'], attrs['plan_end_month']
-        owner = self.context['request'].user
-        last = end or start
-        if attrs['plan_open_ended']:
-            last = start
-            for _ in range(PLAN_HORIZON_MONTHS - 1):
-                last = _next_month(last)
-        missing, cursor = [], start
-        while cursor <= last:
-            if MonthlyBudget.for_month(owner, cursor) is None:
-                missing.append(cursor)
-            cursor = _next_month(cursor)
-        if missing:
-            names = [f'{MONTH_NAMES[m.month - 1]} {m.year}' for m in missing]
-            shown = names[0] if len(names) == 1 else f'{names[0]} bis {names[-1]}' if len(names) == len(_months_between(missing[0], missing[-1])) else f'{names[0]} und {len(names) - 1} weitere Monate'
-            raise ValidationError({'plan_month': f'Für {shown} gibt es noch kein Budget. Lege zuerst ein Budget für den Zeitraum des Sparziels an.'})
         return attrs
     def _validate_cap(self, attrs):
         # Gespartes darf das Ziel nicht überschreiten — außer das Ziel wird im selben Zug erhöht.
@@ -301,14 +267,14 @@ class SetupCategoriesView(PrivateMixin, APIView):
 def month_figures(user, start, end) -> dict:
     """Die Kennzahlen eines Monats der PRIVATEN Finanzen — eine Stelle für
     die Finanzübersicht und „Heute“ (connections/today.py), damit beide nie
-    auseinanderlaufen. verfügbar = Budget + Einnahmen − Ausgaben − Gespartes."""
+    auseinanderlaufen. Restbudget = Monatsbudget − Ausgaben − Sparreservierungen; Einnahmen bleiben separat."""
     rows = Transaction.objects.filter(owner=user, datum__gte=start, datum__lt=end, currency='EUR')
     income = rows.filter(type='INCOME').aggregate(total=Sum('amount'))['total'] or ZERO
     expense = rows.filter(type='EXPENSE').aggregate(total=Sum('amount'))['total'] or ZERO
     budget = MonthlyBudget.for_month(user, start)
     planner = SavingsPlanner(user)
     saved, saved_planned = planner.for_month(start)
-    available = budget.amount + income - expense - saved if budget else None
+    available = budget.amount - expense - saved if budget else None
     return {'rows': rows, 'income': income, 'expense': expense, 'budget': budget, 'planner': planner,
             'saved': saved, 'saved_planned': saved_planned, 'available': available}
 
@@ -331,8 +297,8 @@ class PrivateSummaryView(PrivateMixin, APIView):
         goals = SavingsGoal.covering(SavingsGoal.objects.filter(owner=request.user, currency='EUR'), start)  # nur Ziele dieses Monats
         total = goals.exclude(status='PAUSED').aggregate(target=Sum('target_amount'), current=Sum('current_amount'))
         return Response({'month':raw, 'currency':'EUR', 'budget':money(budget.amount) if budget else None,
-                         # verfügbar = Budget + Einnahmen − Ausgaben − in diesem Monat Gespartes.
-                         'total':money(budget.amount+income) if budget else None,
+                         # total bleibt als API-Feld erhalten und bezeichnet ausschließlich das Ausgabenlimit.
+                         'total':money(budget.amount) if budget else None,
                          'saved':money(saved),'saved_planned':money(saved_planned),
                          # Erster Monat (ab hier, 12 Monate voraus), in dem die Sparraten das Budget sprengen — sonst null.
                          'plan_alert':plan_alert(request.user,start,planner),

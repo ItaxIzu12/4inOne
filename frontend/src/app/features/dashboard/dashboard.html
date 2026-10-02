@@ -32,7 +32,7 @@
         @if (todayLoading()) {
           <p class="state" role="status">Dein Tag wird geladen …</p>
         } @else if (todayError()) {
-          <div class="state"><p role="alert">{{ todayError() }}</p><button class="text-button" (click)="loadToday()">Erneut versuchen</button></div>
+          <div class="state"><p  [appErrorNotice]="todayError()">{{ todayError() }}</p><button class="text-button" (click)="loadToday()">Erneut versuchen</button></div>
         } @else if (!items.length) {
           <div class="state"><span class="empty-icon"><app-icon name="calendar" /></span><h3>Heute ist noch nichts geplant.</h3><p>Platz für das, was dir wichtig ist.</p><a [routerLink]="organisationPath()" class="text-button">Termin oder Aufgabe hinzufügen <app-icon name="arrow" /></a></div>
         } @else {

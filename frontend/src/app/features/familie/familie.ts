@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
@@ -14,7 +15,7 @@ const RELATION_LABEL: Record<Relation, string> = { FAMILY: 'Familie', FRIEND: 'F
 @Component({
   selector: 'app-familie',
   standalone: true,
-  imports: [AppShell, FormsModule, DatePipe, NgTemplateOutlet],
+  imports: [ErrorNoticeDirective, AppShell, FormsModule, DatePipe, NgTemplateOutlet],
   templateUrl: './familie.html',
   styleUrls: ['../einstellungen/einstellungen.css', '../profil/profil.css', './familie.css'],
 })

@@ -1,3 +1,4 @@
+import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { DatePipe } from '@angular/common';
 import { DEMO_MODE } from '../../core/demo-context';
 import { PrivateFinanceApi, FinanceSummary, euros } from '../finanzen/private-finance-api.service';
@@ -40,7 +41,7 @@ function ddmm(isoDate: string): string {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [AppShell, AppIcon, Modal, RouterLink, DatePipe],
+  imports: [ErrorNoticeDirective, AppShell, AppIcon, Modal, RouterLink, DatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -320,7 +321,7 @@ export class Dashboard {
             : this.finance()!.available !== null
               ? this.finance()!.available!.startsWith('-')
                 ? `${euros(this.finance()!.available!.slice(1))} über dem Budget`
-                : `${euros(this.finance()!.available)} verfügbar`
+                : `${euros(this.finance()!.available)} vom Budget übrig`
               : this.finance()!.has_data
                 ? `${euros(this.finance()!.expenses)} Ausgaben · Budget anlegen`
                 : 'Starte mit deinem Monatsbudget',
@@ -391,7 +392,7 @@ export class Dashboard {
     return days === 1 ? 'in 1 Tag' : `in ${days} Tagen`;
   }
   financeProgress() {
-    // Gegen Budget + Einnahmen, wie in Finanzen selbst.
+    // Ausgaben und Sparreservierungen reduzieren das Restbudget.
     const total = Number(this.finance()?.total || 0);
     const expenses = Number(this.finance()?.expenses || 0) + Number(this.finance()?.saved || 0);
     return total > 0 ? Math.min(100, (expenses / total) * 100) : expenses > 0 ? 100 : 0;

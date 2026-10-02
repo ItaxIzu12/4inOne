@@ -41,7 +41,7 @@
       </fieldset>
 
       @if (error()) {
-        <p class="field-error" role="alert">{{ error() }}</p>
+        <p class="field-error"  [appErrorNotice]="error()">{{ error() }}</p>
       }
 
       <button type="submit" class="btn-primary" [disabled]="submitting()">
