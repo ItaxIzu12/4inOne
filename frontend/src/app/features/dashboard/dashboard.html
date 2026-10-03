@@ -83,7 +83,6 @@
               <div class="trip-progress"><span>Vorbereitung</span><strong>{{ tripProgress(trip) }} %</strong></div>
               <progress [value]="tripProgress(trip)" max="100" aria-label="Reisevorbereitung erledigt"></progress>
             }
-            <a [routerLink]="travelPath()" class="trip-link">Reisebereich öffnen <app-icon name="arrow" /></a>
           </div>
         } @else {
           <div class="state"><span class="empty-icon travel"><app-icon name="travel" /></span><h3>Wohin geht es als Nächstes?</h3><p>Noch keine bevorstehende Reise. Plane dein nächstes Ziel mit Packliste, Aufgaben und Budget.</p><a class="text-button" [routerLink]="travelPath()">Reise planen <app-icon name="arrow" /></a></div>

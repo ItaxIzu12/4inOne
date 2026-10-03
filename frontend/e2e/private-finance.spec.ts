@@ -127,7 +127,7 @@ for (const width of [390, 1440]) {
     await pickMonth(page, page.locator('#finance-month'), nextMonth);
     await expect(page.locator('.month-card')).toContainText('3.000,00 €');
     await page.getByRole('button', { name: 'Budgets', exact: true }).click();
-    await expect(page.locator('.tl__bar.is-active')).toContainText(/unbefristet/);
+    await expect(page.locator('.card header').filter({ hasText: 'Gültig:' })).toContainText(/bis auf Weiteres/);
     await pickMonth(page, page.locator('#finance-month'), `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
     await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
     await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
@@ -625,16 +625,16 @@ test('month picker: the selected month stays readable on hover, presses that sli
   await expect(panel).toHaveCount(0);
 });
 
-test('budget timeline replaces the list: bar spans its months, click on the active bar edits, a dialog survives a click outside', async ({ page }) => {
+test('budget year selects months while editing remains explicit', async ({ page }) => {
   await mockTwoMonths(page);
   await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
-  const timeline = page.locator('app-budget-timeline');
+  const timeline = page.locator('app-budget-year');
   await expect(timeline).toBeVisible();
   await expect(page.getByText('Alle Budgets')).toHaveCount(0);
-  const bar = timeline.locator('.tl__bar.is-active');
-  await expect(bar).toContainText('gilt im gewählten Monat');
-  expect((await new AxeBuilder({ page }).include('app-budget-timeline').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+  const bar = timeline.locator('.budget-month.is-selected');
+  await expect(bar).toHaveAttribute('aria-pressed', 'true');
+  expect((await new AxeBuilder({ page }).include('app-budget-year').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 
   // Balken sind reine Anzeige: ein Klick darauf öffnet nichts (kein Fehlgriff auf falsche Werte)
   await bar.click();
@@ -741,12 +741,12 @@ test('a budget that another budget overrides warns in the dialog and shows one v
   await pickMonth(page, page.locator('#finance-month'), '2099-04');
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
 
-  // Zeitleiste: drei Strecken (März–Juli, August, September–Dezember), nie zwei Beträge in einer Spalte
-  const bars = page.locator('app-budget-timeline .tl__bar');
-  await expect(bars).toHaveCount(3);
-  const boxes = await bars.evaluateAll((els) => els.map((e) => e.getBoundingClientRect()).map((r) => [Math.round(r.left), Math.round(r.right), Math.round(r.top)]));
-  expect(new Set(boxes.map((b) => b[2])).size).toBe(1); // alle in einer Zeile
-  for (let i = 1; i < boxes.length; i++) expect(boxes[i][0]).toBeGreaterThanOrEqual(boxes[i - 1][1] - 8);
+  // Each month shows exactly one effective amount, including overlapping budgets.
+  const rows = page.locator('app-budget-year .budget-month');
+  await expect(rows).toHaveCount(12);
+  await expect(rows.nth(6)).toContainText('3.000,00');
+  await expect(rows.nth(7)).toContainText('3.500,00');
+  await expect(rows.nth(8)).toContainText('3.000,00');
 
   // Dialog: Hinweis, Speichern bleibt möglich
   await page.getByRole('button', { name: 'Budget ändern', exact: true }).click();
@@ -757,11 +757,11 @@ test('a budget that another budget overrides warns in the dialog and shows one v
 
 test('the budget dialog says what stays without a budget, and the overview names the missing budget', async ({ page }) => {
   await mockTwoMonths(page);
-  await page.route('**/api/v1/finanzen/private/budgets/1/impact/', (r) => r.fulfill({ json: { transactions: 12, goals: 1 } }));
+  await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
   await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
   await page.getByRole('button', { name: 'Budget ändern', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('Löschst du dieses Budget, gibt es für 12 Buchungen und 1 Sparziel kein Budget mehr. Sie bleiben erhalten. Der Budgetrest kann ohne Limit nicht angezeigt werden.');
+  await expect(page.getByRole('dialog')).toContainText('Im September 2026 sind 1 Buchung und 1 Sparziel vorhanden. Beim Löschen dieses Budgets bleiben diese Einträge erhalten.');
 });
 
 test('without a budget the overview keeps bookings and says so', async ({ page }) => {
@@ -823,4 +823,23 @@ test('bookings: category filter, search by title, and 5-at-a-time with "weitere 
 
   await page.getByPlaceholder('Buchung suchen …').fill('nichts passt');
   await expect(page.getByText('Keine Buchung gefunden. Prüfe die Schreibweise, die Kategorie oder den Filter.')).toBeVisible();
+});
+
+test('budget deletion note is absent when the selected month has no records', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
+  await mockTwoMonths(page);
+  // Other months have bookings; neither they nor an unrelated goal may appear in this note.
+  await page.route('**/api/v1/finanzen/private/transactions/', r => r.fulfill({ json: [
+    { id: 90, date: '2026-08-10', type: 'EXPENSE', amount: '10.00', category: 1, currency: 'EUR', note: '' },
+  ] }));
+  await page.route('**/api/v1/finanzen/private/goals/**', r => r.fulfill({ json: [] }));
+  await page.goto('/finanzen');
+  await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+  await page.getByRole('button', { name: 'Budget ändern', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText(/Beim Löschen dieses Budgets/)).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Eintrag löschen', exact: true }).click();
+  await expect(dialog.getByRole('button', { name: 'Ja, löschen', exact: true })).toBeVisible();
+  await expect(dialog.getByText(/Beim Löschen dieses Budgets/)).toHaveCount(0);
 });

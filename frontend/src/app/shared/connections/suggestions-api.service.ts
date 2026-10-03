@@ -4,9 +4,21 @@ import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../core/api.config';
 
 /** Die Arten von Vorschlägen — backend/connections/suggestions.py. */
-export type SuggestionKind = 'TRIP_SAVINGS_GOAL' | 'TRIP_BUDGET' | 'TRIP_HOUSEHOLD_TASK' | 'TRIP_PACKING';
+export type SuggestionKind =
+  | 'TRIP_SAVINGS_GOAL'
+  | 'TRIP_SAVINGS_GOAL_MANUAL'
+  | 'TRIP_BUDGET'
+  | 'TRIP_HOUSEHOLD_TASK'
+  | 'TRIP_PACKING';
 
-export type SuggestionActionKey = 'create_goal' | 'postpone' | 'hand_over' | 'link' | 'open_packing' | 'open_budget';
+export type SuggestionActionKey =
+  | 'create_goal'
+  | 'postpone'
+  | 'hand_over'
+  | 'link'
+  | 'open_packing'
+  | 'open_budget'
+  | 'open_finance';
 
 export interface SuggestionAction {
   action: SuggestionActionKey;

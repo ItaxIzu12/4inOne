@@ -179,13 +179,35 @@ def _display_name(user) -> str:
 
 
 def _goal_or_budget(user, trip: Trip, today: date) -> list[Suggestion]:
-    if trip.status != Trip.Status.PLANNED or trip.start_date <= today or trip.currency != Trip.Currency.EUR:
+    if trip.status != Trip.Status.PLANNED or trip.start_date <= today:
         return []
     connected = _connected_ids(trip, ObjectType.SAVINGS_GOAL)
     if connected and SavingsGoal.objects.filter(owner=user, pk__in=connected).exists():
         return []
 
     total = _budget_total(trip)
+    if trip.currency != Trip.Currency.EUR:
+        # Die privaten Finanzen rechnen nur in Euro, und 4inOne kennt keine
+        # Wechselkurse. Statt still nichts zu sagen: erklären und die Person
+        # das Ziel selbst in Euro anlegen lassen.
+        if total is None:
+            return []
+        return [
+            Suggestion(
+                key=f'trip:{trip.pk}:goal-foreign',
+                kind='TRIP_SAVINGS_GOAL_MANUAL',
+                title=f'Für „{trip.title}“ sparen',
+                reason=(
+                    f'Das Budget der Reise ist in {trip.currency} geplant, deine Finanzen rechnen in Euro. '
+                    '4inOne kennt keinen Wechselkurs – lege das Sparziel deshalb selbst in Euro an und '
+                    'verknüpfe es dann mit der Reise.'
+                ),
+                trip=trip,
+                priority=2,
+                actions=[{'action': 'open_finance', 'label': 'Sparziel in Finanzen anlegen', 'navigate': True}],
+                detail={'budget_total': str(total), 'currency': trip.currency},
+            )
+        ]
     if total is None:
         if not _can_edit_trip_content(user, trip):
             return []

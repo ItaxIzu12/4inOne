@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { SuggestionDto } from '../../shared/connections/suggestions-api.service';
 import { TripPlan, TripPlanTarget } from './trip-plan';
@@ -139,6 +139,27 @@ describe('TripPlan', () => {
 
     click('Packliste öffnen');
     expect(fixture.componentInstance.opened()).toBe('packliste');
+    http.expectNone((r) => r.url.endsWith('/accept/'));
+  });
+
+  it('a foreign-currency trip opens a new savings goal in finance, prefilled with the trip title', () => {
+    const { click, flushSuggestions, flushConnections } = setup();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    flushSuggestions([
+      {
+        key: 'trip:4:goal-foreign',
+        kind: 'TRIP_SAVINGS_GOAL_MANUAL',
+        title: 'Für „Lissabon“ sparen',
+        reason: 'Das Budget der Reise ist in USD geplant, deine Finanzen rechnen in Euro.',
+        trip: { id: 4, title: 'Lissabon' },
+        actions: [{ action: 'open_finance', label: 'Sparziel in Finanzen anlegen', navigate: true }],
+        detail: {},
+      },
+    ]);
+    flushConnections();
+
+    click('Sparziel in Finanzen anlegen');
+    expect(navigate).toHaveBeenCalledWith(['/finanzen'], { queryParams: { goal: 'new', title: 'Reise: Lissabon' } });
     http.expectNone((r) => r.url.endsWith('/accept/'));
   });
 

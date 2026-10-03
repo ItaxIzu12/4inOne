@@ -1,6 +1,6 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
-import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { afterNextRender, Injector, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
@@ -10,7 +10,7 @@ import { AppShell } from '../../layout/app-shell';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
 import { AppDatePicker } from '../../shared/form/date-picker';
-import { BudgetTimeline } from './budget-timeline';
+import { BudgetYearOverview } from './budget-timeline';
 import { defaultDateInMonth, display } from '../../shared/form/date-utils';
 import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
@@ -72,7 +72,7 @@ function payloadAmount(payload: object): string {
 @Component({
   selector: 'app-private-finance',
   standalone: true,
-  imports: [ErrorNoticeDirective, AmountInput, ReactiveFormsModule, RouterLink, DatePipe, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetTimeline],
+  imports: [ErrorNoticeDirective, AmountInput, ReactiveFormsModule, RouterLink, DatePipe, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview],
   templateUrl: './private-finance.html',
   styleUrl: './private-finance.scss',
 })
@@ -181,8 +181,14 @@ export class PrivateFinance {
   readonly monthLabel = computed(() => display(this.month(), 'month'));
   protected readonly Number = Number;
   readonly span = budgetSpan;
-  /** Was am bearbeiteten Budget hängt (für den Hinweis vor dem Löschen); null, solange unbekannt oder nichts. */
-  readonly budgetImpact = signal<{ transactions: number; goals: number } | null>(null);
+  /** Only records in the selected month belong in this contextual deletion note. */
+  readonly budgetImpact = computed(() => {
+    if (this.editor() !== 'budgets' || !this.editId()) return null;
+    return {
+      transactions: this.transactions().filter(row => row.date.startsWith(this.month())).length,
+      goals: this.goals().filter(goal => goalCovers(goal, this.month())).length,
+    };
+  });
   budgetImpactNote(): string | null {
     const impact = this.budgetImpact();
     if (!impact || (!impact.transactions && !impact.goals)) return null;
@@ -190,7 +196,7 @@ export class PrivateFinance {
       impact.transactions ? `${impact.transactions} ${impact.transactions === 1 ? 'Buchung' : 'Buchungen'}` : '',
       impact.goals ? `${impact.goals} ${impact.goals === 1 ? 'Sparziel' : 'Sparziele'}` : '',
     ].filter(Boolean);
-    return `Löschst du dieses Budget, gibt es für ${parts.join(' und ')} kein Budget mehr. Sie bleiben erhalten. Der Budgetrest kann ohne Limit nicht angezeigt werden.`;
+    return `Im ${this.monthLabel()} sind ${parts.join(' und ')} vorhanden. Beim Löschen dieses Budgets bleiben diese Einträge erhalten.`;
   }
   /** Hinweis im Budget-Dialog, wenn ein anderes, später beginnendes Budget einen Teil des Zeitraums übernimmt. */
   budgetOverrideNote(): string | null {
@@ -263,6 +269,15 @@ export class PrivateFinance {
           this.loading.set(false);
           this.announcePending(r.summary);
           this.openGoalFromQuery();
+          if (this.budgetFocus) {
+            const target = this.budgetFocus;
+            this.budgetFocus = null;
+            afterNextRender(() => {
+              document.querySelector<HTMLElement>(target === 'year'
+                ? 'app-budget-year select'
+                : 'app-budget-year .budget-month.is-selected')?.focus({ preventScroll: true });
+            }, { injector: this.renderInjector });
+          }
         },
         error: () => {
           this.loading.set(false);
@@ -296,21 +311,39 @@ export class PrivateFinance {
     this.notice.set(text);
     this.noticeTimer = setTimeout(() => this.notice.set(''), 6000);
   }
-  /** Deep-Link (?goal=<id>) aus „Verknüpft“: zeigt das Sparziel und öffnet es. */
+  /** Deep-Link (?goal=<id>) aus „Verknüpft“: zeigt das Sparziel und öffnet es.
+   * ?goal=new&title=… öffnet ein neues Sparziel mit vorgeschlagenem Titel (z. B. aus einer Reise in Fremdwährung). */
   private openGoalFromQuery() {
-    const id = Number(this.route.snapshot.queryParamMap.get('goal'));
-    if (!id) return;
+    const params = this.route.snapshot.queryParamMap;
+    const raw = params.get('goal');
+    if (!raw) return;
+    const title = (params.get('title') ?? '').slice(0, 120);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { goal: null },
+      queryParams: { goal: null, title: null },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+    if (raw === 'new') {
+      this.tab.set('goals');
+      this.open('goals');
+      if (title) this.form.patchValue({ title });
+      return;
+    }
+    const id = Number(raw);
+    if (!id) return;
     const goal = this.goals().find((g) => g.id === id);
     if (goal) {
       this.tab.set('goals');
       this.open('goals', goal);
     }
+  }
+  private readonly renderInjector = inject(Injector);
+  private budgetFocus: 'year' | 'month' | null = null;
+  setBudgetMonth(value: string) {
+    if (value === this.month()) return;
+    this.budgetFocus = document.activeElement?.tagName === 'SELECT' ? 'year' : 'month';
+    this.setMonth(value);
   }
   setMonth(value: string) {
     if (!/^\d{4}-\d{2}$/.test(value)) return;
@@ -349,9 +382,6 @@ export class PrivateFinance {
       status: 'ACTIVE',
     });
     this.editor.set(resource);
-    this.budgetImpact.set(null);
-    if (resource === 'budgets' && item)
-      this.api.budgetImpact(item.id).pipe(takeUntilDestroyed(this.destroy)).subscribe({ next: (impact) => this.budgetImpact.set(impact), error: () => undefined });
     this.overrun.set(null);
     this.goalWarning.set(null);
     this.editId.set(item?.id);

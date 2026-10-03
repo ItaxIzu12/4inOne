@@ -163,14 +163,29 @@ def test_shared_trip_splits_the_budget_and_each_goal_stays_private(people):
     assert f'trip:{trip.pk}:goal' in _keys(_client(clara), trip)
 
 
-def test_no_goal_for_past_cancelled_or_foreign_currency_trips(people):
+def test_no_goal_for_started_or_cancelled_trips(people):
     anna = people['anna']
     started = _trip(anna, start_in=0, budget_amount=Decimal('100.00'))
     cancelled = _trip(anna, budget_amount=Decimal('100.00'), status=Trip.Status.CANCELLED)
-    dollars = _trip(anna, budget_amount=Decimal('100.00'), currency=Trip.Currency.USD)
     client = _client(anna)
-    for trip in (started, cancelled, dollars):
-        assert not any(key.endswith(':goal') or key.endswith(':budget') for key in _keys(client, trip))
+    for trip in (started, cancelled):
+        assert not any(key.endswith(('goal', 'budget', 'goal-foreign')) for key in _keys(client, trip))
+
+
+def test_foreign_currency_trip_explains_and_points_to_finance(people):
+    anna = people['anna']
+    trip = _trip(anna, budget_amount=Decimal('800.00'), currency=Trip.Currency.USD)
+    client = _client(anna)
+
+    found = _keys(client, trip)
+    assert f'trip:{trip.pk}:goal' not in found
+    hint = found[f'trip:{trip.pk}:goal-foreign']
+    assert 'USD' in hint['reason'] and 'Euro' in hint['reason']
+    assert hint['actions'] == [{'action': 'open_finance', 'label': 'Sparziel in Finanzen anlegen', 'navigate': True}]
+    # Nur eine Ansicht — nichts wird gespeichert.
+    response = client.post(URL + 'accept/', {'key': hint['key'], 'action': 'open_finance'}, format='json')
+    assert response.status_code == 400
+    assert not SavingsGoal.objects.exists()
 
 
 # ---------------------------------------------------------------------------

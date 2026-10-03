@@ -1,6 +1,7 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
 import {
@@ -18,6 +19,7 @@ const KIND_ICON: Record<SuggestionKind, IconName> = {
   TRIP_PACKING: 'travel',
   TRIP_HOUSEHOLD_TASK: 'household',
   TRIP_SAVINGS_GOAL: 'finance',
+  TRIP_SAVINGS_GOAL_MANUAL: 'finance',
   TRIP_BUDGET: 'finance',
 };
 
@@ -39,6 +41,7 @@ const KIND_ICON: Record<SuggestionKind, IconName> = {
 export class TripPlan {
   private readonly api = inject(SuggestionsApi);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly tripId = input.required<number>();
   /** Eine Aktion, die nur eine Ansicht öffnet (Packliste, Budget). */
@@ -91,6 +94,11 @@ export class TripPlan {
 
   protected run(suggestion: SuggestionDto, action: SuggestionAction): void {
     this.actionError.set(null);
+    if (action.action === 'open_finance') {
+      // Fremdwährung: das Sparziel legt die Person selbst in Euro an (keine Wechselkurse in 4inOne).
+      void this.router.navigate(['/finanzen'], { queryParams: { goal: 'new', title: `Reise: ${suggestion.trip.title}` } });
+      return;
+    }
     if (action.navigate) {
       this.openTab.emit(action.action === 'open_budget' ? 'budget' : 'packliste');
       return;

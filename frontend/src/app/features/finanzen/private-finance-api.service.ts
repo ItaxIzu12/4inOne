@@ -119,9 +119,9 @@ export function budgetRange(budget: FinanceBudget): string {
 }
 const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 const longMonth = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
-/** Ohne Fachjargon: „August 2026“, „März – Juni 2026“, „November 2025 – Februar 2026“, „Ab November 2025, unbefristet“. */
+/** Ohne Fachjargon: „August 2026“, „März – Juni 2026“, „November 2025 – Februar 2026“, „Ab November 2025, bis auf Weiteres“. */
 export function budgetSpan(budget: FinanceBudget): string {
-  if (budget.open_ended) return `Ab ${longMonth(budget.month)}, unbefristet`;
+  if (budget.open_ended) return `Ab ${longMonth(budget.month)}, bis auf Weiteres`;
   if (budget.end_month && budget.end_month.slice(0, 7) !== budget.month.slice(0, 7)) {
     const sameYear = budget.month.slice(0, 4) === budget.end_month.slice(0, 4);
     const from = sameYear ? MONTHS[Number(budget.month.slice(5, 7)) - 1] : longMonth(budget.month);

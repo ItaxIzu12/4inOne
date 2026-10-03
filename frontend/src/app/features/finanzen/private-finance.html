@@ -247,6 +247,7 @@
               <div>
                 <p class="caption">Budget im {{ monthLabel() }}</p>
                 <h3 class="amount">{{ money(budget.amount) }}</h3>
+                <p class="caption">Gültig: {{ span(budget) }}</p>
               </div>
               <button class="secondary" (click)="open('budgets', budget)">Budget ändern</button>
             </header>
@@ -256,7 +257,7 @@
               <button class="secondary" (click)="open('budgets')"><app-icon name="plus" />Budget erstellen</button>
             </div>
           }
-          <app-budget-timeline [budgets]="budgets()" [month]="month()" (monthPick)="setMonth($event)" />
+          <app-budget-year [budgets]="budgets()" [month]="month()" (monthPick)="setBudgetMonth($event)" />
         </section>
       } @else {
         <section class="card">
