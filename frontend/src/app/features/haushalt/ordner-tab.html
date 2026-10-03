@@ -140,7 +140,7 @@
   <div class="field-row">
     <app-field label="Name">
       <input
-        id="folder-name"
+        id="folder-name" required
         type="text"
         maxlength="120"
         [placeholder]="formKind() === 'vertrag' ? 'z. B. Stromvertrag' : 'z. B. Heizung'"
@@ -159,6 +159,7 @@
     </app-field>
   </div>
 
+<fieldset class="form-section"><legend>Planung und weitere Angaben</legend>
   @if (formKind() === 'vertrag') {
     <app-field label="Monatliche Kosten" [optional]="true" hint="Gilt für den ganzen Haushalt. Wer was bezahlt, bucht jede Person privat in Finanzen.">
       <input
@@ -228,4 +229,5 @@
       (input)="formNotes.set($any($event.target).value)"
     ></textarea>
   </app-field>
+</fieldset>
 </app-modal-form>

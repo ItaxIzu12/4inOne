@@ -445,12 +445,10 @@
       <p class="muted small">Das kann gewollt sein, z. B. bei einer Teilreise oder einem Geschäftstermin während einer längeren Reise.</p>
     </div>
   } @else {
-    <app-field label="Titel">
+<fieldset class="form-section"><legend>Reise und Zeitraum</legend>    <app-field label="Titel">
       <input id="trip-title" formControlName="title" maxlength="120" required />
     </app-field>
-    <app-field label="Reiseziel" [optional]="true">
-      <input id="trip-destination" formControlName="destination" maxlength="160" />
-    </app-field>
+
     <div class="field-row">
       <app-field label="Beginn">
         <app-date-picker mode="date" formControlName="start_date" [min]="minStartDate()" />
@@ -459,7 +457,10 @@
         <app-date-picker mode="date" formControlName="end_date" [min]="tripForm.controls.start_date.value" />
       </app-field>
     </div>
-    <div class="field-row">
+</fieldset>
+<fieldset class="form-section"><legend>Weitere Angaben</legend><p class="form-section__hint">Diese Angaben kannst du jetzt ergänzen oder später ändern.</p>    <app-field label="Reiseziel" [optional]="true">
+      <input id="trip-destination" formControlName="destination" maxlength="160" />
+    </app-field>    <div class="field-row">
       <app-field label="Status">
         <app-select formControlName="status" [options]="statusOptions" />
       </app-field>
@@ -485,6 +486,7 @@
     <app-field label="Notizen" [optional]="true">
       <textarea id="trip-notes" formControlName="notes" rows="3" maxlength="5000"></textarea>
     </app-field>
+</fieldset>
   }
 </app-modal-form>
 

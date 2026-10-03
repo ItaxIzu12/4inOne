@@ -85,7 +85,7 @@
               [attr.aria-describedby]="error() ? 'mfa-error' : null"
             />
             @if (error()) {
-              <p id="mfa-error" class="profile-error"  [appErrorNotice]="error()">{{ error() }}</p>
+              <p id="mfa-error" class="profile-error"  [appErrorNotice]="error()" [persistentError]="true">{{ error() }}</p>
             }
             <button type="submit" class="mfa-button" [disabled]="loading()">
               {{ loading() ? 'Wird geprüft …' : 'Bestätigen und aktivieren' }}

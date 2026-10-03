@@ -80,3 +80,98 @@
   outline: 2px solid #164ed0;
   outline-offset: 2px;
 }
+
+.danger-zone {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  border: 1px solid #f3c9c5;
+  border-radius: 20px;
+  background: #fdf4f3;
+}
+.danger-zone h2 {
+  margin: 0;
+  font-size: 16px;
+  color: #8c1d14;
+}
+.danger-zone p {
+  margin: 0;
+  color: #7a2b24;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.danger-zone__button {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid #b3261e;
+  border-radius: 12px;
+  background: #fff;
+  color: #b3261e;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.danger-zone__button:hover {
+  background: #fdeceb;
+}
+.danger-zone__button:focus-visible {
+  outline: 2px solid #b3261e;
+  outline-offset: 2px;
+}
+
+.delete-account {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  max-width: 420px;
+}
+.delete-account h2 {
+  margin: 0;
+  font-size: 19px;
+}
+.delete-account p {
+  margin: 0;
+  color: #405574;
+  line-height: 1.6;
+}
+.delete-account__error {
+  margin: 0;
+  color: #b3261e;
+  font-weight: 600;
+}
+.delete-account__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+.delete-account__cancel,
+.delete-account__confirm {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.delete-account__cancel {
+  border: 1px solid #cfd8e8;
+  background: #fff;
+  color: #142143;
+}
+.delete-account__cancel:focus-visible,
+.delete-account__confirm:focus-visible {
+  outline: 2px solid #164ed0;
+  outline-offset: 2px;
+}
+.delete-account__confirm {
+  border: 1px solid #b3261e;
+  background: #b3261e;
+  color: #fff;
+}
+.delete-account__confirm:disabled,
+.delete-account__cancel:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

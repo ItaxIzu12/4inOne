@@ -88,3 +88,8 @@ Das Monatsbudget ist der festgelegte Gesamtbetrag für Ausgaben und Sparziele. *
 Der vom Nutzer bei einem Sparziel eingetragene Betrag „bereits gespart“ wird im Zeitraum des Ziels vom Restbudget abgezogen. Ohne Sparrate bleibt dieser Betrag in jedem gültigen Monat reserviert, nicht als wiederholte Buchung. Mit Sparrate gelten die bestehenden Reservierungsregeln: geplante und tatsächliche Beträge werden nicht doppelt gezählt. Pausierte Ziele reservieren nichts. Änderungen und Löschen berechnen die Reservierung neu; es werden keine Transaktionen automatisch erstellt.
 
 `summary.total` entspricht dem Monatsbudget; `summary.available` ist das Restbudget. Dashboard, Demo, Fortschritt und Warnungen berücksichtigen Sparreservierungen. Ohne Monatsbudget bleibt das Restbudget unbekannt; Sparziele können trotzdem gespeichert werden. Bestehende Beträge bleiben unverändert. Keine Datenmigration erforderlich.
+
+
+## D18 — Alte Finanzoberfläche entfernt
+
+Die eingefrorene Haushaltsfinanzoberfläche und ihr Link wurden entfernt. Alte Frontend-Adressen werden auf `/finanzen` weitergeleitet. Historische Daten und die serverseitige Schreibsperre bleiben erhalten; keine Datenlöschung oder Migration.

@@ -23,7 +23,7 @@
   }
   @media (max-width: 760px) {
     .domain-sticky {
-      padding: 12px 10px;
+      padding: 10px;
       margin-bottom: 24px;
       border-radius: 20px;
     }
@@ -87,10 +87,10 @@
     .domain-tabs {
       display: flex;
       flex-wrap: nowrap;
-      margin: 22px 0 16px;
+      margin: 10px 0 0;
       padding: 4px;
       gap: 0;
-      min-height: 54px;
+      min-height: 48px;
       border-radius: 16px;
       overflow-x: auto;
       scrollbar-width: none;
@@ -101,9 +101,18 @@
       min-height: 44px;
       padding: 0 8px;
       border-radius: 12px;
-      font-size: 13px;
+      font-size: 14px;
       white-space: nowrap;
     }
+  }
+  .domain-page .caption,
+  .domain-page .muted,
+  .domain-page .field-hint,
+  .domain-page .small,
+  .domain-page .row__subtitle,
+  .domain-page small {
+    font-size: 14px;
+    line-height: 1.5;
   }
   .domain-page > .period {
     display: flex;

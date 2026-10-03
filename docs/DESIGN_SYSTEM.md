@@ -192,3 +192,8 @@ The menu should feel simple rather than becoming a second sidebar.
 - Warnungen mit einer bewussten Entscheidung, etwa „Trotzdem speichern“ bei
   Budgetüberschreitung, bleiben oben im Modal sichtbar. Sie verschwinden nicht
   automatisch. Gemeinsame Formulare nutzen dafür den `modalWarning`-Bereich.
+
+
+## Mobile Dichte und Formulare
+
+Mobile Kopfbereiche bleiben kompakt bei mindestens 44 px großen Bedienelementen. Beschreibungstexte in den Bereichen und Formularhinweise verwenden mindestens 14 px. Lange Formulare werden durch benannte Gruppen gegliedert; optionale Angaben bleiben sichtbar und werden eindeutig bezeichnet. Globale Fehler-Popups ergänzen dauerhafte Feldfehler mit Text, Rahmen und `aria-describedby`; diese verschwinden erst bei Korrektur beziehungsweise erneuter gültiger Prüfung.

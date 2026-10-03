@@ -633,7 +633,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   border-radius: 6px;
   color: #465875;
   background: #eef3f9;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 16px;
   font-weight: 600;
   white-space: nowrap;
@@ -673,7 +673,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   .avatar { width: 32px; height: 32px; }
 }
 @media (max-width: 760px) {
-  :host { --shell-header-height: 82px; }
-  .topbar { padding: 8px 18px; gap: 8px; }
+  :host { --shell-header-height: 68px; }
+  .topbar { padding: 4px 18px; gap: 6px; }
   .profile { gap: 8px; }
 }

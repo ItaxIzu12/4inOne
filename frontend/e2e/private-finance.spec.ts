@@ -843,3 +843,11 @@ test('budget deletion note is absent when the selected month has no records', as
   await expect(dialog.getByRole('button', { name: 'Ja, löschen', exact: true })).toBeVisible();
   await expect(dialog.getByText(/Beim Löschen dieses Budgets/)).toHaveCount(0);
 });
+
+test('legacy household finance links lead to current finances without a legacy entry point', async ({ page }) => {
+  await mockTwoMonths(page);
+  await page.goto('/haushaltsfinanzen');
+  await expect(page).toHaveURL(/\/finanzen$/);
+  await expect(page.getByRole('heading', { name: 'Finanzen', exact: true })).toBeVisible();
+  await expect(page.locator('a[href="/haushaltsfinanzen"]')).toHaveCount(0);
+});

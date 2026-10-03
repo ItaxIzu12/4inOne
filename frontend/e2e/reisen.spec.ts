@@ -189,7 +189,7 @@ test('creating a trip without dates fails with a clear message, nothing is saved
   await page.getByRole('button', { name: 'Neue Reise' }).click();
   await page.locator('#trip-title').fill('Ohne Datum');
   await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
-  await expect(page.locator('.modal-form__error')).toHaveText('Bitte gib Beginn und Ende der Reise an.');
+  await expect(page.locator('app-error-notice [role="alert"]')).toHaveText('Bitte gib Beginn und Ende der Reise an.');
   await page.getByRole('button', { name: 'Abbrechen' }).click();
   await expect(page.getByText('Ohne Datum')).toHaveCount(0);
 });

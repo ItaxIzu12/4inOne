@@ -21,7 +21,7 @@ import { ModalForm } from './modal-form';
       (deleted)="deletes = deletes + 1"
     >
       <app-field label="Titel" hint="Kurz halten" [optional]="optional()">
-        <input id="t" />
+        <input id="t" required />
       </app-field>
     </app-modal-form><app-error-notice />
   `,
@@ -162,6 +162,23 @@ describe('ModalForm', () => {
     await fixture.whenStable();
     expect(notices.message()).toBe('Datum fehlt');
     expect(show.mock.calls.every(([message]) => message === 'Datum fehlt')).toBe(true);
+  });
+
+  it('keeps an accessible field error until the empty field is corrected', async () => {
+    const { fixture, el, click } = setup();
+    click('Speichern');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const input = el.querySelector('#t') as HTMLInputElement;
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+    const errorId = input.getAttribute('aria-describedby')!;
+    expect(el.querySelector('#' + errorId)?.textContent).toContain('Bitte Titel angeben');
+    input.value = 'Korrigiert';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(input.hasAttribute('aria-invalid')).toBe(false);
+    expect(el.querySelector('.field__error')).toBeNull();
   });
 
   it('offers no delete button unless a delete label is given', () => {

@@ -72,7 +72,7 @@
             </label>
           </fieldset>
           @if (error()) {
-            <p id="fam-error" class="profile-error"  [appErrorNotice]="error()">{{ error() }}</p>
+            <p id="fam-error" class="profile-error"  [appErrorNotice]="error()" [persistentError]="true">{{ error() }}</p>
           }
           <button type="submit" class="fam-button" [disabled]="busy() !== null">
             {{ busy() === 'invite' ? 'Wird gesendet …' : 'Einladung senden' }}

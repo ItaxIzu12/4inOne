@@ -28,9 +28,10 @@ export class ErrorNoticeService {
 }
 
 /** Keeps existing error descriptions available to aria-describedby, without an inline box. */
-@Directive({ selector: '[appErrorNotice]', standalone: true, host: { '[hidden]': 'true', '[style.display]': '"none"', '[attr.role]': 'null' } })
+@Directive({ selector: '[appErrorNotice]', standalone: true, host: { '[hidden]': '!persistentError()', '[style.display]': 'persistentError() ? null : "none"', '[attr.role]': 'null' } })
 export class ErrorNoticeDirective {
   readonly appErrorNotice = input<string | null | undefined>('');
+  readonly persistentError = input(false);
   private readonly notices = inject(ErrorNoticeService);
   private readonly element: ElementRef<HTMLElement> = inject(ElementRef);
   private readonly injector = inject(Injector);

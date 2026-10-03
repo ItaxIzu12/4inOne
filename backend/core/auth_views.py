@@ -528,3 +528,18 @@ class ProfileView(APIView):
         request.user.first_name = serializer.validated_data['name'].strip()
         request.user.save(update_fields=['first_name'])
         return Response(_user_payload(request.user))
+
+    def delete(self, request):
+        """Löscht das eigene Konto endgültig. Die Bestätigung ("wirklich löschen?") ist Sache des Frontends
+        (Modal) — dieser Endpunkt führt die Löschung ohne weitere Rückfrage aus, sobald er aufgerufen wird.
+
+        Alles, was über eine FK mit on_delete=CASCADE am User hängt, verschwindet durch Djangos ORM automatisch
+        mit (Reisen, Kontakte, Haushaltsmitgliedschaften, Sitzungen, Tokens, …) — kein Modell im Projekt verwendet
+        PROTECT auf einer User-FK. Ein Haushalt/eine Reise mit weiteren Mitgliedern bleibt für diese bestehen;
+        nur die eigene Mitgliedschaft/die eigenen Reisen verschwinden (siehe reisen/models.py Trip.owner).
+        """
+        with transaction.atomic():
+            request.user.delete()
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        response.delete_cookie(REFRESH_COOKIE_NAME, path=REFRESH_COOKIE_KWARGS['path'])
+        return response

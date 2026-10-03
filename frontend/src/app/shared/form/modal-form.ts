@@ -1,5 +1,6 @@
+import { Field } from './field';
 import { ErrorNoticeService } from '../error-notice/error-notice';
-import { afterNextRender, Injector, Component, DestroyRef, ElementRef, effect, inject, input, output, signal } from '@angular/core';
+import { afterNextRender, Injector, Component, DestroyRef, ElementRef, contentChildren, effect, inject, input, output, signal } from '@angular/core';
 import { AppIcon, IconName } from '../icons/app-icon';
 import { Modal } from '../modal/modal';
 
@@ -47,6 +48,7 @@ export class ModalForm {
   protected readonly titleId = `modal-form-title-${nextId++}`;
   protected readonly confirmingDelete = signal(false);
 
+  private readonly fields = contentChildren(Field, { descendants: true });
   private readonly notices = inject(ErrorNoticeService);
   private readonly injector = inject(Injector);
   private readonly element: ElementRef<HTMLElement> = inject(ElementRef);
@@ -61,13 +63,17 @@ export class ModalForm {
     });
     // Die Rückfrage gilt nur für den aktuellen Dialog, nie für den nächsten.
     effect(() => {
-      if (!this.open()) this.confirmingDelete.set(false);
+      if (!this.open()) {
+        this.confirmingDelete.set(false);
+        this.fields().forEach(field => field.resetValidation());
+      }
     });
   }
 
   protected onSubmit(event: Event): void {
     event.preventDefault();
     if (!this.saving()) {
+      this.fields().forEach(field => field.validate());
       this.submitted.emit();
       // Wait for parent validation and input bindings before repeating an error.
       afterNextRender(() => {

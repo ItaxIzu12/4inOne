@@ -89,6 +89,42 @@ test('the profile page changes the name and the menu follows; the email stays re
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 });
 
+test('deleting the account opens a clear warning first, then signs the user out on confirmation', async ({ page }) => {
+  await signedIn(page);
+  let deleteCalled = false;
+  await page.route('**/api/v1/auth/me/', async (r) => {
+    if (r.request().method() === 'DELETE') {
+      deleteCalled = true;
+      return r.fulfill({ status: 204 });
+    }
+    return r.fulfill({ json: { name: 'Mira Beispiel', email: 'mira@example.com' } });
+  });
+  await page.goto('/einstellungen/profil');
+
+  await page.getByRole('button', { name: 'Konto löschen' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('endgültig gelöscht');
+  await expect(dialog).toContainText('nicht rückgängig machen');
+  expect(deleteCalled).toBe(false); // noch keine Anfrage, nur die Warnung
+
+  // Versehentlich daneben geklickt / "Abbrechen": nichts passiert.
+  await page.getByRole('button', { name: 'Abbrechen' }).click();
+  await expect(dialog).toBeHidden();
+  expect(deleteCalled).toBe(false);
+
+  await page.getByRole('button', { name: 'Konto löschen' }).click();
+  await expect(dialog).toBeVisible();
+  // Das Modal blendet über eine kurze CSS-Animation ein (siehe shared/modal/modal.css) — Axe sonst mitten in der
+  // Opazitäts-Transition ausgeführt, was einen nur während des Einblendens kurz zu schwachen Kontrast meldet.
+  await page.waitForTimeout(250);
+  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+  await page.getByRole('button', { name: 'Konto endgültig löschen' }).click();
+  // Nicht mehr angemeldet: die Startseite zeigt wieder Anmelden/Registrieren statt der echten App.
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('link', { name: 'Anmelden' })).toBeVisible();
+  expect(deleteCalled).toBe(true);
+});
+
 test('active sessions lists the devices, signs one out and all others', async ({ page }) => {
   await signedIn(page);
   let rows = [

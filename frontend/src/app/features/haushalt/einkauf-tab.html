@@ -214,7 +214,7 @@
   (deleted)="deleteEditing()"
 >
   <app-field label="Artikel">
-    <input id="edit-item-name" type="text" maxlength="120" [value]="editName()" (input)="editName.set($any($event.target).value)" />
+    <input id="edit-item-name" required type="text" maxlength="120" [value]="editName()" (input)="editName.set($any($event.target).value)" />
   </app-field>
   <div class="field-row">
     <app-field label="Menge" [optional]="true">

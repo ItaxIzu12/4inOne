@@ -318,9 +318,11 @@
       </app-field>
     </div>
   }
+  <fieldset class="form-section"><legend>Optional: Notizen</legend>
   <app-field label="Beschreibung" [optional]="true">
     <textarea id="entry-description" formControlName="description" rows="3" maxlength="5000"></textarea>
   </app-field>
+  </fieldset>
   @if (editId()) {
     <app-connections [objectType]="editor() === 'event' ? 'CALENDAR_EVENT' : 'TASK'" [objectId]="editId()!" />
   }

@@ -59,7 +59,7 @@
               "
             />
             @if (loginForm.controls.email.invalid && loginForm.controls.email.touched) {
-              <p class="field-error" id="login-email-error" [appErrorNotice]="loginForm.controls.email.errors?.['required'] ? 'Bitte gib deine E-Mail-Adresse ein.' : 'Das sieht nicht wie eine gültige E-Mail-Adresse aus.'">
+              <p class="field-error" id="login-email-error" [appErrorNotice]="loginForm.controls.email.errors?.['required'] ? 'Bitte gib deine E-Mail-Adresse ein.' : 'Das sieht nicht wie eine gültige E-Mail-Adresse aus.'" [persistentError]="true">
                 @if (loginForm.controls.email.errors?.['required']) {
                   Bitte gib deine E-Mail-Adresse ein.
                 } @else {
@@ -198,7 +198,7 @@
               "
             />
             @if (registerForm.controls.name.invalid && registerForm.controls.name.touched) {
-              <p class="field-error" id="register-name-error" [appErrorNotice]="'Bitte gib deinen Namen ein.'">Bitte gib deinen Namen ein.</p>
+              <p class="field-error" id="register-name-error" [appErrorNotice]="'Bitte gib deinen Namen ein.'" [persistentError]="true">Bitte gib deinen Namen ein.</p>
             }
           </div>
 
@@ -219,7 +219,7 @@
               "
             />
             @if (registerForm.controls.email.invalid && registerForm.controls.email.touched) {
-              <p class="field-error" id="register-email-error" [appErrorNotice]="registerForm.controls.email.errors?.['required'] ? 'Bitte gib deine E-Mail-Adresse ein.' : registerForm.controls.email.errors?.['backend'] || 'Das sieht nicht wie eine gültige E-Mail-Adresse aus.'">
+              <p class="field-error" id="register-email-error" [appErrorNotice]="registerForm.controls.email.errors?.['required'] ? 'Bitte gib deine E-Mail-Adresse ein.' : registerForm.controls.email.errors?.['backend'] || 'Das sieht nicht wie eine gültige E-Mail-Adresse aus.'" [persistentError]="true">
                 @if (registerForm.controls.email.errors?.['required']) {
                   Bitte gib deine E-Mail-Adresse ein.
                 } @else if (registerForm.controls.email.errors?.['backend']) {
@@ -368,11 +368,11 @@
               registerForm.controls.confirmPassword.touched &&
               registerForm.controls.confirmPassword.errors?.['required']
             ) {
-              <p class="field-error" id="register-confirm-error" [appErrorNotice]="'Bitte bestätige dein Passwort.'">Bitte bestätige dein Passwort.</p>
+              <p class="field-error" id="register-confirm-error" [appErrorNotice]="'Bitte bestätige dein Passwort.'" [persistentError]="true">Bitte bestätige dein Passwort.</p>
             } @else if (
               registerForm.controls.confirmPassword.touched && registerForm.errors?.['mismatch']
             ) {
-              <p class="field-error" id="register-confirm-error" [appErrorNotice]="'Die Passwörter stimmen nicht überein.'">
+              <p class="field-error" id="register-confirm-error" [appErrorNotice]="'Die Passwörter stimmen nicht überein.'" [persistentError]="true">
                 Die Passwörter stimmen nicht überein.
               </p>
             }

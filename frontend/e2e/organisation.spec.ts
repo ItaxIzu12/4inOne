@@ -58,6 +58,17 @@ for (const width of [390, 1440]) {
       }
       return r.fulfill({ json: list });
     });
+    await page.route('**/api/v1/today/**', r => r.fulfill({ json: {
+      date: day, timezone: 'Europe/Berlin',
+      organisation: {
+        date: day,
+        items: events.map(e => ({ kind: 'event', id: e.id, title: e.title, at: e.starts_at, overdue: false })),
+        event_count: events.length, open_task_count: tasks.filter(t => t.status !== 'DONE').length, overdue_count: 0,
+      },
+      haushalt: null, reisen: { current: null, upcoming: null, events: [] },
+      finanzen: { month: day.slice(0, 7), budget: null, expenses: '0.00', available: null, spent_today: '0.00' },
+      suggestions: [],
+    } }));
     await page.goto('/organisation');
     await expect(page.getByRole('heading', { name: 'Organisation', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Heute hast du frei geplant' })).toBeVisible();

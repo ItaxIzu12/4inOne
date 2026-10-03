@@ -135,6 +135,15 @@ export class AuthService {
       .pipe(tap((user) => this._currentUser.set(user)));
   }
 
+  /** Löscht das eigene Konto endgültig (core/auth_views.py ProfileView.delete) — die Rückfrage "wirklich
+   * löschen?" übernimmt die aufrufende Komponente per Modal, dieser Aufruf selbst führt sie sofort aus.
+   * withCredentials: true, damit das Backend das httpOnly-Refresh-Cookie löschen kann (wie bei logout()). */
+  deleteAccount(): Observable<void> {
+    return this.http
+      .delete<void>(`${API_BASE_URL}/auth/me/`, { withCredentials: true })
+      .pipe(tap(() => this.forceLogout()));
+  }
+
   // Mit Cookies: nur so erkennt das Backend, WELCHES der Geräte gerade fragt („Dieses Gerät“).
   sessions(): Observable<LoginSession[]> {
     return this.http.get<LoginSession[]>(`${API_BASE_URL}/auth/sessions/`, { withCredentials: true });

@@ -165,7 +165,7 @@
 >
   <app-field label="Was ist zu tun?">
     <input
-      id="task-title"
+      id="task-title" required
       type="text"
       maxlength="120"
       placeholder="z. B. Bad putzen"
@@ -173,6 +173,7 @@
       (input)="formTitle.set($any($event.target).value)"
     />
   </app-field>
+<fieldset class="form-section"><legend>Planung und weitere Angaben</legend>
   <app-field label="Beschreibung" [optional]="true">
     <input
       id="task-description"
@@ -245,4 +246,5 @@
   @if (editingId() !== null) {
     <app-connections objectType="HOUSEHOLD_TASK" [objectId]="editingId()" />
   }
+</fieldset>
 </app-modal-form>

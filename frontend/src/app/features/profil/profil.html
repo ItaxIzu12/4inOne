@@ -30,7 +30,7 @@
       </div>
 
       @if (error()) {
-        <p id="profile-error" class="profile-error"  [appErrorNotice]="error()">{{ error() }}</p>
+        <p id="profile-error" class="profile-error"  [appErrorNotice]="error()" [persistentError]="true">{{ error() }}</p>
       }
       @if (saved()) {
         <p class="profile-saved" role="status">Gespeichert.</p>
@@ -40,5 +40,31 @@
         {{ saving() ? 'Wird gespeichert …' : 'Speichern' }}
       </button>
     </form>
+
+    <section class="danger-zone" aria-labelledby="danger-zone-heading">
+      <h2 id="danger-zone-heading">Konto löschen</h2>
+      <p>Dein Konto und alle zugehörigen Daten (Finanzen, Haushalt, Organisation, Reisen, Kontakte) werden endgültig gelöscht. Das lässt sich nicht rückgängig machen.</p>
+      <button type="button" class="danger-zone__button" (click)="openDeleteModal()">Konto löschen</button>
+    </section>
   </main>
 </app-shell>
+
+<app-modal [open]="deleteModalOpen()" labelledBy="delete-account-heading" closeLabel="Dialog schließen" [dismissOnBackdrop]="!deleting()" (closed)="closeDeleteModal()">
+  <div class="delete-account">
+    <h2 id="delete-account-heading">Konto wirklich löschen?</h2>
+    <p>
+      Dein Konto <strong>{{ email() }}</strong> und alle damit verbundenen Daten — Finanzen, Haushaltsaufgaben,
+      Organisation, Reisen und deine Kontakte — werden endgültig gelöscht. Das lässt sich nicht rückgängig
+      machen.
+    </p>
+    @if (deleteError()) {
+      <p class="delete-account__error" role="alert">{{ deleteError() }}</p>
+    }
+    <div class="delete-account__actions">
+      <button type="button" class="delete-account__cancel" [disabled]="deleting()" (click)="closeDeleteModal()">Abbrechen</button>
+      <button type="button" class="delete-account__confirm" [disabled]="deleting()" [attr.aria-busy]="deleting()" (click)="confirmDelete()">
+        {{ deleting() ? 'Wird gelöscht …' : 'Konto endgültig löschen' }}
+      </button>
+    </div>
+  </div>
+</app-modal>

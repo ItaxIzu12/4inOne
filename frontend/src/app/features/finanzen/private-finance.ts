@@ -2,7 +2,7 @@ import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
 import { afterNextRender, Injector, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { forkJoin, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -72,7 +72,7 @@ function payloadAmount(payload: object): string {
 @Component({
   selector: 'app-private-finance',
   standalone: true,
-  imports: [ErrorNoticeDirective, AmountInput, ReactiveFormsModule, RouterLink, DatePipe, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview],
+  imports: [ErrorNoticeDirective, AmountInput, ReactiveFormsModule, DatePipe, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview],
   templateUrl: './private-finance.html',
   styleUrl: './private-finance.scss',
 })

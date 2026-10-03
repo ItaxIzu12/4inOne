@@ -197,8 +197,8 @@ export const routes: Routes = [
       },
       {
         path: 'haushaltsfinanzen',
-        loadComponent: () => import('./features/finanzen/finanzen').then((m) => m.Finanzen),
-        data: { dashboardNav: true, sidebarNav: true },
+        redirectTo: 'finanzen',
+        pathMatch: 'full',
       },
       {
         path: 'haushalt',

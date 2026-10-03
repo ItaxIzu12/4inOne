@@ -24,6 +24,11 @@ for (const width of [390, 1440]) {
     await expect(popup).toBeVisible();
     await page.mouse.move(0, 850);
     await expect(popup).toHaveCount(0, { timeout: 7000 });
+    const amount = dialog.locator('#booking-amount');
+    await expect(amount).toHaveAttribute('aria-invalid', 'true');
+    await expect(dialog.locator('.field__error')).toContainText('Bitte Betrag in EUR angeben.');
+    await amount.fill('25');
+    await expect(amount).not.toHaveAttribute('aria-invalid', 'true');
     await expect(dialog).toBeVisible();
   });
 }

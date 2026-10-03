@@ -305,10 +305,7 @@
         </section>
       }
     }
-    <p class="legacy">
-      <a routerLink="/haushaltsfinanzen">Bisherige Haushaltsfinanzen ansehen</a> · eingefroren, nur noch
-      lesbar
-    </p>
+
   </main></app-shell
 >
 <app-modal-form
@@ -346,7 +343,7 @@
       <app-select formControlName="type" [options]="typeOptions" />
     </app-field>
     <app-field label="Betrag in EUR">
-      <input id="booking-amount" inputmode="decimal" formControlName="amount" aria-required="true" />
+      <input id="booking-amount" required inputmode="decimal" formControlName="amount" aria-required="true" />
     </app-field>
     @if (categories().length) {
       <app-field label="Kategorie">
@@ -385,7 +382,7 @@
       </app-field>
     }
     <app-field label="Monatsbudget in EUR" hint="Dein Gesamtbetrag für Ausgaben und Sparziele. Einnahmen erhöhen ihn nicht automatisch.">
-      <input id="budget-amount" inputmode="decimal" formControlName="amount" aria-required="true" />
+      <input id="budget-amount" required inputmode="decimal" formControlName="amount" aria-required="true" />
     </app-field>
     @if (budgetOverrideNote(); as note) {
       <p class="overrun-note" role="status">{{ note }}</p>
@@ -399,20 +396,23 @@
       </button>
     }
   } @else {
+    <fieldset class="form-section"><legend>Dein Sparziel</legend>
     <app-field label="Titel">
-      <input id="goal-title" formControlName="title" maxlength="120" aria-required="true" />
+      <input id="goal-title" required formControlName="title" maxlength="120" aria-required="true" />
     </app-field>
     <div class="field-row">
-      <app-field label="Zielbetrag in EUR">
-        <input id="goal-target" inputmode="decimal" formControlName="target_amount" aria-required="true" />
+      <app-field label="Zielbetrag in EUR" [error]="formError() &amp;&amp; !amount(form.controls.target_amount.value) ? 'Bitte einen Zielbetrag größer als 0 angeben.' : ''">
+        <input id="goal-target" required inputmode="decimal" formControlName="target_amount" aria-required="true" />
       </app-field>
       <app-field
         label="Bereits gespart in EUR"
+        [error]="formError() &amp;&amp; (amount(form.controls.current_amount.value, true) === null || Number(form.controls.current_amount.value.replace(',', '.')) > Number(form.controls.target_amount.value.replace(',', '.'))) ? 'Bitte einen Betrag zwischen 0 und deinem Zielbetrag angeben.' : ''"
         hint="Höchstens der Zielbetrag. Dieser Betrag wird im Zeitraum des Sparziels vom Restbudget abgezogen."
       >
-        <input id="goal-current" inputmode="decimal" formControlName="current_amount" aria-required="true" />
+        <input id="goal-current" required inputmode="decimal" formControlName="current_amount" aria-required="true" />
       </app-field>
     </div>
+    </fieldset><fieldset class="form-section"><legend>Zeitraum und Status</legend>
     <app-field label="Status">
       <app-select formControlName="status" [options]="statusOptions" />
     </app-field>
@@ -429,6 +429,7 @@
         <app-date-picker mode="month" formControlName="plan_end" [min]="form.controls.plan_start.value" />
       </app-field>
     }
+    </fieldset><fieldset class="form-section"><legend>Optional: monatliche Sparrate</legend>
     <app-field
       label="Sparrate pro Monat"
       [optional]="true"
@@ -436,6 +437,7 @@
     >
       <input id="goal-rate" inputmode="decimal" formControlName="rate" />
     </app-field>
+    </fieldset>
 
   }
   @if (editor() === 'goals' && editId()) {
