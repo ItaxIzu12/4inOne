@@ -27,14 +27,47 @@ class Section(models.TextChoices):
 SECTION_ORDER = [choice.value for choice in Section]
 
 
+class Room(models.TextChoices):
+    """Räume der Wohnung — für Aufgaben und Geräte, nur zum Ordnen und
+    Filtern, keine eigene Raumverwaltung."""
+
+    KITCHEN = 'kueche', 'Küche'
+    BATH = 'bad', 'Badezimmer'
+    LIVING = 'wohnzimmer', 'Wohnzimmer'
+    BEDROOM = 'schlafzimmer', 'Schlafzimmer'
+    KIDS = 'kinderzimmer', 'Kinderzimmer'
+    LAUNDRY = 'waschkueche', 'Waschküche'
+    HALL = 'flur', 'Flur'
+    OFFICE = 'arbeitszimmer', 'Arbeitszimmer'
+    OUTSIDE = 'aussen', 'Außenbereich'
+    EVERYWHERE = 'alle', 'Alle Räume'
+
+
 class ShoppingList(models.Model):
     """Eine Einkaufsliste, gemeinsam bearbeitbar für den ganzen Haushalt
-    (GESAMTKONZEPT.md §5). Aktuell genau eine pro Haushalt, angelegt beim
-    ersten Zugriff (haushalt/services.py active_shopping_list)."""
+    (GESAMTKONZEPT.md §5). Ein Haushalt kann mehrere Listen führen
+    (Wocheneinkauf, Drogerie, Baumarkt …); die erste wird beim ersten Zugriff
+    angelegt (haushalt/services.py active_shopping_list) und ist die
+    Standardliste für Übersicht und Dashboard."""
+
+    class Icon(models.TextChoices):
+        CART = 'wagen', 'Einkaufswagen'
+        DRUGSTORE = 'drogerie', 'Drogerie'
+        HARDWARE = 'baumarkt', 'Baumarkt'
+        DRINKS = 'getraenke', 'Getränke'
+        PARTY = 'party', 'Party'
 
     household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='shopping_lists')
     name = models.CharField(max_length=120, default='Einkaufsliste')
+    description = models.CharField(max_length=200, blank=True, default='')
+    icon = models.CharField(max_length=12, choices=Icon.choices, default=Icon.CART)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+    # „Zuletzt bearbeitet“: rückt bei jeder Änderung an der Liste oder ihren
+    # Einträgen vor (services.touch_list), nicht nur beim Speichern der Liste.
+    updated_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self) -> str:
         return f'{self.name} ({self.household})'
@@ -134,6 +167,13 @@ class Task(models.Model):
         MEDIUM = 2, 'Mittel'
         LARGE = 3, 'Groß'
 
+    Room = Room
+
+    class Priority(models.TextChoices):
+        LOW = 'niedrig', 'Niedrig'
+        MEDIUM = 'mittel', 'Mittel'
+        HIGH = 'hoch', 'Hoch'
+
     household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='tasks')
     title = models.CharField(max_length=120)
     assigned_to = models.ForeignKey(
@@ -154,10 +194,17 @@ class Task(models.Model):
     # ... oder alle N Kalendermonate ("monatlich"). Höchstens eines von beiden.
     recurrence_months = models.PositiveSmallIntegerField(null=True, blank=True)
     effort = models.PositiveSmallIntegerField(choices=Effort.choices, default=Effort.SMALL)
+    # Optional: Raum (leer = ohne Raum), geschätzte Dauer in Minuten und Priorität.
+    room = models.CharField(max_length=20, choices=Room.choices, blank=True, default='')
+    duration_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
+    priority = models.CharField(max_length=10, choices=Priority.choices, default=Priority.MEDIUM)
     # Reihum wechselnde Zuständigkeit: nach jedem Erledigen übernimmt die
     # nächste Person aus rotation_members (sortiert nach ID).
     rotate = models.BooleanField(default=False)
     rotation_members = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='+')
+    # Pausierte Routinen bleiben erhalten, erscheinen aber nicht unter „Heute“
+    # und lassen sich nicht abhaken — beim Fortsetzen startet sie ab heute.
+    is_paused = models.BooleanField(default=False)
     last_done_at = models.DateTimeField(null=True, blank=True)
     last_done_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
@@ -228,6 +275,10 @@ class FolderEntry(models.Model):
     warranty_until = models.DateField(null=True, blank=True)
     maintenance_interval_months = models.PositiveSmallIntegerField(null=True, blank=True)
     next_maintenance = models.DateField(null=True, blank=True)
+    last_maintenance = models.DateField(null=True, blank=True)
+    # Hersteller steht in provider; Modell und Raum nur zum Erkennen und Filtern.
+    model = models.CharField(max_length=120, blank=True, default='')
+    room = models.CharField(max_length=20, choices=Room.choices, blank=True, default='')
 
     def __str__(self) -> str:
         return f'{self.get_kind_display()}: {self.name}'

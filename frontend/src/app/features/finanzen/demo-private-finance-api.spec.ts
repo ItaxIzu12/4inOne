@@ -17,3 +17,30 @@ describe('Demo spending limit', () => {
     expect(Number((await firstValueFrom(api.summary())).available)).toBeCloseTo(Number(before.available) - 50 - 25.3);
   });
 });
+
+describe('Demo own categories', () => {
+  it('creates, renames and deletes categories, moving bookings to Sonstiges', async () => {
+    const api = new DemoPrivateFinanceApi();
+    const created = await firstValueFrom(api.createCategory({ name: 'Haustier', monthly_goal: '60.00' }));
+    expect(created.monthly_goal).toBe('60.00');
+    await expect(firstValueFrom(api.createCategory({ name: 'haustier', monthly_goal: null }))).rejects.toMatchObject({ status: 400 });
+    await firstValueFrom(api.updateCategory(created.id, { name: 'Hund' }));
+    expect((await firstValueFrom(api.categories())).map((c) => c.name)).toContain('Hund');
+
+    const health = (await firstValueFrom(api.categories())).find((c) => c.name === 'Gesundheit')!;
+    const fallback = (await firstValueFrom(api.categories())).find((c) => c.name === 'Sonstiges')!;
+    const moved = (await firstValueFrom(api.transactions())).filter((t) => t.category === health.id).length;
+    const before = (await firstValueFrom(api.transactions())).filter((t) => t.category === fallback.id).length;
+    expect(moved).toBeGreaterThan(0);
+    await firstValueFrom(api.deleteCategory(health.id));
+    const rows = await firstValueFrom(api.transactions());
+    expect(rows.some((t) => t.category === health.id)).toBe(false);
+    expect(rows.filter((t) => t.category === fallback.id).length).toBe(before + moved);
+  });
+  it('keeps Sonstiges: no rename, no delete', async () => {
+    const api = new DemoPrivateFinanceApi();
+    const fallback = (await firstValueFrom(api.categories())).find((c) => c.name === 'Sonstiges')!;
+    await expect(firstValueFrom(api.updateCategory(fallback.id, { name: 'Rest' }))).rejects.toMatchObject({ status: 400 });
+    await expect(firstValueFrom(api.deleteCategory(fallback.id))).rejects.toMatchObject({ status: 400 });
+  });
+});

@@ -201,3 +201,7 @@ Mobile Kopfbereiche bleiben kompakt bei mindestens 44 px großen Bedienelementen
 ## Gemeinsames Dashboard (Oktober 2026)
 
 Demo und angemeldete Nutzer verwenden dasselbe Layout in `dashboard.html`, dieselben Zustände in `dashboard.ts` und Styles in `dashboard.scss`. Die vier Bereichskarten, Sidebar, Logo und mobile Navigation bleiben bestehen. Heute, Aufgaben, nächste Reise, Monatsübersicht, Buchungen und Vorschläge werden aus den jeweiligen Datenquellen befüllt. `DEMO_MODE` wählt über die Route ausschließlich die isolierten Demo-Provider; echte Konten verwenden die autorisierten APIs und Leerzustände. Aufgabenänderungen verwenden dieselben Services wie Organisation. Die Suche umfasst nur die bereits geladenen Dashboard-Inhalte. Der Demo-Hinweis und beispielhafte Vorschläge erscheinen nur in der Demo; persönliche Vorschläge stammen aus der eigenen Heute-API. Fotolizenzen: `frontend/public/images/dashboard/ATTRIBUTION.md` und Bildnachweis im Dashboard.
+
+## Finanz-Übersicht und gemeinsamer Kopfbereich
+
+Die Finanz-Übersicht verwendet kompakte Kennzahlenkarten für Monatsrest, Ausgaben und Einnahmen, eine Kategorienliste und darunter Buchungen sowie Sparziele. Die Budgetrechnung und Warnungen bleiben sichtbar; die übrigen Finanz-Reiter behalten ihr Layout. Alle AppShell-Seiten verwenden den gemeinsamen Such-/Datums-/Profilkopf. Außerhalb des Dashboards führt eine abgesendete Suche zum passenden persönlichen oder Demo-Dashboard. Die tatsächliche Header-Höhe bestimmt den Sticky-Abstand der Bereichsüberschriften.

@@ -12,8 +12,12 @@ import {
   ShoppingItemDto,
   ShoppingItemPatch,
   ShoppingOverviewDto,
+  ShoppingListDto,
+  ShoppingListInput,
+  RoutineStatsDto,
   TaskDto,
   TaskInput,
+  TaskWeekStatsDto,
   TaskStatus,
 } from './haushalt-api.service';
 import { HaushaltDataProvider } from './haushalt-data-provider';
@@ -23,11 +27,23 @@ import { HaushaltDataProvider } from './haushalt-data-provider';
 export class RealHaushaltDataProvider implements HaushaltDataProvider {
   private readonly api = inject(HaushaltApiService);
 
-  getShopping(): Observable<ShoppingOverviewDto> {
-    return this.api.getShopping();
+  getShopping(listId: Id | null = null): Observable<ShoppingOverviewDto> {
+    return this.api.getShopping(listId);
   }
-  addItem(name: string, quantity: string, section: SectionKey | null): Observable<ShoppingItemDto> {
-    return this.api.addItem(name, quantity, section);
+  getShoppingLists(): Observable<ShoppingListDto[]> {
+    return this.api.getShoppingLists();
+  }
+  createShoppingList(input: ShoppingListInput): Observable<ShoppingListDto> {
+    return this.api.createShoppingList(input);
+  }
+  updateShoppingList(id: Id, input: Partial<ShoppingListInput>): Observable<ShoppingListDto> {
+    return this.api.updateShoppingList(id, input);
+  }
+  deleteShoppingList(id: Id): Observable<void> {
+    return this.api.deleteShoppingList(id);
+  }
+  addItem(name: string, quantity: string, section: SectionKey | null, listId: Id | null = null): Observable<ShoppingItemDto> {
+    return this.api.addItem(name, quantity, section, listId);
   }
   updateItem(id: Id, patch: ShoppingItemPatch): Observable<ShoppingItemDto> {
     return this.api.updateItem(id, patch);
@@ -35,8 +51,8 @@ export class RealHaushaltDataProvider implements HaushaltDataProvider {
   deleteItem(id: Id): Observable<void> {
     return this.api.deleteItem(id);
   }
-  completeShopping(amount: number | null): Observable<CompleteShoppingResult> {
-    return this.api.completeShopping(amount);
+  completeShopping(amount: number | null, listId: Id | null = null): Observable<CompleteShoppingResult> {
+    return this.api.completeShopping(amount, listId);
   }
 
   getOverview(): Observable<HaushaltOverviewDto> {
@@ -47,6 +63,15 @@ export class RealHaushaltDataProvider implements HaushaltDataProvider {
   }
   getTaskLoad(): Observable<MemberLoadDto[]> {
     return this.api.getTaskLoad();
+  }
+  getTaskWeek(): Observable<TaskWeekStatsDto> {
+    return this.api.getTaskWeek();
+  }
+  getRoutineStats(): Observable<RoutineStatsDto> {
+    return this.api.getRoutineStats();
+  }
+  setTaskPaused(id: Id, paused: boolean): Observable<TaskDto> {
+    return this.api.setTaskPaused(id, paused);
   }
   createTask(input: TaskInput): Observable<TaskDto> {
     return this.api.createTask(input);

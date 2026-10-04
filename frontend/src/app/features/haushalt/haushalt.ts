@@ -1,36 +1,46 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppShell } from '../../layout/app-shell';
-import { AppIcon } from '../../shared/icons/app-icon';
+import { AppIcon, IconName } from '../../shared/icons/app-icon';
 import { SaveFeedback } from '../../shared/save-feedback/save-feedback';
 import { AufgabenTab } from './aufgaben-tab';
 import { EinkaufTab } from './einkauf-tab';
 import { OrdnerTab } from './ordner-tab';
+import { RoutinenTab } from './routinen-tab';
 import { HaushaltTabKey, UebersichtTab } from './uebersicht-tab';
 
 type HaushaltTab = HaushaltTabKey;
-// Reihenfolge wie im Entwurf: Übersicht, Aufgaben, Geräte, Einkaufsliste,
-// Routinen. „ordner“ bleibt der interne Schlüssel (Geräte und Verträge).
-const TABS: { key: HaushaltTab; label: string }[] = [
-  { key: 'uebersicht', label: 'Übersicht' },
-  { key: 'aufgaben', label: 'Aufgaben' },
-  { key: 'ordner', label: 'Geräte' },
-  { key: 'einkauf', label: 'Einkaufsliste' },
-  { key: 'routinen', label: 'Routinen' },
+// Reihenfolge: Übersicht, Aufgaben, Verträge, Einkaufslisten,
+// Routinen. „ordner“ bleibt der interne Schlüssel des Verträge-Reiters.
+const TABS: { key: HaushaltTab; label: string; icon: IconName }[] = [
+  { key: 'uebersicht', label: 'Übersicht', icon: 'household' },
+  { key: 'aufgaben', label: 'Aufgaben', icon: 'clipboard' },
+  { key: 'ordner', label: 'Verträge', icon: 'finance' },
+  { key: 'einkauf', label: 'Einkaufslisten', icon: 'list' },
+  { key: 'routinen', label: 'Routinen', icon: 'repeat' },
 ];
 const TAB_KEYS = TABS.map((tab) => tab.key);
+
+// Hauptaktion im Seitenkopf passend zum Reiter (Übersicht: neue Aufgabe).
+const HEAD_ACTIONS: Record<HaushaltTab, string> = {
+  uebersicht: 'Neue Aufgabe',
+  aufgaben: 'Neue Aufgabe',
+  routinen: 'Routine hinzufügen',
+  ordner: 'Neuer Vertrag',
+  einkauf: 'Neue Liste',
+};
 
 /**
  * Haushalt-Modul: Übersicht („Heute“), Aufgaben, Routinen (wiederkehrende
  * Aufgaben), Einkaufsliste mit Einkaufsmodus und Einkauf-zu-Ausgabe sowie
- * Geräte und Verträge (GESAMTKONZEPT.md §5). Diese Komponente ist nur die
+ * Verträge (GESAMTKONZEPT.md §5). Diese Komponente ist nur die
  * Seitenhülle; die Bereiche sind eigene Komponenten, die ihre Daten
  * über HAUSHALT_DATA_PROVIDER beziehen (Demo oder echte API, je nach Route).
  */
 @Component({
   selector: 'app-haushalt',
   standalone: true,
-  imports: [AppShell, AppIcon, SaveFeedback, EinkaufTab, AufgabenTab, OrdnerTab, UebersichtTab],
+  imports: [AppShell, AppIcon, SaveFeedback, EinkaufTab, AufgabenTab, OrdnerTab, RoutinenTab, UebersichtTab],
   templateUrl: './haushalt.html',
   styleUrl: './haushalt.scss',
 })
@@ -40,6 +50,7 @@ export class Haushalt {
 
   protected readonly tabs = TABS;
   protected readonly activeTab = signal<HaushaltTab>('uebersicht');
+  protected readonly headAction = computed(() => HEAD_ACTIONS[this.activeTab()]);
   protected readonly saveMessage = signal('');
   protected readonly newTaskRequest = signal(0);
   private requestSeq = 0;
@@ -51,9 +62,10 @@ export class Haushalt {
     inject(DestroyRef).onDestroy(() => clearTimeout(this.saveTimer));
   }
 
-  /** „Neue Aufgabe“ im Seitenkopf: zum Aufgaben-Tab und Formular öffnen. */
-  protected newTask(): void {
-    this.selectTab(this.activeTab() === 'routinen' ? 'routinen' : 'aufgaben');
+  /** Hauptaktion im Seitenkopf: öffnet das passende Formular im aktiven
+   * Reiter; von der Übersicht aus geht es zu „Neue Aufgabe“. */
+  protected headActionClick(): void {
+    if (this.activeTab() === 'uebersicht') this.selectTab('aufgaben');
     this.newTaskRequest.set(++this.requestSeq);
   }
 

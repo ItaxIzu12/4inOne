@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { DemoPrivateFinanceApi } from '../finanzen/demo-private-finance-api';
 import { PrivateFinanceApi } from '../finanzen/private-finance-api.service';
 import { DemoHaushaltDataProvider } from './demo-haushalt-data-provider';
+import { AufgabenTab } from './aufgaben-tab';
 import { EinkaufTab } from './einkauf-tab';
 import { Haushalt } from './haushalt';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
@@ -38,16 +39,22 @@ describe('Haushalt (Demo)', () => {
     const compiled = fixture.nativeElement as HTMLElement;
 
     const tabs = Array.from(compiled.querySelectorAll('[role="tab"]')).map(text);
-    expect(tabs).toEqual(['Übersicht', 'Aufgaben', 'Geräte', 'Einkaufsliste', 'Routinen']);
+    expect(tabs).toEqual(['Übersicht', 'Aufgaben', 'Verträge', 'Einkaufslisten', 'Routinen']);
     expect(compiled.querySelector('[role="tab"][aria-selected="true"]')?.id).toBe('hh-tab-uebersicht');
-    // Demo: 2 fällige Aufgaben (gestern + heute), Zähler aus derselben Antwort
-    expect(text(compiled.querySelector('app-uebersicht-tab .stat__value'))).toBe('4');
+    // Demo: zehn offene Aufgaben (pausierte Routinen zählen nicht), Zähler aus derselben Antwort
+    expect(text(compiled.querySelector('app-uebersicht-tab .stat__value'))).toBe('10');
     expect(text(compiled.querySelector('app-uebersicht-tab .stat__label'))).toBe('offene Aufgaben');
-    // „Aktuelle Aufgaben“: überfällig, dann heute (zwei fällig heute), dann die nächsten (vier Zeilen)
-    expect(compiled.querySelectorAll('app-uebersicht-tab .row').length).toBe(4);
-    const subtitles = Array.from(compiled.querySelectorAll('app-uebersicht-tab .row__meta')).map(text);
-    expect(subtitles).toEqual(['Überfällig', 'Heute', 'Heute', 'Morgen']);
-    expect(compiled.querySelector('app-uebersicht-tab .device')).not.toBeNull(); // „Meine Geräte“
+    // „Heute im Haushalt“: erst überfällig, dann heute fällig — nur, was heute ansteht
+    expect(compiled.querySelectorAll('app-uebersicht-tab .task').length).toBe(3);
+    const chips = Array.from(compiled.querySelectorAll('app-uebersicht-tab .task .tag')).map(text);
+    expect(chips).toEqual(['Überfällig', 'Heute', 'Heute']);
+    // Die vier Karten des Entwurfs
+    const cards = Array.from(compiled.querySelectorAll('app-uebersicht-tab .card h2')).map(text);
+    expect(cards).toEqual(['Heute im Haushalt', 'Verträge', 'Einkauf', 'Routinen']);
+    // Verträge statt Geräte: nächste Kündigungsfrist zuerst, Kennzahl mit Monatssumme
+    expect(text(compiled.querySelector('app-uebersicht-tab .device strong'))).toBe('Hausratversicherung');
+    expect(text(compiled.querySelectorAll('app-uebersicht-tab .stat')[2])).toContain('6Verträge');
+    expect(text(compiled.querySelectorAll('app-uebersicht-tab .stat')[2])).toContain('227,47 € im Monat');
     expect(text(compiled.querySelector('.page-head__action'))).toBe('Neue Aufgabe');
     expect(compiled.querySelector('button[aria-label="Bad putzen als erledigt markieren"]')).not.toBeNull();
   });
@@ -62,10 +69,9 @@ describe('Haushalt (Demo)', () => {
 
     // wiederkehrend: rückt weiter, bleibt offen, ist aber nicht mehr heute fällig (Winterreifen bleibt „Heute“,
     // das ist eine andere, einmalige Aufgabe)
-    const rows = Array.from(compiled.querySelectorAll('app-uebersicht-tab .row'));
-    const badPutzenRow = rows.find((row) => text(row.querySelector('.row__title')) === 'Bad putzen');
-    expect(text(badPutzenRow?.querySelector('.row__meta') ?? null)).not.toBe('Heute');
-    expect(text(compiled.querySelector('app-uebersicht-tab .stat__value'))).toBe('4');
+    const rows = Array.from(compiled.querySelectorAll('app-uebersicht-tab .task'));
+    expect(rows.map((row) => text(row.querySelector('.task__title')))).not.toContain('Bad putzen');
+    expect(text(compiled.querySelector('app-uebersicht-tab .stat__value'))).toBe('10');
   });
 
   it('"Neue Aufgabe" in the page header opens the task form on the tasks tab', () => {
@@ -80,21 +86,55 @@ describe('Haushalt (Demo)', () => {
     expect(text(compiled.querySelector('app-modal-form h2'))).toBe('Neue Aufgabe');
   });
 
-  it('the routines tab lists only recurring tasks and offers daily, weekly and monthly', () => {
+  it('the routines tab groups recurring tasks by rhythm with stats, streak and a pause switch', () => {
     const fixture = TestBed.createComponent(Haushalt);
     fixture.detectChanges();
     openTab(fixture, 'routinen');
     const compiled = fixture.nativeElement as HTMLElement;
 
-    const rows = Array.from(compiled.querySelectorAll('app-aufgaben-tab .row__title')).map(text);
-    expect(rows).toContain('Bad putzen');
-    expect(rows).not.toContain('Winterreifen-Termin vereinbaren'); // einmalig
-    (compiled.querySelector('app-aufgaben-tab .card-head .btn-primary') as HTMLButtonElement).click();
+    expect(text(compiled.querySelector('.page-head__action'))).toBe('Routine hinzufügen');
+    const titles = Array.from(compiled.querySelectorAll('app-routinen-tab .title-text')).map(text);
+    expect(titles).toContain('Bad putzen');
+    expect(titles).not.toContain('Winterreifen-Termin vereinbaren'); // einmalig
+    const groups = Array.from(compiled.querySelectorAll('app-routinen-tab .group__long')).map(text);
+    expect(groups).toEqual(['Tägliche Routinen', 'Wöchentliche Routinen', 'Monatliche Routinen']);
+    // Kennzahlen: 8 aktiv, 2 pausiert, Erledigungsrate aus dem Provider
+    const values = Array.from(compiled.querySelectorAll('app-routinen-tab .stat__value')).map(text);
+    expect(values.slice(0, 3)).toEqual(['8', '2', '92 %']);
+    expect(text(compiled.querySelector('app-routinen-tab .stat__hint'))).toBe('2 pausiert');
+    const kitchen = Array.from(compiled.querySelectorAll('app-routinen-tab .row')).find((r) => text(r).includes('Küche sauber halten'))!;
+    expect(text(kitchen.querySelector('.row__streak'))).toBe('12 Tage');
+
+    // Schalter pausiert die Routine
+    const toggle = kitchen.querySelector('[role="switch"]') as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    toggle.click();
     fixture.detectChanges();
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+    expect(text(compiled.querySelector('app-routinen-tab .stat__value'))).toBe('7');
+
+    // Filter-Chip „Pausiert“
+    const chip = Array.from(compiled.querySelectorAll('app-routinen-tab .chip')).find((c) => text(c).startsWith('Pausiert'))!;
+    (chip as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(Array.from(compiled.querySelectorAll('app-routinen-tab .title-text')).map(text).sort()).toEqual([
+      'Fenster putzen', 'Küche sauber halten', 'Rasen mähen',
+    ]);
+    // „Wer macht wie viel?“ bleibt
+    expect(text(compiled.querySelector('app-routinen-tab .load-list'))).toContain('Anna');
+  });
+
+  it('"Routine hinzufügen" opens the shared task form, starting weekly', () => {
+    const fixture = TestBed.createComponent(Haushalt);
+    fixture.detectChanges();
+    openTab(fixture, 'routinen');
+    const compiled = fixture.nativeElement as HTMLElement;
+    (compiled.querySelector('.page-head__action') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(text(compiled.querySelector('app-modal-form h2'))).toBe('Neue Routine');
     const trigger = Array.from(compiled.querySelectorAll('app-modal-form .select__trigger')).find((t) =>
       text(compiled.querySelector('#' + t.getAttribute('aria-labelledby'))).startsWith('Wie oft?'),
     ) as HTMLButtonElement;
-    // Eine neue Routine startet wöchentlich, nicht einmalig
     expect(text(trigger)).toContain('Wöchentlich');
     trigger.click();
     fixture.detectChanges();
@@ -112,9 +152,14 @@ describe('Haushalt (Demo)', () => {
     fixture.detectChanges();
     expect(compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren als erledigt markieren"]')).toBeNull();
 
-    (compiled.querySelector('#toggle-done') as HTMLButtonElement).click();
+    // Status-Filter „Erledigt“ zeigt die erledigten Aufgaben
+    const tab = fixture.debugElement.query((el) => el.componentInstance instanceof AufgabenTab).componentInstance as AufgabenTab;
+    tab['setFilter']('status', 'done');
     fixture.detectChanges();
     (compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren wieder öffnen"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren wieder öffnen"]')).toBeNull();
+    tab['setFilter']('status', '');
     fixture.detectChanges();
     expect(compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren als erledigt markieren"]')).not.toBeNull();
   });
@@ -124,13 +169,11 @@ describe('Haushalt (Demo)', () => {
     fixture.detectChanges();
     let compiled = fixture.nativeElement as HTMLElement;
 
-    // Übersicht: „Müll rausbringen“ ist erst morgen fällig
-    const overviewCheck = compiled.querySelector(
-      'app-uebersicht-tab button[aria-label*="Müll rausbringen"]',
-    ) as HTMLButtonElement;
-    expect(overviewCheck.disabled).toBe(true);
-    expect(overviewCheck.getAttribute('aria-label')).toContain('noch nicht abhakbar');
-    expect(overviewCheck.getAttribute('title')).toContain('Erst');
+    // Übersicht: „Müll rausbringen“ ist erst morgen fällig — „Heute im Haushalt“ bietet dafür kein Kästchen an,
+    // die Routine erscheint nur mit ihrem nächsten Termin.
+    expect(compiled.querySelector('app-uebersicht-tab .box[aria-label*="Müll rausbringen"]')).toBeNull();
+    const routine = Array.from(compiled.querySelectorAll('app-uebersicht-tab .routine')).find((r) => text(r).includes('Müll rausbringen'));
+    expect(text(routine ?? null)).toContain('Morgen');
 
     openTab(fixture, 'aufgaben');
     compiled = fixture.nativeElement as HTMLElement;
@@ -156,7 +199,14 @@ describe('Haushalt (Demo)', () => {
 
     const headings = Array.from(compiled.querySelectorAll('app-einkauf-tab h3')).map(text);
     expect(headings.slice(0, 3)).toEqual(['Obst & Gemüse', 'Brot & Backwaren', 'Kühlregal']);
-    expect(compiled.querySelector('button[aria-label="Bananen abhaken"]')).not.toBeNull();
+    expect(compiled.querySelector('button[aria-label="Bananen, 1 kg abhaken"]')).not.toBeNull();
+    // Abgehakte bleiben durchgestrichen im Bereich stehen: „2 von 4“
+    expect(text(compiled.querySelector('app-einkauf-tab .group__count'))).toBe('2 von 4 erledigt');
+    expect(compiled.querySelector('button[aria-label="Äpfel, 1 kg zurück auf die Liste"]')).not.toBeNull();
+    // Mehrere Listen links, die erste ist gewählt
+    const lists = Array.from(compiled.querySelectorAll('app-einkauf-tab .list-card b')).map(text);
+    expect(lists).toEqual(['Wocheneinkauf', 'Drogerie', 'Baumarkt', 'Getränke', 'Party / Gäste']);
+    expect(text(compiled.querySelector('app-einkauf-tab .role--owner'))).toBe('Eigentümer');
     expect(compiled.querySelector('[role="tab"][aria-selected="true"]')?.id).toBe('hh-tab-einkauf');
   });
 
@@ -168,26 +218,27 @@ describe('Haushalt (Demo)', () => {
     const finanzen = TestBed.inject(PrivateFinanceApi);
     const before = Number((await firstValueFrom(finanzen.summary())).expenses);
 
-    (compiled.querySelector('button[aria-label="Bananen abhaken"]') as HTMLButtonElement).click();
+    (compiled.querySelector('button[aria-label="Bananen, 1 kg abhaken"]') as HTMLButtonElement).click();
     (compiled.querySelector('button[aria-label="Milch, 2 l abhaken"]') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(text(compiled.querySelector('.checkout-bar__count'))).toBe('2 im Wagen');
+    // Äpfel und Tomaten sind in der Demo schon abgehakt
+    expect(text(compiled.querySelector('.checkout-bar__count'))).toBe('4 im Wagen');
 
     const tab = fixture.debugElement.query((el) => el.componentInstance instanceof EinkaufTab)
       .componentInstance as EinkaufTab;
     tab['openComplete']();
     fixture.detectChanges();
-    // 2 Artikel × 3,50 € Startwert
-    expect(tab['completeAmount']()).toBe(7);
+    // 4 Artikel × 3,50 € Startwert
+    expect(tab['completeAmount']()).toBe(14);
     tab['nudge'](0.5);
     tab['complete'](true);
     fixture.detectChanges();
 
     const after = await firstValueFrom(finanzen.summary());
-    expect(Number(after.expenses) - before).toBeCloseTo(7.5);
+    expect(Number(after.expenses) - before).toBeCloseTo(14.5);
     expect(after.categories.find((c) => c.name === 'Lebensmittel')).toBeTruthy();
-    expect(compiled.querySelector('button[aria-label="Bananen abhaken"]')).toBeNull();
-    expect(text(compiled.querySelector('app-save-feedback'))).toContain('7,50');
+    expect(compiled.querySelector('button[aria-label="Bananen, 1 kg abhaken"]')).toBeNull();
+    expect(text(compiled.querySelector('app-save-feedback'))).toContain('14,50');
   });
 
   it('switches to the task tab and shows the load per member', () => {
@@ -198,9 +249,12 @@ describe('Haushalt (Demo)', () => {
     (compiled.querySelector('#hh-tab-aufgaben') as HTMLButtonElement).click();
     fixture.detectChanges();
 
-    expect(text(compiled.querySelector('#tasks-heading'))).toBe('Anstehende Aufgaben');
-    expect(text(compiled.querySelector('.load-list'))).toContain('Anna');
+    // Wie im Entwurf: Filterleiste, Gruppen-Tabellen mit Spalten, rechts der Überblick
+    expect(compiled.querySelectorAll('app-aufgaben-tab .toolbar app-select').length).toBe(4);
     expect(text(compiled.querySelector('.group--overdue'))).toContain('Pflanzen gießen');
+    expect(text(compiled.querySelector('.group--overdue .col-heads'))).toBe('RaumZuständigFällig amDauerPriorität');
+    expect(text(compiled.querySelector('#ov-heading'))).toBe('Aufgaben im Überblick');
+    expect(text(compiled.querySelector('.tile--done'))).toContain('5');
   });
 
   it('completing a recurring task moves it forward instead of removing it', () => {
@@ -215,19 +269,33 @@ describe('Haushalt (Demo)', () => {
 
     expect(compiled.querySelector('.group--overdue')).toBeNull();
     expect(text(compiled)).toContain('Pflanzen gießen');
-    expect(text(compiled.querySelector('.load-list'))).toContain('6 Punkte');
+    // „erledigt diese Woche“ zählt mit
+    expect(text(compiled.querySelector('.tile--done b'))).toBe('6');
   });
 
-  it('lists upcoming folder deadlines including the contract cost', () => {
+  it('the contracts tab shows only contracts with costs, deadlines and the selected contract', () => {
     const fixture = TestBed.createComponent(Haushalt);
     fixture.detectChanges();
+    openTab(fixture, 'ordner');
     const compiled = fixture.nativeElement as HTMLElement;
-    (compiled.querySelector('#hh-tab-ordner') as HTMLButtonElement).click();
-    fixture.detectChanges();
 
-    expect(text(compiled.querySelector('#contracts-heading')?.parentElement ?? null)).toContain('65,00 €');
-    const deadlines = Array.from(compiled.querySelectorAll('.deadline__title')).map(text);
-    expect(deadlines).toEqual(['Heizung', 'Hausratversicherung']);
+    expect(text(compiled.querySelector('.page-head__action'))).toBe('Neuer Vertrag');
+    const values = Array.from(compiled.querySelectorAll('app-ordner-tab .stat__value')).map(text);
+    expect(values).toEqual(['6', '227,47 €', '2', '1']);
+    // Nächste Kündigungsfrist zuerst und gewählt
+    const names = Array.from(compiled.querySelectorAll('app-ordner-tab .row__name b')).map(text);
+    expect(names.slice(0, 2).sort()).toEqual(['Hausratversicherung', 'Strom']);
+    expect(text(compiled.querySelector('#contract-detail-heading'))).toBe(names[0]);
+    expect(text(compiled.querySelector('#contracts-heading')?.parentElement ?? null)).toContain('227,47 €');
+
+    // Kennzahl „ohne Frist“ filtert
+    (compiled.querySelectorAll('app-ordner-tab .stat')[3] as HTMLElement).click();
+    fixture.detectChanges();
+    expect(Array.from(compiled.querySelectorAll('app-ordner-tab .row__name b')).map(text)).toEqual(['Streaming']);
+
+    // Nur Verträge: kein Umschalter, keine Geräte
+    expect(compiled.querySelector('app-ordner-tab .switcher')).toBeNull();
+    expect(text(compiled.querySelector('app-ordner-tab'))).not.toContain('Geschirrspüler');
   });
 });
 
@@ -249,13 +317,15 @@ describe('DemoHaushaltDataProvider', () => {
   it('the price estimate uses the shopping amounts, never the private booking', async () => {
     const { haushalt, finanzen } = setup();
     const trip = await bookTrip(haushalt, 20);
-    expect((await firstValueFrom(haushalt.getShopping())).price_per_item).toBe('10.00');
+    // Zwei neu abgehakte plus die zwei, die in der Demo schon im Wagen liegen
+    expect(trip.item_count).toBe(4);
+    expect((await firstValueFrom(haushalt.getShopping())).price_per_item).toBe('5.00');
 
     // Eine private Korrektur bleibt privat (ADR-001) und ändert die Schätzung des Haushalts nicht.
     await firstValueFrom(finanzen.save('transactions', { amount: '8.00' }, Number(trip.transaction_id)));
     await firstValueFrom(finanzen.delete('transactions', Number(trip.transaction_id)));
     const after = await firstValueFrom(haushalt.getShopping());
-    expect(after.price_per_item).toBe('10.00');
+    expect(after.price_per_item).toBe('5.00');
     expect(after.price_from_history).toBe(true);
   });
 

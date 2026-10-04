@@ -25,6 +25,8 @@ for (const width of [390, 1440]) {
       // Vorschau vor dem Speichern eines Sparziels: hier ohne Warnung, und sie legt nichts an
       if (new URL(r.request().url()).pathname.endsWith('/preview/'))
         return r.fulfill({ json: { month_over: null, plan_alert: null } });
+      // Letzte Einzahlungen (Reiter Sparziele): hier ohne Verlauf
+      if (new URL(r.request().url()).pathname.endsWith('/goals/einzahlungen/')) return r.fulfill({ json: [] });
       const url = new URL(r.request().url()),
         parts = url.pathname.split('/').filter(Boolean),
         resource = parts[4],
@@ -120,14 +122,14 @@ for (const width of [390, 1440]) {
     await expect(page.getByLabel('Bis einschließlich')).toHaveCount(0);
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(page.locator('.stage')).toContainText('3.000,00 €');
+    await expect(page.locator('.kpis')).toContainText('3.000 €');
     const today = new Date();
     const following = new Date(today.getFullYear(), today.getMonth() + 1, 1);
     const nextMonth = `${following.getFullYear()}-${String(following.getMonth() + 1).padStart(2, '0')}`;
     await pickMonth(page, page.locator('#finance-month'), nextMonth);
-    await expect(page.locator('.stage')).toContainText('3.000,00 €');
+    await expect(page.locator('.kpis')).toContainText('3.000 €');
     await page.getByRole('button', { name: 'Budgets', exact: true }).click();
-    await expect(page.locator('.card header').filter({ hasText: 'Gültig:' })).toContainText(/bis auf Weiteres/);
+    await expect(page.locator('.kpi').filter({ hasText: 'Gültig:' })).toContainText(/bis auf Weiteres/);
     await pickMonth(page, page.locator('#finance-month'), `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
     await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
     await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
@@ -135,7 +137,7 @@ for (const width of [390, 1440]) {
     await page.getByRole('button', { name: 'Standardkategorien anlegen' }).click();
     await page.getByLabel('Notiz (optional)').fill('Supermarkt');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-    await expect(page.locator('.stage')).toContainText('2.951,68 €');
+    await expect(page.locator('.kpis')).toContainText('2.951,68 €');
     await page.getByRole('button', { name: /Supermarkt/ }).click();
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('50,00');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
@@ -145,18 +147,19 @@ for (const width of [390, 1440]) {
     await page.getByLabel('Notiz (optional)').fill('Gehalt');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     // Einnahme erhöht das verfügbare Budget und wird sichtbar bestätigt
-    await expect(page.locator('.stage')).toContainText('2.950,00 €');
-    // Die Rechnung steht offen neben dem Betrag, nichts mehr aufzuklappen.
-    const calc = page.locator('.stage .ledger');
-    await expect(calc).toContainText('Monatsbudget3.000,00 €');
-    await expect(calc).not.toContainText('+ Einnahmen');
-    await expect(calc).toContainText('−Ausgaben50,00 €');
-    await expect(calc).toContainText('=Frei2.950,00 €');
+    await expect(page.locator('.kpis')).toContainText('2.950 €');
+    // Der Reiter Budgets zeigt Budget, Rest und Verbrauch direkt in den Kennzahlen; Einnahmen zählen nicht hinein.
+    await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+    const budgetKpis = page.locator('.kpis');
+    await expect(budgetKpis).toContainText('3.000 €');
+    await expect(budgetKpis).toContainText('2.950 €');
+    await expect(budgetKpis).toContainText('50 € Ausgaben');
+    await expect(budgetKpis).not.toContainText('Einnahmen');
     await expect(page.getByRole('status').filter({ hasText: 'Einnahme' })).toContainText(
       'Einnahme von 3.100,00 € gespeichert. Vom Monatsbudget übrig: 2.950,00 €.',
     );
     await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
-    await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
+    await page.getByRole('button', { name: 'Neues Sparziel', exact: true }).click();
     await page.getByLabel('Titel', { exact: true }).fill('Neue Waschmaschine');
     await page.getByLabel('Zielbetrag in EUR').fill('700');
     // Gespartes darf das Sparziel nicht überschreiten
@@ -175,8 +178,8 @@ for (const width of [390, 1440]) {
     await expect(page.locator('app-error-notice')).toContainText('Die Sparrate darf nicht höher sein als das Sparziel.');
     await page.getByLabel('Sparrate pro Monat').fill('50');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-    await expect(page.locator('.goal')).toContainText('69 % erreicht');
-    await expect(page.locator('.goal .plan')).toContainText(/50,00 € pro Monat · Nur \d\d\.\d{4}/);
+    await expect(page.locator('.goal')).toContainText('69 %');
+    await expect(page.locator('.goal .plan')).toContainText(/50 €\s*Nur \d\d\.\d{4}/);
     // Ein Ziel gilt nur in seinem Zeitraum: im Folgemonat ist es weg …
     const thisMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     await pickMonth(page, page.locator('#finance-month'), nextMonth);
@@ -194,8 +197,10 @@ for (const width of [390, 1440]) {
     await pickMonth(page, page.locator('#finance-month'), thisMonth);
     await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
     // Gespartes mindert das verfügbare Budget und steht in der Aufschlüsselung
-    await expect(page.locator('.stage')).toContainText('2.470,00 €');
-    await expect(page.locator('.stage .ledger')).toContainText('−Für Sparziele zurückgelegt480,00 €');
+    await expect(page.locator('.kpis')).toContainText('2.470 €');
+    await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+    await expect(page.locator('.kpis')).toContainText('480 € Sparen');
+    await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -210,7 +215,7 @@ for (const width of [390, 1440]) {
     await page.getByRole('button', { name: /Supermarkt/ }).click();
     await page.getByRole('button', { name: 'Eintrag löschen', exact: true }).click();
     await page.getByRole('button', { name: 'Ja, löschen', exact: true }).click();
-    await expect(page.locator('.stage')).toContainText('2.520,00 €');
+    await expect(page.locator('.kpis')).toContainText('2.520 €');
     await expect(page.getByRole('status').filter({ hasText: 'gelöscht' })).toContainText('Buchung gelöscht. Vom Monatsbudget übrig: 2.520,00 €.');
   });
 }
@@ -243,7 +248,7 @@ test('warns before an expense exceeds the available budget and books it only aft
   });
 
   await page.goto('/finanzen');
-  await expect(page.locator('.stage')).toContainText('100,00 €');
+  await expect(page.locator('.kpis')).toContainText('100 €');
   await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Betrag in EUR', { exact: true }).fill('150');
@@ -261,9 +266,9 @@ test('warns before an expense exceeds the available budget and books it only aft
   await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dialog).toHaveCount(0);
   expect(posts).toBe(1);
-  await expect(page.locator('.stage')).toContainText('80,00 €');
-  await expect(page.locator('.stage-note')).toHaveCount(0);
-  await expect(page.locator('.stage')).not.toHaveClass(/stage--over/);
+  await expect(page.locator('.kpis')).toContainText('80 €');
+  await expect(page.locator('.alert-note')).toHaveCount(0);
+  await expect(page.locator('.kpi--danger')).toHaveCount(0);
 
   // Jetzt 150 € bei 80 € verfügbar: Warnung, Bestätigung, gebucht — und danach deutlich sichtbar im Minus
   await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
@@ -273,11 +278,11 @@ test('warns before an expense exceeds the available budget and books it only aft
   await dialog.getByRole('button', { name: 'Trotzdem buchen', exact: true }).click();
   await expect(dialog).toHaveCount(0);
   expect(posts).toBe(2);
-  await expect(page.locator('.stage .stage-note').filter({ hasText: 'Budget überschritten' })).toBeVisible();
-  await expect(page.locator('.stage .stage-note')).toContainText('70,00 €');
-  // Die Bühne wird rot und sagt es auch in Worten (Farbe allein reicht nicht)
-  await expect(page.locator('.stage')).toHaveClass(/stage--over/);
-  await expect(page.locator('.stage-label')).toHaveText('Über dem Monatsbudget');
+  await expect(page.locator('.alert-note').filter({ hasText: 'Budget überschritten' })).toBeVisible();
+  await expect(page.locator('.alert-note')).toContainText('70,00 €');
+  // Die Kennzahl wird rot und sagt es auch in Worten (Farbe allein reicht nicht)
+  await expect(page.locator('.kpi--danger')).toHaveCount(1);
+  await expect(page.locator('.kpi--danger .kpi__label')).toHaveText('Über dem Monatsbudget');
   await expect(page.getByRole('status').filter({ hasText: 'Achtung' })).toContainText('Achtung: Du liegst 70,00 € über deinem Monatsbudget.');
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
 });
@@ -321,30 +326,31 @@ test('warns when the savings rates together exceed the budget, even in a later m
     return r.fulfill({ json: [] });
   });
   await page.goto('/finanzen');
-  const note = page.locator('.stage .stage-note');
+  const note = page.locator('.alert-note');
   await expect(note).toContainText('Sparplanung prüfen');
   await expect(note).toContainText('Im 11.2026 reicht das Monatsbudget nach Ausgaben nicht für alle Sparraten: Es fehlen 30,00 €.');
-  await expect(page.locator('.stage')).not.toHaveClass(/stage--over/); // im Moment noch im Plus
+  await expect(page.locator('.kpi--danger')).toHaveCount(0); // im Moment noch im Plus
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
 
+  // Der Hinweis gilt für den ganzen Monat und steht deshalb in jedem Reiter, auch unter Budgets
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
-  await expect(page.locator('.overrun-note')).toContainText('Sparplanung prüfen');
+  await expect(page.locator('.alert-note')).toContainText('Sparplanung prüfen');
 
   // Betrifft es den angezeigten Monat, sagt der Hinweis „In diesem Monat“
   alert = { month: '2026-09', over: '10.00', planned: '110.00' };
   await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
   await page.reload();
-  await expect(page.locator('.stage .stage-note')).toContainText('In diesem Monat reicht das Monatsbudget nach Ausgaben nicht für alle Sparraten');
+  await expect(page.locator('.alert-note')).toContainText('In diesem Monat reicht das Monatsbudget nach Ausgaben nicht für alle Sparraten');
 
   // Kein Alarm: kein Hinweis. Und ist das Budget ohnehin im Minus, gilt nur die Überschreitungs-Meldung (kein Doppelhinweis)
   alert = null;
   await page.reload();
-  await expect(page.locator('.stage .stage-note')).toHaveCount(0);
+  await expect(page.locator('.alert-note')).toHaveCount(0);
   alert = { month: '2026-09', over: '10.00', planned: '110.00' };
   available = '-10.00';
   await page.reload();
-  await expect(page.locator('.stage .stage-note')).toHaveCount(2);
-  await expect(page.locator('.stage .stage-note').filter({ hasText: 'Budget überschritten' })).toBeVisible();
+  await expect(page.locator('.alert-note')).toHaveCount(2);
+  await expect(page.locator('.alert-note').filter({ hasText: 'Budget überschritten' })).toBeVisible();
 });
 
 
@@ -382,7 +388,7 @@ test('warns BEFORE saving a savings goal that exceeds the budget and saves only 
 
   await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
-  await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
+  await page.getByRole('button', { name: 'Neues Sparziel', exact: true }).click();
   const dialog = page.getByRole('dialog');
   const popup = page.locator('app-error-notice aside');
   // Regression: empty -> still incomplete -> valid but over budget.
@@ -429,7 +435,7 @@ test('warns BEFORE saving a savings goal that exceeds the budget and saves only 
   expect(created[0].current_amount).toBe('100.00');
 
   // Sparrate, die in einem späteren Monat nicht mehr reicht → Warnung nennt den Monat; „Trotzdem speichern“ speichert
-  await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
+  await page.getByRole('button', { name: 'Neues Sparziel', exact: true }).click();
   await dialog.getByLabel('Titel', { exact: true }).fill('Reise');
   await dialog.getByLabel('Zielbetrag in EUR').fill('5000');
   await dialog.getByLabel('Sparrate pro Monat').fill('120');
@@ -463,7 +469,7 @@ test('a goal for another month is saved but not shown, and says so', async ({ pa
   });
   await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
-  await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
+  await page.getByRole('button', { name: 'Neues Sparziel', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Titel', { exact: true }).fill('Urlaub');
   await dialog.getByLabel('Zielbetrag in EUR').fill('900');
@@ -534,23 +540,23 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
   await page.goto('/finanzen');
   const selector = page.locator('#finance-month');
   await expect(selector).toHaveCount(1);
-  await expect(page.locator('.stage')).toContainText('90,00 €'); // September: 100 − 10
+  await expect(page.locator('.kpis')).toContainText('90 €'); // September: 100 − 10
 
-  // Der Monat gilt für die ganze Seite und steht deshalb OBERHALB der Reiter
+  // Der Monat gilt für die ganze Seite und steht deshalb im Kopf, über allen Inhalten der Reiter
   const monthBox = (await selector.boundingBox())!;
-  const tabsBox = (await page.locator('nav.tabs').boundingBox())!;
-  expect(monthBox.y).toBeGreaterThan(tabsBox.y + tabsBox.height);
+  const kpiBox = (await page.locator('.kpis').boundingBox())!;
+  expect(monthBox.y + monthBox.height).toBeLessThanOrEqual(kpiBox.y);
 
-  for (const tab of ['Buchungen', 'Budgets', 'Sparziele', 'Übersicht']) {
+  for (const tab of ['Ausgaben', 'Einnahmen', 'Budgets', 'Sparziele', 'Übersicht']) {
     await page.getByRole('button', { name: tab, exact: true }).click();
     await expect(selector).toHaveCount(1); // in jedem Reiter derselbe, nie doppelt
   }
 
   await pickMonth(page, selector, OCT);
   await expect(selector).toContainText('Oktober 2026');
-  await expect(page.locator('.stage')).toContainText('80,00 €'); // Oktober: 100 − 20 (Übersicht)
+  await expect(page.locator('.kpis')).toContainText('80 €'); // Oktober: 100 − 20 (Übersicht)
 
-  await page.getByRole('button', { name: 'Buchungen', exact: true }).click();
+  await page.getByRole('button', { name: 'Ausgaben', exact: true }).click();
   await expect(page.getByRole('button', { name: /Oktoberkauf/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /Septemberkauf/ })).toHaveCount(0);
 
@@ -559,15 +565,15 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
   await expect(page.locator('.goal')).toContainText('Ab Oktober');
 
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
-  await expect(page.locator('.card').first()).toContainText('Budget im Oktober 2026');
-  await expect(page.locator('.card').first()).not.toContainText('Verfügbar');
+  await expect(page.locator('.kpi').first()).toContainText('für Oktober 2026');
+  await expect(page.locator('.kpi').first()).not.toContainText('Verfügbar');
 
   // zurück in den September: alles springt mit
   await pickMonth(page, selector, SEP);
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
   await expect(page.locator('.goal')).toContainText('Nur September');
-  await page.getByRole('button', { name: 'Buchungen', exact: true }).click();
-  await expect(page.getByRole('button', { name: /Septemberkauf/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Ausgaben', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Septemberkauf/ }).first()).toBeVisible();
 });
 
 test('an empty goal list is centered on the whole card without touching the two-column grid', async ({ page }) => {
@@ -695,7 +701,7 @@ test('savings can be saved independently of a spending limit', async ({ page }) 
   });
   await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
-  await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Neues Sparziel', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Titel', { exact: true }).fill('Auto');
   await dialog.getByLabel('Zielbetrag in EUR').fill('500');
@@ -770,7 +776,7 @@ test('without a budget the overview keeps bookings and says so', async ({ page }
     r.fulfill({ json: { month: '2026-09', currency: 'EUR', budget: null, total: null, saved: '0.00', saved_planned: '0.00', available: null, plan_alert: null, income: '0.00', expenses: '10.00', savings_target: '0.00', savings_current: '0.00', has_data: true, categories: [], recent: [] } }),
   );
   await page.goto('/finanzen');
-  await expect(page.locator('.stage')).toContainText('gibt es kein Budget. Deine Einnahmen und Ausgaben bleiben gespeichert');
+  await expect(page.locator('.budget-empty')).toContainText('gibt es kein Budget. Deine Einnahmen und Ausgaben bleiben gespeichert');
 });
 
 test('bookings: category filter, search by title, and 5-at-a-time with "weitere anzeigen"', async ({ page }) => {
@@ -801,20 +807,21 @@ test('bookings: category filter, search by title, and 5-at-a-time with "weitere 
     return r.fulfill({ json: [] });
   });
   await page.goto('/finanzen');
-  await page.getByRole('button', { name: 'Buchungen', exact: true }).click();
+  await page.getByRole('button', { name: 'Ausgaben', exact: true }).click();
 
-  const rows = page.locator('.transaction');
-  await expect(rows).toHaveCount(5); // von 8 zunächst nur 5
-  await expect(page.getByRole('button', { name: '3 weitere Buchungen anzeigen' })).toBeVisible();
-  await page.getByRole('button', { name: '3 weitere Buchungen anzeigen' }).click();
-  await expect(rows).toHaveCount(8);
+  // Die vollständige Liste unten im Reiter: nur Ausgaben, 5 auf einmal
+  const rows = page.locator('#all-rows .transaction');
+  await expect(rows).toHaveCount(5); // von 7 Ausgaben zunächst nur 5
+  await expect(page.getByRole('button', { name: '2 weitere Buchungen anzeigen' })).toBeVisible();
+  await page.getByRole('button', { name: '2 weitere Buchungen anzeigen' }).click();
+  await expect(rows).toHaveCount(7);
 
-  // Kategorie-Filter: nur „Wohnen“ (3 Buchungen) — die Begrenzung greift danach wieder
+  // Kategorie-Filter: nur „Wohnen“ (2 Ausgaben) — die Begrenzung greift danach wieder
   await choose(page, 'Kategorie', 'Wohnen');
-  await expect(rows).toHaveCount(3);
-  await expect(rows).toContainText(['Miete', 'Versicherung', 'Gehalt']);
+  await expect(rows).toHaveCount(2);
+  await expect(rows).toContainText(['Miete', 'Versicherung']);
   await choose(page, 'Kategorie', 'Alle Kategorien');
-  await expect(rows).toHaveCount(5); // Begrenzung wieder auf 5 zurückgesetzt, nicht die vorherigen 8
+  await expect(rows).toHaveCount(5); // Begrenzung wieder auf 5 zurückgesetzt, nicht die vorherigen 7
 
   // Suche nach Titel, auch über Kategorien hinweg
   await page.getByPlaceholder('Buchung suchen …').fill('supermarkt');
@@ -823,6 +830,10 @@ test('bookings: category filter, search by title, and 5-at-a-time with "weitere 
 
   await page.getByPlaceholder('Buchung suchen …').fill('nichts passt');
   await expect(page.getByText('Keine Buchung gefunden. Prüfe die Schreibweise, die Kategorie oder den Filter.')).toBeVisible();
+
+  // Einnahmen haben ihren eigenen Reiter
+  await page.getByRole('button', { name: 'Einnahmen', exact: true }).click();
+  await expect(page.locator('#all-rows .transaction')).toHaveText([/Gehalt/]);
 });
 
 test('budget deletion note is absent when the selected month has no records', async ({ page }) => {

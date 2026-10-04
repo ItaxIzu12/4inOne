@@ -1,0 +1,139 @@
+<input #picker class="sr-only" type="file" multiple [accept]="accept" tabindex="-1" aria-hidden="true" (change)="onPicked(picker)" />
+
+@if (error()) {
+  <p class="inline-error" [appErrorNotice]="error()">{{ error() }}</p>
+}
+
+@if (files() === null) {
+  <p class="muted" role="status">Deine Dateien werden geladen …</p>
+} @else {
+  <div class="files">
+    <!-- Navigation -->
+    <nav class="card side" aria-labelledby="files-nav-h">
+      <h2 id="files-nav-h">Dateien</h2>
+      <button type="button" class="upload" [disabled]="busy()" (click)="pick()">
+        <app-icon name="upload" />{{ busy() ? 'Wird hochgeladen …' : 'Dateien hochladen' }}
+      </button>
+      <ul class="nav">
+        <li><button type="button" [attr.aria-current]="view() === 'all' ? 'true' : null" (click)="setView('all')"><app-icon name="folder" />Alle Dateien<span>{{ counts().all }}</span></button></li>
+        <li><button type="button" [attr.aria-current]="view() === 'recent' ? 'true' : null" (click)="setView('recent')"><app-icon name="clock" />Zuletzt verwendet<span>{{ counts().recent }}</span></button></li>
+        <li><button type="button" [attr.aria-current]="view() === 'favorites' ? 'true' : null" (click)="setView('favorites')"><app-icon name="star" />Favoriten<span>{{ counts().favorites }}</span></button></li>
+      </ul>
+      <h3 class="nav-title">Kategorien</h3>
+      <ul class="nav nav--cats">
+        @for (c of categories; track c.value) {
+          <li>
+            <button type="button" [class]="'tone-' + c.tone" [attr.aria-current]="view() === c.value ? 'true' : null" (click)="setView(c.value)">
+              <span class="cat-icon" aria-hidden="true"><app-icon [name]="c.icon" /></span>{{ c.label }}<span>{{ categoryCount(c.value) }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+      @if (storage(); as st) {
+        <div class="storage">
+          <p><b>Speicherplatz</b></p>
+          <span class="track" role="img" [attr.aria-label]="fileSize(st.used) + ' von ' + fileSize(st.quota) + ' verwendet'"><span [style.width.%]="storageShare()"></span></span>
+          <small>{{ fileSize(st.used) }} von {{ fileSize(st.quota) }} verwendet</small>
+        </div>
+      }
+    </nav>
+
+    <!-- Liste -->
+    <section class="card list" aria-labelledby="files-list-h">
+      <div class="card-head">
+        <h2 id="files-list-h">{{ viewLabel() }}</h2>
+        @if (view() !== 'all') {
+          <button type="button" class="link" (click)="setView('all')">Alle anzeigen <app-icon name="arrow" /></button>
+        }
+      </div>
+      <label class="search">
+        <app-icon name="search" aria-hidden="true" />
+        <span class="sr-only">Dateien suchen</span>
+        <input type="search" placeholder="Dateien suchen …" [value]="query()" (input)="query.set($any($event.target).value)" />
+      </label>
+      <ul class="rows">
+        @for (f of visible(); track f.id) {
+          @let kind = fileKind(f);
+          <li>
+            <button type="button" class="row-btn file-row" [class.is-selected]="selected()?.id === f.id" [attr.aria-current]="selected()?.id === f.id ? 'true' : null" (click)="select(f)">
+              <span class="ficon" [class]="'ficon tone-' + kind.tone" aria-hidden="true"><app-icon [name]="kind.icon" /></span>
+              <span class="row-text"><b>{{ f.name }}</b><small>{{ fileCategory(f.category).label }} · {{ agoText(f.used_at) }}</small></span>
+              <small class="size">{{ fileSize(f.size) }}</small>
+            </button>
+          </li>
+        } @empty {
+          <li class="empty">
+            @if (query().trim()) {
+              Keine Datei passt zu „{{ query().trim() }}“.
+            } @else {
+              Hier liegt noch nichts. Lade Unterlagen, Bilder oder Checklisten hoch – nur für dich sichtbar.
+            }
+          </li>
+        }
+      </ul>
+    </section>
+
+    <!-- Vorschau -->
+    @if (selected(); as f) {
+      @let kind = fileKind(f);
+      @if (sheetOpen()) {
+        <div class="sheet-backdrop" aria-hidden="true" (click)="sheetOpen.set(false)"></div>
+      }
+      <aside class="card preview" [class.is-open]="sheetOpen()" aria-labelledby="file-h" (keydown.escape)="sheetOpen.set(false)">
+        <div class="preview__head">
+          <span class="ficon ficon--big" [class]="'ficon ficon--big tone-' + kind.tone" aria-hidden="true"><app-icon [name]="kind.icon" /></span>
+          <div class="preview__title">
+            <h2 id="file-h">{{ f.name }}</h2>
+            <small>{{ fileCategory(f.category).label }} · {{ fileSize(f.size) }}<br />Geändert {{ agoText(f.updated_at) }}</small>
+          </div>
+          <button type="button" class="star" [attr.aria-pressed]="f.favorite" [attr.aria-label]="f.favorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten'" (click)="toggleFavorite(f)">
+            <app-icon name="star" />
+          </button>
+          <button type="button" class="sheet-close" aria-label="Vorschau schließen" (click)="sheetOpen.set(false)"><app-icon name="close" /></button>
+        </div>
+
+        <div class="stage">
+          @if (kind.image && previewUrl(); as url) {
+            <img [src]="url" [alt]="'Vorschau von ' + f.name" />
+          } @else {
+            <div class="doc" aria-hidden="true">
+              <b>{{ baseName(f.name) }}</b>
+              <span>{{ kind.label }}</span>
+              <i></i><i></i><i></i><i class="short"></i>
+            </div>
+          }
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn-primary" (click)="openFile(f)"><app-icon name="external" />Öffnen</button>
+          <button type="button" class="btn-ghost" (click)="download(f)"><app-icon name="download" />Herunterladen</button>
+          <button type="button" class="btn-ghost btn-icon" [attr.aria-label]="f.name + ' löschen'" (click)="confirmDelete.set(true)"><app-icon name="trash" /></button>
+        </div>
+
+        <h3 class="info-title">Informationen</h3>
+        <dl class="info">
+          <div><dt>Typ</dt><dd>{{ kind.label }}</dd></div>
+          <div><dt>Größe</dt><dd>{{ fileSize(f.size) }}</dd></div>
+          <div><dt>Geändert</dt><dd>{{ editedAt(f.updated_at) }}</dd></div>
+          <div><dt>Hochgeladen</dt><dd>{{ editedAt(f.created_at) }}</dd></div>
+          <div class="info__cat">
+            <dt id="file-cat-label">Kategorie</dt>
+            <dd><app-select ariaLabelledby="file-cat-label" [options]="categoryOptions" [value]="f.category" (valueChange)="setCategory(f, $event)" /></dd>
+          </div>
+        </dl>
+        <p class="private"><app-icon name="shield" aria-hidden="true" />Nur für dich sichtbar</p>
+      </aside>
+    }
+  </div>
+}
+
+<app-modal [open]="confirmDelete()" labelledBy="file-delete-h" closeLabel="Abbrechen" (closed)="confirmDelete.set(false)">
+  <div class="confirm">
+    <h2 id="file-delete-h">Datei löschen?</h2>
+    <p class="muted">„{{ selected()?.name }}“ wird endgültig entfernt.</p>
+    <div class="confirm__actions">
+      <button type="button" class="btn-ghost" (click)="confirmDelete.set(false)">Behalten</button>
+      <button type="button" class="btn-danger" (click)="selected() && remove(selected()!)">Ja, löschen</button>
+    </div>
+  </div>
+</app-modal>

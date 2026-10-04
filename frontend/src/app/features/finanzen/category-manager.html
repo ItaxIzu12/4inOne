@@ -1,0 +1,73 @@
+<app-modal-form
+  icon="tag"
+  title="Kategorien verwalten"
+  [open]="open()"
+  [saving]="saving()"
+  [error]="error()"
+  closeLabel="Kategorien verwalten schließen"
+  (submitted)="save()"
+  (closed)="closed.emit()"
+>
+  <p class="intro">Benenne Kategorien um, setze ein Monatslimit oder lege eigene an. Leeres Limit = kein Limit.</p>
+  <div class="head" aria-hidden="true"><span>Kategorie</span><span>Limit pro Monat</span></div>
+  <ul class="cats">
+    @for (row of rows(); track row.key) {
+      @let label = row.original || 'Neue Kategorie';
+      <li class="cat" [class.is-removed]="row.remove">
+        @if (row.remove) {
+          <span class="dot" [style.background]="row.color" aria-hidden="true"></span>
+          <p class="removed">
+            <b>{{ row.original }}</b>
+            <small>
+              Wird beim Speichern gelöscht.
+              @if (movedCount(row); as moved) {
+                {{ moved === 1 ? '1 Buchung wandert' : moved + ' Buchungen wandern' }} zu „{{ fallback }}“.
+              }
+            </small>
+          </p>
+          <button type="button" class="undo" (click)="patch(row.key, { remove: false })">Rückgängig</button>
+        } @else {
+          <span class="dot" [style.background]="row.color" aria-hidden="true"></span>
+          <span class="name">
+            <label class="sr-only" [for]="'cat-name-' + row.key">Name {{ label }}</label>
+            <input
+              [id]="'cat-name-' + row.key"
+              [value]="row.name"
+              [attr.maxlength]="maxName"
+              [readOnly]="isFallback(row)"
+              [attr.aria-describedby]="isFallback(row) ? 'cat-fallback-hint' : null"
+              placeholder="z. B. Haustier"
+              autocomplete="off"
+              (input)="patch(row.key, { name: $any($event.target).value })"
+            />
+            @if (isFallback(row)) {
+              <small id="cat-fallback-hint">Sammelt alles ohne eigene Kategorie</small>
+            }
+          </span>
+          <span class="limit">
+            <label class="sr-only" [for]="'limit-' + row.key">Limit {{ label }} in EUR</label>
+            <input
+              [id]="'limit-' + row.key"
+              inputmode="decimal"
+              placeholder="kein Limit"
+              autocomplete="off"
+              [value]="row.limit"
+              (input)="patch(row.key, { limit: $any($event.target).value })"
+            />
+            <span class="unit" aria-hidden="true">€</span>
+          </span>
+          @if (isFallback(row)) {
+            <span class="drop-space" aria-hidden="true"></span>
+          } @else {
+            <button type="button" class="drop" [attr.aria-label]="label + ' löschen'" (click)="drop(row)">
+              <app-icon name="trash" />
+            </button>
+          }
+        }
+      </li>
+    } @empty {
+      <li class="empty">Noch keine Kategorien. Lege deine erste an.</li>
+    }
+  </ul>
+  <button type="button" class="add" (click)="add()"><app-icon name="plus" />Eigene Kategorie hinzufügen</button>
+</app-modal-form>

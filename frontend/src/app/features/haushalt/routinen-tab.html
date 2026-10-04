@@ -1,0 +1,208 @@
+@if (loadError()) {
+  <div class="load-error">
+    <p [appErrorNotice]="'Die Routinen konnten nicht geladen werden.'">Die Routinen konnten nicht geladen werden.</p>
+    <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
+  </div>
+} @else if (tasks()) {
+  <!-- Kennzahlen -->
+  <div class="stats">
+    <button type="button" class="stat" (click)="setChip('alle')">
+      <span class="stat__icon" aria-hidden="true"><app-icon name="repeat" /></span>
+      <span class="stat__body">
+        <span class="stat__value">{{ active().length }}</span>
+        <span class="stat__label">{{ active().length === 1 ? 'aktive Routine' : 'aktive Routinen' }}</span>
+        <span class="stat__hint">{{ pausedCount() ? pausedCount() + ' pausiert' : 'keine pausiert' }}</span>
+      </span>
+      <app-icon class="stat__chevron" name="arrow" />
+    </button>
+    <button type="button" class="stat" (click)="setChip('heute')">
+      <span class="stat__icon" aria-hidden="true"><app-icon name="calendar" /></span>
+      <span class="stat__body">
+        <span class="stat__value">{{ dueToday().length }}</span>
+        <span class="stat__label">heute fällig</span>
+        <span class="stat__hint">von {{ active().length }} Routinen</span>
+      </span>
+      <app-icon class="stat__chevron" name="arrow" />
+    </button>
+    <div class="stat stat--green stat--static">
+      <span class="stat__icon" aria-hidden="true"><app-icon name="check-circle" /></span>
+      <span class="stat__body">
+        <span class="stat__value">{{ stats()?.completion_rate === null || stats()?.completion_rate === undefined ? '–' : stats()!.completion_rate + ' %' }}</span>
+        <span class="stat__label">Erledigungsrate</span>
+        <span class="stat__hint">der letzten 4 Wochen</span>
+      </span>
+    </div>
+    <button type="button" class="stat" (click)="setChip('geteilt')">
+      <span class="stat__icon" aria-hidden="true"><app-icon name="people" /></span>
+      <span class="stat__body">
+        <span class="stat__value">{{ shared().length }}</span>
+        <span class="stat__label">{{ shared().length === 1 ? 'geteilte Routine' : 'geteilte Routinen' }}</span>
+        <span class="stat__hint">{{ sharedPeople() === 1 ? 'auf 1 Person' : 'auf ' + sharedPeople() + ' Personen' }} verteilt</span>
+      </span>
+      <app-icon class="stat__chevron" name="arrow" />
+    </button>
+  </div>
+
+  <!-- Handy: Überschrift mit rundem Plus wie im Entwurf -->
+  <div class="list-head">
+    <h2>Meine Routinen</h2>
+    <button type="button" class="round-add" aria-label="Routine hinzufügen" (click)="openNew()">
+      <app-icon name="plus" />
+    </button>
+  </div>
+
+  <!-- Filter und Sortierung -->
+  <div class="toolbar">
+    <div class="chips" role="group" aria-label="Routinen filtern">
+      @for (c of chips; track c.key) {
+        <button type="button" class="chip" [class.is-active]="chip() === c.key" [attr.aria-pressed]="chip() === c.key" (click)="setChip(c.key)">
+          {{ c.label }} ({{ chipCount(c.key) }})
+        </button>
+      }
+      @if (chip() === 'heute' || chip() === 'geteilt') {
+        <button type="button" class="chip is-active" aria-pressed="true" (click)="setChip('alle')">
+          {{ chip() === 'heute' ? 'Heute fällig' : 'Geteilt' }} ({{ chipCount(chip()) }})
+          <app-icon name="close" aria-hidden="true" />
+          <span class="sr-only">Filter entfernen</span>
+        </button>
+      }
+    </div>
+    <div class="sort">
+      <span id="routine-sort">Sortieren nach</span>
+      <app-select ariaLabelledby="routine-sort" [options]="sortOptions" [value]="sort()" (valueChange)="sort.set($any($event))" />
+    </div>
+  </div>
+
+  @if (actionError()) {
+    <p class="field-error" [appErrorNotice]="actionError()">{{ actionError() }}</p>
+  }
+
+  @for (group of groups(); track group.key) {
+    @let open = !collapsed().has(group.key);
+    <section class="group" [attr.aria-labelledby]="'rg-' + group.key">
+      <header class="group__head">
+        <button
+          type="button"
+          class="group__toggle"
+          [attr.aria-expanded]="open"
+          [attr.aria-controls]="'rg-list-' + group.key"
+          (click)="toggleGroup(group.key)"
+        >
+          <app-icon class="group__icon" [name]="group.icon" aria-hidden="true" />
+          <h3 [id]="'rg-' + group.key">
+            <span class="group__long">{{ group.label }}</span><span class="group__short">{{ group.short }}</span>
+            <span class="group__count">({{ group.tasks.length }})</span>
+          </h3>
+          <app-icon class="group__chevron" [name]="open ? 'chevron-up' : 'chevron-down'" aria-hidden="true" />
+        </button>
+        <span class="col col--rhythm" aria-hidden="true">Rhythmus</span>
+        <span class="col col--due" aria-hidden="true">Nächste Fälligkeit</span>
+        <span class="col col--who" aria-hidden="true">Verantwortlich</span>
+        <span class="col col--streak" aria-hidden="true">Serie</span>
+        <span class="col col--status" aria-hidden="true">Status</span>
+      </header>
+
+      @if (open) {
+        <ul class="rows" [id]="'rg-list-' + group.key">
+          @for (task of group.tasks; track task.id) {
+            @let due = nextDue(task);
+            @let r = rhythm(task);
+            @let streak = streakLabel(task);
+            <li class="row" [class.row--paused]="task.is_paused">
+              <span class="row__icon" aria-hidden="true"><app-icon [name]="routineIconFor(task)" /></span>
+              <div class="row__title">
+                <span class="title-text">{{ task.title }}</span>
+                <small class="row__desc">{{ task.description || room(task.room)?.label || '' }}</small>
+                <small class="row__meta">{{ mobileMeta(task) }}</small>
+              </div>
+              <div class="row__rhythm">
+                <span>{{ r.main }}</span>
+                @if (r.sub) {
+                  <small>{{ r.sub }}</small>
+                }
+              </div>
+              <div class="row__due">
+                @if (due.badge) {
+                  <span class="badge" [class]="'badge badge--' + due.tone">{{ due.badge }}</span>
+                } @else {
+                  <span class="due-main" [class.is-paused]="due.tone === 'paused'">{{ due.main }}</span>
+                }
+                <small>{{ due.sub }}</small>
+              </div>
+              <div class="row__who">
+                @if (task.assigned_to_name) {
+                  <span [class]="'avatar avatar--' + avatarTone(task.assigned_to_name)" aria-hidden="true">{{ initials(task.assigned_to_name) }}</span>
+                } @else {
+                  <span class="avatar avatar--all" aria-hidden="true"><app-icon name="people" /></span>
+                }
+                <span class="who-name">{{ whoLabel(task) }}</span>
+              </div>
+              <div class="row__streak">
+                @if (streak) {
+                  <app-icon name="flame" aria-hidden="true" /><span>{{ streak }}</span>
+                } @else {
+                  <span class="muted-dash" aria-label="keine Serie">–</span>
+                }
+              </div>
+              <div class="row__status">
+                <button
+                  type="button"
+                  role="switch"
+                  class="switch"
+                  [attr.aria-checked]="!task.is_paused"
+                  [attr.aria-label]="task.title + ' aktiv'"
+                  [disabled]="busy() === task.id"
+                  (click)="togglePaused(task)"
+                >
+                  <span class="switch__knob"></span>
+                </button>
+              </div>
+              <app-row-menu class="row__menu" [items]="menus().get(task.id) ?? []" [label]="'Aktionen für ' + task.title" (selected)="onMenu(task, $event)" />
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  } @empty {
+    <div class="group empty">
+      @if (chip() !== 'alle') {
+        <p class="muted">
+          Keine Routinen in diesem Filter.
+          <button type="button" class="btn-link" (click)="setChip('alle')">Alle anzeigen</button>
+        </p>
+      } @else {
+        <p class="muted">
+          Noch keine Routinen. Lege täglich, wöchentlich oder monatlich wiederkehrende Aufgaben an – z. B. Müll
+          rausbringen, Wäsche waschen oder Pflanzen gießen.
+        </p>
+        <button type="button" class="btn-primary" (click)="openNew()"><app-icon name="plus" />Routine hinzufügen</button>
+      }
+    </div>
+  }
+
+  <section class="card load" aria-labelledby="load-heading">
+    <div class="load__head">
+      <h2 id="load-heading"><app-icon name="people" aria-hidden="true" />Wer macht wie viel?</h2>
+      <p class="muted small">Erledigte Aufgaben diesen Monat, gewichtet nach Aufwand (klein 1 · mittel 2 · groß 3 Punkte).</p>
+    </div>
+    <ul class="load-list">
+      @for (member of members(); track member.user_id) {
+        <li>
+          <span [class]="'avatar avatar--' + avatarTone(member.name)" aria-hidden="true">{{ initials(member.name) }}</span>
+          <span class="load__name">{{ member.name }}</span>
+          <span class="load-track" role="img" [attr.aria-label]="member.name + ': ' + member.points + ' Punkte'">
+            <span [style.width.%]="(member.points / maxPoints()) * 100"></span>
+          </span>
+          <span class="load__points">{{ member.points }} {{ member.points === 1 ? 'Punkt' : 'Punkte' }} <small>· {{ member.count }} erledigt</small></span>
+        </li>
+      }
+    </ul>
+    @if (totalPoints() === 0) {
+      <p class="muted small">Noch nichts erledigt in diesem Monat.</p>
+    }
+  </section>
+} @else {
+  <p class="muted" aria-live="polite">Routinen werden geladen …</p>
+}
+
+<app-task-form #taskForm kind="routine" [members]="members()" (changed)="onFormChanged($event)" />

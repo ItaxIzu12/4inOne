@@ -6,9 +6,10 @@
         <span class="page-head__icon domain-icon" aria-hidden="true"><app-icon name="household" /></span>
         <div class="page-head__text">
           <h1>Haushalt</h1>
+          <p class="page-subtitle">Ein Zuhause zum Wohlfühlen. Aufgaben, Verträge, Einkäufe und Routinen an einem Ort.</p>
         </div>
-        <button type="button" class="btn-primary page-head__action" aria-label="Neue Aufgabe" (click)="newTask()">
-          <app-icon name="plus" /> <span>Neue Aufgabe</span>
+        <button type="button" class="btn-primary page-head__action" [attr.aria-label]="headAction()" (click)="headActionClick()">
+          <app-icon name="plus" /> <span>{{ headAction() }}</span>
         </button>
       </header>
 
@@ -25,7 +26,7 @@
             [class.is-active]="activeTab() === tab.key"
             (click)="selectTab(tab.key)"
           >
-            {{ tab.label }}
+            <app-icon [name]="tab.icon" aria-hidden="true" />{{ tab.label }}
           </button>
         }
       </div>
@@ -38,16 +39,16 @@
             <app-uebersicht-tab (saved)="showSaved($event)" (openTab)="selectTab($event)" />
           }
           @case ('routinen') {
-            <app-aufgaben-tab mode="routinen" [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />
+            <app-routinen-tab [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />
           }
           @case ('einkauf') {
-            <app-einkauf-tab (saved)="showSaved($event)" />
+            <app-einkauf-tab [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />
           }
           @case ('aufgaben') {
             <app-aufgaben-tab [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />
           }
           @case ('ordner') {
-            <app-ordner-tab (saved)="showSaved($event)" />
+            <app-ordner-tab [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />
           }
         }
       </div>

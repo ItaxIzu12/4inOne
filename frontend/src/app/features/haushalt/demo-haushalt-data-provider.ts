@@ -14,9 +14,14 @@ import {
   SectionKey,
   ShoppingItemDto,
   ShoppingItemPatch,
+  ShoppingListDto,
+  ShoppingListInput,
+  ShoppingMemberDto,
   ShoppingOverviewDto,
+  RoutineStatsDto,
   TaskDto,
   TaskInput,
+  TaskWeekStatsDto,
   TaskStatus,
 } from './haushalt-api.service';
 import { HaushaltDataProvider } from './haushalt-data-provider';
@@ -31,22 +36,44 @@ import { SECTIONS, addDaysIso, addMonthsIso, guessSectionDemo, todayIso } from '
 // dadurch sofort auf, statt stillschweigend echte Daten zu schreiben.
 
 const ANNA: MemberLoadDto = { user_id: 'demo-member-anna', name: 'Anna', points: 0, count: 0 };
+const BEN: MemberLoadDto = { user_id: 'demo-member-ben', name: 'Ben', points: 0, count: 0 };
+const MEMBERS = [ANNA, BEN];
+const memberName = (id: Id | null) => MEMBERS.find((m) => m.user_id === id)?.name ?? null;
+const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString();
 const DEMO_DEFAULT_PRICE = 3.5;
 // „Lebensmittel“ in demo-private-finance-api.ts CATEGORIES.
 const DEMO_GROCERIES_CATEGORY = 2;
 
-function item(id: string, name: string, section: SectionKey, quantity = ''): ShoppingItemDto {
+const DEFAULT_LIST = 'demo-list-1';
+
+function item(
+  id: string,
+  name: string,
+  section: SectionKey,
+  quantity = '',
+  extra: Partial<ShoppingItemDto> = {},
+): ShoppingItemDto {
+  const checked = extra.is_checked ?? false;
   return {
     id,
+    shopping_list: DEFAULT_LIST,
     name,
     quantity,
     section,
-    is_checked: false,
-    checked_at: null,
-    checked_by_name: null,
+    is_checked: checked,
+    checked_at: checked ? hoursAgo(1) : null,
+    checked_by_name: checked ? 'Anna' : null,
     added_by_name: 'Anna',
-    created_at: new Date().toISOString(),
+    created_at: hoursAgo(30),
+    ...extra,
   };
+}
+
+/** Kurzform für die weiteren Demo-Listen. */
+function listItems(list: string, rows: [string, SectionKey, string, boolean?][]): ShoppingItemDto[] {
+  return rows.map(([name, section, quantity, checked], index) =>
+    item(`${list}-item-${index + 1}`, name, section, quantity, { shopping_list: list, is_checked: !!checked }),
+  );
 }
 
 function task(partial: Partial<TaskDto> & Pick<TaskDto, 'id' | 'title'>): TaskDto {
@@ -61,8 +88,13 @@ function task(partial: Partial<TaskDto> & Pick<TaskDto, 'id' | 'title'>): TaskDt
     recurrence_days: null,
     recurrence_months: null,
     effort: 1,
+    room: '',
+    duration_minutes: null,
+    priority: 'mittel',
     rotate: false,
     rotation_member_ids: [],
+    is_paused: false,
+    streak: null,
     is_done: false,
     is_overdue: false,
     last_done_at: null,
@@ -71,18 +103,106 @@ function task(partial: Partial<TaskDto> & Pick<TaskDto, 'id' | 'title'>): TaskDt
   };
 }
 
+function contract(
+  id: string,
+  name: string,
+  provider: string,
+  monthly: string,
+  end: string | null,
+  notice: number | null,
+  notes = '',
+): FolderEntryInput & { id: Id } {
+  return {
+    id,
+    kind: 'vertrag',
+    name,
+    provider,
+    notes,
+    monthly_cost: monthly,
+    contract_end: end,
+    notice_period_months: notice,
+    purchase_date: null,
+    warranty_until: null,
+    maintenance_interval_months: null,
+    next_maintenance: null,
+    last_maintenance: null,
+    model: '',
+    room: '',
+  };
+}
+
+function device(
+  id: string,
+  name: string,
+  provider: string,
+  model: string,
+  room: FolderEntryInput['room'],
+  extra: Partial<FolderEntryInput>,
+): FolderEntryInput & { id: Id } {
+  return {
+    id,
+    kind: 'geraet',
+    name,
+    provider,
+    notes: '',
+    monthly_cost: null,
+    contract_end: null,
+    notice_period_months: null,
+    purchase_date: null,
+    warranty_until: null,
+    maintenance_interval_months: null,
+    next_maintenance: null,
+    last_maintenance: null,
+    model,
+    room,
+    ...extra,
+  };
+}
+
 @Injectable()
 export class DemoHaushaltDataProvider implements HaushaltDataProvider {
   private readonly finanzen = inject(PrivateFinanceApi);
 
   private nextId = 1;
+  private lists: Omit<ShoppingListDto, 'item_count' | 'checked_count'>[] = [
+    { id: DEFAULT_LIST, name: 'Wocheneinkauf', description: 'Unser regelmäßiger Wocheneinkauf für den Haushalt.', icon: 'wagen', created_at: '2024-04-12T10:00:00Z', updated_at: hoursAgo(2), created_by_name: 'Anna' },
+    { id: 'demo-list-2', name: 'Drogerie', description: 'Pflege und Bad.', icon: 'drogerie', created_at: '2024-05-02T10:00:00Z', updated_at: hoursAgo(26), created_by_name: 'Anna' },
+    { id: 'demo-list-3', name: 'Baumarkt', description: 'Für das Kinderzimmer.', icon: 'baumarkt', created_at: '2024-06-20T10:00:00Z', updated_at: hoursAgo(72), created_by_name: 'Ben' },
+    { id: 'demo-list-4', name: 'Getränke', description: '', icon: 'getraenke', created_at: '2024-07-01T10:00:00Z', updated_at: hoursAgo(5), created_by_name: 'Ben' },
+    { id: 'demo-list-5', name: 'Party / Gäste', description: 'Grillabend am Samstag.', icon: 'party', created_at: '2024-08-15T10:00:00Z', updated_at: hoursAgo(48), created_by_name: 'Anna' },
+  ];
   private items: ShoppingItemDto[] = [
-    item('demo-item-1', 'Bananen', 'obst_gemuese'),
-    item('demo-item-2', 'Vollkornbrot', 'backwaren'),
+    item('demo-item-1', 'Bananen', 'obst_gemuese', '1 kg'),
+    item('demo-item-2', 'Vollkornbrot', 'backwaren', '1 Stück'),
     item('demo-item-3', 'Milch', 'kuehlregal', '2 l'),
-    item('demo-item-4', 'Joghurt', 'kuehlregal'),
-    item('demo-item-5', 'Nudeln', 'vorrat'),
+    item('demo-item-4', 'Joghurt', 'kuehlregal', '4 Becher'),
+    item('demo-item-5', 'Nudeln', 'vorrat', '500 g'),
     item('demo-item-6', 'Spülmittel', 'haushalt'),
+    item('demo-item-7', 'Äpfel', 'obst_gemuese', '1 kg', { is_checked: true, added_by_name: 'Ben', created_at: hoursAgo(20) }),
+    item('demo-item-8', 'Tomaten', 'obst_gemuese', '500 g', { is_checked: true, created_at: hoursAgo(2) }),
+    item('demo-item-9', 'Paprika (rot)', 'obst_gemuese', '3 Stück', { added_by_name: 'Ben', created_at: hoursAgo(5) }),
+    item('demo-item-10', 'Käse (Gouda)', 'kuehlregal', '250 g'),
+    item('demo-item-11', 'Brötchen', 'backwaren', '6 Stück', { created_at: hoursAgo(24) }),
+    ...listItems('demo-list-2', [
+      ['Zahnpasta', 'drogerie', '2 Stück', true], ['Duschgel', 'drogerie', '1 Stück', true], ['Shampoo', 'drogerie', '1 Stück', true],
+      ['Deo', 'drogerie', '1 Stück'], ['Wattepads', 'drogerie', '1 Packung'], ['Taschentücher', 'drogerie', '1 Packung'],
+      ['Handseife', 'drogerie', '1 Stück'], ['Sonnencreme', 'drogerie', '1 Stück'], ['Pflaster', 'drogerie', '1 Packung'],
+    ]),
+    ...listItems('demo-list-3', [
+      ['Schrauben 4×40', 'sonstiges', '1 Packung', true], ['Dübel 6 mm', 'sonstiges', '20 Stück'], ['Wandfarbe weiß', 'sonstiges', '10 l'],
+      ['Abdeckfolie', 'sonstiges', '1 Rolle'], ['Malerkrepp', 'sonstiges', '2 Rollen'], ['Pinselset', 'sonstiges', '1 Stück'],
+      ['Glühbirne E27', 'haushalt', '2 Stück'],
+    ]),
+    ...listItems('demo-list-4', [
+      ['Mineralwasser', 'getraenke', '2 Kisten', true], ['Apfelschorle', 'getraenke', '1 Kiste', true], ['Orangensaft', 'getraenke', '2 l', true],
+      ['Hafermilch', 'getraenke', '2 l', true], ['Eistee', 'getraenke', '1,5 l', true], ['Kaffee', 'vorrat', '500 g', true],
+    ]),
+    ...listItems('demo-list-5', [
+      ['Grillwürstchen', 'fleisch_fisch', '12 Stück'], ['Grillkäse', 'kuehlregal', '4 Stück'], ['Baguette', 'backwaren', '2 Stück'],
+      ['Kartoffelsalat', 'kuehlregal', '1 kg'], ['Chips', 'vorrat', '3 Tüten'], ['Salzstangen', 'vorrat', '2 Tüten'],
+      ['Ketchup', 'vorrat', '1 Flasche'], ['Limonade', 'getraenke', '6 Flaschen'], ['Eiswürfel', 'tiefkuehl', '2 Beutel'],
+      ['Servietten', 'haushalt', '1 Packung'], ['Pappteller', 'haushalt', '30 Stück'], ['Becher', 'haushalt', '30 Stück'],
+    ]),
   ];
   private memory: ItemSuggestionDto[] = [
     { id: 'demo-mem-1', name: 'Eier', section: 'kuehlregal', use_count: 9 },
@@ -98,14 +218,23 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
   private trips: { amount: number; count: number }[] = [];
 
   private tasks: TaskDto[] = [
-    task({ id: 'demo-task-1', title: 'Pflanzen gießen', recurrence: 'daily', recurrence_days: 1, due_date: addDaysIso(-1), is_overdue: true }),
-    task({ id: 'demo-task-2', title: 'Bad putzen', recurrence: 'weekly', recurrence_days: 7, effort: 3, due_date: todayIso() }),
-    task({ id: 'demo-task-3', title: 'Müll rausbringen', recurrence: 'weekly', recurrence_days: 7, due_date: addDaysIso(1) }),
+    task({ id: 'demo-task-1', title: 'Pflanzen gießen', description: 'Zimmerpflanzen und Balkon', recurrence: 'daily', recurrence_days: 1, due_date: addDaysIso(-1), is_overdue: true, room: 'wohnzimmer', duration_minutes: 10, priority: 'niedrig', streak: 0 }),
+    task({ id: 'demo-task-2', title: 'Bad putzen', description: 'Waschbecken, Dusche, WC', recurrence: 'weekly', recurrence_days: 7, effort: 3, due_date: todayIso(), room: 'bad', duration_minutes: 20, streak: 4 }),
+    task({ id: 'demo-task-3', title: 'Müll rausbringen', description: 'Restmüll und Papier', recurrence: 'weekly', recurrence_days: 7, due_date: addDaysIso(1), room: 'aussen', duration_minutes: 5, priority: 'hoch', streak: 8 }),
     // Heute statt weit in der Zukunft: sonst wäre die einzige einmalige Demo-Aufgabe erst in 9 Tagen abhakbar
     // (siehe aufgaben-tab.ts notYetDue()) und ein Besuch der Demo könnte sie nie ausprobieren.
-    task({ id: 'demo-task-4', title: 'Winterreifen-Termin vereinbaren', effort: 2, due_date: todayIso() }),
+    task({ id: 'demo-task-4', title: 'Winterreifen-Termin vereinbaren', effort: 2, due_date: todayIso(), duration_minutes: 15, priority: 'hoch' }),
+    task({ id: 'demo-task-5', title: 'Kühlschrank reinigen', effort: 2, due_date: addDaysIso(3), room: 'kueche', duration_minutes: 20, priority: 'niedrig' }),
+    task({ id: 'demo-task-6', title: 'Bettwäsche wechseln', description: 'Alle Betten', recurrence: 'weekly', recurrence_days: 7, due_date: addDaysIso(4), room: 'schlafzimmer', duration_minutes: 15, assigned_to: null, assigned_to_name: null, streak: 3 }),
+    // Weitere Routinen — erst ab morgen fällig, damit „Heute“ ruhig bleibt.
+    task({ id: 'demo-task-7', title: 'Küche sauber halten', description: 'Arbeitsflächen, Spüle, Herd', recurrence: 'daily', recurrence_days: 1, due_date: addDaysIso(1), due_time: '20:00:00', room: 'kueche', duration_minutes: 15, streak: 12, last_done_at: hoursAgo(3), last_done_by_name: 'Anna' }),
+    task({ id: 'demo-task-8', title: 'Wäsche waschen', description: 'Bei Bedarf, mind. 1× täglich', recurrence: 'daily', recurrence_days: 1, due_date: addDaysIso(1), due_time: '22:00:00', room: 'waschkueche', duration_minutes: 10, assigned_to: BEN.user_id, assigned_to_name: BEN.name, streak: 5, last_done_at: hoursAgo(2), last_done_by_name: 'Ben' }),
+    task({ id: 'demo-task-9', title: 'Staubsaugen', description: 'Alle Wohnräume', recurrence: 'weekly', recurrence_days: 7, effort: 2, due_date: addDaysIso(2), room: 'alle', duration_minutes: 30, assigned_to: BEN.user_id, assigned_to_name: BEN.name, streak: 6 }),
+    task({ id: 'demo-task-10', title: 'Rauchmelder prüfen', description: 'Testknopf drücken', recurrence: 'monthly', recurrence_months: 1, due_date: addDaysIso(25), room: 'flur', duration_minutes: 5, assigned_to: BEN.user_id, assigned_to_name: BEN.name, streak: 3 }),
+    task({ id: 'demo-task-11', title: 'Fenster putzen', description: 'Innen und außen', recurrence: 'monthly', recurrence_months: 1, due_date: addDaysIso(12), room: 'alle', duration_minutes: 60, effort: 3, is_paused: true, streak: 0 }),
+    task({ id: 'demo-task-12', title: 'Rasen mähen', description: 'Garten vorne und hinten', recurrence: 'weekly', recurrence_days: 7, due_date: addDaysIso(5), room: 'aussen', duration_minutes: 45, effort: 2, assigned_to: BEN.user_id, assigned_to_name: BEN.name, is_paused: true, streak: 0 }),
   ];
-  private load: MemberLoadDto = { ...ANNA, points: 5, count: 3 };
+  private load: MemberLoadDto[] = [{ ...ANNA, points: 5, count: 3 }, { ...BEN, points: 4, count: 3 }];
 
   // Gespeichert werden nur die Eingaben; Kündigungsdatum und Fristen
   // berechnet folderEntry() bei jedem Lesen, genau wie im Backend.
@@ -123,35 +252,59 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
       warranty_until: null,
       maintenance_interval_months: null,
       next_maintenance: null,
+      last_maintenance: null,
+      model: '',
+      room: '',
     },
-    {
-      id: 'demo-folder-2',
-      kind: 'geraet',
-      name: 'Heizung',
-      provider: 'Gastherme',
+    contract('demo-folder-9', 'Strom', 'Stadtwerke Beispielstadt', '84.00', addMonthsIso(todayIso(), 2), 1, 'Kundennummer 4711-0815'),
+    contract('demo-folder-10', 'Internet & Telefon', 'Beispiel-Telekom', '39.99', addMonthsIso(todayIso(), 9), 3),
+    contract('demo-folder-11', 'Handyvertrag Anna', 'Beispiel-Mobil', '17.99', addMonthsIso(todayIso(), 14), 1),
+    contract('demo-folder-12', 'Streaming', 'Beispiel-Stream', '13.99', null, null),
+    contract('demo-folder-13', 'Haftpflichtversicherung', 'Beispiel-Versicherung', '6.50', addMonthsIso(todayIso(), 7), 3),
+    device('demo-folder-2', 'Heizung', 'Vaillant', 'ecoTEC plus', 'flur', {
       notes: 'Wartungsfirma: Beispiel GmbH',
-      monthly_cost: null,
-      contract_end: null,
-      notice_period_months: null,
-      purchase_date: null,
-      warranty_until: null,
+      purchase_date: addMonthsIso(todayIso(), -50),
       maintenance_interval_months: 12,
       next_maintenance: addDaysIso(21),
-    },
-    {
-      id: 'demo-folder-3',
-      kind: 'geraet',
-      name: 'Waschmaschine',
-      provider: '',
-      notes: '',
-      monthly_cost: null,
-      contract_end: null,
-      notice_period_months: null,
+      last_maintenance: addDaysIso(21 - 365),
+    }),
+    device('demo-folder-3', 'Waschmaschine', 'Bosch', 'Serie 6 (WGG244Z0CH)', 'bad', {
       purchase_date: addMonthsIso(todayIso(), -14),
       warranty_until: addMonthsIso(todayIso(), 10),
-      maintenance_interval_months: null,
-      next_maintenance: null,
-    },
+      maintenance_interval_months: 12,
+      next_maintenance: addMonthsIso(todayIso(), 5),
+      last_maintenance: addMonthsIso(todayIso(), -7),
+    }),
+    device('demo-folder-4', 'Kühlschrank', 'Samsung', 'RB7300', 'kueche', {
+      purchase_date: addMonthsIso(todayIso(), -8),
+      warranty_until: addMonthsIso(todayIso(), 16),
+      maintenance_interval_months: 12,
+      next_maintenance: addMonthsIso(todayIso(), 6),
+    }),
+    device('demo-folder-5', 'Geschirrspüler', 'Siemens', 'iQ300', 'kueche', {
+      purchase_date: addMonthsIso(todayIso(), -30),
+      maintenance_interval_months: 6,
+      next_maintenance: addDaysIso(12),
+      last_maintenance: addDaysIso(12 - 182),
+    }),
+    device('demo-folder-6', 'Staubsauger', 'Dyson', 'V15 Detect', 'flur', {
+      purchase_date: addMonthsIso(todayIso(), -11),
+      warranty_until: addMonthsIso(todayIso(), 13),
+      maintenance_interval_months: 6,
+      next_maintenance: addMonthsIso(todayIso(), 4),
+      last_maintenance: addMonthsIso(todayIso(), -2),
+    }),
+    device('demo-folder-7', 'Backofen', 'AEG', 'Serie 6000', 'kueche', {
+      purchase_date: addMonthsIso(todayIso(), -10),
+      warranty_until: addMonthsIso(todayIso(), 14),
+    }),
+    device('demo-folder-8', 'Kaffeemaschine', "De'Longhi", 'Magnifica S', 'kueche', {
+      purchase_date: addMonthsIso(todayIso(), -22),
+      warranty_until: addDaysIso(55),
+      maintenance_interval_months: 3,
+      next_maintenance: addDaysIso(48),
+      last_maintenance: addDaysIso(48 - 91),
+    }),
   ];
 
   constructor() {
@@ -162,13 +315,55 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
 
   // ---------- Einkauf ----------
 
-  getShopping(): Observable<ShoppingOverviewDto> {
-    const open = new Set(this.items.filter((i) => !i.is_checked).map((i) => i.name.toLowerCase()));
+  private listDto(list: (typeof this.lists)[number]): ShoppingListDto {
+    const items = this.items.filter((i) => i.shopping_list === list.id);
+    return { ...list, item_count: items.length, checked_count: items.filter((i) => i.is_checked).length };
+  }
+
+  private touch(listId: Id): void {
+    const list = this.lists.find((l) => l.id === listId);
+    if (list) list.updated_at = new Date().toISOString();
+  }
+
+  getShoppingLists(): Observable<ShoppingListDto[]> {
+    return of(this.lists.map((l) => this.listDto(l)));
+  }
+
+  createShoppingList(input: ShoppingListInput): Observable<ShoppingListDto> {
+    const now = new Date().toISOString();
+    const created = { ...input, name: input.name.trim(), id: `demo-list-new-${this.nextId++}`, created_at: now, updated_at: now, created_by_name: 'Anna' };
+    this.lists.push(created);
+    return of(this.listDto(created));
+  }
+
+  updateShoppingList(id: Id, input: Partial<ShoppingListInput>): Observable<ShoppingListDto> {
+    const found = this.lists.find((l) => l.id === id);
+    if (!found) return throwError(() => new Error('Demo-Liste nicht gefunden.'));
+    Object.assign(found, input, { updated_at: new Date().toISOString() });
+    return of(this.listDto(found));
+  }
+
+  deleteShoppingList(id: Id): Observable<void> {
+    if (this.lists.length <= 1) return throwError(() => new Error('Die letzte Einkaufsliste kann nicht gelöscht werden.'));
+    this.lists = this.lists.filter((l) => l.id !== id);
+    this.items = this.items.filter((i) => i.shopping_list !== id);
+    return of(undefined);
+  }
+
+  getShopping(listId: Id | null = null): Observable<ShoppingOverviewDto> {
+    const list = listId === null ? this.lists[0] : this.lists.find((l) => l.id === listId);
+    if (!list) return throwError(() => new Error('Demo-Liste nicht gefunden.'));
+    const items = this.items.filter((i) => i.shopping_list === list.id);
+    const open = new Set(items.filter((i) => !i.is_checked).map((i) => i.name.toLowerCase()));
     const booked = this.trips.slice(-10);
     const totalAmount = booked.reduce((sum, trip) => sum + trip.amount, 0);
     const totalCount = booked.reduce((sum, trip) => sum + trip.count, 0);
+    const owner = list.created_by_name ?? 'Anna';
+    const members: ShoppingMemberDto[] = MEMBERS.map((m) => ({ user_id: m.user_id, name: m.name, is_owner: m.name === owner }));
     return of({
-      items: this.items.map((i) => ({ ...i })),
+      list: this.listDto(list),
+      members,
+      items: items.map((i) => ({ ...i })),
       suggestions: [...this.memory]
         .sort((a, b) => b.use_count - a.use_count)
         .filter((m) => !open.has(m.name.toLowerCase()))
@@ -180,16 +375,23 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     });
   }
 
-  addItem(name: string, quantity: string, section: SectionKey | null): Observable<ShoppingItemDto> {
+  addItem(name: string, quantity: string, section: SectionKey | null, listId: Id | null = null): Observable<ShoppingItemDto> {
     const trimmed = name.trim();
-    const existing = this.items.find((i) => !i.is_checked && i.name.toLowerCase() === trimmed.toLowerCase());
+    const list = listId ?? this.lists[0].id;
+    this.touch(list);
+    const existing = this.items.find(
+      (i) => i.shopping_list === list && !i.is_checked && i.name.toLowerCase() === trimmed.toLowerCase(),
+    );
     if (existing) {
       if (quantity) existing.quantity = quantity;
       return of({ ...existing });
     }
     const known = this.memory.find((m) => m.name.toLowerCase() === trimmed.toLowerCase());
     const resolved = section ?? known?.section ?? guessSectionDemo(trimmed);
-    const created = item(`demo-item-new-${this.nextId++}`, trimmed, resolved, quantity);
+    const created = item(`demo-item-new-${this.nextId++}`, trimmed, resolved, quantity, {
+      shopping_list: list,
+      created_at: new Date().toISOString(),
+    });
     this.items.push(created);
     if (known) known.use_count += 1;
     else this.memory.push({ id: `demo-mem-new-${this.nextId++}`, name: trimmed, section: resolved, use_count: 1 });
@@ -200,6 +402,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     const found = this.items.find((i) => i.id === id);
     if (!found) return throwError(() => new Error('Demo-Eintrag nicht gefunden.'));
     Object.assign(found, patch);
+    this.touch(found.shopping_list);
     if (patch.is_checked !== undefined) {
       found.checked_at = patch.is_checked ? new Date().toISOString() : null;
       found.checked_by_name = patch.is_checked ? 'Anna' : null;
@@ -212,14 +415,18 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
   }
 
   deleteItem(id: Id): Observable<void> {
+    const found = this.items.find((i) => i.id === id);
+    if (found) this.touch(found.shopping_list);
     this.items = this.items.filter((i) => i.id !== id);
     return of(undefined);
   }
 
-  completeShopping(amount: number | null): Observable<CompleteShoppingResult> {
-    const checked = this.items.filter((i) => i.is_checked);
+  completeShopping(amount: number | null, listId: Id | null = null): Observable<CompleteShoppingResult> {
+    const list = listId ?? this.lists[0].id;
+    const checked = this.items.filter((i) => i.shopping_list === list && i.is_checked);
     if (checked.length === 0) return throwError(() => new Error('Es ist noch nichts abgehakt.'));
-    this.items = this.items.filter((i) => !i.is_checked);
+    this.items = this.items.filter((i) => !checked.includes(i));
+    this.touch(list);
     const result = (transactionId: Id | null): CompleteShoppingResult => ({
       item_count: checked.length,
       amount: amount === null ? null : amount.toFixed(2),
@@ -245,7 +452,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
 
   getOverview(): Observable<HaushaltOverviewDto> {
     const today = todayIso();
-    const open = this.tasks.filter((t) => !t.is_done);
+    const open = this.tasks.filter((t) => !t.is_done && !t.is_paused);
     const byDate = (a: TaskDto, b: TaskDto) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999');
     const devices = this.folder.filter((e) => e.kind === 'geraet');
     return of({
@@ -263,6 +470,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
         .map((t) => ({ ...t })),
       open_shopping_items: this.items.filter((i) => !i.is_checked).length,
       devices: devices.length,
+      ...this.contractOverview(),
       device_list: devices.slice(0, 5).map((e) => ({
         id: e.id,
         name: e.name,
@@ -271,6 +479,27 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
         warranty_until: e.warranty_until ?? null,
       })),
     });
+  }
+
+  /** Wie backend HaushaltOverviewView: Verträge mit nächster Kündigungsfrist zuerst. */
+  private contractOverview(): Pick<HaushaltOverviewDto, 'contracts' | 'contracts_monthly' | 'contract_list'> {
+    const contracts = this.folder.filter((e) => e.kind === 'vertrag').map((e) => this.folderEntry(e));
+    const monthly = contracts.reduce((sum, e) => sum + (e.monthly_cost ? Number(e.monthly_cost) : 0), 0);
+    const sorted = [...contracts].sort(
+      (a, b) => (a.cancel_by ?? '9999').localeCompare(b.cancel_by ?? '9999') || a.name.localeCompare(b.name, 'de'),
+    );
+    return {
+      contracts: contracts.length,
+      contracts_monthly: monthly.toFixed(2),
+      contract_list: sorted.slice(0, 5).map((e) => ({
+        id: e.id,
+        name: e.name,
+        provider: e.provider,
+        monthly_cost: e.monthly_cost,
+        cancel_by: e.cancel_by,
+        notice_period_months: e.notice_period_months,
+      })),
+    };
   }
 
   getTasks(status: TaskStatus = 'open'): Observable<TaskDto[]> {
@@ -284,7 +513,37 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
   }
 
   getTaskLoad(): Observable<MemberLoadDto[]> {
-    return of([{ ...this.load }]);
+    return of(this.load.map((m) => ({ ...m })));
+  }
+
+  getRoutineStats(): Observable<RoutineStatsDto> {
+    // Beispielwerte im Stil von backend haushalt/services.py routine_stats.
+    return of({ completion_rate: 92, done: 46, expected: 50 });
+  }
+
+  setTaskPaused(id: Id, paused: boolean): Observable<TaskDto> {
+    const found = this.tasks.find((t) => t.id === id);
+    if (!found) return throwError(() => new Error('Demo-Aufgabe nicht gefunden.'));
+    if (!found.recurrence_days && !found.recurrence_months) {
+      return throwError(() => new Error('Pausieren geht nur bei wiederkehrenden Aufgaben.'));
+    }
+    found.is_paused = paused;
+    // Wie im Backend: wer nach einer Pause fortsetzt, startet ab heute.
+    if (!paused && found.due_date && found.due_date < todayIso()) found.due_date = todayIso();
+    return of({ ...found, is_overdue: !!found.due_date && found.due_date < todayIso() });
+  }
+
+  // Beispielwerte wie im Backend (haushalt/services.py week_stats): Erledigungen dieser und der Vorwoche.
+  private doneThisWeek = 5;
+
+  getTaskWeek(): Observable<TaskWeekStatsDto> {
+    const open = this.tasks.filter((t) => !t.is_done && !t.is_paused);
+    return of({
+      done_this_week: this.doneThisWeek,
+      done_last_week: 3,
+      open_total: open.length,
+      assigned_to_me: open.filter((t) => t.assigned_to === ANNA.user_id).length,
+    });
   }
 
   private recurrenceFields(recurrence: TaskDto['recurrence']): Pick<TaskDto, 'recurrence' | 'recurrence_days' | 'recurrence_months'> {
@@ -302,7 +561,8 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
       ...this.recurrenceFields(input.recurrence),
       title: input.title.trim(),
       due_date: input.due_date ?? (input.recurrence ? todayIso() : null),
-      assigned_to_name: input.assigned_to ? ANNA.name : null,
+      assigned_to_name: memberName(input.assigned_to),
+      streak: input.recurrence ? 0 : null,
     });
     this.tasks.push(created);
     return of({ ...created });
@@ -312,7 +572,8 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     const found = this.tasks.find((t) => t.id === id);
     if (!found) return throwError(() => new Error('Demo-Aufgabe nicht gefunden.'));
     Object.assign(found, input, this.recurrenceFields(input.recurrence), {
-      assigned_to_name: input.assigned_to ? ANNA.name : null,
+      assigned_to_name: memberName(input.assigned_to),
+      streak: input.recurrence ? (found.streak ?? 0) : null,
     });
     return of({ ...found });
   }
@@ -325,7 +586,13 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
   completeTask(id: Id): Observable<TaskDto> {
     const found = this.tasks.find((t) => t.id === id);
     if (!found) return throwError(() => new Error('Demo-Aufgabe nicht gefunden.'));
-    this.load = { ...this.load, points: this.load.points + found.effort, count: this.load.count + 1 };
+    if (found.is_paused) return throwError(() => new Error('Diese Routine ist pausiert.'));
+    this.load = this.load.map((m) =>
+      m.user_id === ANNA.user_id ? { ...m, points: m.points + found.effort, count: m.count + 1 } : m,
+    );
+    this.doneThisWeek += 1;
+    // Demo: die Serie wächst, wenn der laufende Zeitraum noch nicht erledigt war.
+    if (found.streak !== null && !(found.last_done_at && found.last_done_at.slice(0, 10) === todayIso())) found.streak += 1;
     found.last_done_at = new Date().toISOString();
     found.last_done_by_name = ANNA.name;
     if (found.recurrence_days) found.due_date = addDaysIso(found.recurrence_days);
@@ -382,6 +649,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     found.next_maintenance = found.maintenance_interval_months
       ? addMonthsIso(todayIso(), found.maintenance_interval_months)
       : null;
+    found.last_maintenance = todayIso();
     return of(this.folderEntry(found));
   }
 
@@ -410,6 +678,9 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     return {
       ...input,
       name: input.name.trim(),
+      model: isContract ? '' : input.model,
+      room: isContract ? '' : input.room,
+      last_maintenance: isContract ? null : input.last_maintenance,
       monthly_cost: isContract ? input.monthly_cost : null,
       next_maintenance: isContract ? null : nextMaintenance,
       cancel_by: cancelBy,

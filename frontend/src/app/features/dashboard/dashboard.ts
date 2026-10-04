@@ -30,7 +30,7 @@ import {
   Injector,
   afterNextRender,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
 import { Modal } from '../../shared/modal/modal';
@@ -110,7 +110,8 @@ export class Dashboard {
   private router = inject(Router);
   private destroy = inject(DestroyRef);
   readonly demo = inject(DEMO_MODE);
-  readonly boardQuery = signal('');
+  // Suchbegriff, den die globale Kopfzeile von einer anderen Seite mitbringt (?q=).
+  readonly boardQuery = signal(inject(ActivatedRoute).snapshot.queryParamMap.get('q') ?? '');
   readonly live = computed(() => this.auth.isAuthenticated() && !this.demo);
   readonly organisationToday = signal<TodayData | null>(null);
   /** Nur bei echtem Konto: „Heute“ aus allen Bereichen (backend/connections/today.py). */
@@ -304,6 +305,7 @@ export class Dashboard {
   }
 
   constructor() {
+    inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(params => this.boardQuery.set((params.get('q') ?? '').slice(0, 200)));
     this.initializeOverview();
     // Ohne Anmeldung liefern dieselben Aufrufe die Demo-Daten der Routengruppe (siehe app.routes.ts) — die vier
     // Kacheln unten zeigen dadurch echte Zahlen aus den jeweiligen Demo-Reitern, statt erfundener Beispielwerte,

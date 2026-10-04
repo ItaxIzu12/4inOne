@@ -1,0 +1,177 @@
+// „Kategorien verwalten“: eine Zeile je Kategorie — Farbe, Name, Limit, Löschen.
+:host {
+  display: contents;
+}
+.intro {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.head,
+.cat {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) 128px 40px;
+  align-items: center;
+  gap: 10px;
+}
+.head {
+  padding: 0 2px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.head span:first-child {
+  grid-column: 2;
+}
+.cats {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.name,
+.limit {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.limit {
+  position: relative;
+}
+input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d9dee6;
+  border-radius: 11px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+}
+input:focus-visible {
+  border-color: var(--accent);
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 0;
+}
+input[readonly] {
+  border-color: transparent;
+  background: #f4f6f8;
+  font-weight: 600;
+}
+.limit input {
+  padding-right: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.unit {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: var(--text-muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+.name small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.drop,
+.undo,
+.add {
+  font: inherit;
+  cursor: pointer;
+}
+.drop {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: #6b7385;
+}
+.drop:hover {
+  background: #fdecef;
+  color: #b0203f;
+}
+.drop app-icon {
+  width: 19px;
+  height: 19px;
+}
+.is-removed {
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  padding: 8px 10px 8px 0;
+  border-radius: 12px;
+  background: #fdf3f5;
+}
+.is-removed .dot {
+  opacity: 0.45;
+  margin-left: 10px;
+}
+.removed {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 0 10px;
+}
+.removed b {
+  color: #575e6e;
+  text-decoration: line-through;
+}
+.removed small {
+  color: #8f2a3d;
+  font-size: 13px;
+}
+.undo {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--accent-hover);
+  font-size: 14px;
+  font-weight: 600;
+}
+.add {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px dashed var(--accent);
+  border-radius: 11px;
+  background: none;
+  color: var(--accent-hover);
+  font-size: 14px;
+  font-weight: 600;
+}
+.add app-icon {
+  width: 18px;
+  height: 18px;
+}
+.empty {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.drop:focus-visible,
+.undo:focus-visible,
+.add:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (max-width: 480px) {
+  .head,
+  .cat {
+    grid-template-columns: 10px minmax(0, 1fr) 96px 40px;
+    gap: 8px;
+  }
+}

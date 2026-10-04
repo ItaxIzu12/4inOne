@@ -1,0 +1,139 @@
+// Notizen als Karten-Raster; angeheftete mit Stern und zartem Akzent.
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.search {
+  display: flex;
+  align-items: center;
+  flex: 0 1 420px;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #e3e1ec;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text-muted);
+}
+.search:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.search app-icon {
+  width: 18px;
+  height: 18px;
+}
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.note {
+  position: relative;
+  border: 1px solid #e8e6f0;
+  border-radius: 16px;
+  background: #fff;
+}
+.note.is-pinned {
+  border-color: color-mix(in srgb, var(--accent) 35%, #e8e6f0);
+  background: color-mix(in srgb, var(--accent-soft) 45%, #fff);
+}
+.note__main {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  width: 100%;
+  min-height: 180px;
+  padding: 18px 48px 16px 18px;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.note__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.note__head app-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+.note__head b {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.note__line {
+  overflow: hidden;
+  color: #4b4f63;
+  font-size: 14px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.note__when {
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 12px;
+}
+.pin {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: #b5b8c4;
+  cursor: pointer;
+}
+.pin[aria-pressed='true'] {
+  color: #e0a100;
+}
+.pin[aria-pressed='true'] app-icon {
+  fill: currentColor;
+}
+.pin app-icon {
+  width: 19px;
+  height: 19px;
+}
+.empty {
+  display: grid;
+  grid-column: 1 / -1;
+  justify-items: center;
+  gap: 6px;
+}
+@media (max-width: 760px) {
+  .bar {
+    flex-wrap: wrap;
+  }
+  .search {
+    flex-basis: 100%;
+  }
+  .note__main {
+    min-height: 0;
+  }
+}

@@ -1,20 +1,44 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
 import { DecimalPipe } from '@angular/common';
-import { Component, DestroyRef, computed, inject, output, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Router } from '@angular/router';
+import { HouseholdInviteModalService } from '../../core/household/household-invite-modal.service';
+import { AppIcon } from '../../shared/icons/app-icon';
 import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
 import { Modal } from '../../shared/modal/modal';
 import { ModalForm } from '../../shared/form/modal-form';
-import { ItemSuggestionDto, SectionKey, ShoppingItemDto, ShoppingOverviewDto } from './haushalt-api.service';
+import {
+  Id,
+  ItemSuggestionDto,
+  SectionKey,
+  ShoppingItemDto,
+  ShoppingListDto,
+  ShoppingListIcon,
+  ShoppingOverviewDto,
+} from './haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
-import { SECTIONS, estimateAmount, groupOpenItems, sliderMax } from './haushalt-logic';
+import { SECTIONS, estimateAmount, sliderMax } from './haushalt-logic';
+import { avatarTone, initials } from './aufgaben-logic';
+import {
+  LIST_ICONS,
+  SECTION_ICONS,
+  ago,
+  editedLabel,
+  groupItems,
+  listIcon,
+  longDate,
+  recentItems,
+  splitQuantity,
+} from './einkauf-logic';
+import { RowMenu, RowMenuItem } from './row-menu';
 
 const MODE_STORAGE_KEY = 'kompass.einkaufsmodus';
 
-// So lange bleibt ein abgehakter Artikel durchgestrichen an seinem Platz,
-// bevor er in den Wagen wandert. Sonst rückt die Liste sofort nach oben und
-// ein schnelles zweites Tippen trifft den falschen Artikel.
+// So lange bleibt ein abgehakter Artikel im Einkaufsmodus durchgestrichen an
+// seinem Platz, bevor er in den Wagen wandert. Sonst rückt die Liste sofort
+// nach oben und ein schnelles zweites Tippen trifft den falschen Artikel.
 const SETTLE_MS = 900;
 
 function readMode(): boolean {
@@ -30,61 +54,117 @@ function formatEuro(value: number): string {
 }
 
 /**
- * Einkaufsliste mit Einkaufsmodus und dem Einkauf-zu-Ausgabe-Moment
- * (GESAMTKONZEPT.md §5.1).
+ * Einkaufslisten nach Entwurf: links alle Listen des Haushalts (Wocheneinkauf,
+ * Drogerie …) mit Fortschritt, in der Mitte die gewählte Liste nach
+ * Ladenbereich gruppiert (abgehakte bleiben durchgestrichen stehen), rechts
+ * Listen-Details, Mitglieder und „Kürzlich hinzugefügt“.
  *
- * Einkaufsmodus: zeigt nur, was noch fehlt, gruppiert nach Ladenbereich in
- * Supermarkt-Reihenfolge — die Lücke, die FamilyWall-Nutzer bemängeln
- * ("die GESAMTE Liste durchscrollen", GESAMTKONZEPT.md §12). Abgehakte
- * Artikel verschwinden in den "Wagen" und lassen sich dort zurückholen.
- *
+ * Erhalten aus der bisherigen Einkaufsliste (GESAMTKONZEPT.md §5.1):
+ * Einkaufsmodus (nur was fehlt, abgehakte wandern in den Wagen), Schnell
+ * hinzufügen aus dem Gedächtnis und der Einkauf-zu-Ausgabe-Moment.
  * Abhaken ist optimistisch: die Zeile reagiert sofort, schlägt die
  * Speicherung fehl, springt sie zurück und es erscheint ein Hinweis.
  */
 @Component({
   selector: 'app-einkauf-tab',
   standalone: true,
-  imports: [ErrorNoticeDirective, AmountInput, DecimalPipe, Field, Modal, ModalForm, AppSelect],
+  imports: [ErrorNoticeDirective, AmountInput, DecimalPipe, AppIcon, Field, Modal, ModalForm, AppSelect, RowMenu],
   templateUrl: './einkauf-tab.html',
   styleUrls: ['./haushalt-common.scss', './einkauf-tab.scss'],
 })
 export class EinkaufTab {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
+  private readonly invite = inject(HouseholdInviteModalService);
+  /** In der öffentlichen Demo gibt es niemanden einzuladen. */
+  protected readonly isDemo = inject(Router).url.startsWith('/demo');
   readonly saved = output<string>();
+  /** Steigt bei jedem „Neue Liste“ im Seitenkopf; > 0 öffnet das Formular. */
+  readonly newRequest = input(0);
 
+  protected readonly lists = signal<ShoppingListDto[]>([]);
+  protected readonly currentId = signal<Id | null>(null);
   protected readonly data = signal<ShoppingOverviewDto | null>(null);
   protected readonly loadError = signal(false);
   protected readonly actionError = signal<string | null>(null);
   protected readonly shoppingMode = signal(readMode());
 
   protected readonly newName = signal('');
-  protected readonly newQuantity = signal('');
+  protected readonly newSection = signal<SectionKey | ''>('');
   protected readonly adding = signal(false);
 
   protected readonly sections = computed(() => this.data()?.sections ?? SECTIONS);
+  protected readonly items = computed(() => this.data()?.items ?? []);
   private readonly settling = signal<ReadonlySet<ShoppingItemDto['id']>>(new Set());
   private readonly settleTimers = new Map<ShoppingItemDto['id'], ReturnType<typeof setTimeout>>();
-  protected setEditSection(value: string): void {
-    this.editSection.set(value as SectionKey);
-  }
+  protected readonly collapsed = signal<ReadonlySet<SectionKey>>(new Set());
   protected readonly sectionOptions = computed<SelectOption[]>(() => this.sections().map((s) => ({ value: s.key, label: s.label })));
-  protected readonly openGroups = computed(() =>
-    groupOpenItems(this.data()?.items ?? [], this.sections(), this.settling()),
-  );
-  protected readonly openCount = computed(() => (this.data()?.items ?? []).filter((i) => !i.is_checked).length);
-  protected readonly checkedItems = computed(() => (this.data()?.items ?? []).filter((i) => i.is_checked));
+  protected readonly addSectionOptions = computed<SelectOption[]>(() => [
+    { value: '', label: 'Kategorie' },
+    ...this.sectionOptions(),
+  ]);
+  protected readonly groups = computed(() => groupItems(this.items(), this.sections(), this.shoppingMode(), this.settling()));
+  protected readonly openCount = computed(() => this.items().filter((i) => !i.is_checked).length);
+  protected readonly checkedItems = computed(() => this.items().filter((i) => i.is_checked));
   protected readonly cartItems = computed(() => this.checkedItems().filter((i) => !this.settling().has(i.id)));
+  protected readonly recent = computed(() => recentItems(this.items()));
   protected readonly pricePerItem = computed(() => Number(this.data()?.price_per_item ?? 3.5));
   protected readonly estimate = computed(() => estimateAmount(this.pricePerItem(), this.checkedItems().length));
   protected readonly canBook = computed(() => this.data()?.can_book_expense ?? false);
+  protected readonly members = computed(() => this.data()?.members ?? []);
+  protected readonly progress = computed(() => {
+    const total = this.items().length;
+    return total ? Math.round((this.checkedItems().length / total) * 100) : 0;
+  });
+  /** Die Listen links, mit den Zählern der gerade offenen Liste aus den lokalen Einträgen. */
+  protected readonly listCards = computed(() =>
+    this.lists().map((list) =>
+      list.id === this.data()?.list.id
+        ? { ...list, item_count: this.items().length, checked_count: this.checkedItems().length }
+        : list,
+    ),
+  );
 
-  // ---------- Bearbeiten ----------
+  // ---------- Darstellung ----------
+  protected readonly sectionIcons = SECTION_ICONS;
+  protected readonly listIcon = listIcon;
+  protected readonly listIconOptions = LIST_ICONS;
+  protected readonly splitQuantity = splitQuantity;
+  protected readonly ago = ago;
+  protected readonly editedLabel = editedLabel;
+  protected readonly longDate = longDate;
+  protected readonly initials = initials;
+  protected readonly avatarTone = avatarTone;
+  protected readonly itemMenu: RowMenuItem[] = [
+    { key: 'edit', label: 'Bearbeiten', icon: 'edit' },
+    { key: 'delete', label: 'Von der Liste entfernen', icon: 'trash', danger: true },
+  ];
+  protected readonly groupMenu: RowMenuItem[] = [
+    { key: 'check', label: 'Alle abhaken', icon: 'check' },
+    { key: 'uncheck', label: 'Alle zurücksetzen', icon: 'repeat' },
+  ];
+  protected readonly listMenu = computed<RowMenuItem[]>(() => [
+    { key: 'mode', label: this.shoppingMode() ? 'Einkaufsmodus beenden' : 'Einkaufsmodus starten', icon: 'cart' },
+    { key: 'edit', label: 'Liste bearbeiten', icon: 'edit' },
+    { key: 'complete', label: 'Einkauf abschließen', icon: 'check-circle', disabled: this.checkedItems().length === 0 },
+  ]);
+  protected readonly listCardMenu: RowMenuItem[] = [{ key: 'edit', label: 'Liste bearbeiten', icon: 'edit' }];
+
+  // ---------- Eintrag bearbeiten ----------
   protected readonly editing = signal<ShoppingItemDto | null>(null);
   protected readonly editName = signal('');
   protected readonly editQuantity = signal('');
   protected readonly editSection = signal<SectionKey>('sonstiges');
   protected readonly editError = signal<string | null>(null);
   protected readonly editSaving = signal(false);
+
+  // ---------- Liste anlegen / bearbeiten ----------
+  protected readonly listFormOpen = signal(false);
+  protected readonly listEditingId = signal<Id | null>(null);
+  protected readonly listName = signal('');
+  protected readonly listDescription = signal('');
+  protected readonly listIconValue = signal<ShoppingListIcon>('wagen');
+  protected readonly listError = signal<string | null>(null);
+  protected readonly listSaving = signal(false);
 
   // ---------- Einkauf abschließen ----------
   protected readonly completeOpen = signal(false);
@@ -95,11 +175,14 @@ export class EinkaufTab {
 
   constructor() {
     this.load();
-    // Die Liste teilen sich mehrere Personen: kommt man in den Tab zurück
+    effect(() => {
+      if (this.newRequest() > 0) untracked(() => this.openNewList());
+    });
+    // Die Listen teilen sich mehrere Personen: kommt man in den Tab zurück
     // (Handy aus der Tasche), zeigt er, was andere inzwischen eingetragen
     // oder abgehakt haben. Echtzeit-Sync folgt später (siehe Konzept).
     const onVisible = () => {
-      if (document.visibilityState === 'visible' && !this.completeOpen() && !this.editing()) this.load();
+      if (document.visibilityState === 'visible' && !this.completeOpen() && !this.editing() && !this.listFormOpen()) this.load();
     };
     document.addEventListener('visibilitychange', onVisible);
     inject(DestroyRef).onDestroy(() => {
@@ -109,13 +192,33 @@ export class EinkaufTab {
   }
 
   protected load(): void {
-    this.provider.getShopping().subscribe({
+    this.provider.getShoppingLists().subscribe({
+      next: (lists) => {
+        this.lists.set(lists);
+        const current = lists.find((l) => l.id === this.currentId()) ?? lists[0];
+        this.loadList(current?.id ?? null);
+      },
+      error: () => this.loadError.set(true),
+    });
+  }
+
+  private loadList(id: Id | null): void {
+    this.provider.getShopping(id).subscribe({
       next: (data) => {
+        this.currentId.set(data.list.id);
         this.data.set(data);
         this.loadError.set(false);
       },
       error: () => this.loadError.set(true),
     });
+  }
+
+  protected selectList(list: ShoppingListDto): void {
+    if (list.id === this.currentId()) return;
+    this.actionError.set(null);
+    this.collapsed.set(new Set());
+    this.currentId.set(list.id);
+    this.loadList(list.id);
   }
 
   protected toggleMode(): void {
@@ -128,13 +231,43 @@ export class EinkaufTab {
     }
   }
 
+  protected toggleGroup(key: SectionKey): void {
+    this.collapsed.update((set) => {
+      const next = new Set(set);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  protected onListMenu(key: string): void {
+    if (key === 'mode') this.toggleMode();
+    else if (key === 'edit') this.openEditList();
+    else if (key === 'complete') this.openComplete();
+  }
+
+  protected onGroupMenu(key: string, items: ShoppingItemDto[]): void {
+    const target = key === 'check';
+    for (const item of items.filter((i) => i.is_checked !== target)) this.toggle(item);
+  }
+
+  protected onItemMenu(item: ShoppingItemDto, key: string): void {
+    if (key === 'edit') this.openEdit(item);
+    else if (key === 'delete') this.removeItem(item);
+  }
+
+  protected inviteMember(): void {
+    this.invite.open();
+  }
+
+  // ---------- Einträge ----------
+
   protected submitNew(event: Event): void {
     event.preventDefault();
     const name = this.newName().trim();
     if (!name || this.adding()) return;
-    this.add(name, this.newQuantity().trim(), null, () => {
+    this.add(name, '', this.newSection() || null, () => {
       this.newName.set('');
-      this.newQuantity.set('');
     });
   }
 
@@ -145,7 +278,7 @@ export class EinkaufTab {
   private add(name: string, quantity: string, section: SectionKey | null, done?: () => void): void {
     this.adding.set(true);
     this.actionError.set(null);
-    this.provider.addItem(name, quantity, section).subscribe({
+    this.provider.addItem(name, quantity, section, this.currentId()).subscribe({
       next: (created) => {
         this.adding.set(false);
         this.data.update((data) => {
@@ -157,6 +290,7 @@ export class EinkaufTab {
             suggestions: data.suggestions.filter((s) => s.name.toLowerCase() !== created.name.toLowerCase()),
           };
         });
+        this.touchCurrent();
         done?.();
       },
       error: () => {
@@ -168,11 +302,14 @@ export class EinkaufTab {
 
   protected toggle(item: ShoppingItemDto): void {
     const checked = !item.is_checked;
-    this.setSettling(item.id, checked);
+    if (this.shoppingMode()) this.setSettling(item.id, checked);
     this.patchLocal(item.id, { is_checked: checked });
     this.actionError.set(null);
     this.provider.updateItem(item.id, { is_checked: checked }).subscribe({
-      next: (updated) => this.patchLocal(item.id, updated),
+      next: (updated) => {
+        this.patchLocal(item.id, updated);
+        this.touchCurrent();
+      },
       error: () => {
         this.setSettling(item.id, false);
         this.patchLocal(item.id, { is_checked: item.is_checked });
@@ -203,11 +340,33 @@ export class EinkaufTab {
     );
   }
 
+  /** „Zuletzt bearbeitet“ sofort vorrücken — das Backend tut dasselbe (services.touch_list). */
+  private touchCurrent(): void {
+    const now = new Date().toISOString();
+    this.data.update((data) => (data ? { ...data, list: { ...data.list, updated_at: now } } : data));
+  }
+
   protected itemLabel(item: ShoppingItemDto): string {
     return item.quantity ? `${item.name}, ${item.quantity}` : item.name;
   }
 
-  // ---------- Bearbeiten ----------
+  private removeItem(item: ShoppingItemDto): void {
+    this.actionError.set(null);
+    this.provider.deleteItem(item.id).subscribe({
+      next: () => {
+        this.data.update((data) => (data ? { ...data, items: data.items.filter((i) => i.id !== item.id) } : data));
+        this.touchCurrent();
+        this.saved.emit(`„${item.name}“ entfernt.`);
+      },
+      error: () => this.actionError.set(`„${item.name}“ konnte nicht entfernt werden.`),
+    });
+  }
+
+  // ---------- Eintrag bearbeiten ----------
+
+  protected setEditSection(value: string): void {
+    this.editSection.set(value as SectionKey);
+  }
 
   protected openEdit(item: ShoppingItemDto): void {
     this.editing.set(item);
@@ -237,6 +396,7 @@ export class EinkaufTab {
         next: (updated) => {
           this.editSaving.set(false);
           this.patchLocal(item.id, updated);
+          this.touchCurrent();
           this.closeEdit();
         },
         error: () => {
@@ -254,12 +414,85 @@ export class EinkaufTab {
       next: () => {
         this.editSaving.set(false);
         this.data.update((data) => (data ? { ...data, items: data.items.filter((i) => i.id !== item.id) } : data));
+        this.touchCurrent();
         this.closeEdit();
         this.saved.emit(`„${item.name}“ entfernt.`);
       },
       error: () => {
         this.editSaving.set(false);
         this.editError.set('Entfernen hat nicht geklappt. Bitte noch einmal versuchen.');
+      },
+    });
+  }
+
+  // ---------- Liste anlegen / bearbeiten ----------
+
+  protected openNewList(): void {
+    this.listEditingId.set(null);
+    this.listName.set('');
+    this.listDescription.set('');
+    this.listIconValue.set('wagen');
+    this.listError.set(null);
+    this.listFormOpen.set(true);
+  }
+
+  protected openEditList(list: ShoppingListDto | null = this.data()?.list ?? null): void {
+    if (!list) return;
+    this.listEditingId.set(list.id);
+    this.listName.set(list.name);
+    this.listDescription.set(list.description);
+    this.listIconValue.set(list.icon);
+    this.listError.set(null);
+    this.listFormOpen.set(true);
+  }
+
+  protected saveList(): void {
+    if (this.listSaving()) return;
+    const name = this.listName().trim();
+    if (!name) {
+      this.listError.set('Bitte einen Namen für die Liste eingeben.');
+      return;
+    }
+    const input = { name, description: this.listDescription().trim(), icon: this.listIconValue() };
+    const id = this.listEditingId();
+    this.listSaving.set(true);
+    this.listError.set(null);
+    const request = id === null ? this.provider.createShoppingList(input) : this.provider.updateShoppingList(id, input);
+    request.subscribe({
+      next: (list) => {
+        this.listSaving.set(false);
+        this.listFormOpen.set(false);
+        this.currentId.set(list.id);
+        this.load();
+        this.saved.emit(id === null ? `Liste „${name}“ angelegt.` : `Liste „${name}“ gespeichert.`);
+      },
+      error: () => {
+        this.listSaving.set(false);
+        this.listError.set('Speichern hat nicht geklappt. Bitte noch einmal versuchen.');
+      },
+    });
+  }
+
+  protected deleteList(): void {
+    const id = this.listEditingId();
+    if (id === null || this.listSaving()) return;
+    if (this.lists().length <= 1) {
+      this.listError.set('Die letzte Einkaufsliste kann nicht gelöscht werden.');
+      return;
+    }
+    const name = this.listName();
+    this.listSaving.set(true);
+    this.provider.deleteShoppingList(id).subscribe({
+      next: () => {
+        this.listSaving.set(false);
+        this.listFormOpen.set(false);
+        this.currentId.set(null);
+        this.load();
+        this.saved.emit(`Liste „${name}“ gelöscht.`);
+      },
+      error: () => {
+        this.listSaving.set(false);
+        this.listError.set('Löschen hat nicht geklappt. Bitte noch einmal versuchen.');
       },
     });
   }
@@ -314,7 +547,7 @@ export class EinkaufTab {
     }
     this.completeSubmitting.set(true);
     this.completeError.set(null);
-    this.provider.completeShopping(amount).subscribe({
+    this.provider.completeShopping(amount, this.currentId()).subscribe({
       next: (result) => {
         this.completeSubmitting.set(false);
         this.completeOpen.set(false);

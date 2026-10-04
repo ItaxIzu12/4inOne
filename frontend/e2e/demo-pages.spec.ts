@@ -15,9 +15,9 @@ test('the preview links to the new Finanzen design (not the older one) with demo
   await page.getByRole('link', { name: 'Finanzen' }).first().click();
   await expect(page).toHaveURL(/\/finanzen$/);
   // Reiter des AKTUELLEN Designs (private-finance.html) — die ältere Demo-Seite hatte andere Bezeichner.
-  for (const tab of ['Übersicht', 'Buchungen', 'Budgets', 'Sparziele']) await expect(page.getByRole('button', { name: tab, exact: true })).toBeVisible();
-  await expect(page.locator('.stage')).toContainText('Frei bis Monatsende');
-  await expect(page.locator('.stage')).not.toContainText('kein Budget'); // der laufende Monat hat ein Demo-Budget
+  for (const tab of ['Übersicht', 'Ausgaben', 'Einnahmen', 'Budgets', 'Sparziele']) await expect(page.getByRole('button', { name: tab, exact: true })).toBeVisible();
+  await expect(page.locator('.kpis')).toContainText('Vom Monatsbudget übrig');
+  await expect(page.locator('.budget-empty')).toHaveCount(0); // der laufende Monat hat ein Demo-Budget
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 });
 
@@ -27,8 +27,8 @@ test('the preview links to Organisation with demo data, never to the login scree
   await page.getByRole('link', { name: 'Organisation' }).first().click();
   await expect(page).toHaveURL(/\/organisation$/);
   await expect(page).not.toHaveURL(/\/login/);
-  await expect(page.getByRole('heading', { name: /Heute,/ })).toBeVisible();
-  await expect(page.getByText('Zahnarzttermin')).toBeVisible(); // Demo-Termin
+  await expect(page.getByRole('heading', { name: 'Heute', exact: true })).toBeVisible();
+  await expect(page.locator('app-org-overview').getByText('Zahnärztin').first()).toBeVisible(); // Demo-Termin
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 });
 
@@ -45,7 +45,7 @@ test('the preview links to Haushalt with demo data, never to the login screen', 
   await page.getByRole('link', { name: 'Haushalt' }).first().click();
   await expect(page).toHaveURL(/\/haushalt$/);
   await expect(page).not.toHaveURL(/\/login/);
-  await expect(page.getByRole('heading', { name: 'Haushalt' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Haushalt', exact: true })).toBeVisible();
 });
 
 test('the preview links to Reisen with demo data, never to the login screen', async ({ page }) => {

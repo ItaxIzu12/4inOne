@@ -1,4 +1,4 @@
-<app-shell [dashboardHeader]="true" (dashboardQuery)="boardQuery.set($event)">
+<app-shell [dashboardHeader]="true" [searchValue]="boardQuery()" (dashboardQuery)="boardQuery.set($event)">
   <main id="main-content" class="dashboard dashboard--overview" tabindex="-1">
     <header class="greeting">
       <div>

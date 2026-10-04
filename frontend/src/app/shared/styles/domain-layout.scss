@@ -1,9 +1,10 @@
 // Shared geometry; each domain keeps its own colours and content.
 @mixin layout {
+  // Kopfkarte (Titel, Hauptknopf, Reiter) scrollt mit der Seite — sie klebt
+  // nicht mehr oben, damit vor allem auf dem Handy mehr Platz für den Inhalt
+  // bleibt. Zurück nach oben geht es über den globalen „Nach oben“-Knopf
+  // (shared/back-to-top). Der Klassenname bleibt, um nichts umzubenennen.
   .domain-sticky {
-    position: sticky;
-    top: var(--shell-header-height, 72px);
-    z-index: 20;
     padding: 20px;
     margin-bottom: 32px;
     border: 1px solid #e7ebf1;

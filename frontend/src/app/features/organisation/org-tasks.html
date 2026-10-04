@@ -1,0 +1,153 @@
+<div class="layout">
+  <div class="main">
+    <div class="filters" role="group" aria-label="Aufgaben filtern">
+      <span class="sr-only" id="tf-status">Status</span>
+      <span class="sr-only" id="tf-prio">Priorität</span>
+      <span class="sr-only" id="tf-project">Projekt</span>
+      <app-select ariaLabelledby="tf-status" [options]="statusOptions" [value]="status()" (valueChange)="status.set($any($event))" />
+      <app-select ariaLabelledby="tf-prio" [options]="priorityOptions" [value]="priority()" (valueChange)="priority.set($event)" />
+      <app-select ariaLabelledby="tf-project" [options]="projectOptions()" [value]="project()" (valueChange)="project.set($event)" />
+      <label class="search">
+        <app-icon name="search" aria-hidden="true" />
+        <span class="sr-only">Aufgaben durchsuchen</span>
+        <input type="search" placeholder="Aufgabe suchen …" [value]="search()" (input)="search.set($any($event.target).value)" />
+      </label>
+    </div>
+    <button type="button" class="add-mobile" (click)="newTask.emit()"><app-icon name="plus" />Aufgabe hinzufügen</button>
+
+    @for (g of groups(); track g.key) {
+      @let open = !collapsed().has(g.key);
+      <section class="group" [class]="'group group--' + g.key" [attr.aria-labelledby]="'tg-' + g.key">
+        <button type="button" class="group__head" [attr.aria-expanded]="open" (click)="toggleGroup(g.key)">
+          <app-icon class="group__icon" [name]="g.icon" aria-hidden="true" />
+          <h2 [id]="'tg-' + g.key">{{ g.label }} <span class="count">({{ g.tasks.length }})</span></h2>
+          <app-icon class="group__chev" [name]="open ? 'chevron-up' : 'chevron-down'" aria-hidden="true" />
+        </button>
+        @if (open) {
+          <ul class="rows task-list">
+            @for (t of g.tasks; track t.id) {
+              @let due = taskDue(t);
+              <li class="task-row">
+                <button type="button" class="check" [attr.aria-label]="t.title + ' erledigen'" (click)="toggleTask.emit(t)">
+                  <span class="check__ring"><app-icon name="check" /></span>
+                </button>
+                <button type="button" class="row-btn" [attr.aria-label]="t.title + ' ' + (t.status === 'IN_PROGRESS' ? 'In Bearbeitung' : 'Offen')" (click)="openTask.emit(t)">
+                  <span class="row-text">
+                    <b>{{ t.title }}</b>
+                    <small class="project-line">
+                      @if (t.project) {
+                        <app-icon name="folder" aria-hidden="true" />{{ t.project }}
+                      } @else if (t.status === 'IN_PROGRESS') {
+                        In Bearbeitung
+                      }
+                    </small>
+                  </span>
+                  <span class="due" [class.late]="due.late">{{ due.text }}</span>
+                  <span class="prio" [class]="'prio prio--' + t.priority">{{ priorities[t.priority] }}</span>
+                  <app-icon class="more" name="more" aria-hidden="true" />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+
+    @if (doneTasks().length) {
+      <section class="group group--done" aria-labelledby="tg-done">
+        <div class="group__head group__head--static">
+          <app-icon class="group__icon" name="check-circle" aria-hidden="true" />
+          <h2 id="tg-done">Erledigt <span class="count">({{ doneTasks().length }})</span></h2>
+        </div>
+        <ul class="rows task-list">
+          @for (t of doneTasks(); track t.id) {
+            <li class="task-row is-done">
+              <button type="button" class="check is-done" [attr.aria-label]="t.title + ' wieder öffnen'" (click)="toggleTask.emit(t)">
+                <span class="check__ring"><app-icon name="check" /></span>
+              </button>
+              <button type="button" class="row-btn" [attr.aria-label]="t.title + ' Erledigt'" (click)="openTask.emit(t)">
+                <span class="row-text"><b>{{ t.title }}</b><small>{{ t.project || 'Erledigt' }}</small></span>
+                <span class="prio" [class]="'prio prio--' + t.priority">{{ priorities[t.priority] }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (!groups().length && !doneTasks().length) {
+      <div class="card empty">
+        @if (hasFilters()) {
+          <h3>Keine Aufgabe gefunden</h3>
+          <p class="muted">
+            @if (search().trim()) {
+              Für „{{ search().trim() }}“ gibt es keinen Treffer.
+            } @else {
+              Keine Aufgabe passt zu diesen Filtern.
+            }
+          </p>
+          <button type="button" class="link" (click)="resetFilters()">Filter zurücksetzen</button>
+        } @else {
+          <h3>Keine Aufgaben in dieser Ansicht</h3>
+          <p class="muted">Lege eine Aufgabe an – mit Fälligkeit, Priorität und Projekt.</p>
+        }
+      </div>
+    }
+  </div>
+
+  <aside class="side">
+    <section class="card" aria-labelledby="tp-h">
+      <h2 id="tp-h">Fortschritt</h2>
+      @let p = progress();
+      <div class="progress">
+        <span class="ring" [style.--p]="p.pct" aria-hidden="true"></span>
+        <p><b>{{ p.done }} / {{ p.total }}</b><small>Aufgaben erledigt</small></p>
+        <span class="pct">{{ p.pct }} %</span>
+      </div>
+      <ul class="bars">
+        <li>
+          <span>Überfällig</span>
+          <b class="late">{{ p.overdue }}</b>
+          <span class="track track--late" aria-hidden="true"><span [style.width.%]="share(p.overdue, p.total)"></span></span>
+        </li>
+        <li>
+          <span>Heute</span>
+          <b>{{ p.today.done }} von {{ p.today.total }}</b>
+          <span class="track" aria-hidden="true"><span [style.width.%]="share(p.today.done, p.today.total)"></span></span>
+        </li>
+        <li>
+          <span>Diese Woche</span>
+          <b>{{ p.week.done }} von {{ p.week.total }}</b>
+          <span class="track" aria-hidden="true"><span [style.width.%]="share(p.week.done, p.week.total)"></span></span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="card" aria-labelledby="tn-h">
+      <h2 id="tn-h" class="side-title"><app-icon name="calendar" aria-hidden="true" />Nächste Termine</h2>
+      <ul class="next">
+        @for (e of nextEvents(); track e.id) {
+          <li><span>{{ dayWord(eventDay(e)) }}, {{ startTime(e) }}</span><b>{{ e.title }}</b></li>
+        } @empty {
+          <li class="muted">Keine Termine geplant.</li>
+        }
+      </ul>
+      <button type="button" class="link" (click)="showCalendar.emit()">Alle anzeigen <app-icon name="arrow" /></button>
+    </section>
+
+    <section class="card" aria-labelledby="tpj-h">
+      <h2 id="tpj-h" class="side-title"><app-icon name="folder" aria-hidden="true" />Projekte</h2>
+      <ul class="projects">
+        @for (pr of projectList(); track pr.name) {
+          <li>
+            <button type="button" class="project" [class]="'project tone-' + pr.tone" [attr.aria-pressed]="project() === pr.name" (click)="project.set(project() === pr.name ? '' : pr.name)">
+              <i class="dot" aria-hidden="true"></i><b>{{ pr.name }}</b><small>{{ pr.count }} {{ pr.count === 1 ? 'Aufgabe' : 'Aufgaben' }}</small>
+            </button>
+          </li>
+        } @empty {
+          <li class="muted">Gib Aufgaben ein Projekt, z. B. „Familie“ oder „Beruf“.</li>
+        }
+      </ul>
+    </section>
+  </aside>
+</div>

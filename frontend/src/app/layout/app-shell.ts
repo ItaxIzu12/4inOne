@@ -1,9 +1,10 @@
 import { ErrorNoticeDirective } from '../shared/error-notice/error-notice';
-import { Component, input, output, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, input, output, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
+import { BackToTop } from '../shared/back-to-top/back-to-top';
 import { Brand } from '../shared/brand/brand';
 import { AppIcon, IconName } from '../shared/icons/app-icon';
 import { IconInfo } from '../shared/icons/icon-info';
@@ -16,18 +17,38 @@ import { Modal } from '../shared/modal/modal';
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [ErrorNoticeDirective, RouterLink, RouterLinkActive, Brand, AppIcon, Modal, IconInfo, IconLegal, IconLogout, IconProfile, IconSettings, IconTwoFactor],
+  imports: [ErrorNoticeDirective, RouterLink, RouterLinkActive, BackToTop, Brand, AppIcon, Modal, IconInfo, IconLegal, IconLogout, IconProfile, IconSettings, IconTwoFactor],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })
 export class AppShell {
+  /** Auf der Startseite filtert die Suche live (dashboardQuery); überall sonst führt Enter dorthin. */
   readonly dashboardHeader = input(false);
   readonly dashboardQuery = output<string>();
+  /** Vorbelegung des Suchfelds, z. B. ein von einer anderen Seite mitgebrachter Suchbegriff. */
+  readonly searchValue = input('');
   readonly dashboardDate = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
   private readonly dashboardSearch = viewChild<ElementRef<HTMLInputElement>>('dashboardSearch');
+  private readonly topbar = viewChild<ElementRef<HTMLElement>>('topbar');
+  private readonly destroyRef = inject(DestroyRef);
+
+  constructor() {
+    // Die globale Kopfzeile ist je nach Breite und Demo-Hinweis unterschiedlich hoch (Suchfeld in eigener Zeile).
+    // Ihre echte Höhe steht in --shell-header-height, damit feststehende Seitenköpfe (domain-layout) direkt
+    // darunter andocken statt darunter zu verschwinden.
+    afterNextRender(() => {
+      const bar = this.topbar()?.nativeElement;
+      if (!bar || typeof ResizeObserver === 'undefined') return;
+      const apply = () => this.host.nativeElement.style.setProperty('--shell-header-height', `${Math.round(bar.getBoundingClientRect().height)}px`);
+      apply();
+      const observer = new ResizeObserver(apply);
+      observer.observe(bar);
+      this.destroyRef.onDestroy(() => observer.disconnect());
+    });
+  }
   @HostListener('document:keydown', ['$event'])
   focusDashboardSearch(event: KeyboardEvent) {
-    if (this.dashboardHeader() && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
       this.dashboardSearch()?.nativeElement.focus();
     }
@@ -68,6 +89,14 @@ export class AppShell {
       { label: 'Reisen', icon: 'travel' as IconName, path: live ? '/reisen' : '/demo/reisen' },
     ];
   });
+  onSearchInput(value: string) {
+    if (this.dashboardHeader()) this.dashboardQuery.emit(value);
+  }
+  /** Außerhalb der Startseite: zur Startseite, dort zeigt die Suche die Treffer. */
+  submitSearch(value: string) {
+    if (this.dashboardHeader() || !value.trim()) return;
+    void this.router.navigate([this.links()[0].path], { queryParams: { q: value.trim() } });
+  }
   readonly panel = signal('');
   readonly menuOpen = signal(false);
   private readonly trigger = viewChild<ElementRef<HTMLButtonElement>>('trigger');

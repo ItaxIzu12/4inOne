@@ -1,12 +1,11 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
-import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, Observable } from 'rxjs';
+import { catchError, forkJoin, Observable, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
-import { AppIcon } from '../../shared/icons/app-icon';
+import { AppIcon, IconName } from '../../shared/icons/app-icon';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
 import { AppDatePicker } from '../../shared/form/date-picker';
 import { AppDateTimePicker } from '../../shared/form/date-time-picker';
@@ -14,25 +13,52 @@ import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
 import { AppTimePicker } from '../../shared/form/time-picker';
 import { ModalForm } from '../../shared/form/modal-form';
-import {
-  OrganisationApi,
-  PersonalEvent,
-  PersonalTask,
-  TodayData,
-  TodayItem,
-} from './organisation-api.service';
+import { OrganisationApi, PersonalEvent, PersonalNote, PersonalTask, TodayData } from './organisation-api.service';
+import { EVENT_CATEGORIES, localDay } from './organisation-logic';
+import { OrgOverview } from './org-overview';
+import { OrgCalendar } from './org-calendar';
+import { OrgTasks } from './org-tasks';
+import { OrgNotes } from './org-notes';
+import { OrgFiles } from './org-files';
 
-export function localDay(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
+export { localDay } from './organisation-logic';
+
 function localInput(value: string): string {
   const d = new Date(value);
   return `${localDay(d)}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
+
+export type OrgTab = 'overview' | 'calendar' | 'tasks' | 'notes' | 'files';
+const TABS: { key: OrgTab; label: string; icon: IconName }[] = [
+  { key: 'overview', label: 'Übersicht', icon: 'home' },
+  { key: 'calendar', label: 'Kalender', icon: 'calendar' },
+  { key: 'tasks', label: 'Aufgaben', icon: 'check-circle' },
+  { key: 'notes', label: 'Notizen', icon: 'file-text' },
+  { key: 'files', label: 'Dateien', icon: 'folder' },
+];
+// Hauptknopf im Seitenkopf, passend zum Reiter.
+const HEAD_ACTIONS: Record<OrgTab, string> = {
+  overview: 'Neuer Eintrag',
+  calendar: 'Termin erstellen',
+  tasks: 'Aufgabe hinzufügen',
+  notes: 'Neue Notiz',
+  files: 'Datei hochladen',
+};
+
+/**
+ * Organisation: privater Bereich für Termine, Aufgaben, Notizen und Dateien
+ * (docs/ORGANISATION_V1.md). Diese Komponente ist die Seitenhülle: Kopf,
+ * Reiter, Laden der Daten und die gemeinsamen Formulare. Die Reiter sind
+ * eigene Komponenten (org-*.ts) und melden nur, was geöffnet werden soll.
+ * Alles ist privat — der Server filtert nach Eigentümer.
+ */
 @Component({
   selector: 'app-organisation',
   standalone: true,
-  imports: [ErrorNoticeDirective, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, ReactiveFormsModule, DatePipe, AppSelect, AppDatePicker, AppDateTimePicker, AppTimePicker],
+  imports: [
+    ErrorNoticeDirective, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, ReactiveFormsModule, AppSelect,
+    AppDatePicker, AppDateTimePicker, AppTimePicker, OrgOverview, OrgCalendar, OrgTasks, OrgNotes, OrgFiles,
+  ],
   templateUrl: './organisation.html',
   styleUrl: './organisation.scss',
 })
@@ -43,9 +69,12 @@ export class Organisation {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private loaded = false;
-  readonly tab = signal<'today' | 'calendar' | 'tasks'>('today');
+  readonly tabs = TABS;
+  readonly tab = signal<OrgTab>('overview');
+  readonly headAction = computed(() => HEAD_ACTIONS[this.tab()]);
   readonly events = signal<PersonalEvent[]>([]);
   readonly tasks = signal<PersonalTask[]>([]);
+  readonly notes = signal<PersonalNote[]>([]);
   readonly today = signal<TodayData | null>(null);
   readonly loading = signal(true);
   readonly error = signal('');
@@ -53,14 +82,10 @@ export class Organisation {
   readonly formError = signal('');
   readonly editor = signal<'event' | 'task' | null>(null);
   readonly editId = signal<number | undefined>(undefined);
+  /** Ausgewählter Tag im Kalender — Vorgabe für „Termin erstellen“. */
   readonly selectedDay = signal(localDay(new Date()));
-  readonly month = signal(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-  readonly filter = signal('all');
-  readonly filterOptions: SelectOption[] = [
-    { value: 'all', label: 'Alle Aufgaben' },
-    { value: 'active', label: 'Offene Aufgaben' },
-    { value: 'done', label: 'Erledigte Aufgaben' },
-  ];
+  /** Steigt bei „Datei hochladen“ im Kopf; der Dateien-Reiter öffnet dann die Auswahl. */
+  readonly uploadRequest = signal(0);
   readonly priorityOptions: SelectOption[] = [
     { value: 'LOW', label: 'Niedrig' },
     { value: 'MEDIUM', label: 'Mittel' },
@@ -71,139 +96,94 @@ export class Organisation {
     { value: 'IN_PROGRESS', label: 'In Bearbeitung' },
     { value: 'DONE', label: 'Erledigt' },
   ];
-  readonly priorities = { LOW: 'Niedrig', MEDIUM: 'Mittel', HIGH: 'Hoch' };
-  readonly statuses = { OPEN: 'Offen', IN_PROGRESS: 'In Bearbeitung', DONE: 'Erledigt' };
-  readonly weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-  readonly monthLabel = computed(() =>
-    this.month().toLocaleDateString('de-DE', { month: 'long', year: 'numeric' }),
-  );
-  readonly dayLabel = computed(() =>
-    new Date(`${this.selectedDay()}T12:00`).toLocaleDateString('de-DE', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }),
-  );
-  readonly days = computed(() => {
-    const m = this.month();
-    const start = new Date(m.getFullYear(), m.getMonth(), 1);
-    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
-    return Array.from({ length: 42 }, (_, i) => {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      const key = localDay(d);
-      return {
-        key,
-        number: d.getDate(),
-        outside: d.getMonth() !== m.getMonth(),
-        today: key === localDay(new Date()),
-        label: d.toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }),
-        hasEvents: this.events().some((e) => this.onDay(e, key)),
-      };
-    });
-  });
-  readonly dayEvents = computed(() =>
-    this.events().filter((e) => this.onDay(e, this.selectedDay())),
-  );
-  readonly eventSearch = signal('');
-  /** Wie viele der Termine des gewählten Tages sichtbar sind — „weitere anzeigen“ erhöht ihn um 5, ein Wechsel des
-   * Tages oder der Suche setzt ihn zurück (siehe effect() im Konstruktor, wie bei den Aufgaben). */
-  readonly dayEventLimit = signal(5);
-  readonly matchingDayEvents = computed(() => {
-    const query = this.eventSearch().trim().toLocaleLowerCase('de');
-    return this.dayEvents().filter((e) => !query || e.title.toLocaleLowerCase('de').includes(query));
-  });
-  readonly visibleDayEvents = computed(() => this.matchingDayEvents().slice(0, this.dayEventLimit()));
-  readonly moreDayEventsCount = computed(() => Math.max(0, this.matchingDayEvents().length - this.dayEventLimit()));
-  readonly upcoming = computed(() =>
-    this.events()
-      .filter((e) => new Date(e.starts_at) >= new Date())
-      .slice(0, 3),
-  );
-  readonly taskSearch = signal('');
-  /** Wie viele der gefilterten/gesuchten Aufgaben aktuell sichtbar sind — „Weitere anzeigen“ erhöht ihn um 5,
-   * ein Wechsel von Filter oder Suche setzt ihn zurück (siehe effect() im Konstruktor). */
-  readonly taskLimit = signal(5);
-  readonly matchingTasks = computed(() => {
-    const query = this.taskSearch().trim().toLocaleLowerCase('de');
-    return this.tasks()
-      .filter(
-        (t) =>
-          this.filter() === 'all' ||
-          (this.filter() === 'active' ? t.status !== 'DONE' : t.status === 'DONE'),
-      )
-      .filter((t) => !query || t.title.toLocaleLowerCase('de').includes(query))
-      .sort(
-        (a, b) =>
-          (a.due_date || '9999').localeCompare(b.due_date || '9999') ||
-          (a.due_time || '').localeCompare(b.due_time || ''),
-      );
-  });
-  readonly visibleTasks = computed(() => this.matchingTasks().slice(0, this.taskLimit()));
-  readonly moreTasksCount = computed(() => Math.max(0, this.matchingTasks().length - this.taskLimit()));
+  readonly categoryOptions: SelectOption[] = EVENT_CATEGORIES.map((c) => ({ value: c.value, label: c.label }));
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(120)]],
     description: ['', Validators.maxLength(5000)],
     starts_at: [''],
     ends_at: [''],
     location: ['', Validators.maxLength(240)],
+    category: ['sonstiges'],
     due_date: [''],
     due_time: [''],
     priority: ['MEDIUM'],
     status: ['OPEN'],
+    project: ['', Validators.maxLength(60)],
   });
+
   constructor() {
+    const tab = this.route.snapshot.queryParamMap.get('tab') as OrgTab | null;
+    if (tab && TABS.some((t) => t.key === tab)) this.tab.set(tab);
     this.load(true);
-    // Filter oder Suchbegriff geändert: wieder nur die ersten 5 Treffer zeigen, sonst bliebe ein hoher Zähler von
-    // der vorherigen Suche stehen und „Weitere anzeigen“ würde beim Öffnen sofort viele Aufgaben auf einmal zeigen.
-    effect(() => {
-      this.filter();
-      this.taskSearch();
-      untracked(() => this.taskLimit.set(5));
-    });
-    // Derselbe Grund für die Termine des gewählten Tages: ein anderer Tag oder eine neue Suche zeigt wieder nur 5.
-    effect(() => {
-      this.selectedDay();
-      this.eventSearch();
-      untracked(() => this.dayEventLimit.set(5));
-    });
     // Wechsel auf ein anderes Objekt derselben Seite (z. B. Aufgabe → verknüpfter Termin)
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(() => {
       if (this.loaded) this.openFromQuery();
     });
   }
-  onDay(e: PersonalEvent, day: string) {
-    const start = new Date(`${day}T00:00`);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
-    return (
-      new Date(e.starts_at) < end &&
-      (new Date(e.starts_at) >= start || (!!e.ends_at && new Date(e.ends_at) > start))
-    );
-  }
+
   load(openRequested = false) {
-    this.loading.set(true);
+    this.loading.set(this.events().length === 0 && this.tasks().length === 0);
     this.error.set('');
-    forkJoin({ events: this.api.events(), tasks: this.api.tasks(), today: this.api.today() })
+    forkJoin({
+      events: this.api.events(),
+      tasks: this.api.tasks(),
+      today: this.api.today(),
+      // Notizen sind Zusatz: fehlen sie, bleiben Termine und Aufgaben nutzbar.
+      notes: this.api.notes().pipe(catchError(() => of([] as PersonalNote[]))),
+    })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (r) => {
           this.events.set(r.events);
           this.tasks.set(r.tasks);
           this.today.set(r.today);
+          this.notes.set(r.notes);
           this.loading.set(false);
           this.loaded = true;
           if (openRequested) this.openFromQuery();
         },
         error: () => {
           this.loading.set(false);
-          this.error.set(
-            'Deine Organisation konnte nicht geladen werden. Bitte versuche es erneut.',
-          );
+          this.error.set('Deine Organisation konnte nicht geladen werden. Bitte versuche es erneut.');
         },
       });
   }
+
+  selectTab(tab: OrgTab) {
+    this.tab.set(tab);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'overview' ? null : tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  onTabKeydown(event: KeyboardEvent) {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+    const keys = TABS.map((t) => t.key);
+    const index = keys.indexOf(this.tab());
+    const next = keys[(index + (event.key === 'ArrowRight' ? 1 : keys.length - 1)) % keys.length];
+    this.selectTab(next);
+    queueMicrotask(() => document.getElementById(`org-tab-${next}`)?.focus());
+  }
+
+  /** Hauptknopf im Kopf — öffnet das passende Formular des Reiters. */
+  headActionClick() {
+    switch (this.tab()) {
+      case 'calendar':
+        return this.open('event');
+      case 'tasks':
+        return this.open('task');
+      case 'notes':
+        return this.openNote();
+      case 'files':
+        return this.uploadRequest.update((n) => n + 1);
+      default:
+        return this.open('event', undefined, true);
+    }
+  }
+
   /** Deep-Link (?kind=task|event&id=…): öffnet das Objekt und räumt die Adresse auf,
    * damit derselbe Link später erneut wirkt. Kommt aus dem Dashboard und aus „Verknüpft“. */
   private openFromQuery() {
@@ -220,48 +200,23 @@ export class Organisation {
     });
     if (item) this.open(kind, item);
   }
-  selectToday() {
-    const date = this.today()?.date || localDay(new Date());
-    const day = new Date(`${date}T12:00`);
-    this.month.set(new Date(day.getFullYear(), day.getMonth(), 1));
-    this.selectedDay.set(date);
-    this.tab.set('calendar');
-  }
-  /** Datumsfilter im Kalender-Reiter: springt direkt zum gewählten Tag, ohne sich per Monatspfeil dorthin
-   * durchzuklicken — das kleine Monatsraster folgt automatisch. */
-  protected pickDate(day: string): void {
-    if (!day) return;
-    const d = new Date(`${day}T12:00`);
-    this.month.set(new Date(d.getFullYear(), d.getMonth(), 1));
-    this.selectedDay.set(day);
-  }
-  protected showMoreTasks(): void {
-    this.taskLimit.update((n) => n + 5);
-  }
-  protected showMoreDayEvents(): void {
-    this.dayEventLimit.update((n) => n + 5);
-  }
-  changeMonth(delta: number) {
-    const m = this.month();
-    const next = new Date(m.getFullYear(), m.getMonth() + delta, 1);
-    this.month.set(next);
-    this.selectedDay.set(localDay(next));
-  }
-  /** Zeigt die Auswahl Termin/Aufgabe im Dialog — nur beim allgemeinen „Neuer Eintrag“. „Aufgabe erstellen“ und
-   * „Termin erstellen“ öffnen den Dialog gleich für genau diese Art, ohne Auswahl. */
+
+  /** Zeigt die Auswahl Termin/Aufgabe im Dialog — nur beim allgemeinen „Neuer Eintrag“. */
   readonly typeChoice = signal(false);
-  open(kind: 'event' | 'task', item?: PersonalEvent | PersonalTask, choice = false) {
+  open(kind: 'event' | 'task', item?: PersonalEvent | PersonalTask, choice = false, day?: string) {
     this.typeChoice.set(choice && !item);
     this.form.reset({
       title: '',
       description: '',
-      starts_at: `${this.selectedDay()}T09:00`,
+      starts_at: `${day ?? this.selectedDay()}T09:00`,
       ends_at: '',
       location: '',
+      category: 'sonstiges',
       due_date: '',
       due_time: '',
       priority: 'MEDIUM',
       status: 'OPEN',
+      project: '',
     });
     this.editor.set(kind);
     this.editId.set(item?.id);
@@ -273,6 +228,7 @@ export class Organisation {
           starts_at: localInput(item.starts_at),
           ends_at: item.ends_at ? localInput(item.ends_at) : '',
           location: item.location,
+          category: item.category ?? 'sonstiges',
         });
       else
         this.form.patchValue({
@@ -280,19 +236,20 @@ export class Organisation {
           due_time: item.due_time?.slice(0, 5) || '',
           priority: item.priority,
           status: item.status,
+          project: item.project ?? '',
         });
     }
   }
-  openToday(item: TodayItem) {
-    const entry =
-      item.kind === 'event'
-        ? this.events().find((e) => e.id === item.id)
-        : this.tasks().find((t) => t.id === item.id);
-    if (entry) this.open(item.kind, entry);
+
+  newEventOn(day: string) {
+    this.selectedDay.set(day);
+    this.open('event', undefined, false, day);
   }
+
   close() {
     if (!this.saving()) this.editor.set(null);
   }
+
   save() {
     if (this.saving()) return;
     this.form.markAllAsTouched();
@@ -318,6 +275,7 @@ export class Organisation {
               title: v.title.trim(),
               description: v.description,
               location: v.location,
+              category: v.category as PersonalEvent['category'],
               starts_at: new Date(v.starts_at).toISOString(),
               ends_at: v.ends_at ? new Date(v.ends_at).toISOString() : null,
             },
@@ -331,6 +289,7 @@ export class Organisation {
               due_time: v.due_time || null,
               priority: v.priority as PersonalTask['priority'],
               status: v.status as PersonalTask['status'],
+              project: v.project.trim(),
             },
             this.editId(),
           );
@@ -342,17 +301,19 @@ export class Organisation {
       },
       error: () => {
         this.saving.set(false);
-        this.formError.set(
-          'Speichern fehlgeschlagen. Bitte prüfe deine Angaben und versuche es erneut.',
-        );
+        this.formError.set('Speichern fehlgeschlagen. Bitte prüfe deine Angaben und versuche es erneut.');
       },
     });
   }
+
   toggle(task: PersonalTask) {
     if (this.saving()) return;
     this.saving.set(true);
+    // Sofort sichtbar abhaken; bei einem Fehler springt die Zeile zurück.
+    const next: PersonalTask['status'] = task.status === 'DONE' ? 'OPEN' : 'DONE';
+    this.tasks.update((list) => list.map((t) => (t.id === task.id ? { ...t, status: next } : t)));
     this.api
-      .saveTask({ status: task.status === 'DONE' ? 'OPEN' : 'DONE' }, task.id)
+      .saveTask({ status: next }, task.id)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: () => {
@@ -361,10 +322,12 @@ export class Organisation {
         },
         error: () => {
           this.saving.set(false);
+          this.tasks.update((list) => list.map((t) => (t.id === task.id ? task : t)));
           this.error.set('Der Aufgabenstatus konnte nicht gespeichert werden.');
         },
       });
   }
+
   remove() {
     const id = this.editId(),
       kind = this.editor();
@@ -385,7 +348,72 @@ export class Organisation {
         },
       });
   }
-  isOverdue(task: PersonalTask) {
-    return task.status !== 'DONE' && !!task.due_date && task.due_date < localDay(new Date());
+
+  // ---------- Notizen ----------
+  readonly noteOpen = signal(false);
+  readonly noteId = signal<number | undefined>(undefined);
+  readonly noteTitle = signal('');
+  readonly noteBody = signal('');
+  readonly notePinned = signal(false);
+  readonly noteError = signal('');
+
+  openNote(note?: PersonalNote) {
+    this.noteId.set(note?.id);
+    this.noteTitle.set(note?.title ?? '');
+    this.noteBody.set(note?.body ?? '');
+    this.notePinned.set(note?.pinned ?? false);
+    this.noteError.set('');
+    this.noteOpen.set(true);
+  }
+
+  saveNote() {
+    if (this.saving()) return;
+    const title = this.noteTitle().trim();
+    if (!title) {
+      this.noteError.set('Bitte gib einen Titel ein.');
+      return;
+    }
+    this.saving.set(true);
+    this.api
+      .saveNote({ title, body: this.noteBody().trim(), pinned: this.notePinned() }, this.noteId())
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.noteOpen.set(false);
+          this.load();
+        },
+        error: () => {
+          this.saving.set(false);
+          this.noteError.set('Speichern fehlgeschlagen. Bitte versuche es erneut.');
+        },
+      });
+  }
+
+  togglePin(note: PersonalNote) {
+    this.api
+      .saveNote({ title: note.title, body: note.body, pinned: !note.pinned }, note.id)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({ next: () => this.load(), error: () => this.error.set('Die Notiz konnte nicht gespeichert werden.') });
+  }
+
+  removeNote() {
+    const id = this.noteId();
+    if (!id || this.saving()) return;
+    this.saving.set(true);
+    this.api
+      .removeNote(id)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.noteOpen.set(false);
+          this.load();
+        },
+        error: () => {
+          this.saving.set(false);
+          this.noteError.set('Löschen fehlgeschlagen. Bitte versuche es erneut.');
+        },
+      });
   }
 }

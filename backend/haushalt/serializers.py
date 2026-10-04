@@ -8,7 +8,7 @@ from rest_framework import serializers
 from core.models import HouseholdMembership
 from finanzen.models import Category
 from haushalt import services
-from haushalt.models import FolderEntry, ItemMemory, Section, ShoppingItem, Task
+from haushalt.models import FolderEntry, ItemMemory, Section, ShoppingItem, ShoppingList, Task
 
 # Wie in finanzen/serializers.py: deutlich unter dem technisch Möglichen,
 # fängt Tippfehler (eine Null zu viel) ab.
@@ -42,8 +42,52 @@ def _clean_name(value: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+class _HouseholdListField(serializers.PrimaryKeyRelatedField):
+    """Eine Einkaufsliste aus dem Haushalt der anfragenden Person — eine
+    fremde Listen-ID ist schlicht „nicht gefunden“ (IDOR-Schutz)."""
+
+    def get_queryset(self):
+        membership = services.membership_for(self.context['request'].user)
+        if membership is None:
+            return ShoppingList.objects.none()
+        return ShoppingList.objects.filter(household=membership.household)
+
+
+class ShoppingListSerializer(serializers.ModelSerializer):
+    item_count = serializers.IntegerField(read_only=True, default=0)
+    checked_count = serializers.IntegerField(read_only=True, default=0)
+    created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ShoppingList
+        fields = [
+            'id',
+            'name',
+            'description',
+            'icon',
+            'item_count',
+            'checked_count',
+            'created_at',
+            'updated_at',
+            'created_by_name',
+        ]
+        read_only_fields = ['id', 'item_count', 'checked_count', 'created_at', 'updated_at', 'created_by_name']
+        extra_kwargs = {'description': {'required': False, 'allow_blank': True}, 'icon': {'required': False}}
+
+    def get_created_by_name(self, obj) -> str | None:
+        return _display_name(obj.created_by)
+
+    def validate_name(self, value):
+        return _clean_name(value)
+
+    def validate_description(self, value):
+        return value.strip()
+
+
 class ShoppingItemSerializer(serializers.ModelSerializer):
     section = serializers.ChoiceField(choices=Section.choices, required=False)
+    # Optional: ohne Angabe landet ein neuer Eintrag auf der Standardliste.
+    shopping_list = _HouseholdListField(required=False)
     checked_by_name = serializers.SerializerMethodField()
     added_by_name = serializers.SerializerMethodField()
 
@@ -54,6 +98,7 @@ class ShoppingItemSerializer(serializers.ModelSerializer):
         # aus dem Haushalt der anfragenden Person bestimmt.
         fields = [
             'id',
+            'shopping_list',
             'name',
             'quantity',
             'section',
@@ -90,6 +135,8 @@ class CompleteShoppingSerializer(serializers.Serializer):
     category_id = serializers.PrimaryKeyRelatedField(
         source='category', queryset=Category.objects.all(), required=False, allow_null=True
     )
+    # Welche Liste abgeschlossen wird; ohne Angabe die Standardliste.
+    shopping_list = _HouseholdListField(required=False, allow_null=True)
 
     def validate_amount(self, value):
         if value is None:
@@ -141,6 +188,7 @@ class TaskSerializer(serializers.ModelSerializer):
     is_overdue = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     recurrence = serializers.ChoiceField(choices=['daily', 'weekly', 'monthly'], required=False, allow_null=True)
+    streak = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
@@ -157,14 +205,21 @@ class TaskSerializer(serializers.ModelSerializer):
             'recurrence_days',
             'recurrence_months',
             'effort',
+            'room',
+            'duration_minutes',
+            'priority',
             'rotate',
             'rotation_member_ids',
+            'is_paused',
+            'streak',
             'is_done',
             'is_overdue',
             'last_done_at',
             'last_done_by_name',
         ]
-        read_only_fields = ['id', 'is_done', 'last_done_at', 'last_done_by_name', 'assigned_to_name', 'is_overdue']
+        read_only_fields = [
+            'id', 'is_done', 'last_done_at', 'last_done_by_name', 'assigned_to_name', 'is_overdue', 'streak'
+        ]
         extra_kwargs = {'description': {'required': False, 'allow_blank': True}}
 
     def get_assigned_to_name(self, obj) -> str | None:
@@ -179,11 +234,23 @@ class TaskSerializer(serializers.ModelSerializer):
     def get_status(self, obj) -> str:
         return 'done' if obj.is_done else 'open'
 
+    def get_streak(self, obj) -> int | None:
+        """Serie einer Routine in ihrem Rhythmus (Tage, Wochen, Monate);
+        None für einmalige Aufgaben."""
+        if not (obj.recurrence_days or obj.recurrence_months):
+            return None
+        return services.routine_streak(obj, services.completion_days(obj))
+
     def validate_title(self, value):
         return _clean_name(value)
 
     def validate_description(self, value):
         return value.strip()
+
+    def validate_duration_minutes(self, value):
+        if value is not None and not 1 <= value <= 600:
+            raise serializers.ValidationError('Die Dauer muss zwischen 1 und 600 Minuten liegen.')
+        return value
 
     def validate_recurrence_months(self, value):
         if value is not None and not 1 <= value <= 12:
@@ -225,6 +292,20 @@ class TaskSerializer(serializers.ModelSerializer):
         recurrence = current('recurrence_days') or current('recurrence_months')
         rotate = current('rotate', False)
         rotation = current('rotation_members', [])
+
+        if current('is_paused', False) and not recurrence:
+            raise serializers.ValidationError({'is_paused': 'Pausieren geht nur bei wiederkehrenden Aufgaben.'})
+        if (
+            attrs.get('is_paused') is False
+            and self.instance is not None
+            and self.instance.is_paused
+            and 'due_date' not in attrs
+            and self.instance.due_date is not None
+            and self.instance.due_date < timezone.localdate()
+        ):
+            # Fortsetzen nach einer Pause: ab heute weiter, nicht als
+            # wochenlang überfällige Routine.
+            attrs['due_date'] = timezone.localdate()
 
         if recurrence and current('due_date') is None:
             # Wiederkehrende Aufgaben brauchen einen Startpunkt — ohne Angabe
@@ -271,6 +352,9 @@ class FolderEntrySerializer(serializers.ModelSerializer):
             'warranty_until',
             'maintenance_interval_months',
             'next_maintenance',
+            'last_maintenance',
+            'model',
+            'room',
             'deadlines',
         ]
         read_only_fields = ['id', 'cancel_by', 'deadlines']
@@ -298,6 +382,14 @@ class FolderEntrySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Die Kündigungsfrist darf höchstens 36 Monate betragen.')
         return value
 
+    def validate_model(self, value):
+        return value.strip()
+
+    def validate_last_maintenance(self, value):
+        if value is not None and value > timezone.localdate():
+            raise serializers.ValidationError('Die letzte Wartung kann nicht in der Zukunft liegen.')
+        return value
+
     def validate_maintenance_interval_months(self, value):
         if value is not None and not 1 <= value <= 120:
             raise serializers.ValidationError('Das Wartungsintervall muss zwischen 1 und 120 Monaten liegen.')
@@ -311,7 +403,15 @@ class FolderEntrySerializer(serializers.ModelSerializer):
         # Felder der jeweils anderen Art werden verworfen, statt stillschweigend
         # gespeichert zu werden (ein Gerät hat keine Kündigungsfrist).
         contract_fields = ('monthly_cost', 'contract_end', 'notice_period_months')
-        device_fields = ('purchase_date', 'warranty_until', 'maintenance_interval_months', 'next_maintenance')
+        device_fields = (
+            'purchase_date',
+            'warranty_until',
+            'maintenance_interval_months',
+            'next_maintenance',
+            'last_maintenance',
+            'model',
+            'room',
+        )
         foreign = device_fields if kind == FolderEntry.Kind.CONTRACT else contract_fields
         for field in foreign:
             attrs.pop(field, None)

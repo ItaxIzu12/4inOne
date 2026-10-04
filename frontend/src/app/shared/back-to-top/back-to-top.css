@@ -34,6 +34,21 @@
   border-color: var(--accent);
 }
 
+/* Handy: über der unteren Navigation (app-shell .mobile-nav, ab 760 px abwärts). */
+@media (max-width: 760px) {
+  .back-to-top {
+    right: 16px;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.back-to-top:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .back-to-top { transition: opacity 0.01ms linear; }
 }

@@ -1,8 +1,11 @@
-from django.db.models import F, Q
+from datetime import timedelta
+from decimal import Decimal
+
+from django.db.models import Count, F, Prefetch, Q
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,12 +13,13 @@ from rest_framework.viewsets import ModelViewSet
 
 from core.permissions import HouseholdScopedPermission
 from haushalt import services
-from haushalt.models import FolderEntry, Section, ShoppingItem, Task
+from haushalt.models import FolderEntry, Section, ShoppingItem, ShoppingList, Task, TaskCompletion
 from haushalt.serializers import (
     CompleteShoppingSerializer,
     FolderEntrySerializer,
     ItemMemorySerializer,
     ShoppingItemSerializer,
+    ShoppingListSerializer,
     TaskSerializer,
 )
 from haushalt.throttling import HaushaltWriteRateThrottle
@@ -64,11 +68,18 @@ class ShoppingOverviewView(APIView):
     def get(self, request):
         membership = _require_membership(request)
         household = membership.household
-        shopping_list = services.active_shopping_list(household)
+        # ?liste=<id> wählt eine Liste des eigenen Haushalts, ohne Angabe die
+        # Standardliste. Eine fremde ID ist 404 — nicht „leer“.
+        shopping_list = services.shopping_list_for(household, request.query_params.get('liste'))
+        if shopping_list is None:
+            raise NotFound('Diese Einkaufsliste gibt es nicht.')
         items = services.sort_items(shopping_list.items.select_related('checked_by', 'added_by'))
         per_item, from_history = services.price_per_item(household)
+        list_row = _lists_with_counts(household).get(pk=shopping_list.pk)
         return Response(
             {
+                'list': ShoppingListSerializer(list_row).data,
+                'members': services.list_members(household, shopping_list),
                 'items': ShoppingItemSerializer(items, many=True).data,
                 'suggestions': ItemMemorySerializer(services.suggestions(household, shopping_list), many=True).data,
                 'sections': [{'key': choice.value, 'label': choice.label} for choice in Section],
@@ -77,6 +88,51 @@ class ShoppingOverviewView(APIView):
                 'can_book_expense': not services.is_child_account(membership),
             }
         )
+
+
+def _lists_with_counts(household):
+    return (
+        ShoppingList.objects.filter(household=household)
+        .select_related('created_by')
+        .annotate(item_count=Count('items'), checked_count=Count('items', filter=Q(items__is_checked=True)))
+        .order_by('id')
+    )
+
+
+class ShoppingListViewSet(_WriteThrottleMixin, ModelViewSet):
+    """Mehrere Einkaufslisten pro Haushalt (Wocheneinkauf, Drogerie …), jede
+    mit Zahl der Einträge und der abgehakten. Die letzte Liste lässt sich
+    nicht löschen — es gibt immer eine Standardliste."""
+
+    serializer_class = ShoppingListSerializer
+    permission_classes = [IsAuthenticated, HouseholdScopedPermission]
+    household_field = 'household'
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+
+    def get_queryset(self):
+        membership = services.membership_for(self.request.user)
+        if membership is None:
+            return ShoppingList.objects.none()
+        # Beim ersten Aufruf gibt es die Standardliste noch nicht.
+        services.active_shopping_list(membership.household)
+        return _lists_with_counts(membership.household)
+
+    def perform_create(self, serializer):
+        household = _require_membership(self.request).household
+        # Die Standardliste (älteste) muss es vorher geben, sonst würde die
+        # erste selbst angelegte Liste ungewollt zur Standardliste.
+        services.active_shopping_list(household)
+        if ShoppingList.objects.filter(household=household).count() >= services.MAX_SHOPPING_LISTS:
+            raise ValidationError(f'Maximal {services.MAX_SHOPPING_LISTS} Einkaufslisten pro Haushalt.')
+        serializer.save(household=household, created_by=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save(updated_at=timezone.now())
+
+    def perform_destroy(self, instance):
+        if ShoppingList.objects.filter(household=instance.household).count() <= 1:
+            raise ValidationError('Die letzte Einkaufsliste kann nicht gelöscht werden.')
+        instance.delete()
 
 
 class ShoppingItemViewSet(_WriteThrottleMixin, ModelViewSet):
@@ -92,7 +148,9 @@ class ShoppingItemViewSet(_WriteThrottleMixin, ModelViewSet):
 
     def perform_create(self, serializer):
         household = _require_membership(self.request).household
-        shopping_list = services.active_shopping_list(household)
+        shopping_list = serializer.validated_data.pop('shopping_list', None) or services.active_shopping_list(
+            household
+        )
         if shopping_list.items.filter(is_checked=False).count() >= services.MAX_OPEN_ITEMS:
             raise ValidationError(f'Maximal {services.MAX_OPEN_ITEMS} offene Einträge pro Liste.')
         name = serializer.validated_data['name']
@@ -105,10 +163,12 @@ class ShoppingItemViewSet(_WriteThrottleMixin, ModelViewSet):
                 existing.quantity = quantity
                 existing.save(update_fields=['quantity'])
             serializer.instance = existing
+            services.touch_list(shopping_list)
             return
         section = serializer.validated_data.get('section') or services.guess_section(household, name)
         serializer.save(shopping_list=shopping_list, added_by=self.request.user, section=section)
         services.remember_item(household, name, section)
+        services.touch_list(shopping_list)
 
     def perform_update(self, serializer):
         checked = serializer.validated_data.pop('is_checked', None)
@@ -117,6 +177,12 @@ class ShoppingItemViewSet(_WriteThrottleMixin, ModelViewSet):
             services.set_item_checked(item, checked, self.request.user)
         if 'section' in serializer.validated_data:
             services.update_memory_section(item.shopping_list.household, item.name, item.section)
+        services.touch_list(item.shopping_list)
+
+    def perform_destroy(self, instance):
+        shopping_list = instance.shopping_list
+        instance.delete()
+        services.touch_list(shopping_list)
 
     @action(detail=False, methods=['post'], url_path='abschliessen')
     def complete(self, request):
@@ -130,7 +196,11 @@ class ShoppingItemViewSet(_WriteThrottleMixin, ModelViewSet):
             raise PermissionDenied('Kind-Konten können keine Ausgaben buchen.')
         try:
             trip, _ = services.complete_shopping(
-                membership.household, request.user, amount, serializer.validated_data.get('category')
+                membership.household,
+                request.user,
+                amount,
+                serializer.validated_data.get('category'),
+                serializer.validated_data.get('shopping_list'),
             )
         except ValueError as error:
             raise ValidationError(str(error)) from error
@@ -160,9 +230,18 @@ class TaskViewSet(_WriteThrottleMixin, ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
+        since = timezone.now() - timedelta(days=services.STREAK_LOOKBACK_DAYS)
         queryset = (
             Task.objects.select_related('assigned_to', 'last_done_by', 'household')
-            .prefetch_related('rotation_members')
+            .prefetch_related(
+                'rotation_members',
+                # Für die Serie (TaskSerializer.streak) in einem Rutsch statt pro Aufgabe.
+                Prefetch(
+                    'completions',
+                    queryset=TaskCompletion.objects.filter(done_at__gte=since).only('task_id', 'done_at'),
+                    to_attr='recent_completions',
+                ),
+            )
             .filter(household__members=self.request.user)
         )
         if self.action != 'list':
@@ -187,6 +266,8 @@ class TaskViewSet(_WriteThrottleMixin, ModelViewSet):
         task = self.get_object()
         if task.is_done:
             raise ValidationError('Diese Aufgabe ist bereits erledigt.')
+        if task.is_paused:
+            raise ValidationError('Diese Routine ist pausiert. Bitte erst fortsetzen.')
         return Response(self.get_serializer(services.complete_task(task, request.user)).data)
 
     @action(detail=True, methods=['post'], url_path='wieder-oeffnen')
@@ -218,11 +299,14 @@ class HaushaltOverviewView(APIView):
                     'open_shopping_items': 0,
                     'devices': 0,
                     'device_list': [],
+                    'contracts': 0,
+                    'contracts_monthly': '0.00',
+                    'contract_list': [],
                 }
             )
         household = membership.household
         today = timezone.localdate()
-        open_tasks = Task.objects.filter(household=household, is_done=False)
+        open_tasks = Task.objects.filter(household=household, is_done=False, is_paused=False)
         due = (
             open_tasks.filter(due_date__lte=today)
             .select_related('assigned_to', 'last_done_by', 'household')
@@ -236,7 +320,26 @@ class HaushaltOverviewView(APIView):
             .order_by(F('due_date').asc(nulls_last=True), F('due_time').asc(nulls_last=True), 'id')[: self.LIMIT]
         )
         devices = []
+        contracts = []
+        contracts_monthly = Decimal('0')
+        contract_count = 0
         if not services.is_child_account(membership):
+            # Verträge mit der nächsten Kündigungsfrist zuerst, ohne Frist zuletzt.
+            rows = list(FolderEntry.objects.filter(household=household, kind=FolderEntry.Kind.CONTRACT))
+            contract_count = len(rows)
+            contracts_monthly = sum((e.monthly_cost or Decimal('0') for e in rows), Decimal('0'))
+            rows.sort(key=lambda e: (services.cancel_by(e) is None, services.cancel_by(e) or today, e.name.lower()))
+            contracts = [
+                {
+                    'id': entry.id,
+                    'name': entry.name,
+                    'provider': entry.provider,
+                    'monthly_cost': str(entry.monthly_cost) if entry.monthly_cost is not None else None,
+                    'cancel_by': services.cancel_by(entry),
+                    'notice_period_months': entry.notice_period_months,
+                }
+                for entry in rows[: self.LIMIT]
+            ]
             devices = [
                 {
                     'id': entry.id,
@@ -256,6 +359,9 @@ class HaushaltOverviewView(APIView):
                 'today': TaskSerializer(due, many=True, context={'request': request}).data,
                 'upcoming': TaskSerializer(upcoming, many=True, context={'request': request}).data,
                 'device_list': devices,
+                'contracts': contract_count,
+                'contracts_monthly': f'{contracts_monthly:.2f}',
+                'contract_list': contracts,
                 'open_shopping_items': ShoppingItem.objects.filter(
                     shopping_list__household=household, is_checked=False
                 ).count(),
@@ -264,6 +370,27 @@ class HaushaltOverviewView(APIView):
                 else FolderEntry.objects.filter(household=household, kind=FolderEntry.Kind.DEVICE).count(),
             }
         )
+
+
+class TaskWeekView(APIView):
+    """Kennzahlen für „Aufgaben im Überblick“: erledigt diese Woche (Mo–So) und
+    in der Vorwoche, offene Aufgaben gesamt und die der anfragenden Person."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        household = _require_membership(request).household
+        return Response(services.week_stats(household, request.user))
+
+
+class RoutineStatsView(APIView):
+    """Erledigungsrate der aktiven Routinen in den letzten vier Wochen."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        household = _require_membership(request).household
+        return Response(services.routine_stats(household))
 
 
 class TaskLoadView(APIView):

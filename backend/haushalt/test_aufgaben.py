@@ -126,3 +126,61 @@ def test_open_task_limit_per_household(anna, household, client_for, monkeypatch)
     assert client.post(URL, {'title': 'Eins'}, format='json').status_code == 201
     assert client.post(URL, {'title': 'Zwei'}, format='json').status_code == 201
     assert client.post(URL, {'title': 'Drei'}, format='json').status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# Raum, Dauer, Priorität und Wochenzahlen (Aufgaben-Reiter nach Entwurf)
+# ---------------------------------------------------------------------------
+
+WEEK = '/api/v1/haushalt/aufgaben/woche/'
+
+
+def test_task_keeps_room_duration_and_priority(anna, client_for):
+    client = client_for(anna)
+    created = client.post(
+        URL, {'title': 'Küche aufräumen', 'room': 'kueche', 'duration_minutes': 10, 'priority': 'hoch'}, format='json'
+    )
+    assert created.status_code == 201, created.data
+    assert (created.data['room'], created.data['duration_minutes'], created.data['priority']) == ('kueche', 10, 'hoch')
+
+    plain = client.post(URL, {'title': 'Ohne Angaben'}, format='json').data
+    assert (plain['room'], plain['duration_minutes'], plain['priority']) == ('', None, 'mittel')
+
+    changed = client.patch(f'{URL}{created.data["id"]}/', {'room': '', 'duration_minutes': None}, format='json')
+    assert changed.status_code == 200
+    assert (changed.data['room'], changed.data['duration_minutes']) == ('', None)
+
+
+@pytest.mark.parametrize(
+    'payload',
+    [{'room': 'keller'}, {'priority': 'dringend'}, {'duration_minutes': 0}, {'duration_minutes': 601}],
+)
+def test_invalid_room_priority_or_duration_is_rejected(anna, client_for, payload):
+    response = client_for(anna).post(URL, {'title': 'X', **payload}, format='json')
+    assert response.status_code == 400
+
+
+def test_week_stats_count_completions_and_my_tasks(anna, ben, household, client_for):
+    client = client_for(anna)
+    mine = client.post(URL, {'title': 'Meins', 'assigned_to': anna.id}, format='json').data
+    client.post(URL, {'title': 'Bens', 'assigned_to': ben.id}, format='json')
+    client.post(URL, {'title': 'Für alle'}, format='json')
+    client.post(f'{URL}{mine["id"]}/erledigt/')
+    # Eine Erledigung aus der Vorwoche
+    TaskCompletion.objects.create(
+        household=household, title='Alt', done_by=anna, effort=1, done_at=timezone.now() - timedelta(days=7)
+    )
+
+    data = client.get(WEEK).data
+
+    assert data == {'done_this_week': 1, 'done_last_week': 1, 'open_total': 2, 'assigned_to_me': 0}
+    assert client_for(ben).get(WEEK).data['assigned_to_me'] == 1
+
+
+def test_week_stats_only_see_the_own_household(anna, fremd, client_for):
+    foreign = client_for(fremd)
+    task = foreign.post(URL, {'title': 'Fremd', 'assigned_to': fremd.id}, format='json').data
+    foreign.post(f'{URL}{task["id"]}/erledigt/')
+
+    data = client_for(anna).get(WEEK).data
+    assert data['done_this_week'] == 0 and data['open_total'] == 0

@@ -13,6 +13,7 @@ import {
 function item(id: number, name: string, section: ShoppingItemDto['section'], checked = false): ShoppingItemDto {
   return {
     id,
+    shopping_list: 1,
     name,
     quantity: '',
     section,

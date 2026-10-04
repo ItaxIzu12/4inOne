@@ -1,0 +1,526 @@
+// Routinen nach Entwurf: Kennzahlen (haushalt-stats.scss), Chips und
+// Sortierung, Gruppen-Tabellen mit Status-Schalter; mobil kompakte Zeilen.
+.stat--static {
+  cursor: default;
+}
+
+// ---------- Überschrift (nur Handy) ----------
+.list-head {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0 12px;
+}
+.list-head h2 {
+  font-size: 19px;
+}
+.round-add {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  cursor: pointer;
+}
+.round-add app-icon {
+  width: 22px;
+  height: 22px;
+}
+
+// ---------- Chips und Sortierung ----------
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 24px 0 16px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.chip:hover {
+  border-color: #f2cadd;
+  color: var(--text);
+}
+.chip.is-active {
+  border-color: #f6c6d6;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+.chip app-icon {
+  width: 14px;
+  height: 14px;
+}
+.sort {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.sort app-select {
+  min-width: 150px;
+}
+
+// ---------- Gruppen ----------
+// Spalten: Symbol | Routine | Rhythmus | Fälligkeit | Verantwortlich | Serie | Status | Menü
+.group__head,
+.row {
+  display: grid;
+  grid-template-columns: 44px minmax(170px, 1.7fr) minmax(96px, 0.9fr) minmax(110px, 1fr) minmax(120px, 1fr) minmax(86px, 0.7fr) 60px 40px;
+  align-items: center;
+  column-gap: 14px;
+}
+.group {
+  margin-bottom: 16px;
+}
+.group__head {
+  min-height: 48px;
+  padding: 0 16px;
+}
+.group__toggle {
+  grid-column: 1 / 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.group__toggle h3 {
+  font-size: 17px;
+  font-weight: 700;
+}
+.group__count {
+  margin-left: 4px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.group__icon {
+  width: 24px;
+  height: 24px;
+}
+.group__short,
+.group__chevron {
+  display: none;
+}
+.col {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.row {
+  min-height: 64px;
+  padding: 8px 16px;
+}
+.row + .row {
+  border-top: 1px solid #eef0f4;
+}
+.row__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fafbfc;
+  color: #3d4a63;
+}
+.row__icon app-icon {
+  width: 21px;
+  height: 21px;
+}
+.row__title,
+.row__rhythm,
+.row__due {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.title-text {
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+small {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.row__meta {
+  display: none;
+}
+.row__rhythm span,
+.due-main {
+  font-size: 14px;
+}
+.due-main.is-paused {
+  color: var(--text-muted);
+}
+.badge {
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.badge--today {
+  background: #fde7ee;
+  color: #b0204f;
+}
+.badge--late {
+  background: #fde2e2;
+  color: #a4161a;
+}
+.row__who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 14px;
+}
+.who-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+.avatar--blue {
+  background: #e6eefc;
+  color: #2a5bb8;
+}
+.avatar--rose {
+  background: #fde7ee;
+  color: #b0204f;
+}
+.avatar--all {
+  background: #eef0f5;
+  color: #5b6577;
+}
+.avatar app-icon {
+  width: 17px;
+  height: 17px;
+}
+.row__streak {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.row__streak app-icon {
+  width: 17px;
+  height: 17px;
+  color: #e8590c;
+}
+.muted-dash {
+  color: var(--text-muted);
+}
+
+// Schalter: aktiv = rosé, pausiert = grau
+.switch {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #cfd4dc;
+  cursor: pointer;
+}
+.switch[aria-checked='true'] {
+  background: var(--accent);
+}
+.switch__knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px #0003;
+}
+.switch[aria-checked='true'] .switch__knob {
+  transform: translateX(18px);
+}
+.switch:disabled {
+  opacity: 0.6;
+}
+.switch:focus-visible,
+.chip:focus-visible,
+.round-add:focus-visible,
+.group__toggle:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+// Pausiert: gedämpft, aber mit ausreichendem Kontrast (keine Transparenz auf Text)
+.row--paused .row__icon {
+  opacity: 0.5;
+}
+.row--paused .title-text,
+.row--paused .row__rhythm,
+.row--paused .row__who,
+.row--paused .row__streak {
+  color: var(--text-muted);
+}
+.row--paused .avatar {
+  background: #eef0f5;
+  color: #4b5567;
+}
+
+.empty {
+  padding: 28px 20px;
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  text-align: center;
+}
+.empty .btn-primary {
+  margin-top: 12px;
+}
+.field-error {
+  margin: 0 0 12px;
+}
+
+// ---------- Wer macht wie viel? ----------
+.load {
+  margin-top: 8px;
+}
+.load__head h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.load__head h2 app-icon {
+  width: 22px;
+  height: 22px;
+}
+.load__head p {
+  margin: 4px 0 12px;
+}
+.load-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.load-list li {
+  display: grid;
+  grid-template-columns: 32px minmax(70px, 140px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+.load-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #f1f2f5;
+  overflow: hidden;
+}
+.load-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+.load__points {
+  white-space: nowrap;
+}
+
+// ---------- Responsiv ----------
+@media (max-width: 1280px) {
+  .group__head,
+  .row {
+    grid-template-columns: 44px minmax(160px, 1.8fr) minmax(110px, 1fr) minmax(110px, 1fr) minmax(80px, 0.7fr) 60px 40px;
+  }
+  .col--rhythm,
+  .row__rhythm {
+    display: none;
+  }
+}
+@media (max-width: 1000px) {
+  .group__head,
+  .row {
+    grid-template-columns: 44px minmax(150px, 1.8fr) minmax(104px, 1fr) 40px minmax(76px, 0.7fr) 56px 40px;
+  }
+  .who-name {
+    display: none;
+  }
+  .col--who {
+    font-size: 0;
+  }
+  .toolbar {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 760px) {
+  .list-head {
+    display: flex;
+  }
+  .toolbar {
+    margin-top: 0;
+  }
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -16px;
+    padding: 0 16px 2px;
+  }
+  .chip {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+  .sort {
+    display: none;
+  }
+  .group__head {
+    display: flex;
+    padding: 0 4px;
+  }
+  .col {
+    display: none;
+  }
+  .group__toggle {
+    flex: 1;
+  }
+  .group__long {
+    display: none;
+  }
+  .group__short {
+    display: inline;
+  }
+  .group__chevron {
+    display: block;
+    width: 20px;
+    height: 20px;
+    margin-left: auto;
+    color: var(--text-muted);
+  }
+  // Symbol | Titel + Rhythmus | Fälligkeit über Serie | Schalter | Menü
+  .row {
+    grid-template-columns: 36px minmax(0, 1fr) auto 44px 28px;
+    grid-template-areas:
+      'icon title due status menu'
+      'icon title streak status menu';
+    column-gap: 10px;
+    row-gap: 2px;
+    padding: 10px 12px;
+  }
+  .row__icon {
+    grid-area: icon;
+    width: 36px;
+    height: 36px;
+  }
+  .row__title {
+    grid-area: title;
+  }
+  .row__desc,
+  .row__who,
+  .row__due small {
+    display: none;
+  }
+  .row__meta {
+    display: block;
+  }
+  .row__due {
+    grid-area: due;
+    justify-items: end;
+  }
+  .badge {
+    justify-self: end;
+  }
+  .due-main {
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .title-text {
+    font-size: 14px;
+  }
+  .row__meta {
+    font-size: 12px;
+  }
+  .badge {
+    font-size: 11.5px;
+  }
+  .row__streak {
+    grid-area: streak;
+    justify-content: flex-end;
+    font-size: 12.5px;
+  }
+  .row__streak app-icon {
+    width: 14px;
+    height: 14px;
+  }
+  .row__status {
+    grid-area: status;
+  }
+  .row__menu {
+    grid-area: menu;
+  }
+  .load-list li {
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+  }
+  .load-track {
+    grid-column: 2 / 4;
+    grid-row: 2;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .switch,
+  .switch__knob,
+  .chip {
+    transition:
+      background-color 160ms ease-out,
+      transform 160ms ease-out,
+      border-color 160ms ease-out;
+  }
+}

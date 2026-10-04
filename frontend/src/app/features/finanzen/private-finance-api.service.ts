@@ -6,7 +6,17 @@ export interface FinanceCategory {
   name: string;
   /** Feste Farbe der Kategorie (backend finanzen/category_colors.py), nie nach Listenposition. */
   color: string;
+  /** Monatslimit der Kategorie („Kategorie-Budgets“); null = kein Limit. */
+  monthly_goal?: string | null;
 }
+export interface CategoryPayload {
+  name: string;
+  monthly_goal: string | null;
+}
+/** Auffang-Kategorie: nicht lösch- oder umbenennbar (backend private_api.FALLBACK_CATEGORY). */
+export const FALLBACK_CATEGORY = 'Sonstiges';
+/** Wie backend private_api.MAX_CATEGORY_NAME. */
+export const MAX_CATEGORY_NAME = 40;
 export interface FinanceTransaction {
   id: number;
   amount: string;
@@ -15,6 +25,16 @@ export interface FinanceTransaction {
   date: string;
   note: string;
   currency: string;
+  /** Kommt jeden Monat wieder (Miete, Gehalt, Abo) — nur eine Markierung, es wird nichts automatisch gebucht. */
+  recurring?: boolean;
+}
+/** Eine Einzahlung (oder Entnahme, negativ) in ein Sparziel — GET goals/einzahlungen/. */
+export interface SavingsContributionDto {
+  id: number;
+  goal: number;
+  goal_title: string;
+  amount: string;
+  date: string;
 }
 export interface FinanceBudget {
   id: number;
@@ -185,6 +205,26 @@ export class PrivateFinanceApi {
     return id
       ? this.http.patch(`${this.base}/${resource}/${id}/`, payload)
       : this.http.post(`${this.base}/${resource}/`, payload);
+  }
+  /** Die letzten Einzahlungen in die eigenen Sparziele, neueste zuerst. */
+  contributions() {
+    return this.http.get<SavingsContributionDto[]>(`${this.base}/goals/einzahlungen/`);
+  }
+  /** Monatslimit einer Kategorie setzen (null = kein Limit). */
+  setCategoryLimit(id: number, monthlyGoal: string | null) {
+    return this.http.patch<FinanceCategory>(`${this.base}/categories/${id}/`, { monthly_goal: monthlyGoal });
+  }
+  /** Eigene Kategorie anlegen; die Farbe vergibt das Backend. */
+  createCategory(payload: CategoryPayload) {
+    return this.http.post<FinanceCategory>(`${this.base}/categories/`, payload);
+  }
+  /** Name und/oder Limit ändern — „Sonstiges“ behält seinen Namen. */
+  updateCategory(id: number, payload: Partial<CategoryPayload>) {
+    return this.http.patch<FinanceCategory>(`${this.base}/categories/${id}/`, payload);
+  }
+  /** Löschen; vorhandene Buchungen wandern im Backend nach „Sonstiges“. */
+  deleteCategory(id: number) {
+    return this.http.delete<void>(`${this.base}/categories/${id}/`);
   }
   /** Was hängt an diesem Budget? Buchungen/Sparziele in Monaten, die ohne es gar kein Budget mehr hätten. */
   budgetImpact(id: number) {

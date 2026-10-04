@@ -3,8 +3,8 @@ import { AmountInput } from '../../shared/directives/amount-input';
 import { afterNextRender, Injector, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DatePipe, NgComponentOutlet } from '@angular/common';
-import { forkJoin, of } from 'rxjs';
+import { DatePipe } from '@angular/common';
+import { catchError, forkJoin, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon } from '../../shared/icons/app-icon';
@@ -12,6 +12,32 @@ import { ConnectionsSection } from '../../shared/connections/connections-section
 import { AppDatePicker } from '../../shared/form/date-picker';
 import { BudgetYearOverview } from './budget-timeline';
 import { budgetBand, categoryVisual, daysLeftInMonth, groupByDay, shiftMonth, splitAmount } from './finance-overview';
+import {
+  axis,
+  categoryBudgets,
+  categoryIcon,
+  categorySlices,
+  dayLabel,
+  deltaEuro,
+  deltaLabel,
+  donut,
+  expenseSplit,
+  goalIcon,
+  goalNearlyDone,
+  goalOnTrack,
+  goalPercent,
+  incomeSources,
+  insights,
+  monthName,
+  monthTotal,
+  monthlyBars,
+  recurringItems,
+  savedInMonth,
+  shiftYm,
+  shortMonthYear,
+  sourceIcon,
+  weeklyBars,
+} from './finance-tabs';
 import { defaultDateInMonth, display } from '../../shared/form/date-utils';
 import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
@@ -24,6 +50,7 @@ import {
   FinanceBudget,
   SavingsGoal,
   FinanceSummary,
+  SavingsContributionDto,
   financeMonth,
   budgetCovers,
   budgetRange,
@@ -33,9 +60,19 @@ import {
   goalCovers,
   GoalPreview,
   euros,
+  MAX_CATEGORY_NAME,
   UNCATEGORISED_COLOR,
 } from './private-finance-api.service';
+import { CategoryManager } from './category-manager';
 type Resource = 'transactions' | 'budgets' | 'goals';
+export type FinanceTab = 'overview' | 'expenses' | 'income' | 'budgets' | 'goals';
+const FINANCE_TABS: { key: FinanceTab; label: string }[] = [
+  { key: 'overview', label: 'Übersicht' },
+  { key: 'expenses', label: 'Ausgaben' },
+  { key: 'income', label: 'Einnahmen' },
+  { key: 'budgets', label: 'Budgets' },
+  { key: 'goals', label: 'Sparziele' },
+];
 /** Die erste verständliche Fehlermeldung aus der API-Antwort (z. B. „gespart darf das Ziel nicht überschreiten“). */
 function apiMessage(body: unknown): string | null {
   if (!body || typeof body !== 'object') return null;
@@ -73,9 +110,10 @@ function payloadAmount(payload: object): string {
 @Component({
   selector: 'app-private-finance',
   standalone: true,
-  imports: [ErrorNoticeDirective, AmountInput, ReactiveFormsModule, DatePipe, NgComponentOutlet, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview],
+  imports: [ErrorNoticeDirective, AmountInput, ReactiveFormsModule, DatePipe, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview, CategoryManager],
   templateUrl: './private-finance.html',
-  styleUrl: './private-finance.scss',
+  // Abschnitte zuerst, damit die Handy-Regeln in private-finance.scss sie überschreiben.
+  styleUrls: ['./finance-sections.scss', './private-finance.scss'],
 })
 export class PrivateFinance {
   private api = inject(PrivateFinanceApi);
@@ -83,13 +121,17 @@ export class PrivateFinance {
   private destroy = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  readonly tab = signal('overview');
+  /** Reiter: Übersicht, Ausgaben, Einnahmen, Budgets, Sparziele. */
+  readonly tab = signal<FinanceTab>('overview');
+  readonly tabs = FINANCE_TABS;
   readonly month = signal(financeMonth());
   readonly summary = signal<FinanceSummary | null>(null);
   readonly categories = signal<FinanceCategory[]>([]);
   readonly transactions = signal<FinanceTransaction[]>([]);
   readonly budgets = signal<FinanceBudget[]>([]);
   readonly goals = signal<SavingsGoal[]>([]);
+  /** Einzahlungen in Sparziele (neueste zuerst) — „Gespart“, „Letzte Einzahlungen“, Monatsverlauf. */
+  readonly contributions = signal<SavingsContributionDto[]>([]);
   readonly loading = signal(true);
   /** Bestätigung nach Speichern/Löschen — mit dem neuen verfügbaren Betrag. */
   readonly notice = signal('');
@@ -153,6 +195,172 @@ export class PrivateFinance {
     this.band().map((seg) => `${seg.label} ${this.money(seg.amount.toFixed(2))}`).join(', '),
   );
   protected readonly Math = Math;
+
+  // ---------- Reiter: Kennzahlen und Diagramme (finance-tabs.ts) ----------
+  readonly prevMonth = computed(() => shiftYm(this.month(), -1));
+  readonly monthShort = computed(() => monthName(this.month()));
+  readonly incomeNow = computed(() => monthTotal(this.transactions(), this.month(), 'INCOME'));
+  readonly expenseNow = computed(() => monthTotal(this.transactions(), this.month(), 'EXPENSE'));
+  readonly incomeDelta = computed(() =>
+    deltaLabel(this.incomeNow(), monthTotal(this.transactions(), this.prevMonth(), 'INCOME'), this.prevMonth()),
+  );
+  readonly expenseDelta = computed(() =>
+    deltaLabel(this.expenseNow(), monthTotal(this.transactions(), this.prevMonth(), 'EXPENSE'), this.prevMonth()),
+  );
+  readonly savedNow = computed(() => savedInMonth(this.contributions(), this.month()));
+  readonly savedDelta = computed(() =>
+    deltaEuro(this.savedNow(), savedInMonth(this.contributions(), this.prevMonth()), this.prevMonth()),
+  );
+  readonly weeks = computed(() => weeklyBars(this.transactions(), this.contributions(), this.month()));
+  readonly weekAxis = computed(() => axis(Math.max(0, ...this.weeks().flatMap((w) => [w.income, w.expense, w.saved]))));
+  readonly incomeAxis = computed(() => axis(Math.max(0, ...this.weeks().map((w) => w.income))));
+  readonly expenseMonths = computed(() => monthlyBars(this.transactions(), this.month(), 'EXPENSE'));
+  readonly expenseMonthsAxis = computed(() => axis(Math.max(0, ...this.expenseMonths().map((m) => m.value))));
+  readonly expenseSlices = computed(() => categorySlices(this.transactions(), this.categories(), this.month()));
+  readonly expenseDonut = computed(() => donut(this.expenseSlices()));
+  readonly sources = computed(() => incomeSources(this.transactions(), this.categories(), this.month()));
+  readonly recurringExpenses = computed(() => recurringItems(this.transactions(), 'EXPENSE', this.month()));
+  readonly recurringIncome = computed(() => recurringItems(this.transactions(), 'INCOME', this.month()));
+  readonly split = computed(() => expenseSplit(this.transactions(), this.month()));
+  readonly fixedIncome = computed(() =>
+    this.transactions()
+      .filter((t) => t.type === 'INCOME' && t.recurring && t.date.startsWith(this.month()))
+      .reduce((sum, t) => sum + Number(t.amount), 0),
+  );
+  readonly prevIncome = computed(() => monthTotal(this.transactions(), this.prevMonth(), 'INCOME'));
+  readonly catBudgets = computed(() => categoryBudgets(this.transactions(), this.categories(), this.month()));
+  /** Budget-Nutzung: Anteile der Kategorien an allem Ausgegebenen. */
+  readonly usageDonut = computed(() => donut(this.expenseSlices()));
+  readonly spentShare = computed(() => this.percent(this.used(), this.summary()?.total));
+  readonly monthExpenses = computed(() =>
+    this.transactions().filter((t) => t.type === 'EXPENSE' && t.date.startsWith(this.month())).slice(0, 6),
+  );
+  readonly monthIncome = computed(() =>
+    this.transactions().filter((t) => t.type === 'INCOME' && t.date.startsWith(this.month())).slice(0, 5),
+  );
+  readonly activeGoals = computed(() => this.goals().filter((g) => g.status === 'ACTIVE'));
+  readonly goalsOnTrack = computed(() => this.activeGoals().filter((g) => goalOnTrack(g, this.month())).length);
+  readonly goalsNearlyDone = computed(() => this.activeGoals().filter(goalNearlyDone).length);
+  readonly plannedRate = computed(() =>
+    this.activeGoals().reduce((sum, g) => sum + Number(g.monthly_amount ?? 0), 0),
+  );
+  readonly hints = computed(() =>
+    insights({
+      month: this.month(),
+      budget: this.summary()?.total ? Number(this.summary()!.total) : null,
+      available: this.summary()?.available != null ? Number(this.summary()!.available) : null,
+      categoryBudgets: this.catBudgets(),
+      goals: this.goals(),
+    }),
+  );
+  readonly goalPercent = goalPercent;
+  readonly goalIcon = goalIcon;
+  readonly goalOnTrack = (goal: SavingsGoal) => goalOnTrack(goal, this.month());
+  readonly categoryIcon = categoryIcon;
+  readonly dayLabel = dayLabel;
+  readonly monthName = monthName;
+  readonly shortMonthYear = shortMonthYear;
+  readonly sourceIcon = sourceIcon;
+
+  /** Beträge für Kennzahlen: runde ohne Cent („3.000 €“), sonst genau („2.951,68 €“). */
+  eur(value: number | string | null | undefined): string {
+    const n = Math.round(Number(value ?? 0) * 100) / 100;
+    const digits = Number.isInteger(n) ? 0 : 2;
+    return `${n.toLocaleString('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits })} €`;
+  }
+  /** Anteil (0–100) einer Zahl an einer anderen, gerundet. */
+  share(part: number, whole: number): number {
+    return whole > 0 ? Math.round((part / whole) * 100) : 0;
+  }
+  /** Höhe eines Balkens in Prozent der Achse. */
+  barHeight(value: number, top: number): number {
+    return top > 0 ? Math.max(value > 0 ? 2 : 0, (value / top) * 100) : 0;
+  }
+  rowTitle(row: FinanceTransaction): string {
+    return row.note || this.categoryName(row.category);
+  }
+  selectTab(tab: FinanceTab) {
+    this.tab.set(tab);
+    // Ausgaben/Einnahmen zeigen in der Liste nur ihren Typ.
+    this.typeFilter.set(tab === 'expenses' ? 'EXPENSE' : tab === 'income' ? 'INCOME' : 'ALL');
+    this.categoryFilter.set('');
+    this.transactionSearch.set('');
+  }
+  onTabKeydown(event: KeyboardEvent) {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+    const keys = FINANCE_TABS.map((t) => t.key);
+    const index = keys.indexOf(this.tab());
+    const next = keys[(index + (event.key === 'ArrowRight' ? 1 : keys.length - 1)) % keys.length];
+    this.selectTab(next);
+    queueMicrotask(() => document.getElementById(`fin-tab-${next}`)?.focus());
+  }
+  /** Zur vollständigen Liste im Reiter springen. */
+  showAll(tab: FinanceTab) {
+    this.selectTab(tab);
+    afterNextRender(() => document.getElementById('all-rows')?.scrollIntoView({ block: 'start' }), {
+      injector: this.renderInjector,
+    });
+  }
+
+  // ---------- Kategorien verwalten (Name, Limit, eigene, löschen) ----------
+  readonly categoriesOpen = signal(false);
+  openCategories() {
+    this.categoriesOpen.set(true);
+  }
+  categoriesSaved(message: string) {
+    this.categoriesOpen.set(false);
+    this.remember(message, null);
+    this.load();
+  }
+
+  // ---------- Neue Kategorie direkt im Buchungsformular ----------
+  readonly quickCategory = signal<string | null>(null);
+  readonly quickCategoryError = signal('');
+  readonly maxCategoryName = MAX_CATEGORY_NAME;
+  startQuickCategory() {
+    this.quickCategory.set('');
+    this.quickCategoryError.set('');
+    afterNextRender(() => document.getElementById('quick-category')?.focus(), { injector: this.renderInjector });
+  }
+  cancelQuickCategory() {
+    this.quickCategory.set(null);
+    this.quickCategoryError.set('');
+  }
+  createQuickCategory() {
+    const name = (this.quickCategory() ?? '').trim().replace(/\s+/g, ' ');
+    if (this.saving()) return;
+    if (!name) {
+      this.quickCategoryError.set('Gib der Kategorie einen Namen.');
+      return;
+    }
+    const existing = this.categories().find((c) => c.name.toLocaleLowerCase('de') === name.toLocaleLowerCase('de'));
+    if (existing) {
+      // Gibt es schon: einfach auswählen statt einen Fehler zu zeigen.
+      this.form.controls.category.setValue(String(existing.id));
+      this.cancelQuickCategory();
+      return;
+    }
+    this.saving.set(true);
+    this.api
+      .createCategory({ name, monthly_goal: null })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (created) => {
+          this.saving.set(false);
+          this.categories.update((all) => [...all, created].sort((a, b) => a.name.localeCompare(b.name, 'de')));
+          this.form.controls.category.setValue(String(created.id));
+          this.cancelQuickCategory();
+          afterNextRender(() => document.getElementById('booking-new-category')?.focus(), { injector: this.renderInjector });
+        },
+        error: (e) => {
+          this.saving.set(false);
+          this.quickCategoryError.set(
+            (e?.status === 400 && apiMessage(e.error)) || 'Die Kategorie konnte nicht angelegt werden. Bitte versuche es erneut.',
+          );
+        },
+      });
+  }
+
   stepMonth(delta: number) {
     this.setMonth(shiftMonth(this.month(), delta));
   }
@@ -254,6 +462,7 @@ export class PrivateFinance {
     category: [''],
     date: [''],
     note: ['', Validators.maxLength(255)],
+    recurring: [false],
     month: [''],
     scope: ['single'],
     end_month: [''],
@@ -294,6 +503,8 @@ export class PrivateFinance {
       transactions: this.api.transactions(),
       budgets: this.api.budgets(),
       goals: this.api.goals(this.month()),
+      // Nur Zusatzinformation: fehlt sie, bleibt die Seite trotzdem nutzbar.
+      contributions: this.api.contributions().pipe(catchError(() => of([] as SavingsContributionDto[]))),
     })
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
@@ -303,6 +514,7 @@ export class PrivateFinance {
           this.transactions.set(r.transactions);
           this.budgets.set(r.budgets);
           this.goals.set(r.goals);
+          this.contributions.set(r.contributions);
           this.loading.set(false);
           this.announcePending(r.summary);
           this.openGoalFromQuery();
@@ -406,6 +618,7 @@ export class PrivateFinance {
       category: String(this.categories()[0]?.id || ''),
       date: defaultDateInMonth(this.month()),
       note: '',
+      recurring: false,
       month: this.month(),
       scope: 'single',
       end_month: '',
@@ -419,12 +632,13 @@ export class PrivateFinance {
       status: 'ACTIVE',
     });
     this.editor.set(resource);
+    this.cancelQuickCategory();
     this.overrun.set(null);
     this.goalWarning.set(null);
     this.editId.set(item?.id);
     this.formError.set('');
     if (item) {
-      if ('type' in item) this.form.patchValue({ ...item, category: String(item.category) });
+      if ('type' in item) this.form.patchValue({ ...item, category: String(item.category), recurring: !!item.recurring });
       else if ('month' in item)
         this.form.patchValue({
           amount: item.amount,
@@ -493,6 +707,7 @@ export class PrivateFinance {
         date: v.date,
         note: v.note,
         currency: 'EUR',
+        recurring: v.recurring,
       };
     } else if (resource === 'budgets') {
       if (amount === null || !v.month) {

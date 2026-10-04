@@ -27,8 +27,37 @@ export interface SectionDto {
   label: string;
 }
 
+/** Symbol einer Einkaufsliste — backend haushalt/models.py ShoppingList.Icon. */
+export type ShoppingListIcon = 'wagen' | 'drogerie' | 'baumarkt' | 'getraenke' | 'party';
+
+export interface ShoppingListDto {
+  id: Id;
+  name: string;
+  description: string;
+  icon: ShoppingListIcon;
+  item_count: number;
+  checked_count: number;
+  created_at: string;
+  updated_at: string;
+  created_by_name: string | null;
+}
+
+export interface ShoppingListInput {
+  name: string;
+  description: string;
+  icon: ShoppingListIcon;
+}
+
+/** Wer die Liste sieht und bearbeitet: alle im Haushalt; is_owner = hat sie angelegt. */
+export interface ShoppingMemberDto {
+  user_id: Id;
+  name: string;
+  is_owner: boolean;
+}
+
 export interface ShoppingItemDto {
   id: Id;
+  shopping_list: Id;
   name: string;
   quantity: string;
   section: SectionKey;
@@ -47,6 +76,8 @@ export interface ItemSuggestionDto {
 }
 
 export interface ShoppingOverviewDto {
+  list: ShoppingListDto;
+  members: ShoppingMemberDto[];
   items: ShoppingItemDto[];
   suggestions: ItemSuggestionDto[];
   sections: SectionDto[];
@@ -74,7 +105,36 @@ export interface CompleteShoppingResult {
 export type Effort = 1 | 2 | 3;
 
 export type Recurrence = 'daily' | 'weekly' | 'monthly';
+/** Wo eine Aufgabe anfällt — backend haushalt/models.py Task.Room; '' = ohne Raum. */
+export type TaskRoom =
+  | ''
+  | 'kueche'
+  | 'bad'
+  | 'wohnzimmer'
+  | 'schlafzimmer'
+  | 'kinderzimmer'
+  | 'waschkueche'
+  | 'flur'
+  | 'arbeitszimmer'
+  | 'aussen'
+  | 'alle';
+export type TaskPriority = 'niedrig' | 'mittel' | 'hoch';
+
+/** GET /haushalt/aufgaben/woche/ — „Aufgaben im Überblick“. */
+export interface TaskWeekStatsDto {
+  done_this_week: number;
+  done_last_week: number;
+  open_total: number;
+  assigned_to_me: number;
+}
 export type TaskStatus = 'open' | 'done';
+
+/** GET /haushalt/aufgaben/routinen/ — Erledigungsrate der aktiven Routinen (4 Wochen). */
+export interface RoutineStatsDto {
+  completion_rate: number | null;
+  done: number;
+  expected: number;
+}
 
 export interface TaskDto {
   id: Id;
@@ -89,8 +149,15 @@ export interface TaskDto {
   recurrence_days: number | null;
   recurrence_months: number | null;
   effort: Effort;
+  room: TaskRoom;
+  duration_minutes: number | null;
+  priority: TaskPriority;
   rotate: boolean;
   rotation_member_ids: Id[];
+  /** Pausierte Routinen erscheinen nicht unter „Heute“ und lassen sich nicht abhaken. */
+  is_paused: boolean;
+  /** Serie im Rhythmus der Routine (Tage/Wochen/Monate in Folge); null bei einmaligen Aufgaben. */
+  streak: number | null;
   is_done: boolean;
   is_overdue: boolean;
   last_done_at: string | null;
@@ -105,6 +172,9 @@ export interface TaskInput {
   due_time: string | null;
   recurrence: Recurrence | null;
   effort: Effort;
+  room: TaskRoom;
+  duration_minutes: number | null;
+  priority: TaskPriority;
   rotate: boolean;
   rotation_member_ids: Id[];
 }
@@ -118,6 +188,16 @@ export interface OverviewDeviceDto {
   warranty_until: string | null;
 }
 
+/** Vertrag in der Übersicht — die nächste Kündigungsfrist zuerst. */
+export interface OverviewContractDto {
+  id: Id;
+  name: string;
+  provider: string;
+  monthly_cost: string | null;
+  cancel_by: string | null;
+  notice_period_months: number | null;
+}
+
 export interface HaushaltOverviewDto {
   open_tasks: number;
   overdue_tasks: number;
@@ -128,6 +208,10 @@ export interface HaushaltOverviewDto {
   open_shopping_items: number;
   devices: number;
   device_list: OverviewDeviceDto[];
+  /** Kind-Konten: 0 / leer (Vertragskosten sind Finanzdaten). */
+  contracts: number;
+  contracts_monthly: string;
+  contract_list: OverviewContractDto[];
 }
 
 export interface MemberLoadDto {
@@ -161,6 +245,10 @@ export interface FolderEntryDto {
   warranty_until: string | null;
   maintenance_interval_months: number | null;
   next_maintenance: string | null;
+  last_maintenance: string | null;
+  /** Gerät: Modell und Raum (Hersteller steht in provider). */
+  model: string;
+  room: TaskRoom;
   deadlines: DeadlineDto[];
 }
 
@@ -176,6 +264,9 @@ export interface FolderEntryInput {
   warranty_until: string | null;
   maintenance_interval_months: number | null;
   next_maintenance: string | null;
+  last_maintenance: string | null;
+  model: string;
+  room: TaskRoom;
 }
 
 /** Die echten /api/v1/haushalt/-Endpunkte (backend/haushalt/urls.py). */
@@ -184,13 +275,32 @@ export class HaushaltApiService {
   private readonly http = inject(HttpClient);
   private readonly base = `${API_BASE_URL}/haushalt`;
 
-  getShopping(): Observable<ShoppingOverviewDto> {
-    return this.http.get<ShoppingOverviewDto>(`${this.base}/einkauf/`);
+  /** Ohne listId die Standardliste des Haushalts. */
+  getShopping(listId: Id | null = null): Observable<ShoppingOverviewDto> {
+    const params: Record<string, string> = listId === null ? {} : { liste: String(listId) };
+    return this.http.get<ShoppingOverviewDto>(`${this.base}/einkauf/`, { params });
   }
 
-  addItem(name: string, quantity: string, section: SectionKey | null): Observable<ShoppingItemDto> {
-    const body: Record<string, string> = { name, quantity };
+  getShoppingLists(): Observable<ShoppingListDto[]> {
+    return this.http.get<ShoppingListDto[]>(`${this.base}/einkauf/listen/`);
+  }
+
+  createShoppingList(input: ShoppingListInput): Observable<ShoppingListDto> {
+    return this.http.post<ShoppingListDto>(`${this.base}/einkauf/listen/`, input);
+  }
+
+  updateShoppingList(id: Id, input: Partial<ShoppingListInput>): Observable<ShoppingListDto> {
+    return this.http.patch<ShoppingListDto>(`${this.base}/einkauf/listen/${id}/`, input);
+  }
+
+  deleteShoppingList(id: Id): Observable<void> {
+    return this.http.delete<void>(`${this.base}/einkauf/listen/${id}/`);
+  }
+
+  addItem(name: string, quantity: string, section: SectionKey | null, listId: Id | null = null): Observable<ShoppingItemDto> {
+    const body: Record<string, string | Id> = { name, quantity };
     if (section) body['section'] = section;
+    if (listId !== null) body['shopping_list'] = listId;
     return this.http.post<ShoppingItemDto>(`${this.base}/einkauf/eintraege/`, body);
   }
 
@@ -202,10 +312,10 @@ export class HaushaltApiService {
     return this.http.delete<void>(`${this.base}/einkauf/eintraege/${id}/`);
   }
 
-  completeShopping(amount: number | null): Observable<CompleteShoppingResult> {
-    return this.http.post<CompleteShoppingResult>(`${this.base}/einkauf/eintraege/abschliessen/`, {
-      amount: amount === null ? null : amount.toFixed(2),
-    });
+  completeShopping(amount: number | null, listId: Id | null = null): Observable<CompleteShoppingResult> {
+    const body: Record<string, string | Id | null> = { amount: amount === null ? null : amount.toFixed(2) };
+    if (listId !== null) body['shopping_list'] = listId;
+    return this.http.post<CompleteShoppingResult>(`${this.base}/einkauf/eintraege/abschliessen/`, body);
   }
 
   getTasks(status: TaskStatus | 'all' = 'open'): Observable<TaskDto[]> {
@@ -218,6 +328,18 @@ export class HaushaltApiService {
 
   reopenTask(id: Id): Observable<TaskDto> {
     return this.http.post<TaskDto>(`${this.base}/aufgaben/${id}/wieder-oeffnen/`, {});
+  }
+
+  getTaskWeek(): Observable<TaskWeekStatsDto> {
+    return this.http.get<TaskWeekStatsDto>(`${this.base}/aufgaben/woche/`);
+  }
+
+  getRoutineStats(): Observable<RoutineStatsDto> {
+    return this.http.get<RoutineStatsDto>(`${this.base}/aufgaben/routinen/`);
+  }
+
+  setTaskPaused(id: Id, paused: boolean): Observable<TaskDto> {
+    return this.http.patch<TaskDto>(`${this.base}/aufgaben/${id}/`, { is_paused: paused });
   }
 
   getTaskLoad(): Observable<MemberLoadDto[]> {

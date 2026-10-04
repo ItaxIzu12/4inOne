@@ -22,7 +22,7 @@
     <p class="sidebar-note">Alles Wichtige.<br />Ein guter Überblick.</p>
   </aside>
   <div class="workspace">
-    <header class="topbar" [class.topbar--demo]="isDemoRoute()" [class.topbar--dashboard]="dashboardHeader()">
+    <header #topbar class="topbar topbar--dashboard" [class.topbar--demo]="isDemoRoute()">
       <div class="brand-group">
       <a class="mobile-brand" [routerLink]="links()[0].path" aria-label="4inOne – Startseite"
         ><app-brand
@@ -37,14 +37,20 @@
           </div>
         }
       </div>
-      @if (dashboardHeader()) {
-        <label class="dashboard-search">
-          <app-icon name="search" />
-          <input #dashboardSearch type="search" [attr.aria-label]="isDemoRoute() ? 'Demo-Überblick durchsuchen' : 'Deinen Überblick durchsuchen'" placeholder="Suche nach Aufgaben, Ausgaben, Reisen …" (input)="dashboardQuery.emit(dashboardSearch.value)" />
-          <kbd aria-hidden="true">⌘ K</kbd>
-        </label>
-        <time class="dashboard-date">{{ dashboardDate }}</time>
-      }
+      <!-- Globale Kopfzeile (wie auf der Startseite): Suche und Datum auf jeder Seite. -->
+      <form class="dashboard-search" role="search" (submit)="$event.preventDefault(); submitSearch(dashboardSearch.value)">
+        <button type="submit" class="search-submit" aria-label="Im Überblick suchen"><app-icon name="search" /></button>
+        <input
+          #dashboardSearch
+          type="search"
+          [value]="searchValue()"
+          [attr.aria-label]="isDemoRoute() ? 'Demo-Überblick durchsuchen' : 'Deinen Überblick durchsuchen'"
+          placeholder="Im Überblick suchen …"
+          (input)="onSearchInput(dashboardSearch.value)"
+        />
+        <kbd aria-hidden="true">⌘ K</kbd>
+      </form>
+      <time class="dashboard-date">{{ dashboardDate }}</time>
       <div class="profile">
         <button
           class="icon-button"
@@ -110,6 +116,8 @@
     <ng-content />
   </div>
 </div>
+<!-- Global in der App: die Bereichsköpfe scrollen mit, „Nach oben“ bringt sie zurück. -->
+<app-back-to-top />
 <nav class="mobile-nav" aria-label="Mobile Navigation">
   @for (link of links(); track link.label; let first = $first) {
     <a

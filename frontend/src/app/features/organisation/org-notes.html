@@ -1,0 +1,44 @@
+<div class="bar">
+  <label class="search">
+    <app-icon name="search" aria-hidden="true" />
+    <span class="sr-only">Notizen durchsuchen</span>
+    <input type="search" placeholder="Notizen durchsuchen …" [value]="search()" (input)="search.set($any($event.target).value)" />
+  </label>
+  <span class="muted">{{ notes().length }} {{ notes().length === 1 ? 'Notiz' : 'Notizen' }}</span>
+</div>
+
+<ul class="grid">
+  @for (n of visible(); track n.id) {
+    <li class="note" [class.is-pinned]="n.pinned">
+      <button type="button" class="note__main" (click)="openNote.emit(n)">
+        <span class="note__head"><app-icon name="file-text" aria-hidden="true" /><b>{{ n.title }}</b></span>
+        @for (line of noteLines(n, 6); track $index) {
+          <span class="note__line">{{ line }}</span>
+        } @empty {
+          <span class="note__line muted">Noch kein Inhalt</span>
+        }
+        <small class="note__when">Bearbeitet {{ editedAt(n.updated_at) }}</small>
+      </button>
+      <button
+        type="button"
+        class="pin"
+        [attr.aria-pressed]="n.pinned"
+        [attr.aria-label]="n.pinned ? n.title + ' lösen' : n.title + ' anheften'"
+        (click)="togglePin.emit(n)"
+      >
+        <app-icon name="star" />
+      </button>
+    </li>
+  } @empty {
+    <li class="card empty">
+      @if (search().trim()) {
+        <h3>Keine Notiz gefunden</h3>
+        <p class="muted">Für „{{ search().trim() }}“ gibt es keinen Treffer.</p>
+      } @else {
+        <h3>Noch keine Notizen</h3>
+        <p class="muted">Halte Ideen, Gesprächsnotizen oder Listen fest – nur für dich sichtbar.</p>
+        <button type="button" class="link" (click)="openNote.emit(undefined)"><app-icon name="plus" />Neue Notiz</button>
+      }
+    </li>
+  }
+</ul>

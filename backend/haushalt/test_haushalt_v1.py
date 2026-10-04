@@ -124,6 +124,9 @@ def test_overview_without_household_is_empty(db, client_for):
         'open_shopping_items': 0,
         'devices': 0,
         'device_list': [],
+        'contracts': 0,
+        'contracts_monthly': '0.00',
+        'contract_list': [],
     }
 
 
@@ -196,3 +199,24 @@ def test_overview_device_list_is_scoped_and_hidden_from_child_accounts(anna, kin
     # Kind-Konten erreichen den Haushaltsordner nicht (NoChildAccount)
     child = client_for(kind).get(OVERVIEW).data
     assert child['devices'] == 0 and child['device_list'] == []
+
+
+def test_overview_lists_contracts_by_next_cancel_date_and_hides_them_from_children(anna, kind, fremd, household, client_for):
+    from datetime import date
+    from decimal import Decimal
+
+    from haushalt.models import FolderEntry
+
+    FolderEntry.objects.create(household=household, kind='vertrag', name='Internet', monthly_cost=Decimal('39.99'))
+    FolderEntry.objects.create(
+        household=household, kind='vertrag', name='Strom', provider='Stadtwerke', monthly_cost=Decimal('80.00'),
+        contract_end=date(2030, 6, 30), notice_period_months=3,
+    )
+    FolderEntry.objects.create(household=household, kind='geraet', name='Waschmaschine')
+    mine = client_for(anna).get(OVERVIEW).data
+    assert mine['contracts'] == 2
+    assert mine['contracts_monthly'] == '119.99'
+    assert [(c['name'], str(c['cancel_by'])) for c in mine['contract_list']] == [('Strom', '2030-03-30'), ('Internet', 'None')]
+    assert client_for(fremd).get(OVERVIEW).data['contract_list'] == []
+    child = client_for(kind).get(OVERVIEW).data
+    assert child['contracts'] == 0 and child['contract_list'] == [] and child['contracts_monthly'] == '0.00'

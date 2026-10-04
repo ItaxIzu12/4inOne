@@ -81,9 +81,9 @@
   width: 24px;
   height: 24px;
 }
-// Tabs als Leiste mit Unterstrich (Entwurf), nicht als Pillen.
+// Reiter: auf dem Handy dieselbe Leiste wie in allen Bereichen (nichts springt beim Wechseln), ab Tablet wie im
+// Entwurf eine ruhige Leiste mit Icon, der aktive Reiter in Bereichsfarbe unterstrichen.
 .subtabs {
-  // Reiter wie in Finanzen und Organisation: eine Leiste mit gefülltem aktiven Reiter, Farbe = Bereichsfarbe.
   display: flex;
   gap: 5px;
   margin: 28px 0 22px;
@@ -98,6 +98,10 @@
   display: none;
 }
 .subtab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   flex: 1 0 auto;
   min-height: 44px;
   padding: 0 18px;
@@ -109,11 +113,47 @@
   white-space: nowrap;
   cursor: pointer;
 }
+.subtab app-icon {
+  display: none;
+}
 .subtab.is-active {
   background: #fdeef5;
   color: var(--accent-hover);
   font-weight: 650;
   box-shadow: none;
+}
+@media (min-width: 761px) {
+  .subtabs {
+    gap: 6px;
+    margin: 22px 0 22px;
+    padding: 0;
+    border: 0;
+    border-bottom: 1px solid #ece6ea;
+    border-radius: 0;
+    background: none;
+  }
+  .subtab {
+    gap: 8px;
+    flex: 0 0 auto;
+    min-height: 46px;
+    padding: 0 14px;
+    margin-bottom: -1px;
+    border-bottom: 2.5px solid transparent;
+    border-radius: 0;
+    font-size: 15px;
+  }
+  .subtab app-icon {
+    display: inline-flex;
+    width: 19px;
+    height: 19px;
+  }
+  .subtab:hover {
+    color: var(--accent-hover);
+  }
+  .subtab.is-active {
+    border-bottom-color: var(--accent);
+    background: none;
+  }
 }
 .subtab:focus-visible {
   outline: 3px solid var(--accent);
@@ -127,7 +167,7 @@
     font-size: 27px;
   }
   .page-subtitle {
-    display: none;
+    font-size: 13px;
   }
   .page-head__icon {
     width: 44px;
@@ -182,7 +222,7 @@
   }
   .page-head h1 {
     font-size: 32px;
-    line-height: 1.6;
+    line-height: 1.2;
     letter-spacing: -1px;
   }
   .page-subtitle {
@@ -197,11 +237,32 @@
   }
 }
 
-// Seitenränder auf dem Handy wie in Finanzen und Organisation.
+// Seitenränder auf dem Handy wie in Finanzen und Organisation. Der Untertitel entfällt dort, damit der
+// Kopf in allen Bereichen gleich hoch bleibt (nichts springt beim Wechseln).
 @media (max-width: 760px) {
   .hh-main {
     padding: 14px 18px 26px;
   }
+  .page-subtitle {
+    display: none;
+  }
 }
 
 @include domain.layout;
+
+// Kopf wie im Entwurf: keine Karte um Titel und Reiter, die Inhalte beginnen
+// direkt unter der Reiter-Linie. Auf dem Handy bleiben Titel und Reiter exakt
+// an derselben Stelle wie in den anderen Bereichen (e2e mobile-domain-controls)
+// — nur der Rahmen und der Abstand nach unten entfallen.
+.domain-sticky {
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .domain-sticky {
+    padding: 10px 10px 0;
+    margin-bottom: 10px;
+  }
+}

@@ -178,6 +178,10 @@ class Transaction(models.Model):
     # 12 Monate zurück). Alle Monats-/Jahresrechnungen (finanzen/services.py)
     # filtern nach DIESEM Feld. Ersetzt das frühere occurred_at (DateTime).
     datum = models.DateField(default=heute)
+    # Kommt jeden Monat wieder (Miete, Gehalt, Abo) — nur eine Markierung für
+    # „Wiederkehrend“, „Fixkosten“ und die nächste erwartete Zahlung in der
+    # Finanzübersicht. Es entstehen KEINE automatischen Buchungen.
+    recurring = models.BooleanField(default=False)
     # Technischer Erstellungs-Zeitstempel — unabhängig von datum, nur für
     # Audit/Nachvollziehbarkeit, fließt in keine Berechnung ein.
     created_at = models.DateTimeField(auto_now_add=True)

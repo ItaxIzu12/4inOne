@@ -10,12 +10,12 @@ lesen sie direkt (connections/today.py), ohne Kopie, die auseinanderlaufen
 kann."""
 
 import calendar
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.db import IntegrityError
 from django.db import transaction as db_transaction
-from django.db.models import Count, F, Sum
+from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 
 from core.models import Household, HouseholdMembership
@@ -48,6 +48,7 @@ ESTIMATE_TRIP_WINDOW = 10
 MAX_OPEN_ITEMS = 200
 MAX_OPEN_TASKS = 200
 MAX_FOLDER_ENTRIES = 200
+MAX_SHOPPING_LISTS = 20
 # Gemerkte Artikel werden nicht abgelehnt, sondern ausgedünnt: über dieser
 # Zahl fallen die am seltensten und am längsten nicht genutzten weg.
 MAX_ITEM_MEMORIES = 500
@@ -122,10 +123,48 @@ def add_months(value: date, months: int) -> date:
 
 
 def active_shopping_list(household: Household) -> ShoppingList:
+    """Die Standardliste (die älteste) — Ziel, wenn der Client keine Liste nennt."""
     shopping_list = ShoppingList.objects.filter(household=household).order_by('id').first()
     if shopping_list is None:
-        shopping_list = ShoppingList.objects.create(household=household)
+        shopping_list = ShoppingList.objects.create(household=household, name='Wocheneinkauf')
     return shopping_list
+
+
+def shopping_list_for(household: Household, list_id) -> ShoppingList | None:
+    """Liste `list_id` dieses Haushalts, ohne ID die Standardliste. None, wenn
+    die ID nicht zum Haushalt gehört — fremde Listen bleiben unsichtbar."""
+    if list_id in (None, ''):
+        return active_shopping_list(household)
+    try:
+        return ShoppingList.objects.filter(household=household, pk=int(list_id)).first()
+    except (TypeError, ValueError):
+        return None
+
+
+def touch_list(shopping_list: ShoppingList) -> None:
+    """„Zuletzt bearbeitet“ vorrücken — auch wenn nur ein Eintrag sich ändert."""
+    ShoppingList.objects.filter(pk=shopping_list.pk).update(updated_at=timezone.now())
+
+
+def list_members(household: Household, shopping_list: ShoppingList) -> list[dict]:
+    """Wer die Liste sieht und bearbeitet: alle Mitglieder des Haushalts. Wer
+    sie angelegt hat, ist „Eigentümer“ — bei älteren Listen ohne Ersteller
+    die erste Admin-Person des Haushalts."""
+    memberships = list(HouseholdMembership.objects.filter(household=household).select_related('user').order_by('id'))
+    owner_id = shopping_list.created_by_id
+    if owner_id is None:
+        owner_id = next(
+            (m.user_id for m in memberships if m.role == HouseholdMembership.Role.ADMIN),
+            memberships[0].user_id if memberships else None,
+        )
+    return [
+        {
+            'user_id': m.user_id,
+            'name': ' '.join(part for part in (m.user.first_name, m.user.last_name) if part) or m.user.email,
+            'is_owner': m.user_id == owner_id,
+        }
+        for m in memberships
+    ]
 
 
 def guess_section(household: Household, name: str) -> str:
@@ -227,14 +266,18 @@ def set_item_checked(item: ShoppingItem, checked: bool, user) -> ShoppingItem:
 
 @db_transaction.atomic
 def complete_shopping(
-    household: Household, user, amount: Decimal | None, category: Category | None
+    household: Household,
+    user,
+    amount: Decimal | None,
+    category: Category | None,
+    shopping_list: ShoppingList | None = None,
 ) -> tuple[ShoppingTrip, list[ShoppingItem]]:
     """Schließt den Einkauf ab: alle abgehakten Einträge verlassen die Liste,
     werden als ShoppingTrip festgehalten und — wenn ein Betrag angegeben ist
     — als Ausgabe in den privaten Finanzen der Person gebucht, die eingekauft
     hat. Offene Einträge bleiben stehen (das ist, was beim nächsten Mal noch
     fehlt)."""
-    shopping_list = active_shopping_list(household)
+    shopping_list = shopping_list or active_shopping_list(household)
     checked = list(shopping_list.items.select_for_update().filter(is_checked=True))
     if not checked:
         raise ValueError('Es ist noch nichts abgehakt.')
@@ -255,6 +298,7 @@ def complete_shopping(
         transaction=transaction,
     )
     ShoppingItem.objects.filter(pk__in=[item.pk for item in checked]).delete()
+    touch_list(shopping_list)
     return trip, checked
 
 
@@ -336,6 +380,104 @@ def reopen_task(task: Task) -> Task:
     return task
 
 
+def week_stats(household, user) -> dict:
+    """Erledigungen dieser Woche (ab Montag) und der Vorwoche aus dem Protokoll
+    (TaskCompletion — auch wiederkehrende Aufgaben zählen jedes Mal), dazu
+    die offenen Aufgaben gesamt und die der Person zugewiesenen."""
+    today = timezone.localdate()
+    monday = today - timedelta(days=today.weekday())
+    start = timezone.make_aware(datetime.combine(monday, time.min))
+    last_start = start - timedelta(days=7)
+    completions = TaskCompletion.objects.filter(household=household)
+    open_tasks = Task.objects.filter(household=household, is_done=False, is_paused=False)
+    return {
+        'done_this_week': completions.filter(done_at__gte=start).count(),
+        'done_last_week': completions.filter(done_at__gte=last_start, done_at__lt=start).count(),
+        'open_total': open_tasks.count(),
+        'assigned_to_me': open_tasks.filter(assigned_to=user).count(),
+    }
+
+
+# Wie weit die Serie höchstens zurückschaut — und damit, wie viel Protokoll
+# geladen wird (drei Jahre reichen auch für monatliche Routinen).
+STREAK_LOOKBACK_DAYS = 3 * 366
+ROUTINE_RATE_DAYS = 28
+
+
+def _period(task: Task, today: date, k: int) -> tuple[date, date]:
+    """Der k-te Zeitraum vor dem aktuellen (k = 0: der laufende) im Rhythmus
+    der Routine: Tage, Kalenderwochen, Kalendermonate — oder Blöcke zu N Tagen."""
+    if task.recurrence_months:
+        start = add_months(today.replace(day=1), -k * task.recurrence_months)
+        return start, add_months(start, task.recurrence_months) - timedelta(days=1)
+    if task.recurrence_days == 7:
+        start = today - timedelta(days=today.weekday() + 7 * k)
+        return start, start + timedelta(days=6)
+    days = task.recurrence_days or 1
+    end = today - timedelta(days=k * days)
+    return end - timedelta(days=days - 1), end
+
+
+def routine_streak(task: Task, done_days: list[date], today: date | None = None) -> int:
+    """Serie: wie viele Zeiträume in Folge die Routine erledigt wurde, vom
+    laufenden aus rückwärts. Ist der laufende noch offen, bricht das die Serie
+    nicht — er ist ja noch nicht vorbei."""
+    if not (task.recurrence_days or task.recurrence_months):
+        return 0
+    today = today or timezone.localdate()
+    days = sorted(set(done_days), reverse=True)
+    if not days:
+        return 0
+    streak = 0
+    for k in range(400):
+        start, end = _period(task, today, k)
+        if end < days[-1]:
+            break
+        if any(start <= day <= end for day in days):
+            streak += 1
+        elif k > 0:
+            break
+    return streak
+
+
+def completion_days(task: Task) -> list[date]:
+    """Erledigungstage (lokale Zeit) im Rückblick der Serie — aus dem
+    vorgeladenen recent_completions (TaskViewSet), sonst per Abfrage."""
+    completions = getattr(task, 'recent_completions', None)
+    if completions is None:
+        since = timezone.now() - timedelta(days=STREAK_LOOKBACK_DAYS)
+        completions = task.completions.filter(done_at__gte=since).only('done_at') if task.pk else []
+    return [timezone.localdate(c.done_at) for c in completions]
+
+
+def routine_stats(household: Household) -> dict:
+    """Erledigungsrate der letzten vier Wochen über alle aktiven Routinen:
+    erledigt ÷ erwartet. Erwartet wird je Routine, wie oft ihr Rhythmus seit
+    Beginn des Fensters (oder seit sie angelegt ist) dran war; mehr
+    Erledigungen als erwartet zählen nicht doppelt."""
+    today = timezone.localdate()
+    window_start = today - timedelta(days=ROUTINE_RATE_DAYS - 1)
+    routines = Task.objects.filter(household=household, is_done=False, is_paused=False).filter(
+        Q(recurrence_days__isnull=False) | Q(recurrence_months__isnull=False)
+    )
+    done_total = expected_total = 0
+    for task in routines:
+        start = max(window_start, timezone.localdate(task.created_at))
+        length = (today - start).days + 1
+        if task.recurrence_months:
+            expected = 1
+        else:
+            expected = max(1, -(-length // task.recurrence_days))
+        done = task.completions.filter(done_at__date__gte=start).count()
+        done_total += min(done, expected)
+        expected_total += expected
+    return {
+        'completion_rate': round(100 * done_total / expected_total) if expected_total else None,
+        'done': done_total,
+        'expected': expected_total,
+    }
+
+
 def month_load(household: Household) -> list[dict]:
     """Lastanzeige: Aufwandspunkte und Anzahl erledigter Aufgaben pro
     Mitglied im laufenden Monat. Alle Mitglieder erscheinen, auch mit 0 —
@@ -412,9 +554,11 @@ def first_maintenance(base: date, interval_months: int) -> date:
 def complete_maintenance(entry: FolderEntry) -> FolderEntry:
     """Wartung erledigt: nächster Termin = heute + Intervall. Ohne Intervall
     entfällt der nächste Termin."""
+    today = timezone.localdate()
+    entry.last_maintenance = today
     if entry.maintenance_interval_months:
-        entry.next_maintenance = add_months(timezone.localdate(), entry.maintenance_interval_months)
+        entry.next_maintenance = add_months(today, entry.maintenance_interval_months)
     else:
         entry.next_maintenance = None
-    entry.save(update_fields=['next_maintenance'])
+    entry.save(update_fields=['next_maintenance', 'last_maintenance'])
     return entry

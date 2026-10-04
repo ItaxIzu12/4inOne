@@ -216,6 +216,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Private Dateien (Organisation › Dateien): eigener Ordner, KEINE MEDIA_URL —
+# Zugriff nur über die API mit Eigentümer-Prüfung.
+PRIVATE_MEDIA_ROOT = Path(env('PRIVATE_MEDIA_ROOT', default=str(BASE_DIR / 'private_media')))
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.1/ref/settings/#default-auto-field

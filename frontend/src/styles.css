@@ -225,3 +225,18 @@ button[aria-busy='true'] { cursor:progress; }
 .save-spinner { display:inline-block; width:16px; height:16px; flex:0 0 16px; margin-right:8px; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; vertical-align:middle; animation:save-spin .8s linear infinite; }
 @keyframes save-spin { to { transform:rotate(360deg); } }
 @media(prefers-reduced-motion:reduce) { .save-spinner { animation:none; } }
+
+/* „Nach oben“ weicht festen Leisten der Seiten aus (globale Regeln, weil der
+   Knopf in app.html sitzt und die Leisten in den Bereichen): über der Leiste
+   „Einkauf abschließen“, und ausgeblendet, solange ein Blatt von unten offen ist. */
+body:has(app-einkauf-tab .checkout-bar) app-back-to-top .back-to-top {
+  bottom: 96px;
+}
+@media (max-width: 760px) {
+  body:has(app-einkauf-tab .checkout-bar) app-back-to-top .back-to-top {
+    bottom: calc(176px + env(safe-area-inset-bottom, 0px));
+  }
+  body:has(.detail.is-open) app-back-to-top .back-to-top {
+    display: none;
+  }
+}

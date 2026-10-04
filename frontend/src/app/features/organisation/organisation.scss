@@ -1,17 +1,23 @@
 @use '../../shared/styles/domain-layout' as domain;
+// Organisation: Seitenhülle (Kopf, Reiter, Formular-Extras). Die Reiter selbst
+// haben eigene Stile (org-*.scss). Lila ist die Bereichsfarbe.
 :host {
   display: block;
   color: #18163f;
+  --accent: #6d3fc4;
+  --accent-glow: #6d3fc4;
+  --accent-hover: #5a2fa8;
+  --accent-soft: #f1ebfc;
+  --lavender: #f1ebfc;
 }
 .organisation-page {
+  --text-muted: #5a5f74;
   max-width: 1440px;
   margin: auto;
-  padding: 34px;
+  padding: 34px 34px 52px;
 }
 .page-heading,
-.heading-copy,
-.card-heading,
-.month-controls {
+.heading-copy {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -26,611 +32,193 @@
   width: 60px;
   height: 60px;
   border-radius: 18px;
-  background: #faf3ff;
-  color: #9145ed;
-  box-shadow: none;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 .heading-icon app-icon {
   width: 32px;
   height: 32px;
 }
 h1 {
+  margin: 0;
   font-size: 32px;
+  line-height: 1.2;
   letter-spacing: -1px;
 }
-h2 {
-  font-size: 19px;
-  letter-spacing: -0.3px;
-}
-h3 {
-  font-size: 17px;
-}
-p,
-small {
-  color: #62617e;
-  line-height: 1.6;
-}
-.heading-copy p {
-  margin-top: 5px;
-  font-size: 14px;
-}
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-button {
-  cursor: pointer;
-}
-button:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 3px solid #7241b3;
-  outline-offset: 3px;
+.subtitle {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: 15px;
 }
 .primary,
-.secondary,
-.text-button {
+.secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: 44px;
-  border-radius: 13px;
   padding: 10px 16px;
+  border-radius: 13px;
+  font: inherit;
   font-size: 14px;
+  cursor: pointer;
 }
 .primary {
-  // Hauptknopf wie in Finanzen und Haushalt: 13 px Rundung, dezenter Verlauf, feiner Rand, weicher Schatten.
-  color: white;
-  background: #8d4fda;
-  border: 1px solid #7538bd;
-  box-shadow: none;
+  border: 1px solid #5a2fa8;
+  background: var(--accent);
+  color: #fff;
+}
+.primary app-icon {
+  width: 20px;
+  height: 20px;
 }
 .secondary {
-  background: #f2edf9;
   border: 1px solid #e4d9f4;
+  background: #f2edf9;
   color: #5a3388;
 }
-.text-button {
-  border: 0;
-  background: transparent;
-  color: #6734a2;
-  padding: 8px 0;
-}
+// Reiter: am Rechner ruhige Leiste mit Symbol, aktiv lila unterstrichen.
 .tabs {
   display: flex;
-  margin: 28px 0 22px;
-  border: 1px solid #ebe5f6;
-  background: #faf8fe;
-  border-radius: 16px;
-  padding: 5px;
-  gap: 5px;
+  gap: 6px;
+  margin: 22px 0 0;
+  border-bottom: 1px solid #ebe8f2;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 .tabs button {
-  flex: 1;
-  min-height: 44px;
-  border: 0;
-  background: transparent;
-  border-radius: 12px;
-  color: #52516f;
-}
-.tabs button[aria-current] {
-  background: #f4e9ff;
-  color: #4e2385;
-  font-weight: 650;
-  box-shadow: none;
-}
-.content-grid {
-  // Links die Hauptkarte mit den drei Kacheln direkt darunter, rechts Kalender und „Nächste Termine“: so entsteht
-  // unter der linken Karte keine Lücke, auch wenn die rechte Spalte höher ist.
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(290px, 1fr);
-  grid-template-areas:
-    'main side'
-    'stats side';
-  grid-template-rows: auto 1fr;
-  gap: 22px;
-  align-items: start;
-}
-.content-grid > .main-card {
-  grid-area: main;
-}
-.content-grid > .side-column {
-  grid-area: side;
-}
-.content-grid > .stats {
-  grid-area: stats;
-}
-/* Zusammengesetzter Selektor (.content-grid + Modifier), damit er unabhängig von der Reihenfolge im Stylesheet
-   IMMER gegen das generische .content-grid gewinnt (2 Klassen schlagen 1 Klasse) — auch innerhalb der schmaleren
-   Breakpoints unten, die sonst denselben (0,0,1,0)-Vorrang wie .tasks-view/.calendar-view allein hätten. */
-.content-grid.tasks-view {
-  grid-template-columns: 1fr;
-  grid-template-areas: 'main';
-  grid-template-rows: auto;
-}
-/* Keine „stats“-Zeile: Kalender-Reiter zeigt die drei Kacheln nicht mehr (die stehen nur im Reiter „Heute“),
-   sonst bliebe hier eine leere Fläche in Höhe der freien Zeile stehen. */
-.content-grid.calendar-view {
-  grid-template-areas: 'main side';
-  grid-template-rows: auto;
-}
-.card {
-  padding: 22px;
-  border: 1px solid #eee7f8;
-  border-radius: 22px;
-  background: #ffffffec;
-  box-shadow: none;
-}
-.main-card {
-  min-height: 410px;
-}
-.private {
-  font-size: 12px;
-  color: #66627b;
-}
-.entries {
-  margin-top: 12px;
-}
-.entry {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 17px 0;
-  min-height: 77px;
-  border: 0;
-  border-bottom: 1px solid #f0edf5;
-  background: transparent;
-  text-align: left;
-  color: #18163f;
-}
-.entry:last-child {
-  border-bottom: 0;
-}
-.entry-icon {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 44px;
-  border-radius: 14px;
-  color: #9145ed;
-  background: #f3eaff;
-  box-shadow: none;
-}
-.task-icon {
-  color: #b84685;
-  background: #fff0f8;
-}
-.entry-time {
-  font-size: 13px;
-  min-width: 44px;
-  color: #655a83;
-}
-.entry-copy {
-  flex: 1;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.entry-copy strong {
-  display: block;
-  font-size: 14px;
-}
-.entry-copy small {
-  display: block;
-  font-size: 12px;
-  margin-top: 3px;
-}
-.chevron {
-  width: 15px;
-  color: #817492;
-}
-.side-column {
-  display: grid;
-  gap: 18px;
-}
-.calendar {
-  padding: 20px;
-}
-.month-controls {
-  gap: 5px;
-}
-.month-controls button {
-  width: 38px;
-  height: 44px;
-  border: 0;
-  background: #f7f3fc;
-  border-radius: 10px;
-  font-size: 24px;
-  color: #604186;
-}
-.month-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 3px;
-  margin-top: 18px;
-}
-.weekday {
-  text-align: center;
-  color: #716288;
-  font-size: 12px;
-  padding-bottom: 8px;
-}
-.month-grid button {
-  min-width: 0;
-  height: 40px;
-  border: 0;
-  background: transparent;
-  border-radius: 12px;
-  color: #33264e;
-  font-size: 13px;
-  position: relative;
-}
-.month-grid .outside {
-  color: #71647f;
-  background: #fbf9fd;
-}
-.month-grid .selected {
-  background: #8745d3;
-  color: white;
-}
-.month-grid [aria-current] {
-  box-shadow: none;
-}
-.month-grid .has-events:after {
-  content: '';
-  width: 4px;
-  height: 4px;
-  background: currentColor;
-  border-radius: 50%;
-  position: absolute;
-  bottom: 4px;
-  left: calc(50% - 2px);
-}
-.upcoming-entry {
-  display: grid;
-  gap: 4px;
-  width: 100%;
-  background: none;
-  border: 0;
-  border-bottom: 1px solid #f0edf5;
-  text-align: left;
-  color: #201942;
-  padding: 14px 0;
-}
-.upcoming-entry small {
-  font-size: 12px;
-}
-.upcoming-entry strong {
-  font-size: 14px;
-}
-.upcoming p {
-  margin-top: 12px;
-}
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin: 0;
-}
-.stats > button,
-.stats > div {
-  display: grid;
-  grid-template-columns: 34px 1fr;
-  gap: 8px 12px;
-  align-items: center;
-  padding: 18px;
-  text-align: left;
-  background: #faf5ff;
-  border: 1px solid white;
-  border-radius: 18px;
-  color: #562e8c;
-}
-.stats > :nth-child(2) {
-  background: #fff1f7;
-  color: #9d3a72;
-}
-.stats > :nth-child(3) {
-  background: #fff0f3;
-  color: #ac3c58;
-}
-.stats span {
-  grid-column: 1/-1;
-  font-size: 13px;
-}
-.stats strong {
-  font-size: 24px;
-}
-.empty,
-.state {
-  text-align: center;
-  padding: 45px 18px;
-}
-.empty > app-icon {
-  width: 32px;
-  height: 32px;
-  color: #8553ba;
-  margin-bottom: 15px;
-}
-.empty p {
-  max-width: 38ch;
-  margin: 12px auto 20px;
-}
-.overdue {
-  color: #a22c49 !important;
-}
-.task-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 18px 0;
-}
-.filter {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  font-size: 14px;
-  margin: 0;
-}
-.task-search {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-width: 220px;
-  flex: 1 1 220px;
-  max-width: 320px;
-  height: 44px;
+  min-height: 46px;
+  margin-bottom: -1px;
   padding: 0 14px;
-  border: 1px solid #e4ddf3;
-  border-radius: 13px;
-  background: #faf8fe;
-  color: #6a6486;
+  border: 0;
+  border-bottom: 2.5px solid transparent;
+  background: none;
+  color: #52516f;
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
 }
-.task-search app-icon {
+.tabs button app-icon {
   width: 18px;
   height: 18px;
-  flex-shrink: 0;
 }
-.task-search input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: 14px;
-  color: #18163f;
+.tabs button:hover {
+  color: var(--accent-hover);
 }
-.task-search input::placeholder {
-  color: #9089ab;
+.tabs button[aria-current] {
+  border-bottom-color: var(--accent);
+  color: var(--accent-hover);
+  font-weight: 650;
 }
-.task-search input::-webkit-search-cancel-button {
-  cursor: pointer;
-}
-.show-more {
-  display: block;
-  width: 100%;
-  margin-top: 14px;
-  padding: 12px;
-  border: 1px dashed #d9d0ee;
-  border-radius: 13px;
-  background: none;
-  color: #7a3ec4;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.show-more:hover {
-  background: #faf8fe;
-}
-.show-more:focus-visible {
-  outline: 2px solid #7a3ec4;
+.tabs button:focus-visible,
+.primary:focus-visible {
+  outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
-.task-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+.state {
+  padding: 40px 10px;
+  color: var(--text-muted);
+  text-align: center;
 }
-.task-entry {
-  flex: 1;
-}
-.completion {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #cdb8e5;
-  border-radius: 14px;
-  background: #faf6ff;
-  color: #7844b1;
-}
-.completion.done {
-  background: #e6f7ee;
-  color: #22724c;
-  border-color: #a6d9bd;
-}
-.struck {
-  text-decoration: line-through;
-}
-.filter app-select {
-  width: min(240px, 100%);
+.inline-error {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fde8eb;
+  color: #8f2a3d;
+  font-size: 14px;
 }
 .entry-types {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 .entry-types button {
   flex: 1;
   min-height: 44px;
-  background: #faf6ff;
   border: 1px solid #e5d7f5;
   border-radius: 10px;
+  background: #faf6ff;
   color: #593884;
+  font: inherit;
+  cursor: pointer;
 }
 .entry-types [aria-pressed='true'] {
+  border-color: var(--accent);
   background: #eadefa;
-  border-color: #955bc7;
+  font-weight: 600;
+}
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.checkbox-row input {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  accent-color: var(--accent);
+}
+.checkbox-row small {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 13px;
 }
 @media (max-width: 1100px) {
   .organisation-page {
-    padding: 24px 18px;
-  }
-  .content-grid {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      'main'
-      'side'
-      'stats';
-    grid-template-rows: auto;
-  }
-  .content-grid.calendar-view,
-  .content-grid.tasks-view {
-    grid-template-areas:
-      'main'
-      'side';
-  }
-  .side-column {
-    grid-template-columns: 1fr 1fr;
-  }
-  .main-card {
-    min-height: 300px;
-  }
-}
-@media (max-width: 760px) {
-  .organisation-page {
-    padding: 14px 18px 26px;
-  }
-  .heading-icon {
-    width: 42px;
-    height: 44px;
-    border-radius: 13px;
-  }
-  .heading-icon app-icon {
-    width: 28px;
-    height: 28px;
-  }
-  h1 {
-    font-size: 24px;
-  }
-  .heading-copy {
-    gap: 10px;
-  }
-  .heading-copy p {
-    font-size: 12px;
-  }
-  .page-heading {
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .page-heading > .primary {
-    margin-left: auto;
-    white-space: nowrap;
-    padding: 10px 16px;
+    padding: 24px 20px 40px;
   }
   .tabs {
-    margin: 22px 0 16px;
-    padding: 4px;
     gap: 0;
   }
   .tabs button {
-    min-width: 0;
-    padding: 0 4px;
-    font-size: 13px;
-    white-space: nowrap;
+    flex: 0 0 auto;
+    padding: 0 10px;
   }
-  .card {
-    padding: 18px;
-    border-radius: 19px;
+}
+@include domain.layout;
+// Kopf ohne Karte wie in Haushalt und Finanzen.
+.domain-sticky {
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+  margin-bottom: 16px;
+}
+@media (max-width: 760px) {
+  .domain-sticky {
+    padding: 10px 10px 0;
+    margin-bottom: 12px;
   }
-  h2 {
-    font-size: 17px;
+  .subtitle {
+    display: none;
   }
-  // Lange Titel (z. B. das Datum im Kalender-Reiter) drücken den Button in die zweite Zeile — dort soll er die
-  // volle Breite nutzen (klar erkennbar, leichter zu treffen), statt als schmale Pille links zu hängen.
-  .card-heading {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .card-heading > button {
-    flex: 1 1 100%;
-    justify-content: center;
-  }
-  .side-column {
-    grid-template-columns: 1fr;
-  }
-  .content-grid {
-    gap: 16px;
-  }
-  .stats {
-    gap: 8px;
-  }
-  .stats > button,
-  .stats > div {
-    padding: 12px 9px;
-    grid-template-columns: 24px 1fr;
-    gap: 7px;
-  }
-  .stats span {
-    font-size: 11px;
-  }
-  .stats strong {
-    font-size: 20px;
-  }
-  .entry {
-    gap: 10px;
-  }
-  .private {
-    font-size: 11px;
-  }
-  .entry-icon {
-    width: 32px;
-    height: 38px;
-  }
-  .entry-time {
-    min-width: 38px;
-    font-size: 12px;
-  }
-  .month-grid button {
+  .heading-icon {
+    width: 44px;
     height: 44px;
   }
-}
-
-@media (max-width: 760px) {
-  .main-card {
-    min-height: 220px;
+  // Fünf Reiter auf 390 px ohne Scrollen, Symbole nur am Rechner.
+  .tabs {
+    gap: 0;
+    border: 1px solid #ebe5f6;
+    background: #faf8fe;
   }
-  // Reiter „Kalender“: Monat zuerst (Orientierung/Navigation), dann der gewählte Tag (das Ziel, wenn man einen Tag
-  // antippt oder das Datumsfeld benutzt), „Nächste Termine“ zuletzt als ergänzender Ausblick. Dafür löst sich
-  // .side-column auf (display: contents) und seine beiden Karten reihen sich direkt in .content-grid ein — sonst
-  // ließen sie sich nicht unabhängig vom Tageskern einsortieren.
-  .content-grid.calendar-view {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      'calendar'
-      'main'
-      'upcoming';
+  .tabs button {
+    flex: 1 1 auto;
+    justify-content: center;
+    margin-bottom: 0;
+    padding: 0 4px;
+    border-bottom: 0;
+    font-size: 13px;
   }
-  .calendar-view .side-column {
-    display: contents;
+  .tabs button app-icon {
+    display: none;
   }
-  .calendar-view .calendar {
-    grid-area: calendar;
-  }
-  .calendar-view .upcoming {
-    grid-area: upcoming;
+  .tabs button[aria-current] {
+    background: #f4e9ff;
   }
 }
-
-@include domain.layout;

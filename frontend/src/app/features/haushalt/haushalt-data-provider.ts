@@ -11,8 +11,12 @@ import {
   ShoppingItemDto,
   ShoppingItemPatch,
   ShoppingOverviewDto,
+  ShoppingListDto,
+  ShoppingListInput,
+  RoutineStatsDto,
   TaskDto,
   TaskInput,
+  TaskWeekStatsDto,
   TaskStatus,
 } from './haushalt-api.service';
 
@@ -23,16 +27,24 @@ import {
  * In-Memory-Daten auf /haushalt, echte API auf /app/haushalt.
  */
 export interface HaushaltDataProvider {
-  getShopping(): Observable<ShoppingOverviewDto>;
-  addItem(name: string, quantity: string, section: SectionKey | null): Observable<ShoppingItemDto>;
+  // listId null = Standardliste des Haushalts (Übersicht, Dashboard).
+  getShopping(listId?: Id | null): Observable<ShoppingOverviewDto>;
+  getShoppingLists(): Observable<ShoppingListDto[]>;
+  createShoppingList(input: ShoppingListInput): Observable<ShoppingListDto>;
+  updateShoppingList(id: Id, input: Partial<ShoppingListInput>): Observable<ShoppingListDto>;
+  deleteShoppingList(id: Id): Observable<void>;
+  addItem(name: string, quantity: string, section: SectionKey | null, listId?: Id | null): Observable<ShoppingItemDto>;
   updateItem(id: Id, patch: ShoppingItemPatch): Observable<ShoppingItemDto>;
   deleteItem(id: Id): Observable<void>;
   // amount null = Einkauf ohne Ausgabe abschließen.
-  completeShopping(amount: number | null): Observable<CompleteShoppingResult>;
+  completeShopping(amount: number | null, listId?: Id | null): Observable<CompleteShoppingResult>;
 
   getOverview(): Observable<HaushaltOverviewDto>;
   getTasks(status?: TaskStatus): Observable<TaskDto[]>;
   getTaskLoad(): Observable<MemberLoadDto[]>;
+  getTaskWeek(): Observable<TaskWeekStatsDto>;
+  getRoutineStats(): Observable<RoutineStatsDto>;
+  setTaskPaused(id: Id, paused: boolean): Observable<TaskDto>;
   createTask(input: TaskInput): Observable<TaskDto>;
   updateTask(id: Id, input: TaskInput): Observable<TaskDto>;
   deleteTask(id: Id): Observable<void>;

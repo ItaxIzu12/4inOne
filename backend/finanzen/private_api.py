@@ -22,6 +22,7 @@ ZERO = Decimal('0.00')
 MAX_AMOUNT = Decimal('999999.99')
 BOOKING_YEARS_BACK = 10    # Aufbewahrungsfrist für Steuerunterlagen
 BOOKING_YEARS_AHEAD = 1    # geplante Ausgaben, z. B. die Miete nächsten Monat
+CONTRIBUTION_LIMIT = 100   # „Letzte Einzahlungen“ und Monatsverlauf brauchen nicht mehr
 
 def booking_date_bounds(today=None):
     today = today or timezone.localdate()
@@ -41,14 +42,39 @@ class CurrencyMixin(serializers.Serializer):
     # EUR-only V1 deliberately prevents adding incompatible currencies together.
     currency = serializers.ChoiceField(choices=['EUR'], default='EUR')
 
+MAX_CATEGORY_NAME = 40
+# Auffang-Kategorie: Buchungen gelöschter Kategorien landen hier, daher nicht lösch- oder umbenennbar.
+FALLBACK_CATEGORY = 'Sonstiges'
+
 class PrivateCategorySerializer(serializers.ModelSerializer):
+    # Monatslimit der Kategorie („Kategorie-Budgets“) — leer = kein Limit.
+    monthly_goal = serializers.DecimalField(
+        max_digits=10, decimal_places=2, min_value=Decimal('0'), max_value=MAX_AMOUNT,
+        required=False, allow_null=True, error_messages=MAX_AMOUNT_MESSAGES,
+    )
     class Meta:
         model = Category
         # color nur lesbar: sie wird beim Anlegen fest vergeben
         # (category_colors.py), damit sie nie von der Listenposition abhängt.
-        fields = ['id', 'name', 'color']
+        fields = ['id', 'name', 'color', 'monthly_goal']
         read_only_fields = ['id', 'color']
         validators = []
+    def validate_name(self, value):
+        # Eigene Kategorien: Name getrimmt, kurz genug für Legende und Auswahl, pro Person
+        # nur einmal (ohne Groß/Klein). Die Farbe bleibt beim Umbenennen gleich.
+        name = ' '.join(value.split())
+        if not name:
+            raise ValidationError('Gib der Kategorie einen Namen.')
+        if len(name) > MAX_CATEGORY_NAME:
+            raise ValidationError(f'Der Name darf höchstens {MAX_CATEGORY_NAME} Zeichen lang sein.')
+        if self.instance is not None and self.instance.name == FALLBACK_CATEGORY and name != FALLBACK_CATEGORY:
+            raise ValidationError(f'„{FALLBACK_CATEGORY}“ sammelt alles ohne eigene Kategorie und behält seinen Namen.')
+        mine = Category.objects.filter(owner=self.context['request'].user, name__iexact=name)
+        if self.instance is not None:
+            mine = mine.exclude(pk=self.instance.pk)
+        if mine.exists():
+            raise ValidationError('Diese Kategorie gibt es schon.')
+        return name
 
 class PrivateTransactionSerializer(CurrencyMixin, serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.none())
@@ -57,8 +83,9 @@ class PrivateTransactionSerializer(CurrencyMixin, serializers.ModelSerializer):
     amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('.01'), max_value=MAX_AMOUNT, error_messages=MAX_AMOUNT_MESSAGES)
     class Meta:
         model = Transaction
-        fields = ['id', 'amount', 'type', 'category', 'date', 'note', 'currency']
+        fields = ['id', 'amount', 'type', 'category', 'date', 'note', 'currency', 'recurring']
         read_only_fields = ['id']
+        extra_kwargs = {'recurring': {'required': False}}
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['category'].queryset = Category.objects.filter(owner=self.context['request'].user)
@@ -173,14 +200,34 @@ class PrivateTransactionViewSet(PrivateViewSet):
 class PrivateCategoryViewSet(PrivateViewSet):
     queryset = Category.objects.order_by('name')
     serializer_class = PrivateCategorySerializer
-    http_method_names = ['get', 'post', 'head', 'options']
+    # PATCH für Name und Monatslimit; DELETE verschiebt Buchungen nach „Sonstiges“.
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
     def perform_create(self, serializer):
         try:
             with transaction.atomic():
                 name = serializer.validated_data['name']
                 serializer.save(owner=self.request.user, color=color_for_name(name))
         except IntegrityError:
-            raise ValidationError('Dieser Eintrag besteht bereits oder ist ungültig.')
+            raise ValidationError('Diese Kategorie gibt es schon.')
+
+    @action(detail=True, methods=['get'], url_path='impact')
+    def impact(self, request, pk=None):
+        """Wie viele Buchungen hängen an der Kategorie? Nur zur Anzeige vor dem Löschen."""
+        category = self.get_object()
+        return Response({'transactions': category.transactions.count(), 'fallback': FALLBACK_CATEGORY})
+
+    def perform_destroy(self, instance):
+        if instance.name == FALLBACK_CATEGORY:
+            raise ValidationError(f'„{FALLBACK_CATEGORY}“ sammelt alles ohne eigene Kategorie und kann nicht gelöscht werden.')
+        with transaction.atomic():
+            # Keine Buchung geht verloren: alles wandert in die Auffang-Kategorie (bei Bedarf neu angelegt).
+            if instance.transactions.exists():
+                fallback, _ = Category.objects.get_or_create(
+                    owner=self.request.user, name=FALLBACK_CATEGORY,
+                    defaults={'color': color_for_name(FALLBACK_CATEGORY)},
+                )
+                instance.transactions.update(category=fallback)
+            instance.delete()
 
 class MonthlyBudgetViewSet(PrivateViewSet):
     queryset = MonthlyBudget.objects.all()
@@ -241,6 +288,17 @@ class SavingsGoalViewSet(PrivateViewSet):
             super().perform_update(serializer)
             self._record(serializer.instance, serializer.instance.current_amount - before)
 
+    @action(detail=False, methods=['get'], url_path='einzahlungen')
+    def contributions(self, request):
+        """Die letzten Einzahlungen (und Entnahmen) in die eigenen Sparziele,
+        neueste zuerst — für „Letzte Einzahlungen“ und den Monatsverlauf."""
+        rows = (SavingsContribution.objects.filter(owner=request.user).select_related('goal')
+                .order_by('-date', '-id')[:CONTRIBUTION_LIMIT])
+        return Response([
+            {'id': c.id, 'goal': c.goal_id, 'goal_title': c.goal.title, 'amount': money(c.amount), 'date': c.date.isoformat()}
+            for c in rows
+        ])
+
     @action(detail=False, methods=['post'], url_path='preview')
     def preview_new(self, request):
         return self._preview(request, None)
@@ -254,7 +312,7 @@ class SavingsGoalViewSet(PrivateViewSet):
         apply = (lambda: self.perform_update(serializer)) if instance is not None else (lambda: self.perform_create(serializer))
         return Response(goal_change_warning(request.user, apply))
 
-DEFAULT_CATEGORIES = ['Wohnen', 'Lebensmittel', 'Mobilität', 'Freizeit', 'Gesundheit', 'Reisen', 'Sonstiges']
+DEFAULT_CATEGORIES = ['Wohnen', 'Lebensmittel', 'Mobilität', 'Freizeit', 'Gesundheit', 'Reisen', FALLBACK_CATEGORY]
 class SetupCategoriesView(PrivateMixin, APIView):
     def post(self, request):
         # Explicit idempotent write, never create rows as a side effect of GET.

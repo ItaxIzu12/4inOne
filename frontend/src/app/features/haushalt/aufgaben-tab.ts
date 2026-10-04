@@ -1,44 +1,43 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AppIcon } from '../../shared/icons/app-icon';
-import { ConnectionsSection } from '../../shared/connections/connections-section';
-import { AppDatePicker } from '../../shared/form/date-picker';
-import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
-import { AppTimePicker } from '../../shared/form/time-picker';
-import { ModalForm } from '../../shared/form/modal-form';
-import { Effort, Id, MemberLoadDto, Recurrence, TaskDto, TaskInput } from './haushalt-api.service';
+import { Id, MemberLoadDto, TaskDto, TaskWeekStatsDto } from './haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
 import { daysUntil, recurrenceLabel, relativeDay, todayIso } from './haushalt-logic';
-
-interface TaskGroup {
-  key: string;
-  label: string;
-  tasks: TaskDto[];
-}
-
-const RECURRENCE_OPTIONS: { value: Recurrence | null; label: string }[] = [
-  { value: null, label: 'Einmalig' },
-  { value: 'daily', label: 'Täglich' },
-  { value: 'weekly', label: 'Wöchentlich' },
-  { value: 'monthly', label: 'Monatlich' },
-];
-
-const EFFORT_LABELS: Record<Effort, string> = { 1: 'Klein', 2: 'Mittel', 3: 'Groß' };
+import {
+  GroupKey,
+  NO_FILTERS,
+  PRIORITY_FILTER_OPTIONS,
+  PRIORITY_LABEL,
+  ROOM_FILTER_OPTIONS,
+  STATUS_OPTIONS,
+  TaskFilters,
+  dueLabel,
+  durationLabel,
+  endOfWeekIso,
+  filterTasks,
+  groupTasks,
+  initials,
+  room,
+} from './aufgaben-logic';
+import { TaskForm, TaskFormChange } from './task-form';
 
 /**
- * Haushaltsaufgaben mit fairer Verteilung: wiederkehrende Aufgaben wechseln
- * auf Wunsch reihum die zuständige Person, jede Erledigung zählt Aufwands-
- * punkte (klein 1 · mittel 2 · groß 3) für die Lastanzeige "Wer macht wie
- * viel". Aufgaben mit Datum stehen automatisch im gemeinsamen Kalender
- * (backend haushalt/services.py sync_task_event).
+ * Haushaltsaufgaben nach Entwurf: Filterleiste (Status, Räume, Personen,
+ * Prioritäten), Gruppen als Tabelle (Raum, Zuständig, Fällig am, Dauer,
+ * Priorität), daneben „Aufgaben im Überblick“, „Nächste Fälligkeiten“ und
+ * „Schnell eine Aufgabe erfassen“. Wiederkehrende Aufgaben wechseln auf
+ * Wunsch reihum; jede Erledigung zählt Aufwandspunkte für „Wer macht wie viel“
+ * (im Routinen-Reiter). Fällige Aufgaben erscheinen automatisch unter „Heute“.
+ * Das Formular teilt sich der Reiter mit den Routinen (task-form.ts).
  */
 @Component({
   selector: 'app-aufgaben-tab',
   standalone: true,
-  imports: [ErrorNoticeDirective, AppIcon, ConnectionsSection, Field, ModalForm, AppSelect, AppDatePicker, AppTimePicker],
+  imports: [ErrorNoticeDirective, AppIcon, AppSelect, TaskForm],
   templateUrl: './aufgaben-tab.html',
   styleUrls: ['./haushalt-common.scss', './aufgaben-tab.scss'],
 })
@@ -47,9 +46,6 @@ export class AufgabenTab {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly saved = output<string>();
-  /** „aufgaben“ zeigt alle offenen Aufgaben, „routinen“ nur wiederkehrende —
-   * dieselben Daten und dasselbe Formular, keine zweite Aufgabenlogik. */
-  readonly mode = input<'aufgaben' | 'routinen'>('aufgaben');
   /** Steigt bei jedem „Neue Aufgabe“ im Seitenkopf; > 0 öffnet das Formular. */
   readonly newRequest = input(0);
 
@@ -57,20 +53,12 @@ export class AufgabenTab {
   protected readonly doneTasks = signal<TaskDto[] | null>(null);
   protected readonly showDone = signal(false);
   protected readonly reopening = signal<Id | null>(null);
-  protected readonly isRoutines = computed(() => this.mode() === 'routinen');
   protected readonly members = signal<MemberLoadDto[]>([]);
   protected readonly loadError = signal(false);
   protected readonly actionError = signal<string | null>(null);
   protected readonly completing = signal<Id | null>(null);
 
-  protected readonly recurrenceOptions = RECURRENCE_OPTIONS;
-  protected readonly recurrenceSelectOptions: SelectOption[] = RECURRENCE_OPTIONS.map((o) => ({ value: o.value ?? '', label: o.label }));
-  protected readonly assigneeOptions = computed<SelectOption[]>(() => [
-    { value: '', label: 'Alle / wer Zeit hat' },
-    ...this.members().map((m) => ({ value: String(m.user_id), label: m.name })),
-  ]);
-  protected readonly effortOptions: Effort[] = [1, 2, 3];
-  protected readonly effortLabels = EFFORT_LABELS;
+  private readonly taskForm = viewChild.required<TaskForm>('taskForm');
   protected readonly relativeDay = relativeDay;
   /** Noch nicht fällig: erst heute oder überfällig lässt sich abhaken — sonst könnte man eine wiederkehrende
    * Aufgabe beliebig oft hintereinander „erledigen“ und sich Punkte/Fälligkeit vordatieren, ohne dass die Zeit
@@ -80,49 +68,105 @@ export class AufgabenTab {
   }
   protected readonly recurrenceLabel = recurrenceLabel;
 
-  private readonly visibleTasks = computed(() => {
-    const tasks = this.tasks() ?? [];
-    return this.isRoutines() ? tasks.filter((t) => t.recurrence_days || t.recurrence_months) : tasks;
+  /** Pausierte Routinen ruhen — sie stehen nur im Routinen-Reiter. */
+  protected readonly visibleTasks = computed(() => (this.tasks() ?? []).filter((t) => !t.is_paused));
+
+  // ---------- Filter und Gruppen ----------
+  protected readonly filters = signal<TaskFilters>({ ...NO_FILTERS });
+  protected readonly filtersOpen = signal(false);
+  protected readonly collapsed = signal<Set<GroupKey>>(new Set());
+  protected readonly hasFilters = computed(() => Object.values(this.filters()).some((v) => v !== ''));
+  protected readonly statusOptions = STATUS_OPTIONS;
+  protected readonly roomFilterOptions = ROOM_FILTER_OPTIONS;
+  protected readonly priorityFilterOptions = PRIORITY_FILTER_OPTIONS;
+  protected readonly personFilterOptions = computed<SelectOption[]>(() => [
+    { value: '', label: 'Alle Personen' },
+    ...this.members().map((m) => ({ value: String(m.user_id), label: m.name })),
+    { value: 'none', label: 'Nicht zugeteilt' },
+  ]);
+  protected readonly showsDone = computed(() => this.filters().status === 'done');
+
+  protected readonly groups = computed(() => groupTasks(filterTasks(this.visibleTasks(), this.filters())));
+  protected readonly filteredDone = computed(() => filterTasks(this.doneTasks() ?? [], { ...this.filters(), status: '' }));
+
+  protected setFilter<K extends keyof TaskFilters>(key: K, value: string): void {
+    this.filters.update((f) => ({ ...f, [key]: value }));
+    if (key === 'status' && value === 'done') this.loadDone();
+  }
+  protected resetFilters(): void {
+    this.filters.set({ ...NO_FILTERS });
+  }
+  protected toggleGroup(key: GroupKey): void {
+    this.collapsed.update((set) => {
+      const next = new Set(set);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  // ---------- Überblick ----------
+  protected readonly week = signal<TaskWeekStatsDto | null>(null);
+  protected readonly overdueTasks = computed(() => this.visibleTasks().filter((t) => t.is_overdue));
+  protected readonly todayCount = computed(() => this.visibleTasks().filter((t) => t.due_date === todayIso()).length);
+  /** „seit 1–2 Tagen“ — Spanne, wie lange überfällige Aufgaben schon liegen. */
+  protected readonly overdueSpan = computed(() => {
+    const days = this.overdueTasks().map((t) => -daysUntil(t.due_date!));
+    if (!days.length) return 'nichts überfällig';
+    const min = Math.min(...days);
+    const max = Math.max(...days);
+    const unit = max === 1 ? 'Tag' : 'Tagen';
+    return min === max ? `seit ${max} ${unit}` : `seit ${min}–${max} Tagen`;
   });
-
-  protected readonly groups = computed<TaskGroup[]>(() => {
-    const tasks = this.visibleTasks();
-    const groups: TaskGroup[] = [
-      { key: 'overdue', label: 'Überfällig', tasks: [] },
-      { key: 'today', label: 'Heute', tasks: [] },
-      { key: 'week', label: 'Nächste 7 Tage', tasks: [] },
-      { key: 'later', label: 'Später', tasks: [] },
-      { key: 'undated', label: 'Ohne Datum', tasks: [] },
-    ];
-    for (const task of tasks) {
-      if (!task.due_date) groups[4].tasks.push(task);
-      else {
-        const days = daysUntil(task.due_date);
-        groups[days < 0 ? 0 : days === 0 ? 1 : days <= 7 ? 2 : 3].tasks.push(task);
-      }
-    }
-    return groups.filter((group) => group.tasks.length > 0);
+  protected readonly weekDelta = computed(() => {
+    const week = this.week();
+    if (!week) return '';
+    const delta = week.done_this_week - week.done_last_week;
+    return delta === 0 ? 'wie in der Vorwoche' : `${delta > 0 ? '+' : '−'}${Math.abs(delta)} zur Vorwoche`;
   });
+  /** „Nächste Fälligkeiten“: ab heute, nach Datum — überfällige stehen schon oben in der Tabelle. */
+  protected readonly upcoming = computed(() =>
+    this.visibleTasks()
+      .filter((t) => !!t.due_date && t.due_date >= todayIso())
+      .sort((a, b) => a.due_date!.localeCompare(b.due_date!))
+      .slice(0, 4),
+  );
 
-  protected readonly totalPoints = computed(() => this.members().reduce((sum, m) => sum + m.points, 0));
-  protected readonly maxPoints = computed(() => Math.max(1, ...this.members().map((m) => m.points)));
+  // ---------- Darstellung ----------
+  protected readonly room = room;
+  protected readonly dueLabel = dueLabel;
+  protected readonly durationLabel = durationLabel;
+  protected readonly initials = initials;
+  protected readonly priorityLabel = PRIORITY_LABEL;
 
-  // ---------- Formular ----------
-  protected readonly formOpen = signal(false);
-  protected readonly editingId = signal<Id | null>(null);
-  protected readonly formTitle = signal('');
-  protected readonly formDescription = signal('');
-  protected readonly formRecurrence = signal<Recurrence | null>(null);
-  protected readonly formDue = signal('');
-  protected readonly formTime = signal('');
-  protected readonly formEffort = signal<Effort>(1);
-  protected readonly formAssignee = signal<Id | null>(null);
-  protected readonly formRotate = signal(false);
-  protected readonly formRotation = signal<Id[]>([]);
-  protected readonly formError = signal<string | null>(null);
-  protected readonly formSaving = signal(false);
+  // ---------- Schnell erfassen ----------
+  protected readonly quickTitle = signal('');
+  protected readonly quickSaving = signal(false);
+  protected quickAdd(when: 'none' | 'today' | 'week'): void {
+    const title = this.quickTitle().trim();
+    if (!title || this.quickSaving()) return;
+    this.quickSaving.set(true);
+    this.actionError.set(null);
+    const due = when === 'today' ? todayIso() : when === 'week' ? endOfWeekIso() : null;
+    this.provider
+      .createTask({
+        title, description: '', recurrence: null, due_date: due, due_time: null, effort: 1, assigned_to: null,
+        rotate: false, rotation_member_ids: [], room: '', duration_minutes: null, priority: 'mittel',
+      })
+      .subscribe({
+        next: () => {
+          this.quickSaving.set(false);
+          this.quickTitle.set('');
+          this.load();
+          this.saved.emit(`„${title}“ angelegt.`);
+        },
+        error: () => {
+          this.quickSaving.set(false);
+          this.actionError.set('Die Aufgabe konnte nicht angelegt werden. Bitte noch einmal versuchen.');
+        },
+      });
+  }
 
-  protected readonly canRotate = computed(() => this.formRecurrence() !== null && this.members().length >= 2);
 
   constructor() {
     this.load();
@@ -132,10 +176,11 @@ export class AufgabenTab {
   }
 
   protected load(): void {
-    forkJoin({ tasks: this.provider.getTasks(), members: this.provider.getTaskLoad() }).subscribe({
-      next: ({ tasks, members }) => {
+    forkJoin({ tasks: this.provider.getTasks(), members: this.provider.getTaskLoad(), week: this.provider.getTaskWeek() }).subscribe({
+      next: ({ tasks, members, week }) => {
         this.tasks.set(tasks);
         this.members.set(members);
+        this.week.set(week);
         this.loadError.set(false);
         this.openTaskFromQuery(tasks);
       },
@@ -201,14 +246,7 @@ export class AufgabenTab {
 
   private reloadLoad(): void {
     this.provider.getTaskLoad().subscribe({ next: (members) => this.members.set(members), error: () => undefined });
-  }
-
-  protected metaLine(task: TaskDto): string {
-    const parts = [recurrenceLabel(task.recurrence_days, task.recurrence_months)];
-    if (task.assigned_to_name) parts.push(task.rotate ? `${task.assigned_to_name} (reihum)` : task.assigned_to_name);
-    else parts.push('alle');
-    parts.push(`Aufwand ${EFFORT_LABELS[task.effort].toLowerCase()}`);
-    return parts.join(' · ');
+    this.provider.getTaskWeek().subscribe({ next: (week) => this.week.set(week), error: () => undefined });
   }
 
   protected complete(task: TaskDto): void {
@@ -241,126 +279,19 @@ export class AufgabenTab {
     });
   }
 
-  // ---------- Formular ----------
+  // ---------- Formular (TaskForm) ----------
 
   protected openNew(): void {
-    this.editingId.set(null);
-    this.formTitle.set('');
-    this.formDescription.set('');
-    this.formRecurrence.set(this.isRoutines() ? 'weekly' : null);
-    this.formTime.set('');
-    this.formDue.set(todayIso());
-    this.formEffort.set(1);
-    this.formAssignee.set(null);
-    this.formRotate.set(false);
-    this.formRotation.set([]);
-    this.formError.set(null);
-    this.formOpen.set(true);
+    this.taskForm().openNew();
   }
 
   protected openEdit(task: TaskDto): void {
-    this.editingId.set(task.id);
-    this.formTitle.set(task.title);
-    this.formDescription.set(task.description ?? '');
-    this.formRecurrence.set(task.recurrence);
-    this.formTime.set(task.due_time ? task.due_time.slice(0, 5) : '');
-    this.formDue.set(task.due_date ?? '');
-    this.formEffort.set(task.effort);
-    this.formAssignee.set(task.assigned_to);
-    this.formRotate.set(task.rotate);
-    this.formRotation.set([...task.rotation_member_ids]);
-    this.formError.set(null);
-    this.formOpen.set(true);
+    this.taskForm().openEdit(task);
   }
 
-  protected closeForm(): void {
-    this.formOpen.set(false);
-  }
-
-  protected setRecurrence(value: string): void {
-    this.formRecurrence.set(value === '' ? null : (value as Recurrence));
-    if (value === '') this.formRotate.set(false);
-  }
-
-  protected setAssignee(value: string): void {
-    const member = this.members().find((m) => String(m.user_id) === value);
-    this.formAssignee.set(member ? member.user_id : null);
-  }
-
-  protected toggleRotate(checked: boolean): void {
-    this.formRotate.set(checked);
-    if (checked && this.formRotation().length === 0) {
-      // Vorauswahl: alle Mitglieder — der häufigste Fall.
-      this.formRotation.set(this.members().map((m) => m.user_id));
-    }
-  }
-
-  protected toggleRotationMember(id: Id, checked: boolean): void {
-    this.formRotation.update((ids) => (checked ? [...ids, id] : ids.filter((existing) => existing !== id)));
-  }
-
-  protected isInRotation(id: Id): boolean {
-    return this.formRotation().includes(id);
-  }
-
-  protected submit(): void {
-    if (this.formSaving()) return;
-    const title = this.formTitle().trim();
-    if (!title) {
-      this.formError.set('Bitte beschreibe die Aufgabe kurz.');
-      return;
-    }
-    const rotate = this.canRotate() && this.formRotate();
-    if (rotate && this.formRotation().length < 2) {
-      this.formError.set('Für „reihum“ bitte mindestens zwei Personen auswählen.');
-      return;
-    }
-    const input: TaskInput = {
-      title,
-      description: this.formDescription().trim(),
-      recurrence: this.formRecurrence(),
-      due_date: this.formDue() || null,
-      due_time: this.formDue() && this.formTime() ? this.formTime() : null,
-      effort: this.formEffort(),
-      assigned_to: this.formAssignee(),
-      rotate,
-      rotation_member_ids: rotate ? this.formRotation() : [],
-    };
-    const id = this.editingId();
-    this.formSaving.set(true);
-    this.formError.set(null);
-    const request = id === null ? this.provider.createTask(input) : this.provider.updateTask(id, input);
-    request.subscribe({
-      next: () => {
-        this.formSaving.set(false);
-        this.formOpen.set(false);
-        this.load();
-        this.saved.emit(
-          id === null ? (this.isRoutines() ? 'Routine angelegt.' : 'Aufgabe angelegt.') : 'Aufgabe gespeichert.',
-        );
-      },
-      error: () => {
-        this.formSaving.set(false);
-        this.formError.set('Speichern hat nicht geklappt. Bitte Eingaben prüfen und noch einmal versuchen.');
-      },
-    });
-  }
-
-  protected deleteEditing(): void {
-    const id = this.editingId();
-    if (id === null || this.formSaving()) return;
-    this.formSaving.set(true);
-    this.provider.deleteTask(id).subscribe({
-      next: () => {
-        this.formSaving.set(false);
-        this.formOpen.set(false);
-        this.tasks.update((tasks) => (tasks ?? []).filter((t) => t.id !== id));
-        this.saved.emit('Aufgabe gelöscht.');
-      },
-      error: () => {
-        this.formSaving.set(false);
-        this.formError.set('Löschen hat nicht geklappt. Bitte noch einmal versuchen.');
-      },
-    });
+  protected onFormChanged(change: TaskFormChange): void {
+    if (change.deletedId !== undefined) this.tasks.update((tasks) => (tasks ?? []).filter((t) => t.id !== change.deletedId));
+    this.load();
+    this.saved.emit(change.message);
   }
 }

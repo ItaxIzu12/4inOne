@@ -41,7 +41,7 @@ def _haushalt(user, today):
         return None
     household = membership.household
     due = (
-        HouseholdTask.objects.filter(household=household, is_done=False, due_date__lte=today)
+        HouseholdTask.objects.filter(household=household, is_done=False, is_paused=False, due_date__lte=today)
         .filter(Q(assigned_to=user) | Q(assigned_to__isnull=True))
         .select_related('assigned_to')
         .order_by('due_date', 'due_time', 'id')

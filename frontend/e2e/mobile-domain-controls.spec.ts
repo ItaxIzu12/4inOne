@@ -39,17 +39,28 @@ for (const width of [320, 360, 390]) {
       await expect(sticky).toHaveCSS('border-radius', '20px');
       if (domain === 'finanzen') {
         const card = await sticky.boundingBox();
-        // Abstand zwischen Kopf und erstem Inhalt (die Monatsbühne trägt jetzt die Monatsauswahl)
-        const stage = await page.locator('.finance-page > .stage').boundingBox();
-        expect(stage!.y - (card!.y + card!.height)).toBeGreaterThanOrEqual(24);
+        // Die Kennzahlen beginnen unter dem Kopf (mit der Monatsauswahl), nie darüber oder darin
+        const kpis = await page.locator('.finance-page > .kpis').boundingBox();
+        expect(kpis!.y).toBeGreaterThanOrEqual(card!.y + card!.height);
       }
-      await page.evaluate(() => window.scrollTo(0, 350));
-      await expect(page.locator('.topbar')).toBeInViewport();
-      await expect(button).toBeInViewport();
-      await expect(page.locator('.domain-tabs')).toBeInViewport();
-      expect(await page.locator('.domain-sticky').evaluate(el =>
-        el.getBoundingClientRect().top >= 82,
-      )).toBe(true);
+      // Die Bereichskarte scrollt mit (nicht mehr sticky); die globale Kopfzeile
+      // bleibt, und „Nach oben“ bringt Titel und Reiter zurück.
+      await expect(sticky).not.toHaveCSS('position', 'sticky');
+      const scrollable = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+      if (scrollable > 400) {
+        await page.evaluate(() => window.scrollTo(0, 400));
+        await expect(page.locator('.topbar')).toBeInViewport();
+        await expect(page.locator('.domain-tabs')).not.toBeInViewport();
+        const backToTop = page.getByRole('button', { name: 'Nach oben scrollen' });
+        await expect(backToTop).toBeVisible();
+        // über der unteren Navigation, nicht darauf
+        const nav = await page.locator('.mobile-nav').boundingBox();
+        const top = await backToTop.boundingBox();
+        expect(top!.y + top!.height).toBeLessThanOrEqual(nav!.y);
+        await backToTop.click();
+        await expect(page.locator('.domain-tabs')).toBeInViewport();
+        await expect(button).toBeInViewport();
+      }
       await page.screenshot({ path: `test-results/mobile-controls-${domain}-${width}.png` });
     }
   });

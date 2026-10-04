@@ -288,7 +288,9 @@ def _household_consequences(user, trip: Trip, today: date) -> list[Suggestion]:
         for member in household.members.exclude(pk=user.pk).order_by('id')
     ]
     tasks = (
-        HouseholdTask.objects.filter(household=household, is_done=False, due_date__isnull=False, due_date__lte=trip.end_date)
+        HouseholdTask.objects.filter(
+            household=household, is_done=False, is_paused=False, due_date__isnull=False, due_date__lte=trip.end_date
+        )
         .filter(Q(assigned_to=user) | Q(assigned_to__isnull=True))
         .exclude(pk__in=already)
         .order_by('due_date', 'id')
