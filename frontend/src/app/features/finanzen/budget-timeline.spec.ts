@@ -55,4 +55,21 @@ describe('Budget year overview', () => {
     expect(fixture.componentInstance.month()).toBe('2027-05');
     expect(rows()[4].textContent).toContain('1.000,00');
   });
+  it('the year dropdown shows the actual current year on load, not just the first option in its range', () => {
+    const { el } = setup();
+    const select = el.querySelector('select')!;
+    // years() spans [currentYear-1 .. currentYear+2], so "2025" (the first option) would be selected by
+    // default if the <select> only relied on its own [value] binding racing against @for's <option>s.
+    expect(select.value).toBe('2026');
+    expect(select.selectedIndex).toBe(1);
+  });
+  it('shows the viewed year next to the heading, and it follows the year switch', () => {
+    const { fixture, el } = setup([budget(1, '2027-05', null)]);
+    expect(el.querySelector('h3')!.textContent).toContain('2026');
+    const select = el.querySelector('select')!;
+    select.value = '2027';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(el.querySelector('h3')!.textContent).toContain('2027');
+  });
 });

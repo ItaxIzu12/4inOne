@@ -3,7 +3,7 @@ import { AmountInput } from '../../shared/directives/amount-input';
 import { afterNextRender, Injector, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgComponentOutlet } from '@angular/common';
 import { forkJoin, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
@@ -11,6 +11,7 @@ import { AppIcon } from '../../shared/icons/app-icon';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
 import { AppDatePicker } from '../../shared/form/date-picker';
 import { BudgetYearOverview } from './budget-timeline';
+import { budgetBand, categoryVisual, daysLeftInMonth, groupByDay, shiftMonth, splitAmount } from './finance-overview';
 import { defaultDateInMonth, display } from '../../shared/form/date-utils';
 import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
@@ -72,7 +73,7 @@ function payloadAmount(payload: object): string {
 @Component({
   selector: 'app-private-finance',
   standalone: true,
-  imports: [ErrorNoticeDirective, AmountInput, ReactiveFormsModule, DatePipe, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview],
+  imports: [ErrorNoticeDirective, AmountInput, ReactiveFormsModule, DatePipe, NgComponentOutlet, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview],
   templateUrl: './private-finance.html',
   styleUrl: './private-finance.scss',
 })
@@ -119,6 +120,42 @@ export class PrivateFinance {
   });
   /** Hinweis, wenn die Sparraten zusammen mehr reservieren als das Monatsbudget nach Ausgaben hergeben. */
   readonly planAlertText = computed(() => planAlertMessage(this.summary(), this.month()));
+
+  // ---------- Übersicht ----------
+  /** Der große Betrag der Monatsbühne, die Cents getrennt (kleiner gesetzt). */
+  readonly heroAmount = computed(() => {
+    const over = this.overBudget();
+    return splitAmount(this.money(over ?? this.summary()?.available ?? '0'));
+  });
+  /** Tage bis Monatsende (heute mitgezählt); 0 für vergangene Monate. */
+  readonly daysLeft = computed(() => daysLeftInMonth(this.month()));
+  /** Was pro verbleibendem Tag frei ist — nur, wenn es etwas zu verteilen gibt. */
+  readonly perDay = computed(() => {
+    const available = Number(this.summary()?.available ?? 0);
+    const days = this.daysLeft();
+    return available > 0 && days > 0 ? String(Math.floor(available / days)) : null;
+  });
+  readonly freeShare = computed(() => this.percent(this.summary()?.available, this.summary()?.total));
+  readonly band = computed(() => budgetBand(this.summary()));
+  readonly recentDays = computed(() => groupByDay(this.summary()?.recent ?? []));
+  readonly categoryVisual = categoryVisual;
+  /** Anteil einer Kategorie an allen Ausgaben, für die Rangliste. */
+  categoryShare(amount: string) {
+    return this.percent(amount, this.summary()?.expenses);
+  }
+  /** Wie viele Ausgaben dieses Monats in die Kategorie fallen (ohne Kategorie: id null). */
+  bookingCount(categoryId: number | null) {
+    return this.transactions().filter(
+      (t) => t.type === 'EXPENSE' && t.date.startsWith(this.month()) && (t.category ?? null) === categoryId,
+    ).length;
+  }
+  readonly bandLabel = computed(() =>
+    this.band().map((seg) => `${seg.label} ${this.money(seg.amount.toFixed(2))}`).join(', '),
+  );
+  protected readonly Math = Math;
+  stepMonth(delta: number) {
+    this.setMonth(shiftMonth(this.month(), delta));
+  }
   readonly categoryFilter = signal('');
   readonly transactionSearch = signal('');
   /** Wie viele der gefilterten/gesuchten Buchungen aktuell sichtbar sind — „Weitere anzeigen“ erhöht ihn um 5,

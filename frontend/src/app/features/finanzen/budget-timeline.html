@@ -1,13 +1,13 @@
 <section class="budget-year" aria-label="Monatsbudgets im Jahresüberblick">
   <div class="budget-year__head">
     <div>
-      <h3>Dein Budgetjahr</h3>
+      <h3>Dein Budgetjahr {{ year() }}</h3>
       <p>{{ planned() }} von 12 Monaten geplant</p>
     </div>
     <div class="budget-year__select">
       <label for="budget-year-select">Jahr</label>
-      <select id="budget-year-select" [value]="year()" (change)="changeYear($event)">
-        @for (value of years(); track value) { <option [value]="value">{{ value }}</option> }
+      <select id="budget-year-select" (change)="changeYear($event)">
+        @for (value of years(); track value) { <option [value]="value" [selected]="value === year()">{{ value }}</option> }
       </select>
     </div>
   </div>

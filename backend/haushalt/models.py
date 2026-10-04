@@ -20,6 +20,7 @@ class Section(models.TextChoices):
     DRINKS = 'getraenke', 'Getränke'
     TOILETRIES = 'drogerie', 'Drogerie'
     HOUSEHOLD = 'haushalt', 'Haushalt'
+    CLOTHING = 'kleidung', 'Kleidung'
     OTHER = 'sonstiges', 'Sonstiges'
 
 

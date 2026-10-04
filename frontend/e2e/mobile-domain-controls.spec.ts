@@ -39,8 +39,9 @@ for (const width of [320, 360, 390]) {
       await expect(sticky).toHaveCSS('border-radius', '20px');
       if (domain === 'finanzen') {
         const card = await sticky.boundingBox();
-        const period = await page.locator('.finance-page > .period').boundingBox();
-        expect(period!.y - (card!.y + card!.height)).toBeGreaterThanOrEqual(24);
+        // Abstand zwischen Kopf und erstem Inhalt (die Monatsbühne trägt jetzt die Monatsauswahl)
+        const stage = await page.locator('.finance-page > .stage').boundingBox();
+        expect(stage!.y - (card!.y + card!.height)).toBeGreaterThanOrEqual(24);
       }
       await page.evaluate(() => window.scrollTo(0, 350));
       await expect(page.locator('.topbar')).toBeInViewport();

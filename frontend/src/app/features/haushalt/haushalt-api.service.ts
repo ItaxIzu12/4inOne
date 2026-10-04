@@ -19,6 +19,7 @@ export type SectionKey =
   | 'getraenke'
   | 'drogerie'
   | 'haushalt'
+  | 'kleidung'
   | 'sonstiges';
 
 export interface SectionDto {

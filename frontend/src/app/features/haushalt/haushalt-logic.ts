@@ -13,6 +13,7 @@ export const SECTIONS: SectionDto[] = [
   { key: 'getraenke', label: 'Getränke' },
   { key: 'drogerie', label: 'Drogerie' },
   { key: 'haushalt', label: 'Haushalt' },
+  { key: 'kleidung', label: 'Kleidung' },
   { key: 'sonstiges', label: 'Sonstiges' },
 ];
 
@@ -124,6 +125,7 @@ const DEMO_KEYWORDS: [SectionKey, string[]][] = [
   ['getraenke', ['wasser', 'saft', 'bier', 'wein', 'cola']],
   ['drogerie', ['shampoo', 'duschgel', 'seife', 'zahnpasta', 'deo']],
   ['haushalt', ['klopapier', 'toilettenpapier', 'spülmittel', 'waschmittel', 'müllbeutel', 'küchenrolle']],
+  ['kleidung', ['hose', 'jeans', 'shirt', 'pullover', 'pulli', 'jacke', 'kleid', 'rock', 'socke', 'schuh', 'schuhe']],
 ];
 
 export function guessSectionDemo(name: string): SectionKey {

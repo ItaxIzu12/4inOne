@@ -83,6 +83,11 @@ SECTION_KEYWORDS: dict[str, tuple[str, ...]] = {
         'klopapier', 'toilettenpapier', 'küchenrolle', 'spülmittel', 'waschmittel', 'müllbeutel',
         'schwamm', 'reiniger', 'tabs', 'alufolie', 'backpapier', 'batterie', 'glühbirne',
     ),
+    Section.CLOTHING: (
+        'hose', 'hosen', 'jeans', 'shirt', 't-shirt', 'tshirt', 'pullover', 'pulli', 'jacke',
+        'mantel', 'kleid', 'rock', 'socke', 'socken', 'unterwäsche', 'schuh', 'schuhe', 'mütze',
+        'schal', 'handschuh', 'pyjama', 'anzug', 'bluse', 'strumpfhose', 'leggings',
+    ),
 }
 
 
@@ -236,7 +241,10 @@ def complete_shopping(
 
     transaction = None
     if amount is not None:
-        transaction = finanzen_services.book_shopping_expense(user, amount, len(checked), category)
+        category_name = None if category is not None else _dominant_category_name(checked)
+        transaction = finanzen_services.book_shopping_expense(
+            user, amount, [item.name for item in checked], category, category_name
+        )
 
     trip = ShoppingTrip.objects.create(
         household=household,
@@ -248,6 +256,17 @@ def complete_shopping(
     )
     ShoppingItem.objects.filter(pk__in=[item.pk for item in checked]).delete()
     return trip, checked
+
+
+def _dominant_category_name(items: list[ShoppingItem]) -> str | None:
+    """Wenn die Mehrheit der abgehakten Einträge Kleidung ist, soll die
+    Ausgabe auch als „Kleidung" erscheinen statt immer als die
+    Standard-Kategorie (finanzen_services.PRIVATE_SHOPPING_CATEGORY). Für
+    alle anderen Ladenbereiche bleibt es beim Standard."""
+    clothing = sum(1 for item in items if item.section == Section.CLOTHING)
+    if clothing * 2 > len(items):
+        return 'Kleidung'
+    return None
 
 
 def sort_items(items):

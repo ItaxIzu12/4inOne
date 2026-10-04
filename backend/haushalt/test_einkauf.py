@@ -29,6 +29,7 @@ def test_new_item_is_sorted_into_a_shop_section(anna, client_for):
     assert _add(client, 'Vollmilch')['section'] == 'kuehlregal'
     assert _add(client, 'Reis')['section'] == 'vorrat'  # nicht Kühlregal wegen "ei"
     assert _add(client, 'Geburtstagskerzen')['section'] == 'sonstiges'
+    assert _add(client, 'Hose')['section'] == 'kleidung'
 
 
 def test_household_decision_about_a_section_wins_next_time(anna, client_for):
@@ -92,7 +93,7 @@ def test_completing_with_amount_books_an_expense_in_finance(anna, client_for):
     assert transaction.type == 'EXPENSE'
     assert transaction.category.name == 'Lebensmittel' and transaction.category.owner == anna
     assert transaction.created_by == anna
-    assert transaction.description == 'Einkauf (3 Artikel)'
+    assert transaction.description == 'Einkauf: Milch, Brot, Käse'
     # Die Ausgabe erscheint sofort in Annas privater Übersicht.
     summary = client.get('/api/v1/finanzen/private/summary/?month=' + transaction.datum.strftime('%Y-%m')).data
     assert summary['expenses'] == '18.40'
@@ -122,6 +123,31 @@ def test_shopping_reuses_the_existing_groceries_category(anna, client_for):
     assert Category.objects.filter(owner=anna, name='Lebensmittel').count() == 1
 
 
+def test_clothing_purchase_is_booked_under_its_own_category(anna, client_for):
+    client = client_for(anna)
+    item = _add(client, 'Hose')
+    client.patch(f'{ITEMS}{item["id"]}/', {'is_checked': True}, format='json')
+
+    response = client.post(COMPLETE, {'amount': '39.99'}, format='json')
+
+    transaction = Transaction.objects.get(pk=response.data['transaction_id'])
+    assert transaction.category.name == 'Kleidung' and transaction.category.owner == anna
+    assert transaction.description == 'Einkauf: Hose'
+
+
+def test_mixed_cart_with_only_a_minority_of_clothing_still_books_as_groceries(anna, client_for):
+    client = client_for(anna)
+    for name in ('Milch', 'Brot', 'Hose'):
+        item = _add(client, name)
+        client.patch(f'{ITEMS}{item["id"]}/', {'is_checked': True}, format='json')
+
+    response = client.post(COMPLETE, {'amount': '25.00'}, format='json')
+
+    transaction = Transaction.objects.get(pk=response.data['transaction_id'])
+    assert transaction.category.name == 'Lebensmittel'
+    assert transaction.description == 'Einkauf: Milch, Brot, Hose'
+
+
 def test_completing_without_amount_creates_no_expense(anna, client_for):
     client = client_for(anna)
     item = _add(client, 'Milch')
@@ -142,7 +168,7 @@ def test_completing_with_nothing_checked_is_rejected(anna, client_for):
 
 
 def _booked_trip(household, user, item_count, amount):
-    transaction = finanzen_services.book_shopping_expense(user, Decimal(amount), item_count)
+    transaction = finanzen_services.book_shopping_expense(user, Decimal(amount), [f'Artikel {n}' for n in range(item_count)])
     return ShoppingTrip.objects.create(
         household=household, item_count=item_count, amount=Decimal(amount), transaction=transaction
     )

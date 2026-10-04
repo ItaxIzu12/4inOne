@@ -228,38 +228,6 @@ select:focus-visible {
   font-size: 13px;
   color: #56627a;
 }
-.calc {
-  display: grid;
-  gap: 2px;
-  max-width: 420px;
-  margin: 14px 0 0;
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-}
-.calc > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 5px 0;
-  color: #56627a;
-}
-.calc dt,
-.calc dd {
-  margin: 0;
-}
-.calc dd {
-  white-space: nowrap;
-}
-.calc__sum {
-  margin-top: 4px;
-  padding-top: 8px !important;
-  border-top: 1px solid #dce7e0;
-  color: var(--text, #162e29) !important;
-  font-weight: 700;
-}
-.month-card {
-  background: #fff;
-}
 progress {
   appearance: none;
   width: 100%;
@@ -288,57 +256,6 @@ progress.over::-webkit-progress-value {
 progress.over::-moz-progress-bar {
   background: #c62f45;
 }
-.totals {
-  display: grid;
-  gap: 14px;
-}
-.totals .card {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  padding: 18px 22px;
-}
-.totals strong {
-  font-size: 22px;
-  font-variant-numeric: tabular-nums;
-}
-.mini-icon {
-  width: 40px;
-  height: 42px;
-  border-radius: 13px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-.expense {
-  background: #fff0f6;
-  color: #c8497b;
-}
-.income {
-  background: #e6f9ed;
-  color: #18a354;
-}
-.categories {
-  grid-column: 1;
-}
-.category-row {
-  display: grid;
-  grid-template-columns: 110px minmax(30px, 1fr) 110px;
-  align-items: center;
-  gap: 14px;
-  min-height: 46px;
-  font-size: 13px;
-}
-.category-row strong {
-  text-align: right;
-  font-weight: 600;
-}
-.category-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
 // Farbe kommt als --cat aus der Kategorie (backend category_colors.py) —
 // nie über :nth-child, sonst springt sie bei jeder Umsortierung.
 .cat-dot {
@@ -351,27 +268,8 @@ progress.over::-moz-progress-bar {
   background: var(--cat, #8a93a3);
   vertical-align: -1px;
 }
-.category-name .cat-dot {
-  margin-right: 0;
-}
 // Eigener Balken statt <progress>: färbt in allen Browsern gleich
 // (::-webkit-progress-value gilt nicht in Firefox).
-.cat-bar {
-  display: block;
-  height: 8px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #e6eee9;
-}
-.cat-bar > span {
-  display: block;
-  height: 100%;
-  border-radius: 8px;
-  background: var(--cat, #8a93a3);
-}
-.savings > strong {
-  font-size: 26px;
-}
 .recent {
   margin-top: 18px;
 }
@@ -548,12 +446,6 @@ progress.over::-moz-progress-bar {
   .overview-grid {
     grid-template-columns: 1fr;
   }
-  .categories {
-    grid-column: auto;
-  }
-  .totals {
-    grid-template-columns: 1fr 1fr;
-  }
   .goal-grid {
     grid-template-columns: 1fr;
   }
@@ -612,32 +504,6 @@ progress.over::-moz-progress-bar {
   .amount {
     font-size: 32px;
   }
-  .totals {
-    gap: 10px;
-  }
-  .totals .card {
-    padding: 14px 10px;
-    gap: 8px;
-  }
-  .totals strong {
-    font-size: 17px;
-  }
-  .totals p {
-    font-size: 12px;
-  }
-  .mini-icon {
-    width: 30px;
-    height: 34px;
-  }
-  .mini-icon app-icon {
-    width: 21px;
-    height: 21px;
-  }
-  .category-row {
-    grid-template-columns: 90px minmax(20px, 1fr) 90px;
-    gap: 8px;
-    font-size: 12px;
-  }
   .transaction {
     gap: 10px;
   }
@@ -668,9 +534,495 @@ progress.over::-moz-progress-bar {
 @include domain.layout;
 
 // Compact overview: explain calculations on demand, keep the limit prominent.
-.budget-explanation { margin-top: 20px; font-size: 13px; color: #4c6559; }
-.budget-explanation summary { cursor: pointer; padding: 8px 0; min-height: 44px; }
-.budget-explanation summary:focus-visible { outline: 3px solid #20734f; outline-offset: 3px; }
-.budget-explanation p, .savings-note { line-height: 1.6; font-size: 13px; }
-.totals { align-content: start; }
-.totals .card { min-height: 108px; }
+
+// ---------- Übersicht: Monatsbühne ----------
+// Der Monatsrest ist der Höhepunkt der Seite: sanftes Mint aus dem Finanz-Grün, große Zahl, die Rechnung offen
+// daneben statt aufgeklappt. Freundlich durch Rundung und Ruhe, nicht durch zusätzliche Farben.
+.stage {
+  margin: 4px 0 18px;
+  border-radius: 30px;
+  background: #fff;
+  border: 1px solid #dcefe4;
+  overflow: hidden;
+}
+.stage-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  gap: 32px;
+  align-items: end;
+  padding: 26px 30px 30px;
+  background: #e7f6ee;
+}
+.stage--over .stage-top {
+  background: #fbecee;
+}
+.month-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 22px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 77 49 / 8%);
+}
+.month-step {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #155c39;
+  cursor: pointer;
+}
+.month-step:first-child app-icon {
+  transform: rotate(180deg);
+}
+.month-step:hover {
+  background: var(--accent-soft);
+}
+.month-step:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.month-step app-icon {
+  width: 18px;
+  height: 18px;
+}
+.month-pick {
+  display: block;
+  min-width: 170px;
+}
+.stage-label {
+  margin: 0 0 6px;
+  color: #2c5a43;
+  font-size: 16px;
+  font-weight: 600;
+}
+.stage-amount {
+  margin: 0;
+  color: #0f4d31;
+  font-size: clamp(64px, 7.4vw, 104px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+}
+.stage-amount small {
+  margin-left: 2px;
+  font-size: 0.42em;
+  letter-spacing: -0.02em;
+  vertical-align: 0.95em;
+}
+.stage--over .stage-amount,
+.stage--over .stage-label {
+  color: #8f2a3d;
+}
+.stage-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.stage-facts li {
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: #fff;
+  color: #2c5a43;
+  font-size: 14px;
+}
+.stage-facts b {
+  color: #0f4d31;
+}
+.stage-empty {
+  max-width: 520px;
+  margin: 4px 0 18px;
+  color: #2c5a43;
+  line-height: 1.6;
+}
+
+.ledger {
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 77 49 / 8%), 0 10px 24px -14px rgb(15 77 49 / 30%);
+}
+.ledger-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #162e29;
+}
+.ledger dl {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.ledger dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+.ledger dt {
+  color: #3f5a4d;
+}
+.ledger dd {
+  margin: 0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ledger .op {
+  display: inline-block;
+  width: 16px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.ledger-sum {
+  padding-top: 10px;
+  border-top: 1.5px solid #dcefe4;
+  font-size: 16.5px !important;
+}
+.ledger-sum dt,
+.ledger-sum dd {
+  color: #0f4d31;
+  font-weight: 700;
+}
+.ledger-in {
+  display: flex;
+  justify-content: space-between;
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px dashed #dcefe4;
+  font-size: 14px;
+  color: #3f5a4d;
+  font-variant-numeric: tabular-nums;
+}
+.ledger-in b {
+  color: var(--accent);
+}
+.ledger-note {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: #587062;
+}
+
+.band-wrap {
+  padding: 22px 30px 24px;
+}
+.band-head h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+// Jeder Teil eine kleine Pille mit Luft dazwischen — weicher als ein harter Balken.
+.band {
+  display: flex;
+  gap: 4px;
+  height: 20px;
+}
+.seg {
+  min-width: 6px;
+  border-radius: 999px;
+  background: var(--cat, #8a93a3);
+}
+.seg--saved {
+  background: #9fd6b8;
+}
+.seg--free {
+  background: #eef2f0;
+  box-shadow: inset 0 0 0 1px #dfe7e2;
+}
+.band-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  color: #3f5a4d;
+  font-variant-numeric: tabular-nums;
+}
+.band-keys li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.band-keys b {
+  color: #162e29;
+  font-weight: 600;
+}
+.key {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--cat, #8a93a3);
+}
+.key--saved {
+  background: #9fd6b8;
+}
+.key--free {
+  background: #eef2f0;
+  box-shadow: inset 0 0 0 1px #c9d6ce;
+}
+.stage-note {
+  margin: 0 30px 22px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #fbecee;
+  color: #6f2030;
+  font-size: 14px;
+}
+
+// ---------- Übersicht: Kategorien, Sparziele, Kontoauszug ----------
+.rank-card header,
+.goals-card header,
+.statement header {
+  margin-bottom: 8px;
+}
+.rank {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto 104px;
+  column-gap: 14px;
+  align-items: center;
+  padding: 12px 0 14px;
+  border-top: 1px solid #edf3ef;
+}
+.rank:first-of-type {
+  border-top: 0;
+}
+// Der „Kiesel“: Kategorienfarbe sanft als Fläche, kräftig als Icon.
+.pebble {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--cat, #8a93a3) 15%, #fff);
+  color: var(--cat, #8a93a3);
+}
+.pebble app-icon,
+.pebble ::ng-deep svg {
+  width: 22px;
+  height: 22px;
+}
+.rank-name b {
+  display: block;
+  font-weight: 600;
+}
+.rank-name small {
+  color: #587062;
+}
+.rank-share {
+  color: #587062;
+  font-size: 13.5px;
+}
+.rank-amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.rank-bar {
+  grid-column: 2 / -1;
+  height: 6px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: #eef2f0;
+  overflow: hidden;
+}
+.rank-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--cat, #8a93a3);
+}
+
+.goal-row {
+  display: block;
+  width: 100%;
+  padding: 14px 12px;
+  margin: 0 -12px;
+  width: calc(100% + 24px);
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.goal-row:hover {
+  background: #f4faf6;
+}
+.goal-row:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.goal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.goal-top b {
+  font-size: 16px;
+  font-weight: 600;
+}
+.goal-amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.goal-amount em {
+  font-style: normal;
+  font-weight: 400;
+  color: #587062;
+}
+.goal-bar {
+  display: block;
+  height: 10px;
+  margin: 10px 0 6px;
+  border-radius: 999px;
+  background: #eef2f0;
+  overflow: hidden;
+}
+.goal-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+.goal-row small {
+  color: #587062;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef2f0;
+  color: #3f5a4d;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.chip app-icon {
+  width: 13px;
+  height: 13px;
+}
+.chip--done {
+  background: var(--accent-soft);
+  color: #155c39;
+}
+
+.statement {
+  margin-top: 18px;
+}
+.day-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 0 8px;
+  border-bottom: 1px solid #e6efe9;
+  font-size: 13px;
+  font-weight: 700;
+  color: #587062;
+  font-variant-numeric: tabular-nums;
+}
+.statement-row {
+  display: grid;
+  grid-template-columns: 4px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  padding: 14px 0;
+  border: 0;
+  border-bottom: 1px solid #f0f4f1;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.statement-row:hover .statement-copy strong {
+  color: var(--accent);
+}
+.statement-row:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+.statement-mark {
+  align-self: stretch;
+  border-radius: 999px;
+  background: var(--cat, #8a93a3);
+}
+.statement-copy strong {
+  display: block;
+  font-weight: 600;
+}
+.statement-copy small {
+  color: #587062;
+}
+.statement-amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #162e29;
+}
+.statement-amount.positive {
+  color: var(--accent);
+}
+
+@media (max-width: 1100px) {
+  .stage-top {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+}
+@media (max-width: 760px) {
+  .stage {
+    border-radius: 24px;
+  }
+  .stage-top {
+    padding: 18px 18px 20px;
+  }
+  .month-switch {
+    margin-bottom: 16px;
+  }
+  .month-pick {
+    min-width: 0;
+  }
+  .stage-amount {
+    font-size: 60px;
+  }
+  .band-wrap {
+    padding: 18px;
+  }
+  .band-keys {
+    gap: 8px 16px;
+    font-size: 13px;
+  }
+  .stage-note {
+    margin: 0 18px 18px;
+  }
+  .rank {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+  }
+  .rank-share {
+    display: none;
+  }
+  .pebble {
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .month-step,
+  .goal-row {
+    transition: background-color 160ms ease-out;
+  }
+}

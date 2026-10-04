@@ -43,33 +43,45 @@ def household_account(household: Household) -> Account:
 PRIVATE_SHOPPING_CATEGORY = 'Lebensmittel'
 
 
-def book_shopping_expense(user, amount: Decimal, item_count: int, category: Category | None = None) -> Transaction:
+def book_shopping_expense(
+    user,
+    amount: Decimal,
+    item_names: list[str],
+    category: Category | None = None,
+    category_name: str | None = None,
+) -> Transaction:
     """Der Einkauf-zu-Ausgabe-Moment: ein abgeschlossener Einkauf wird eine
     ganz normale Ausgabe von heute in den PRIVATEN Finanzen der Person, die
     eingekauft hat (ADR-001: Finanzen gehören einer Person). Sie erscheint
-    sofort in Budget, Kategorien und „verfügbar“ — ohne doppelte Eingabe.
+    sofort in Budget, Kategorien und „verfügbar“ — ohne doppelte Eingabe, mit
+    den tatsächlich gekauften Artikeln in der Beschreibung.
 
     Die bisherigen Haushaltsfinanzen sind eingefroren und bekommen keine
     neuen Buchungen mehr.
 
     `category` muss, falls übergeben, bereits vom Aufrufer gegen die Person
-    geprüft sein (IDOR); sonst wird ihre Kategorie „Lebensmittel“ verwendet
-    und bei Bedarf mit fester Farbe angelegt."""
+    geprüft sein (IDOR); sonst wird `category_name` (z. B. „Kleidung“, wenn
+    der Einkauf überwiegend aus Kleidung bestand) oder andernfalls
+    „Lebensmittel“ verwendet und bei Bedarf mit passender Farbe angelegt."""
     from finanzen.category_colors import color_for_name
 
     if category is None:
+        name = category_name or PRIVATE_SHOPPING_CATEGORY
         category, _ = Category.objects.get_or_create(
             owner=user,
-            name=PRIVATE_SHOPPING_CATEGORY,
-            defaults={'color': color_for_name(PRIVATE_SHOPPING_CATEGORY)},
+            name=name,
+            defaults={'color': color_for_name(name)},
         )
+    description = f'Einkauf: {", ".join(item_names)}' if item_names else 'Einkauf'
+    if len(description) > 255:
+        description = description[:254] + '…'
     return Transaction.objects.create(
         owner=user,
         type='EXPENSE',
         currency='EUR',
         category=category,
         amount=amount,
-        description=f'Einkauf ({item_count} Artikel)',
+        description=description,
         created_by=user,
         datum=timezone.localdate(),
     )

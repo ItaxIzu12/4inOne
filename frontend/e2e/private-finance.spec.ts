@@ -120,12 +120,12 @@ for (const width of [390, 1440]) {
     await expect(page.getByLabel('Bis einschließlich')).toHaveCount(0);
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(page.locator('.month-card')).toContainText('3.000,00 €');
+    await expect(page.locator('.stage')).toContainText('3.000,00 €');
     const today = new Date();
     const following = new Date(today.getFullYear(), today.getMonth() + 1, 1);
     const nextMonth = `${following.getFullYear()}-${String(following.getMonth() + 1).padStart(2, '0')}`;
     await pickMonth(page, page.locator('#finance-month'), nextMonth);
-    await expect(page.locator('.month-card')).toContainText('3.000,00 €');
+    await expect(page.locator('.stage')).toContainText('3.000,00 €');
     await page.getByRole('button', { name: 'Budgets', exact: true }).click();
     await expect(page.locator('.card header').filter({ hasText: 'Gültig:' })).toContainText(/bis auf Weiteres/);
     await pickMonth(page, page.locator('#finance-month'), `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
@@ -135,7 +135,7 @@ for (const width of [390, 1440]) {
     await page.getByRole('button', { name: 'Standardkategorien anlegen' }).click();
     await page.getByLabel('Notiz (optional)').fill('Supermarkt');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-    await expect(page.locator('.month-card')).toContainText('2.951,68 €');
+    await expect(page.locator('.stage')).toContainText('2.951,68 €');
     await page.getByRole('button', { name: /Supermarkt/ }).click();
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('50,00');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
@@ -145,13 +145,13 @@ for (const width of [390, 1440]) {
     await page.getByLabel('Notiz (optional)').fill('Gehalt');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     // Einnahme erhöht das verfügbare Budget und wird sichtbar bestätigt
-    await expect(page.locator('.month-card')).toContainText('2.950,00 €');
-    await page.locator('.budget-explanation summary').click();
-    const calc = page.locator('.month-card .calc');
+    await expect(page.locator('.stage')).toContainText('2.950,00 €');
+    // Die Rechnung steht offen neben dem Betrag, nichts mehr aufzuklappen.
+    const calc = page.locator('.stage .ledger');
     await expect(calc).toContainText('Monatsbudget3.000,00 €');
     await expect(calc).not.toContainText('+ Einnahmen');
-    await expect(calc).toContainText('− Ausgaben50,00 €');
-    await expect(calc).toContainText('= Übrig2.950,00 €');
+    await expect(calc).toContainText('−Ausgaben50,00 €');
+    await expect(calc).toContainText('=Frei2.950,00 €');
     await expect(page.getByRole('status').filter({ hasText: 'Einnahme' })).toContainText(
       'Einnahme von 3.100,00 € gespeichert. Vom Monatsbudget übrig: 2.950,00 €.',
     );
@@ -194,8 +194,8 @@ for (const width of [390, 1440]) {
     await pickMonth(page, page.locator('#finance-month'), thisMonth);
     await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
     // Gespartes mindert das verfügbare Budget und steht in der Aufschlüsselung
-    await expect(page.locator('.month-card')).toContainText('2.470,00 €');
-    await expect(page.locator('.month-card .calc')).toContainText('− Für Sparziele zurückgelegt480,00 €');
+    await expect(page.locator('.stage')).toContainText('2.470,00 €');
+    await expect(page.locator('.stage .ledger')).toContainText('−Für Sparziele zurückgelegt480,00 €');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -210,7 +210,7 @@ for (const width of [390, 1440]) {
     await page.getByRole('button', { name: /Supermarkt/ }).click();
     await page.getByRole('button', { name: 'Eintrag löschen', exact: true }).click();
     await page.getByRole('button', { name: 'Ja, löschen', exact: true }).click();
-    await expect(page.locator('.month-card')).toContainText('2.520,00 €');
+    await expect(page.locator('.stage')).toContainText('2.520,00 €');
     await expect(page.getByRole('status').filter({ hasText: 'gelöscht' })).toContainText('Buchung gelöscht. Vom Monatsbudget übrig: 2.520,00 €.');
   });
 }
@@ -243,7 +243,7 @@ test('warns before an expense exceeds the available budget and books it only aft
   });
 
   await page.goto('/finanzen');
-  await expect(page.locator('.month-card')).toContainText('100,00 €');
+  await expect(page.locator('.stage')).toContainText('100,00 €');
   await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Betrag in EUR', { exact: true }).fill('150');
@@ -261,9 +261,9 @@ test('warns before an expense exceeds the available budget and books it only aft
   await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dialog).toHaveCount(0);
   expect(posts).toBe(1);
-  await expect(page.locator('.month-card')).toContainText('80,00 €');
-  await expect(page.locator('.overrun-note')).toHaveCount(0);
-  await expect(page.locator('.month-card progress')).not.toHaveClass(/over/);
+  await expect(page.locator('.stage')).toContainText('80,00 €');
+  await expect(page.locator('.stage-note')).toHaveCount(0);
+  await expect(page.locator('.stage')).not.toHaveClass(/stage--over/);
 
   // Jetzt 150 € bei 80 € verfügbar: Warnung, Bestätigung, gebucht — und danach deutlich sichtbar im Minus
   await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
@@ -273,11 +273,11 @@ test('warns before an expense exceeds the available budget and books it only aft
   await dialog.getByRole('button', { name: 'Trotzdem buchen', exact: true }).click();
   await expect(dialog).toHaveCount(0);
   expect(posts).toBe(2);
-  await expect(page.locator('.month-card .overrun-note').filter({ hasText: 'Budget überschritten' })).toBeVisible();
-  await expect(page.locator('.month-card .overrun-note')).toContainText('70,00 €');
-  // Balken wird rot und sagt es auch in Worten (Farbe allein reicht nicht)
-  await expect(page.locator('.month-card progress')).toHaveClass(/over/);
-  await expect(page.locator('.month-card progress')).toHaveAttribute('aria-label', 'Monatsbudget überschritten');
+  await expect(page.locator('.stage .stage-note').filter({ hasText: 'Budget überschritten' })).toBeVisible();
+  await expect(page.locator('.stage .stage-note')).toContainText('70,00 €');
+  // Die Bühne wird rot und sagt es auch in Worten (Farbe allein reicht nicht)
+  await expect(page.locator('.stage')).toHaveClass(/stage--over/);
+  await expect(page.locator('.stage-label')).toHaveText('Über dem Monatsbudget');
   await expect(page.getByRole('status').filter({ hasText: 'Achtung' })).toContainText('Achtung: Du liegst 70,00 € über deinem Monatsbudget.');
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
 });
@@ -321,10 +321,10 @@ test('warns when the savings rates together exceed the budget, even in a later m
     return r.fulfill({ json: [] });
   });
   await page.goto('/finanzen');
-  const note = page.locator('.month-card .overrun-note');
+  const note = page.locator('.stage .stage-note');
   await expect(note).toContainText('Sparplanung prüfen');
   await expect(note).toContainText('Im 11.2026 reicht das Monatsbudget nach Ausgaben nicht für alle Sparraten: Es fehlen 30,00 €.');
-  await expect(page.locator('.month-card progress')).not.toHaveClass(/over/); // im Moment noch im Plus
+  await expect(page.locator('.stage')).not.toHaveClass(/stage--over/); // im Moment noch im Plus
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
 
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
@@ -334,17 +334,17 @@ test('warns when the savings rates together exceed the budget, even in a later m
   alert = { month: '2026-09', over: '10.00', planned: '110.00' };
   await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
   await page.reload();
-  await expect(page.locator('.month-card .overrun-note')).toContainText('In diesem Monat reicht das Monatsbudget nach Ausgaben nicht für alle Sparraten');
+  await expect(page.locator('.stage .stage-note')).toContainText('In diesem Monat reicht das Monatsbudget nach Ausgaben nicht für alle Sparraten');
 
   // Kein Alarm: kein Hinweis. Und ist das Budget ohnehin im Minus, gilt nur die Überschreitungs-Meldung (kein Doppelhinweis)
   alert = null;
   await page.reload();
-  await expect(page.locator('.month-card .overrun-note')).toHaveCount(0);
+  await expect(page.locator('.stage .stage-note')).toHaveCount(0);
   alert = { month: '2026-09', over: '10.00', planned: '110.00' };
   available = '-10.00';
   await page.reload();
-  await expect(page.locator('.month-card .overrun-note')).toHaveCount(2);
-  await expect(page.locator('.month-card .overrun-note').filter({ hasText: 'Budget überschritten' })).toBeVisible();
+  await expect(page.locator('.stage .stage-note')).toHaveCount(2);
+  await expect(page.locator('.stage .stage-note').filter({ hasText: 'Budget überschritten' })).toBeVisible();
 });
 
 
@@ -534,7 +534,7 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
   await page.goto('/finanzen');
   const selector = page.locator('#finance-month');
   await expect(selector).toHaveCount(1);
-  await expect(page.locator('.month-card')).toContainText('90,00 €'); // September: 100 − 10
+  await expect(page.locator('.stage')).toContainText('90,00 €'); // September: 100 − 10
 
   // Der Monat gilt für die ganze Seite und steht deshalb OBERHALB der Reiter
   const monthBox = (await selector.boundingBox())!;
@@ -548,7 +548,7 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
 
   await pickMonth(page, selector, OCT);
   await expect(selector).toContainText('Oktober 2026');
-  await expect(page.locator('.month-card')).toContainText('80,00 €'); // Oktober: 100 − 20 (Übersicht)
+  await expect(page.locator('.stage')).toContainText('80,00 €'); // Oktober: 100 − 20 (Übersicht)
 
   await page.getByRole('button', { name: 'Buchungen', exact: true }).click();
   await expect(page.getByRole('button', { name: /Oktoberkauf/ })).toBeVisible();
@@ -770,7 +770,7 @@ test('without a budget the overview keeps bookings and says so', async ({ page }
     r.fulfill({ json: { month: '2026-09', currency: 'EUR', budget: null, total: null, saved: '0.00', saved_planned: '0.00', available: null, plan_alert: null, income: '0.00', expenses: '10.00', savings_target: '0.00', savings_current: '0.00', has_data: true, categories: [], recent: [] } }),
   );
   await page.goto('/finanzen');
-  await expect(page.locator('.month-card')).toContainText('gibt es kein Budget. Deine Einnahmen und Ausgaben bleiben gespeichert');
+  await expect(page.locator('.stage')).toContainText('gibt es kein Budget. Deine Einnahmen und Ausgaben bleiben gespeichert');
 });
 
 test('bookings: category filter, search by title, and 5-at-a-time with "weitere anzeigen"', async ({ page }) => {

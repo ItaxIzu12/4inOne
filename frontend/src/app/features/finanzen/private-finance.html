@@ -37,12 +37,14 @@
     </nav>
     </div>
 
+    @if (tab() !== 'overview') {
         <div class="period">
           <label for="finance-month"
             ><span class="sr-only">Monat</span>
             <app-date-picker mode="month" inputId="finance-month" [value]="month()" (valueChange)="setMonth($event)" />
           </label>
         </div>
+    }
 
     @if (loading()) {
       <p class="empty" role="status">Deine Finanzen werden geladen …</p>
@@ -53,104 +55,149 @@
       </div>
     } @else {
       @if (tab() === 'overview') {
-        <div class="overview-grid">
-          <section class="card month-card">
-            <p>Vom Monatsbudget übrig</p>
-            <h2 class="amount">{{ money(summary()?.available) }}</h2>
-            @if (summary()?.budget !== null) {
-              <p>
-                Von {{ money(summary()?.total) }} ·
-                {{ percent(used(), summary()?.total) }} % ausgegeben oder für Sparziele zurückgelegt
-              </p>
-              <progress
-                [class.over]="overBudget() !== null"
-                [value]="percent(used(), summary()?.total)"
-                max="100"
-                [attr.aria-label]="overBudget() !== null ? 'Monatsbudget überschritten' : 'Monatsbudget verbraucht'"
-              ></progress>
-              <details class="budget-explanation">
-                <summary>So berechnet sich dein Budgetrest</summary>
-                <dl class="calc">
-                  <div><dt>Monatsbudget</dt><dd>{{ money(summary()?.budget) }}</dd></div>
-                  <div><dt>− Ausgaben</dt><dd>{{ money(summary()?.expenses) }}</dd></div>
-                  <div><dt>− Für Sparziele zurückgelegt</dt><dd>{{ money(summary()?.saved) }}</dd></div>
-                  <div class="calc__sum"><dt>= Übrig</dt><dd>{{ money(summary()?.available) }}</dd></div>
-                </dl>
-                <p>Einnahmen erhöhen dein Monatsbudget nicht automatisch. Bereits gesparte Beträge werden im Zeitraum des Sparziels zurückgelegt. Eine Sparrate wird dabei nicht doppelt gezählt.</p>
-              </details>
-              @if (overBudget(); as over) {
-                <p class="overrun-note" role="status">
-                  <strong>Budget überschritten:</strong> Du hast {{ money(over) }} mehr ausgegeben oder für Sparziele zurückgelegt, als dein Monatsbudget vorsieht.
+        <!-- Monatsbühne: der Monatsrest als Höhepunkt der Seite, die Rechnung offen daneben. -->
+        <section class="stage" [class.stage--over]="overBudget() !== null" aria-labelledby="stage-label">
+          <div class="stage-top">
+            <div class="stage-main">
+              <div class="month-switch">
+                <button type="button" class="month-step" aria-label="Vorheriger Monat" (click)="stepMonth(-1)"><app-icon name="arrow" /></button>
+                <label for="finance-month" class="month-pick"
+                  ><span class="sr-only">Monat</span>
+                  <app-date-picker mode="month" inputId="finance-month" [value]="month()" (valueChange)="setMonth($event)" />
+                </label>
+                <button type="button" class="month-step next" aria-label="Nächster Monat" (click)="stepMonth(1)"><app-icon name="arrow" /></button>
+              </div>
+              @if (summary()?.budget !== null) {
+                <p class="stage-label" id="stage-label">
+                  {{ overBudget() !== null ? 'Über dem Monatsbudget' : daysLeft() > 0 ? 'Frei bis Monatsende' : 'Am Monatsende frei geblieben' }}
                 </p>
+                <p class="stage-amount" [attr.aria-label]="money(overBudget() ?? summary()?.available)">
+                  <span aria-hidden="true">{{ heroAmount().whole }}<small>{{ heroAmount().rest }}</small></span>
+                </p>
+                <ul class="stage-facts" aria-label="Kurz gesagt">
+                  @if (overBudget() === null) {
+                    @if (daysLeft() > 0) {
+                      <li>noch <b>{{ daysLeft() }} {{ daysLeft() === 1 ? 'Tag' : 'Tage' }}</b></li>
+                    }
+                    @if (perDay(); as day) {
+                      <li>rund <b>{{ money(day).replace(',00', '') }} pro Tag</b></li>
+                    }
+                    <li><b>{{ freeShare() }} %</b> des Budgets frei</li>
+                  } @else {
+                    <li>Mehr ausgegeben oder zurückgelegt, als dein Budget vorsieht</li>
+                  }
+                </ul>
+              } @else {
+                <p class="stage-label" id="stage-label">Noch kein Monatsbudget</p>
+                <p class="stage-empty">
+                  Für {{ monthLabel() }} gibt es kein Budget.
+                  @if (Number(summary()?.income) + Number(summary()?.expenses) > 0) {
+                    Deine Einnahmen und Ausgaben bleiben gespeichert, ein Budgetrest kann erst mit einem Monatsbudget angezeigt werden.
+                  } @else {
+                    Lege eines fest, dann siehst du, was dir noch bleibt.
+                  }
+                </p>
+                <button class="primary" (click)="open('budgets')"><app-icon name="plus" />Budget erstellen</button>
               }
-              @if (planAlertText(); as alert) {
-                <p class="overrun-note" role="status"><strong>Sparplanung prüfen:</strong> {{ alert }}</p>
-              }
-            } @else {
-              <p>
-                Für {{ monthLabel() }} gibt es kein Budget.
-                @if (Number(summary()?.income) + Number(summary()?.expenses) > 0) {
-                  Deine Einnahmen und Ausgaben bleiben gespeichert, ein Budgetrest kann erst mit einem Monatsbudget angezeigt werden.
-                } @else {
-                  Lege eines fest, dann siehst du, was dir noch bleibt.
-                }
-              </p>
-              <button class="text-button" (click)="open('budgets')">
-                Budget erstellen <app-icon name="arrow" />
-              </button>
+            </div>
+
+            @if (summary()?.budget !== null) {
+              <div class="ledger">
+                <p class="ledger-title">So rechnet sich das</p>
+                <dl>
+                  <div><dt>Monatsbudget</dt><dd>{{ money(summary()?.budget) }}</dd></div>
+                  <div><dt><span class="op" aria-hidden="true">−</span>Ausgaben</dt><dd>{{ money(summary()?.expenses) }}</dd></div>
+                  <div><dt><span class="op" aria-hidden="true">−</span>Für Sparziele zurückgelegt</dt><dd>{{ money(summary()?.saved) }}</dd></div>
+                  <div class="ledger-sum"><dt><span class="op" aria-hidden="true">=</span>{{ overBudget() !== null ? 'Überschritten' : 'Frei' }}</dt><dd>{{ money(summary()?.available) }}</dd></div>
+                </dl>
+                <p class="ledger-in"><span>Eingänge im Monat</span><b>+{{ money(summary()?.income) }}</b></p>
+                <p class="ledger-note">Einnahmen erhöhen dein Monatsbudget nicht automatisch.</p>
+              </div>
             }
-          </section>
-          <div class="totals">
-            <section class="card">
-              <span class="mini-icon expense"><app-icon name="bars" /></span>
-              <div>
-                <p>Ausgaben</p>
-                <strong>{{ money(summary()?.expenses) }}</strong>
-              </div>
-            </section>
-            <section class="card">
-              <span class="mini-icon income"><app-icon name="finance" /></span>
-              <div>
-                <p>Einnahmen</p>
-                <strong>{{ money(summary()?.income) }}</strong>
-              </div>
-            </section>
           </div>
-          <section class="card categories">
-            <header><h2>Ausgaben nach Kategorien</h2></header>
+
+          @if (band().length) {
+            <div class="band-wrap">
+              <div class="band-head"><h2>Wohin die {{ money(summary()?.total) }} gehen</h2></div>
+              <div class="band" role="img" [attr.aria-label]="bandLabel()">
+                @for (seg of band(); track seg.key) {
+                  <span class="seg" [class]="'seg seg--' + seg.kind" [style.--cat]="seg.color" [style.flex-grow]="seg.share"></span>
+                }
+              </div>
+              <ul class="band-keys">
+                @for (seg of band(); track seg.key) {
+                  <li><i [class]="'key key--' + seg.kind" [style.--cat]="seg.color" aria-hidden="true"></i>{{ seg.label }} <b>{{ money(seg.amount.toFixed(2)) }}</b></li>
+                }
+              </ul>
+            </div>
+          }
+          @if (overBudget(); as over) {
+            <p class="stage-note" role="status">
+              <strong>Budget überschritten:</strong> Du hast {{ money(over) }} mehr ausgegeben oder für Sparziele zurückgelegt, als dein Monatsbudget vorsieht.
+            </p>
+          }
+          @if (planAlertText(); as alert) {
+            <p class="stage-note" role="status"><strong>Sparplanung prüfen:</strong> {{ alert }}</p>
+          }
+        </section>
+
+        <div class="overview-grid">
+          <section class="card rank-card" aria-labelledby="cat-h">
+            <header><h2 id="cat-h">Ausgaben nach Kategorien</h2>
+              <button class="text-button" (click)="tab.set('budgets')">Budget ansehen <app-icon name="arrow" /></button></header>
             @for (category of summary()?.categories; track category.id ?? category.name) {
-              <!-- Farbe kommt aus der Kategorie selbst, nie aus der Listenposition:
-                   die Liste ist nach Betrag sortiert und ordnet sich ständig um. -->
-              <div class="category-row" [style.--cat]="category.color">
-                <span class="category-name"><i class="cat-dot" aria-hidden="true"></i>{{ category.name }}</span
-                ><span
-                  class="cat-bar"
+              <!-- Farbe kommt aus der Kategorie selbst, nie aus der Listenposition. -->
+              <div class="rank" [style.--cat]="category.color">
+                <span class="pebble" aria-hidden="true">
+                  @if (categoryVisual(category.name); as visual) {
+                    @if ('app' in visual) { <app-icon [name]="visual.app" /> } @else { <ng-container [ngComponentOutlet]="visual.component" /> }
+                  }
+                </span>
+                <span class="rank-name"><b>{{ category.name }}</b>
+                  @if (bookingCount(category.id); as count) { <small>{{ count }} {{ count === 1 ? 'Buchung' : 'Buchungen' }}</small> }</span>
+                <span class="rank-share">{{ categoryShare(category.amount) }} %</span>
+                <strong class="rank-amount">{{ money(category.amount) }}</strong>
+                <span
+                  class="rank-bar"
                   role="progressbar"
                   aria-valuemin="0"
                   aria-valuemax="100"
-                  [attr.aria-valuenow]="percent(category.amount, summary()?.expenses)"
+                  [attr.aria-valuenow]="categoryShare(category.amount)"
                   [attr.aria-label]="category.name + ' Anteil an Ausgaben'"
-                  ><span [style.width.%]="percent(category.amount, summary()?.expenses)"></span></span
-                ><strong>{{ money(category.amount) }}</strong>
+                  ><span [style.width.%]="categoryShare(category.amount)"></span
+                ></span>
               </div>
             } @empty {
-              <p class="empty">Noch keine Ausgaben in diesem Monat.</p>
+              <p class="empty">Noch keine Ausgaben in diesem Monat. Schön ruhig.</p>
             }
           </section>
-          <section class="card savings">
-            <header>
-              <h2>Deine Sparziele</h2>
-            </header>
-            <p class="savings-note">Bereits gesparte Beträge reduzieren dein Restbudget im gewählten Zeitraum.</p>
-            @if (goals().length) {
-              <strong>{{ money(summary()?.savings_current) }}</strong>
-              <p>Von {{ money(summary()?.savings_target) }} · aktive und erreichte Ziele</p>
-              <progress
-                [value]="percent(summary()?.savings_current, summary()?.savings_target)"
-                max="100"
-                aria-label="Sparziel-Fortschritt"
-              ></progress>
-            } @else {
+
+          <section class="card goals-card" aria-labelledby="goal-h">
+            <header><h2 id="goal-h">Sparziele</h2>
+              <button class="text-button" (click)="open('goals')"><app-icon name="plus" /> Neues Ziel</button></header>
+            @for (goal of goals(); track goal.id) {
+              <button class="goal-row" (click)="open('goals', goal)">
+                <span class="goal-top"><b>{{ goal.title }}</b>
+                  @if (goal.status === 'COMPLETED') {
+                    <span class="chip chip--done"><app-icon name="check" />Erreicht</span>
+                  } @else if (goal.status === 'PAUSED') {
+                    <span class="chip">Pausiert</span>
+                  } @else {
+                    <span class="goal-amount">{{ money(goal.current_amount) }} <em>von {{ money(goal.target_amount) }}</em></span>
+                  }
+                </span>
+                <span class="goal-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="percent(goal.current_amount, goal.target_amount)" [attr.aria-label]="goal.title + ' Fortschritt'"
+                  ><span [style.width.%]="percent(goal.current_amount, goal.target_amount)"></span
+                ></span>
+                <small>
+                  @if (goal.status === 'COMPLETED') {
+                    {{ money(goal.target_amount) }} zusammengespart
+                  } @else {
+                    Noch {{ money((Number(goal.target_amount) - Number(goal.current_amount)).toFixed(2)) }}@if (goal.monthly_amount) { · {{ money(goal.monthly_amount) }} pro Monat}
+                  }
+                </small>
+              </button>
+            } @empty {
               <div class="empty text-align-center">
                 <p>Wofür möchtest du sparen?</p>
                 <button class="secondary" (click)="open('goals')"><app-icon name="plus" />Sparziel erstellen</button>
@@ -158,34 +205,29 @@
             }
           </section>
         </div>
-        <section class="card recent">
+
+        <section class="card statement" aria-labelledby="tx-h">
           <header>
-            <h2>Letzte Buchungen</h2>
+            <h2 id="tx-h">Letzte Buchungen</h2>
             <button class="text-button" (click)="tab.set('transactions')">
               Alle anzeigen <app-icon name="arrow" />
             </button>
           </header>
-          @for (row of summary()?.recent; track row.id) {
-            <button class="transaction" (click)="open('transactions', row)">
-              <span
-                class="mini-icon"
-                [class.income]="row.type === 'INCOME'"
-                [class.expense]="row.type === 'EXPENSE'"
-                ><app-icon [name]="row.type === 'INCOME' ? 'finance' : 'bars'" /></span
-              ><span class="transaction-copy"
-                ><strong>{{ row.note || categoryName(row.category) }}</strong
-                ><small
-                  ><i class="cat-dot" aria-hidden="true" [style.--cat]="categoryColor(row.category)"></i
-                  >{{ categoryName(row.category) }} · {{ row.date | date: 'dd.MM.yyyy' }}</small
-                ></span
-              ><strong
-                [class.negative]="row.type === 'EXPENSE'"
-                [class.positive]="row.type === 'INCOME'"
-                >{{ row.type === 'EXPENSE' ? '−' : '+' }}{{ money(row.amount) }}</strong
-              >
-            </button>
+          @for (day of recentDays(); track day.date) {
+            <div class="day-head"><span>{{ day.label }}</span><span>{{ day.total < 0 ? '−' : '+' }}{{ money(Math.abs(day.total).toFixed(2)) }}</span></div>
+            @for (row of day.rows; track row.id) {
+              <button class="statement-row" (click)="open('transactions', row)" [style.--cat]="categoryColor(row.category)">
+                <span class="statement-mark" aria-hidden="true"></span>
+                <span class="statement-copy"
+                  ><strong>{{ row.note || categoryName(row.category) }}</strong
+                  ><small>{{ row.type === 'INCOME' ? 'Eingang · ' : '' }}{{ categoryName(row.category) }}</small></span
+                ><strong class="statement-amount" [class.positive]="row.type === 'INCOME'"
+                  >{{ row.type === 'EXPENSE' ? '−' : '+' }}{{ money(row.amount) }}</strong
+                >
+              </button>
+            }
           } @empty {
-            <p class="empty">Noch keine Buchungen. Trage deine erste Einnahme oder Ausgabe ein.</p>
+            <p class="empty">Noch keine Buchungen. Trag deine erste Einnahme oder Ausgabe ein.</p>
           }
         </section>
       } @else if (tab() === 'transactions') {
