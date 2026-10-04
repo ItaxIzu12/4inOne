@@ -150,6 +150,9 @@ h3 {
   border-bottom: 1px solid #e7ece9;
 }
 .tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   min-height: 46px;
   margin-bottom: -1px;
   padding: 0 14px;
@@ -160,6 +163,10 @@ h3 {
   font: inherit;
   font-size: 15px;
   cursor: pointer;
+}
+.tabs button app-icon {
+  width: 18px;
+  height: 18px;
 }
 .tabs button:hover {
   color: var(--accent-hover);
@@ -768,6 +775,21 @@ input:focus-visible {
     flex-basis: 40%;
   }
 }
+// Reiter mit Symbolen brauchen die Breite: der Monat rutscht in eine eigene Zeile.
+@media (max-width: 1200px) {
+  .period-bar {
+    position: static;
+    margin-top: 12px;
+  }
+  .tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs button {
+    flex: 0 0 auto;
+    padding: 0 10px;
+  }
+}
 @media (max-width: 1100px) {
   .finance-page {
     padding: 24px 20px 40px;
@@ -814,6 +836,13 @@ input:focus-visible {
   }
   .tabs [aria-current] {
     background: #e3f5e9;
+  }
+  // Wie Organisation: auf dem Handy nur Text, damit fünf Reiter ohne Scrollen passen.
+  .tabs button {
+    justify-content: center;
+  }
+  .tabs button app-icon {
+    display: none;
   }
   .period-bar {
     position: static;

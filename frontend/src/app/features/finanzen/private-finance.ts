@@ -7,7 +7,7 @@ import { DatePipe } from '@angular/common';
 import { catchError, forkJoin, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
-import { AppIcon } from '../../shared/icons/app-icon';
+import { AppIcon, IconName } from '../../shared/icons/app-icon';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
 import { AppDatePicker } from '../../shared/form/date-picker';
 import { BudgetYearOverview } from './budget-timeline';
@@ -66,12 +66,12 @@ import {
 import { CategoryManager } from './category-manager';
 type Resource = 'transactions' | 'budgets' | 'goals';
 export type FinanceTab = 'overview' | 'expenses' | 'income' | 'budgets' | 'goals';
-const FINANCE_TABS: { key: FinanceTab; label: string }[] = [
-  { key: 'overview', label: 'Übersicht' },
-  { key: 'expenses', label: 'Ausgaben' },
-  { key: 'income', label: 'Einnahmen' },
-  { key: 'budgets', label: 'Budgets' },
-  { key: 'goals', label: 'Sparziele' },
+const FINANCE_TABS: { key: FinanceTab; label: string; icon: IconName }[] = [
+  { key: 'overview', label: 'Übersicht', icon: 'home' },
+  { key: 'expenses', label: 'Ausgaben', icon: 'arrow-down' },
+  { key: 'income', label: 'Einnahmen', icon: 'trend-up' },
+  { key: 'budgets', label: 'Budgets', icon: 'bars' },
+  { key: 'goals', label: 'Sparziele', icon: 'piggy' },
 ];
 /** Die erste verständliche Fehlermeldung aus der API-Antwort (z. B. „gespart darf das Ziel nicht überschreiten“). */
 function apiMessage(body: unknown): string | null {

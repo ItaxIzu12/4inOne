@@ -19,7 +19,7 @@
       <nav class="tabs domain-tabs" aria-label="Finanzansichten" (keydown)="onTabKeydown($event)">
         @for (t of tabs; track t.key) {
           <button [id]="'fin-tab-' + t.key" [attr.aria-current]="tab() === t.key ? 'page' : null" (click)="selectTab(t.key)">
-            {{ t.label }}
+            <app-icon [name]="t.icon" aria-hidden="true" />{{ t.label }}
           </button>
         }
       </nav>
