@@ -78,17 +78,17 @@ describe('Dashboard', () => {
     TestBed.inject(HttpTestingController).expectOne(req => req.url.endsWith('/reisen/trips/')).flush([
       { title: 'Fertig', status: 'DONE', start_date: '2099-01-01', end_date: '2099-01-05' },
       { title: 'Abgesagt', status: 'CANCELLED', start_date: '2099-01-02', end_date: '2099-01-05' },
-      { title: 'Wien entdecken', destination: 'Wien', status: 'PLANNED', start_date: '2099-02-01', end_date: '2099-02-03', packing_total: 4, packing_packed: 2, tasks_total: 2, tasks_open: 1 },
+      { title: 'Wien entdecken', destination: 'Wien', status: 'PLANNED', start_date: '2099-02-01', end_date: '2099-02-03', budget_amount: null, packing_total: 4, packing_packed: 2, tasks_total: 2, tasks_open: 1 },
     ]);
     f.detectChanges();
     expect(f.componentInstance.nextTrip()?.title).toBe('Wien entdecken');
     expect(f.nativeElement.querySelector('.next-trip').textContent).toContain('50 %');
-    expect(f.nativeElement.querySelector('.next-trip').textContent).toContain('2 von 4 gepackt');
+    expect(f.nativeElement.querySelector('.next-trip').textContent).toContain('2 / 4');
   });
-  it('has no search bar any more', () => {
+  it('offers the shared dashboard search', () => {
     const f = TestBed.createComponent(Dashboard);
     f.detectChanges();
-    expect(f.nativeElement.querySelector('.search')).toBeNull();
+    expect(f.nativeElement.querySelector('.dashboard-search')).toBeTruthy();
     expect(f.nativeElement.textContent).not.toContain('Suche in 4inOne');
   });
 

@@ -1,13 +1,35 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
+import { FormsModule } from '@angular/forms';
+import { Subject, switchMap, of, catchError } from 'rxjs';
+import { NgTemplateOutlet } from '@angular/common';
 import { DatePipe } from '@angular/common';
 import { DEMO_MODE } from '../../core/demo-context';
-import { PrivateFinanceApi, FinanceSummary, euros } from '../finanzen/private-finance-api.service';
+import {
+  PrivateFinanceApi,
+  FinanceSummary,
+  euros,
+  financeMonth,
+} from '../finanzen/private-finance-api.service';
 import { HaushaltOverviewDto } from '../haushalt/haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from '../haushalt/haushalt-data-provider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { OrganisationApi, TodayData, TodayItem } from '../organisation/organisation-api.service';
+import {
+  OrganisationApi,
+  TodayData,
+  TodayItem,
+  PersonalTask,
+} from '../organisation/organisation-api.service';
 import { ReisenApi, Trip } from '../reisen/reisen-api.service';
-import { Component, computed, inject, signal, DestroyRef } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  signal,
+  DestroyRef,
+  ElementRef,
+  Injector,
+  afterNextRender,
+} from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
@@ -41,7 +63,16 @@ function ddmm(isoDate: string): string {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [ErrorNoticeDirective, AppShell, AppIcon, Modal, RouterLink, DatePipe],
+  imports: [
+    ErrorNoticeDirective,
+    AppShell,
+    AppIcon,
+    Modal,
+    RouterLink,
+    DatePipe,
+    NgTemplateOutlet,
+    FormsModule,
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -78,16 +109,202 @@ export class Dashboard {
   });
   private router = inject(Router);
   private destroy = inject(DestroyRef);
-  private readonly demo = inject(DEMO_MODE);
+  readonly demo = inject(DEMO_MODE);
+  readonly boardQuery = signal('');
   readonly live = computed(() => this.auth.isAuthenticated() && !this.demo);
   readonly organisationToday = signal<TodayData | null>(null);
   /** Nur bei echtem Konto: „Heute“ aus allen Bereichen (backend/connections/today.py). */
   readonly overview = signal<TodayOverview | null>(null);
   /** Höchstens zwei Vorschläge — vollständig und mit Aktionen stehen sie in der jeweiligen Reise. */
-  readonly suggestions = computed(() => (this.live() ? (this.overview()?.suggestions ?? []).slice(0, 2) : []));
+  readonly suggestions = computed(() =>
+    this.live() ? (this.overview()?.suggestions ?? []).slice(0, 2) : [],
+  );
   readonly todayLoading = signal(false);
   readonly todayError = signal('');
+  private readonly boardHost = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly boardInjector = inject(Injector);
+  private boardFocusAfterRender(selector: string) {
+    afterNextRender(
+      () => this.boardHost.nativeElement.querySelector<HTMLElement>(selector)?.focus(),
+      {
+        injector: this.boardInjector,
+      },
+    );
+  }
+  boardShowTaskForm() {
+    this.boardAdding.set(true);
+    this.boardFocusAfterRender('#demo-task-title');
+  }
+  boardCloseTaskForm() {
+    this.boardAdding.set(false);
+    this.boardFocusAfterRender('.new-action');
+  }
+  readonly boardMonth = signal(financeMonth());
+  readonly boardSummary = signal<FinanceSummary | null>(null);
+  readonly boardLoading = signal(false);
+  readonly boardFinanceError = signal(false);
+  readonly boardTasks = signal<PersonalTask[]>([]);
+  readonly boardTaskError = signal('');
+  readonly boardTasksLoading = signal(true);
+  readonly boardBusy = signal(false);
+  readonly boardAdding = signal(false);
+  boardTaskTitle = '';
+  readonly boardMoney = euros;
+  readonly boardDisplayedTasks = computed(() => this.boardTasks().slice(0, 4));
+  readonly boardMonthLabel = computed(() =>
+    new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' }).format(
+      new Date(`${this.boardMonth()}-01T12:00`),
+    ),
+  );
+  readonly boardUsed = computed(() => {
+    const s = this.boardSummary();
+    return s && Number(s.total) > 0
+      ? Math.min(
+          100,
+          Math.max(0, Math.round(((Number(s.expenses) + Number(s.saved)) / Number(s.total)) * 100)),
+        )
+      : 0;
+  });
+  private readonly boardMonths = new Subject<string>();
+  readonly boardResults = computed(() => {
+    const boardQuery = this.boardQuery().trim().toLocaleLowerCase('de');
+    if (!boardQuery) return [];
+    const trip = this.nextTrip();
+    return [
+      ...this.boardTasks().map((t) => ({
+        title: t.title,
+        area: 'Aufgabe',
+        path: this.organisationPath(),
+        params: { kind: 'task', id: t.id } as Record<string, string | number>,
+      })),
+      ...(this.boardSummary()?.recent ?? []).map((t) => ({
+        title: t.note || 'Buchung',
+        area: `Finanzen · ${euros(t.amount)}`,
+        path: this.domainPath('finanzen'),
+        params: {},
+      })),
+      ...(trip
+        ? [
+            {
+              title: trip.title,
+              area: `Reisen · ${trip.destination}`,
+              path: this.travelPath(),
+              params: { trip: trip.id },
+            },
+          ]
+        : []),
+      ...['Finanzen', 'Haushalt', 'Organisation', 'Reisen'].map((area) => ({
+        title: area,
+        area: 'Bereich öffnen',
+        path: this.domainPath(area.toLowerCase()),
+        params: {},
+      })),
+    ]
+      .filter((r) => `${r.title} ${r.area}`.toLocaleLowerCase('de').includes(boardQuery))
+      .slice(0, 8);
+  });
+  private initializeOverview() {
+    this.boardMonths
+      .pipe(
+        switchMap((boardMonth) => {
+          this.boardLoading.set(true);
+          this.boardFinanceError.set(false);
+          this.boardSummary.set(null);
+          return this.financeApi.summary(boardMonth).pipe(
+            catchError(() => {
+              this.boardFinanceError.set(true);
+              if (boardMonth === financeMonth()) this.financeError.set(true);
+              return of(null);
+            }),
+          );
+        }),
+        takeUntilDestroyed(this.destroy),
+      )
+      .subscribe((boardSummary) => {
+        this.boardSummary.set(boardSummary);
+        if (this.boardMonth() === financeMonth() && boardSummary) {
+          this.finance.set(boardSummary);
+          this.financeError.set(false);
+        }
+        this.boardLoading.set(false);
+      });
+    this.boardLoadMonth();
+    this.boardLoadTasks();
+  }
+  boardLoadMonth() {
+    this.boardMonths.next(this.boardMonth());
+  }
+  boardChangeMonth(delta: number) {
+    const date = new Date(`${this.boardMonth()}-01T12:00`);
+    date.setMonth(date.getMonth() + delta);
+    this.boardMonth.set(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+    this.boardLoadMonth();
+  }
+  boardLoadTasks() {
+    if (!this.demo && !this.live()) return;
+    this.boardTasksLoading.set(true);
+    this.boardTaskError.set('');
+    this.api
+      .tasks()
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (boardTasks) => {
+          this.boardTasks.set(boardTasks.filter((t) => t.status !== 'DONE'));
+          this.boardTasksLoading.set(false);
+        },
+        error: () => {
+          this.boardTaskError.set('Aufgaben konnten nicht geladen werden.');
+          this.boardTasksLoading.set(false);
+        },
+      });
+  }
+  boardToggleTask(task: PersonalTask) {
+    if (!this.demo && !this.live()) return;
+    if (this.boardBusy()) return;
+    this.boardBusy.set(true);
+    this.boardTaskError.set('');
+    this.api
+      .saveTask({ status: task.status === 'DONE' ? 'OPEN' : 'DONE' }, task.id)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (updated) => {
+          this.boardTasks.update((boardTasks) =>
+            boardTasks.map((t) => (t.id === updated.id ? updated : t)),
+          );
+          this.boardBusy.set(false);
+          this.loadToday();
+        },
+        error: () => {
+          this.boardTaskError.set('Die Aufgabe konnte nicht gespeichert werden.');
+          this.boardBusy.set(false);
+        },
+      });
+  }
+  boardAddTask() {
+    if (!this.demo && !this.live()) return;
+    if (!this.boardTaskTitle.trim() || this.boardBusy()) return;
+    this.boardBusy.set(true);
+    this.boardTaskError.set('');
+    this.api
+      .saveTask({ title: this.boardTaskTitle.trim(), status: 'OPEN', priority: 'MEDIUM' })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (task) => {
+          this.boardTasks.update((boardTasks) => [task, ...boardTasks]);
+          this.boardTaskTitle = '';
+          this.boardCloseTaskForm();
+          this.boardBusy.set(false);
+          this.loadToday();
+        },
+        error: () => {
+          this.boardTaskError.set('Die Aufgabe konnte nicht erstellt werden.');
+          this.boardBusy.set(false);
+        },
+      });
+  }
+
   constructor() {
+    this.initializeOverview();
     // Ohne Anmeldung liefern dieselben Aufrufe die Demo-Daten der Routengruppe (siehe app.routes.ts) — die vier
     // Kacheln unten zeigen dadurch echte Zahlen aus den jeweiligen Demo-Reitern, statt erfundener Beispielwerte,
     // die von dort abweichen konnten.
@@ -99,19 +316,18 @@ export class Dashboard {
         next: (data) => this.household.set(data),
         error: () => this.householdError.set(true),
       });
-    this.financeApi
-      .summary()
-      .pipe(takeUntilDestroyed(this.destroy))
-      .subscribe({
-        next: (data) => this.finance.set(data),
-        error: () => this.financeError.set(true),
-      });
     this.reisenApi
       .trips()
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
-        next: (data) => { this.trips.set(data); this.tripsLoading.set(false); },
-        error: () => { this.tripsError.set(true); this.tripsLoading.set(false); },
+        next: (data) => {
+          this.trips.set(data);
+          this.tripsLoading.set(false);
+        },
+        error: () => {
+          this.tripsError.set(true);
+          this.tripsLoading.set(false);
+        },
       });
     if (this.live()) {
       this.onboardingApi
@@ -160,7 +376,19 @@ export class Dashboard {
       });
   }
   get items(): TodayRow[] {
-    if (!this.live()) return this.demoItems;
+    if (this.demo)
+      return (this.organisationToday()?.items ?? []).slice(0, TODAY_ROWS).map((item) => ({
+        title: item.title,
+        mobile: item.title,
+        time: item.overdue ? ddmm(item.at.slice(0, 10)) : item.all_day ? 'Heute' : hhmm(item.at),
+        note: item.overdue
+          ? 'Überfällig'
+          : item.location || (item.kind === 'task' ? 'Aufgabe' : ''),
+        icon: item.kind === 'event' ? 'calendar' : 'check',
+        tone: 'organisation',
+        source: item,
+      }));
+    if (!this.live()) return this.boardItems;
     return this.liveRows();
   }
   /** Alle Bereiche in einer Liste: Überfälliges zuerst, dann nach Uhrzeit, Ganztägiges und Fristen danach. */
@@ -192,8 +420,12 @@ export class Dashboard {
         row: {
           title: task.title,
           mobile: task.title,
-          time: task.overdue ? ddmm(task.due_date) : task.due_time ?? 'Heute',
-          note: task.overdue ? 'Haushalt · überfällig' : task.mine ? 'Haushalt · du bist dran' : 'Haushalt · noch niemand zugeteilt',
+          time: task.overdue ? ddmm(task.due_date) : (task.due_time ?? 'Heute'),
+          note: task.overdue
+            ? 'Haushalt · überfällig'
+            : task.mine
+              ? 'Haushalt · du bist dran'
+              : 'Haushalt · noch niemand zugeteilt',
           icon: 'household',
           tone: 'household',
           link: { path: ['/haushalt'], query: { tab: 'aufgaben', task: task.id } },
@@ -221,7 +453,10 @@ export class Dashboard {
           title: deadline.title,
           mobile: deadline.title,
           time: deadline.days === 0 ? 'Heute' : ddmm(deadline.date),
-          note: deadline.days === 0 ? 'Frist im Haushaltsordner' : `Frist in ${deadline.days} ${deadline.days === 1 ? 'Tag' : 'Tagen'}`,
+          note:
+            deadline.days === 0
+              ? 'Frist im Haushaltsordner'
+              : `Frist in ${deadline.days} ${deadline.days === 1 ? 'Tag' : 'Tagen'}`,
           icon: 'device',
           tone: 'household',
           link: { path: ['/haushalt'], query: { tab: 'ordner' } },
@@ -233,7 +468,10 @@ export class Dashboard {
       rows.push({
         order: '4',
         row: {
-          title: shopping === 1 ? '1 Sache auf der Einkaufsliste' : `${shopping} Sachen auf der Einkaufsliste`,
+          title:
+            shopping === 1
+              ? '1 Sache auf der Einkaufsliste'
+              : `${shopping} Sachen auf der Einkaufsliste`,
           mobile: 'Einkaufsliste',
           time: '',
           note: 'Haushalt',
@@ -249,19 +487,27 @@ export class Dashboard {
       .map((r) => r.row);
   });
   openItem(item: TodayRow) {
-    if (this.live() && item.link) this.router.navigate(item.link.path, { queryParams: item.link.query });
+    if (this.live() && item.link)
+      this.router.navigate(item.link.path, { queryParams: item.link.query });
     else if (this.live() && item.source)
       this.router.navigate(['/organisation'], {
+        queryParams: { kind: item.source.kind, id: item.source.id },
+      });
+    else if (this.demo && item.source)
+      this.router.navigate(['/demo/organisation'], {
         queryParams: { kind: item.source.kind, id: item.source.id },
       });
     else this.detail.set(item.title);
   }
   showDay() {
     if (this.live()) this.router.navigateByUrl('/organisation');
+    else if (this.demo) this.router.navigateByUrl('/demo/organisation');
     else this.detail.set('Dein Tag');
   }
 
-  readonly name = computed(() => this.demo ? 'Sophie' : this.auth.currentUser()?.name || 'Sophie');
+  readonly name = computed(() =>
+    this.demo ? 'Sophie' : this.auth.currentUser()?.name || 'Sophie',
+  );
   readonly date = new Intl.DateTimeFormat('de-DE', {
     weekday: 'long',
     day: 'numeric',
@@ -269,7 +515,7 @@ export class Dashboard {
     year: 'numeric',
   }).format(new Date());
   readonly detail = signal('');
-  readonly demoItems: TodayRow[] = [
+  readonly boardItems: TodayRow[] = [
     {
       title: 'Yoga',
       mobile: 'Yoga',
@@ -385,7 +631,9 @@ export class Dashboard {
   });
   tripDaysUntilLabel(trip: Trip): string {
     const days = Math.round(
-      (new Date(`${trip.start_date}T00:00`).getTime() - new Date(new Date().toDateString()).getTime()) / 86_400_000,
+      (new Date(`${trip.start_date}T00:00`).getTime() -
+        new Date(new Date().toDateString()).getTime()) /
+        86_400_000,
     );
     if (days < 0) return 'Gerade unterwegs';
     if (days === 0) return "Heute geht's los";
@@ -401,10 +649,22 @@ export class Dashboard {
     const hour = new Date().getHours();
     return hour < 11 ? 'Guten Morgen' : hour < 18 ? 'Hallo' : 'Guten Abend';
   })();
-  readonly travelPath = computed(() => this.live() ? '/reisen' : '/demo/reisen');
-  readonly organisationPath = computed(() => this.live() ? '/organisation' : '/demo/organisation');
+  readonly travelPath = computed(() => (this.live() ? '/reisen' : '/demo/reisen'));
+  readonly organisationPath = computed(() =>
+    this.live() ? '/organisation' : '/demo/organisation',
+  );
+  domainPath(area: string) {
+    return `${this.demo ? '/demo' : ''}/${area}`;
+  }
+  tripBudgetPercent(trip: Trip) {
+    return Number(trip.budget_amount) > 0
+      ? Math.round((Number(trip.budget_spent) / Number(trip.budget_amount)) * 100)
+      : 0;
+  }
   tripProgress(trip: Trip) {
     const total = trip.packing_total + trip.tasks_total;
-    return total > 0 ? Math.round((trip.packing_packed + trip.tasks_total - trip.tasks_open) / total * 100) : 0;
+    return total > 0
+      ? Math.round(((trip.packing_packed + trip.tasks_total - trip.tasks_open) / total) * 100)
+      : 0;
   }
 }

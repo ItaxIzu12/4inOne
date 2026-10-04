@@ -1,5 +1,5 @@
 import { ErrorNoticeDirective } from '../shared/error-notice/error-notice';
-import { Component, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, input, output, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
@@ -21,6 +21,18 @@ import { Modal } from '../shared/modal/modal';
   styleUrl: './app-shell.scss',
 })
 export class AppShell {
+  readonly dashboardHeader = input(false);
+  readonly dashboardQuery = output<string>();
+  readonly dashboardDate = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+  private readonly dashboardSearch = viewChild<ElementRef<HTMLInputElement>>('dashboardSearch');
+  @HostListener('document:keydown', ['$event'])
+  focusDashboardSearch(event: KeyboardEvent) {
+    if (this.dashboardHeader() && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.dashboardSearch()?.nativeElement.focus();
+    }
+  }
+
   readonly auth = inject(AuthService);
   private router = inject(Router);
   // Eigenes Signal statt nur auth.isAuthenticated(): wer über "4inOne entdecken" (Onboarding) oder einen

@@ -22,7 +22,7 @@
     <p class="sidebar-note">Alles Wichtige.<br />Ein guter Überblick.</p>
   </aside>
   <div class="workspace">
-    <header class="topbar" [class.topbar--demo]="isDemoRoute()">
+    <header class="topbar" [class.topbar--demo]="isDemoRoute()" [class.topbar--dashboard]="dashboardHeader()">
       <div class="brand-group">
       <a class="mobile-brand" [routerLink]="links()[0].path" aria-label="4inOne – Startseite"
         ><app-brand
@@ -37,6 +37,14 @@
           </div>
         }
       </div>
+      @if (dashboardHeader()) {
+        <label class="dashboard-search">
+          <app-icon name="search" />
+          <input #dashboardSearch type="search" [attr.aria-label]="isDemoRoute() ? 'Demo-Überblick durchsuchen' : 'Deinen Überblick durchsuchen'" placeholder="Suche nach Aufgaben, Ausgaben, Reisen …" (input)="dashboardQuery.emit(dashboardSearch.value)" />
+          <kbd aria-hidden="true">⌘ K</kbd>
+        </label>
+        <time class="dashboard-date">{{ dashboardDate }}</time>
+      }
       <div class="profile">
         <button
           class="icon-button"

@@ -197,3 +197,7 @@ The menu should feel simple rather than becoming a second sidebar.
 ## Mobile Dichte und Formulare
 
 Mobile Kopfbereiche bleiben kompakt bei mindestens 44 px großen Bedienelementen. Beschreibungstexte in den Bereichen und Formularhinweise verwenden mindestens 14 px. Lange Formulare werden durch benannte Gruppen gegliedert; optionale Angaben bleiben sichtbar und werden eindeutig bezeichnet. Globale Fehler-Popups ergänzen dauerhafte Feldfehler mit Text, Rahmen und `aria-describedby`; diese verschwinden erst bei Korrektur beziehungsweise erneuter gültiger Prüfung.
+
+## Gemeinsames Dashboard (Oktober 2026)
+
+Demo und angemeldete Nutzer verwenden dasselbe Layout in `dashboard.html`, dieselben Zustände in `dashboard.ts` und Styles in `dashboard.scss`. Die vier Bereichskarten, Sidebar, Logo und mobile Navigation bleiben bestehen. Heute, Aufgaben, nächste Reise, Monatsübersicht, Buchungen und Vorschläge werden aus den jeweiligen Datenquellen befüllt. `DEMO_MODE` wählt über die Route ausschließlich die isolierten Demo-Provider; echte Konten verwenden die autorisierten APIs und Leerzustände. Aufgabenänderungen verwenden dieselben Services wie Organisation. Die Suche umfasst nur die bereits geladenen Dashboard-Inhalte. Der Demo-Hinweis und beispielhafte Vorschläge erscheinen nur in der Demo; persönliche Vorschläge stammen aus der eigenen Heute-API. Fotolizenzen: `frontend/public/images/dashboard/ATTRIBUTION.md` und Bildnachweis im Dashboard.
