@@ -8,6 +8,8 @@ from connections.views import (
     SuggestionAcceptView,
     SuggestionDismissView,
     SuggestionListView,
+    TripRemindersView,
+    TripSavingsView,
 )
 
 urlpatterns = [
@@ -18,5 +20,7 @@ urlpatterns = [
     path('suggestions/', SuggestionListView.as_view(), name='connection-suggestions'),
     path('suggestions/accept/', SuggestionAcceptView.as_view(), name='connection-suggestions-accept'),
     path('suggestions/dismiss/', SuggestionDismissView.as_view(), name='connection-suggestions-dismiss'),
+    path('reisen/<int:trip_id>/erinnerungen/', TripRemindersView.as_view(), name='trip-reminders'),
+    path('reisen/<int:trip_id>/sparziel/', TripSavingsView.as_view(), name='trip-savings'),
     path('<int:pk>/', ConnectionDetailView.as_view(), name='connection-detail'),
 ]

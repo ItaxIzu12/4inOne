@@ -3,46 +3,70 @@ import { AmountInput } from '../../shared/directives/amount-input';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Observable, forkJoin } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
-import { AppIcon } from '../../shared/icons/app-icon';
+import { AppIcon, IconName } from '../../shared/icons/app-icon';
 import { AppDatePicker } from '../../shared/form/date-picker';
 import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
 import { ModalForm } from '../../shared/form/modal-form';
+import { AppTimePicker } from '../../shared/form/time-picker';
+import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { Modal } from '../../shared/modal/modal';
 import { BudgetCategory, ContactOption, PackingCategory, PackingItem, ReisenApi, Trip, TripBudgetCategory, TripExpense, TripParticipant, TripTask } from './reisen-api.service';
 import { buildTripSuggestions, SuggestedPackingItem, SuggestedTask } from './trip-suggestions';
 import { buildTripReadiness, TripReadiness } from './trip-readiness';
-import { TripPlan } from './trip-plan';
+import { TripList, TripTarget } from './trip-list';
+import { TripPacking } from './trip-packing';
+import { TripBudget } from './trip-budget';
+import { TripReminders } from './trip-reminders';
+import { TripOverview } from './trip-overview';
+import { BUDGET_META, BUDGET_ORDER, PACKING_META, PACKING_ORDER, STATUS_LABELS, STATUS_ORDER, formatMoney, localDay, totalBudget, tripIcon } from './reisen-logic';
 
-export function localDay(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
+export { formatMoney, localDay } from './reisen-logic';
 
-const CURRENCY_SYMBOLS: Record<Trip['currency'], { symbol: string; prefix: boolean }> = {
-  EUR: { symbol: '€', prefix: false },
-  USD: { symbol: '$', prefix: true },
-  GBP: { symbol: '£', prefix: true },
-  CHF: { symbol: 'CHF', prefix: true },
+export type ReisenTab = 'uebersicht' | 'reisen' | 'packlisten' | 'budget' | 'erinnerungen';
+const TABS: { key: ReisenTab; label: string; icon: IconName }[] = [
+  { key: 'uebersicht', label: 'Übersicht', icon: 'home' },
+  { key: 'reisen', label: 'Reisen', icon: 'travel' },
+  { key: 'packlisten', label: 'Packlisten', icon: 'luggage' },
+  { key: 'budget', label: 'Budget', icon: 'coins' },
+  { key: 'erinnerungen', label: 'Erinnerungen', icon: 'bell' },
+];
+// Hauptknopf im Seitenkopf, passend zum Reiter.
+const HEAD_ACTIONS: Record<ReisenTab, string> = {
+  uebersicht: '',
+  reisen: 'Neue Reise',
+  packlisten: 'Element hinzufügen',
+  budget: 'Ausgabe erfassen',
+  erinnerungen: 'Erinnerung hinzufügen',
 };
-/** Immer deutsche Zahlengruppierung (1.500,00), nur Symbol/Position wechseln je Währung — Reisen ist ein
- * deutschsprachiges Produkt, ein 1:1-Formatwechsel pro Währung wäre inkonsistent mit dem Rest der App. */
-export function formatMoney(value: string | number, currency: Trip['currency']): string {
-  const amount = (typeof value === 'number' ? value : Number(value)).toLocaleString('de-DE', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  const { symbol, prefix } = CURRENCY_SYMBOLS[currency] ?? CURRENCY_SYMBOLS.EUR;
-  return prefix ? `${symbol} ${amount}` : `${amount} ${symbol}`;
-}
 
 @Component({
   selector: 'app-reisen',
   standalone: true,
-  imports: [ErrorNoticeDirective, AmountInput, AppShell, AppIcon, Field, ModalForm, Modal, ReactiveFormsModule, AppSelect, AppDatePicker, DatePipe, TripPlan],
+  imports: [
+    ErrorNoticeDirective,
+    AmountInput,
+    AppShell,
+    AppIcon,
+    Field,
+    ModalForm,
+    Modal,
+    ReactiveFormsModule,
+    AppSelect,
+    AppDatePicker,
+    AppTimePicker,
+    DatePipe,
+    TripList,
+    TripPacking,
+    TripBudget,
+    TripReminders,
+    TripOverview,
+    MobileAction,
+  ],
   templateUrl: './reisen.html',
   styleUrl: './reisen.scss',
 })
@@ -51,9 +75,18 @@ export class Reisen {
   private destroy = inject(DestroyRef);
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   protected readonly formatMoney = formatMoney;
+  protected readonly tripIcon = tripIcon;
 
-  readonly tab = signal<'uebersicht' | 'reisen' | 'packliste' | 'aufgaben' | 'budget'>('uebersicht');
+  readonly tabs = TABS;
+  readonly tab = signal<ReisenTab>(tabFromQuery(this.route.snapshot.queryParamMap.get('tab')));
+  /** Ohne gewählte Reise oder ohne Schreibrecht führt der Hauptknopf zu „Neue Reise“ — Text und Aktion passen zusammen. */
+  readonly headAction = computed(() => {
+    const tab = this.tab();
+    const tripTab = tab === 'packlisten' || tab === 'budget' || tab === 'erinnerungen';
+    return tripTab && (!this.selectedTrip() || !this.canEdit()) ? HEAD_ACTIONS.reisen : HEAD_ACTIONS[tab];
+  });
   readonly trips = signal<Trip[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
@@ -74,18 +107,8 @@ export class Reisen {
     return upcoming[0] ?? this.trips()[0] ?? null;
   });
 
-  readonly statusOptions: SelectOption[] = [
-    { value: 'PLANNED', label: 'Geplant' },
-    { value: 'ACTIVE', label: 'Unterwegs' },
-    { value: 'DONE', label: 'Abgeschlossen' },
-    { value: 'CANCELLED', label: 'Storniert' },
-  ];
-  readonly statusLabels: Record<Trip['status'], string> = {
-    PLANNED: 'Geplant',
-    ACTIVE: 'Unterwegs',
-    DONE: 'Abgeschlossen',
-    CANCELLED: 'Storniert',
-  };
+  readonly statusOptions: SelectOption[] = STATUS_ORDER.map((value) => ({ value, label: STATUS_LABELS[value] }));
+  readonly statusLabels = STATUS_LABELS;
   // Alle drei mit führender "Keine Angabe"-Option: ausschließlich als Grundlage für die Smart-Setup-Vorschläge
   // gedacht, deshalb nie erzwungen (siehe trip-suggestions.ts).
   readonly travelTypeOptions: SelectOption[] = [
@@ -114,15 +137,8 @@ export class Reisen {
     { value: 'UNKNOWN', label: 'Noch unklar' },
   ];
   // Reihenfolge, in der die Packliste gruppiert angezeigt wird (siehe packingGroups()).
-  readonly packingCategoryOrder: PackingCategory[] = ['DOKUMENTE', 'KLEIDUNG', 'TECHNIK', 'GESUNDHEIT', 'HYGIENE', 'SONSTIGES'];
-  readonly packingCategoryLabels: Record<PackingCategory, string> = {
-    DOKUMENTE: 'Dokumente',
-    KLEIDUNG: 'Kleidung',
-    TECHNIK: 'Technik',
-    GESUNDHEIT: 'Gesundheit',
-    HYGIENE: 'Hygiene',
-    SONSTIGES: 'Sonstiges',
-  };
+  readonly packingCategoryOrder: PackingCategory[] = PACKING_ORDER;
+  readonly packingCategoryLabels = Object.fromEntries(PACKING_ORDER.map((c) => [c, PACKING_META[c].label])) as Record<PackingCategory, string>;
   readonly packingCategoryOptions: SelectOption[] = this.packingCategoryOrder.map((value) => ({
     value,
     label: this.packingCategoryLabels[value],
@@ -134,16 +150,10 @@ export class Reisen {
     { value: 'CHF', label: 'Schweizer Franken (CHF)' },
   ];
   // Reihenfolge, in der das geplante Budget je Kategorie angezeigt wird (siehe budgetCategoryRows()).
-  readonly budgetCategoryOrder: BudgetCategory[] = ['TRANSPORT', 'UNTERKUNFT', 'ESSEN', 'AKTIVITAETEN', 'SHOPPING', 'SONSTIGES', 'RESERVE'];
-  readonly budgetCategoryLabels: Record<BudgetCategory, string> = {
-    TRANSPORT: 'Transport',
-    UNTERKUNFT: 'Unterkunft',
-    ESSEN: 'Essen',
-    AKTIVITAETEN: 'Aktivitäten',
-    SHOPPING: 'Shopping',
-    SONSTIGES: 'Sonstiges',
-    RESERVE: 'Reserve',
-  };
+  readonly budgetCategoryOrder: BudgetCategory[] = BUDGET_ORDER;
+  readonly budgetMeta = BUDGET_META;
+  readonly budgetCategoryLabels = Object.fromEntries(BUDGET_ORDER.map((c) => [c, BUDGET_META[c].label])) as Record<BudgetCategory, string>;
+  readonly budgetCategoryOptions: SelectOption[] = BUDGET_ORDER.map((value) => ({ value, label: BUDGET_META[value].label }));
   readonly participantRoleOptions: SelectOption[] = [
     { value: 'VIEWER', label: 'Betrachter' },
     { value: 'EDITOR', label: 'Bearbeiter' },
@@ -176,6 +186,9 @@ export class Reisen {
     baggage_type: [''],
     budget_amount: [''],
     currency: ['EUR'],
+    accommodation: ['', Validators.maxLength(160)],
+    accommodation_area: ['', Validators.maxLength(120)],
+    transport_note: ['', Validators.maxLength(160)],
     notes: ['', Validators.maxLength(5000)],
   });
 
@@ -224,14 +237,14 @@ export class Reisen {
       budget_amount: trip.budget_amount,
     });
   });
-  /** „Wichtigste offene Aufgaben" für die Detailübersicht: die 3 nächsten Fälligkeiten zuerst, Aufgaben ohne
-   * Fälligkeitsdatum zuletzt — mehr würde die kompakte Karte überladen (siehe MOBILE-Vorgabe). */
-  readonly readinessTopOpenTasks = computed(() =>
-    [...this.openTasks()]
-      .sort((a, b) => (a.due_date ?? '9999-99-99').localeCompare(b.due_date ?? '9999-99-99'))
-      .slice(0, 3),
-  );
-  readonly budgetTotal = computed(() => Number(this.selectedTrip()?.budget_amount || 0));
+  readonly budgetTotal = computed(() => totalBudget(this.selectedTrip(), this.budgetCategories()));
+  /** Schreiben darf, wer die Reise angelegt hat oder als Besitzer/Bearbeiter mitreist. */
+  readonly canEdit = computed(() => {
+    const role = this.selectedTrip()?.my_role;
+    return role === 'OWNER' || role === 'EDITOR';
+  });
+  /** Hochzählen lädt die Erinnerungen neu (nach Anlegen/Ändern einer Erinnerung). */
+  readonly reminderVersion = signal(0);
   readonly budgetSpent = computed(() => this.expenses().reduce((sum, e) => sum + Number(e.amount), 0));
   readonly budgetProgress = computed(() => {
     const total = this.budgetTotal();
@@ -270,13 +283,31 @@ export class Reisen {
   readonly taskForm = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(120)]],
     due_date: [''],
+    due_time: [''],
     note: ['', Validators.maxLength(240)],
   });
 
-  readonly newExpenseTitle = signal('');
-  readonly newExpenseAmount = signal('');
-  readonly newExpenseDate = signal(localDay(new Date()));
-  readonly expenseAdding = signal(false);
+  // ---------- Ausgaben anlegen/bearbeiten ----------
+  readonly expenseEditor = signal(false);
+  readonly editExpenseId = signal<number | undefined>(undefined);
+  readonly expenseSaving = signal(false);
+  readonly expenseFormError = signal('');
+  readonly expenseForm = this.fb.nonNullable.group({
+    title: ['', [Validators.required, Validators.maxLength(120)]],
+    amount: ['', Validators.required],
+    date: [localDay(new Date()), Validators.required],
+    category: ['SONSTIGES'],
+  });
+
+  // ---------- Budget planen ----------
+  readonly planEditor = signal(false);
+  readonly planSaving = signal(false);
+  readonly planError = signal('');
+  readonly planTotal = signal('');
+  readonly planDraft = signal<Record<string, string>>({});
+  readonly planSum = computed(() =>
+    Object.values(this.planDraft()).reduce((sum, raw) => sum + (Number(raw.replace(',', '.')) || 0), 0),
+  );
   readonly actionError = signal('');
 
   constructor() {
@@ -310,8 +341,8 @@ export class Reisen {
           // Deep-Link aus einer Verknüpfung (?trip=), z. B. vom Sparziel in Finanzen.
           const linked = Number(this.route.snapshot.queryParamMap.get('trip'));
           if (linked && trips.some((t) => t.id === linked)) {
+            // Der Reiter kommt aus ?tab= (Standard: Übersicht).
             this.selectedTripId.set(linked);
-            this.tab.set('uebersicht');
             return;
           }
           const current = this.selectedTripId();
@@ -324,6 +355,15 @@ export class Reisen {
           this.error.set('Deine Reisen konnten nicht geladen werden. Bitte versuche es erneut.');
         },
       });
+  }
+
+  /** Zähler der Reisen (gepackt, offene Aufgaben, ausgegeben) leise neu laden — ohne Ladezustand, damit die
+   * Reiter ihren Zustand (Filter, aufgeklappte Gruppen) behalten. */
+  refreshTrips(): void {
+    this.api
+      .trips()
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({ next: (trips) => this.trips.set(trips), error: () => undefined });
   }
 
   /** Erneuter Ladeversuch nach einem detailError() — ein zweites selectTrip(id) mit DERSELBEN ID würde den
@@ -361,6 +401,37 @@ export class Reisen {
     this.selectedTripId.set(id);
   }
 
+  selectTab(tab: ReisenTab): void {
+    this.tab.set(tab);
+    this.actionError.set('');
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'uebersicht' ? null : tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+  onTabKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+    const keys = TABS.map((t) => t.key);
+    const index = keys.indexOf(this.tab());
+    const next = keys[(index + (event.key === 'ArrowRight' ? 1 : keys.length - 1)) % keys.length];
+    this.selectTab(next);
+    queueMicrotask(() => document.getElementById(`reisen-tab-${next}`)?.focus());
+  }
+  /** Hauptknopf im Kopf — öffnet das passende Formular des Reiters (ohne gewählte Reise: eine neue Reise). */
+  headActionClick(): void {
+    const tab = this.tab();
+    if (tab === 'uebersicht' || tab === 'reisen' || !this.selectedTrip() || !this.canEdit()) return this.openTripEditor();
+    if (tab === 'packlisten') return this.openPackingEditor();
+    if (tab === 'budget') return this.openExpenseEditor();
+    return this.openTaskEditor();
+  }
+  /** Aus einem Reiter heraus („Zur Packliste“, „Budget“ in den Reisedetails …). */
+  openTarget(target: TripTarget): void {
+    this.selectTab(target);
+  }
+
   // ---------- Reise anlegen/bearbeiten ----------
   /** Frühester wählbarer Beginn: heute bei einer neuen Reise oder einer, die noch nicht begonnen hat — sonst
    * (die Reise läuft schon oder ist vorbei) keine Einschränkung, sonst ließe sich ihr Datum gar nicht mehr
@@ -378,6 +449,9 @@ export class Reisen {
       baggage_type: trip?.baggage_type ?? '',
       budget_amount: trip?.budget_amount ?? '',
       currency: trip?.currency ?? 'EUR',
+      accommodation: trip?.accommodation ?? '',
+      accommodation_area: trip?.accommodation_area ?? '',
+      transport_note: trip?.transport_note ?? '',
       notes: trip?.notes ?? '',
     });
     this.minStartDate.set(trip && trip.start_date < localDay(new Date()) ? '' : localDay(new Date()));
@@ -463,6 +537,9 @@ export class Reisen {
           baggage_type: v.baggage_type as Trip['baggage_type'],
           budget_amount: v.budget_amount ? v.budget_amount : null,
           currency: v.currency as Trip['currency'],
+          accommodation: v.accommodation.trim(),
+          accommodation_area: v.accommodation_area.trim(),
+          transport_note: v.transport_note.trim(),
           notes: v.notes,
         },
         this.editTripId(),
@@ -552,7 +629,7 @@ export class Reisen {
           this.participantsSaving.set(false);
           this.newParticipantContactId.set(null);
           this.newParticipantRole.set('VIEWER');
-          this.load();
+          this.refreshTrips();
         },
         error: () => {
           this.participantsSaving.set(false);
@@ -566,7 +643,7 @@ export class Reisen {
       .updateParticipantRole(participant.id, role)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
-        next: () => this.load(),
+        next: () => this.refreshTrips(),
         error: () => this.participantsError.set(`Rolle von „${participant.display_name}“ konnte nicht geändert werden.`),
       });
   }
@@ -581,7 +658,7 @@ export class Reisen {
           // schließen, sonst zeigt participantsEditorTrip() nach load() plötzlich eine Reise, die gar nicht
           // mehr in trips() auftaucht.
           if (participant.is_self) this.participantsEditorTripId.set(null);
-          this.load();
+          this.refreshTrips();
         },
         error: () => this.participantsError.set(`„${participant.display_name}“ konnte nicht entfernt werden.`),
       });
@@ -611,8 +688,18 @@ export class Reisen {
   readonly smartSetupSaving = signal(false);
   readonly smartSetupError = signal('');
 
-  private openSmartSetup(trip: Trip): void {
-    const suggestions = buildTripSuggestions(trip);
+  /** Vorschläge auch für eine bestehende Reise (Packlisten › „Vorschläge hinzufügen“) — ohne das, was schon da ist. */
+  openSuggestionsForSelected(): void {
+    const trip = this.selectedTrip();
+    if (!trip) return;
+    const packed = new Set(this.packing().map((i) => i.title.toLocaleLowerCase('de')));
+    const tasks = new Set(this.tasks().map((t) => t.title.toLocaleLowerCase('de')));
+    this.openSmartSetup(trip, (title) => packed.has(title.toLocaleLowerCase('de')), (title) => tasks.has(title.toLocaleLowerCase('de')));
+    this.smartSetupReview.set(true);
+  }
+  private openSmartSetup(trip: Trip, hasItem: (title: string) => boolean = () => false, hasTask: (title: string) => boolean = () => false): void {
+    const all = buildTripSuggestions(trip);
+    const suggestions = { packing: all.packing.filter((i) => !hasItem(i.title)), tasks: all.tasks.filter((t) => !hasTask(t.title)) };
     this.smartSetupSuggestions.set(suggestions);
     this.smartSetupPackingChecked.set(suggestions.packing.map(() => true));
     this.smartSetupTasksChecked.set(suggestions.tasks.map(() => true));
@@ -670,6 +757,10 @@ export class Reisen {
           this.smartSetupSaving.set(false);
           this.smartSetupTrip.set(null);
           this.selectTrip(trip.id);
+          // dieselbe Reise: Details und Zähler neu laden, damit die neuen Einträge sofort erscheinen
+          this.loadTripDetail(trip.id);
+          this.refreshTrips();
+          this.reminderVersion.update((v) => v + 1);
         },
         error: () => {
           this.smartSetupSaving.set(false);
@@ -679,10 +770,10 @@ export class Reisen {
   }
 
   // ---------- Packliste ----------
-  openPackingEditor(item?: PackingItem): void {
+  openPackingEditor(item?: PackingItem, category?: PackingCategory | null): void {
     this.packingForm.reset({
       title: item?.title ?? '',
-      category: item?.category ?? 'SONSTIGES',
+      category: item?.category ?? category ?? 'SONSTIGES',
       quantity: String(item?.quantity ?? 1),
       note: item?.note ?? '',
     });
@@ -717,6 +808,7 @@ export class Reisen {
           this.packingSaving.set(false);
           this.packingEditor.set(false);
           this.packing.update((items) => (id ? items.map((i) => (i.id === id ? saved : i)) : [...items, saved]));
+          this.refreshTrips();
         },
         error: () => {
           this.packingSaving.set(false);
@@ -736,6 +828,7 @@ export class Reisen {
           this.packingSaving.set(false);
           this.packingEditor.set(false);
           this.packing.update((items) => items.filter((i) => i.id !== id));
+          this.refreshTrips();
         },
         error: () => {
           this.packingSaving.set(false);
@@ -745,11 +838,14 @@ export class Reisen {
   }
   togglePacking(item: PackingItem): void {
     const packed = !item.is_packed;
-    this.packing.update((items) => items.map((i) => (i.id === item.id ? { ...i, is_packed: packed } : i)));
+    this.packing.update((items) =>
+      items.map((i) => (i.id === item.id ? { ...i, is_packed: packed, packed_at: packed ? new Date().toISOString() : null } : i)),
+    );
     this.api
       .savePackingItem({ is_packed: packed }, item.id)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
+        next: (saved) => this.packing.update((items) => items.map((i) => (i.id === saved.id ? saved : i))),
         error: () => {
           this.packing.update((items) => items.map((i) => (i.id === item.id ? { ...i, is_packed: !packed } : i)));
           this.actionError.set(`„${item.title}“ konnte nicht gespeichert werden.`);
@@ -757,11 +853,28 @@ export class Reisen {
       });
   }
 
-  // ---------- Aufgaben ----------
+  resetPacking(): void {
+    const tripId = this.selectedTripId();
+    if (!tripId) return;
+    this.actionError.set('');
+    this.api
+      .resetPacking(tripId)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.packing.update((items) => items.map((i) => ({ ...i, is_packed: false, packed_at: null })));
+          this.refreshTrips();
+        },
+        error: () => this.actionError.set('Die Packliste konnte nicht zurückgesetzt werden. Bitte versuche es erneut.'),
+      });
+  }
+
+  // ---------- Erinnerungen (Reise-Aufgaben) ----------
   openTaskEditor(item?: TripTask): void {
     this.taskForm.reset({
       title: item?.title ?? '',
       due_date: item?.due_date ?? '',
+      due_time: item?.due_time ? item.due_time.slice(0, 5) : '',
       note: item?.note ?? '',
     });
     this.editTaskId.set(item?.id);
@@ -780,17 +893,23 @@ export class Reisen {
       this.taskFormError.set('Bitte gib einen Titel ein (maximal 120 Zeichen).');
       return;
     }
+    const id = this.editTaskId();
+    if (v.due_time && !v.due_date) {
+      this.taskFormError.set('Bitte wähle zur Uhrzeit auch ein Datum.');
+      return;
+    }
     this.taskSaving.set(true);
     this.taskFormError.set('');
-    const id = this.editTaskId();
     this.api
-      .saveTask({ trip: tripId, title: v.title.trim(), due_date: v.due_date || null, note: v.note.trim() }, id)
+      .saveTask({ trip: tripId, title: v.title.trim(), due_date: v.due_date || null, due_time: v.due_date && v.due_time ? v.due_time : null, note: v.note.trim() }, id)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (saved) => {
           this.taskSaving.set(false);
           this.taskEditor.set(false);
           this.tasks.update((items) => (id ? items.map((i) => (i.id === id ? saved : i)) : [...items, saved]));
+          this.reminderVersion.update((v) => v + 1);
+          this.refreshTrips();
         },
         error: () => {
           this.taskSaving.set(false);
@@ -810,12 +929,35 @@ export class Reisen {
           this.taskSaving.set(false);
           this.taskEditor.set(false);
           this.tasks.update((items) => items.filter((i) => i.id !== id));
+          this.reminderVersion.update((v) => v + 1);
+          this.refreshTrips();
         },
         error: () => {
           this.taskSaving.set(false);
           this.taskFormError.set('Löschen fehlgeschlagen. Bitte versuche es erneut.');
         },
       });
+  }
+  /** Aus den Erinnerungen: eine Reise-Aufgabe abhaken oder wieder öffnen. */
+  toggleReminder(change: { id: number; done: boolean }): void {
+    const item = this.tasks().find((t) => t.id === change.id);
+    const status = change.done ? 'DONE' : 'OPEN';
+    if (item) this.tasks.update((items) => items.map((i) => (i.id === change.id ? { ...i, status } : i)));
+    this.api
+      .saveTask({ status }, change.id)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => this.refreshTrips(),
+        error: () => {
+          if (item) this.tasks.update((items) => items.map((i) => (i.id === change.id ? { ...i, status: item.status } : i)));
+          this.reminderVersion.update((v) => v + 1);
+          this.actionError.set('Die Erinnerung konnte nicht gespeichert werden. Bitte versuche es erneut.');
+        },
+      });
+  }
+  openTaskById(id: number): void {
+    const task = this.tasks().find((t) => t.id === id);
+    if (task) this.openTaskEditor(task);
   }
   toggleTask(item: TripTask): void {
     const status = item.status === 'OPEN' ? 'DONE' : 'OPEN';
@@ -831,107 +973,153 @@ export class Reisen {
       });
   }
 
-  // ---------- Budget ----------
-  addExpense(): void {
-    const title = this.newExpenseTitle().trim();
-    const tripId = this.selectedTripId();
-    const amount = Number(this.newExpenseAmount().replace(',', '.'));
-    if (!title || !tripId || !Number.isFinite(amount) || amount < 0 || this.expenseAdding()) return;
-    this.expenseAdding.set(true);
-    this.actionError.set('');
-    this.api
-      .saveExpense({ trip: tripId, title, amount: amount.toFixed(2), date: this.newExpenseDate() })
-      .pipe(takeUntilDestroyed(this.destroy))
-      .subscribe({
-        next: (created) => {
-          this.expenseAdding.set(false);
-          this.expenses.update((items) => [...items, created]);
-          this.newExpenseTitle.set('');
-          this.newExpenseAmount.set('');
-        },
-        error: () => {
-          this.expenseAdding.set(false);
-          this.actionError.set(`„${title}“ konnte nicht hinzugefügt werden.`);
-        },
-      });
+  // ---------- Ausgaben ----------
+  openExpenseEditor(item?: TripExpense): void {
+    this.expenseForm.reset({
+      title: item?.title ?? '',
+      amount: item ? item.amount.replace('.', ',') : '',
+      date: item?.date ?? localDay(new Date()),
+      category: item?.category ?? 'SONSTIGES',
+    });
+    this.editExpenseId.set(item?.id);
+    this.expenseFormError.set('');
+    this.expenseEditor.set(true);
   }
-  removeExpense(item: TripExpense): void {
-    this.api
-      .removeExpense(item.id)
-      .pipe(takeUntilDestroyed(this.destroy))
-      .subscribe({
-        next: () => this.expenses.update((items) => items.filter((i) => i.id !== item.id)),
-        error: () => this.actionError.set(`„${item.title}“ konnte nicht entfernt werden.`),
-      });
+  closeExpenseEditor(): void {
+    if (!this.expenseSaving()) this.expenseEditor.set(false);
   }
-
-  /** Geplanter Betrag je Kategorie — leer/ungültig/0 heißt "nicht geplant" und entfernt die Zeile wieder, ein
-   * gültiger Betrag legt sie an oder aktualisiert sie (Upsert), passend zur Unique-Constraint im Backend. */
-  saveBudgetCategoryAmount(category: BudgetCategory, rawValue: string): void {
+  saveExpenseForm(): void {
+    if (this.expenseSaving()) return;
+    this.expenseForm.markAllAsTouched();
+    const v = this.expenseForm.getRawValue();
     const tripId = this.selectedTripId();
-    if (!tripId) return;
-    const existing = this.budgetCategories().find((r) => r.category === category);
-    const amount = Number(rawValue.replace(',', '.'));
-    if (!rawValue.trim() || !Number.isFinite(amount) || amount <= 0) {
-      if (existing) this.removeBudgetCategoryRow(existing);
+    const amount = Number(v.amount.trim().replace(',', '.'));
+    if (!v.title.trim() || !tripId) {
+      this.expenseFormError.set('Bitte beschreibe die Ausgabe, z. B. „Hotel“ (maximal 120 Zeichen).');
       return;
     }
-    this.actionError.set('');
+    if (!v.amount.trim() || !Number.isFinite(amount) || amount < 0) {
+      this.expenseFormError.set('Bitte gib einen gültigen Betrag ein, z. B. 45,50.');
+      return;
+    }
+    if (!v.date) {
+      this.expenseFormError.set('Bitte wähle ein Datum.');
+      return;
+    }
+    this.expenseSaving.set(true);
+    this.expenseFormError.set('');
+    const id = this.editExpenseId();
     this.api
-      .saveBudgetCategory({ trip: tripId, category, planned_amount: amount.toFixed(2) }, existing?.id)
+      .saveExpense({ trip: tripId, title: v.title.trim(), amount: amount.toFixed(2), date: v.date, category: v.category as BudgetCategory }, id)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (saved) => {
-          this.budgetCategories.update((rows) => (existing ? rows.map((r) => (r.id === existing.id ? saved : r)) : [...rows, saved]));
+          this.expenseSaving.set(false);
+          this.expenseEditor.set(false);
+          this.expenses.update((items) => (id ? items.map((i) => (i.id === id ? saved : i)) : [...items, saved]));
+          this.refreshTrips();
         },
-        error: () => this.actionError.set(`„${this.budgetCategoryLabels[category]}“ konnte nicht gespeichert werden.`),
+        error: () => {
+          this.expenseSaving.set(false);
+          this.expenseFormError.set('Speichern fehlgeschlagen. Bitte versuche es erneut.');
+        },
       });
   }
-  private removeBudgetCategoryRow(row: TripBudgetCategory): void {
+  removeExpenseFromEditor(): void {
+    const id = this.editExpenseId();
+    if (!id || this.expenseSaving()) return;
+    this.expenseSaving.set(true);
     this.api
-      .removeBudgetCategory(row.id)
+      .removeExpense(id)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
-        next: () => this.budgetCategories.update((rows) => rows.filter((r) => r.id !== row.id)),
-        error: () => this.actionError.set(`„${this.budgetCategoryLabels[row.category]}“ konnte nicht entfernt werden.`),
+        next: () => {
+          this.expenseSaving.set(false);
+          this.expenseEditor.set(false);
+          this.expenses.update((items) => items.filter((i) => i.id !== id));
+          this.refreshTrips();
+        },
+        error: () => {
+          this.expenseSaving.set(false);
+          this.expenseFormError.set('Löschen fehlgeschlagen. Bitte versuche es erneut.');
+        },
       });
   }
 
-  tripDateRange(trip: Trip): string {
-    const fmt = (iso: string) => new Date(`${iso}T12:00`).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' });
-    return `${fmt(trip.start_date)} – ${fmt(trip.end_date)}`;
-  }
-  /** Kompakte Variante für den Detail-Header ("05.–09. November", ohne Jahr) — tripDateRange() bleibt für die
-   * ausführlichere Listendarstellung ("5. November 2026 – 9. November 2026") unverändert. */
-  tripDateRangeShort(trip: Trip): string {
-    const start = new Date(`${trip.start_date}T12:00`);
-    const end = new Date(`${trip.end_date}T12:00`);
-    const day = (d: Date) => String(d.getDate()).padStart(2, '0');
-    const month = (d: Date) => d.toLocaleDateString('de-DE', { month: 'long' });
-    if (start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth()) {
-      return `${day(start)}.–${day(end)}. ${month(start)}`;
+  // ---------- Budget planen (Gesamtbudget + je Kategorie) ----------
+  openPlanEditor(): void {
+    const trip = this.selectedTrip();
+    if (!trip) return;
+    const draft: Record<string, string> = {};
+    for (const category of BUDGET_ORDER) {
+      const row = this.budgetCategories().find((r) => r.category === category);
+      draft[category] = row ? row.planned_amount.replace('.', ',') : '';
     }
-    const year = (d: Date) => (start.getFullYear() !== end.getFullYear() ? ` ${d.getFullYear()}` : '');
-    return `${day(start)}. ${month(start)}${year(start)} – ${day(end)}. ${month(end)}${year(end)}`;
+    this.planDraft.set(draft);
+    this.planTotal.set(trip.budget_amount ? trip.budget_amount.replace('.', ',') : '');
+    this.planError.set('');
+    this.planEditor.set(true);
   }
-  /** Kurzer Teilnehmer-Hinweis für den Detail-Header — "Nur du" bei einer Solo-Reise, sonst die Namen (bei
-   * mehr als drei gekürzt), nie E-Mail/Rolle (die stehen schon in der Teilnehmer-Karte/dem Dialog). */
-  participantsSummary(trip: Trip): string {
-    const names = trip.participants.map((p) => p.display_name);
-    if (names.length <= 1) return 'Nur du';
-    if (names.length <= 3) return names.join(', ');
-    return `${names.slice(0, 2).join(', ')} +${names.length - 2} weitere`;
+  setPlanAmount(category: BudgetCategory, value: string): void {
+    this.planDraft.update((d) => ({ ...d, [category]: value }));
   }
-  daysUntil(trip: Trip): number {
-    const diff = new Date(`${trip.start_date}T00:00`).getTime() - new Date(`${localDay(new Date())}T00:00`).getTime();
-    return Math.round(diff / 86_400_000);
+  closePlanEditor(): void {
+    if (!this.planSaving()) this.planEditor.set(false);
   }
-  /** Text für die Tage-bis-Abreise-Pille, oder null wenn die Reise schon begonnen hat. Eigene Methode statt
-   * `@if (daysUntil(next); as days)` im Template: bei days === 0 wäre die Zahl selbst falsy und die Pille
-   * bliebe trotz passender @else-if-Bedingung unsichtbar. */
-  tripDaysLabel(trip: Trip): string | null {
-    const days = this.daysUntil(trip);
-    if (days < 0) return null;
-    return days === 0 ? "Heute geht's los" : `in ${days} ${days === 1 ? 'Tag' : 'Tagen'}`;
+  /** Speichert nur, was sich geändert hat: leer oder 0 entfernt eine geplante Kategorie (wie zuvor im Reiter). */
+  savePlan(): void {
+    const trip = this.selectedTrip();
+    if (!trip || this.planSaving()) return;
+    const parse = (raw: string) => {
+      const text = raw.trim().replace(',', '.');
+      if (!text) return 0;
+      const value = Number(text);
+      return Number.isFinite(value) && value >= 0 ? value : null;
+    };
+    const total = parse(this.planTotal());
+    if (total === null) {
+      this.planError.set('Bitte gib ein gültiges Gesamtbudget ein, z. B. 700.');
+      return;
+    }
+    const steps: Observable<unknown>[] = [];
+    for (const category of BUDGET_ORDER) {
+      const value = parse(this.planDraft()[category] ?? '');
+      if (value === null) {
+        this.planError.set(`Bitte gib für „${BUDGET_META[category].label}“ einen gültigen Betrag ein.`);
+        return;
+      }
+      const existing = this.budgetCategories().find((r) => r.category === category);
+      if (value === 0 && existing) steps.push(this.api.removeBudgetCategory(existing.id));
+      else if (value > 0 && (!existing || Number(existing.planned_amount) !== value))
+        steps.push(this.api.saveBudgetCategory({ trip: trip.id, category, planned_amount: value.toFixed(2) }, existing?.id));
+    }
+    const before = Number(trip.budget_amount || 0);
+    if (total !== before) steps.push(this.api.saveTrip({ budget_amount: total > 0 ? total.toFixed(2) : null }, trip.id));
+    if (!steps.length) {
+      this.planEditor.set(false);
+      return;
+    }
+    this.planSaving.set(true);
+    this.planError.set('');
+    forkJoin(steps)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.planSaving.set(false);
+          this.planEditor.set(false);
+          this.loadTripDetail(trip.id);
+          this.refreshTrips();
+        },
+        error: () => {
+          this.planSaving.set(false);
+          this.planError.set('Nicht alles konnte gespeichert werden. Bitte prüfe die Beträge und versuche es erneut.');
+          this.loadTripDetail(trip.id);
+          this.refreshTrips();
+        },
+      });
   }
+}
+
+function tabFromQuery(value: string | null): ReisenTab {
+  return TABS.some((t) => t.key === value) ? (value as ReisenTab) : 'uebersicht';
 }

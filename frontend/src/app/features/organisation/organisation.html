@@ -9,9 +9,11 @@
             <p class="subtitle">Dein Alltag. Klar organisiert.</p>
           </div>
         </div>
-        <button class="primary" [attr.aria-label]="headAction()" (click)="headActionClick()">
-          <app-icon [name]="tab() === 'files' ? 'upload' : 'plus'" /><span>{{ headAction() }}</span>
-        </button>
+        @if (headAction()) {
+          <button class="primary" [attr.aria-label]="headAction()" (click)="headActionClick()">
+            <app-icon [name]="tab() === 'files' ? 'upload' : 'plus'" /><span>{{ headAction() }}</span>
+          </button>
+        }
       </header>
       <nav class="tabs domain-tabs" aria-label="Organisation Ansichten" (keydown)="onTabKeydown($event)">
         @for (t of tabs; track t.key) {
@@ -61,7 +63,6 @@
             [events]="events()"
             (openTask)="open('task', $event)"
             (toggleTask)="toggle($event)"
-            (newTask)="open('task')"
             (showCalendar)="selectTab('calendar')"
           />
         }
@@ -72,6 +73,9 @@
           <app-org-files [uploadRequest]="uploadRequest()" />
         }
       }
+    }
+    @if (headAction()) {
+      <app-mobile-action [label]="headAction()" [icon]="tab() === 'files' ? 'upload' : 'plus'" (pressed)="headActionClick()" />
     }
   </main></app-shell
 >
@@ -88,13 +92,6 @@
   (closed)="close()"
   (deleted)="remove()"
 >
-  @if (!editId() && typeChoice()) {
-    <div class="entry-types">
-      <button type="button" [attr.aria-pressed]="editor() === 'event'" (click)="editor.set('event')">Termin</button>
-      <button type="button" [attr.aria-pressed]="editor() === 'task'" (click)="editor.set('task')">Aufgabe</button>
-      <button type="button" aria-pressed="false" (click)="editor.set(null); openNote()">Notiz</button>
-    </div>
-  }
   <app-field label="Titel">
     <input id="entry-title" formControlName="title" maxlength="120" required />
   </app-field>

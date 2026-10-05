@@ -13,7 +13,6 @@
         <input type="search" placeholder="Aufgabe suchen …" [value]="search()" (input)="search.set($any($event.target).value)" />
       </label>
     </div>
-    <button type="button" class="add-mobile" (click)="newTask.emit()"><app-icon name="plus" />Aufgabe hinzufügen</button>
 
     @for (g of groups(); track g.key) {
       @let open = !collapsed().has(g.key);

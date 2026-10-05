@@ -21,7 +21,10 @@ class Trip(models.Model):
     """
 
     class Status(models.TextChoices):
-        PLANNED = 'PLANNED', 'Geplant'
+        # Reihenfolge = Lebenslauf einer Reise: Idee → in Planung → bestätigt (gebucht) → unterwegs → abgeschlossen.
+        IDEA = 'IDEA', 'Idee'
+        PLANNED = 'PLANNED', 'In Planung'
+        CONFIRMED = 'CONFIRMED', 'Bestätigt'
         ACTIVE = 'ACTIVE', 'Unterwegs'
         DONE = 'DONE', 'Abgeschlossen'
         CANCELLED = 'CANCELLED', 'Storniert'
@@ -72,6 +75,11 @@ class Trip(models.Model):
     # ist explizit (kein Float, kein impliziter Euro-Zwang), Decimal wie überall bei Geldbeträgen im Projekt.
     budget_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=3, choices=Currency.choices, default=Currency.EUR)
+    # Optionale Eckdaten für die Reisedetails („Unterkunft: Hotel Central, 2 Nächte · Berlin Mitte“, „Transport: Zug,
+    # Hin- und Rückfahrt gebucht“). Die Nächte ergeben sich aus dem Zeitraum und werden nicht gespeichert.
+    accommodation = models.CharField(max_length=160, blank=True, default='')
+    accommodation_area = models.CharField(max_length=120, blank=True, default='')
+    transport_note = models.CharField(max_length=160, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -104,11 +112,12 @@ class TripScopedModel(models.Model):
 
 class PackingItem(TripScopedModel):
     class Category(models.TextChoices):
-        DOKUMENTE = 'DOKUMENTE', 'Dokumente'
+        DOKUMENTE = 'DOKUMENTE', 'Wichtige Dokumente'
         KLEIDUNG = 'KLEIDUNG', 'Kleidung'
         TECHNIK = 'TECHNIK', 'Technik'
         GESUNDHEIT = 'GESUNDHEIT', 'Gesundheit'
         HYGIENE = 'HYGIENE', 'Hygiene'
+        UNTERWEGS = 'UNTERWEGS', 'Unterwegs'
         SONSTIGES = 'SONSTIGES', 'Sonstiges'
 
     title = models.CharField(max_length=120)
@@ -118,6 +127,8 @@ class PackingItem(TripScopedModel):
     # GENAU einer Kategorie, damit die Liste danach gruppiert werden kann — "Sonstiges" statt eines leeren Werts.
     category = models.CharField(max_length=10, choices=Category.choices, default=Category.SONSTIGES)
     note = models.CharField(max_length=240, blank=True, default='')
+    # Wann zuletzt abgehakt („Erledigt am 10. März“) — vom Serializer gesetzt, beim Zurücknehmen wieder leer.
+    packed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['is_packed', 'id']
@@ -131,6 +142,8 @@ class TripTask(TripScopedModel):
 
     title = models.CharField(max_length=120)
     due_date = models.DateField(null=True, blank=True)
+    # Optional, nur mit Datum sinnvoll („Online Check-in öffnen, Mi 18:00“) — im Reiter „Erinnerungen“.
+    due_time = models.TimeField(null=True, blank=True)
     status = models.CharField(max_length=4, choices=Status.choices, default=Status.OPEN)
     note = models.CharField(max_length=240, blank=True, default='')
 
@@ -156,14 +169,28 @@ class TripEvent(TripScopedModel):
         ]
 
 
+class BudgetCategory(models.TextChoices):
+    """Kategorien des Reisebudgets — gemeinsam für die Planung (TripBudgetCategory) und die Ausgaben (TripExpense),
+    damit sich „geplant“ und „ausgegeben“ je Kategorie gegenüberstellen lassen."""
+
+    TRANSPORT = 'TRANSPORT', 'Transport'
+    UNTERKUNFT = 'UNTERKUNFT', 'Unterkunft'
+    ESSEN = 'ESSEN', 'Essen'
+    AKTIVITAETEN = 'AKTIVITAETEN', 'Aktivitäten'
+    SHOPPING = 'SHOPPING', 'Shopping'
+    SONSTIGES = 'SONSTIGES', 'Sonstiges'
+    RESERVE = 'RESERVE', 'Reserve'
+
+
 class TripExpense(TripScopedModel):
     """Eigenständige Ausgabenerfassung je Reise — bewusst NICHT mit Finanzen/Transaction
     verbunden (AGENTS.md: Finanzen bleibt stabil, Cross-Domain nur über explizite
-    Connections, die für Reisen V1 noch nicht gebaut werden)."""
+    Connections). Jede Ausgabe gehört zu einer Budget-Kategorie (Standard „Sonstiges“)."""
 
     title = models.CharField(max_length=120)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateField()
+    category = models.CharField(max_length=12, choices=BudgetCategory.choices, default=BudgetCategory.SONSTIGES)
 
     class Meta:
         ordering = ['date', 'id']
@@ -172,18 +199,10 @@ class TripExpense(TripScopedModel):
 
 
 class TripBudgetCategory(TripScopedModel):
-    """Geplanter Betrag je Budget-Kategorie einer Reise — nur die Planung (siehe ANZEIGE-Beispiel in der
-    Aufgabenstellung: "Geplant: Transport 500 €, ..."). Tatsächliche Ausgaben bleiben bewusst unkategorisiert in
-    TripExpense; eine Ist-je-Kategorie-Auswertung wäre ein zweites, größeres Feature und ist hier nicht verlangt."""
+    """Geplanter Betrag je Budget-Kategorie einer Reise. Die Ausgaben (TripExpense) tragen dieselbe Kategorie,
+    so zeigt der Reiter „Budget“ geplant, ausgegeben und verbleibend je Kategorie."""
 
-    class Category(models.TextChoices):
-        TRANSPORT = 'TRANSPORT', 'Transport'
-        UNTERKUNFT = 'UNTERKUNFT', 'Unterkunft'
-        ESSEN = 'ESSEN', 'Essen'
-        AKTIVITAETEN = 'AKTIVITAETEN', 'Aktivitäten'
-        SHOPPING = 'SHOPPING', 'Shopping'
-        SONSTIGES = 'SONSTIGES', 'Sonstiges'
-        RESERVE = 'RESERVE', 'Reserve'
+    Category = BudgetCategory
 
     category = models.CharField(max_length=12, choices=Category.choices)
     planned_amount = models.DecimalField(max_digits=10, decimal_places=2)

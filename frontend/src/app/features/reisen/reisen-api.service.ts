@@ -3,6 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../core/api.config';
 
+/** Lebenslauf einer Reise: Idee → in Planung → bestätigt (gebucht) → unterwegs → abgeschlossen (oder storniert). */
+export type TripStatus = 'IDEA' | 'PLANNED' | 'CONFIRMED' | 'ACTIVE' | 'DONE' | 'CANCELLED';
 export interface Trip {
   id: number;
   title: string;
@@ -13,7 +15,7 @@ export interface Trip {
   start_date: string;
   end_date: string;
   notes: string;
-  status: 'PLANNED' | 'ACTIVE' | 'DONE' | 'CANCELLED';
+  status: TripStatus;
   /** Alle drei optional (leerer String = keine Angabe) — dienen nur dazu, die Smart-Setup-Vorschläge
    * (siehe trip-suggestions.ts) sinnvoller zu wählen; Reisen funktioniert auch ganz ohne sie. */
   travel_type: 'CITY_TRIP' | 'BEACH' | 'BUSINESS' | 'ROAD_TRIP' | 'ACTIVE' | 'FAMILY' | 'GENERAL' | '';
@@ -22,6 +24,10 @@ export interface Trip {
   budget_amount: string | null;
   /** Explizit statt eines impliziten Euro-Zwangs — kein Float, immer als String (Decimal) übertragen. */
   currency: 'EUR' | 'USD' | 'GBP' | 'CHF';
+  /** Optionale Eckdaten für die Reisedetails; die Nächte ergeben sich aus dem Zeitraum. */
+  accommodation: string;
+  accommodation_area: string;
+  transport_note: string;
   created_at: string;
   updated_at: string;
   packing_total: number;
@@ -50,7 +56,7 @@ export interface ContactOption {
   id: number;
   name: string;
 }
-export type PackingCategory = 'DOKUMENTE' | 'KLEIDUNG' | 'TECHNIK' | 'GESUNDHEIT' | 'HYGIENE' | 'SONSTIGES';
+export type PackingCategory = 'DOKUMENTE' | 'KLEIDUNG' | 'TECHNIK' | 'GESUNDHEIT' | 'HYGIENE' | 'UNTERWEGS' | 'SONSTIGES';
 export interface PackingItem {
   id: number;
   trip: number;
@@ -61,12 +67,16 @@ export interface PackingItem {
    * gruppieren lässt ("Sonstiges" statt eines leeren Werts). */
   category: PackingCategory;
   note: string;
+  /** Wann abgehakt („Erledigt am 10. März“) — setzt das Backend, null solange offen. */
+  packed_at?: string | null;
 }
 export interface TripTask {
   id: number;
   trip: number;
   title: string;
   due_date: string | null;
+  /** „HH:MM[:SS]“, nur zusammen mit due_date. */
+  due_time?: string | null;
   status: 'OPEN' | 'DONE';
   note: string;
 }
@@ -84,15 +94,43 @@ export interface TripExpense {
   title: string;
   amount: string;
   date: string;
+  category: BudgetCategory;
 }
 export type BudgetCategory = 'TRANSPORT' | 'UNTERKUNFT' | 'ESSEN' | 'AKTIVITAETEN' | 'SHOPPING' | 'SONSTIGES' | 'RESERVE';
-/** Nur die Planung je Kategorie (siehe Trip-Budget-Anzeige) — tatsächliche Ausgaben bleiben bewusst
- * unkategorisiert in TripExpense, kein zweites vollständiges Finanzsystem. */
+/** Geplanter Betrag je Kategorie; die Ausgaben tragen dieselbe Kategorie (geplant vs. ausgegeben). */
 export interface TripBudgetCategory {
   id: number;
   trip: number;
   category: BudgetCategory;
   planned_amount: string;
+}
+export type ReminderArea = 'REISEN' | 'HAUSHALT' | 'ORGANISATION';
+export type ReminderSource = 'TRIP_TASK' | 'TRIP_EVENT' | 'HOUSEHOLD_TASK' | 'ORG_EVENT' | 'ORG_TASK';
+/** Eine Zeile im Reiter „Erinnerungen“ (backend connections/trip_overview.py) — Reise-Aufgaben/-Termine plus
+ * eigene Haushalts- und Organisationseinträge rund um die Reise. */
+export interface TripReminder {
+  key: string;
+  source: ReminderSource;
+  area: ReminderArea;
+  /** ID im Ursprungsbereich (z. B. TripTask.id) */
+  id: number | null;
+  title: string;
+  date: string | null;
+  time: string | null;
+  place: string;
+  done: boolean;
+}
+export interface TripReminders {
+  window_start: string;
+  window_end: string;
+  items: TripReminder[];
+}
+/** Eigenes, mit der Reise verknüpftes Sparziel aus Finanzen (nur die eigenen). */
+export interface TripSavingsGoal {
+  id: number;
+  title: string;
+  current_amount: string;
+  target_amount: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -187,6 +225,19 @@ export class ReisenApi {
   }
   removeBudgetCategory(id: number) {
     return this.http.delete<void>(`${this.base}/budget-categories/${id}/`);
+  }
+
+  /** Alle Häkchen der Packliste dieser Reise zurücknehmen (nur mit Schreibrecht). */
+  resetPacking(tripId: number) {
+    return this.http.post<{ reset: number }>(`${this.base}/packing-items/zuruecksetzen/`, {}, {
+      params: new HttpParams().set('trip', tripId),
+    });
+  }
+  reminders(tripId: number) {
+    return this.http.get<TripReminders>(`${API_BASE_URL}/connections/reisen/${tripId}/erinnerungen/`);
+  }
+  savings(tripId: number) {
+    return this.http.get<TripSavingsGoal[]>(`${API_BASE_URL}/connections/reisen/${tripId}/sparziel/`);
   }
 
   /** Eigene Kontakte (core/contact_views.py) als Auswahl zum Hinzufügen eines Teilnehmers — kein Endpunkt, der

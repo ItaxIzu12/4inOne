@@ -3,7 +3,7 @@ from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from connections import services, suggestions
+from connections import services, suggestions, trip_overview
 from connections.today import today_overview
 from connections.serializers import (
     CandidateQuerySerializer,
@@ -116,3 +116,18 @@ class TodayOverviewView(ConnectionsView):
 
     def get(self, request):
         return Response(today_overview(request.user, request.query_params.get('timezone', 'Europe/Berlin')))
+
+
+class TripRemindersView(ConnectionsView):
+    """GET /api/v1/connections/reisen/<id>/erinnerungen/ — Reise-Aufgaben und -Termine plus eigene Haushalts- und
+    Organisationseinträge rund um die Reise (siehe trip_overview.py)."""
+
+    def get(self, request, trip_id):
+        return Response(trip_overview.reminders(request.user, trip_id))
+
+
+class TripSavingsView(ConnectionsView):
+    """GET /api/v1/connections/reisen/<id>/sparziel/ — die eigenen, mit der Reise verknüpften Sparziele."""
+
+    def get(self, request, trip_id):
+        return Response(trip_overview.savings(request.user, trip_id))

@@ -773,6 +773,12 @@ small {
     bottom: calc(96px + env(safe-area-inset-bottom));
   }
 }
+@media (max-width: 760px) {
+  .checkout-bar {
+    // zusätzlich über dem festen Hauptknopf „Neue Liste“ (shared/mobile-action)
+    bottom: calc(142px + env(safe-area-inset-bottom));
+  }
+}
 @media (max-width: 900px) {
   .shop {
     grid-template-columns: minmax(0, 1fr);

@@ -84,7 +84,7 @@ def _haushalt(user, today):
 
 
 def _reisen(user, today, tz):
-    trips = KINDS[ObjectType.TRIP].visible(user).exclude(status__in=(Trip.Status.CANCELLED, Trip.Status.DONE))
+    trips = KINDS[ObjectType.TRIP].visible(user).exclude(status__in=(Trip.Status.IDEA, Trip.Status.CANCELLED, Trip.Status.DONE))
     current = trips.filter(start_date__lte=today, end_date__gte=today).order_by('start_date', 'id').first()
     upcoming = (
         trips.filter(start_date__gt=today, start_date__lte=today + timedelta(days=TRIP_LEAD_DAYS))

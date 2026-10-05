@@ -82,7 +82,7 @@ for (const width of [390, 1440]) {
 
     // Aufgabe mit Projekt, dann erledigen und wieder öffnen
     await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
-    await page.getByRole('button', { name: 'Aufgabe hinzufügen', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Aufgabe erstellen', exact: true }).first().click();
     await dialog.getByLabel('Titel', { exact: true }).fill('Steuer abgeben');
     await dialog.getByLabel('Projekt (optional)').fill('Finanzen');
     await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
@@ -97,7 +97,7 @@ for (const width of [390, 1440]) {
 
     // Notiz anlegen und anheften
     await page.getByRole('button', { name: 'Notizen', exact: true }).click();
-    await page.getByRole('button', { name: 'Neue Notiz', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Notiz erstellen', exact: true }).first().click();
     await dialog.getByLabel('Titel der Notiz').fill('Ideen');
     await dialog.getByLabel('Inhalt (optional)').fill('• Sommerfest\n• Newsletter');
     await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
@@ -123,29 +123,28 @@ for (const width of [390, 1440]) {
   });
 }
 
-test('the head button follows the tab, only "Neuer Eintrag" offers the choice', async ({ page }) => {
+test('the head button follows the tab, and the overview has none', async ({ page }) => {
   await mockApi(page);
   await page.goto('/organisation');
   const head = page.locator('.page-heading .primary');
-  await expect(head).toHaveText(/Neuer Eintrag/);
-  await head.click();
-  await expect(page.locator('.entry-types')).toContainText(['Termin', 'Aufgabe', 'Notiz'].join(''));
-  await page.getByRole('button', { name: 'Abbrechen' }).click();
+  await expect(page.getByRole('heading', { name: 'Organisation', exact: true })).toBeVisible();
+  await expect(head).toHaveCount(0);
 
   for (const [tab, label, title] of [
     ['Kalender', 'Termin erstellen', 'Termin erstellen'],
-    ['Aufgaben', 'Aufgabe hinzufügen', 'Aufgabe erstellen'],
-    ['Notizen', 'Neue Notiz', 'Neue Notiz'],
+    ['Aufgaben', 'Aufgabe erstellen', 'Aufgabe erstellen'],
+    ['Notizen', 'Notiz erstellen', 'Neue Notiz'],
   ]) {
     await page.getByRole('button', { name: tab, exact: true }).click();
     await expect(head).toHaveText(new RegExp(label));
     await head.click();
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
-    await expect(page.locator('.entry-types')).toHaveCount(0);
     await page.getByRole('button', { name: 'Abbrechen' }).click();
   }
   await page.getByRole('button', { name: 'Dateien', exact: true }).click();
   await expect(head).toHaveText(/Datei hochladen/);
+  await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
+  await expect(head).toHaveCount(0);
 });
 
 test.describe('demo preview', () => {

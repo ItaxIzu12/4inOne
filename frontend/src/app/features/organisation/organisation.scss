@@ -131,25 +131,6 @@ h1 {
   color: #8f2a3d;
   font-size: 14px;
 }
-.entry-types {
-  display: flex;
-  gap: 10px;
-}
-.entry-types button {
-  flex: 1;
-  min-height: 44px;
-  border: 1px solid #e5d7f5;
-  border-radius: 10px;
-  background: #faf6ff;
-  color: #593884;
-  font: inherit;
-  cursor: pointer;
-}
-.entry-types [aria-pressed='true'] {
-  border-color: var(--accent);
-  background: #eadefa;
-  font-weight: 600;
-}
 .checkbox-row {
   display: flex;
   align-items: flex-start;

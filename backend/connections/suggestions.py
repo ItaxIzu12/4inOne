@@ -49,7 +49,9 @@ PACKING_LEAD_DAYS = 7
 TODAY_TRIP_LIMIT = 10
 MAX_MONTH_SPAN = 240  # Schutz gegen Endlosschleifen bei monatlichen Aufgaben
 
-ACTIVE_TRIP_STATUSES = (Trip.Status.PLANNED, Trip.Status.ACTIVE)
+# Eine bloße Idee löst noch keine Vorschläge aus; geplant oder schon gebucht schon.
+PLANNING_TRIP_STATUSES = (Trip.Status.PLANNED, Trip.Status.CONFIRMED)
+ACTIVE_TRIP_STATUSES = (*PLANNING_TRIP_STATUSES, Trip.Status.ACTIVE)
 
 
 class SuggestionError(services.ConnectionRuleError):
@@ -179,7 +181,7 @@ def _display_name(user) -> str:
 
 
 def _goal_or_budget(user, trip: Trip, today: date) -> list[Suggestion]:
-    if trip.status != Trip.Status.PLANNED or trip.start_date <= today:
+    if trip.status not in PLANNING_TRIP_STATUSES or trip.start_date <= today:
         return []
     connected = _connected_ids(trip, ObjectType.SAVINGS_GOAL)
     if connected and SavingsGoal.objects.filter(owner=user, pk__in=connected).exists():
@@ -342,7 +344,7 @@ def _household_consequences(user, trip: Trip, today: date) -> list[Suggestion]:
 
 
 def _packing(user, trip: Trip, today: date) -> list[Suggestion]:
-    if trip.status != Trip.Status.PLANNED:
+    if trip.status not in PLANNING_TRIP_STATUSES:
         return []
     days = (trip.start_date - today).days
     if not 0 <= days <= PACKING_LEAD_DAYS or trip.packingitems.exists():

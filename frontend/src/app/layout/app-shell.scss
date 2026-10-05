@@ -128,49 +128,6 @@ input:focus-visible {
 .demo-banner__cta:hover {
   background: #163f78;
 }
-.topbar {
-  height: 88px;
-  background: #fff;
-  border-bottom: 1px solid #edf0f6;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 36px;
-  gap: 20px;
-}
-.profile {
-  margin-left: auto;
-  display: flex;
-  gap: 20px;
-  align-items: center;
-}
-.icon-button {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  background: transparent;
-  border-radius: 50%;
-}
-.profile-button {
-  border: 0;
-  background: none;
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  min-height: 48px;
-}
-.avatar {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  background: #e3eee7;
-  border-radius: 50%;
-  font-size: 16px;
-  color: #315b46;
-}
 .mobile-brand,
 .mobile-nav {
   display: none;
@@ -205,33 +162,14 @@ input:focus-visible {
     gap: 12px;
     font-size: 14px;
   }
-  .topbar {
-    padding: 16px 24px;
-  }
 }
 @media (max-width: 760px) {
   .shell {
     display: block;
     padding-bottom: calc(88px + env(safe-area-inset-bottom));
   }
-  .sidebar,
-  .profile-name {
+  .sidebar {
     display: none;
-  }
-  .mobile-brand {
-    display: block;
-  }
-  .mobile-brand app-brand {
-    font-size: 23px;
-  }
-  .topbar {
-    height: 76px;
-    padding: 16px 20px;
-    background: transparent;
-    border: 0;
-  }
-  .profile {
-    gap: 5px;
   }
   .demo-banner {
     padding: 10px 20px;
@@ -362,14 +300,6 @@ input:focus-visible {
   padding: 22px;
   line-height: 1.6;
 }
-.topbar {
-  height: 84px;
-  padding: 12px 24px;
-  background: #ffffff8f;
-  border: 1px solid #fff;
-  border-radius: 26px;
-  box-shadow: 0 8px 20px #7590b515;
-}
 .demo-banner {
   margin: 0 16px 12px;
   padding: 10px 20px;
@@ -377,17 +307,6 @@ input:focus-visible {
   border: 1px solid #fff;
   border-radius: 18px;
   box-shadow: 0 6px 12px #718ebb0c;
-}
-.avatar {
-  width: 44px;
-  height: 44px;
-  border: 2px solid #fff;
-  background: linear-gradient(145deg, #d2f3e2, #daf0fc);
-  box-shadow: 0 4px 9px #607eaa22;
-}
-.profile-button {
-  border-left: 1px solid #dae1ef;
-  padding-left: 20px;
 }
 @media (max-width: 1250px) {
   .shell {
@@ -407,32 +326,14 @@ input:focus-visible {
     width: 24px;
     height: 24px;
   }
-  .topbar {
-    padding: 12px 20px;
-  }
 }
 @media (max-width: 760px) {
   .shell {
     display: block;
     padding: 0 0 calc(90px + env(safe-area-inset-bottom));
   }
-  .topbar {
-    height: 82px;
-    padding: 16px 18px;
-    background: transparent;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-  }
   .demo-banner {
     margin: 0 12px 10px;
-  }
-  .profile-button {
-    padding-left: 8px;
-  }
-  .avatar {
-    width: 38px;
-    height: 38px;
   }
   .mobile-nav {
     background: #ffffffed;
@@ -547,52 +448,6 @@ input:focus-visible {
   color: #b3261e;
 }
 
-/* Kopfzeile am Rechner: kein weißer Balken mehr, nur Glocke und Profil als zwei ruhige Chips, die auf dem Hintergrund liegen. */
-@media (min-width: 761px) {
-  .topbar {
-    height: 72px;
-    padding: 14px 4px 0;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
-  }
-  .icon-button,
-  .profile-button {
-    border: 1px solid #fff;
-    background: #ffffffb8;
-    box-shadow: 0 4px 12px #6a86b018;
-    backdrop-filter: blur(10px);
-  }
-  .icon-button {
-    width: 48px;
-    height: 48px;
-  }
-  .icon-button:hover,
-  .profile-button:hover {
-    background: #fff;
-  }
-  .profile {
-    gap: 12px;
-  }
-  .profile-button {
-    min-height: 48px;
-    padding: 0 16px 0 4px;
-    border-radius: 999px;
-    border-left: 1px solid #fff;
-  }
-  .avatar {
-    width: 40px;
-    height: 40px;
-  }
-}
-
-@media (max-width: 760px) {
-  .profile-button {
-    border-left: 0;
-    padding-left: 0;
-  }
-}
-
 /* Domain icons remain colored; selected links also tint their label and background. */
 .sidebar nav a, .mobile-nav a { --nav-accent: #235bb5; --nav-soft: #edf3fc; color: #566176; }
 .sidebar nav a[data-domain="finance"], .mobile-nav a[data-domain="finance"] { --nav-accent: #1e7a4d; --nav-soft: #edf7f1; }
@@ -602,109 +457,350 @@ input:focus-visible {
 .sidebar nav a app-icon, .mobile-nav a app-icon { color: var(--nav-accent); filter: none; width: 24px; height: 24px; }
 .sidebar nav a.active, .mobile-nav a.active { color: var(--nav-accent); background: var(--nav-soft); box-shadow: none; border-color: transparent; }
 .sidebar-note, .demo-banner { color: #53627a; background: #f1f5fa; box-shadow: none; }
-.sidebar, .topbar { background: #fff; border-color: #e7ebf1; }
+.sidebar { background: #fff; border-color: #e7ebf1; }
 a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offset: 3px; }
 
-// Persistent navigation; the demo label belongs to the product chrome.
-:host { --shell-header-height: 56px; }
+// ---------------------------------------------------------------------------
+// Kopfzeile — ein einziger Block (vorher mehrfach überschrieben).
+// Rechner: Suche · Datum · Glocke | Profil, ruhig auf hellem Grund.
+// Handy: Marke + Glocke + Profil oben, Suche darunter, mit sicherem Abstand zum oberen Rand.
+// ---------------------------------------------------------------------------
+:host {
+  --shell-header-height: 72px;
+}
 .topbar {
   position: sticky;
   top: 0;
   z-index: 40;
-  height: var(--shell-header-height);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 72px;
+  padding: 12px 28px;
+  border: 0;
   border-radius: 0;
-  background: #fff;
-  border-bottom: 1px solid #e7ebf1;
+  background: #f8fafdf2;
+  box-shadow: inset 0 -1px #e7ebf1;
+  backdrop-filter: blur(12px);
 }
-.brand-group { display: grid; gap: 2px; }
+.brand-group {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.topbar:not(.topbar--demo) .brand-group {
+  display: none;
+}
 .demo-banner {
   display: block;
   margin: 0;
   padding: 0;
   border: 0;
   background: transparent;
-  box-shadow: none;
 }
 .demo-banner .demo-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 7px;
-  border-radius: 6px;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid #dfe6f1;
+  border-radius: 999px;
+  background: #fff;
   color: #465875;
-  background: #eef3f9;
   font-size: 12px;
-  line-height: 16px;
   font-weight: 600;
+  line-height: 16px;
   white-space: nowrap;
 }
 .demo-badge__dot {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #607596;
+  background: #e0a100;
 }
-@media (min-width: 761px) {
+.brand-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.mobile-date,
+.demo-badge__short {
+  display: none;
+}
+// Suche
+.dashboard-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 4px;
+  max-width: 560px;
+  min-height: 46px;
+  margin: 0;
+  padding: 0 10px 0 2px;
+  border: 1px solid #e1e7f0;
+  border-radius: 12px;
+  background: #fff;
+}
+.dashboard-search:focus-within {
+  border-color: #9db6e3;
+  box-shadow: 0 0 0 3px #e6eefb;
+}
+.search-submit {
+  display: grid;
+  place-items: center;
+  min-width: 42px;
+  min-height: 42px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #405574;
+}
+.dashboard-search app-icon {
+  width: 19px;
+  height: 19px;
+}
+.dashboard-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  border: 0;
+  outline: none;
+  background: none;
+  color: #142143;
+  font: inherit;
+  font-size: 14px;
+}
+.dashboard-search input::placeholder {
+  color: #526079;
+}
+.dashboard-search kbd {
+  padding: 3px 7px;
+  border: 1px solid #e1e7f0;
+  border-radius: 6px;
+  background: #f6f8fb;
+  color: #566780;
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+}
+// Datum: Kalender-Kachel, Wochentag klein, Datum kräftig
+.dashboard-date {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.dashboard-date__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #e1e7f0;
+  border-radius: 12px;
+  background: #fff;
+  color: #3b5b8f;
+}
+.dashboard-date__icon app-icon {
+  width: 19px;
+  height: 19px;
+}
+.dashboard-date__text {
+  display: grid;
+  line-height: 1.25;
+}
+.dashboard-date__text small {
+  color: #526079;
+  font-size: 12px;
+}
+.dashboard-date__text b {
+  color: #142143;
+  font-size: 14px;
+  font-weight: 600;
+}
+// Glocke und Profil
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 4px;
+  padding-left: 14px;
+  border-left: 1px solid #e1e7f0;
+}
+.topbar:not(:has(.dashboard-date)) .profile {
+  margin-left: auto;
+}
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #e1e7f0;
+  border-radius: 50%;
+  background: #fff;
+  color: #1f2a44;
+}
+.icon-button app-icon {
+  width: 21px;
+  height: 21px;
+}
+.profile-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 4px 12px 4px 4px;
+  border: 1px solid #e1e7f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #142143;
+  font: inherit;
+  text-align: left;
+}
+.icon-button:hover,
+.profile-button:hover {
+  border-color: #c9d5e8;
+  background: #fbfcfe;
+}
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2f6fd6, #6d4fd1);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.avatar--large {
+  flex-basis: 44px;
+  width: 44px;
+  height: 44px;
+  font-size: 16px;
+}
+.profile-text {
+  display: grid;
+  line-height: 1.2;
+}
+.profile-name {
+  max-width: 140px;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-text small {
+  color: #526079;
+  font-size: 12px;
+}
+.profile-button .chevron {
+  width: 16px;
+  height: 16px;
+  color: #526079;
+}
+// Mittlere Breite: Datum kompakt, Profil ohne Namen
+@media (min-width: 761px) and (max-width: 1250px) {
   .topbar {
-    padding: 4px 24px;
-    background: #f8fafd;
-    border: 0;
-    box-shadow: inset 0 -1px #e7ebf1;
+    padding: 12px 20px;
+    gap: 12px;
   }
-  .topbar--demo {
-    margin-inline: 34px;
-    padding-inline: 20px;
-    border: 1px solid #e7ebf1;
-    border-radius: 24px;
-    background: #fff;
-    box-shadow: none;
+  .dashboard-date__text small {
+    display: none;
+  }
+}
+@media (min-width: 761px) and (max-width: 1050px) {
+  .dashboard-date,
+  .profile-text {
+    display: none;
+  }
+  .profile {
+    margin-left: auto;
+  }
+  .profile-button {
+    padding-right: 8px;
+  }
+}
+// Handy
+@media (max-width: 760px) {
+  .topbar {
+    flex-wrap: wrap;
+    gap: 12px;
+    min-height: 0;
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px;
+    background: #fffffff2;
+  }
+  .brand-group,
+  .topbar:not(.topbar--demo) .brand-group {
+    display: grid;
+    flex: 1 1 0;
+  }
+  // kurz „Demo“ neben dem Datum, damit Glocke und Profil in der ersten Zeile bleiben
+  .demo-badge__long {
+    display: none;
+  }
+  .demo-badge__short {
+    display: inline;
+  }
+  .mobile-brand {
+    display: block;
+    width: fit-content;
+  }
+  .mobile-brand app-brand {
+    font-size: 22px;
   }
   .demo-banner .demo-badge {
-    font-size: 12px;
-    padding: 5px 9px;
+    padding: 2px 8px;
+    font-size: 11px;
   }
-  .profile-button,
+  .dashboard-date {
+    display: none;
+  }
+  .mobile-date {
+    display: inline;
+    color: #526079;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .profile {
+    gap: 8px;
+    margin-left: auto;
+    padding-left: 0;
+    border-left: 0;
+  }
   .icon-button {
-    min-height: 40px;
-    box-shadow: none;
-    border-color: #e7ebf1;
-    background: #fff;
+    width: 42px;
+    height: 42px;
   }
-  .avatar { width: 32px; height: 32px; }
+  .profile-button {
+    gap: 4px;
+    min-height: 42px;
+    padding: 2px;
+    border-radius: 999px;
+  }
+  .profile-text,
+  .profile-button .chevron {
+    display: none;
+  }
+  .avatar {
+    flex-basis: 36px;
+    width: 36px;
+    height: 36px;
+  }
+  .dashboard-search {
+    order: 3;
+    flex: 1 1 100%;
+    max-width: none;
+    min-height: 44px;
+  }
+  .dashboard-search kbd {
+    display: none;
+  }
 }
-@media (max-width: 760px) {
-  :host { --shell-header-height: 68px; }
-  .topbar { padding: 4px 18px; gap: 6px; }
-  .profile { gap: 8px; }
-}
-
-// Opt-in dashboard header. Sidebar and mobile navigation are unchanged.
-.topbar--dashboard {
-  .dashboard-search { display: flex; align-items: center; gap: 10px; flex: 1; max-width: 550px; padding: 0 12px; min-height: 44px; border: 1px solid #e1e7f0; border-radius: 10px; background: #fff; }
-  .dashboard-search app-icon { width: 20px; height: 20px; color: #405574; }
-  .dashboard-search input { width: 100%; min-width: 0; min-height: 42px; border: 0; background: none; font: inherit; font-size: 13px; color: #142143; }
-  .dashboard-search input::placeholder { color: #566780; }
-  .dashboard-search kbd { white-space: nowrap; font: inherit; font-size: 12px; color: #566780; background: #f2f5fa; padding: 3px 5px; border-radius: 4px; }
-  .dashboard-date { white-space: nowrap; font-size: 13px; margin-left: auto; color: #405574; }
-}
-@media (min-width: 761px) {
-  .topbar.topbar--dashboard { height: auto; min-height: 74px; margin: 0; border: 0; border-radius: 0; padding: 12px 28px; gap: 18px; box-shadow: none; background: #f8fafdf5; flex-wrap: wrap; }
-  .topbar--dashboard .brand-group { order: 3; width: 100%; }
-  .topbar--dashboard .demo-badge { background: none; border: 0; padding: 0; min-height: 0; font-size: 12px; }
-  .topbar--dashboard .profile-name { display: none; }
-}
-@media (min-width: 761px) and (max-width: 1150px) {
-  .topbar--dashboard .dashboard-date { display: none; }
-}
-@media (max-width: 760px) {
-  .topbar.topbar--dashboard { height: auto; min-height: 68px; flex-wrap: wrap; padding-bottom: 10px; }
-  .topbar--dashboard .dashboard-search { order: 3; flex-basis: 100%; max-width: none; }
-  .topbar--dashboard .dashboard-date, .topbar--dashboard .dashboard-search kbd { display: none; }
-}
-
-@media (min-width: 761px) {
-  .topbar--dashboard:not(.topbar--demo) .brand-group { display: none; }
-}
-
-.search-submit { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; color: #405574; }
-.topbar--dashboard .dashboard-search { padding-left: 2px; margin: 0; }

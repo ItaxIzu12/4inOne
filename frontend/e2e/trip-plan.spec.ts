@@ -59,6 +59,8 @@ async function mockApi(page: Page) {
       return r.fulfill({ json: { detail } });
     }
     if (url.pathname.endsWith('/suggestions/')) return r.fulfill({ json: suggestions });
+    if (url.pathname.endsWith('/erinnerungen/')) return r.fulfill({ json: { window_start: '2030-11-03', window_end: '2030-11-17', items: [] } });
+    if (url.pathname.endsWith('/sparziel/')) return r.fulfill({ json: [] });
     if (url.pathname.endsWith('/options/')) return r.fulfill({ json: [] });
     return r.fulfill({ json: connections });
   });
@@ -66,10 +68,11 @@ async function mockApi(page: Page) {
 
 test('planning a trip: explained suggestions, a decision, and the result stays connected', async ({ page }) => {
   await mockApi(page);
-  await page.goto('/reisen?trip=4');
+  // Die Vorschläge stehen im Reiter „Erinnerungen“ unter „Vorschläge & Hinweise“.
+  await page.goto('/reisen?trip=4&tab=erinnerungen');
 
   const plan = page.locator('app-trip-plan');
-  await expect(plan.getByRole('heading', { name: 'Nächste Schritte' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Vorschläge & Hinweise' })).toBeVisible();
   await expect(plan).toContainText('300,00 € pro Monat');
   await expect(plan).toContainText('am 13.11.2030 bist du in Lissabon');
   await page.screenshot({ path: 'test-results/trip-plan-before.png', fullPage: true });
@@ -90,7 +93,7 @@ test('planning a trip: explained suggestions, a decision, and the result stays c
 test('trip plan works at phone width without horizontal scroll', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await mockApi(page);
-  await page.goto('/reisen?trip=4');
+  await page.goto('/reisen?trip=4&tab=erinnerungen');
   await expect(page.locator('app-trip-plan')).toContainText('Für „Lissabon“ sparen');
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);

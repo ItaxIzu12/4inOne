@@ -48,9 +48,6 @@
   color: var(--text);
   font: inherit;
 }
-.add-mobile {
-  display: none;
-}
 .group__head {
   display: flex;
   align-items: center;
@@ -296,24 +293,6 @@
   }
   .search {
     flex-basis: 100%;
-  }
-  .add-mobile {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-height: 46px;
-    border: 0;
-    border-radius: 12px;
-    background: var(--accent);
-    color: #fff;
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .add-mobile app-icon {
-    width: 18px;
-    height: 18px;
   }
   .task-row .row-btn {
     flex-wrap: wrap;

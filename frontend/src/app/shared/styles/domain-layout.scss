@@ -63,27 +63,10 @@
       width: 28px;
       height: 28px;
     }
-    .domain-heading .head-actions {
-      display: contents;
-    }
-    .domain-heading button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 44px;
-      width: 44px;
-      height: 44px;
-      min-height: 44px;
-      padding: 0;
-      margin-left: auto;
-      border-radius: 13px;
-    }
-    .domain-heading button span {
+    // Die Hauptaktion steht auf dem Handy als fester Knopf unten (shared/mobile-action), nicht im Kopf.
+    .domain-heading .head-actions,
+    .domain-heading > button {
       display: none;
-    }
-    .domain-heading button app-icon {
-      width: 20px;
-      height: 20px;
     }
     .domain-tabs {
       display: flex;
@@ -104,6 +87,14 @@
       border-radius: 12px;
       font-size: 14px;
       white-space: nowrap;
+    }
+  }
+  // Sehr schmale Handys: Reiter behalten ihre Textbreite und lassen sich wischen, statt sich zu überlappen.
+  @media (max-width: 360px) {
+    .domain-sticky .domain-tabs button {
+      flex: 0 0 auto;
+      min-width: max-content;
+      padding: 0 8px;
     }
   }
   .domain-page .caption,

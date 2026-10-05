@@ -12,7 +12,9 @@ for (const width of [390, 820, 1536]) {
     await page.goto('/demo');
     await expect(page.getByRole('heading', { name: 'Aktuelle Aufgaben' })).toBeVisible();
     await expect(page.locator('.domain')).toHaveCount(4);
-    await expect(page.getByText('Demo-Modus · Beispieldaten', { exact: true })).toBeVisible();
+    // am Handy kurz „Demo“ (neben dem Datum), sonst ausgeschrieben
+    if (width < 761) await expect(page.locator('.demo-badge__short')).toBeVisible();
+    else await expect(page.getByText('Demo-Modus · Beispieldaten', { exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
     await page.screenshot({ path: `test-results/new-demo-${width}.png`, fullPage: true });

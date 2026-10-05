@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from core.models import Contact
@@ -83,6 +84,7 @@ class TripSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'destination', 'start_date', 'end_date', 'notes', 'status',
             'travel_type', 'transport_type', 'baggage_type', 'budget_amount', 'currency',
+            'accommodation', 'accommodation_area', 'transport_note',
             'created_at', 'updated_at',
             'packing_total', 'packing_packed', 'tasks_open', 'tasks_total', 'events_count', 'budget_spent',
             'participants', 'my_role',
@@ -153,15 +155,36 @@ class TripScopedSerializer(serializers.ModelSerializer):
 class PackingItemSerializer(TripScopedSerializer):
     class Meta:
         model = PackingItem
-        fields = ['id', 'trip', 'title', 'is_packed', 'quantity', 'category', 'note', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        fields = ['id', 'trip', 'title', 'is_packed', 'quantity', 'category', 'note', 'packed_at', 'created_at']
+        read_only_fields = ['id', 'packed_at', 'created_at']
+
+    def _stamp(self, validated_data, before: bool):
+        # „Erledigt am“ folgt allein dem Häkchen: abhaken setzt den Zeitpunkt, zurücknehmen löscht ihn.
+        if 'is_packed' in validated_data and validated_data['is_packed'] != before:
+            validated_data['packed_at'] = timezone.now() if validated_data['is_packed'] else None
+
+    def create(self, validated_data):
+        self._stamp(validated_data, False)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        self._stamp(validated_data, instance.is_packed)
+        return super().update(instance, validated_data)
 
 
 class TripTaskSerializer(TripScopedSerializer):
     class Meta:
         model = TripTask
-        fields = ['id', 'trip', 'title', 'due_date', 'status', 'note', 'created_at']
+        fields = ['id', 'trip', 'title', 'due_date', 'due_time', 'status', 'note', 'created_at']
         read_only_fields = ['id', 'created_at']
+
+    def validate(self, attrs):
+        due_date = attrs.get('due_date', getattr(self.instance, 'due_date', None))
+        if attrs.get('due_time') and not due_date:
+            raise serializers.ValidationError({'due_time': 'Eine Uhrzeit braucht ein Datum.'})
+        if 'due_date' in attrs and attrs['due_date'] is None:
+            attrs['due_time'] = None
+        return attrs
 
 
 class TripEventSerializer(TripScopedSerializer):
@@ -181,7 +204,7 @@ class TripEventSerializer(TripScopedSerializer):
 class TripExpenseSerializer(TripScopedSerializer):
     class Meta:
         model = TripExpense
-        fields = ['id', 'trip', 'title', 'amount', 'date', 'created_at']
+        fields = ['id', 'trip', 'title', 'amount', 'date', 'category', 'created_at']
         read_only_fields = ['id', 'created_at']
 
     def validate_amount(self, value):

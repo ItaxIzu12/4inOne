@@ -1,18 +1,21 @@
 @use '../../shared/styles/domain-layout' as domain;
-// Gleiche Bausteine wie organisation.scss (Karten, Tabs, Zeilen), nur mit dem blauen "travel"-Akzent, der
-// bereits in app-shell.scss/dashboard.scss für Reisen verwendet wird (#2889ef-Familie), statt Organisations Lila.
+// Reisen: Seitenhülle (Kopf, Reiter), Übersicht und Dialoge. Die Reiter Reisen, Packlisten, Budget und
+// Erinnerungen haben eigene Stile (trip-*.scss). Blau ist die Bereichsfarbe.
 :host {
   display: block;
   color: #16233a;
+  --accent: #2563eb;
+  --accent-hover: #1d4fd8;
+  --accent-soft: #eef4ff;
+  --text-muted: #5b6b83;
 }
 .reisen-page {
-  max-width: 1100px;
+  max-width: 1440px;
   margin: auto;
-  padding: 34px;
+  padding: 34px 34px 52px;
 }
 .page-heading,
-.heading-copy,
-.card-heading {
+.heading-copy {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -27,16 +30,17 @@
   width: 60px;
   height: 60px;
   border-radius: 18px;
-  background: #f1faff;
-  color: #2889ef;
-  box-shadow: none;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 .heading-icon app-icon {
   width: 32px;
   height: 32px;
 }
 h1 {
+  margin: 0;
   font-size: 32px;
+  line-height: 1.2;
   letter-spacing: -1px;
 }
 h2 {
@@ -48,8 +52,12 @@ h3 {
 }
 p,
 small {
-  color: #5b6b83;
+  color: var(--text-muted);
   line-height: 1.6;
+}
+.subtitle {
+  margin: 5px 0 0;
+  font-size: 15px;
 }
 button,
 input,
@@ -68,7 +76,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid #2889ef;
+  outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
 .primary,
@@ -79,124 +87,94 @@ textarea:focus-visible {
   justify-content: center;
   gap: 8px;
   min-height: 44px;
-  border-radius: 13px;
   padding: 10px 16px;
+  border-radius: 12px;
   font-size: 14px;
 }
 .primary,
 .btn-primary {
-  color: white;
-  background: #246db8;
-  border: 1px solid #1c6bc9;
-  box-shadow: none;
+  border: 1px solid #1d4fd8;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+.primary:hover,
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+.primary app-icon {
+  width: 20px;
+  height: 20px;
 }
 .secondary {
-  background: #edf5fe;
-  border: 1px solid #d7e8fb;
+  border: 1px solid #d7e4fb;
+  background: #f1f6ff;
   color: #1c5ca8;
 }
+// Reiter: ruhige Leiste mit Symbol, aktiv blau unterstrichen (wie Organisation und Finanzen).
 .tabs {
   display: flex;
-  flex-wrap: wrap;
-  margin: 28px 0 22px;
-  border: 1px solid #e4eefb;
-  background: #f8fbfe;
-  border-radius: 16px;
-  padding: 5px;
-  gap: 5px;
+  gap: 6px;
+  margin: 22px 0 0;
+  border-bottom: 1px solid #e6eaf2;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 .tabs button {
-  flex: 1;
-  min-width: 90px;
-  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  margin-bottom: -1px;
+  padding: 0 14px;
   border: 0;
-  background: transparent;
-  border-radius: 12px;
+  border-bottom: 2.5px solid transparent;
+  background: none;
   color: #4c5c72;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.tabs button app-icon {
+  width: 18px;
+  height: 18px;
+}
+.tabs button:hover {
+  color: var(--accent-hover);
 }
 .tabs button[aria-current] {
-  background: #e6f2ff;
-  color: #1a5fac;
+  border-bottom-color: var(--accent);
+  color: #1c4fae;
   font-weight: 650;
-  box-shadow: none;
 }
-.card {
-  padding: 22px;
-  border: 1px solid #e8f0fa;
-  border-radius: 22px;
-  background: #ffffffec;
-  box-shadow: none;
-  margin-bottom: 22px;
-}
-.card:last-child {
-  margin-bottom: 0;
-}
-.highlight {
-  background: #f1faff;
-  border-color: #d9ecff;
-}
-.highlight-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.budget-plan {
+  display: grid;
   gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.highlight-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #2277db;
-  margin-bottom: 6px;
-}
-.highlight-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 16px;
-}
-.highlight-stats span {
-  display: inline-flex;
+.budget-plan li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 140px;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #2a3a52;
+  gap: 10px;
 }
-.highlight-stats app-icon {
-  width: 16px;
-  height: 16px;
-  color: #2889ef;
+.budget-plan app-icon {
+  width: 20px;
+  height: 20px;
+  color: #39465c;
 }
-.pill {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  // #2277db auf #eaf4ff (die ursprünglichen Werte) erreichen nur 3.99:1 Kontrast — hier dieselbe, bereits
-  // geprüfte dunklere Kombination wie --accent, damit jede .pill (auch ohne --accent) WCAG AA erfüllt.
-  background: #dcefff;
-  color: #1c5ca8;
-  font-size: 12px;
-  font-weight: 700;
+.budget-plan input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d9dee6;
+  border-radius: 11px;
+  text-align: right;
 }
-.pill--accent {
-  background: #dcefff;
-  color: #1c5ca8;
-}
-.pill--link {
-  border: 0;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.pill--link app-icon {
-  width: 13px;
-  height: 13px;
-}
-.pill--link:hover {
-  background: #dcefff;
+.budget-plan__sum {
+  margin: 4px 0 0;
+  font-size: 14px;
 }
 .btn-link {
   border: 0;
@@ -210,207 +188,6 @@ textarea:focus-visible {
 .btn-link:hover {
   text-decoration: underline;
 }
-
-// ---------- Reise-Detailübersicht (Übersicht-Tab einer geöffneten Reise) ----------
-.trip-detail {
-  padding: 0;
-  overflow: hidden;
-}
-.trip-detail__cover {
-  display: grid;
-  place-items: center;
-  height: 72px;
-  background: #eaf4ff;
-  color: #2889ef;
-}
-.trip-detail__cover app-icon {
-  width: 30px;
-  height: 30px;
-}
-.trip-detail__header {
-  padding: 18px 22px 0;
-}
-.trip-detail__heading-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-.trip-detail__dates {
-  margin: 4px 0 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #2a3a52;
-}
-.trip-detail__pills {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-}
-.trip-detail__pills .pill {
-  margin-top: 0;
-}
-.readiness {
-  margin: 18px 22px 0;
-  padding: 16px;
-  border: 1px solid #e8f0fa;
-  border-radius: 16px;
-  background: #f8fbfe;
-}
-.readiness__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-.readiness__label {
-  font-size: 14px;
-  font-weight: 700;
-  color: #16233a;
-}
-.readiness__percent {
-  font-size: 22px;
-  font-weight: 700;
-  color: #1c5ca8;
-}
-.readiness .progress {
-  margin-top: 8px;
-}
-.readiness__list {
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.readiness__item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: #5b6b83;
-}
-.readiness__dot {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid #c9def6;
-  background: #fff;
-}
-.readiness__item.is-partial .readiness__dot {
-  border-color: #2889ef;
-  background: #2889ef;
-  box-shadow: none;
-}
-.readiness__item.is-done .readiness__dot {
-  border-color: #2fa968;
-  background: #2fa968;
-}
-.readiness__item.is-done .readiness__dot::after {
-  content: '';
-  display: block;
-}
-.readiness__item.is-done {
-  color: #22724c;
-  font-weight: 600;
-}
-.trip-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  padding: 18px 22px 22px;
-}
-.trip-cards__item {
-  padding: 14px;
-  border: 1px solid #e8f0fa;
-  border-radius: 14px;
-  background: #fff;
-}
-.trip-cards__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.trip-cards__head h3 {
-  margin: 0;
-}
-.trip-cards__stat {
-  margin: 0;
-  font-size: 14px;
-  color: #16233a;
-}
-.trip-cards .progress--small {
-  margin-top: 8px;
-  height: 6px;
-}
-.trip-cards .list.compact .row {
-  min-height: auto;
-  padding: 6px 0;
-}
-.trip-cards .list.compact .row__title {
-  font-size: 14px;
-}
-@media (max-width: 760px) {
-  .trip-detail__header {
-    padding: 16px 16px 0;
-  }
-  .readiness {
-    margin: 16px 16px 0;
-  }
-  .trip-cards {
-    grid-template-columns: 1fr;
-    padding: 16px;
-  }
-}
-.trip-row-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-top: 1px solid #eef4fb;
-}
-.trip-row-wrap:first-child {
-  border-top: 0;
-}
-.trip-row {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  min-width: 0;
-  padding: 14px 4px;
-  border: 0;
-  border-top: 1px solid #eef4fb;
-  background: transparent;
-  text-align: left;
-  color: #16233a;
-  border-radius: 12px;
-}
-.trip-row-wrap > .trip-row {
-  border-top: 0;
-}
-.card > .trip-row:first-child {
-  border-top: 0;
-}
-.trip-row.is-selected {
-  background: #f1faff;
-}
-.trip-icon {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 44px;
-  border-radius: 14px;
-  color: #2889ef;
-  background: #eaf4ff;
-}
 .row__main {
   flex: 1;
   min-width: 0;
@@ -420,90 +197,11 @@ textarea:focus-visible {
   font-size: 15px;
   overflow-wrap: anywhere;
 }
-.row__title--done {
-  color: #53627a;
-  text-decoration: line-through;
-}
 .row__meta {
   display: block;
   margin-top: 2px;
   font-size: 13px;
   color: #5b6b83;
-}
-.chevron {
-  width: 15px;
-  flex-shrink: 0;
-  color: #94a3b8;
-  transition: transform 0.15s;
-}
-.chevron--open {
-  transform: rotate(90deg);
-}
-.trip-item {
-  border-top: 1px solid #eef4fb;
-}
-.card > .trip-item:first-child {
-  border-top: 0;
-}
-.trip-item > .trip-row {
-  border-top: 0;
-}
-.trip-quick-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 4px 14px;
-}
-.trip-quick-links button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid #d7e8fb;
-  border-radius: 999px;
-  background: #f4faff;
-  color: #1c5ca8;
-  font-size: 13px;
-}
-.trip-quick-links button:hover {
-  background: #eaf4ff;
-}
-.trip-quick-links app-icon {
-  width: 15px;
-  height: 15px;
-}
-.edit-btn {
-  flex-shrink: 0;
-  min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid #d7e8fb;
-  border-radius: 12px;
-  background: #f4faff;
-  color: #1c5ca8;
-  font-size: 14px;
-  font-weight: 600;
-}
-.edit-btn:hover {
-  background: #eaf4ff;
-}
-.edit-icon-btn {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border: 1px solid #1c6bc9;
-  border-radius: 12px;
-  background: #246db8;
-  color: #fff;
-}
-.edit-icon-btn:hover {
-  background: #205fa3;
-}
-.edit-icon-btn app-icon {
-  width: 18px;
-  height: 18px;
 }
 .empty {
   text-align: center;
@@ -522,21 +220,6 @@ textarea:focus-visible {
 .state {
   text-align: center;
   padding: 40px 16px;
-}
-.task-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 0 0 18px;
-}
-.filter {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin: 0;
-}
-.filter app-select {
-  width: min(280px, 100%);
 }
 .icon-btn {
   display: grid;
@@ -573,53 +256,6 @@ textarea:focus-visible {
 .list > .row:first-child {
   border-top: 0;
 }
-.completion {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  border: 1px solid #c9def6;
-  border-radius: 14px;
-  background: #f4faff;
-  color: #2277db;
-}
-.completion.done {
-  background: #e6f7ee;
-  color: #22724c;
-  border-color: #a6d9bd;
-}
-.group + .group {
-  margin-top: 8px;
-}
-.group h3 {
-  margin: 20px 0 4px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #5b6b83;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.group:first-child h3 {
-  margin-top: 4px;
-}
-.row__link {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  min-width: 0;
-  min-height: 44px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-}
-.amount {
-  font-size: 14px;
-  white-space: nowrap;
-}
 .add-form {
   display: flex;
   flex-wrap: wrap;
@@ -649,73 +285,6 @@ textarea:focus-visible {
   color: #b3261e;
   font-size: 13px;
   font-weight: 700;
-}
-.budget-summary {
-  margin-top: 8px;
-}
-.budget-numbers {
-  margin: 0 0 10px;
-  font-size: 20px;
-}
-.progress {
-  height: 10px;
-  border-radius: 999px;
-  background: #eaf1fa;
-  overflow: hidden;
-}
-.progress__bar {
-  height: 100%;
-  background: #246db8;
-  border-radius: 999px;
-}
-.budget-section-heading {
-  margin: 24px 0 2px;
-  font-size: 15px;
-}
-.budget-category-list {
-  margin: 12px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.budget-category-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 48px;
-  padding: 4px 0;
-  border-top: 1px solid #eef4fb;
-}
-.budget-category-list > .budget-category-row:first-child {
-  border-top: 0;
-}
-.budget-category-label {
-  font-size: 15px;
-}
-.budget-category-input {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.budget-category-input input {
-  width: 90px;
-  min-height: 40px;
-  padding: 0 10px;
-  border: 1.5px solid #d7e8fb;
-  border-radius: 10px;
-  background: #fff;
-  color: #16233a;
-  font-size: 15px;
-  text-align: right;
-}
-.budget-category-currency {
-  min-width: 34px;
-  font-size: 13px;
-  color: #53627a;
-}
-.budget-category-sum {
-  margin-top: 10px;
 }
 .field-row {
   display: flex;
@@ -816,39 +385,11 @@ textarea:focus-visible {
   .save-spinner {
     animation: reisen-spin 0.7s linear infinite;
   }
+
 }
 @keyframes reisen-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-@media (max-width: 760px) {
-  .reisen-page {
-    padding: 14px 18px 26px;
-  }
-  .heading-icon {
-    width: 42px;
-    height: 44px;
-    border-radius: 13px;
-  }
-  .heading-icon app-icon {
-    width: 28px;
-    height: 28px;
-  }
-  h1 {
-    font-size: 24px;
-  }
-  .page-heading {
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .card {
-    padding: 18px;
-    border-radius: 19px;
-  }
-  .field-row {
-    flex-direction: column;
   }
 }
 .overlap-warning {
@@ -873,42 +414,61 @@ textarea:focus-visible {
   color: #6e5527;
 }
 
-// Gleiche kompakte, einzeilige Navigation wie im Haushalt.
-@media (max-width: 959px) {
-  .tabs {
-    flex-wrap: nowrap;
-    margin: 22px 0 16px;
-    padding: 4px;
-    gap: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
+@media (max-width: 1100px) {
+  .reisen-page {
+    padding: 24px 20px 40px;
   }
-  .tabs::-webkit-scrollbar {
+  .tabs {
+    gap: 0;
+  }
+  .tabs button {
+    flex: 0 0 auto;
+    padding: 0 10px;
+  }
+
+}
+@include domain.layout;
+// Kopf ohne Karte wie in den anderen Bereichen.
+.domain-sticky {
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+  margin-bottom: 16px;
+}
+@media (max-width: 760px) {
+  .domain-sticky {
+    padding: 10px 10px 0;
+    margin-bottom: 12px;
+  }
+  .subtitle {
     display: none;
+  }
+  .heading-icon {
+    width: 44px;
+    height: 44px;
+  }
+  .field-row {
+    flex-direction: column;
+  }
+  // Fünf Reiter auf 390 px ohne Scrollen, Symbole nur am Rechner.
+  .tabs {
+    gap: 0;
+    border: 1px solid #e3eaf7;
+    background: #f8fbff;
   }
   .tabs button {
     flex: 1 1 auto;
-    min-width: 0;
-    padding: 0 4px;
-    font-size: 13px;
-    white-space: nowrap;
+    justify-content: center;
+    margin-bottom: 0;
+    padding: 0 3px;
+    border-bottom: 0;
+    font-size: 12.5px;
   }
-  .page-heading > .primary {
-    margin-left: auto;
-    white-space: nowrap;
-  }
-}
-
-@media (max-width: 760px) {
-  .page-heading > .primary {
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    flex-shrink: 0;
-  }
-  .page-heading > .primary span {
+  .tabs button app-icon {
     display: none;
   }
-}
+  .tabs button[aria-current] {
+    background: #e6efff;
+  }
 
-@include domain.layout;
+}

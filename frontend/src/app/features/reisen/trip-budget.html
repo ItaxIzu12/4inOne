@@ -1,0 +1,142 @@
+@let t = trip();
+<div class="top">
+  <app-trip-switcher class="top__trip" [trips]="trips()" [trip]="t" (changed)="switchTrip.emit($event)" />
+</div>
+
+<div class="kpis">
+  <div class="kpi">
+    <span class="kpi__icon kpi__icon--gold" aria-hidden="true"><app-icon name="coins" /></span>
+    <div class="kpi__body">
+      <span class="kpi__label">Gesamtbudget</span>
+      <b class="kpi__value">{{ total() ? money(total()) : '—' }}</b>
+      <small>{{ t.budget_amount ? 'Geplantes Budget' : total() ? 'Summe der Planung' : 'Noch nicht geplant' }}</small>
+    </div>
+  </div>
+  <div class="kpi">
+    <span class="kpi__icon" aria-hidden="true"><app-icon name="pie" /></span>
+    <div class="kpi__body">
+      <span class="kpi__label">Bereits ausgegeben</span>
+      <b class="kpi__value">{{ money(spent()) }}</b>
+      @if (total()) {
+        <small>{{ spentPct() }} % von {{ money(total()) }}</small>
+        <span class="bar" [class.bar--over]="spent() > total()" aria-hidden="true"><span [style.width.%]="barWidth(spentPct())"></span></span>
+      }
+    </div>
+  </div>
+  <div class="kpi">
+    <span class="kpi__icon kpi__icon--green" aria-hidden="true"><app-icon name="coins" /></span>
+    <div class="kpi__body">
+      <span class="kpi__label">{{ left() < 0 ? 'Über dem Budget' : 'Noch verfügbar' }}</span>
+      <b class="kpi__value" [class.late]="left() < 0">{{ total() ? money(left() < 0 ? -left() : left()) : '—' }}</b>
+      @if (total()) {
+        <small>{{ left() < 0 ? 'Budget überschritten' : 100 - barWidth(spentPct()) + ' % verbleibend' }}</small>
+        <span class="bar bar--green" aria-hidden="true"><span [style.width.%]="100 - barWidth(spentPct())"></span></span>
+      }
+    </div>
+  </div>
+  <div class="kpi">
+    <span class="kpi__icon kpi__icon--violet" aria-hidden="true"><app-icon name="piggy" /></span>
+    <div class="kpi__body">
+      <span class="kpi__label">Sparbetrag</span>
+      @if (savings().length) {
+        <b class="kpi__value">{{ money(saved()) }}</b>
+        <small>aus deinem Sparziel „{{ savings()[0].title }}“</small>
+      } @else {
+        <b class="kpi__value">—</b>
+        <button type="button" class="link" (click)="createGoal()">Sparziel anlegen</button>
+      }
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="main">
+    <section class="card" aria-labelledby="tb-cats">
+      <div class="card-head">
+        <h2 id="tb-cats" class="card-title"><app-icon name="bars" aria-hidden="true" />Ausgaben nach Kategorien</h2>
+        @if (canEdit()) {
+          <button type="button" class="link" (click)="editPlan.emit()"><app-icon name="edit" />Planung bearbeiten</button>
+        }
+      </div>
+      @if (rows().length) {
+        <div class="cats" role="table" aria-label="Geplant, ausgegeben und verbleibend je Kategorie">
+          <div class="cats__head" role="row">
+            <span role="columnheader">Kategorie</span><span role="columnheader">Geplant</span><span role="columnheader">Ausgegeben</span><span role="columnheader">Verbleibend</span><span role="columnheader">Fortschritt</span>
+          </div>
+          @for (r of rows(); track r.category) {
+            <div class="cats__row" role="row">
+              <span class="cats__name" role="cell"><app-icon [name]="r.icon" aria-hidden="true" /><b>{{ r.label }}</b>
+                <small class="mobile-only">{{ money(r.spent) }} von {{ money(r.planned) }}</small></span>
+              <span class="num desktop-only" role="cell">{{ r.planned ? money(r.planned) : '—' }}</span>
+              <span class="num desktop-only" role="cell">{{ money(r.spent) }}</span>
+              <span class="num desktop-only" role="cell" [class.late]="r.remaining < 0">{{ r.planned ? money(r.remaining) : '—' }}</span>
+              <span class="cats__progress" role="cell">
+                <span class="bar" [class.bar--green]="r.pct < 50" [class.bar--over]="r.over" aria-hidden="true"><span [style.width.%]="barWidth(r.pct)"></span></span>
+                <span class="num">{{ r.pct }} %</span>
+              </span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty">
+          <app-icon name="coins" />
+          <h3>Noch keine Planung</h3>
+          <p class="muted">Lege fest, wie viel du für Unterkunft, Transport, Essen und Aktivitäten einplanst.</p>
+          @if (canEdit()) {
+            <button type="button" class="soft" (click)="editPlan.emit()"><app-icon name="plus" />Budget planen</button>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="card" aria-labelledby="tb-recent">
+      <div class="card-head">
+        <h2 id="tb-recent" class="card-title"><app-icon name="clock" aria-hidden="true" />Letzte Ausgaben</h2>
+        @if (hasMore()) {
+          <button type="button" class="link" (click)="showAll.set(!showAll())">
+            {{ showAll() ? 'Weniger anzeigen' : 'Alle Ausgaben anzeigen' }}<app-icon [name]="showAll() ? 'chevron-up' : 'arrow'" />
+          </button>
+        }
+      </div>
+      @if (recent().length) {
+        <div class="exp__head" aria-hidden="true"><span>Datum</span><span>Beschreibung</span><span>Kategorie</span><span>Betrag</span></div>
+        <ul class="exp">
+          @for (e of recent(); track e.id) {
+            @let m = meta[e.category || 'SONSTIGES'];
+            <li>
+              <button type="button" class="exp__row" [disabled]="!canEdit()" [attr.aria-label]="e.title + ', ' + m.label + ', ' + money(e.amount, false) + ', ' + shortDate(e.date) + (canEdit() ? ' – bearbeiten' : '')" (click)="editExpense.emit(e)">
+                <span class="exp__date">{{ shortDate(e.date) }}</span>
+                <app-icon class="exp__icon mobile-only" [name]="m.icon" aria-hidden="true" />
+                <span class="exp__title"><b>{{ e.title }}</b><small class="mobile-only">{{ shortDate(e.date) }} · {{ m.label }}</small></span>
+                <span class="exp__cat"><app-icon [name]="m.icon" aria-hidden="true" />{{ m.label }}</span>
+                <span class="exp__amount num">−{{ money(e.amount, false) }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="muted">Noch keine Ausgaben erfasst.</p>
+      }
+    </section>
+  </div>
+
+  <aside class="card finance" aria-labelledby="tb-finance">
+    <h2 id="tb-finance" class="card-title"><app-icon name="link" aria-hidden="true" />Reise und Finanzen</h2>
+    <p class="muted">Reisekosten bleiben bei dieser Reise. Dein Monatsbudget in Finanzen ändert sich dadurch nicht – so zählt nichts doppelt.</p>
+    <ul class="features">
+      <li>
+        <span class="tile" aria-hidden="true"><app-icon name="piggy" /></span>
+        <span><b>Sparziel für die Reise</b><small>Verknüpfe ein Sparziel aus Finanzen mit der Reise – der Sparbetrag steht dann hier.</small></span>
+      </li>
+      <li>
+        <span class="tile" aria-hidden="true"><app-icon name="bars" /></span>
+        <span><b>Geplant und ausgegeben</b><small>Je Kategorie siehst du, wie viel noch übrig ist.</small></span>
+      </li>
+      <li>
+        <span class="tile" aria-hidden="true"><app-icon name="edit" /></span>
+        <span><b>Volle Kontrolle</b><small>Du kannst Ausgaben jederzeit bearbeiten, einer anderen Kategorie zuordnen oder löschen.</small></span>
+      </li>
+    </ul>
+    <button type="button" class="soft finance__go" (click)="openFinance()">Zu den Finanzen<app-icon name="external" /></button>
+  </aside>
+</div>

@@ -233,10 +233,17 @@ body:has(app-einkauf-tab .checkout-bar) app-back-to-top .back-to-top {
   bottom: 96px;
 }
 @media (max-width: 760px) {
-  body:has(app-einkauf-tab .checkout-bar) app-back-to-top .back-to-top {
-    bottom: calc(176px + env(safe-area-inset-bottom, 0px));
+  /* über dem festen Hauptknopf unten (shared/mobile-action) */
+  body:has(.mobile-action) app-back-to-top .back-to-top {
+    bottom: calc(142px + env(safe-area-inset-bottom, 0px));
   }
-  body:has(.detail.is-open) app-back-to-top .back-to-top {
+  body:has(app-einkauf-tab .checkout-bar) app-back-to-top .back-to-top {
+    bottom: calc(214px + env(safe-area-inset-bottom, 0px));
+  }
+  /* offene Dialoge und Blätter von unten verdecken nichts mit festen Knöpfen */
+  body:has(.detail.is-open) app-back-to-top .back-to-top,
+  body:has(.detail.is-open) app-mobile-action,
+  body:has(.modal-panel) app-mobile-action {
     display: none;
   }
 }

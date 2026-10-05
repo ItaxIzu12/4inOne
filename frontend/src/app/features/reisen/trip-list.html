@@ -1,0 +1,203 @@
+<div class="toolbar">
+  <span class="sr-only" id="tl-status">Nach Status filtern</span>
+  <span class="sr-only" id="tl-period">Nach Zeitraum filtern</span>
+  <span class="sr-only" id="tl-person">Nach Teilnehmer filtern</span>
+  <span class="sr-only" id="tl-sort">Sortieren nach</span>
+  <div class="filter filter--status">
+    <app-select ariaLabelledby="tl-status" [options]="statusOptions" [value]="status()" (valueChange)="status.set($event)" />
+  </div>
+  <button
+    type="button"
+    class="soft filter-toggle"
+    [attr.aria-expanded]="filtersOpen()"
+    [attr.aria-label]="filtersOpen() ? 'Weitere Filter ausblenden' : 'Weitere Filter anzeigen'"
+    (click)="filtersOpen.set(!filtersOpen())"
+  >
+    <app-icon name="filter" />
+  </button>
+  <div class="filter filter--more" [class.is-open]="filtersOpen()">
+    <app-select ariaLabelledby="tl-period" [options]="periodOptions" [value]="period()" (valueChange)="period.set($any($event))" />
+  </div>
+  <div class="filter filter--more" [class.is-open]="filtersOpen()">
+    <app-select ariaLabelledby="tl-person" [options]="personOptions()" [value]="person()" (valueChange)="person.set($event)" />
+  </div>
+</div>
+
+<div class="layout">
+  <section class="card list-card" aria-labelledby="tl-count">
+    <div class="list-head">
+      <h2 id="tl-count">{{ shown().length === 1 ? '1 Reise' : shown().length + ' Reisen' }}</h2>
+      <div class="sort">
+        <small aria-hidden="true">Sortieren nach</small>
+        <app-select ariaLabelledby="tl-sort" [options]="sortOptions" [value]="sort()" (valueChange)="sort.set($any($event))" />
+      </div>
+    </div>
+    <ul class="trips">
+      @for (t of shown(); track t.id) {
+        @let pct = readiness(t);
+        <li>
+          <button
+            type="button"
+            class="trip"
+            [class.is-selected]="current()?.id === t.id"
+            [attr.aria-current]="current()?.id === t.id ? 'true' : null"
+            [attr.aria-label]="t.title + ', ' + range(t) + ', ' + labels[t.status] + ', ' + pct + ' % vorbereitet'"
+            (click)="open(t)"
+          >
+            <span class="tile" aria-hidden="true"><app-icon [name]="icon(t)" /></span>
+            <span class="trip__text">
+              <b>{{ t.title }}</b>
+              <small>{{ range(t) }}</small>
+            </span>
+            <span class="trip__state">
+              <span class="status" [class]="'status status--' + tone[t.status]">{{ labels[t.status] }}</span>
+              <span class="trip__progress">
+                <span class="bar" aria-hidden="true"><span [style.width.%]="pct"></span></span>
+                <span class="num">{{ pct }} %</span>
+              </span>
+            </span>
+            <span class="trip__people"><app-icon name="people" aria-hidden="true" />{{ peopleLabel(t.participants.length || 1) }}</span>
+            <app-icon class="chev" name="arrow" aria-hidden="true" />
+          </button>
+        </li>
+      } @empty {
+        <li class="empty">
+          <app-icon name="travel" />
+          @if (hasFilters()) {
+            <h3>Keine Reise passt zu diesen Filtern</h3>
+            <button type="button" class="link" (click)="resetFilters()">Filter zurücksetzen</button>
+          } @else {
+            <h3>Noch keine Reise geplant</h3>
+            <p class="muted">Wohin soll es als Nächstes gehen?</p>
+            <button type="button" class="primary" (click)="newTrip.emit()"><app-icon name="plus" />Erste Reise planen</button>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+
+  @if (current(); as t) {
+    @if (sheetOpen()) {
+      <div class="sheet-backdrop" aria-hidden="true" (click)="closeSheet()"></div>
+    }
+    <aside class="card detail" [class.is-open]="sheetOpen()" aria-labelledby="tl-detail-heading" (keydown.escape)="closeSheet()">
+      <div class="detail__head">
+        <span class="tile tile--lg" aria-hidden="true"><app-icon [name]="icon(t)" /></span>
+        <div class="detail__title">
+          <h2 id="tl-detail-heading">{{ t.title }}</h2>
+          <span class="status" [class]="'status status--' + tone[t.status]">{{ labels[t.status] }}</span>
+        </div>
+        <div class="menu-wrap">
+          <button type="button" class="icon-btn" aria-label="Weitere Aktionen zur Reise" [attr.aria-expanded]="menuOpen()" (click)="menuOpen.set(!menuOpen())">
+            <app-icon name="more" />
+          </button>
+          @if (menuOpen()) {
+            <div class="menu">
+              <button type="button" (click)="menu('edit', t)"><app-icon name="edit" />Reise bearbeiten</button>
+              <button type="button" (click)="menu('participants', t)"><app-icon name="user-plus" />Teilnehmer verwalten</button>
+            </div>
+          }
+        </div>
+        <button type="button" class="sheet-close" aria-label="Details schließen" (click)="closeSheet()"><app-icon name="close" /></button>
+      </div>
+
+      <p class="detail__dates">
+        <app-icon name="calendar" aria-hidden="true" />
+        <span>{{ range(t) }} <br />({{ days(t) === 1 ? '1 Tag' : days(t) + ' Tage' }})</span>
+      </p>
+
+      <ul class="facts">
+        <li>
+          <button type="button" class="fact" (click)="menu('participants', t)">
+            <app-icon class="fact__icon" name="people" aria-hidden="true" />
+            <span class="fact__text"><b>Teilnehmer</b><small>{{ peopleLabel(t.participants.length || 1) }}</small></span>
+            <span class="avatars" aria-hidden="true">
+              @for (p of t.participants.slice(0, 3); track p.id) {
+                <span class="avatar">{{ initials(p.display_name) }}</span>
+              }
+              @if (t.participants.length > 3) {
+                <span class="avatar avatar--more">+{{ t.participants.length - 3 }}</span>
+              }
+            </span>
+            <app-icon class="chev" name="arrow" aria-hidden="true" />
+          </button>
+        </li>
+        <li>
+          <button type="button" class="fact" (click)="menu('edit', t)">
+            <app-icon class="fact__icon" name="bed" aria-hidden="true" />
+            <span class="fact__text">
+              <b>Unterkunft</b>
+              @if (t.accommodation) {
+                <small>{{ t.accommodation }}</small>
+                <small>{{ nights(t) === 1 ? '1 Nacht' : nights(t) + ' Nächte' }}{{ t.accommodation_area ? ' · ' + t.accommodation_area : '' }}</small>
+              } @else {
+                <small>Noch keine Unterkunft eingetragen</small>
+              }
+            </span>
+            <app-icon class="chev" name="arrow" aria-hidden="true" />
+          </button>
+        </li>
+        <li>
+          <button type="button" class="fact" (click)="menu('edit', t)">
+            <app-icon class="fact__icon" [name]="transportIcon(t.transport_type)" aria-hidden="true" />
+            <span class="fact__text">
+              <b>Transport</b>
+              @if (t.transport_type) {
+                <small>{{ transportLabels[t.transport_type] }}</small>
+                @if (t.transport_note) {
+                  <small>{{ t.transport_note }}</small>
+                }
+              } @else {
+                <small>Noch nicht festgelegt</small>
+              }
+            </span>
+            <app-icon class="chev" name="arrow" aria-hidden="true" />
+          </button>
+        </li>
+        <li>
+          <button type="button" class="fact" (click)="go('packlisten', t)">
+            <app-icon class="fact__icon" name="luggage" aria-hidden="true" />
+            <span class="fact__text">
+              <b>Verknüpfte Packliste</b>
+              @if (t.packing_total) {
+                <small>{{ t.title }}</small>
+                <small>{{ t.packing_packed }} / {{ t.packing_total }} erledigt</small>
+              } @else {
+                <small>Noch leer – jetzt anlegen</small>
+              }
+            </span>
+            <app-icon class="chev" name="arrow" aria-hidden="true" />
+          </button>
+        </li>
+        <li>
+          <button type="button" class="fact" (click)="go('budget', t)">
+            <app-icon class="fact__icon" name="coins" aria-hidden="true" />
+            <span class="fact__text">
+              <b>Budget</b>
+              @if (t.budget_amount) {
+                <small>{{ money(t.budget_spent, t) }} von {{ money(t.budget_amount, t) }}</small>
+                <span class="fact__bar">
+                  <span class="bar" aria-hidden="true"><span [style.width.%]="budgetPct(t) > 100 ? 100 : budgetPct(t)"></span></span>
+                  <span class="num">{{ budgetPct(t) }} %</span>
+                </span>
+              } @else {
+                <small>{{ money(t.budget_spent, t) }} ausgegeben · kein Budget festgelegt</small>
+              }
+            </span>
+            <app-icon class="chev" name="arrow" aria-hidden="true" />
+          </button>
+        </li>
+        <li>
+          <button type="button" class="fact" (click)="go('erinnerungen', t)">
+            <app-icon class="fact__icon" name="check-circle" aria-hidden="true" />
+            <span class="fact__text">
+              <b>Offene Aufgaben</b>
+              <small [class.late]="t.tasks_open > 0">{{ t.tasks_open === 0 ? 'Alles erledigt' : t.tasks_open === 1 ? '1 offene Aufgabe' : t.tasks_open + ' offene Aufgaben' }}</small>
+            </span>
+            <app-icon class="chev" name="arrow" aria-hidden="true" />
+          </button>
+        </li>
+      </ul>
+    </aside>
+  }
+</div>

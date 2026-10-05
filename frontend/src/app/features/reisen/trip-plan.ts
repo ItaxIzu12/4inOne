@@ -44,6 +44,8 @@ export class TripPlan {
   private readonly router = inject(Router);
 
   readonly tripId = input.required<number>();
+  /** Kompakt (Seitenleiste „Vorschläge & Hinweise“ im Reiter Erinnerungen): ohne eigene Überschrift. */
+  readonly compact = input(false);
   /** Eine Aktion, die nur eine Ansicht öffnet (Packliste, Budget). */
   readonly openTab = output<TripPlanTarget>();
 

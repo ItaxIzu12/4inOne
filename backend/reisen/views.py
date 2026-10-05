@@ -2,11 +2,12 @@ from django.db.models import Q
 from django.utils.dateparse import parse_date
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask
-from .permissions import TripAccessPermission, TripContentAccessPermission, TripParticipantManagePermission
+from .permissions import WRITABLE_ROLES, TripAccessPermission, TripContentAccessPermission, TripParticipantManagePermission
 from .serializers import (
     PackingItemSerializer,
     TripBudgetCategorySerializer,
@@ -93,6 +94,20 @@ class TripScopedViewSet(PrivateResponseMixin, viewsets.ModelViewSet):
 class PackingItemViewSet(TripScopedViewSet):
     queryset = PackingItem.objects.all()
     serializer_class = PackingItemSerializer
+
+
+    @action(detail=False, methods=['post'], url_path='zuruecksetzen')
+    def reset(self, request):
+        """Alle Häkchen einer Reise auf einmal zurücknehmen (?trip=<id>) — nur mit Schreibrecht an der Reise."""
+        trip = trips_visible_to(request.user).filter(pk=request.query_params.get('trip') or 0).first()
+        if trip is None:
+            raise NotFound()
+        if trip.owner_id != request.user.id and not TripParticipant.objects.filter(
+            trip=trip, user=request.user, role__in=WRITABLE_ROLES
+        ).exists():
+            raise PermissionDenied('Du darfst diese Packliste nicht ändern.')
+        changed = PackingItem.objects.filter(trip=trip, is_packed=True).update(is_packed=False, packed_at=None)
+        return Response({'reset': changed})
 
 
 class TripTaskViewSet(TripScopedViewSet):

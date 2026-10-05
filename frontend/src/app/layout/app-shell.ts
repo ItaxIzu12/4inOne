@@ -27,7 +27,12 @@ export class AppShell {
   readonly dashboardQuery = output<string>();
   /** Vorbelegung des Suchfelds, z. B. ein von einer anderen Seite mitgebrachter Suchbegriff. */
   readonly searchValue = input('');
-  readonly dashboardDate = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+  private readonly today = new Date();
+  /** Datum in der Kopfzeile: Wochentag klein darüber, Datum darunter (z. B. „Montag“ / „5. Oktober 2026“). */
+  readonly todayWeekday = new Intl.DateTimeFormat('de-DE', { weekday: 'long' }).format(this.today);
+  readonly todayDate = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }).format(this.today);
+  readonly todayShort = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'short' }).format(this.today);
+  readonly todayIso = `${this.today.getFullYear()}-${String(this.today.getMonth() + 1).padStart(2, '0')}-${String(this.today.getDate()).padStart(2, '0')}`;
   private readonly dashboardSearch = viewChild<ElementRef<HTMLInputElement>>('dashboardSearch');
   private readonly topbar = viewChild<ElementRef<HTMLElement>>('topbar');
   private readonly destroyRef = inject(DestroyRef);
@@ -70,7 +75,13 @@ export class AppShell {
     return url === '/demo' || url.startsWith('/demo/');
   });
   readonly name = computed(() => this.isDemoRoute() ? 'Sophie' : this.auth.currentUser()?.name || 'Mein Konto');
-  readonly initials = computed(() => this.name().slice(0, 1).toUpperCase());
+  /** „Mira Neu“ → „MN“, „Sophie“ → „S“. */
+  readonly initials = computed(() => {
+    const words = this.name().trim().split(/\s+/).filter(Boolean);
+    return ((words[0]?.[0] ?? '') + (words.length > 1 ? words[words.length - 1][0] : '')).toUpperCase() || '?';
+  });
+  /** Kleine Zeile unter dem Namen im Profil-Knopf. */
+  readonly accountHint = computed(() => (this.isDemoRoute() ? 'Vorschau' : 'Mein Konto'));
   readonly links = computed(() => {
     const live = !this.isDemoRoute();
     return [

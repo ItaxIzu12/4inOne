@@ -1,0 +1,91 @@
+.switcher {
+  position: relative;
+}
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 18px;
+  border: 1px solid #e6e9f0;
+  border-radius: 16px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.trigger:hover {
+  border-color: #c7d4ea;
+}
+.text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+.title-row b {
+  font-size: 17px;
+}
+.switcher--button .trigger {
+  gap: 8px;
+  width: auto;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+.switcher--button .trigger > app-icon:first-child {
+  width: 18px;
+  height: 18px;
+}
+.list {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  z-index: 20;
+  display: grid;
+  gap: 2px;
+  min-width: 240px;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid #e6e9f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 12px 32px #16233a1f;
+  list-style: none;
+}
+.switcher--button .list {
+  left: auto;
+}
+.list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.list button:hover,
+.list [aria-current] {
+  background: var(--blue-soft);
+}
+.list b {
+  font-weight: 600;
+}

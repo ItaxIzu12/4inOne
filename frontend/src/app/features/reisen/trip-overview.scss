@@ -1,0 +1,397 @@
+// Reiter „Übersicht“: nächste Reise + Vorschlag, drei Kennzahlen, To-dos + Erinnerungen, Hinweis zu Finanzen.
+:host {
+  display: grid;
+  gap: 16px;
+}
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  gap: 16px;
+}
+.lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.card-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  margin-bottom: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.card-link--static {
+  cursor: default;
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+// Nächste Reise
+.next__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.next__title h2 {
+  font-size: 22px;
+  letter-spacing: -0.3px;
+}
+.next__date {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-top: 10px;
+  color: #39465c;
+  font-size: 15px;
+}
+.next__date app-icon {
+  width: 20px;
+  height: 20px;
+  color: #4b5568;
+}
+.when {
+  margin-left: auto;
+  color: var(--blue-text);
+  font-weight: 600;
+}
+.prep {
+  margin: 20px 0 16px;
+}
+.prep__head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: #16233a;
+  font-size: 15px;
+}
+.prep .bar {
+  height: 8px;
+}
+.facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.facts button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 14px;
+  border: 1px solid #e6e9f0;
+  border-radius: 12px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.facts button:hover {
+  border-color: #c7d4ea;
+}
+.facts app-icon {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  color: #39465c;
+}
+.facts__text {
+  display: grid;
+  min-width: 0;
+}
+.facts__text b {
+  font-size: 15px;
+}
+.of {
+  font-weight: 400;
+}
+// Reisevorschlag
+.tip {
+  display: flex;
+  flex-direction: column;
+}
+.tip__title {
+  margin-bottom: 8px;
+  font-size: 17px;
+}
+.tip .muted {
+  font-size: 14px;
+}
+.tip__actions {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+.tip__actions .primary {
+  width: 100%;
+}
+// Kennzahlen
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kpi {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 100px;
+  padding: 18px 20px;
+  border: 1px solid #e6e9f0;
+  border-radius: 16px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.kpi:hover {
+  border-color: #c7d4ea;
+}
+.kpi__icon {
+  align-self: flex-start;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  color: var(--blue);
+}
+.kpi__icon--red {
+  color: #d6334f;
+}
+.kpi__icon--gold {
+  color: #c98a00;
+}
+.kpi__text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+.kpi__label {
+  font-size: 15px;
+  font-weight: 600;
+}
+.kpi__value {
+  font-size: 24px;
+  letter-spacing: -0.4px;
+  font-variant-numeric: tabular-nums;
+}
+// Listen
+.rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 4px 0;
+  border-top: 1px solid var(--line);
+}
+.row:first-child {
+  border-top: 0;
+}
+.row--empty {
+  padding: 12px 0;
+}
+.todo {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  min-height: 44px;
+  cursor: pointer;
+}
+.todo input {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+.row__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #f3f5f9;
+  color: #39465c;
+}
+.row__icon app-icon {
+  width: 19px;
+  height: 19px;
+}
+.row__text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.row__text b {
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.row__text small {
+  font-size: 13px;
+}
+.row__when {
+  flex: 0 0 auto;
+  color: #4b5568;
+  font-size: 13px;
+  white-space: nowrap;
+}
+// Hinweis zu Finanzen
+.finance {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  border: 1px solid #e6e9f0;
+  border-radius: 14px;
+  background: #fff;
+}
+.finance__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f3f5f9;
+  color: #39465c;
+}
+.finance__icon app-icon {
+  width: 20px;
+  height: 20px;
+}
+.finance__text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.finance__text b {
+  font-size: 14px;
+}
+.finance .soft {
+  color: var(--blue-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.finance .soft app-icon {
+  width: 16px;
+  height: 16px;
+}
+@media (max-width: 1180px) {
+  .top,
+  .lists {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  :host {
+    gap: 12px;
+  }
+  .next__title h2 {
+    font-size: 19px;
+  }
+  .next__date {
+    font-size: 14px;
+  }
+  .prep {
+    margin: 16px 0 12px;
+  }
+  // Packliste, Aufgaben, Budget als Liste untereinander
+  .facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    border: 1px solid #e6e9f0;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .facts li + li button {
+    border-top: 1px solid var(--line);
+  }
+  .facts button {
+    min-height: 48px;
+    border: 0;
+    border-radius: 0;
+  }
+  .facts__text {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .kpis {
+    gap: 8px;
+  }
+  .kpis li {
+    display: flex;
+  }
+  // drei kleine Kacheln nebeneinander: Symbol + Titel oben, Zahl darunter
+  .kpi {
+    position: relative;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-height: 0;
+    height: 100%;
+    padding: 12px;
+  }
+  .kpi > .chev {
+    display: none;
+  }
+  .kpi__icon {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 18px;
+    height: 18px;
+  }
+  .kpi__label {
+    padding-left: 24px;
+    font-size: 11px;
+    line-height: 18px;
+  }
+  .kpi__value {
+    font-size: 20px;
+  }
+  .kpi__text small {
+    font-size: 12px;
+  }
+  .finance {
+    flex-wrap: wrap;
+  }
+  .finance .soft {
+    width: 100%;
+  }
+}

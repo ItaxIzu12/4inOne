@@ -24,7 +24,6 @@ export class OrgTasks {
   readonly events = input<PersonalEvent[]>([]);
   readonly openTask = output<PersonalTask>();
   readonly toggleTask = output<PersonalTask>();
-  readonly newTask = output<void>();
   readonly showCalendar = output<void>();
 
   protected readonly status = signal<StatusFilter>('open');

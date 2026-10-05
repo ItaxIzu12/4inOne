@@ -1,14 +1,13 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { choose } from './helpers';
 
 /** Eigene Kategorien im Reiter Budgets und direkt im Buchungsformular — mit den Demo-Daten (kein Backend). */
 for (const width of [390, 1440]) {
   test(`own categories can be managed ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.route('http://localhost:8000/api/**', (route) => route.abort());
-    await page.goto('/demo');
-    await page.getByRole('link', { name: 'Finanzen' }).first().click();
+    // direkt in die Demo-Finanzen (der Link auf /demo kann je nach Breite zur echten Seite führen)
+    await page.goto('/demo/finanzen');
     await page.getByRole('button', { name: 'Budgets', exact: true }).click();
     await page.getByRole('button', { name: 'Kategorien verwalten', exact: true }).click();
     const dialog = page.getByRole('dialog');
@@ -42,7 +41,8 @@ for (const width of [390, 1440]) {
     await expect(budgets).not.toContainText('Gesundheit');
 
     // Neue Kategorie direkt beim Buchen anlegen und gleich auswählen
-    await page.getByRole('button', { name: 'Neue Buchung', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Ausgaben', exact: true }).click();
+    await page.getByRole('button', { name: 'Ausgabe erfassen', exact: true }).click();
     await page.getByRole('button', { name: 'Neue Kategorie', exact: true }).click();
     await expect(page.getByLabel('Name der neuen Kategorie')).toBeFocused();
     await page.getByLabel('Name der neuen Kategorie').fill('Geschenke');
@@ -54,7 +54,9 @@ for (const width of [390, 1440]) {
     await page.getByLabel('Name der neuen Kategorie').fill('haustier');
     await page.getByRole('button', { name: 'Anlegen', exact: true }).click();
     await expect(page.getByRole('dialog').getByLabel('Kategorie', { exact: true })).toContainText('Haustier');
-    await choose(page, 'Kategorie', 'Geschenke');
+    // im Dialog (der Reiter „Ausgaben“ hat selbst einen Kategorie-Filter)
+    await page.getByRole('dialog').getByLabel('Kategorie', { exact: true }).click();
+    await page.getByRole('option', { name: 'Geschenke', exact: true }).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }

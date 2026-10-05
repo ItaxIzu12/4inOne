@@ -1,6 +1,17 @@
 import { test, expect } from '@playwright/test';
 import { choose, pickDate, pickMonth } from './helpers';
 import AxeBuilder from '@axe-core/playwright';
+
+/** Neue Buchung: über den Reiter „Ausgaben“ bzw. „Einnahmen“ (die Übersicht hat keinen Hauptknopf). */
+async function newBooking(page: import('@playwright/test').Page, kind: 'Ausgabe' | 'Einnahme' = 'Ausgabe') {
+  await page.getByRole('button', { name: kind === 'Ausgabe' ? 'Ausgaben' : 'Einnahmen', exact: true }).click();
+  await page.getByRole('button', { name: `${kind} erfassen`, exact: true }).click();
+}
+/** Nach dem Speichern zurück zur Übersicht, deren Kennzahlen die Tests prüfen. */
+async function overview(page: import('@playwright/test').Page) {
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
+}
 for (const width of [390, 1440]) {
   test(`private finance lifecycle ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
@@ -132,20 +143,23 @@ for (const width of [390, 1440]) {
     await expect(page.locator('.kpi').filter({ hasText: 'Gültig:' })).toContainText(/bis auf Weiteres/);
     await pickMonth(page, page.locator('#finance-month'), `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
     await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
-    await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
+    await newBooking(page);
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('48,32');
     await page.getByRole('button', { name: 'Standardkategorien anlegen' }).click();
     await page.getByLabel('Notiz (optional)').fill('Supermarkt');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await overview(page);
     await expect(page.locator('.kpis')).toContainText('2.951,68 €');
     await page.getByRole('button', { name: /Supermarkt/ }).click();
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('50,00');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-    await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
-    await choose(page, 'Typ', 'Einnahme');
+    await newBooking(page, 'Einnahme');
+    // „Einnahme erfassen“ startet bereits als Einnahme
+    await expect(page.getByLabel('Typ', { exact: true })).toContainText('Einnahme');
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('3100');
     await page.getByLabel('Notiz (optional)').fill('Gehalt');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await overview(page);
     // Einnahme erhöht das verfügbare Budget und wird sichtbar bestätigt
     await expect(page.locator('.kpis')).toContainText('2.950 €');
     // Der Reiter Budgets zeigt Budget, Rest und Verbrauch direkt in den Kennzahlen; Einnahmen zählen nicht hinein.
@@ -249,7 +263,7 @@ test('warns before an expense exceeds the available budget and books it only aft
 
   await page.goto('/finanzen');
   await expect(page.locator('.kpis')).toContainText('100 €');
-  await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
+  await newBooking(page);
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Betrag in EUR', { exact: true }).fill('150');
   await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
@@ -266,18 +280,20 @@ test('warns before an expense exceeds the available budget and books it only aft
   await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dialog).toHaveCount(0);
   expect(posts).toBe(1);
+  await overview(page);
   await expect(page.locator('.kpis')).toContainText('80 €');
   await expect(page.locator('.alert-note')).toHaveCount(0);
   await expect(page.locator('.kpi--danger')).toHaveCount(0);
 
   // Jetzt 150 € bei 80 € verfügbar: Warnung, Bestätigung, gebucht — und danach deutlich sichtbar im Minus
-  await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
+  await newBooking(page);
   await dialog.getByLabel('Betrag in EUR', { exact: true }).fill('150');
   await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dialog.getByRole('alert')).toContainText('um 70,00 €');
   await dialog.getByRole('button', { name: 'Trotzdem buchen', exact: true }).click();
   await expect(dialog).toHaveCount(0);
   expect(posts).toBe(2);
+  await overview(page);
   await expect(page.locator('.alert-note').filter({ hasText: 'Budget überschritten' })).toBeVisible();
   await expect(page.locator('.alert-note')).toContainText('70,00 €');
   // Die Kennzahl wird rot und sagt es auch in Worten (Farbe allein reicht nicht)
@@ -301,9 +317,8 @@ test('an income never triggers the overrun warning', async ({ page }) => {
     return r.fulfill({ json: [] });
   });
   await page.goto('/finanzen');
-  await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
+  await newBooking(page, 'Einnahme');
   const dialog = page.getByRole('dialog');
-  await choose(page, 'Typ', 'Einnahme');
   await dialog.getByLabel('Betrag in EUR', { exact: true }).fill('5000');
   await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dialog).toHaveCount(0);
@@ -662,7 +677,7 @@ test('a new booking proposes a date inside the selected month', async ({ page })
   const selector = page.locator('#finance-month');
   for (const [month, expected] of [['2099-03', '01.03.2099'], ['2020-02', '29.02.2020']]) {
     await pickMonth(page, selector, month);
-    await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
+    await newBooking(page);
     await expect(page.getByRole('dialog')).toContainText(expected);
     await page.getByRole('button', { name: 'Abbrechen' }).click();
     await expect(page.getByRole('dialog')).toBeHidden();
@@ -675,13 +690,13 @@ test('saving a booking dated outside the shown month says where it went, inside 
   await pickMonth(page, page.locator('#finance-month'), '2099-03');
   const notice = page.locator('app-save-feedback');
 
-  await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
+  await newBooking(page);
   await page.getByLabel('Betrag in EUR', { exact: true }).fill('12');
   await page.getByRole('dialog').getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(notice).toContainText('Ausgabe von 12,00 € gespeichert.');
   await expect(notice).not.toContainText('nicht in der aktuellen Liste');
 
-  await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click();
+  await newBooking(page);
   await page.getByLabel('Betrag in EUR', { exact: true }).fill('7');
   await pickDate(page, page.getByRole('dialog').getByLabel('Datum', { exact: true }), '2099-04-10');
   await page.getByRole('dialog').getByRole('button', { name: 'Speichern', exact: true }).click();

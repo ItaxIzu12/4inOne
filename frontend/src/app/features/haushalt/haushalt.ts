@@ -1,4 +1,5 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
@@ -23,7 +24,7 @@ const TAB_KEYS = TABS.map((tab) => tab.key);
 
 // Hauptaktion im Seitenkopf passend zum Reiter (Übersicht: neue Aufgabe).
 const HEAD_ACTIONS: Record<HaushaltTab, string> = {
-  uebersicht: 'Neue Aufgabe',
+  uebersicht: '',
   aufgaben: 'Neue Aufgabe',
   routinen: 'Routine hinzufügen',
   ordner: 'Neuer Vertrag',
@@ -40,7 +41,7 @@ const HEAD_ACTIONS: Record<HaushaltTab, string> = {
 @Component({
   selector: 'app-haushalt',
   standalone: true,
-  imports: [AppShell, AppIcon, SaveFeedback, EinkaufTab, AufgabenTab, OrdnerTab, RoutinenTab, UebersichtTab],
+  imports: [MobileAction, AppShell, AppIcon, SaveFeedback, EinkaufTab, AufgabenTab, OrdnerTab, RoutinenTab, UebersichtTab],
   templateUrl: './haushalt.html',
   styleUrl: './haushalt.scss',
 })

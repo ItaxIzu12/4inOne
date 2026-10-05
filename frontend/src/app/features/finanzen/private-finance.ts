@@ -1,4 +1,5 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
+import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { AmountInput } from '../../shared/directives/amount-input';
 import { afterNextRender, Injector, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -110,7 +111,7 @@ function payloadAmount(payload: object): string {
 @Component({
   selector: 'app-private-finance',
   standalone: true,
-  imports: [ErrorNoticeDirective, AmountInput, ReactiveFormsModule, DatePipe, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview, CategoryManager],
+  imports: [MobileAction, ErrorNoticeDirective, AmountInput, ReactiveFormsModule, DatePipe, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview, CategoryManager],
   templateUrl: './private-finance.html',
   // Abschnitte zuerst, damit die Handy-Regeln in private-finance.scss sie überschreiben.
   styleUrls: ['./finance-sections.scss', './private-finance.scss'],
@@ -123,6 +124,35 @@ export class PrivateFinance {
   private router = inject(Router);
   /** Reiter: Übersicht, Ausgaben, Einnahmen, Budgets, Sparziele. */
   readonly tab = signal<FinanceTab>('overview');
+  /** Hauptknopf je Reiter (Kopf am Rechner, fest unten am Handy). Auf der Übersicht bewusst keiner. */
+  readonly headAction = computed(() => {
+    switch (this.tab()) {
+      case 'expenses':
+        return 'Ausgabe erfassen';
+      case 'income':
+        return 'Einnahme erfassen';
+      case 'budgets':
+        return this.activeBudget() ? 'Budget ändern' : 'Budget festlegen';
+      case 'goals':
+        return 'Sparziel erstellen';
+      default:
+        return '';
+    }
+  });
+  headActionClick() {
+    switch (this.tab()) {
+      case 'expenses':
+        return this.open('transactions');
+      case 'income':
+        this.open('transactions');
+        this.form.controls.type.setValue('INCOME');
+        return;
+      case 'budgets':
+        return this.open('budgets', this.activeBudget() ?? undefined);
+      case 'goals':
+        return this.open('goals');
+    }
+  }
   readonly tabs = FINANCE_TABS;
   readonly month = signal(financeMonth());
   readonly summary = signal<FinanceSummary | null>(null);
@@ -486,6 +516,9 @@ export class PrivateFinance {
     this.rowLimit.update((n) => n + 5);
   }
   constructor() {
+    // Reiter aus der Adresse (?tab=expenses …), wie in Haushalt, Organisation und Reisen.
+    const linkedTab = this.route.snapshot.queryParamMap.get('tab');
+    if (FINANCE_TABS.some((t) => t.key === linkedTab)) this.selectTab(linkedTab as FinanceTab);
     this.load();
     this.destroy.onDestroy(() => clearTimeout(this.noticeTimer));
     // Ändert sich etwas im Dialog, gilt die Warnung nicht mehr.

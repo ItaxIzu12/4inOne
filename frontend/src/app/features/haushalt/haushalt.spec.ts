@@ -55,7 +55,8 @@ describe('Haushalt (Demo)', () => {
     expect(text(compiled.querySelector('app-uebersicht-tab .device strong'))).toBe('Hausratversicherung');
     expect(text(compiled.querySelectorAll('app-uebersicht-tab .stat')[2])).toContain('6Verträge');
     expect(text(compiled.querySelectorAll('app-uebersicht-tab .stat')[2])).toContain('227,47 € im Monat');
-    expect(text(compiled.querySelector('.page-head__action'))).toBe('Neue Aufgabe');
+    // Die Übersicht hat bewusst keinen Hauptknopf
+    expect(compiled.querySelector('.page-head__action')).toBeNull();
     expect(compiled.querySelector('button[aria-label="Bad putzen als erledigt markieren"]')).not.toBeNull();
   });
 
@@ -74,11 +75,13 @@ describe('Haushalt (Demo)', () => {
     expect(text(compiled.querySelector('app-uebersicht-tab .stat__value'))).toBe('10');
   });
 
-  it('"Neue Aufgabe" in the page header opens the task form on the tasks tab', () => {
+  it('"Neue Aufgabe" in the page header of the tasks tab opens the task form', () => {
     const fixture = TestBed.createComponent(Haushalt);
     fixture.detectChanges();
+    openTab(fixture, 'aufgaben');
     const compiled = fixture.nativeElement as HTMLElement;
 
+    expect(text(compiled.querySelector('.page-head__action'))).toBe('Neue Aufgabe');
     (compiled.querySelector('.page-head__action') as HTMLButtonElement).click();
     fixture.detectChanges();
 

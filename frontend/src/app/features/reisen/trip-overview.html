@@ -1,0 +1,139 @@
+@let t = trip();
+@let s = suggestion();
+<div class="top">
+  <section class="card next" aria-labelledby="ov-next">
+    <button type="button" class="card-link" (click)="openTab.emit('reisen')">
+      <span class="card-title"><app-icon name="travel" aria-hidden="true" /><span id="ov-next-label">{{ isNext() ? 'Nächste Reise' : 'Ausgewählte Reise' }}</span></span>
+      <span class="sr-only">– alle Reisen ansehen</span>
+      <app-icon class="chev" name="arrow" aria-hidden="true" />
+    </button>
+    <div class="next__title">
+      <h2 id="ov-next">{{ t.title }}</h2>
+      <span class="status" [class]="'status status--' + tone[t.status]">{{ labels[t.status] }}</span>
+    </div>
+    <p class="next__date">
+      <app-icon name="calendar" aria-hidden="true" /><span>{{ range(t) }}</span>
+      @if (countdownText(); as c) {
+        <b class="when">{{ c }}</b>
+      }
+    </p>
+    <div class="prep">
+      <div class="prep__head"><span>Reisevorbereitung</span><span class="num">{{ readiness() }} %</span></div>
+      <span class="bar" aria-hidden="true"><span [style.width.%]="readiness()"></span></span>
+    </div>
+    <ul class="facts">
+      <li>
+        <button type="button" (click)="openTab.emit('packlisten')">
+          <app-icon name="luggage" aria-hidden="true" />
+          <span class="facts__text"><small>Packliste</small><b class="num">{{ packed() }} / {{ packingTotal() }}</b></span>
+        </button>
+      </li>
+      <li>
+        <button type="button" (click)="openTab.emit('erinnerungen')">
+          <app-icon name="check-circle" aria-hidden="true" />
+          <span class="facts__text"><small>Aufgaben</small><b [class.late]="tasksOpen() > 0">{{ tasksOpen() ? tasksOpen() + ' offen' : 'erledigt' }}</b></span>
+        </button>
+      </li>
+      <li>
+        <button type="button" (click)="openTab.emit('budget')">
+          <app-icon name="coins" aria-hidden="true" />
+          <span class="facts__text"><small>Budget</small><b class="num">{{ money(budgetSpent()) }}@if (budgetTotal()) {<span class="of"> von {{ money(budgetTotal()) }}</span>}</b></span>
+        </button>
+      </li>
+    </ul>
+  </section>
+
+  <section class="card tip" aria-labelledby="ov-tip">
+    <div class="card-link card-link--static">
+      <span class="card-title"><app-icon name="bulb" aria-hidden="true" />Reisevorschlag</span>
+    </div>
+    <h2 id="ov-tip" class="tip__title">{{ s.title }}</h2>
+    <p class="muted">{{ s.text }}</p>
+    @if (s.action && s.target) {
+      <div class="tip__actions">
+        <button type="button" class="primary" (click)="openTab.emit(s.target)">{{ s.action }}</button>
+        <button type="button" class="link" (click)="remindLater()">Später erinnern</button>
+      </div>
+    }
+  </section>
+</div>
+
+<ul class="kpis">
+  <li>
+    <button type="button" class="kpi" (click)="openTab.emit('reisen')">
+      <app-icon class="kpi__icon" name="luggage" aria-hidden="true" />
+      <span class="kpi__text"><span class="kpi__label">Aktive Reisen</span><b class="kpi__value">{{ active().count }}</b><small>{{ active().text }}</small></span>
+      <app-icon class="chev" name="arrow" aria-hidden="true" />
+    </button>
+  </li>
+  <li>
+    <button type="button" class="kpi" (click)="openTab.emit('erinnerungen')">
+      <app-icon class="kpi__icon kpi__icon--red" name="check-circle" aria-hidden="true" />
+      <span class="kpi__text"><span class="kpi__label">Anstehende Aufgaben</span><b class="kpi__value">{{ tasksOpen() }}</b><small>{{ tasksOpen() === 1 ? 'offene Aufgabe' : 'offene Aufgaben' }}</small></span>
+      <app-icon class="chev" name="arrow" aria-hidden="true" />
+    </button>
+  </li>
+  <li>
+    <button type="button" class="kpi" (click)="openTab.emit('budget')">
+      <app-icon class="kpi__icon kpi__icon--gold" name="coins" aria-hidden="true" />
+      <span class="kpi__text">
+        <span class="kpi__label">Budgetstatus</span>
+        <b class="kpi__value">{{ budgetTotal() ? budgetPct() + ' %' : '—' }}</b>
+        <small>{{ budgetTotal() ? money(budgetSpent()) + ' von ' + money(budgetTotal()) : 'noch nicht geplant' }}</small>
+      </span>
+      <app-icon class="chev" name="arrow" aria-hidden="true" />
+    </button>
+  </li>
+</ul>
+
+<div class="lists">
+  <section class="card" aria-labelledby="ov-todos">
+    <button type="button" class="card-link" (click)="openTab.emit('erinnerungen')">
+      <span class="card-title"><app-icon name="list" aria-hidden="true" /><span id="ov-todos">Nächste To-dos</span></span>
+      <span class="sr-only">– alle Erinnerungen</span>
+      <app-icon class="chev" name="arrow" aria-hidden="true" />
+    </button>
+    <ul class="rows">
+      @for (task of todos(); track task.id) {
+        @let d = due(task.due_date);
+        <li class="row">
+          <label class="todo">
+            <input type="checkbox" [disabled]="!canEdit()" (change)="check(task)" />
+            <span class="row__text"><b>{{ task.title }}</b><small>{{ t.title }}</small></span>
+          </label>
+          <span class="row__when" [class.late]="d.urgent">{{ d.text }}</span>
+        </li>
+      } @empty {
+        <li class="row row--empty muted">Keine offenen To-dos – alles erledigt.</li>
+      }
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="ov-reminders">
+    <button type="button" class="card-link" (click)="openTab.emit('erinnerungen')">
+      <span class="card-title"><app-icon name="bell" aria-hidden="true" /><span id="ov-reminders">Bevorstehende Erinnerungen</span></span>
+      <span class="sr-only">– alle Erinnerungen</span>
+      <app-icon class="chev" name="arrow" aria-hidden="true" />
+    </button>
+    <ul class="rows">
+      @for (r of upcoming(); track r.key) {
+        <li class="row">
+          <span class="row__icon" aria-hidden="true"><app-icon [name]="icon(r)" /></span>
+          <span class="row__text"><b>{{ r.title }}</b><small>{{ r.place || t.title }}</small></span>
+          <span class="row__when">{{ when(r.date, r.time) }}</span>
+        </li>
+      } @empty {
+        <li class="row row--empty muted">Keine anstehenden Erinnerungen.</li>
+      }
+    </ul>
+  </section>
+</div>
+
+<section class="finance" aria-labelledby="ov-finance">
+  <span class="finance__icon" aria-hidden="true"><app-icon name="link" /></span>
+  <span class="finance__text">
+    <b id="ov-finance">Reise und Finanzen</b>
+    <small>Reisekosten bleiben bei der Reise und verändern dein Monatsbudget nicht. Ein verknüpftes Sparziel siehst du im Budget.</small>
+  </span>
+  <button type="button" class="soft" (click)="openFinance()">Zu Finanzen<app-icon name="external" /></button>
+</section>

@@ -10,11 +10,13 @@
             <p class="overview-intro">Behalte dein Geld klar im Blick.</p>
           </div>
         </div>
-        <div class="head-actions">
-          <button class="primary" aria-label="Neue Buchung" (click)="open('transactions')">
-            <app-icon name="plus" /><span>Neue Buchung</span>
-          </button>
-        </div>
+        @if (headAction()) {
+          <div class="head-actions">
+            <button class="primary" [attr.aria-label]="headAction()" (click)="headActionClick()">
+              <app-icon [name]="tab() === 'budgets' && activeBudget() ? 'edit' : 'plus'" /><span>{{ headAction() }}</span>
+            </button>
+          </div>
+        }
       </header>
       <nav class="tabs domain-tabs" aria-label="Finanzansichten" (keydown)="onTabKeydown($event)">
         @for (t of tabs; track t.key) {
@@ -565,11 +567,9 @@
               @if (activeBudget(); as budget) {
                 <b class="kpi__value">{{ eur(budget.amount) }}</b>
                 <span class="kpi__hint">für {{ monthLabel() }} · Gültig: {{ span(budget) }}</span>
-                <button type="button" class="link" (click)="open('budgets', budget)">Budget ändern</button>
               } @else {
                 <b class="kpi__value">—</b>
                 <span class="kpi__hint">Für diesen Monat hast du noch kein Budget festgelegt.</span>
-                <button type="button" class="link" (click)="open('budgets')"><app-icon name="plus" />Budget erstellen</button>
               }
             </span>
           </div>
@@ -774,6 +774,9 @@
           </section>
         </div>
       }
+    }
+    @if (headAction()) {
+      <app-mobile-action [label]="headAction()" [icon]="tab() === 'budgets' && activeBudget() ? 'edit' : 'plus'" (pressed)="headActionClick()" />
     }
   </main></app-shell
 >

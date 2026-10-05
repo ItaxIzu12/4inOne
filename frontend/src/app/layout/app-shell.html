@@ -27,15 +27,19 @@
       <a class="mobile-brand" [routerLink]="links()[0].path" aria-label="4inOne – Startseite"
         ><app-brand
       /></a>
-        @if (isDemoRoute()) {
-          <div class="demo-banner">
-            <span class="demo-badge"
-              title="Demo mit Beispieldaten. Änderungen werden beim Neuladen zurückgesetzt.">
-              <span class="demo-badge__dot" aria-hidden="true"></span>
-              Demo-Modus · Beispieldaten
-            </span>
-          </div>
-        }
+        <div class="brand-meta">
+          @if (isDemoRoute()) {
+            <div class="demo-banner">
+              <span class="demo-badge"
+                title="Demo mit Beispieldaten. Änderungen werden beim Neuladen zurückgesetzt.">
+                <span class="demo-badge__dot" aria-hidden="true"></span>
+                <span class="demo-badge__long">Demo-Modus · Beispieldaten</span><span class="demo-badge__short">Demo</span>
+              </span>
+            </div>
+          }
+          <!-- am Handy: kurzes Datum unter dem Logo (am Rechner steht es ausführlich rechts) -->
+          <time class="mobile-date" [attr.datetime]="todayIso">{{ todayShort }}</time>
+        </div>
       </div>
       <!-- Globale Kopfzeile (wie auf der Startseite): Suche und Datum auf jeder Seite. -->
       <form class="dashboard-search" role="search" (submit)="$event.preventDefault(); submitSearch(dashboardSearch.value)">
@@ -50,9 +54,13 @@
         />
         <kbd aria-hidden="true">⌘ K</kbd>
       </form>
-      <time class="dashboard-date">{{ dashboardDate }}</time>
+      <time class="dashboard-date" [attr.datetime]="todayIso">
+        <span class="dashboard-date__icon" aria-hidden="true"><app-icon name="calendar" /></span>
+        <span class="dashboard-date__text"><small>{{ todayWeekday }}</small><b>{{ todayDate }}</b></span>
+      </time>
       <div class="profile">
         <button
+          type="button"
           class="icon-button"
           aria-label="Benachrichtigungen öffnen"
           (click)="panel.set('Benachrichtigungen')"
@@ -70,9 +78,9 @@
             aria-label="Kontomenü"
             (click)="toggleMenu()"
           >
-            <span class="avatar">{{ initials() }}</span
-            ><span class="profile-name">{{ name() }}</span
-            ><span class="profile-name chevron" aria-hidden="true">⌄</span>
+            <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+            <span class="profile-text"><b class="profile-name">{{ name() }}</b><small>{{ accountHint() }}</small></span>
+            <app-icon class="chevron" name="chevron-down" aria-hidden="true" />
           </button>
           @if (menuOpen()) {
             <div id="account-menu" class="account-menu" role="menu" aria-label="Konto" (keydown)="onMenuKey($event)">

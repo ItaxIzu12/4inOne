@@ -1,6 +1,8 @@
 @if (enabled()) {
-  <section class="trip-plan" aria-labelledby="trip-plan-heading">
-    <h3 id="trip-plan-heading" class="trip-plan__title">Nächste Schritte</h3>
+  <section class="trip-plan" [class.trip-plan--compact]="compact()" [attr.aria-labelledby]="compact() ? null : 'trip-plan-heading'" [attr.aria-label]="compact() ? 'Vorschläge zur Reise' : null">
+    @if (!compact()) {
+      <h3 id="trip-plan-heading" class="trip-plan__title">Nächste Schritte</h3>
+    }
 
     @if (message(); as text) {
       <p class="trip-plan__done" role="status">
@@ -66,7 +68,9 @@
             </div>
           </li>
         } @empty {
-          <li class="trip-plan__muted">Alles im Blick – für diese Reise gibt es gerade nichts zu tun.</li>
+          @if (!compact()) {
+            <li class="trip-plan__muted">Alles im Blick – für diese Reise gibt es gerade nichts zu tun.</li>
+          }
         }
       </ul>
     }

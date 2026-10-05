@@ -1,4 +1,5 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
+import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -38,10 +39,10 @@ const TABS: { key: OrgTab; label: string; icon: IconName }[] = [
 ];
 // Hauptknopf im Seitenkopf, passend zum Reiter.
 const HEAD_ACTIONS: Record<OrgTab, string> = {
-  overview: 'Neuer Eintrag',
+  overview: '',
   calendar: 'Termin erstellen',
-  tasks: 'Aufgabe hinzufügen',
-  notes: 'Neue Notiz',
+  tasks: 'Aufgabe erstellen',
+  notes: 'Notiz erstellen',
   files: 'Datei hochladen',
 };
 
@@ -56,6 +57,7 @@ const HEAD_ACTIONS: Record<OrgTab, string> = {
   selector: 'app-organisation',
   standalone: true,
   imports: [
+    MobileAction,
     ErrorNoticeDirective, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, ReactiveFormsModule, AppSelect,
     AppDatePicker, AppDateTimePicker, AppTimePicker, OrgOverview, OrgCalendar, OrgTasks, OrgNotes, OrgFiles,
   ],
@@ -179,8 +181,6 @@ export class Organisation {
         return this.openNote();
       case 'files':
         return this.uploadRequest.update((n) => n + 1);
-      default:
-        return this.open('event', undefined, true);
     }
   }
 
@@ -201,10 +201,7 @@ export class Organisation {
     if (item) this.open(kind, item);
   }
 
-  /** Zeigt die Auswahl Termin/Aufgabe im Dialog — nur beim allgemeinen „Neuer Eintrag“. */
-  readonly typeChoice = signal(false);
-  open(kind: 'event' | 'task', item?: PersonalEvent | PersonalTask, choice = false, day?: string) {
-    this.typeChoice.set(choice && !item);
+  open(kind: 'event' | 'task', item?: PersonalEvent | PersonalTask, day?: string) {
     this.form.reset({
       title: '',
       description: '',
@@ -243,7 +240,7 @@ export class Organisation {
 
   newEventOn(day: string) {
     this.selectedDay.set(day);
-    this.open('event', undefined, false, day);
+    this.open('event', undefined, day);
   }
 
   close() {

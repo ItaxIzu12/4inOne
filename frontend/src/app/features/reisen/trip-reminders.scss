@@ -1,0 +1,355 @@
+// Reiter „Erinnerungen“: Zeitleiste links, Vorschläge und Hinweise rechts.
+.top {
+  display: block;
+  margin-bottom: 14px;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.chips {
+  display: flex;
+  gap: 8px;
+}
+.chips button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #dfe6f2;
+  border-radius: 12px;
+  background: #fff;
+  color: #39465c;
+  font: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.chips [aria-pressed='true'] {
+  border-color: #c9dafb;
+  background: var(--blue-soft);
+  color: var(--blue-text);
+  font-weight: 600;
+}
+.filter {
+  flex: 0 1 210px;
+  min-width: 170px;
+}
+.filter-toggle {
+  display: none;
+}
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 20px;
+  align-items: start;
+}
+.main {
+  min-width: 0;
+}
+.range-title {
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+.days {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.day {
+  position: relative;
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 0 26px;
+}
+// senkrechte Linie mit Punkt je Tag
+.day::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: -12px;
+  left: 97px;
+  width: 1px;
+  background: #e1e6ef;
+}
+.day:last-child::before {
+  bottom: auto;
+  height: 40px;
+}
+.day::after {
+  content: '';
+  position: absolute;
+  top: 26px;
+  left: 92px;
+  width: 11px;
+  height: 11px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 1px #c9dafb;
+}
+.day__label {
+  display: grid;
+  align-content: start;
+  padding-top: 18px;
+  font-size: 14px;
+}
+.day__label span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.day__title {
+  display: none;
+}
+.items {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #e6e9f0;
+  border-radius: 14px;
+  background: #fff;
+}
+.item.is-done .item__text b {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+.item__text {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+}
+.item__text b {
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.item__text small {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.item__text small app-icon {
+  width: 15px;
+  height: 15px;
+}
+.area {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.area--REISEN {
+  background: #e6efff;
+  color: #1c4fae;
+}
+.area--HAUSHALT {
+  background: #e3f6ea;
+  color: #17723f;
+}
+.area--ORGANISATION {
+  background: #f1ebfc;
+  color: #5a2fa8;
+}
+.item__menu {
+  position: relative;
+  margin: -8px -8px 0 0;
+}
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: #4b5568;
+  cursor: pointer;
+}
+.icon-btn:hover {
+  background: #f1f4f9;
+}
+.icon-btn app-icon {
+  width: 20px;
+  height: 20px;
+}
+.menu {
+  position: absolute;
+  top: 42px;
+  right: 0;
+  z-index: 5;
+  display: grid;
+  min-width: 220px;
+  padding: 6px;
+  border: 1px solid #e6e9f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 32px #16233a1f;
+}
+.menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.menu button:hover {
+  background: var(--blue-soft);
+}
+.menu app-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--blue);
+}
+// Seitenleiste
+.side {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #e6e9f0;
+  border-radius: 16px;
+  background: #fff;
+}
+.side__title {
+  font-size: 16px;
+}
+.side app-trip-plan {
+  padding: 0;
+}
+.hint {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e6e9f0;
+  border-radius: 14px;
+  background: #fff;
+}
+.hint h3 {
+  margin-bottom: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.hint .muted {
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.hint .soft {
+  min-height: 40px;
+  width: 100%;
+  color: var(--blue-text);
+  font-weight: 600;
+}
+.hint .soft app-icon {
+  width: 15px;
+  height: 15px;
+}
+.hint--warn {
+  border-color: #f6dca8;
+  background: #fff8ea;
+}
+.hint--info {
+  border: 0;
+  background: #f4f7fc;
+  padding-right: 40px;
+}
+.hint--info .muted {
+  margin-bottom: 0;
+}
+.hint__icon {
+  flex: 0 0 24px;
+  color: #d98a00;
+}
+.hint__icon--blue {
+  color: var(--blue);
+}
+.hint__icon app-icon {
+  width: 22px;
+  height: 22px;
+}
+.hint__close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: #4b5568;
+  cursor: pointer;
+}
+.hint__close app-icon {
+  width: 16px;
+  height: 16px;
+}
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .chips {
+    flex: 1 1 auto;
+  }
+  .filter-toggle {
+    display: inline-flex;
+    flex: 0 0 48px;
+    margin-left: auto;
+    padding: 0;
+  }
+  .filter {
+    display: none;
+    flex: 1 1 calc(50% - 5px);
+    min-width: 0;
+  }
+  .filter.is-open {
+    display: block;
+  }
+  .day {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .day::before,
+  .day::after,
+  .day__label {
+    display: none;
+  }
+  .day__title {
+    display: block;
+    margin: 4px 0 10px;
+    font-size: 15px;
+  }
+  .item {
+    flex-wrap: wrap;
+    padding: 14px;
+  }
+  .item__text {
+    flex-basis: calc(100% - 110px);
+  }
+  .area {
+    order: 4;
+    margin-left: 58px;
+  }
+}

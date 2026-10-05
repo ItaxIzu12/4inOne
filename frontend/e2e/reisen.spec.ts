@@ -1,11 +1,32 @@
-import { test, expect } from '@playwright/test';
-import { pickDate } from './helpers';
+import { test, expect, Page } from '@playwright/test';
+import { choose, pickDate } from './helpers';
 import AxeBuilder from '@axe-core/playwright';
 
 function iso(offsetDays: number): string {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+async function axe(page: Page) {
+  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+}
+async function submit(page: Page) {
+  await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
+}
+async function tab(page: Page, label: string) {
+  await page.locator('nav.tabs button', { hasText: label }).click();
+}
+/** Hauptaktion: am Rechner oben im Kopf, am Handy der feste Knopf unten. */
+async function headAction(page: Page) {
+  await page.locator('.page-heading .primary:visible, app-mobile-action button:visible').first().click();
+}
+async function newTrip(page: Page, title: string, from: number, to: number) {
+  // „Neue Reise“ gibt es im Reiter Reisen (die Übersicht hat keinen Hauptknopf)
+  await tab(page, 'Reisen');
+  await headAction(page);
+  await page.locator('#trip-title').fill(title);
+  await pickDate(page, page.getByLabel('Beginn', { exact: true }), iso(from));
+  await pickDate(page, page.getByLabel('Ende', { exact: true }), iso(to));
 }
 
 // Demo-Route (öffentlich, DemoReisenApi): vollständiger CRUD-Durchlauf einmal mobil, einmal am Desktop.
@@ -15,346 +36,364 @@ for (const width of [390, 1440]) {
     await page.goto('/demo/reisen');
     await page.waitForLoadState('networkidle');
 
-    // CREATE
-    await page.getByRole('button', { name: 'Neue Reise' }).click();
-    await page.locator('#trip-title').fill('Städtetrip Wien');
-    await pickDate(page, page.getByLabel('Beginn', { exact: true }), iso(60));
-    await pickDate(page, page.getByLabel('Ende', { exact: true }), iso(63));
-    await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
-
-    // Smart Setup erscheint nach jedem Erstellen (siehe trip-suggestions.ts) — hier übersprungen, eigener Test weiter unten.
+    // CREATE mit Unterkunft und Transport-Notiz
+    await newTrip(page, 'Städtetrip Wien', 60, 63);
+    await page.locator('#trip-accommodation').fill('Hotel Sacher');
+    await page.locator('#trip-accommodation-area').fill('Innere Stadt');
+    await submit(page);
     await expect(page.getByRole('heading', { name: 'Deine Reise ist vorbereitet.' })).toBeVisible();
     await page.getByRole('button', { name: 'Überspringen', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Deine Reise ist vorbereitet.' })).toBeHidden();
+    await expect(page.locator('.trip', { hasText: 'Städtetrip Wien' })).toBeVisible();
 
-    // Kein Reiseziel angegeben → der Detail-Header fällt auf den Titel zurück (siehe reisen.html trip-detail).
-    await expect(page.locator('.trip-detail h2')).toHaveText('Städtetrip Wien');
-
-    // READ: Übersicht zeigt sie, "Reisen"-Reiter zeigt sie mit Bearbeiten-Zugang
-    await page.getByRole('button', { name: 'Reisen', exact: true }).click();
-    const row = page.locator('.trip-row-wrap', { hasText: 'Städtetrip Wien' });
+    // READ: im Reiter „Reisen“ mit Details
+    await tab(page, 'Reisen');
+    const row = page.locator('.trip', { hasText: 'Städtetrip Wien' });
     await expect(row).toBeVisible();
+    await row.click();
+    const detail = page.locator('.detail');
+    await expect(detail).toContainText('Hotel Sacher');
+    await expect(detail).toContainText('3 Nächte · Innere Stadt');
 
-    // UPDATE: vorhandene Werte müssen korrekt geladen sein
-    await row.locator('.edit-icon-btn').click();
+    // UPDATE über das Menü der Details
+    await detail.getByRole('button', { name: 'Weitere Aktionen zur Reise' }).click();
+    await detail.getByRole('button', { name: 'Reise bearbeiten' }).click();
     await expect(page.locator('#trip-title')).toHaveValue('Städtetrip Wien');
     await page.locator('#trip-title').fill('Städtetrip Wien (verlängert)');
-    await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
-    await expect(page.getByText('Städtetrip Wien (verlängert)')).toBeVisible();
+    await choose(page, 'Status', 'Bestätigt');
+    await submit(page);
+    await expect(page.locator('.trip', { hasText: 'Städtetrip Wien (verlängert)' })).toContainText('Bestätigt');
 
-    // DELETE: Bestätigungsdialog
-    await page.locator('.trip-row-wrap', { hasText: 'Städtetrip Wien (verlängert)' }).locator('.edit-icon-btn').click();
+    // DELETE mit Rückfrage
+    await page.locator('.trip', { hasText: 'Städtetrip Wien (verlängert)' }).click();
+    await detail.getByRole('button', { name: 'Weitere Aktionen zur Reise' }).click();
+    await detail.getByRole('button', { name: 'Reise bearbeiten' }).click();
     await page.getByRole('button', { name: 'Reise löschen' }).click();
     await expect(page.getByText('Wirklich löschen?')).toBeVisible();
     await page.getByRole('button', { name: 'Ja, löschen' }).click();
     await expect(page.locator('.modal-panel')).toBeHidden();
     await expect(page.getByText('Städtetrip Wien (verlängert)')).toHaveCount(0);
 
-    expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await axe(page);
   });
 }
 
-test('packing list at mobile width: grouped by category, big touch targets, full add/check/edit/delete', async ({ page }) => {
+test('Reisen tab: filter, sort and trip details; on a phone the details open as a sheet', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/demo/reisen');
+  await page.goto('/demo/reisen?tab=reisen');
   await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Packliste', exact: true }).click();
 
-  // Kategorien sichtbar, Häkchen-Button groß genug zum Antippen (mind. 44x44 px).
-  await expect(page.getByRole('heading', { name: 'Dokumente', level: 3 })).toBeVisible();
-  const check = page.locator('.row', { hasText: 'Reisepass' }).locator('.completion');
-  const box = await check.boundingBox();
-  expect(box!.width).toBeGreaterThanOrEqual(44);
-  expect(box!.height).toBeGreaterThanOrEqual(44);
+  await expect(page.locator('#tl-count')).toHaveText('3 Reisen');
+  await expect(page.locator('.detail')).toBeHidden();
+  await page.locator('.trip', { hasText: 'Berlin Wochenende' }).click();
+  const sheet = page.locator('.detail.is-open');
+  await expect(sheet).toBeVisible();
+  await expect(page.locator('app-mobile-action button')).toBeHidden();
+  await expect(sheet).toContainText('Hin- und Rückfahrt gebucht');
+  await expect(sheet).toContainText('8 offene Aufgaben');
+  await axe(page);
+  await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
+  await expect(page.locator('app-mobile-action button')).toHaveText('Neue Reise');
 
-  // Hinzufügen
-  await page.getByRole('button', { name: 'Artikel hinzufügen' }).click();
-  await page.locator('#packing-item-title').fill('Regenschirm');
-  await page.getByLabel('Kategorie').click();
-  await page.getByRole('option', { name: 'Sonstiges' }).click();
-  await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
-  await expect(page.getByRole('heading', { name: 'Sonstiges', level: 3 })).toBeVisible();
-  await expect(page.getByText('Regenschirm')).toBeVisible();
-
-  // Abhaken
-  await page.locator('.row', { hasText: 'Regenschirm' }).locator('.completion').click();
-  await expect(page.locator('.row', { hasText: 'Regenschirm' }).locator('.row__title')).toHaveClass(/row__title--done/);
-
-  // Bearbeiten
-  await page.locator('.row', { hasText: 'Regenschirm' }).locator('.row__link').click();
-  await page.locator('#packing-item-title').fill('Faltschirm');
-  await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
-  await expect(page.getByText('Faltschirm')).toBeVisible();
-
-  // Löschen
-  await page.locator('.row', { hasText: 'Faltschirm' }).locator('.row__link').click();
-  await page.getByRole('button', { name: 'Artikel löschen' }).click();
-  await page.getByRole('button', { name: 'Ja, löschen' }).click();
-  await expect(page.getByText('Faltschirm')).toHaveCount(0);
-
-  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+  await page.getByLabel('Nach Status filtern', { exact: true }).click();
+  await page.getByRole('option', { name: 'Idee', exact: true }).click();
+  await expect(page.locator('#tl-count')).toHaveText('1 Reise');
+  await expect(page.locator('.trip')).toHaveText(/Skifahren Schweiz/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test('trip tasks at mobile width: big touch targets, full add/complete/reopen/edit/delete', async ({ page }) => {
+test('packing list at mobile width: categories, check with date, add/edit/delete, big touch targets', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/demo/reisen');
+  await page.goto('/demo/reisen?tab=packlisten');
   await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
 
-  const check = page.locator('.row', { hasText: 'Zugtickets buchen' }).locator('.completion');
+  await expect(page.getByRole('heading', { name: 'Wichtige Dokumente', level: 3 })).toBeVisible();
+  await expect(page.locator('#pk-progress')).toHaveText('12 von 24 erledigt');
+  const check = page.locator('.item', { hasText: 'Ladegerät' }).locator('.check');
   const box = await check.boundingBox();
-  expect(box!.width).toBeGreaterThanOrEqual(44);
   expect(box!.height).toBeGreaterThanOrEqual(44);
 
-  // Hinzufügen mit Fälligkeit und Notiz
-  await page.getByRole('button', { name: 'Aufgabe hinzufügen' }).click();
+  await check.click();
+  await expect(page.locator('#pk-progress')).toHaveText('13 von 24 erledigt');
+  await expect(page.locator('.item', { hasText: 'Ladegerät' })).toContainText('Erledigt am');
+
+  // Hinzufügen über „Element hinzufügen“ (unten, auf dem Handy)
+  await expect(page.locator('.page-heading .primary')).toBeHidden();
+  await page.locator('app-mobile-action button', { hasText: 'Element hinzufügen' }).click();
+  // ein offener Dialog verdeckt sich nicht selbst mit dem festen Knopf
+  await expect(page.locator('app-mobile-action button')).toBeHidden();
+  await page.locator('#packing-item-title').fill('Faltschirm');
+  await choose(page, 'Kategorie', 'Unterwegs');
+  await submit(page);
+  await expect(page.locator('.group', { hasText: 'Unterwegs' })).toContainText('Faltschirm');
+
+  // Bearbeiten und Löschen
+  await page.getByRole('button', { name: 'Faltschirm bearbeiten' }).click();
+  await page.locator('#packing-item-title').fill('Taschenschirm');
+  await submit(page);
+  await expect(page.getByText('Taschenschirm')).toBeVisible();
+  await page.getByRole('button', { name: 'Taschenschirm bearbeiten' }).click();
+  await page.getByRole('button', { name: 'Artikel löschen' }).click();
+  await page.getByRole('button', { name: 'Ja, löschen' }).click();
+  await expect(page.getByText('Taschenschirm')).toHaveCount(0);
+
+  // Ansicht „Offen“ zeigt nur Offenes
+  await page.locator('.views button', { hasText: 'Offen' }).click();
+  await expect(page.locator('.item input:checked')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await axe(page);
+});
+
+test('reminders at mobile width: trip, household and calendar in one list; add with time, mark done, edit, delete', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/demo/reisen?tab=erinnerungen');
+  await page.waitForLoadState('networkidle');
+
+  await expect(page.locator('.item', { hasText: 'Online Check-in öffnen' })).toContainText('18:00');
+  await expect(page.locator('.item', { hasText: 'Pflanzen gießen' })).toContainText('Haushalt');
+  await expect(page.locator('.item', { hasText: 'Abreise' })).toContainText('Organisation');
+  await expect(page.locator('.hint--warn')).toContainText('„Pflanzen gießen“ fällt in deine Reisezeit');
+
+  await headAction(page);
   await page.locator('#task-item-title').fill('Visum beantragen');
-  await pickDate(page, page.getByLabel('Fällig am'), iso(5));
+  await pickDate(page, page.getByLabel(/^Datum/), iso(5));
   await page.locator('#task-item-note').fill('Braucht ca. 2 Wochen');
-  await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
-  await expect(page.getByText('Visum beantragen')).toBeVisible();
-  await expect(page.getByText('Braucht ca. 2 Wochen')).toBeVisible();
+  await submit(page);
+  const visa = page.locator('.item', { hasText: 'Visum beantragen' });
+  await expect(visa).toBeVisible();
 
-  // Erledigen und wieder öffnen — nichts bleibt fälschlich als erledigt stehen.
-  const visaCheck = page.locator('.row', { hasText: 'Visum beantragen' }).locator('.completion');
-  await visaCheck.click();
-  await expect(page.locator('.row', { hasText: 'Visum beantragen' }).locator('.row__title')).toHaveClass(/row__title--done/);
-  await visaCheck.click();
-  await expect(page.locator('.row', { hasText: 'Visum beantragen' }).locator('.row__title')).not.toHaveClass(/row__title--done/);
+  await visa.getByRole('button', { name: 'Aktionen zu Visum beantragen' }).click();
+  await page.getByRole('button', { name: 'Als erledigt markieren' }).click();
+  await expect(visa).toHaveClass(/is-done/);
+  await visa.getByRole('button', { name: 'Aktionen zu Visum beantragen' }).click();
+  await page.getByRole('button', { name: 'Wieder öffnen' }).click();
+  await expect(visa).not.toHaveClass(/is-done/);
 
-  // Bearbeiten
-  await page.locator('.row', { hasText: 'Visum beantragen' }).locator('.row__link').click();
+  await visa.getByRole('button', { name: 'Aktionen zu Visum beantragen' }).click();
+  await page.getByRole('button', { name: 'Bearbeiten', exact: true }).click();
+  await expect(page.locator('#task-item-note')).toHaveValue('Braucht ca. 2 Wochen');
   await page.locator('#task-item-title').fill('Visum verlängern');
-  await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
-  await expect(page.getByText('Visum verlängern')).toBeVisible();
+  await submit(page);
+  await expect(page.locator('.item', { hasText: 'Visum verlängern' })).toBeVisible();
 
-  // Löschen
-  await page.locator('.row', { hasText: 'Visum verlängern' }).locator('.row__link').click();
-  await page.getByRole('button', { name: 'Aufgabe löschen' }).click();
+  await page.locator('.item', { hasText: 'Visum verlängern' }).getByRole('button', { name: /Aktionen zu/ }).click();
+  await page.getByRole('button', { name: 'Bearbeiten', exact: true }).click();
+  await page.getByRole('button', { name: 'Erinnerung löschen' }).click();
   await page.getByRole('button', { name: 'Ja, löschen' }).click();
   await expect(page.getByText('Visum verlängern')).toHaveCount(0);
 
-  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+  // Filter Bereich
+  await page.getByRole('button', { name: 'Weitere Filter anzeigen' }).click();
+  await page.getByLabel('Nach Bereich filtern', { exact: true }).click();
+  await page.getByRole('option', { name: 'Haushalt', exact: true }).click();
+  await expect(page.locator('.item')).toHaveCount(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await axe(page);
 });
 
-test('trip budget at mobile width: plan amounts per category, currency-aware, big touch targets', async ({ page }) => {
+test('trip budget at mobile width: totals, plan per category, expenses with category', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/demo/reisen');
+  await page.goto('/demo/reisen?tab=budget');
   await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Budget', exact: true }).click();
-  await page.locator('.budget-category-label').first().waitFor();
 
-  const labels = await page.locator('.budget-category-label').allTextContents();
-  expect(labels).toEqual(['Transport', 'Unterkunft', 'Essen', 'Aktivitäten', 'Shopping', 'Sonstiges', 'Reserve']);
+  const kpis = page.locator('.kpi');
+  await expect(kpis.nth(0)).toContainText('700 €');
+  await expect(kpis.nth(1)).toContainText('420 €');
+  await expect(kpis.nth(2)).toContainText('280 €');
+  await expect(kpis.nth(3)).toContainText('150 €');
+  await expect(page.locator('.cats__row', { hasText: 'Unterkunft' })).toContainText('80 %');
 
-  // Shopping ist noch nicht geplant -> jetzt eine Summe eintragen.
-  const shoppingRow = page.locator('.budget-category-row', { hasText: 'Shopping' });
-  const shoppingInput = shoppingRow.locator('input');
-  const box = await shoppingInput.boundingBox();
-  expect(box!.height).toBeGreaterThanOrEqual(40);
-  await shoppingInput.fill('120');
-  await shoppingInput.blur();
-  await expect(shoppingInput).toHaveValue('120.00');
-  await expect(page.locator('.budget-category-sum')).toContainText('Geplant gesamt');
+  // Planung: Shopping einplanen
+  await page.getByRole('button', { name: 'Planung bearbeiten' }).click();
+  await page.getByLabel('Shopping', { exact: true }).fill('120');
+  await expect(page.locator('.budget-plan__sum')).toContainText('820 €');
+  await submit(page);
+  await expect(page.locator('.cats__row', { hasText: 'Shopping' })).toContainText('0 € von 120 €');
 
-  // Wieder leeren entfernt die Planung.
-  await shoppingInput.fill('');
-  await shoppingInput.blur();
-  await expect(shoppingInput).toHaveValue('');
+  // Ausgabe erfassen
+  await page.locator('app-mobile-action button', { hasText: 'Ausgabe erfassen' }).click();
+  await page.locator('#expense-title').fill('Souvenir');
+  await page.locator('#expense-amount').fill('30');
+  await choose(page, 'Kategorie', 'Shopping');
+  await submit(page);
+  await expect(kpis.nth(1)).toContainText('450 €');
+  await expect(page.locator('.cats__row', { hasText: 'Shopping' })).toContainText('30 € von 120 €');
+  await expect(page.locator('.exp')).toContainText('Souvenir');
 
-  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+  // Bearbeiten und löschen
+  await page.locator('.exp__row', { hasText: 'Souvenir' }).click();
+  await expect(page.locator('#expense-amount')).toHaveValue('30,00');
+  await page.getByRole('button', { name: 'Ausgabe löschen' }).click();
+  await page.getByRole('button', { name: 'Ja, löschen' }).click();
+  await expect(page.locator('.exp')).not.toContainText('Souvenir');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await axe(page);
 });
 
-test('a trip budget can use a different currency than euro, without touching private finances', async ({ page }) => {
+test('a trip budget can use a different currency than euro, and says honestly it stays apart from Finanzen', async ({ page }) => {
   await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Neue Reise' }).click();
-  await page.locator('#trip-title').fill('USA-Reise');
-  await pickDate(page, page.getByLabel('Beginn', { exact: true }), iso(80));
-  await pickDate(page, page.getByLabel('Ende', { exact: true }), iso(90));
+  await newTrip(page, 'USA-Reise', 100, 110);
   await page.locator('#trip-budget').fill('2000');
-  await page.getByLabel('Währung').click();
-  await page.getByRole('option', { name: 'US-Dollar ($)' }).click();
-  await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
+  await choose(page, 'Währung', 'US-Dollar ($)');
+  await submit(page);
   await page.getByRole('button', { name: 'Überspringen', exact: true }).click();
 
-  await page.getByRole('button', { name: 'Budget', exact: true }).click();
-  await expect(page.getByText('$ 2.000,00')).toBeVisible();
-  await expect(page.getByText('nicht automatisch mit Finanzen verbunden')).toBeVisible();
+  await tab(page, 'Budget');
+  await expect(page.locator('.kpi').first()).toContainText('$ 2.000');
+  await expect(page.locator('app-trip-budget aside.finance')).toContainText('Dein Monatsbudget in Finanzen ändert sich dadurch nicht');
 });
 
 test('creating a trip without dates fails with a clear message, nothing is saved', async ({ page }) => {
   await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Neue Reise' }).click();
-  await page.locator('#trip-title').fill('Ohne Datum');
-  await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
+  await tab(page, 'Reisen');
+  await headAction(page);
+  await page.locator('#trip-title').fill('Reise ohne Zeitraum');
+  await submit(page);
   await expect(page.locator('app-error-notice [role="alert"]')).toHaveText('Bitte gib Beginn und Ende der Reise an.');
   await page.getByRole('button', { name: 'Abbrechen' }).click();
-  await expect(page.getByText('Ohne Datum')).toHaveCount(0);
+  await expect(page.getByText('Reise ohne Zeitraum')).toHaveCount(0);
 });
 
-test('smart setup: a flight with hand luggage suggests check-in tasks and a compact-packing hint, and lets you deselect one before accepting', async ({ page }) => {
+test('smart setup: a flight with hand luggage suggests check-in tasks, and lets you deselect one before accepting', async ({ page }) => {
   await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Neue Reise' }).click();
-  await page.locator('#trip-title').fill('Flug nach Rom');
-  await pickDate(page, page.getByLabel('Beginn', { exact: true }), iso(45));
-  await pickDate(page, page.getByLabel('Ende', { exact: true }), iso(48));
-  await page.getByLabel('Transportart').click();
+  await newTrip(page, 'Flug nach Rom', 45, 48);
+  await page.getByLabel(/^Transportart/).click();
   await page.getByRole('option', { name: 'Flugzeug' }).click();
-  await page.getByLabel('Gepäck').click();
+  await page.getByLabel(/^Gepäck/).click();
   await page.getByRole('option', { name: 'Nur Handgepäck' }).click();
-  await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
+  await submit(page);
 
   await expect(page.getByRole('heading', { name: 'Deine Reise ist vorbereitet.' })).toBeVisible();
   await page.getByRole('button', { name: 'Vorschläge prüfen' }).click();
   await expect(page.getByText('Online-Check-in durchführen')).toBeVisible();
   await expect(page.getByText('Gepäckbestimmungen prüfen')).toBeVisible();
-  await expect(page.getByText('Handgepäck-Maße und Flüssigkeitsregel prüfen')).toBeVisible();
-
   await page.getByText('Gepäckbestimmungen prüfen').click(); // abwählen
   await page.getByRole('button', { name: 'Übernehmen' }).click();
   await expect(page.getByRole('heading', { name: 'Deine Reise ist vorbereitet.' })).toBeHidden();
 
-  await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
-  await expect(page.getByText('Online-Check-in durchführen')).toBeVisible();
+  await tab(page, 'Erinnerungen');
+  await expect(page.locator('.item', { hasText: 'Online-Check-in durchführen' })).toBeVisible();
   await expect(page.getByText('Gepäckbestimmungen prüfen')).toHaveCount(0);
 
-  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+  // „Vorschläge hinzufügen“ in der Packliste bietet nur noch, was fehlt
+  await tab(page, 'Packlisten');
+  await page.getByRole('button', { name: 'Vorschläge hinzufügen' }).click();
+  await expect(page.getByRole('heading', { name: /Vorschläge für Flug nach Rom/ })).toBeVisible();
+  await expect(page.locator('.suggestion-list')).not.toContainText('Online-Check-in durchführen');
+  await axe(page);
 });
 
 test('participants: a solo trip starts owned by its creator alone, and the owner can add/remove a contact', async ({ page }) => {
   await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Reisen', exact: true }).click();
-
-  const row = page.locator('.trip-row-wrap', { hasText: 'Berlin Wochenende' });
-  await row.getByRole('button', { name: /Teilnehmer verwalten/ }).click();
+  await newTrip(page, 'Allein unterwegs', 20, 22);
+  await submit(page);
+  await page.getByRole('button', { name: 'Überspringen', exact: true }).click();
+  await tab(page, 'Reisen');
+  await page.locator('.trip', { hasText: 'Allein unterwegs' }).click();
+  await page.locator('.detail').getByRole('button', { name: /Teilnehmer/ }).first().click();
 
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('heading', { name: /Teilnehmer – Berlin Wochenende/ })).toBeVisible();
-  // Solo: der Ersteller ist sofort der einzige Teilnehmer, keine Gruppe/Haushalt-Pflicht.
+  await expect(dialog.getByRole('heading', { name: /Teilnehmer – Allein unterwegs/ })).toBeVisible();
   await expect(dialog.locator('.row', { hasText: 'Anna' })).toContainText('(Du)');
   await expect(dialog.locator('.row', { hasText: 'Anna' })).toContainText('Besitzer');
   await expect(dialog.locator('.row')).toHaveCount(1);
 
   // Hinzufügen aus den eigenen Kontakten, nicht per freier E-Mail-Eingabe.
   await dialog.getByLabel('Person').click();
-  await page.getByRole('option', { name: 'Max' }).click();
+  await page.getByRole('option', { name: 'Lena' }).click();
   await dialog.getByLabel('Rolle').click();
   await page.getByRole('option', { name: 'Bearbeiter' }).click();
   await dialog.getByRole('button', { name: 'Hinzufügen' }).click();
-
-  await expect(dialog.locator('.row', { hasText: 'Max' })).toContainText('Bearbeiter');
+  await expect(dialog.locator('.row', { hasText: 'Lena' })).toContainText('Bearbeiter');
   await expect(dialog.locator('.row')).toHaveCount(2);
 
-  // Entfernen: der Ersteller darf jeden entfernen, ohne die Reise selbst zu verlieren.
-  await dialog.locator('.row', { hasText: 'Max' }).getByRole('button', { name: /entfernen/ }).click();
-  await expect(dialog.locator('.row', { hasText: 'Max' })).toHaveCount(0);
+  await dialog.locator('.row', { hasText: 'Lena' }).getByRole('button', { name: /entfernen/ }).click();
+  await expect(dialog.locator('.row', { hasText: 'Lena' })).toHaveCount(0);
   await expect(dialog.locator('.row')).toHaveCount(1);
-
-  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+  await axe(page);
 });
 
-test('trip detail overview: header, countdown/status and readiness checklist reflect the real trip data', async ({ page }) => {
+test('overview: next trip, suggestion, key figures, to-dos and reminders without duplicates', async ({ page }) => {
   await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
 
-  const detail = page.locator('.trip-detail');
-  await expect(detail.locator('h2')).toHaveText('Berlin, Deutschland');
-  await expect(detail).toContainText('Berlin Wochenende');
-  await expect(detail).toContainText('Geplant');
-  await expect(detail).toContainText('Nur du');
+  const next = page.locator('app-trip-overview .next');
+  await expect(next.locator('h2')).toHaveText('Berlin Wochenende');
+  await expect(next).toContainText('Bestätigt');
+  await expect(next).toContainText('in 12 Tagen');
+  // 12 von 24 gepackt (50%), 1 von 9 Aufgaben (11%), Budget (100%), Zeitraum (100%) → 65%
+  await expect(next.locator('.prep .num')).toHaveText('65 %');
+  await expect(next).toContainText('12 / 24');
+  await expect(next).toContainText('8 offen');
+  await expect(page.locator('.kpi__value')).toHaveText(['2', '8', '60 %']);
 
-  // Demo-Daten: 1 von 3 gepackt (33%), 1 von 2 Aufgaben erledigt (50%), Budget gesetzt (100%), Zeitraum (100%)
-  // → Schnitt 71% (siehe trip-readiness.spec.ts für die Berechnungsregel).
-  await expect(detail.locator('.readiness__percent')).toHaveText('71 %');
-  await expect(detail.locator('.readiness__list')).toContainText('Reisezeitraum vollständig');
-  await expect(detail.locator('.readiness__list')).toContainText('1 von 3 Packitems');
-  await expect(detail.locator('.readiness__list')).toContainText('1 von 2 Aufgaben');
-  await expect(detail.locator('.readiness__list')).toContainText('Budget festgelegt');
-  await expect(detail.locator('.readiness__list')).toContainText('Noch offene Vorbereitung');
+  // Reisevorschlag führt zur Packliste; „Später erinnern“ zeigt den nächsten Schritt
+  const tip = page.locator('.tip');
+  await expect(tip).toContainText('Packliste noch unvollständig');
+  await tip.getByRole('button', { name: 'Später erinnern' }).click();
+  await expect(tip).toContainText('8 Aufgaben sind noch offen');
 
-  await expect(detail.locator('.trip-cards__item--aufgaben')).toContainText('Zugtickets buchen');
-  await expect(detail.locator('.trip-cards__item--packliste')).toContainText('1 von 3 gepackt');
-  await expect(detail.locator('.trip-cards__item--budget')).toContainText('90,00 €');
-  await expect(detail.locator('.trip-cards__item--teilnehmer')).toContainText('Nur du');
+  // To-do abhaken: verschwindet, Zähler sinkt
+  const todos = page.locator('.lists .card').first();
+  await expect(todos.locator('.row').first()).toContainText('Heute');
+  await todos.getByLabel('Reiseversicherung prüfen').click();
+  await expect(todos).not.toContainText('Reiseversicherung prüfen');
+  await expect(page.locator('.kpi__value').nth(1)).toHaveText('7');
 
-  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+  const reminders = page.locator('.lists .card').nth(1);
+  await expect(reminders).toContainText('Online Check-in öffnen');
+  await expect(reminders).toContainText('Pflanzen gießen');
+  await expect(reminders).not.toContainText('Hotel-Check-in bestätigen');
+
+  await page.locator('.kpi', { hasText: 'Budgetstatus' }).click();
+  await expect(page.locator('nav.tabs [aria-current]')).toContainText('Budget');
+  await axe(page);
 });
 
-test('readiness reaches 100% once a brand-new trip is fully packed, tasked and budgeted', async ({ page }) => {
+test('readiness reaches 100% once a brand-new trip is fully packed and its reminder done', async ({ page }) => {
   await page.goto('/demo/reisen');
   await page.waitForLoadState('networkidle');
-
-  await page.getByRole('button', { name: 'Neue Reise' }).click();
-  await page.locator('#trip-title').fill('Rom Kurztrip');
-  await pickDate(page, page.getByLabel('Beginn', { exact: true }), iso(40));
-  await pickDate(page, page.getByLabel('Ende', { exact: true }), iso(43));
-  await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
+  await newTrip(page, 'Rom Kurztrip', 40, 43);
+  await submit(page);
   await page.getByRole('button', { name: 'Überspringen', exact: true }).click();
 
-  // Neu angelegt, noch nichts vorbereitet außer dem Zeitraum: (100+0+0)/3 = 33% (kein Budget → ausgeklammert).
-  const detail = page.locator('.trip-detail');
-  await expect(detail.locator('.readiness__percent')).toHaveText('33 %');
-  await expect(detail.locator('.readiness__list')).toContainText('Noch keine Packliste');
-  await expect(detail.locator('.readiness__list')).toContainText('Noch keine Aufgaben');
-  await expect(detail.locator('.readiness__list')).not.toContainText('Budget festgelegt');
+  await tab(page, 'Übersicht');
+  const prep = page.locator('app-trip-overview .prep .num');
+  await expect(prep).toHaveText('33 %');
 
-  await page.getByRole('button', { name: 'Packliste', exact: true }).click();
-  await page.getByRole('button', { name: 'Artikel hinzufügen' }).click();
+  await tab(page, 'Packlisten');
+  await headAction(page);
   await page.locator('#packing-item-title').fill('Sonnenbrille');
-  await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
-  await page.locator('.row', { hasText: 'Sonnenbrille' }).locator('.completion').click();
+  await submit(page);
+  await page.locator('.item', { hasText: 'Sonnenbrille' }).locator('.check').click();
 
-  await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
-  await page.getByRole('button', { name: 'Aufgabe hinzufügen' }).click();
+  await tab(page, 'Erinnerungen');
+  await headAction(page);
   await page.locator('#task-item-title').fill('Koffer packen');
-  await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
-  await page.locator('.row', { hasText: 'Koffer packen' }).locator('.completion').click();
+  await submit(page);
+  await page.locator('.item', { hasText: 'Koffer packen' }).getByRole('button', { name: /Aktionen zu/ }).click();
+  await page.getByRole('button', { name: 'Als erledigt markieren' }).click();
 
-  await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
-  // Zeitraum 100, Packliste 100, Aufgaben 100, weiterhin kein Budget (ausgeklammert) → 100%, ohne je ein
-  // Budget hinterlegt zu haben (das optionale Feature darf nicht unnötig bestrafen).
-  await expect(detail.locator('.readiness__percent')).toHaveText('100 %');
-  await expect(detail.locator('.readiness__list')).toContainText('Alles vorbereitet');
+  await tab(page, 'Übersicht');
+  await expect(prep).toHaveText('100 %');
+  // ohne Budget schlägt die Übersicht als Nächstes die Budgetplanung vor (Budget ist optional, zählt nicht mit)
+  await expect(page.locator('.tip')).toContainText('Budget planen');
 });
 
-// Mobile: Reiseheader → Countdown/Status → Reisebereitschaft → Aufgaben → Packliste → Budget → Teilnehmer,
-// einspaltig. Desktop darf die vier Karten nebeneinander anordnen (kein strikter 1-Spalten-Zwang).
-test('trip detail overview: mobile stacks sections in the prescribed order, desktop may use a multi-column grid', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 1000 });
-  await page.goto('/demo/reisen');
-  await page.waitForLoadState('networkidle');
-
-  const aufgabenCard = page.locator('.trip-cards__item--aufgaben');
-  const packlisteCard = page.locator('.trip-cards__item--packliste');
-  const budgetCard = page.locator('.trip-cards__item--budget');
-  const teilnehmerCard = page.locator('.trip-cards__item--teilnehmer');
-
-  const yOf = async (locator: typeof aufgabenCard) => (await locator.boundingBox())!.y;
-  const [headerY, readinessY, aufgabenY, packlisteY, budgetY, teilnehmerY] = await Promise.all([
-    yOf(page.locator('.trip-detail__header')),
-    yOf(page.locator('.readiness')),
-    yOf(aufgabenCard),
-    yOf(packlisteCard),
-    yOf(budgetCard),
-    yOf(teilnehmerCard),
-  ]);
-  expect(headerY).toBeLessThan(readinessY);
-  expect(readinessY).toBeLessThan(aufgabenY);
-  expect(aufgabenY).toBeLessThan(packlisteY);
-  expect(packlisteY).toBeLessThan(budgetY);
-  expect(budgetY).toBeLessThan(teilnehmerY);
-
-  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
-
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  // Am Desktop dürfen sich Aufgaben- und Packlisten-Karte eine Zeile teilen (2-Spalten-Grid), statt wie am
-  // Handy strikt untereinander zu stehen.
-  const [aufgabenYDesktop, packlisteYDesktop] = await Promise.all([yOf(aufgabenCard), yOf(packlisteCard)]);
-  expect(Math.abs(aufgabenYDesktop - packlisteYDesktop)).toBeLessThan(5);
+test('all five tabs fit at desktop and phone width without horizontal scroll', async ({ page }) => {
+  for (const width of [1440, 820, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const t of ['', 'reisen', 'packlisten', 'budget', 'erinnerungen']) {
+      await page.goto(`/demo/reisen${t ? '?tab=' + t : ''}`);
+      await page.waitForLoadState('networkidle');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${t} @ ${width}`).toBe(true);
+    }
+  }
 });
 
 // Echtes (angemeldetes) Konto ohne jede Reise: kein Fake-Trip, klarer Empty State.

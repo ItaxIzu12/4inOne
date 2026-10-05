@@ -1,0 +1,250 @@
+// Gemeinsame Bausteine der Reisen-Reiter: Karten, Status-Pillen, Fortschritt, Symbol-Kacheln, Zeilen.
+// Blau ist die Bereichsfarbe (#2889ef-Familie, geprüfte dunklere Stufen für Text).
+:host {
+  display: block;
+  --line: #edf0f5;
+  --blue: #2563eb;
+  --blue-text: #1c5ca8;
+  --blue-soft: #eef4ff;
+  --green: #1f9d55;
+  --text-muted: #5b6b83;
+}
+.card {
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid #e6e9f0;
+  border-radius: 16px;
+  background: #fff;
+}
+h2,
+h3 {
+  margin: 0;
+  color: #16233a;
+}
+h2 {
+  font-size: 17px;
+  line-height: 1.3;
+}
+h3 {
+  font-size: 15px;
+}
+p {
+  margin: 0;
+}
+.muted {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+small {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.card-title app-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--blue);
+}
+.tile {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.tile app-icon {
+  width: 22px;
+  height: 22px;
+}
+.tile--lg {
+  flex-basis: 52px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+}
+.tile--lg app-icon {
+  width: 26px;
+  height: 26px;
+}
+.tile--green {
+  background: #e8f7ee;
+  color: #1f7a44;
+}
+.tile--violet {
+  background: #f1ebfc;
+  color: #6d3fc4;
+}
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.status::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+.status--green {
+  background: #e3f6ea;
+  color: #17723f;
+}
+.status--blue {
+  background: #e6efff;
+  color: #1c4fae;
+}
+.status--gray {
+  background: #eef0f4;
+  color: #4b5568;
+}
+.status--violet {
+  background: #f1ebfc;
+  color: #5a2fa8;
+}
+.status--red {
+  background: #fde8eb;
+  color: #a32038;
+}
+.bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: #e8ecf3;
+  overflow: hidden;
+}
+.bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--blue);
+}
+.bar--green > span {
+  background: var(--green);
+}
+.bar--over > span {
+  background: #d6334f;
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--blue-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.link app-icon {
+  width: 15px;
+  height: 15px;
+}
+.soft {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #dfe6f2;
+  border-radius: 12px;
+  background: #fff;
+  color: #1f2a44;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.soft:hover {
+  border-color: #c7d4ea;
+  background: #f8faff;
+}
+.soft app-icon {
+  width: 18px;
+  height: 18px;
+}
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--blue);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.primary:hover {
+  background: #1d4fd8;
+}
+.primary app-icon {
+  width: 20px;
+  height: 20px;
+}
+.chev {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  color: #8a93a3;
+}
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 28px 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.empty app-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--blue);
+}
+.late {
+  color: #c4214a !important;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+@media (max-width: 760px) {
+  .card {
+    padding: 16px;
+  }
+}

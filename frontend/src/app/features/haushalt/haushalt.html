@@ -8,9 +8,11 @@
           <h1>Haushalt</h1>
           <p class="page-subtitle">Ein Zuhause zum Wohlfühlen. Aufgaben, Verträge, Einkäufe und Routinen an einem Ort.</p>
         </div>
-        <button type="button" class="btn-primary page-head__action" [attr.aria-label]="headAction()" (click)="headActionClick()">
-          <app-icon name="plus" /> <span>{{ headAction() }}</span>
-        </button>
+        @if (headAction()) {
+          <button type="button" class="btn-primary page-head__action" [attr.aria-label]="headAction()" (click)="headActionClick()">
+            <app-icon name="plus" /> <span>{{ headAction() }}</span>
+          </button>
+        }
       </header>
 
       <div class="subtabs domain-tabs" role="tablist" aria-label="Bereiche im Haushalt" (keydown)="onTabKeydown($event)">
@@ -52,5 +54,8 @@
           }
         }
       </div>
+    @if (headAction()) {
+      <app-mobile-action [label]="headAction()" (pressed)="headActionClick()" />
+    }
   </main>
 </app-shell>
