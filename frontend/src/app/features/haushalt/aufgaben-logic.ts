@@ -1,5 +1,5 @@
 import { IconName } from '../../shared/icons/app-icon';
-import { SelectOption } from '../../shared/form/select';
+import { calendarWeek } from '../../shared/dates/calendar-week';
 import { TaskDto, TaskPriority, TaskRoom } from './haushalt-api.service';
 import { daysUntil, isoDate } from './haushalt-logic';
 
@@ -27,36 +27,10 @@ export function room(value: TaskRoom): { label: string; icon: IconName } | null 
 
 export const PRIORITIES: { value: TaskPriority; label: string }[] = [
   { value: 'hoch', label: 'Hoch' },
-  { value: 'mittel', label: 'Mittel' },
+  { value: 'mittel', label: 'Normal' },
   { value: 'niedrig', label: 'Niedrig' },
 ];
-export const PRIORITY_LABEL: Record<TaskPriority, string> = { hoch: 'Hoch', mittel: 'Mittel', niedrig: 'Niedrig' };
-
-export type GroupKey = 'overdue' | 'today' | 'week' | 'later' | 'undated';
-export interface TaskGroup {
-  key: GroupKey;
-  label: string;
-  tasks: TaskDto[];
-}
-
-/** Überfällig, Heute, Diese Woche (bis 7 Tage), Später, Ohne Datum — leere Gruppen fallen weg. */
-export function groupTasks(tasks: TaskDto[], today: Date = new Date()): TaskGroup[] {
-  const groups: TaskGroup[] = [
-    { key: 'overdue', label: 'Überfällig', tasks: [] },
-    { key: 'today', label: 'Heute', tasks: [] },
-    { key: 'week', label: 'Diese Woche', tasks: [] },
-    { key: 'later', label: 'Später', tasks: [] },
-    { key: 'undated', label: 'Ohne Datum', tasks: [] },
-  ];
-  for (const task of tasks) {
-    if (!task.due_date) groups[4].tasks.push(task);
-    else {
-      const days = daysUntil(task.due_date, today);
-      groups[days < 0 ? 0 : days === 0 ? 1 : days <= 7 ? 2 : 3].tasks.push(task);
-    }
-  }
-  return groups.filter((group) => group.tasks.length > 0);
-}
+export const PRIORITY_LABEL: Record<TaskPriority, string> = { hoch: 'Hoch', mittel: 'Normal', niedrig: 'Niedrig' };
 
 const SHORT = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'long' });
 const WITH_DAY = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -123,33 +97,8 @@ export function filterTasks(tasks: TaskDto[], filters: TaskFilters, today: Date 
       const days = t.due_date ? daysUntil(t.due_date, today) : null;
       if (filters.status === 'overdue' && !(days !== null && days < 0)) return false;
       if (filters.status === 'today' && days !== 0) return false;
-      if (filters.status === 'week' && !(days !== null && days >= 0 && days <= 7)) return false;
+      if (filters.status === 'week' && !(days !== null && days >= 0 && t.due_date! <= calendarWeek(isoDate(today)).end)) return false;
     }
     return true;
   });
-}
-
-export const STATUS_OPTIONS: SelectOption[] = [
-  { value: '', label: 'Alle Status' },
-  { value: 'overdue', label: 'Überfällig' },
-  { value: 'today', label: 'Heute fällig' },
-  { value: 'week', label: 'Diese Woche' },
-  { value: 'done', label: 'Erledigt' },
-];
-export const ROOM_FILTER_OPTIONS: SelectOption[] = [
-  { value: '', label: 'Alle Räume' },
-  ...ROOMS.map((r) => ({ value: r.value, label: r.label })),
-  { value: 'none', label: 'Ohne Raum' },
-];
-export const PRIORITY_FILTER_OPTIONS: SelectOption[] = [
-  { value: '', label: 'Alle Prioritäten' },
-  ...PRIORITIES.map((p) => ({ value: p.value, label: p.label })),
-];
-
-/** Sonntag dieser Woche — Ziel von „Diese Woche“ beim schnellen Erfassen. */
-export function endOfWeekIso(today: Date = new Date()): string {
-  const day = today.getDay(); // 0 = Sonntag
-  const sunday = new Date(today);
-  sunday.setDate(today.getDate() + (day === 0 ? 0 : 7 - day));
-  return isoDate(sunday);
 }

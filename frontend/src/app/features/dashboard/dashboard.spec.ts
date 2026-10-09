@@ -59,7 +59,7 @@ describe('Dashboard', () => {
     const request = TestBed.inject(HttpTestingController).expectOne((req) => req.url.includes('/finanzen/private/summary/'));
     request.flush({ available: '250.00', budget: '3000.00', has_data: true });
     f.detectChanges();
-    expect(f.nativeElement.textContent).toContain('250,00 € vom Budget übrig');
+    expect(f.nativeElement.textContent).toContain('250,00 € übrig');
     // Haushalt kommt über HAUSHALT_DATA_PROVIDER (der Stub oben), nicht über HttpClient — dieselbe Weiche wie in
     // app.routes.ts zwischen Demo- und echter Datenquelle.
     expect(f.nativeElement.textContent).toContain('3 offene Aufgaben');
@@ -82,8 +82,8 @@ describe('Dashboard', () => {
     ]);
     f.detectChanges();
     expect(f.componentInstance.nextTrip()?.title).toBe('Wien entdecken');
-    expect(f.nativeElement.querySelector('.next-trip').textContent).toContain('50 %');
-    expect(f.nativeElement.querySelector('.next-trip').textContent).toContain('2 / 4');
+    // Die Startseite zeigt nur den Stand im Band; Details stehen in Reisen.
+    expect(f.nativeElement.querySelector('.domain.travel').textContent).toMatch(/In \d+ Tagen/);
   });
   it('offers the shared dashboard search', () => {
     const f = TestBed.createComponent(Dashboard);
@@ -130,7 +130,7 @@ describe('Dashboard', () => {
       expect(cta?.getAttribute('href')).toBe('/organisation');
       http.expectOne(req => req.url.endsWith('/reisen/trips/')).flush([]);
       f.detectChanges();
-      expect(f.nativeElement.querySelector('.next-trip').textContent).toContain('Noch keine bevorstehende Reise');
+      expect(f.nativeElement.querySelector('.domain.travel').textContent).toContain('Noch keine Reise geplant');
       expect(f.nativeElement.textContent).not.toContain('Berlin Wochenende');
     });
 
@@ -162,27 +162,19 @@ describe('Dashboard', () => {
 
       const rows = Array.from(f.nativeElement.querySelectorAll('.today-row strong') as NodeListOf<HTMLElement>).map((r) => r.textContent);
       expect(rows).toEqual([
-        'Müll rausbringen', 'Zug nach Wien', 'Zahnarzt', 'Blumen gießen', 'Kündigen bis: Strom', '3 Sachen auf der Einkaufsliste',
+        'Müll rausbringen', 'Zug nach Wien', 'Zahnarzt', 'Blumen gießen', 'Kündigen bis: Strom',
       ]);
       expect(f.nativeElement.textContent).toContain('Haushalt · überfällig');
       expect(f.nativeElement.textContent).toContain('Frist in 7 Tagen');
     });
 
-    it('shows at most two suggestions and links each to its trip', () => {
+    it('keeps the start page minimal: greeting, the four areas and today — nothing else', () => {
       const f = TestBed.createComponent(Dashboard);
       f.detectChanges();
-      const suggestion = (key: string, title: string) => ({
-        key, kind: 'TRIP_PACKING' as const, title, reason: 'Begründung', trip: { id: 9, title: 'Wien' }, actions: [], detail: {},
-      });
-      TestBed.inject(HttpTestingController).expectOne((req) => req.url.endsWith('/api/v1/today/')).flush(
-        overview({ suggestions: [suggestion('a', 'Packliste anlegen'), suggestion('b', 'Für „Wien“ sparen'), suggestion('c', 'Dritter')] }),
-      );
-      f.detectChanges();
-
-      const links = Array.from(f.nativeElement.querySelectorAll('.today-suggestion') as NodeListOf<HTMLAnchorElement>);
-      expect(links.length).toBe(2);
-      expect(links[0].getAttribute('href')).toBe('/reisen?trip=9');
-      expect(f.nativeElement.textContent).not.toContain('Dritter');
+      const el = f.nativeElement as HTMLElement;
+      expect(el.querySelectorAll('.domain').length).toBe(4);
+      expect(el.querySelector('.today')).toBeTruthy();
+      expect(el.querySelector('.tasks, .month, .transactions, .next-trip, .suggestions, img')).toBeNull();
     });
 
     it('with two or more areas chosen during onboarding, those tiles move first and are visibly marked — not just reordered', () => {

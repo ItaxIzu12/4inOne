@@ -1,0 +1,142 @@
+<div class="bar">
+  <div class="switch" role="group" aria-label="Zeitraum der Übersicht">
+    @for (p of periods; track p) {
+      <button type="button" [attr.aria-pressed]="period() === p" (click)="select(p)">{{ labels[p] }}</button>
+    }
+  </div>
+</div>
+<!-- Datumsauswahl der Seite, direkt unter dem Zeitraum-Umschalter -->
+<ng-content />
+
+@if (period() !== 'month') {
+  @let t = totals();
+  @if (rangeError(); as problem) {
+    <!-- Die Meldung selbst steht direkt unter dem Datumsfeld; hier nur, warum nichts erscheint und wie es weitergeht. -->
+    <section class="card empty range-empty" aria-labelledby="range-empty-h">
+      <app-icon name="calendar" aria-hidden="true" />
+      <p id="range-empty-h">Für diesen Zeitraum kann nichts angezeigt werden</p>
+      <span class="muted">{{ rangeHelp() }}</span>
+      @if (range().from && range().to && range().to < range().from) {
+        <button type="button" class="swap" (click)="swapRange()">Daten tauschen</button>
+      }
+    </section>
+  } @else {
+    @if (future()) {
+      <p class="note note--info" role="status">
+        Dieser Zeitraum reicht in die Zukunft. Angezeigt werden nur Buchungen, die bereits erfasst sind – nichts wird hochgerechnet.
+      </p>
+    }
+
+    @if (isEmpty()) {
+      <section class="card empty" aria-live="polite">
+        <app-icon name="finance" aria-hidden="true" />
+        <p>{{ emptyText() }}</p>
+        <button type="button" class="link" (click)="showExpenses.emit()">Zu den Ausgaben<app-icon name="arrow" /></button>
+      </section>
+    } @else {
+      <!-- Dieselben Karten wie die Monatsansicht: Einnahmen · Ausgaben · Gespart; nur der Zeitraum darunter ändert sich -->
+      <ul class="kpis">
+        <li class="kpi">
+          <span class="kpi__icon" aria-hidden="true"><app-icon name="trend-up" /></span>
+          <span class="kpi__body"><span class="kpi__label">Einnahmen</span><b class="kpi__value num">{{ money(t.income) }}</b><span class="kpi__hint">{{ scope() }}</span></span>
+        </li>
+        <li class="kpi">
+          <span class="kpi__icon kpi__icon--down" aria-hidden="true"><app-icon name="arrow-down" /></span>
+          <span class="kpi__body"><span class="kpi__label">Ausgaben</span><b class="kpi__value num">{{ money(t.expenses) }}</b><span class="kpi__hint">{{ scope() }}</span></span>
+        </li>
+        <li class="kpi">
+          <span class="kpi__icon kpi__icon--blue" aria-hidden="true"><app-icon name="piggy" /></span>
+          <span class="kpi__body"><span class="kpi__label">Gespart</span><b class="kpi__value num">{{ money(t.saved) }}</b><span class="kpi__hint">{{ scope() }}</span></span>
+        </li>
+      </ul>
+
+      <div class="grid" [class.grid--single]="period() !== 'week' || !top().length">
+        <section class="card" aria-labelledby="period-rows">
+          <h2 id="period-rows" class="list-title">Transaktionen <small>{{ scope() }}</small></h2>
+          @if (t.rows.length) {
+            <ul class="rows">
+              @for (row of visibleRows(); track row.id) {
+                <li>
+                  <button type="button" class="row" (click)="openTransaction.emit(row)">
+                    <span class="dot" [style.background]="categoryColor(row.category)" aria-hidden="true"></span>
+                    <span class="row__text">
+                      <b>{{ rowTitle(row) }}</b>
+                      <small>{{ categoryName(row.category) }}@if (period() !== 'day') { · {{ shortDate(row.date) }} }</small>
+                    </span>
+                    <strong class="num" [class.minus]="row.type === 'EXPENSE'" [class.plus]="row.type === 'INCOME'">
+                      {{ row.type === 'EXPENSE' ? '−' : '+' }}{{ money(row.amount) }}
+                    </strong>
+                  </button>
+                </li>
+              }
+            </ul>
+            @if (hiddenCount() > 0) {
+              <button type="button" class="link" (click)="showAll.set(!showAll())">
+                {{ showAll() ? 'Weniger anzeigen' : (hiddenCount() === 1 ? '1 weitere Buchung anzeigen' : hiddenCount() + ' weitere Buchungen anzeigen') }}
+              </button>
+            }
+          } @else {
+            <p class="muted">Keine Buchungen – nur Sparbeiträge.</p>
+          }
+        </section>
+
+        @if (period() === 'week' && top().length) {
+          <section class="card" aria-labelledby="period-top">
+            <h2 id="period-top">Top-Ausgabenkategorien</h2>
+            <ul class="tops">
+              @for (c of top(); track c.id) {
+                <li>
+                  <span class="tops__name"><span class="dot" [style.background]="c.color" aria-hidden="true"></span>{{ c.name }}</span>
+                  <b class="num">{{ money(c.amount) }}</b>
+                  <span class="tops__bar" aria-hidden="true"><span [style.width.%]="c.pct" [style.background]="c.color"></span></span>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      </div>
+    }
+
+    @if (period() === 'day') {
+      @let m = monthSummary();
+      @if (m) {
+        <section class="card month" aria-labelledby="period-month">
+          <h2 id="period-month">Monat im Blick</h2>
+          <ul class="month__list">
+            <li>
+              @if (m.total !== null && m.available !== null) {
+                <span>{{ +m.available < 0 ? 'Über dem Monatsbudget' : 'Vom Monatsbudget übrig' }}</span>
+                <b class="num" [class.minus]="+m.available < 0">{{ money(m.available.startsWith('-') ? m.available.slice(1) : m.available) }}</b>
+              } @else {
+                <span>Monatsbudget</span><b>—</b><small>{{ monthWords().dative }} nicht festgelegt</small>
+              }
+            </li>
+            <li><span>Ausgaben</span><b class="num">{{ money(m.expenses) }}</b><small>{{ monthWords().when }}</small></li>
+            <li><span>Gespart</span><b class="num">{{ money(m.saved) }}</b><small>{{ monthWords().when }}</small></li>
+          </ul>
+        </section>
+      }
+    }
+
+    @if (period() === 'custom') {
+      @let b = rangeBudget();
+      @if (b && b.total !== null && b.available !== null) {
+        <section class="card month" aria-labelledby="period-budget">
+          <h2 id="period-budget">Monatsbudget {{ matchingMonthLabel() }}</h2>
+          <ul class="month__list">
+            <li>
+              <span>{{ +b.available < 0 ? 'Über dem Monatsbudget' : 'Vom Monatsbudget übrig' }}</span>
+              <b class="num" [class.minus]="+b.available < 0">{{ money(b.available.startsWith('-') ? b.available.slice(1) : b.available) }}</b>
+            </li>
+            <li><span>Monatsbudget</span><b class="num">{{ money(b.total) }}</b></li>
+            <li><span>Gespart</span><b class="num">{{ money(b.saved) }}</b><small>für Sparziele</small></li>
+          </ul>
+        </section>
+      } @else if (matchingMonth()) {
+        <p class="note">Für {{ matchingMonthLabel() }} ist kein Monatsbudget festgelegt – daher kein Restbudget.</p>
+      } @else {
+        <p class="note">Für einen frei gewählten Zeitraum gibt es kein Restbudget – Budgets gelten pro Kalendermonat. Wähle genau einen Monat (1. bis Monatsende), um das Restbudget zu sehen.</p>
+      }
+    }
+  }
+}

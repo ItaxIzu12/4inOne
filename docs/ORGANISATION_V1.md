@@ -1,113 +1,91 @@
-# Organisation V1 — Umsetzung
+# Organisation V1 — Stand (eingefroren)
 
-Organisation unter `/app/organisation` ist ein privater Kalender- und Aufgabenbereich.
-Die bestehende Anwendung, Authentifizierung, AppShell, Icons und Modal-Komponente
-werden wiederverwendet. Die Referenz wird durch echte Angular-Elemente umgesetzt.
+Stand: 08.10.2026. Grundlage: „4inOne – ORGANISATION V1 – FINALER MASTER PROMPT“.
+Organisation hilft, Termine, Aufgaben und Notizen schnell im Griff zu behalten — ohne zweite Produktivitätsplattform.
 
-## Verhalten
+## Analyse
 
-- **Heute:** chronologisch sortierte Termine (auch mehrtägige Überschneidungen),
-  heute fällige und an früheren Tagen fällige, unerledigte Aufgaben; Empty State.
-- **Kalender:** Monatsraster mit Auswahl eines Tages, Tagesliste, nächste Termine,
-  Termin erstellen/bearbeiten/löschen mit Bestätigung.
-- **Aufgaben:** erstellen, bearbeiten, löschen, erledigen und wieder öffnen;
-  Filter für alle, offene und erledigte Aufgaben. Optionale Fälligkeit/Uhrzeit,
-  Priorität LOW/MEDIUM/HIGH, Status OPEN/IN_PROGRESS/DONE.
-- **Dashboard:** im eingeloggten Bereich maximal vier echte Organisationseinträge
-  und echte Terminanzahl; Einträge öffnen die passende Bearbeitung in Organisation.
-  Öffentliche Vorschau bleibt ohne private API-Abfragen. Andere Dashboard-Karten
-  bleiben ausdrücklich als Beispieldaten gekennzeichnet.
-- Lade-, Fehler- und Leerzustände; Formulare bleiben bei Speicherfehlern erhalten.
-- Lokale Browserzeitzone für Today-Abfrage; Eventzeitpunkte werden als ISO-Datumszeiten
-  übertragen. Aufgaben ohne Uhrzeit werden am Fälligkeitstag vor zeitgebundenen
-  Einträgen eingeordnet. Überfällig bedeutet hier: Fälligkeitsdatum vor heute.
+**Bereits vorhanden:** private Modelle `PersonalEvent`, `PersonalTask`, `PersonalNote` (je `owner`, fremde IDs → 404,
+`Cache-Control: no-store`), Today-Aggregation für das Dashboard (`today/`), private Dateien (`PersonalFile`).
 
-## Modelle und Migration
+**Doppelt:** Reiter „Übersicht“ (das globale Dashboard beantwortet „Was ist heute wichtig?“) und „Dateien“ (Dateien
+gehören später zu ihrem Kontext). Haushalt hatte eine eigene Wiederholungslogik — jetzt gemeinsam in `core/recurrence.py`.
 
-`organisation.PersonalEvent`: owner, title, starts_at, ends_at, location,
-description, created_at, updated_at.
+**Wiederverwendung:** dieselben Modelle, APIs, Formulare (`ModalForm`, `app-field`, Datums-/Zeitauswahl),
+Today-Aggregation, Verknüpfungsbereich (`app-connections`).
 
-`organisation.PersonalTask`: owner, title, description, due_date, due_time,
-priority, status, created_at, updated_at.
+**Bewusst erhalten (ohne Reiter):** Dateien-Backend (`organisation/files/`) und der alte haushaltsgebundene
+`CalendarEvent` (Onboarding-Zählung). Erinnerungen haben keinen eigenen Reiter.
 
-Migration: `organisation/0003_personalevent_personaltask.py`, lokal angewendet.
-Indizes nach Eigentümer und Fälligkeit/Zeitpunkt; Datenbankbedingungen verhindern
-Ende vor Beginn sowie Aufgaben-Uhrzeiten ohne Datum.
+## Navigation
 
-Der vorhandene, haushaltsgebundene `CalendarEvent` und seine Daten bleiben unverändert.
-Die neue API veröffentlicht keine gemeinsamen Haushaltstermine. D-011/ADR-001 ist
-weiterhin ein Vorschlag; die domänenübergreifende Bereichsmigration gehört nicht
-zu diesem Auftrag. V1 verwendet einen direkten Besitzer-Fremdschlüssel.
+Genau drei Reiter: **Kalender** (Heute · Woche · Monat) · **Aufgaben** (Alle · Heute · Überfällig · Wiederkehrend ·
+Erledigt) · **Notizen** (Angeheftet, danach zuletzt bearbeitet). Alte Links `?tab=overview|files` führen zum Kalender.
 
-## API
+## Models und Migration (`organisation/0005_organisation_v1`, nur additiv)
 
-Alle Endpunkte erfordern Anmeldung und geben `Cache-Control: no-store` zurück.
+- `PersonalEvent`: + `all_day`, + `recurrence` (`''`/daily/weekly/monthly/yearly). Beginn/Ende bleiben `starts_at`/`ends_at`
+  (Datum + Uhrzeit in einem Feld); ganztägig = Mitternacht in der Zeitzone der Person.
+- `PersonalTask`: + `recurrence_days`, + `recurrence_months`, + `last_done_at`. Status bleibt OPEN/IN_PROGRESS/DONE
+  (DONE = erledigt), Priorität LOW/MEDIUM/HIGH (MEDIUM heißt jetzt „Normal“).
+- `PersonalNote`: `title` optional; Inhalt oder Titel ist Pflicht.
 
-| Pfad unter `/api/v1/organisation/` | Methoden |
+Kein gemeinsames Task-Modell über Haushalt/Organisation/Reisen in V1: Haushalt-Aufgaben hängen am Haushalt
+(gemeinsam), Organisation-Aufgaben an der Person (privat). Gemeinsam ist die Wiederholungslogik. Eine Konsolidierung
+wäre eine riskante Datenmigration und ist als spätere Aufgabe dokumentiert.
+
+## APIs (`/api/v1/organisation/`)
+
+| Endpunkt | Zweck |
 | --- | --- |
-| `events/` | GET, POST |
-| `events/{id}/` | GET, PUT, PATCH, DELETE |
-| `tasks/` | GET, POST |
-| `tasks/{id}/` | GET, PUT, PATCH, DELETE |
-| `today/?timezone=Europe/Berlin` | GET |
+| `events/?start=JJJJ-MM-TT&end=JJJJ-MM-TT&timezone=` | Termine des Zeitraums (max. 400 Tage), Wiederholungen je Vorkommen mit `series_starts_at` |
+| `events/`, `events/<id>/` | CRUD; vergangene Termine erlaubt; Ende vor Beginn → 400 |
+| `tasks/?status=&due_date=&overdue=1&recurring=1` | Aufgaben; `recurrence` setzt die Wiederholung; DONE auf wiederkehrender Aufgabe rückt sie weiter |
+| `notes/` | Notizen (angeheftete zuerst, dann zuletzt bearbeitet) |
+| `today/` | Tagesübersicht fürs Dashboard (berücksichtigt Wiederholungen) |
+| `summary/` | `events_today`, `tasks_today`, `overdue_tasks` in einer Antwort |
 
-Der Server setzt owner ausschließlich anhand von request.user. Listen und
-Detailzugriffe werden nach owner gefiltert. Fremde IDs liefern 404, auch bei
-PUT/PATCH/DELETE. Household-Mitgliedschaft erweitert die Rechte nicht.
-Besitzerdaten sind kein beschreibbares Serializer-Feld.
+## Permissions
 
-Listen liefern in V1 alle persönlichen Einträge; Pagination und serverseitige
-Monatsfilter sind keine Bestandteile dieser Version.
+Privat als Standard: jede Abfrage filtert nach `owner`; fremde IDs liefern 404 ohne Inhalt; Listen, Zeitraum,
+Today und Summary enthalten nur eigene Objekte. Teilen gibt es in V1 nicht — eine Gruppenmitgliedschaft gibt keinen
+Zugriff auf persönliche Organisation-Daten.
 
-## Angular
+## Tests
 
-- `Organisation`: drei Ansichten, Monatsnavigation, Tagesauswahl, Aufgabenfilter,
-  reaktive Bearbeitungsformulare, Löschbestätigung, Lade-/Fehlerzustände.
-- `OrganisationApi`: typisierte HTTP-Aufrufe, keine globale Speicherung privater Daten.
-- `Dashboard`: getrennte öffentliche Beispielansicht und private Heute-Abfrage.
-- `AppShell`, `AppIcon`, `Modal` werden unverändert wiederverwendet.
+- Backend `organisation/test_private_api.py`: Event-CRUD, vergangene Termine, Ende vor Beginn (gleicher Tag/anderer
+  Tag), ganztägig, Zeitraumfilter, wöchentliche/jährliche Wiederholung (auch über die Zeitumstellung), Aufgabenfilter,
+  vergangene Fälligkeit, Erledigen einmalig/wiederkehrend, Notizen (Inhalt ohne Titel, anheften, lösen, Reihenfolge),
+  kein Zugriff und keine Metadaten für andere Personen, Summary.
+- Frontend `organisation-logic.spec.ts`: Monatsraster, Woche ab Montag, Zeiten, Wiederholungen im Zeitraum,
+  Aufgabenansichten, Notiztitel und Datum.
+- E2E `organisation.spec.ts`: leeres Konto (Empty States, keine Demo-Daten), Kalender lädt nur den Zeitraum,
+  Termin mit Fehler am Feld + Wiederholung, Schnelleingabe, Erledigen/Wieder öffnen, Notiz, Löschen mit Bestätigung,
+  Demo-Ansichten, axe bei 360/390/430/820/1440 px, Tagesstreifen am Handy.
 
-## Geänderte/neue Dateien dieses Auftrags
+## Manuell testen
 
-Backend:
-- `backend/config/urls.py`
-- `backend/core/onboarding_views.py`
-- `backend/organisation/models.py`
-- `backend/organisation/migrations/0003_personalevent_personaltask.py`
-- `backend/organisation/serializers.py`
-- `backend/organisation/views.py`
-- `backend/organisation/urls.py`
-- `backend/organisation/test_private_api.py`
+1. Neues Konto → Organisation: drei Reiter, leere Zustände, keine Demo-Daten.
+2. Termin „Teammeeting“, heute 09:30–10:30 → in Heute/Woche/Monat.
+3. Termin im September → erlaubt. Gleicher Tag 10:00 → 09:00 → Fehler am Feld „Ende“.
+4. Aufgabe „Präsentation vorbereiten“ heute → unter „Heute“; mit vergangenem Datum → unter „Überfällig“.
+5. „Wochenplanung“ wöchentlich → erledigen → nächste Fälligkeit +7 Tage, bleibt offen.
+6. Notiz nur mit Inhalt anlegen, bearbeiten, anheften.
+7. Zweite Person: kein Zugriff auf Termine, Aufgaben, Notizen der ersten.
+8. 360 px: Kalender (Tagesstreifen), Aufgaben, Notizen, Formulare ohne seitliches Scrollen.
 
-Frontend:
-- `frontend/src/app/app.routes.ts`
-- `frontend/src/app/features/organisation/organisation.ts`
-- `frontend/src/app/features/organisation/organisation.html`
-- `frontend/src/app/features/organisation/organisation.scss`
-- `frontend/src/app/features/organisation/organisation-api.service.ts`
-- `frontend/src/app/features/dashboard/dashboard.ts`
-- `frontend/src/app/features/dashboard/dashboard.html`
-- `frontend/e2e/organisation.spec.ts`
+## Bewusst nicht implementiert
 
-Dokumentation:
-- `docs/ORGANISATION_V1.md`
+Connections, Suggestions, Automationen, externe Kalender (Google/Outlook/Apple/CalDAV), Dateien-Reiter, AI,
+Teilen von Objekten, Projektmanagement.
 
-Andere bereits parallel geänderte Architektur-/Roadmap-Dokumente wurden nicht
-als Bestandteil dieser Implementierung bearbeitet.
+## Technische Schulden
 
-## Validierung
+- Wiederkehrende Termine werden als Serie bearbeitet (keine Ausnahme für ein einzelnes Vorkommen).
+- Kein gemeinsames Task-Modell (siehe oben).
+- Dateien-Backend ohne Oberfläche, bis es kontextbezogen eingebunden wird.
 
-- Angular-Produktionsbuild mit Typprüfung erfolgreich.
-- 124 Frontend-Tests erfolgreich.
-- 222 Django-Tests erfolgreich, darunter Eigentümerisolation, fremde CRUD-Zugriffe,
-  Owner-Manipulation, Datumsvalidierung, Erledigen/Wiederöffnen, lokale Tagesgrenzen,
-  mehrtägige Termine und Ausschluss des geteilten Haushaltskalenders.
-- Django-Systemprüfung ohne Probleme; keine fehlenden Migrationen.
-- 22 Browserprüfungen erfolgreich; nach der letzten mobilen Layoutkorrektur die
-  drei Organisationstests erneut erfolgreich (390/1440 Pixel, CRUD,
-  Monatsnavigation, Dashboard-Verknüpfung, nicht angemeldeter Zugriff).
-- Screenshots der mobilen und Desktop-Ansicht visuell geprüft.
-- Keine automatisiert erkannten WCAG-A/AA-Verstöße in den geprüften Ansichten.
-- Bestehende Build-Warnung: `finanzen.scss` überschreitet sein CSS-Größenbudget.
+## Eingefroren
 
-Keine Kalenderanbieter, Push-Benachrichtigungen, KI oder Connection Engine ergänzt.
+Organisation V1 ist eingefroren. Danach nur Bugfixes, Security, Accessibility, Performance und echte UX-Probleme
+aus Tests — keine neuen Reiter oder Funktionen, bis alle vier Kernbereiche getestet sind.

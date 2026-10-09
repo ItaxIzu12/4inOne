@@ -9,7 +9,6 @@ Ordnerfristen schreiben NICHT mehr in einen Kalender — „Heute“ und der Kal
 lesen sie direkt (connections/today.py), ohne Kopie, die auseinanderlaufen
 kann."""
 
-import calendar
 from datetime import date, datetime, time, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -19,6 +18,7 @@ from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 
 from core.models import Household, HouseholdMembership
+from core.recurrence import add_months, next_after
 from finanzen import services as finanzen_services
 from finanzen.models import Category
 from haushalt.models import (
@@ -49,6 +49,9 @@ MAX_OPEN_ITEMS = 200
 MAX_OPEN_TASKS = 200
 MAX_FOLDER_ENTRIES = 200
 MAX_SHOPPING_LISTS = 20
+# „Demnächst“ im Haushalt: Wartung, Garantieende und Kündigungsfrist in den
+# nächsten 30 Tagen — die eine Definition für Übersicht, Geräte und Verträge.
+UPCOMING_DAYS = 30
 # Gemerkte Artikel werden nicht abgelehnt, sondern ausgedünnt: über dieser
 # Zahl fallen die am seltensten und am längsten nicht genutzten weg.
 MAX_ITEM_MEMORIES = 500
@@ -107,24 +110,15 @@ def is_child_account(membership: HouseholdMembership | None) -> bool:
     return membership is not None and membership.role == HouseholdMembership.Role.CHILD_ACCOUNT
 
 
-def add_months(value: date, months: int) -> date:
-    """value + months Monate; der Tag wird auf das Monatsende begrenzt
-    (31.01. + 1 Monat = 28./29.02.)."""
-    month_index = value.month - 1 + months
-    year = value.year + month_index // 12
-    month = month_index % 12 + 1
-    day = min(value.day, calendar.monthrange(year, month)[1])
-    return date(year, month, day)
-
-
 # ---------------------------------------------------------------------------
 # Einkaufsliste
 # ---------------------------------------------------------------------------
 
 
 def active_shopping_list(household: Household) -> ShoppingList:
-    """Die Standardliste (die älteste) — Ziel, wenn der Client keine Liste nennt."""
-    shopping_list = ShoppingList.objects.filter(household=household).order_by('id').first()
+    """Die Standardliste (die älteste nicht archivierte) — Ziel, wenn der Client
+    keine Liste nennt. Sind alle archiviert, entsteht eine neue."""
+    shopping_list = ShoppingList.objects.filter(household=household, archived=False).order_by('id').first()
     if shopping_list is None:
         shopping_list = ShoppingList.objects.create(household=household, name='Wocheneinkauf')
     return shopping_list
@@ -338,12 +332,21 @@ def next_assignee(task: Task):
     return rotation[0]
 
 
+def next_due_date(task: Task, today: date | None = None) -> date:
+    """Nächster Termin einer wiederkehrenden Aufgabe: vom BISHERIGEN
+    Fälligkeitsdatum um das Intervall weiter (Di 06.10 → Di 13.10), damit der
+    Wochentag bzw. Monatstag erhalten bleibt. Liegt der Termin dann noch nicht
+    in der Zukunft (spät erledigt), wird im selben Rhythmus weitergerückt —
+    es entstehen keine Nachhol-Datensätze."""
+    today = today or timezone.localdate()
+    return next_after(task.due_date or today, task.recurrence_days, task.recurrence_months, today)
+
+
 @db_transaction.atomic
 def complete_task(task: Task, user) -> Task:
-    """Aufgabe abhaken. Wiederkehrende Aufgaben rücken um ihr Intervall ab
-    HEUTE weiter (nicht ab dem alten Fälligkeitsdatum — wer eine Woche zu
-    spät putzt, ist nicht sofort wieder dran) und wechseln ggf. die
-    zuständige Person."""
+    """Aufgabe abhaken. Wiederkehrende Aufgaben rücken auf ihren nächsten
+    Termin (next_due_date) und wechseln ggf. die zuständige Person; einmalige
+    werden erledigt."""
     now = timezone.now()
     TaskCompletion.objects.create(
         task=task, household=task.household, title=task.title, done_by=user, done_at=now, effort=task.effort
@@ -351,12 +354,7 @@ def complete_task(task: Task, user) -> Task:
     task.last_done_at = now
     task.last_done_by = user
     if task.recurrence_days or task.recurrence_months:
-        today = timezone.localdate()
-        task.due_date = (
-            today + timedelta(days=task.recurrence_days)
-            if task.recurrence_days
-            else add_months(today, task.recurrence_months)
-        )
+        task.due_date = next_due_date(task)
         if task.rotate:
             task.assigned_to = next_assignee(task)
     else:
@@ -380,12 +378,18 @@ def reopen_task(task: Task) -> Task:
     return task
 
 
+def calendar_week(day: date) -> tuple[date, date]:
+    """Kalenderwoche für de-DE: Montag bis Sonntag (date.weekday(): Montag = 0) — dieselbe Regel wie im
+    Frontend (shared/dates/calendar-week.ts)."""
+    monday = day - timedelta(days=day.weekday())
+    return monday, monday + timedelta(days=6)
+
+
 def week_stats(household, user) -> dict:
     """Erledigungen dieser Woche (ab Montag) und der Vorwoche aus dem Protokoll
     (TaskCompletion — auch wiederkehrende Aufgaben zählen jedes Mal), dazu
     die offenen Aufgaben gesamt und die der Person zugewiesenen."""
-    today = timezone.localdate()
-    monday = today - timedelta(days=today.weekday())
+    monday, _ = calendar_week(timezone.localdate())
     start = timezone.make_aware(datetime.combine(monday, time.min))
     last_start = start - timedelta(days=7)
     completions = TaskCompletion.objects.filter(household=household)
@@ -411,8 +415,7 @@ def _period(task: Task, today: date, k: int) -> tuple[date, date]:
         start = add_months(today.replace(day=1), -k * task.recurrence_months)
         return start, add_months(start, task.recurrence_months) - timedelta(days=1)
     if task.recurrence_days == 7:
-        start = today - timedelta(days=today.weekday() + 7 * k)
-        return start, start + timedelta(days=6)
+        return calendar_week(today - timedelta(days=7 * k))
     days = task.recurrence_days or 1
     end = today - timedelta(days=k * days)
     return end - timedelta(days=days - 1), end
@@ -508,34 +511,102 @@ def month_load(household: Household) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def cancel_by(entry: FolderEntry) -> date | None:
-    """Letzter Tag, an dem ein Vertrag noch fristgerecht gekündigt werden
-    kann: Vertragsende minus Kündigungsfrist."""
-    if entry.contract_end is None:
+def cancellation_deadline(entry: FolderEntry) -> date | None:
+    """Letzter Tag, an dem ein Vertrag noch fristgerecht gekündigt werden kann:
+    Vertragsende minus Kündigungsfrist in Tagen (31.12.2026 − 30 = 01.12.2026)."""
+    if entry.kind != FolderEntry.Kind.CONTRACT or entry.end_date is None:
         return None
-    return add_months(entry.contract_end, -(entry.notice_period_months or 0))
+    return entry.end_date - timedelta(days=entry.notice_period_days or 0)
 
 
-def folder_deadlines(entry: FolderEntry) -> list[dict]:
-    """Alle Fristen eines Eintrags, jeweils mit stabilem Schlüssel für den
-    Kalender und einem lesbaren Titel."""
+# Kosten pro Abrechnungszeitraum → Monatsanteil (nur zur Anzeige im Haushalt,
+# nichts davon geht nach Finanzen). Einmalige Kosten haben keinen Monatsanteil.
+_MONTHS_PER_CYCLE = {
+    FolderEntry.BillingCycle.MONTHLY: 1,
+    FolderEntry.BillingCycle.QUARTERLY: 3,
+    FolderEntry.BillingCycle.YEARLY: 12,
+}
+
+
+def monthly_equivalent(entry: FolderEntry) -> Decimal | None:
+    months = _MONTHS_PER_CYCLE.get(entry.billing_cycle)
+    if entry.kind != FolderEntry.Kind.CONTRACT or entry.cost is None or months is None:
+        return None
+    return (entry.cost / months).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+
+def contract_status(entry: FolderEntry, today: date | None = None) -> str:
+    """Wirksamer Vertragsstatus. Gespeichert werden nur ACTIVE, CANCELLED und
+    ENDED; EXPIRING (Kündigungsfrist in den nächsten UPCOMING_DAYS Tagen) und
+    das Ende ohne automatische Verlängerung werden berechnet."""
+    today = today or timezone.localdate()
+    Status = FolderEntry.Status
+    if entry.status == Status.ENDED:
+        return Status.ENDED
+    if entry.end_date is not None and entry.end_date < today and not (
+        entry.auto_renewal and entry.status == Status.ACTIVE
+    ):
+        return Status.ENDED
+    if entry.status == Status.CANCELLED:
+        return Status.CANCELLED
+    deadline = cancellation_deadline(entry)
+    if deadline is not None and today <= deadline <= today + timedelta(days=UPCOMING_DAYS):
+        return Status.EXPIRING
+    return Status.ACTIVE
+
+
+def folder_deadlines(entry: FolderEntry, today: date | None = None) -> list[dict]:
+    """Alle anstehenden Fristen eines Eintrags, jeweils mit stabilem Schlüssel
+    und lesbarem Titel. Beendete oder gekündigte Verträge und außer Betrieb
+    gesetzte Geräte haben keine Fristen mehr."""
     deadlines = []
     if entry.kind == FolderEntry.Kind.CONTRACT:
-        day = cancel_by(entry)
+        if contract_status(entry, today) in (FolderEntry.Status.CANCELLED, FolderEntry.Status.ENDED):
+            return deadlines
+        day = cancellation_deadline(entry)
         if day is not None:
-            label = 'Kündigen bis' if entry.notice_period_months else 'Vertrag endet'
+            label = 'Kündigen bis' if entry.notice_period_days else 'Vertrag endet'
             deadlines.append({'art': 'kuendigung', 'datum': day, 'titel': f'{label}: {entry.name}'})
     else:
-        if entry.warranty_until is not None:
+        if entry.status == FolderEntry.Status.RETIRED:
+            return deadlines
+        if entry.warranty_end_date is not None:
             deadlines.append(
-                {'art': 'garantie', 'datum': entry.warranty_until, 'titel': f'Garantie endet: {entry.name}'}
+                {'art': 'garantie', 'datum': entry.warranty_end_date, 'titel': f'Garantie endet: {entry.name}'}
             )
-        if entry.next_maintenance is not None:
-            deadlines.append({'art': 'wartung', 'datum': entry.next_maintenance, 'titel': f'Wartung: {entry.name}'})
+        if entry.maintenance_due_date is not None:
+            deadlines.append(
+                {'art': 'wartung', 'datum': entry.maintenance_due_date, 'titel': f'Wartung: {entry.name}'}
+            )
     return deadlines
 
 
 FOLDER_DEADLINE_KINDS = ('kuendigung', 'garantie', 'wartung')
+
+
+def upcoming_deadlines(household: Household, today: date | None = None, days: int = UPCOMING_DAYS) -> list[dict]:
+    """„Demnächst“: Fristen aller Geräte und Verträge des Haushalts von heute
+    bis in `days` Tagen, früheste zuerst. Ohne Vertragsnummer oder Kosten —
+    nur, was „Heute“ zeigt."""
+    today = today or timezone.localdate()
+    horizon = today + timedelta(days=days)
+    result = []
+    for entry in FolderEntry.objects.filter(household=household):
+        for deadline in folder_deadlines(entry, today):
+            if today <= deadline['datum'] <= horizon:
+                result.append(
+                    {
+                        'entry_id': entry.pk,
+                        'kind': entry.kind,
+                        'art': deadline['art'],
+                        'title': deadline['titel'],
+                        'name': entry.name,
+                        'date': deadline['datum'],
+                        'days': (deadline['datum'] - today).days,
+                    }
+                )
+    result.sort(key=lambda d: (d['date'], d['title']))
+    return result
 
 
 def first_maintenance(base: date, interval_months: int) -> date:
@@ -557,8 +628,8 @@ def complete_maintenance(entry: FolderEntry) -> FolderEntry:
     today = timezone.localdate()
     entry.last_maintenance = today
     if entry.maintenance_interval_months:
-        entry.next_maintenance = add_months(today, entry.maintenance_interval_months)
+        entry.maintenance_due_date = add_months(today, entry.maintenance_interval_months)
     else:
-        entry.next_maintenance = None
-    entry.save(update_fields=['next_maintenance', 'last_maintenance'])
+        entry.maintenance_due_date = None
+    entry.save(update_fields=['maintenance_due_date', 'last_maintenance', 'updated_at'])
     return entry

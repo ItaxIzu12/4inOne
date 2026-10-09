@@ -1,7 +1,7 @@
 :host { display: block; }
 .budget-year { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border, #dfe4ed); }
 .budget-year__head { display:flex; justify-content:space-between; align-items:center; gap:20px; }
-h3 { margin:0; font-size:18px; color:var(--text); }
+h2 { margin:0; font-size:20px; color:var(--text); }
 p { margin:6px 0 0; font-size:14px; line-height:1.5; color:var(--text-muted); }
 .budget-year__select { display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; }
 select { min-height:44px; padding:8px 32px 8px 12px; font:inherit; border:1px solid var(--border-strong, #b9c0ce); border-radius:12px; color:var(--text); background:var(--surface, #fff); cursor:pointer; }

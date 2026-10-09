@@ -1,31 +1,28 @@
-<section class="card cal" aria-labelledby="cal-title">
+<section class="cal" aria-labelledby="cal-title">
   <div class="toolbar">
-    <div class="toolbar__nav">
-      <button type="button" class="icon-btn" [attr.aria-label]="'Zurück'" (click)="step(-1)"><app-icon name="chevron-left" /></button>
-      <button type="button" class="icon-btn" [attr.aria-label]="'Weiter'" (click)="step(1)"><app-icon name="arrow" /></button>
-      <button type="button" class="today-btn" (click)="goToday()">Heute</button>
-      <h2 id="cal-title">{{ title() }}</h2>
-    </div>
-    <div class="views" role="group" aria-label="Ansicht">
+    <div class="views" role="group" aria-label="Kalenderansicht">
       @for (v of views; track v.key) {
-        <button type="button" [attr.aria-pressed]="view() === v.key" (click)="view.set(v.key)">{{ v.label }}</button>
+        <button type="button" [attr.aria-pressed]="view() === v.key" (click)="setView(v.key)">{{ v.label }}</button>
       }
     </div>
-  </div>
-
-  <div class="chips" role="group" aria-label="Kategorien anzeigen">
-    <button type="button" class="chip chip--all" [attr.aria-pressed]="hidden().size === 0" (click)="showAll()">Alle Kategorien</button>
-    @for (c of categories; track c.value) {
-      <button type="button" class="chip" [class]="'chip cat-' + c.value" [attr.aria-pressed]="!hidden().has(c.value)" (click)="toggleCategory(c.value)">
-        <i class="dot" aria-hidden="true"></i>{{ c.label }}
+    <div class="nav">
+      <button type="button" class="icon-btn" [attr.aria-label]="view() === 'month' ? 'Vorheriger Monat' : view() === 'week' ? 'Vorherige Woche' : 'Vorheriger Tag'" (click)="step(-1)">
+        <app-icon name="chevron-left" />
       </button>
+      <h2 id="cal-title" aria-live="polite">{{ title() }}</h2>
+      <button type="button" class="icon-btn" [attr.aria-label]="view() === 'month' ? 'Nächster Monat' : view() === 'week' ? 'Nächste Woche' : 'Nächster Tag'" (click)="step(1)">
+        <app-icon name="arrow" />
+      </button>
+    </div>
+    <!-- „Zu heute“ abseits der Pfeile, damit man beim Blättern nicht versehentlich zurückspringt -->
+    @if (jumpLabel(); as label) {
+      <button type="button" class="today-btn" (click)="goToday()"><app-icon name="calendar" aria-hidden="true" />{{ label }}</button>
     }
   </div>
 
   <div class="body" [class.body--day]="view() === 'day'">
-    <!-- Monat -->
     @if (view() === 'month') {
-      <div class="month">
+      <div class="month" role="group" aria-label="Tage im Monat">
         @for (w of weekdays; track w) {
           <span class="month__wd" aria-hidden="true">{{ w }}</span>
         }
@@ -37,107 +34,114 @@
             [class.is-selected]="d.key === selectedDay()"
             [attr.aria-current]="d.today ? 'date' : null"
             [attr.aria-pressed]="d.key === selectedDay()"
-            [attr.aria-label]="longDay(d.key) + (d.events.length ? ', ' + d.events.length + (d.events.length === 1 ? ' Termin' : ' Termine') : '')"
+            [attr.aria-label]="dayLabel(d.key, d.events.length)"
             (click)="select(d.key)"
           >
             <span class="cell__num" [class.is-today]="d.today">{{ d.number }}</span>
             <span class="cell__events" aria-hidden="true">
-              @for (e of d.events.slice(0, 2); track e.id) {
-                <span class="ev" [class]="'ev cat-' + (e.category ?? 'sonstiges')"><i class="dot"></i>{{ startTime(e) }} {{ e.title }}</span>
+              @for (e of d.events.slice(0, 2); track e.id + e.starts_at) {
+                <span class="ev" [class]="'ev cat-' + (e.category ?? 'sonstiges')">{{ e.title }}</span>
               }
               @if (d.events.length > 2) {
                 <span class="ev ev--more">+{{ d.events.length - 2 }} weitere</span>
               }
             </span>
-            <span class="cell__dots" aria-hidden="true">
-              @for (e of d.events.slice(0, 3); track e.id) {
-                <i class="dot" [class]="'dot cat-' + (e.category ?? 'sonstiges')"></i>
-              }
-            </span>
+            @if (d.events.length) {
+              <span class="cell__dot" aria-hidden="true"></span>
+            }
           </button>
         }
       </div>
     }
 
-    <!-- Woche -->
     @if (view() === 'week') {
+      <!-- Rechner: sieben Spalten; Handy: Tagesstreifen, darunter die Agenda -->
       <div class="week">
         @for (d of week(); track d.day) {
           <div class="week__col" [class.is-selected]="d.day === selectedDay()">
-            <button type="button" class="week__head" [attr.aria-pressed]="d.day === selectedDay()" (click)="select(d.day)">
-              <small>{{ dayWord(d.day) }}</small><b>{{ d.day.slice(8, 10) }}</b>
+            <button type="button" class="week__head" [attr.aria-pressed]="d.day === selectedDay()" [attr.aria-label]="dayLabel(d.day, d.events.length)" (click)="select(d.day)">
+              <small>{{ weekday(d.day) }}</small><b [class.is-today]="d.day === todayKey">{{ +d.day.slice(8, 10) }}</b>
             </button>
-            @for (e of d.events; track e.id) {
-              <button type="button" class="week__ev" [class]="'week__ev cat-' + (e.category ?? 'sonstiges')" (click)="openEvent.emit(e)">
+            @for (e of d.events; track e.id + e.starts_at) {
+              <button type="button" class="week__ev" (click)="openEvent.emit(e)">
                 <small>{{ timeRange(e) }}</small><b>{{ e.title }}</b>
               </button>
-            } @empty {
-              <span class="week__empty">—</span>
             }
           </div>
         }
       </div>
-    }
-
-    <!-- Gewählter Tag -->
-    <aside class="day" aria-labelledby="day-h">
-      <div class="day__head">
-        <div>
-          <h3 id="day-h">{{ longDay(selectedDay()) }}</h3>
-          <p class="sub">{{ dayInfo() }}</p>
-        </div>
-        <div class="day__nav">
-          <button type="button" class="icon-btn" aria-label="Vorheriger Tag" (click)="stepDay(-1)"><app-icon name="chevron-left" /></button>
-          <button type="button" class="icon-btn" aria-label="Nächster Tag" (click)="stepDay(1)"><app-icon name="arrow" /></button>
-        </div>
+      <div class="strip" role="group" aria-label="Tag der Woche">
+        @for (d of week(); track d.day) {
+          <button type="button" class="strip__day" [attr.aria-pressed]="d.day === selectedDay()" [attr.aria-label]="dayLabel(d.day, d.events.length)" (click)="select(d.day)">
+            <small>{{ weekday(d.day) }}</small>
+            <b [class.is-today]="d.day === todayKey">{{ +d.day.slice(8, 10) }}</b>
+            <i class="strip__dot" [class.is-on]="d.events.length > 0" aria-hidden="true"></i>
+          </button>
+        }
       </div>
-      @for (e of dayEvents(); track e.id) {
-        <article class="event" [class]="'event cat-' + (e.category ?? 'sonstiges')">
-          <p class="event__time">{{ timeRange(e) }}</p>
-          <h4>{{ e.title }}</h4>
-          @if (e.location) {
-            <p class="event__line"><app-icon name="map-pin" aria-hidden="true" />{{ e.location }}</p>
-          }
-          <span class="tag">{{ category(e.category).label }}</span>
-          @if (e.description) {
-            <p class="event__line event__desc"><app-icon name="list" aria-hidden="true" />{{ e.description }}</p>
-          }
-          <p class="event__line"><app-icon name="user" aria-hidden="true" />Nur für mich</p>
-          <div class="event__actions">
-            <button type="button" class="btn-primary" [attr.aria-label]="e.title + ' bearbeiten'" (click)="openEvent.emit(e)">Bearbeiten</button>
-          </div>
-        </article>
-      } @empty {
-        <div class="day__empty">
-          <p class="muted">An diesem Tag ist nichts geplant.</p>
-          <button type="button" class="btn-soft" (click)="newEvent.emit(selectedDay())"><app-icon name="plus" />Termin an diesem Tag</button>
-        </div>
-      }
-    </aside>
-  </div>
-</section>
-
-<section class="card upcoming" aria-labelledby="up-h">
-  <div class="card-head">
-    <h2 id="up-h"><app-icon name="list" aria-hidden="true" />Demnächst</h2>
-  </div>
-  <ul class="rows">
-    @for (e of upcoming(); track e.id) {
-      <li>
-        <button type="button" class="row-btn up-row" (click)="openEvent.emit(e)">
-          <span class="up__day" [class.is-today]="eventDay(e) === todayKey">{{ dayWord(eventDay(e)) }}</span>
-          <span class="up__time">{{ timeRange(e) }}</span>
-          <span class="up__title" [class]="'up__title cat-' + (e.category ?? 'sonstiges')"><i class="dot" aria-hidden="true"></i><b>{{ e.title }}</b></span>
-          <span class="up__place">
-            @if (e.location) {
-              <app-icon name="map-pin" aria-hidden="true" />{{ e.location }}
-            }
-          </span>
-          <span class="up__rel">{{ relativeStart(e) }}</span>
-        </button>
-      </li>
-    } @empty {
-      <li class="empty">Keine kommenden Termine.</li>
     }
-  </ul>
+
+    <!-- Agenda des Zeitraums: Tag, ganze Woche oder ganzer Monat, nach Tagen gruppiert -->
+    <section class="agenda" [class.agenda--scroll]="view() !== 'day'" aria-labelledby="agenda-h">
+      <h3 id="agenda-h">{{ agendaHeading() }}</h3>
+      @if (loading()) {
+        <p class="muted" role="status">Termine werden geladen …</p>
+      } @else if (empty()) {
+        <div class="empty">
+          <h4>Noch keine Termine</h4>
+          <p class="muted">Plane deinen ersten Termin.</p>
+          <button type="button" class="link-btn" (click)="addEvent.emit(selectedDay())"><app-icon name="plus" />Termin hinzufügen</button>
+        </div>
+      } @else {
+        @if (pastCount() && !showPast()) {
+          <button type="button" class="more-btn" (click)="showPast.set(true)">
+            <app-icon name="chevron-up" aria-hidden="true" />Frühere Termine ({{ pastCount() }})
+          </button>
+        }
+        @for (g of shownDays(); track g.day) {
+          <div class="agenda__day" [id]="'agenda-' + g.day" [class.is-selected]="view() !== 'day' && g.day === selectedDay()">
+            @if (view() !== 'day') {
+              <h4 class="agenda__date" [class.is-today]="g.day === todayKey">{{ groupLabel(g.day) }}</h4>
+            }
+            <ul class="agenda__list">
+              @for (e of g.events; track e.id + e.starts_at) {
+                <li>
+                  <button type="button" class="agenda__row" [attr.aria-label]="e.title + ', ' + timeRange(e) + (e.location ? ', ' + e.location : '') + ' – bearbeiten'" (click)="openEvent.emit(e)">
+                    <span class="agenda__time">
+                      <b>{{ e.all_day ? 'Ganztägig' : startTime(e) }}</b>
+                      @if (!e.all_day && e.ends_at) {<small>bis {{ endTime(e) }}</small>}
+                    </span>
+                    <span class="agenda__text">
+                      <b><i class="dot" [class]="'dot cat-' + (e.category ?? 'sonstiges')" aria-hidden="true"></i>{{ e.title }}</b>
+                      @if (e.location || e.recurrence) {
+                        <small>
+                          @if (e.location) {<span><app-icon name="map-pin" aria-hidden="true" />{{ e.location }}</span>}
+                          @if (e.recurrence) {<span><app-icon name="repeat" aria-hidden="true" />{{ repeatHint(e) }}</span>}
+                        </small>
+                      }
+                    </span>
+                  </button>
+                </li>
+              } @empty {
+                <li class="agenda__none">
+                  <p class="muted">Keine Termine an diesem Tag.</p>
+                  <button type="button" class="link-btn" (click)="addEvent.emit(selectedDay())"><app-icon name="plus" />Termin hinzufügen</button>
+                </li>
+              }
+            </ul>
+          </div>
+        } @empty {
+          <div class="agenda__none">
+            <p class="muted">{{ emptyPeriod() }}</p>
+            <button type="button" class="link-btn" (click)="addEvent.emit(selectedDay())"><app-icon name="plus" />Termin hinzufügen</button>
+          </div>
+        }
+        @if (hiddenCount() > 0) {
+          <button type="button" class="more-btn" (click)="showAll.set(true)">
+            <app-icon name="chevron-down" aria-hidden="true" />{{ hiddenCount() === 1 ? 'Einen weiteren Termin anzeigen' : 'Weitere ' + hiddenCount() + ' Termine anzeigen' }}
+          </button>
+        }
+      }
+    </section>
+  </div>
 </section>

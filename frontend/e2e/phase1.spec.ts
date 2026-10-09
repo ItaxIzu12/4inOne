@@ -1,33 +1,21 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+// Grundgerüst des Demo-Dashboards in allen Breiten; die Inhalte selbst prüft demo-dashboard.spec.ts.
 for (const width of [360, 390, 768, 1440]) {
   test(`phase 1 dashboard at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
+    await page.route('http://localhost:8000/api/**', (route) => route.abort());
     await page.goto('/demo');
-    await expect(page.getByRole('heading', { name: 'Hallo Sophie!' })).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
-      true,
-    );
-    if (width < 761) {
-      await expect(page.getByRole('button', { name: /Yoga/ })).toBeVisible();
-      await expect(page.locator('.mobile-nav')).toBeVisible();
-      await expect(page.locator('.time')).toHaveCount(4);
-      await expect(page.locator('.domain p')).toHaveCount(4);
-      await expect(page.locator('.trip-progress')).toBeVisible();
+    // Die Begrüßung folgt der Tageszeit (Guten Morgen / Hallo / Guten Abend).
+    await expect(page.getByRole('heading', { name: /^(Guten Morgen|Hallo|Guten Abend),? Sophie!$/ })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    if (width < 761) await expect(page.locator('.mobile-nav')).toBeVisible();
+    for (const area of ['Finanzen', 'Haushalt', 'Organisation', 'Reisen']) {
+      await expect(page.locator('main').getByRole('link', { name: new RegExp(area) }).first()).toBeVisible();
     }
-    await page.getByRole('button', { name: 'Zur Packliste' }).click();
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await page.getByLabel('Ausweis & Tickets').check();
-    await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Zur Packliste' })).toBeFocused();
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
-      .analyze();
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'));
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
     expect(results.violations).toEqual([]);
-    await page.getByRole('heading', { name: 'Hallo Sophie!' }).click();
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await page.screenshot({ path: `test-results/dashboard-${width}.png`, fullPage: true });
   });
 }
 for (const path of ['/login', '/registrieren']) {

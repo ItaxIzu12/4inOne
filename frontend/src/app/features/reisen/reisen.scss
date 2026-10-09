@@ -1,6 +1,6 @@
 @use '../../shared/styles/domain-layout' as domain;
-// Reisen: Seitenhülle (Kopf, Reiter), Übersicht und Dialoge. Die Reiter Reisen, Packlisten, Budget und
-// Erinnerungen haben eigene Stile (trip-*.scss). Blau ist die Bereichsfarbe.
+// Reisen: Seitenhülle (Meine Reisen bzw. Kopf einer Reise mit vier Reitern) und die Dialoge. Die Reiter selbst
+// haben eigene Stile (trip-*.scss). Blau ist die Bereichsfarbe.
 :host {
   display: block;
   color: #16233a;
@@ -102,7 +102,8 @@ textarea:focus-visible {
 .btn-primary:hover {
   background: var(--accent-hover);
 }
-.primary app-icon {
+.primary app-icon,
+.secondary app-icon {
   width: 20px;
   height: 20px;
 }
@@ -145,6 +146,125 @@ textarea:focus-visible {
   border-bottom-color: var(--accent);
   color: #1c4fae;
   font-weight: 650;
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin: -8px 0 6px;
+  padding: 0 4px 0 0;
+  border: 0;
+  background: none;
+  color: #1c5ca8;
+  font-size: 14px;
+  font-weight: 600;
+}
+.back app-icon {
+  width: 18px;
+  height: 18px;
+}
+.back:hover {
+  text-decoration: underline;
+}
+.trip-heading__text {
+  min-width: 0;
+}
+.trip-heading h1 {
+  overflow-wrap: anywhere;
+}
+.trip-heading .subtitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.subtitle__sep {
+  color: #9aa4b5;
+}
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.status::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+.status--green {
+  background: #e3f6ea;
+  color: #17723f;
+}
+.status--blue {
+  background: #e6efff;
+  color: #1c4fae;
+}
+.status--gray {
+  background: #eef0f4;
+  color: #4b5568;
+}
+.status--red {
+  background: #fde8eb;
+  color: #a32038;
+}
+.card-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  max-width: 520px;
+  margin: 24px auto 0;
+  padding: 36px 20px;
+  border: 1px solid #e6e9f0;
+  border-radius: 16px;
+  background: #fff;
+  text-align: center;
+}
+.card-state app-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--accent);
+}
+.card-state h2,
+.card-state p {
+  margin: 0;
+}
+.more-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #1c5ca8;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+.more-toggle .muted {
+  color: #5b6b83;
+  font-weight: 400;
+}
+.more-toggle app-icon {
+  width: 18px;
+  height: 18px;
+}
+.more {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.overlap-warning .small {
+  font-size: 13px;
 }
 .budget-plan {
   display: grid;
@@ -447,10 +567,29 @@ textarea:focus-visible {
     width: 44px;
     height: 44px;
   }
+  .trip-heading {
+    align-items: flex-start;
+  }
+  .trip-heading h1 {
+    font-size: 24px;
+    letter-spacing: -0.5px;
+  }
+  // Der Zeitraum ist in einer Reise die wichtigste Zeile — auch am Handy sichtbar.
+  .trip-heading .subtitle {
+    display: flex;
+    font-size: 13.5px;
+  }
+  .trip-heading .secondary span {
+    display: none;
+  }
+  .trip-heading .secondary {
+    width: 44px;
+    padding: 0;
+  }
   .field-row {
     flex-direction: column;
   }
-  // Fünf Reiter auf 390 px ohne Scrollen, Symbole nur am Rechner.
+  // Vier Reiter auf 360 px ohne Scrollen, Symbole nur am Rechner.
   .tabs {
     gap: 0;
     border: 1px solid #e3eaf7;

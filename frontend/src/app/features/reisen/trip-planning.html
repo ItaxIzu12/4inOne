@@ -1,0 +1,120 @@
+@let t = trip();
+<div class="layout">
+  <section class="card tasks" aria-labelledby="pl-tasks">
+    <div class="card-head">
+      <h2 id="pl-tasks" class="card-title"><app-icon name="check-circle" aria-hidden="true" />Aufgaben</h2>
+      @if (tasks().length) {
+        <div class="chips" role="group" aria-label="Aufgaben anzeigen">
+          <button type="button" [attr.aria-pressed]="view() === 'open'" (click)="view.set('open')">Offen <span class="num">{{ openCount() }}</span></button>
+          <button type="button" [attr.aria-pressed]="view() === 'done'" (click)="view.set('done')">Erledigt <span class="num">{{ doneCount() }}</span></button>
+          @if (shared()) {
+            <button type="button" [attr.aria-pressed]="view() === 'mine'" (click)="view.set('mine')">Meine <span class="num">{{ mineCount() }}</span></button>
+          }
+        </div>
+      }
+    </div>
+
+    @if (canEdit() && tasks().length) {
+      <form class="quick" (submit)="submit($event)">
+        <label class="quick__field" for="trip-task-quick">
+          <app-icon name="plus" aria-hidden="true" />
+          <span class="sr-only">Neue Aufgabe</span>
+          <input id="trip-task-quick" type="text" maxlength="120" autocomplete="off" placeholder="Aufgabe, z. B. Hotel buchen" [value]="draft()" (input)="draft.set($any($event.target).value)" (keydown.enter)="submit($event)" />
+        </label>
+        <button type="button" class="quick__more" aria-label="Mit Datum, Uhrzeit und Zuständigkeit hinzufügen" title="Mit Datum und Details" (click)="addWithDetails()"><app-icon name="calendar" /></button>
+        <button type="submit" class="quick__submit" [disabled]="!draft().trim() || busy()">Hinzufügen</button>
+      </form>
+    }
+
+    @if (!tasks().length) {
+      <div class="empty">
+        <app-icon name="list" />
+        <h3>Noch nichts geplant</h3>
+        <p class="muted">Füge Aufgaben oder wichtige Reiseinformationen hinzu.</p>
+        @if (canEdit()) {
+          <div class="empty__actions">
+            <button type="button" class="primary" (click)="addTask.emit('')"><app-icon name="plus" />Aufgabe hinzufügen</button>
+            <button type="button" class="soft" (click)="suggest.emit()"><app-icon name="bulb" />Vorschläge ansehen</button>
+          </div>
+        }
+      </div>
+    } @else {
+      <ul class="rows">
+        @for (task of shown(); track task.id) {
+          @let d = due(task);
+          <li class="row" [class.is-done]="task.status === 'DONE'">
+            <label class="row__check">
+              <input type="checkbox" [checked]="task.status === 'DONE'" [disabled]="!canEdit()" (change)="toggleTask.emit(task)" />
+              <span class="row__text">
+                <b>{{ task.title }}</b>
+                <small>
+                  <span [class.late]="d.urgent && task.status === 'OPEN'">{{ d.text }}</span>
+                  @if (task.assignee_name) {
+                    <span class="row__who"> · {{ task.assignee_name }}</span>
+                  }
+                </small>
+              </span>
+            </label>
+            @if (canEdit()) {
+              <button type="button" class="icon-btn" [attr.aria-label]="task.title + ' bearbeiten'" (click)="editTask.emit(task)"><app-icon name="edit" /></button>
+            }
+          </li>
+        } @empty {
+          <li class="row row--empty muted">
+            {{ view() === 'done' ? 'Noch nichts erledigt.' : view() === 'mine' ? 'Dir ist keine offene Aufgabe zugewiesen.' : 'Alles erledigt.' }}
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <div class="side">
+    <section class="card" aria-labelledby="pl-people">
+      <div class="card-head">
+        <h2 id="pl-people" class="card-title"><app-icon name="people" aria-hidden="true" />Teilnehmer</h2>
+        <button type="button" class="link" (click)="manageParticipants.emit()">{{ t.my_role === 'OWNER' ? 'Verwalten' : 'Ansehen' }}</button>
+      </div>
+      <ul class="people">
+        @for (p of t.participants; track p.id) {
+          <li>
+            <span class="avatar" aria-hidden="true">{{ initials(p.display_name) }}</span>
+            <span class="people__name">{{ p.display_name }}{{ p.is_self ? ' (Du)' : '' }}</span>
+            <small>{{ roleLabels[p.role] }}</small>
+          </li>
+        } @empty {
+          <li class="muted">Noch niemand eingetragen.</li>
+        }
+      </ul>
+      <p class="privacy"><app-icon name="lock" aria-hidden="true" />Teilnehmer sehen nur diese Reise – nie deine Finanzen, deinen Haushalt oder deinen Kalender.</p>
+    </section>
+
+    <section class="card" aria-labelledby="pl-info">
+      <div class="card-head">
+        <h2 id="pl-info" class="card-title"><app-icon name="travel" aria-hidden="true" />Anreise und Unterkunft</h2>
+      </div>
+      <dl class="info">
+        <div><dt>Abreise</dt><dd>{{ t.departure || 'Nicht angegeben' }}</dd></div>
+        <div>
+          <dt>Transport</dt>
+          <dd>{{ t.transport_type ? transportLabels[t.transport_type] : 'Nicht angegeben' }}@if (t.transport_note) { · {{ t.transport_note }} }</dd>
+        </div>
+        <div>
+          <dt>Unterkunft</dt>
+          <dd>{{ t.accommodation || 'Nicht angegeben' }}@if (t.accommodation_area) { · {{ t.accommodation_area }} }</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="card" aria-labelledby="pl-tips">
+      <h2 id="pl-tips" class="card-title"><app-icon name="bulb" aria-hidden="true" />Hinweise</h2>
+      <ul class="tips">
+        @for (tip of tips(); track tip) {
+          <li>{{ tip }}</li>
+        }
+      </ul>
+      @if (canEdit()) {
+        <button type="button" class="link" (click)="suggest.emit()">Vorschläge für Aufgaben und Packliste<app-icon name="arrow" /></button>
+      }
+    </section>
+  </div>
+</div>

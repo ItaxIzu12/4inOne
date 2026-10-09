@@ -1,8 +1,4 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
-import { FormsModule } from '@angular/forms';
-import { Subject, switchMap, of, catchError } from 'rxjs';
-import { NgTemplateOutlet } from '@angular/common';
-import { DatePipe } from '@angular/common';
 import { DEMO_MODE } from '../../core/demo-context';
 import {
   PrivateFinanceApi,
@@ -26,9 +22,6 @@ import {
   inject,
   signal,
   DestroyRef,
-  ElementRef,
-  Injector,
-  afterNextRender,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AppShell } from '../../layout/app-shell';
@@ -50,8 +43,8 @@ export interface TodayRow {
   link?: { path: string[]; query: Record<string, string | number> };
 }
 
-/** Heute fokussiert halten (D8): lieber wenige Zeilen, der Rest liegt in den Bereichen. */
-const TODAY_ROWS = 6;
+/** Heute fokussiert halten: höchstens fünf Zeilen, der Rest liegt in den Bereichen. */
+const TODAY_ROWS = 5;
 
 function hhmm(iso: string): string {
   return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
@@ -69,9 +62,6 @@ function ddmm(isoDate: string): string {
     AppIcon,
     Modal,
     RouterLink,
-    DatePipe,
-    NgTemplateOutlet,
-    FormsModule,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
@@ -107,6 +97,7 @@ export class Dashboard {
       .sort((a, b) => a.start_date.localeCompare(b.start_date));
     return upcoming[0] ?? null;
   });
+  /** Unterwegs ergibt sich aus dem Zeitraum (Reisen V1 speichert keinen Status „Unterwegs“). */
   private router = inject(Router);
   private destroy = inject(DestroyRef);
   readonly demo = inject(DEMO_MODE);
@@ -116,57 +107,11 @@ export class Dashboard {
   readonly organisationToday = signal<TodayData | null>(null);
   /** Nur bei echtem Konto: „Heute“ aus allen Bereichen (backend/connections/today.py). */
   readonly overview = signal<TodayOverview | null>(null);
-  /** Höchstens zwei Vorschläge — vollständig und mit Aktionen stehen sie in der jeweiligen Reise. */
-  readonly suggestions = computed(() =>
-    this.live() ? (this.overview()?.suggestions ?? []).slice(0, 2) : [],
-  );
   readonly todayLoading = signal(false);
   readonly todayError = signal('');
-  private readonly boardHost = inject<ElementRef<HTMLElement>>(ElementRef);
-  private readonly boardInjector = inject(Injector);
-  private boardFocusAfterRender(selector: string) {
-    afterNextRender(
-      () => this.boardHost.nativeElement.querySelector<HTMLElement>(selector)?.focus(),
-      {
-        injector: this.boardInjector,
-      },
-    );
-  }
-  boardShowTaskForm() {
-    this.boardAdding.set(true);
-    this.boardFocusAfterRender('#demo-task-title');
-  }
-  boardCloseTaskForm() {
-    this.boardAdding.set(false);
-    this.boardFocusAfterRender('.new-action');
-  }
-  readonly boardMonth = signal(financeMonth());
+  /** Für die Suche oben: Buchungen des Monats und eigene Aufgaben (die Startseite zeigt sie selbst nicht). */
   readonly boardSummary = signal<FinanceSummary | null>(null);
-  readonly boardLoading = signal(false);
-  readonly boardFinanceError = signal(false);
   readonly boardTasks = signal<PersonalTask[]>([]);
-  readonly boardTaskError = signal('');
-  readonly boardTasksLoading = signal(true);
-  readonly boardBusy = signal(false);
-  readonly boardAdding = signal(false);
-  boardTaskTitle = '';
-  readonly boardMoney = euros;
-  readonly boardDisplayedTasks = computed(() => this.boardTasks().slice(0, 4));
-  readonly boardMonthLabel = computed(() =>
-    new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' }).format(
-      new Date(`${this.boardMonth()}-01T12:00`),
-    ),
-  );
-  readonly boardUsed = computed(() => {
-    const s = this.boardSummary();
-    return s && Number(s.total) > 0
-      ? Math.min(
-          100,
-          Math.max(0, Math.round(((Number(s.expenses) + Number(s.saved)) / Number(s.total)) * 100)),
-        )
-      : 0;
-  });
-  private readonly boardMonths = new Subject<string>();
   readonly boardResults = computed(() => {
     const boardQuery = this.boardQuery().trim().toLocaleLowerCase('de');
     if (!boardQuery) return [];
@@ -204,104 +149,23 @@ export class Dashboard {
       .filter((r) => `${r.title} ${r.area}`.toLocaleLowerCase('de').includes(boardQuery))
       .slice(0, 8);
   });
+  /** Finanzen des laufenden Monats (Stand im Band, Buchungen für die Suche) und eigene Aufgaben (Suche). */
   private initializeOverview() {
-    this.boardMonths
-      .pipe(
-        switchMap((boardMonth) => {
-          this.boardLoading.set(true);
-          this.boardFinanceError.set(false);
-          this.boardSummary.set(null);
-          return this.financeApi.summary(boardMonth).pipe(
-            catchError(() => {
-              this.boardFinanceError.set(true);
-              if (boardMonth === financeMonth()) this.financeError.set(true);
-              return of(null);
-            }),
-          );
-        }),
-        takeUntilDestroyed(this.destroy),
-      )
-      .subscribe((boardSummary) => {
-        this.boardSummary.set(boardSummary);
-        if (this.boardMonth() === financeMonth() && boardSummary) {
-          this.finance.set(boardSummary);
-          this.financeError.set(false);
-        }
-        this.boardLoading.set(false);
+    this.financeApi
+      .summary(financeMonth())
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (summary) => {
+          this.finance.set(summary);
+          this.boardSummary.set(summary);
+        },
+        error: () => this.financeError.set(true),
       });
-    this.boardLoadMonth();
-    this.boardLoadTasks();
-  }
-  boardLoadMonth() {
-    this.boardMonths.next(this.boardMonth());
-  }
-  boardChangeMonth(delta: number) {
-    const date = new Date(`${this.boardMonth()}-01T12:00`);
-    date.setMonth(date.getMonth() + delta);
-    this.boardMonth.set(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
-    this.boardLoadMonth();
-  }
-  boardLoadTasks() {
     if (!this.demo && !this.live()) return;
-    this.boardTasksLoading.set(true);
-    this.boardTaskError.set('');
     this.api
       .tasks()
       .pipe(takeUntilDestroyed(this.destroy))
-      .subscribe({
-        next: (boardTasks) => {
-          this.boardTasks.set(boardTasks.filter((t) => t.status !== 'DONE'));
-          this.boardTasksLoading.set(false);
-        },
-        error: () => {
-          this.boardTaskError.set('Aufgaben konnten nicht geladen werden.');
-          this.boardTasksLoading.set(false);
-        },
-      });
-  }
-  boardToggleTask(task: PersonalTask) {
-    if (!this.demo && !this.live()) return;
-    if (this.boardBusy()) return;
-    this.boardBusy.set(true);
-    this.boardTaskError.set('');
-    this.api
-      .saveTask({ status: task.status === 'DONE' ? 'OPEN' : 'DONE' }, task.id)
-      .pipe(takeUntilDestroyed(this.destroy))
-      .subscribe({
-        next: (updated) => {
-          this.boardTasks.update((boardTasks) =>
-            boardTasks.map((t) => (t.id === updated.id ? updated : t)),
-          );
-          this.boardBusy.set(false);
-          this.loadToday();
-        },
-        error: () => {
-          this.boardTaskError.set('Die Aufgabe konnte nicht gespeichert werden.');
-          this.boardBusy.set(false);
-        },
-      });
-  }
-  boardAddTask() {
-    if (!this.demo && !this.live()) return;
-    if (!this.boardTaskTitle.trim() || this.boardBusy()) return;
-    this.boardBusy.set(true);
-    this.boardTaskError.set('');
-    this.api
-      .saveTask({ title: this.boardTaskTitle.trim(), status: 'OPEN', priority: 'MEDIUM' })
-      .pipe(takeUntilDestroyed(this.destroy))
-      .subscribe({
-        next: (task) => {
-          this.boardTasks.update((boardTasks) => [task, ...boardTasks]);
-          this.boardTaskTitle = '';
-          this.boardCloseTaskForm();
-          this.boardBusy.set(false);
-          this.loadToday();
-        },
-        error: () => {
-          this.boardTaskError.set('Die Aufgabe konnte nicht erstellt werden.');
-          this.boardBusy.set(false);
-        },
-      });
+      .subscribe({ next: (tasks) => this.boardTasks.set(tasks.filter((t) => t.status !== 'DONE')), error: () => undefined });
   }
 
   constructor() {
@@ -434,7 +298,7 @@ export class Dashboard {
         },
       });
     }
-    for (const event of data?.reisen.events ?? []) {
+    for (const event of data?.reisen?.events ?? []) {
       rows.push({
         order: `1${hhmm(event.at)}`,
         row: {
@@ -457,11 +321,11 @@ export class Dashboard {
           time: deadline.days === 0 ? 'Heute' : ddmm(deadline.date),
           note:
             deadline.days === 0
-              ? 'Frist im Haushaltsordner'
+              ? 'Frist unter Zuhause'
               : `Frist in ${deadline.days} ${deadline.days === 1 ? 'Tag' : 'Tagen'}`,
           icon: 'device',
           tone: 'household',
-          link: { path: ['/haushalt'], query: { tab: 'ordner' } },
+          link: { path: ['/haushalt'], query: { tab: 'zuhause', bereich: deadline.art === 'kuendigung' ? 'vertraege' : 'geraete' } },
         },
       });
     }
@@ -479,7 +343,7 @@ export class Dashboard {
           note: 'Haushalt',
           icon: 'basket',
           tone: 'household',
-          link: { path: ['/haushalt'], query: { tab: 'einkauf' } },
+          link: { path: ['/haushalt'], query: { tab: 'einkaufen' } },
         },
       });
     }
@@ -569,7 +433,7 @@ export class Dashboard {
             : this.finance()!.available !== null
               ? this.finance()!.available!.startsWith('-')
                 ? `${euros(this.finance()!.available!.slice(1))} über dem Budget`
-                : `${euros(this.finance()!.available)} vom Budget übrig`
+                : `${euros(this.finance()!.available)} übrig`
               : this.finance()!.has_data
                 ? `${euros(this.finance()!.expenses)} Ausgaben · Budget anlegen`
                 : 'Starte mit deinem Monatsbudget',
@@ -607,7 +471,7 @@ export class Dashboard {
         summary: this.tripsError()
           ? 'Reisen konnten nicht geladen werden'
           : this.nextTrip()
-            ? `${this.nextTrip()!.title} · ${this.tripDaysUntilLabel(this.nextTrip()!)}`
+            ? this.tripDaysUntilLabel(this.nextTrip()!).replace(/^in /, 'In ')
             : this.trips().length
               ? 'Keine bevorstehende Reise'
               : 'Noch keine Reise geplant',
@@ -641,12 +505,6 @@ export class Dashboard {
     if (days === 0) return "Heute geht's los";
     return days === 1 ? 'in 1 Tag' : `in ${days} Tagen`;
   }
-  financeProgress() {
-    // Ausgaben und Sparreservierungen reduzieren das Restbudget.
-    const total = Number(this.finance()?.total || 0);
-    const expenses = Number(this.finance()?.expenses || 0) + Number(this.finance()?.saved || 0);
-    return total > 0 ? Math.min(100, (expenses / total) * 100) : expenses > 0 ? 100 : 0;
-  }
   readonly greeting = (() => {
     const hour = new Date().getHours();
     return hour < 11 ? 'Guten Morgen' : hour < 18 ? 'Hallo' : 'Guten Abend';
@@ -657,16 +515,5 @@ export class Dashboard {
   );
   domainPath(area: string) {
     return `${this.demo ? '/demo' : ''}/${area}`;
-  }
-  tripBudgetPercent(trip: Trip) {
-    return Number(trip.budget_amount) > 0
-      ? Math.round((Number(trip.budget_spent) / Number(trip.budget_amount)) * 100)
-      : 0;
-  }
-  tripProgress(trip: Trip) {
-    const total = trip.packing_total + trip.tasks_total;
-    return total > 0
-      ? Math.round(((trip.packing_packed + trip.tasks_total - trip.tasks_open) / total) * 100)
-      : 0;
   }
 }

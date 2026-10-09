@@ -1,0 +1,139 @@
+// Datei-Import: Dateiwahl als große Fläche, danach eine kompakte Vorschau. Die Bereichsfarbe kommt über --accent.
+.imp-intro,
+.imp-note {
+  margin: 0;
+  color: #4a5568;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.imp-note {
+  font-size: 13px;
+}
+.imp-file {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 84px;
+  padding: 16px 18px;
+  border: 1.5px dashed color-mix(in srgb, var(--accent, #1e7a4d) 40%, #ffffff);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent, #1e7a4d) 5%, #ffffff);
+  color: #162e29;
+  cursor: pointer;
+}
+.imp-file:hover {
+  border-color: var(--accent, #1e7a4d);
+}
+.imp-file:focus-within {
+  outline: 3px solid var(--accent, #1e7a4d);
+  outline-offset: 2px;
+}
+.imp-file app-icon {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  color: var(--accent, #1e7a4d);
+}
+.imp-file span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.imp-file small {
+  color: #56627a;
+  font-size: 13px;
+}
+// Unsichtbar, aber per Tastatur und Screenreader bedienbar (die Fläche ist das Label).
+.imp-file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.imp-summary {
+  margin: 0;
+  color: #162e29;
+  font-size: 15px;
+}
+.imp-rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.imp-rows li {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  border-top: 1px solid #edf0f2;
+  font-size: 14px;
+}
+.imp-rows li:first-child {
+  border-top: 0;
+}
+.imp-rows li.is-off {
+  color: #6b7486;
+}
+.imp-rows li.is-off b {
+  font-weight: 500;
+  text-decoration: line-through;
+}
+.imp-rows__date {
+  color: #56627a;
+  font-variant-numeric: tabular-nums;
+}
+.imp-rows__text {
+  display: grid;
+  min-width: 0;
+}
+.imp-rows__text b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.imp-rows__text small {
+  color: #56627a;
+  font-size: 12.5px;
+}
+.imp-rows__amount {
+  color: #a3243b;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.imp-rows__amount.is-income {
+  color: #17723f;
+}
+.imp-more {
+  margin: 0;
+  color: #56627a;
+  font-size: 13px;
+}
+.imp-again {
+  justify-self: start;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent, #1e7a4d);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+// Schmal: das Datum steht als kleine Zeile über dem Titel (bei Terminen ist es das Wichtigste).
+@media (max-width: 480px) {
+  .imp-rows li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 0;
+    padding: 6px 0;
+  }
+  .imp-rows__date {
+    grid-column: 1 / -1;
+    font-size: 12.5px;
+  }
+}

@@ -1,9 +1,10 @@
 import { IconName } from '../../shared/icons/app-icon';
-import { EventCategory, FileCategory, PersonalEvent, PersonalFile, PersonalNote, PersonalTask } from './organisation-api.service';
+import { calendarWeek } from '../../shared/dates/calendar-week';
+import { EventCategory, PersonalEvent, PersonalNote, PersonalTask, Repeat } from './organisation-api.service';
 
 /**
- * Anzeigeregeln der Organisation (Übersicht, Kalender, Aufgaben, Notizen,
- * Dateien) — reine Funktionen, einzeln testbar. Tage sind „JJJJ-MM-TT“ in
+ * Anzeigeregeln der Organisation (Kalender, Aufgaben, Notizen) — reine
+ * Funktionen, einzeln testbar. Tage sind „JJJJ-MM-TT“ in
  * lokaler Zeit; Termine tragen ISO-Zeitpunkte.
  */
 
@@ -69,10 +70,57 @@ export function monthGrid(month: Date, events: PersonalEvent[], today: Date = ne
   });
 }
 
+const STEP: Record<Repeat, { days?: number; months?: number }> = {
+  daily: { days: 1 },
+  weekly: { days: 7 },
+  monthly: { months: 1 },
+  yearly: { months: 12 },
+};
+
+/** Termine im Zeitraum, wiederkehrende einmal pro Vorkommen — dieselben Regeln wie backend
+ * organisation/services.py events_between (für die Demo; die echte API liefert das fertig). */
+export function expandEvents(events: PersonalEvent[], start: string, end: string): PersonalEvent[] {
+  const lower = new Date(`${start}T00:00`);
+  const upper = new Date(`${end}T00:00`);
+  upper.setDate(upper.getDate() + 1);
+  const touches = (from: Date, to: Date | null) => from < upper && (from >= lower || (!!to && to >= lower));
+  const rows: PersonalEvent[] = [];
+  for (const e of events) {
+    const first = new Date(e.starts_at);
+    const length = e.ends_at ? new Date(e.ends_at).getTime() - first.getTime() : null;
+    if (!e.recurrence) {
+      if (touches(first, e.ends_at ? new Date(e.ends_at) : null)) rows.push(e);
+      continue;
+    }
+    const step = STEP[e.recurrence];
+    for (let i = 0; i < 800; i++) {
+      const at = new Date(first);
+      if (step.days) at.setDate(first.getDate() + step.days * i);
+      else {
+        const day = first.getDate();
+        at.setDate(1);
+        at.setMonth(first.getMonth() + (step.months ?? 1) * i);
+        at.setDate(Math.min(day, new Date(at.getFullYear(), at.getMonth() + 1, 0).getDate()));
+      }
+      if (at >= upper) break;
+      const until = length !== null ? new Date(at.getTime() + length) : null;
+      if (touches(at, until)) {
+        rows.push({ ...e, starts_at: at.toISOString(), ends_at: until ? until.toISOString() : null, series_starts_at: e.starts_at });
+      }
+    }
+  }
+  return rows.sort((a, b) => a.starts_at.localeCompare(b.starts_at) || a.id - b.id);
+}
+
+/** Erster und letzter Tag des sichtbaren Monatsrasters (sechs Wochen ab Montag). */
+export function gridRange(month: Date): { start: string; end: string } {
+  const grid = monthGrid(month, []);
+  return { start: grid[0].key, end: grid[grid.length - 1].key };
+}
+
 /** Die sieben Tage (Mo–So) der Woche, in der `day` liegt. */
 export function weekOf(day: string): string[] {
-  const d = parseDay(day);
-  const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+  const monday = parseDay(calendarWeek(day).start);
   return Array.from({ length: 7 }, (_, i) => localDay(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)));
 }
 
@@ -81,13 +129,14 @@ const hhmm = (iso: string) => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
-/** „16:00 – 16:45“ oder „16:00“. */
+/** „16:00 – 16:45“, „16:00“ oder „Ganztägig“. */
 export function timeRange(e: PersonalEvent): string {
+  if (e.all_day) return 'Ganztägig';
   return e.ends_at ? `${hhmm(e.starts_at)} – ${hhmm(e.ends_at)}` : hhmm(e.starts_at);
 }
 
 export function startTime(e: PersonalEvent): string {
-  return hhmm(e.starts_at);
+  return e.all_day ? 'Ganztägig' : hhmm(e.starts_at);
 }
 
 export function endTime(e: PersonalEvent): string {
@@ -120,79 +169,53 @@ export function dayWord(day: string, now: Date = new Date()): string {
   return shortDay(day);
 }
 
-/** „In 4 Std.“, „Läuft“, „Morgen“, „In 3 Tagen“ — Abstand bis zum Beginn. */
-export function relativeStart(e: PersonalEvent, now: Date = new Date()): string {
-  const start = new Date(e.starts_at);
-  const end = e.ends_at ? new Date(e.ends_at) : start;
-  if (start <= now && end >= now) return 'Läuft gerade';
-  if (start < now) return 'Vorbei';
-  const days = Math.round((parseDay(localDay(start)).getTime() - parseDay(localDay(now)).getTime()) / 86_400_000);
-  if (days === 0) {
-    const hours = Math.round((start.getTime() - now.getTime()) / 3_600_000);
-    return hours < 1 ? 'Gleich' : `In ${hours} Std.`;
-  }
-  if (days === 1) return 'Morgen';
-  return `In ${days} Tagen`;
-}
-
-/** Die nächsten Termine ab jetzt (laufende eingeschlossen). */
-export function upcomingEvents(events: PersonalEvent[], now: Date = new Date(), limit = 5): PersonalEvent[] {
-  return events
-    .filter((e) => new Date(e.ends_at ?? e.starts_at) >= now)
-    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
-    .slice(0, limit);
-}
-
-/** Nächste Termine NACH heute, nach Tag gruppiert (Übersicht „Nächste Termine“). */
-export function nextDays(events: PersonalEvent[], now: Date = new Date(), limit = 4): { day: string; events: PersonalEvent[] }[] {
-  const today = localDay(now);
-  const later = events.filter((e) => localDay(new Date(e.starts_at)) > today).sort((a, b) => a.starts_at.localeCompare(b.starts_at)).slice(0, limit);
-  const groups: { day: string; events: PersonalEvent[] }[] = [];
-  for (const e of later) {
-    const day = localDay(new Date(e.starts_at));
-    const group = groups.find((g) => g.day === day);
-    if (group) group.events.push(e);
-    else groups.push({ day, events: [e] });
-  }
-  return groups;
-}
-
 // ---------------------------------------------------------------------------
 // Aufgaben
 // ---------------------------------------------------------------------------
 
-export type TaskGroupKey = 'overdue' | 'today' | 'week' | 'later' | 'undated';
-
-export interface TaskGroup {
-  key: TaskGroupKey;
-  label: string;
-  icon: IconName;
-  tasks: PersonalTask[];
-}
-
 const daysUntil = (day: string, now: Date) =>
   Math.round((parseDay(day).getTime() - parseDay(localDay(now)).getTime()) / 86_400_000);
 
-/** Offene Aufgaben: Überfällig, Heute, Diese Woche (bis 7 Tage), Später, Ohne Datum — leere Gruppen fallen weg. */
-export function groupTasks(tasks: PersonalTask[], now: Date = new Date()): TaskGroup[] {
-  const groups: TaskGroup[] = [
-    { key: 'overdue', label: 'Überfällig', icon: 'flag', tasks: [] },
-    { key: 'today', label: 'Heute', icon: 'sun', tasks: [] },
-    { key: 'week', label: 'Diese Woche', icon: 'calendar', tasks: [] },
-    { key: 'later', label: 'Später', icon: 'calendar-check', tasks: [] },
-    { key: 'undated', label: 'Ohne Datum', icon: 'list', tasks: [] },
-  ];
-  const sorted = [...tasks].sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999') || (a.due_time ?? '99').localeCompare(b.due_time ?? '99'));
-  for (const t of sorted) {
-    if (t.status === 'DONE') continue;
-    if (!t.due_date) groups[4].tasks.push(t);
-    else {
-      const days = daysUntil(t.due_date, now);
-      groups[days < 0 ? 0 : days === 0 ? 1 : days <= 7 ? 2 : 3].tasks.push(t);
-    }
-  }
-  return groups.filter((g) => g.tasks.length);
+/** Ansichten im Reiter Aufgaben. */
+export type TaskView = 'all' | 'today' | 'overdue' | 'recurring' | 'done';
+export const TASK_VIEWS: { key: TaskView; label: string }[] = [
+  { key: 'all', label: 'Alle' },
+  { key: 'today', label: 'Heute' },
+  { key: 'overdue', label: 'Überfällig' },
+  { key: 'recurring', label: 'Wiederkehrend' },
+  { key: 'done', label: 'Erledigt' },
+];
+
+export const isRecurring = (t: PersonalTask) => !!(t.recurrence_days || t.recurrence_months);
+
+/** Aufgaben einer Ansicht, nach Fälligkeit sortiert (ohne Datum zuletzt). „Alle“ = alle offenen. */
+export function filterTasks(tasks: PersonalTask[], view: TaskView, now: Date = new Date()): PersonalTask[] {
+  const today = localDay(now);
+  const open = (t: PersonalTask) => t.status !== 'DONE';
+  const pick: Record<TaskView, (t: PersonalTask) => boolean> = {
+    all: open,
+    today: (t) => open(t) && t.due_date === today,
+    overdue: (t) => open(t) && !!t.due_date && t.due_date < today,
+    recurring: (t) => open(t) && isRecurring(t),
+    done: (t) => !open(t),
+  };
+  const list = tasks.filter(pick[view]);
+  if (view === 'done') return list.sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''));
+  return list.sort(
+    (a, b) =>
+      (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999') ||
+      (a.due_time ?? '99').localeCompare(b.due_time ?? '99') ||
+      a.id - b.id,
+  );
 }
+
+export const REPEAT_LABEL: Record<string, string> = {
+  daily: 'Täglich',
+  weekly: 'Wöchentlich',
+  monthly: 'Monatlich',
+  yearly: 'Jährlich',
+  custom: 'Wiederkehrend',
+};
 
 /** „Heute, 16:00“, „Morgen“, „Fr., 25. Apr.“, „12. Apr.“ (überfällig), „Ohne Datum“. */
 export function taskDue(task: PersonalTask, now: Date = new Date()): { text: string; late: boolean } {
@@ -207,51 +230,6 @@ export function taskDue(task: PersonalTask, now: Date = new Date()): { text: str
   return { text: `${d.getDate()}. ${MONTH_SHORT[d.getMonth()]}`, late };
 }
 
-export interface TaskProgress {
-  done: number;
-  total: number;
-  pct: number;
-  overdue: number;
-  today: { done: number; total: number };
-  week: { done: number; total: number };
-}
-
-/** Fortschritt aller Aufgaben mit Datum in der Nähe: erledigt / gesamt, dazu heute und diese Woche. */
-export function taskProgress(tasks: PersonalTask[], now: Date = new Date()): TaskProgress {
-  const done = tasks.filter((t) => t.status === 'DONE').length;
-  const within = (from: number, to: number) => tasks.filter((t) => t.due_date && daysUntil(t.due_date, now) >= from && daysUntil(t.due_date, now) <= to);
-  const count = (list: PersonalTask[]) => ({ done: list.filter((t) => t.status === 'DONE').length, total: list.length });
-  return {
-    done,
-    total: tasks.length,
-    pct: tasks.length ? Math.round((done / tasks.length) * 100) : 0,
-    overdue: tasks.filter((t) => t.status !== 'DONE' && t.due_date && daysUntil(t.due_date, now) < 0).length,
-    today: count(within(0, 0)),
-    week: count(within(0, 7)),
-  };
-}
-
-const PROJECT_TONES = ['violet', 'indigo', 'green', 'orange', 'gray', 'rose', 'teal'];
-
-/** Projekte der offenen Aufgaben mit Anzahl, größtes zuerst; Farbe stabil nach Name. */
-export function projects(tasks: PersonalTask[]): { name: string; count: number; tone: string }[] {
-  const counts = new Map<string, number>();
-  for (const t of tasks) {
-    const name = (t.project ?? '').trim();
-    if (!name || t.status === 'DONE') continue;
-    counts.set(name, (counts.get(name) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([name, count]) => ({ name, count, tone: projectTone(name) }))
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'de'));
-}
-
-export function projectTone(name: string): string {
-  let sum = 0;
-  for (const ch of name) sum += ch.charCodeAt(0);
-  return PROJECT_TONES[sum % PROJECT_TONES.length];
-}
-
 // ---------------------------------------------------------------------------
 // Notizen
 // ---------------------------------------------------------------------------
@@ -259,6 +237,20 @@ export function projectTone(name: string): string {
 /** Die ersten Zeilen einer Notiz als Vorschau. */
 export function noteLines(note: PersonalNote, max = 3): string[] {
   return (note.body ?? '').split('\n').map((l) => l.trim()).filter(Boolean).slice(0, max);
+}
+
+/** Titel einer Notiz — ohne Titel die erste Zeile des Inhalts. */
+export function noteTitle(note: Pick<PersonalNote, 'title' | 'body'>): string {
+  return note.title.trim() || noteLines(note as PersonalNote, 1)[0] || 'Ohne Titel';
+}
+
+/** „Heute“, „Gestern“, „02.10.2026“ — zuletzt bearbeitet. */
+export function noteEdited(iso: string, now: Date = new Date()): string {
+  const day = localDay(new Date(iso));
+  if (day === localDay(now)) return 'Heute';
+  if (day === localDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))) return 'Gestern';
+  const [y, m, d] = day.split('-');
+  return `${d}.${m}.${y}`;
 }
 
 /** „Heute, 09:14“, „Gestern, 16:42“, „Sa, 10. Mai“. */
@@ -269,52 +261,4 @@ export function editedAt(iso: string, now: Date = new Date()): string {
   if (day === localDay(now)) return `Heute, ${time}`;
   if (day === localDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))) return `Gestern, ${time}`;
   return weekdayDay(day);
-}
-
-// ---------------------------------------------------------------------------
-// Dateien
-// ---------------------------------------------------------------------------
-
-export const FILE_CATEGORIES: { value: FileCategory; label: string; icon: IconName; tone: string }[] = [
-  { value: 'reise', label: 'Reisedokumente', icon: 'travel', tone: 'red' },
-  { value: 'buchung', label: 'Buchungen', icon: 'calendar', tone: 'blue' },
-  { value: 'persoenlich', label: 'Persönliches', icon: 'user', tone: 'green' },
-  { value: 'checkliste', label: 'Checklisten', icon: 'check-circle', tone: 'amber' },
-  { value: 'bild', label: 'Bilder', icon: 'image', tone: 'violet' },
-  { value: 'sonstiges', label: 'Sonstiges', icon: 'folder', tone: 'gray' },
-];
-
-export function fileCategory(value: FileCategory) {
-  return FILE_CATEGORIES.find((c) => c.value === value) ?? FILE_CATEGORIES[FILE_CATEGORIES.length - 1];
-}
-
-/** Dateiart für Symbol und Farbe: PDF rot, Tabelle grün, Dokument blau, Text gelb, Bild mit Vorschau. */
-export function fileKind(file: Pick<PersonalFile, 'content_type' | 'name'>): { label: string; icon: IconName; tone: string; image: boolean } {
-  const t = file.content_type;
-  if (t === 'application/pdf') return { label: 'PDF-Dokument', icon: 'file-text', tone: 'red', image: false };
-  if (t.startsWith('image/')) return { label: 'Bild', icon: 'image', tone: 'violet', image: true };
-  if (t.includes('spreadsheet')) return { label: 'Tabelle', icon: 'bars', tone: 'green', image: false };
-  if (t.includes('wordprocessing')) return { label: 'Dokument', icon: 'file-text', tone: 'blue', image: false };
-  if (t === 'text/plain') return { label: 'Textdatei', icon: 'list', tone: 'amber', image: false };
-  return { label: 'Datei', icon: 'folder', tone: 'gray', image: false };
-}
-
-/** „1,2 MB“, „284 KB“, „12 KB“. */
-export function fileSize(bytes: number): string {
-  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / 1024 ** 3).toLocaleString('de-DE', { maximumFractionDigits: 1 })} GB`;
-  if (bytes >= 1024 * 1024) return `${(bytes / 1024 ** 2).toLocaleString('de-DE', { maximumFractionDigits: 1 })} MB`;
-  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-}
-
-/** „vor 2 Stunden“, „gestern“, „vor 3 Tagen“, „vor 2 Wochen“. */
-export function agoText(iso: string, now: Date = new Date()): string {
-  const minutes = Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000);
-  if (minutes < 1) return 'gerade eben';
-  if (minutes < 60) return `vor ${minutes} Min.`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return hours === 1 ? 'vor 1 Stunde' : `vor ${hours} Stunden`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return 'gestern';
-  if (days < 14) return `vor ${days} Tagen`;
-  return `vor ${Math.floor(days / 7)} Wochen`;
 }

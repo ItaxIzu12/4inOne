@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -68,8 +71,8 @@ class TripParticipantSerializer(serializers.ModelSerializer):
 
 
 class TripSerializer(serializers.ModelSerializer):
-    # Kennzahlen für die Übersicht/Listenkarten — clientseitig berechnet, keine eigene
-    # Aggregations-API (siehe AGENTS.md: keine spekulative Infrastruktur vor echtem Bedarf).
+    # Kennzahlen für Meine Reisen und die Übersicht. Die Liste liefert sie per Annotation in einer Abfrage
+    # (siehe annotate_trip_counts() in views.py); ohne Annotation (z. B. direkt nach dem Anlegen) wird gezählt.
     packing_total = serializers.SerializerMethodField()
     packing_packed = serializers.SerializerMethodField()
     tasks_open = serializers.SerializerMethodField()
@@ -82,7 +85,7 @@ class TripSerializer(serializers.ModelSerializer):
     class Meta:
         model = Trip
         fields = [
-            'id', 'title', 'destination', 'start_date', 'end_date', 'notes', 'status',
+            'id', 'title', 'destination', 'departure', 'start_date', 'end_date', 'notes', 'status',
             'travel_type', 'transport_type', 'baggage_type', 'budget_amount', 'currency',
             'accommodation', 'accommodation_area', 'transport_note',
             'created_at', 'updated_at',
@@ -96,6 +99,11 @@ class TripSerializer(serializers.ModelSerializer):
         end = attrs.get('end_date', getattr(self.instance, 'end_date', None))
         if start and end and end < start:
             raise serializers.ValidationError({'end_date': 'Das Ende darf nicht vor dem Beginn liegen.'})
+        # Reisen V1: eine Reise braucht ein Ziel. Ältere Reisen ohne Ziel bleiben bearbeitbar, solange das Ziel
+        # nicht ausdrücklich geleert wird.
+        destination = attrs.get('destination')
+        if (self.instance is None or 'destination' in attrs) and not (destination or '').strip():
+            raise serializers.ValidationError({'destination': 'Bitte gib ein Reiseziel an.'})
         return attrs
 
     def validate_budget_amount(self, value):
@@ -103,27 +111,32 @@ class TripSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Das Budget darf nicht negativ sein.')
         return value
 
+    @staticmethod
+    def _count(obj, name, fallback):
+        value = getattr(obj, name, None)
+        return fallback() if value is None else value
+
     def get_packing_total(self, obj):
-        return obj.packingitems.count()
+        return self._count(obj, 'n_packing', lambda: obj.packingitems.count())
 
     def get_packing_packed(self, obj):
-        return obj.packingitems.filter(is_packed=True).count()
+        return self._count(obj, 'n_packed', lambda: obj.packingitems.filter(is_packed=True).count())
 
     def get_tasks_open(self, obj):
-        return obj.triptasks.filter(status=TripTask.Status.OPEN).count()
+        return self._count(obj, 'n_tasks_open', lambda: obj.triptasks.filter(status=TripTask.Status.OPEN).count())
 
     def get_tasks_total(self, obj):
-        return obj.triptasks.count()
+        return self._count(obj, 'n_tasks', lambda: obj.triptasks.count())
 
     def get_events_count(self, obj):
-        return obj.tripevents.count()
+        return self._count(obj, 'n_events', lambda: obj.tripevents.count())
 
     def get_budget_spent(self, obj):
-        total = sum((expense.amount for expense in obj.tripexpenses.all()), start=0)
-        return str(total)
+        total = self._count(obj, 'sum_spent', lambda: obj.tripexpenses.aggregate(total=Sum('amount'))['total'])
+        return str((total or Decimal('0')).quantize(Decimal('0.01')))
 
     def get_participants(self, obj):
-        return TripParticipantSerializer(obj.participants.select_related('user'), many=True, context=self.context).data
+        return TripParticipantSerializer(obj.participants.all(), many=True, context=self.context).data
 
     def get_my_role(self, obj):
         request = self.context.get('request')
@@ -173,10 +186,18 @@ class PackingItemSerializer(TripScopedSerializer):
 
 
 class TripTaskSerializer(TripScopedSerializer):
+    assignee_name = serializers.SerializerMethodField()
+
     class Meta:
         model = TripTask
-        fields = ['id', 'trip', 'title', 'due_date', 'due_time', 'status', 'note', 'created_at']
+        fields = ['id', 'trip', 'title', 'due_date', 'due_time', 'status', 'note', 'assignee', 'assignee_name', 'created_at']
         read_only_fields = ['id', 'created_at']
+        # Zuständig sein kann nur, wer die Reise sieht — die Prüfung gegen genau diese Reise folgt in validate().
+        # Unbekannte ID und fremde Person bekommen dieselbe Meldung, damit sich keine Konten erraten lassen.
+        extra_kwargs = {'assignee': {'error_messages': {'does_not_exist': 'Diese Person reist nicht mit.'}}}
+
+    def get_assignee_name(self, obj):
+        return _display_name(obj.assignee) if obj.assignee_id else ''
 
     def validate(self, attrs):
         due_date = attrs.get('due_date', getattr(self.instance, 'due_date', None))
@@ -184,6 +205,14 @@ class TripTaskSerializer(TripScopedSerializer):
             raise serializers.ValidationError({'due_time': 'Eine Uhrzeit braucht ein Datum.'})
         if 'due_date' in attrs and attrs['due_date'] is None:
             attrs['due_time'] = None
+        assignee = attrs.get('assignee')
+        if assignee is not None:
+            trip = attrs.get('trip') or getattr(self.instance, 'trip', None)
+            if trip is None or not (
+                trip.owner_id == assignee.id or TripParticipant.objects.filter(trip=trip, user=assignee).exists()
+            ):
+                # Gleiche Meldung wie für eine unbekannte ID: verrät nicht, ob es das Konto gibt.
+                raise serializers.ValidationError({'assignee': 'Diese Person reist nicht mit.'})
         return attrs
 
 
@@ -208,8 +237,9 @@ class TripExpenseSerializer(TripScopedSerializer):
         read_only_fields = ['id', 'created_at']
 
     def validate_amount(self, value):
-        if value < 0:
-            raise serializers.ValidationError('Der Betrag darf nicht negativ sein.')
+        # Eine Ausgabe von 0 € ist keine Ausgabe. Das Datum darf vor der Reise liegen (Flug Monate vorher gebucht).
+        if value <= 0:
+            raise serializers.ValidationError('Der Betrag muss größer als 0 sein.')
         return value
 
 

@@ -31,6 +31,7 @@ interface Cell {
   standalone: true,
   templateUrl: './date-picker.html',
   styleUrl: './date-picker.css',
+  host: { '[class.dp--inline]': "appearance() === 'inline'" },
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => AppDatePicker), multi: true }],
 })
 export class AppDatePicker implements ControlValueAccessor, AfterViewInit {
@@ -40,6 +41,11 @@ export class AppDatePicker implements ControlValueAccessor, AfterViewInit {
   readonly min = input('');
   readonly max = input('');
   readonly placeholder = input('');
+  /** `inline`: ohne eigenen Rahmen, zentriert — für Datumsleisten (‹ Oktober 2026 ›), die selbst den Rahmen tragen. */
+  readonly appearance = input<'field' | 'inline'>('field');
+  /** Ohne <app-field>: Fehlerzustand und die id der Fehlermeldung direkt am Auslöser. */
+  readonly invalid = input(false);
+  readonly ariaDescribedby = input<string | null>(null);
   readonly inputId = input<string | null>(null);
   /** Explizite Beschriftung ohne umgebendes <app-field> (siehe select.ts, dieselbe Korrektur: natives
    * `<label for>` allein reicht bei diesem Auslöser-Button in Chromium nicht zuverlässig für den Namen). */

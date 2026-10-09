@@ -48,7 +48,7 @@ def test_today_combines_every_area_for_its_owner(world):
     PersonalTask.objects.create(owner=anna, title='Arzt anrufen', due_date=today)
     HouseholdTask.objects.create(household=home, title='Müll', due_date=today, assigned_to=anna)
     HouseholdTask.objects.create(household=home, title='Spülmaschine', due_date=today - timedelta(days=1))
-    FolderEntry.objects.create(household=home, kind='geraet', name='Heizung', next_maintenance=today + timedelta(days=5))
+    FolderEntry.objects.create(household=home, kind='geraet', name='Heizung', maintenance_due_date=today + timedelta(days=5))
     shopping = ShoppingList.objects.create(household=home)
     ShoppingItem.objects.create(shopping_list=shopping, name='Milch')
     MonthlyBudget.objects.create(owner=anna, month=today.replace(day=1), amount=Decimal('1000.00'))
@@ -112,7 +112,7 @@ def test_child_accounts_see_tasks_but_no_folder_deadlines(world):
     kid, home = world['kid'], world['home']
     today = timezone.localdate()
     HouseholdTask.objects.create(household=home, title='Zimmer aufräumen', due_date=today, assigned_to=kid)
-    FolderEntry.objects.create(household=home, kind='vertrag', name='Strom', contract_end=today + timedelta(days=3))
+    FolderEntry.objects.create(household=home, kind='vertrag', name='Strom', end_date=today + timedelta(days=3))
 
     data = _get(kid)
 

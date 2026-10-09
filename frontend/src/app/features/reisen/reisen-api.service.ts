@@ -3,12 +3,15 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../core/api.config';
 
-/** Lebenslauf einer Reise: Idee → in Planung → bestätigt (gebucht) → unterwegs → abgeschlossen (oder storniert). */
-export type TripStatus = 'IDEA' | 'PLANNED' | 'CONFIRMED' | 'ACTIVE' | 'DONE' | 'CANCELLED';
+/** Reisen V1: in Planung → bestätigt (gebucht) → abgeschlossen, oder abgesagt. Kein Entwurf; „Unterwegs“ ergibt
+ * sich aus dem Zeitraum (reisen-logic.ts tripPhase()). */
+export type TripStatus = 'PLANNED' | 'CONFIRMED' | 'DONE' | 'CANCELLED';
 export interface Trip {
   id: number;
   title: string;
   destination: string;
+  /** Optionaler Abreiseort („Düsseldorf“ oder „DUS“) — reine Information, keine Flug-API. */
+  departure: string;
   /** Pflichtfeld: eine Reise ohne konkreten Zeitraum wird in V1 nicht gespeichert (siehe
    * reisen/models.py Trip-Docstring). "Reiseideen" ohne Termin sind ein eigenständiges, noch nicht
    * gebautes Konzept. */
@@ -79,6 +82,9 @@ export interface TripTask {
   due_time?: string | null;
   status: 'OPEN' | 'DONE';
   note: string;
+  /** Wer sich kümmert — nur der Ersteller oder ein Teilnehmer dieser Reise (Backend prüft). */
+  assignee?: number | null;
+  assignee_name?: string;
 }
 export interface TripEvent {
   id: number;
@@ -104,35 +110,6 @@ export interface TripBudgetCategory {
   category: BudgetCategory;
   planned_amount: string;
 }
-export type ReminderArea = 'REISEN' | 'HAUSHALT' | 'ORGANISATION';
-export type ReminderSource = 'TRIP_TASK' | 'TRIP_EVENT' | 'HOUSEHOLD_TASK' | 'ORG_EVENT' | 'ORG_TASK';
-/** Eine Zeile im Reiter „Erinnerungen“ (backend connections/trip_overview.py) — Reise-Aufgaben/-Termine plus
- * eigene Haushalts- und Organisationseinträge rund um die Reise. */
-export interface TripReminder {
-  key: string;
-  source: ReminderSource;
-  area: ReminderArea;
-  /** ID im Ursprungsbereich (z. B. TripTask.id) */
-  id: number | null;
-  title: string;
-  date: string | null;
-  time: string | null;
-  place: string;
-  done: boolean;
-}
-export interface TripReminders {
-  window_start: string;
-  window_end: string;
-  items: TripReminder[];
-}
-/** Eigenes, mit der Reise verknüpftes Sparziel aus Finanzen (nur die eigenen). */
-export interface TripSavingsGoal {
-  id: number;
-  title: string;
-  current_amount: string;
-  target_amount: string;
-}
-
 @Injectable({ providedIn: 'root' })
 export class ReisenApi {
   private http = inject(HttpClient);
@@ -233,13 +210,6 @@ export class ReisenApi {
       params: new HttpParams().set('trip', tripId),
     });
   }
-  reminders(tripId: number) {
-    return this.http.get<TripReminders>(`${API_BASE_URL}/connections/reisen/${tripId}/erinnerungen/`);
-  }
-  savings(tripId: number) {
-    return this.http.get<TripSavingsGoal[]>(`${API_BASE_URL}/connections/reisen/${tripId}/sparziel/`);
-  }
-
   /** Eigene Kontakte (core/contact_views.py) als Auswahl zum Hinzufügen eines Teilnehmers — kein Endpunkt, der
    * beliebige E-Mails gegen bestehende Konten prüft (siehe reisen/serializers.py). */
   contacts() {

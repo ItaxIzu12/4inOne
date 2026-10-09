@@ -91,6 +91,8 @@ export type IconName =
   | 'user-plus'
   | 'meat'
   | 'umbrella'
+  | 'archive'
+  | 'lock'
   | 'mountain'
   | 'car'
   | 'train'
@@ -231,6 +233,8 @@ export class AppIcon {
     'user-plus': 'M10 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM3 21a7 7 0 0 1 12.5-4.3M19 14v6m-3-3h6',
     'meat': 'M15.5 3.5c3 1.5 5 5 4 8.5-1.2 4-5.5 6-9.5 5.5l-3.5 3.5a2 2 0 0 1-3-3l3.5-3.5C6.5 10.5 8.5 6 12.5 4c1-.5 2-.7 3-.5Zm-3 6.5a2 2 0 1 0 0 .01',
     'umbrella': 'M12 3a9 9 0 0 0-9 9h18a9 9 0 0 0-9-9Zm0 0v1m0 8v6.5a2.5 2.5 0 0 0 5 0',
+    'lock': 'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4',
+    'archive': 'M3 4h18v4H3zM5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4',
     'mountain': 'M3 20 10 7l4 7 2-3 5 9H3Zm7-13 2.2 4L10 12.5 8 11',
     'car': 'M5 16V11l2-5h10l2 5v5M5 16h14M5 16v2.5h3V16m8 0v2.5h3V16M4 11h16M7.5 13.5h.01m9 0h.01',
     'train': 'M7 3h10a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2Zm-2 7h14M8.5 13.5h.01m7 0h.01M8 17l-2 4m10-4 2 4',

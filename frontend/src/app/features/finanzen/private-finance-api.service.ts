@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { API_BASE_URL } from '../../core/api.config';
+import { ImportRow } from './finance-import';
 export interface FinanceCategory {
   id: number;
   name: string;
@@ -27,6 +28,14 @@ export interface FinanceTransaction {
   currency: string;
   /** Kommt jeden Monat wieder (Miete, Gehalt, Abo) — nur eine Markierung, es wird nichts automatisch gebucht. */
   recurring?: boolean;
+}
+/** Ergebnis von POST transactions/import/ — je Zeile „new“, „duplicate“ oder „invalid“ (mit Grund). */
+export interface ImportResult {
+  new: number;
+  duplicates: number;
+  invalid: number;
+  created: number;
+  rows: { row: number; status: 'new' | 'duplicate' | 'invalid'; message: string; category?: string }[];
 }
 /** Eine Einzahlung (oder Entnahme, negativ) in ein Sparziel — GET goals/einzahlungen/. */
 export interface SavingsContributionDto {
@@ -194,6 +203,10 @@ export class PrivateFinanceApi {
   transactions() {
     return this.http.get<FinanceTransaction[]>(`${this.base}/transactions/`);
   }
+  /** Kontoauszug übernehmen (Zeilen aus finance-import.ts); dryRun = nur prüfen für die Vorschau. */
+  importTransactions(rows: ImportRow[], dryRun: boolean) {
+    return this.http.post<ImportResult>(`${this.base}/transactions/import/`, { rows, dry_run: dryRun });
+  }
   budgets() {
     return this.http.get<FinanceBudget[]>(`${this.base}/budgets/`);
   }
@@ -207,8 +220,10 @@ export class PrivateFinanceApi {
       : this.http.post(`${this.base}/${resource}/`, payload);
   }
   /** Die letzten Einzahlungen in die eigenen Sparziele, neueste zuerst. */
-  contributions() {
-    return this.http.get<SavingsContributionDto[]>(`${this.base}/goals/einzahlungen/`);
+  /** Ohne Zeitraum die letzten Einzahlungen; mit Von/Bis („JJJJ-MM-TT“, beide eingeschlossen) alle im Zeitraum. */
+  contributions(from?: string, to?: string) {
+    const params: Record<string, string> = from && to ? { von: from, bis: to } : {};
+    return this.http.get<SavingsContributionDto[]>(`${this.base}/goals/einzahlungen/`, { params });
   }
   /** Monatslimit einer Kategorie setzen (null = kein Limit). */
   setCategoryLimit(id: number, monthlyGoal: string | null) {

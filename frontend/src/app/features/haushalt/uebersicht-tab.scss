@@ -1,15 +1,27 @@
-// Haushalt-Übersicht nach Entwurf: vier Kennzahlen, darunter ein 2×2-Raster aus
-// „Heute im Haushalt“, Geräte-Status, Einkauf und Routinen.
+// Reiter „Heute“: Heute fällig (breit), daneben Demnächst und Einkauf;
+// ohne jede Angabe ein einladender leerer Zustand.
 :host {
   display: block;
 }
 
 // ---------- Raster ----------
-.board {
+.today {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-areas:
+    'tasks soon'
+    'tasks shop';
   gap: 20px;
   align-items: start;
+}
+.today__tasks {
+  grid-area: tasks;
+}
+.today__soon {
+  grid-area: soon;
+}
+.today__shop {
+  grid-area: shop;
 }
 .card + .card {
   margin-top: 0; // im Raster regelt gap den Abstand
@@ -26,7 +38,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  min-height: 44px;
+  margin-bottom: 6px;
 }
 .card-head h2 {
   display: flex;
@@ -41,6 +54,15 @@
   height: 22px;
   color: var(--text);
 }
+.count {
+  min-width: 24px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-size: 13px;
+  text-align: center;
+}
 .head-link {
   display: inline-flex;
   align-items: center;
@@ -52,6 +74,7 @@
   color: var(--text-muted);
   font: inherit;
   font-size: 14px;
+  white-space: nowrap;
   cursor: pointer;
 }
 .head-link app-icon {
@@ -60,25 +83,6 @@
 }
 .head-link:hover {
   color: var(--accent-hover);
-}
-.more {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 10px;
-  background: none;
-  color: #6b7488;
-  cursor: pointer;
-}
-.more:hover {
-  background: #f4f5fa;
-}
-.more app-icon {
-  width: 22px;
-  height: 22px;
-  stroke-width: 3;
 }
 ul {
   margin: 0;
@@ -90,12 +94,25 @@ ul {
   color: var(--text-muted);
   font-size: 14px;
 }
+.small {
+  font-size: 13px;
+}
 .empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
   padding: 18px 0 6px;
   text-align: center;
 }
 .field-error {
   margin: 0 0 14px;
+}
+.hint {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+.hint--warn {
+  color: #a12323;
 }
 
 // Kästchen wie im Entwurf: eckig mit kleiner Rundung, gefüllt in Bereichsfarbe.
@@ -129,21 +146,34 @@ ul {
   stroke-width: 3;
 }
 
-// ---------- Heute im Haushalt ----------
+// ---------- Heute fällig ----------
 .task {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) auto 112px 36px;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
   align-items: center;
   column-gap: 14px;
-  min-height: 52px;
+  min-height: 56px;
   border-top: 1px solid #f0f2f6;
 }
 .task:first-child {
   border-top: 0;
 }
 .task__title {
+  display: grid;
+  gap: 2px;
   font-size: 15px;
   overflow-wrap: anywhere;
+}
+.task__title small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+.task__title small app-icon {
+  width: 13px;
+  height: 13px;
 }
 .tag {
   padding: 3px 10px;
@@ -158,212 +188,173 @@ ul {
   background: #fde2e2;
   color: #a12323;
 }
-.task__meta {
-  color: var(--text-muted);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-// ---------- Geräte-Status ----------
-.device {
-  display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1.15fr) 36px;
-  align-items: center;
-  column-gap: 14px;
-  padding: 12px 0;
-  border-top: 1px solid #f0f2f6;
-}
-.device:first-child {
-  border-top: 0;
-}
-.device__art {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: #f1f3f7;
-  color: #3d4a63;
-}
-.device__art app-icon {
-  width: 30px;
-  height: 30px;
-}
-.device__name strong,
-.device__status b {
-  display: block;
-  font-size: 15px;
-  font-weight: 600;
-}
-.device__name small,
-.device__status small {
-  display: block;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-.device__status {
-  display: grid;
-  grid-template-columns: 10px 1fr;
-  column-gap: 8px;
-  align-items: center;
-}
-.device__status small {
-  grid-column: 2;
-}
-.device__status b {
-  font-weight: 500;
-  color: #1d6b3f;
-}
-.dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: #23a05a;
-}
-.device__status--due b {
-  color: #8a5300;
-}
-.device__status--due .dot {
-  background: #f0a020;
-}
-
-// ---------- Einkauf ----------
-.shop {
-  padding: 16px 18px 14px;
-  border-radius: 16px;
-  background: #fdf1f6;
-}
-.shop__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-.shop__head strong {
-  display: block;
-  font-size: 15px;
-}
-.shop__head small {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-.shop__bar {
-  display: block;
-  height: 5px;
-  margin: 12px 0 14px;
-  border-radius: 999px;
-  background: #f2d6e3;
-  overflow: hidden;
-}
-.shop__bar > span {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--accent);
-}
-.shop__items {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px 24px;
-}
-.shop__items li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 34px;
-  font-size: 14.5px;
-}
-.shop__items .done {
-  color: var(--text-muted);
-}
-.shop__items small {
-  color: var(--text-muted);
+.tag--prio {
+  background: #fdf1dc;
+  color: #7a4300;
 }
 .add {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  min-height: 34px;
+  gap: 8px;
+  min-height: 44px;
   padding: 0;
   border: 0;
   background: none;
-  color: var(--text-muted);
+  color: var(--accent-hover);
   font: inherit;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
 }
 .add app-icon {
   width: 18px;
   height: 18px;
 }
-.add:hover {
-  color: var(--accent-hover);
-}
 
-// ---------- Routinen ----------
-.routine {
+// ---------- Demnächst ----------
+.soon {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto 36px;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 14px;
-  padding: 12px 0;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 6px 0;
+  border: 0;
   border-top: 1px solid #f0f2f6;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
-.routine:first-child {
+.soon-list li:first-child .soon {
   border-top: 0;
 }
-.routine__icon {
+.soon:hover .soon__text b {
+  color: var(--accent-hover);
+}
+.soon__icon {
   display: grid;
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 12px;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-hover);
 }
-.routine__icon app-icon {
-  width: 21px;
-  height: 21px;
+.soon__icon--warn {
+  background: #fdf1dc;
+  color: #7a4300;
 }
-.routine__name small,
-.routine__next small {
-  display: block;
-  font-size: 12.5px;
-  color: var(--text-muted);
+.soon__icon app-icon {
+  width: 20px;
+  height: 20px;
 }
-.routine__name strong {
-  display: block;
-  font-size: 15px;
-  font-weight: 500;
+.soon__text,
+.soon__date {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
 }
-.routine__next {
-  font-size: 14px;
-}
-.routine__next--warn {
-  color: #a12323;
+.soon__text b {
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
-.done-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  border-radius: 8px;
-  background: #e3f6ec;
-  color: #1d6b3f;
-  font-size: 13px;
-  font-weight: 600;
+.soon__date {
+  text-align: right;
   white-space: nowrap;
 }
-.done-chip app-icon {
-  width: 14px;
-  height: 14px;
-  stroke-width: 2.6;
+.soon small {
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+// ---------- Einkauf ----------
+.shop__count {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+.shop__count b {
+  font-size: 22px;
+}
+.shop__preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.shop__preview li {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f3f5f8;
+  font-size: 13.5px;
+}
+.shop__preview .shop__more {
+  background: none;
+  color: var(--text-muted);
+}
+.shop__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.shop__open app-icon {
+  width: 16px;
+  height: 16px;
+}
+
+// ---------- Leerer Zustand ----------
+.welcome {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 40px 24px;
+  text-align: center;
+}
+.welcome h2 {
+  margin: 0;
+  font-size: 22px;
+}
+.welcome .muted {
+  max-width: 460px;
+}
+.welcome__icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+.welcome__icon app-icon {
+  width: 32px;
+  height: 32px;
+}
+.welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.welcome__actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.welcome__actions app-icon {
+  width: 18px;
+  height: 18px;
 }
 
 // ---------- Responsiv ----------
 @media (max-width: 960px) {
-  .board {
-    grid-template-columns: 1fr;
+  .today {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'tasks' 'soon' 'shop';
   }
 }
 @media (max-width: 560px) {
@@ -371,39 +362,23 @@ ul {
     padding: 16px;
   }
   .task {
-    grid-template-columns: 22px minmax(0, 1fr) auto 36px;
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+    row-gap: 4px;
+    padding: 8px 0;
   }
-  .task__meta {
-    display: none;
-  }
-  .device {
-    grid-template-columns: 48px minmax(0, 1fr) 36px;
-    row-gap: 6px;
-  }
-  .device__art {
-    width: 48px;
-    height: 48px;
-  }
-  .device__status {
+  .task .tag--prio {
     grid-column: 2;
-    grid-row: 2;
+    justify-self: start;
   }
-  .device .more {
-    grid-row: 1;
-    grid-column: 3;
+  .welcome__actions {
+    display: grid;
+    width: 100%;
   }
-  .shop__items {
-    grid-template-columns: 1fr;
-  }
-  .routine {
-    grid-template-columns: 40px minmax(0, 1fr) auto;
-  }
-  .routine .more {
-    display: none;
+  .welcome__actions button {
+    justify-content: center;
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .more,
   .box {
     transition: border-color 160ms ease-out, background-color 160ms ease-out;
   }

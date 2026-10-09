@@ -1,7 +1,7 @@
-<section class="budget-year" aria-label="Monatsbudgets im Jahresüberblick">
+<section class="budget-year" aria-labelledby="budget-year-title">
   <div class="budget-year__head">
     <div>
-      <h3>Dein Budgetjahr {{ year() }}</h3>
+      <h2 id="budget-year-title">Budgetjahr {{ year() }}</h2>
       <p>{{ planned() }} von 12 Monaten geplant</p>
     </div>
     <div class="budget-year__select">
@@ -11,7 +11,7 @@
       </select>
     </div>
   </div>
-  <p class="budget-year__help">Wähle einen Monat. Sein Budget kannst du oben ansehen und bearbeiten.</p>
+  <p class="budget-year__help">Wähle einen Monat, um sein Budget anzusehen oder zu ändern.</p>
   <ul class="budget-year__months">
     @for (row of months(); track row.month) {
       <li>

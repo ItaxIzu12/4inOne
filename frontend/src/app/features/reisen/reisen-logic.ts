@@ -1,32 +1,18 @@
 import { IconName } from '../../shared/icons/app-icon';
-import {
-  BudgetCategory,
-  PackingCategory,
-  PackingItem,
-  ReminderArea,
-  Trip,
-  TripBudgetCategory,
-  TripExpense,
-  TripReminder,
-  TripStatus,
-} from './reisen-api.service';
+import { BudgetCategory, PackingCategory, PackingItem, Trip, TripBudgetCategory, TripExpense, TripTask, TripStatus } from './reisen-api.service';
 
 // ---------- Status ----------
-export const STATUS_ORDER: TripStatus[] = ['IDEA', 'PLANNED', 'CONFIRMED', 'ACTIVE', 'DONE', 'CANCELLED'];
+export const STATUS_ORDER: TripStatus[] = ['PLANNED', 'CONFIRMED', 'DONE', 'CANCELLED'];
 export const STATUS_LABELS: Record<TripStatus, string> = {
-  IDEA: 'Idee',
   PLANNED: 'In Planung',
   CONFIRMED: 'Bestätigt',
-  ACTIVE: 'Unterwegs',
   DONE: 'Abgeschlossen',
-  CANCELLED: 'Storniert',
+  CANCELLED: 'Abgesagt',
 };
 /** Farbton der Status-Pille (siehe trip-common.scss .status--*). */
-export const STATUS_TONE: Record<TripStatus, 'green' | 'blue' | 'gray' | 'violet' | 'red'> = {
-  IDEA: 'gray',
+export const STATUS_TONE: Record<TripStatus, 'green' | 'blue' | 'gray' | 'red'> = {
   PLANNED: 'blue',
   CONFIRMED: 'green',
-  ACTIVE: 'violet',
   DONE: 'gray',
   CANCELLED: 'red',
 };
@@ -69,20 +55,57 @@ export function countdown(trip: Pick<Trip, 'start_date'>, today: string): string
   if (days === 1) return 'morgen';
   return `in ${days} Tagen`;
 }
-/** „Mi“ und „12. März“ für die Zeitleiste der Erinnerungen. */
-export function dayParts(iso: string): { weekday: string; day: string } {
-  const d = noon(iso);
-  return {
-    weekday: d.toLocaleDateString('de-DE', { weekday: 'short' }).replace('.', ''),
-    day: d.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' }),
-  };
+const MONTHS_LONG = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+/** Für den Kopf einer Reise: „12.–15. November 2026“, „30. November – 2. Dezember 2026“. */
+export function longRange(trip: Pick<Trip, 'start_date' | 'end_date'>): string {
+  return rangeWith(trip, MONTHS_LONG);
 }
-/** „Mi, 12. März 2025, 18:00“ */
-export function reminderWhen(date: string | null, time: string | null): string {
-  if (!date) return 'Ohne Datum';
-  const d = noon(date);
-  const text = d.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }).replace('.,', ',');
-  return time ? `${text}, ${time.slice(0, 5)}` : text;
+const MONTHS_SHORT = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
+/** Kompakt für Karten: „12.–15. Nov. 2026“, „30. Nov. – 2. Dez. 2026“, „30. Dez. 2026 – 2. Jan. 2027“. */
+export function shortRange(trip: Pick<Trip, 'start_date' | 'end_date'>): string {
+  return rangeWith(trip, MONTHS_SHORT);
+}
+function rangeWith(trip: Pick<Trip, 'start_date' | 'end_date'>, months: string[]): string {
+  const [sy, sm, sd] = trip.start_date.split('-').map(Number);
+  const [ey, em, ed] = trip.end_date.split('-').map(Number);
+  if (sy === ey && sm === em) return sd === ed ? `${sd}. ${months[sm - 1]} ${sy}` : `${sd}.–${ed}. ${months[em - 1]} ${ey}`;
+  if (sy === ey) return `${sd}. ${months[sm - 1]} – ${ed}. ${months[em - 1]} ${ey}`;
+  return `${sd}. ${months[sm - 1]} ${sy} – ${ed}. ${months[em - 1]} ${ey}`;
+}
+
+// ---------- Phase einer Reise ----------
+/** Wo eine Reise zeitlich steht — „unterwegs“ ergibt sich aus dem Zeitraum, nicht aus einem Status. */
+export type TripPhase = 'upcoming' | 'ongoing' | 'past' | 'cancelled';
+export function tripPhase(trip: Pick<Trip, 'start_date' | 'end_date' | 'status'>, today: string): TripPhase {
+  if (trip.status === 'CANCELLED') return 'cancelled';
+  if (trip.end_date < today) return 'past';
+  return trip.start_date <= today ? 'ongoing' : 'upcoming';
+}
+/** „In 37 Tagen“, „Morgen“, „Heute geht's los“, „Unterwegs · Tag 2 von 4“, „Vorbei“, „Abgesagt“. */
+export function whenText(trip: Pick<Trip, 'start_date' | 'end_date' | 'status'>, today: string): string {
+  const phase = tripPhase(trip, today);
+  if (phase === 'cancelled') return 'Abgesagt';
+  if (phase === 'past') return 'Vorbei';
+  if (phase === 'ongoing') return `Unterwegs · Tag ${daysUntil(today, trip.start_date) + 1} von ${tripDays(trip)}`;
+  const days = daysUntil(trip.start_date, today);
+  return days === 0 ? 'Heute geht’s los' : days === 1 ? 'Morgen' : `In ${days} Tagen`;
+}
+export interface TripGroups {
+  upcoming: Trip[];
+  past: Trip[];
+  cancelled: Trip[];
+}
+/** Meine Reisen: bevorstehend (inkl. laufender, früheste zuerst), vergangen (neueste zuerst), abgesagt. */
+export function groupTrips(trips: Trip[], today: string): TripGroups {
+  const groups: TripGroups = { upcoming: [], past: [], cancelled: [] };
+  for (const trip of trips) {
+    const phase = tripPhase(trip, today);
+    groups[phase === 'ongoing' ? 'upcoming' : phase].push(trip);
+  }
+  groups.upcoming.sort((a, b) => a.start_date.localeCompare(b.start_date) || a.id - b.id);
+  groups.past.sort((a, b) => b.end_date.localeCompare(a.end_date) || b.id - a.id);
+  groups.cancelled.sort((a, b) => b.start_date.localeCompare(a.start_date) || b.id - a.id);
+  return groups;
 }
 
 // ---------- Personen ----------
@@ -111,39 +134,6 @@ export const TRANSPORT_LABELS: Record<Exclude<Trip['transport_type'], ''>, strin
 };
 export function transportIcon(type: Trip['transport_type']): IconName {
   return type === 'TRAIN' ? 'train' : type === 'CAR' || type === 'BUS' ? 'car' : type === 'FLIGHT' ? 'travel' : 'car';
-}
-
-// ---------- Reisen-Liste: Filter und Sortierung ----------
-export type PeriodFilter = '' | 'upcoming' | 'past' | 'this-year';
-export type TripSort = 'date-asc' | 'date-desc' | 'title' | 'updated';
-export interface TripFilter {
-  status: TripStatus | '';
-  period: PeriodFilter;
-  /** Anzeigename eines Teilnehmers oder leer */
-  person: string;
-}
-export function filterTrips(trips: Trip[], filter: TripFilter, today: string): Trip[] {
-  return trips.filter((t) => {
-    if (filter.status && t.status !== filter.status) return false;
-    if (filter.period === 'upcoming' && t.end_date < today) return false;
-    if (filter.period === 'past' && t.end_date >= today) return false;
-    if (filter.period === 'this-year' && t.start_date.slice(0, 4) !== today.slice(0, 4)) return false;
-    if (filter.person && !t.participants.some((p) => p.display_name === filter.person)) return false;
-    return true;
-  });
-}
-export function sortTrips(trips: Trip[], sort: TripSort): Trip[] {
-  const list = [...trips];
-  switch (sort) {
-    case 'date-desc':
-      return list.sort((a, b) => b.start_date.localeCompare(a.start_date) || b.id - a.id);
-    case 'title':
-      return list.sort((a, b) => a.title.localeCompare(b.title, 'de'));
-    case 'updated':
-      return list.sort((a, b) => b.updated_at.localeCompare(a.updated_at));
-    default:
-      return list.sort((a, b) => a.start_date.localeCompare(b.start_date) || a.id - b.id);
-  }
 }
 
 // ---------- Packliste ----------
@@ -183,36 +173,6 @@ export function packingGroups(items: PackingItem[], view: PackingView): PackingG
 export function percent(part: number, total: number): number {
   return total > 0 ? Math.round((part / total) * 100) : 0;
 }
-/** „Noch nicht eingepackt: Ladegerät und Reiseapotheke.“ — die wichtigsten offenen Dinge zuerst (Dokumente, Technik,
- * Gesundheit), höchstens drei Namen. */
-export function notPackedHint(items: PackingItem[]): string | null {
-  const priority: PackingCategory[] = ['DOKUMENTE', 'TECHNIK', 'GESUNDHEIT', 'UNTERWEGS', 'HYGIENE', 'KLEIDUNG', 'SONSTIGES'];
-  const open = items
-    .filter((i) => !i.is_packed)
-    .sort((a, b) => priority.indexOf(a.category) - priority.indexOf(b.category) || a.id - b.id);
-  if (!open.length) return null;
-  const names = open.slice(0, 2).map((i) => i.title);
-  const rest = open.length - names.length;
-  const list = rest > 0 ? `${names.join(', ')} und ${rest} weitere` : names.join(' und ');
-  return `Noch nicht eingepackt: ${list}.`;
-}
-/** Kurze, aus den echten Reisedaten abgeleitete Tipps — keine erfundenen Wetterdaten. */
-export function packingTips(trip: Trip, items: PackingItem[]): string[] {
-  const tips: string[] = [];
-  const hint = notPackedHint(items);
-  if (hint) tips.push(hint);
-  const days = tripDays(trip);
-  if (trip.baggage_type === 'HAND_LUGGAGE' || (days <= 3 && trip.transport_type !== 'CAR')) {
-    tips.push(days <= 3 ? 'Für ein Wochenende reicht Handgepäck.' : 'Nur Handgepäck: Flüssigkeiten in kleine Behälter umfüllen.');
-  }
-  if (trip.transport_type === 'TRAIN' || trip.transport_type === 'FLIGHT' || trip.transport_type === 'BUS') {
-    tips.push('Tickets und Buchungen auch offline verfügbar machen.');
-  }
-  if (!items.some((i) => i.category === 'DOKUMENTE')) tips.push('Denk an Ausweis oder Reisepass.');
-  if (trip.accommodation) tips.push(`Buchungsbestätigung für „${trip.accommodation}“ griffbereit halten.`);
-  return tips.slice(0, 4);
-}
-
 // ---------- Budget ----------
 export const BUDGET_ORDER: BudgetCategory[] = ['UNTERKUNFT', 'TRANSPORT', 'ESSEN', 'AKTIVITAETEN', 'SHOPPING', 'SONSTIGES', 'RESERVE'];
 export const BUDGET_META: Record<BudgetCategory, { label: string; icon: IconName }> = {
@@ -256,64 +216,6 @@ export function totalBudget(trip: Trip | null, planned: TripBudgetCategory[]): n
   return own > 0 ? own : planned.reduce((s, p) => s + Number(p.planned_amount), 0);
 }
 
-// ---------- Erinnerungen ----------
-export const AREA_LABELS: Record<ReminderArea, string> = { REISEN: 'Reisen', HAUSHALT: 'Haushalt', ORGANISATION: 'Organisation' };
-const ICON_WORDS: [RegExp, IconName][] = [
-  [/check-?in|flug|boarding/i, 'travel'],
-  [/dokument|pass|ausweis|visum|versicherung/i, 'file-text'],
-  [/koffer|pack|gepäck/i, 'luggage'],
-  [/pflanz|gieß|blume/i, 'plant'],
-  [/abreise|abfahrt|fahrt|auto|taxi/i, 'car'],
-  [/zug|bahn/i, 'train'],
-  [/hotel|unterkunft/i, 'bed'],
-  [/ticket|museum|eintritt/i, 'ticket'],
-  [/essen|restaurant|tisch/i, 'utensils'],
-];
-export function reminderIcon(reminder: Pick<TripReminder, 'title' | 'area' | 'source'>): IconName {
-  const hit = ICON_WORDS.find(([pattern]) => pattern.test(reminder.title));
-  if (hit) return hit[1];
-  if (reminder.area === 'HAUSHALT') return 'household';
-  if (reminder.source === 'ORG_EVENT' || reminder.source === 'TRIP_EVENT') return 'calendar';
-  return 'check-circle';
-}
-export type ReminderRange = 'all' | 'today' | 'week';
-export type ReminderKind = '' | 'task' | 'event';
-export interface ReminderFilter {
-  range: ReminderRange;
-  area: ReminderArea | '';
-  kind: ReminderKind;
-}
-const EVENT_SOURCES = new Set(['TRIP_EVENT', 'ORG_EVENT']);
-export function filterReminders(items: TripReminder[], filter: ReminderFilter, today: string): TripReminder[] {
-  const weekEnd = addDays(today, 6);
-  return items.filter((r) => {
-    if (filter.area && r.area !== filter.area) return false;
-    if (filter.kind === 'event' && !EVENT_SOURCES.has(r.source)) return false;
-    if (filter.kind === 'task' && EVENT_SOURCES.has(r.source)) return false;
-    if (filter.range === 'today' && r.date !== today) return false;
-    if (filter.range === 'week' && (!r.date || r.date < today || r.date > weekEnd)) return false;
-    return true;
-  });
-}
-export interface ReminderDay {
-  date: string | null;
-  items: TripReminder[];
-}
-/** Nach Tag gruppiert (die Liste kommt bereits sortiert vom Backend); ohne Datum zuletzt. */
-export function groupReminders(items: TripReminder[]): ReminderDay[] {
-  const days: ReminderDay[] = [];
-  for (const item of items) {
-    const last = days[days.length - 1];
-    if (last && last.date === item.date) last.items.push(item);
-    else days.push({ date: item.date, items: [item] });
-  }
-  return days;
-}
-/** Haushaltseinträge, die in die Reisezeit fallen — der Hinweis „verschieben oder abgeben?“. */
-export function householdConflicts(items: TripReminder[], trip: Pick<Trip, 'start_date' | 'end_date'>): TripReminder[] {
-  return items.filter((r) => r.area === 'HAUSHALT' && !!r.date && r.date >= trip.start_date && r.date <= trip.end_date);
-}
-
 // ---------- Geld ----------
 const CURRENCY_SYMBOLS: Record<Trip['currency'], { symbol: string; prefix: boolean }> = {
   EUR: { symbol: '€', prefix: false },
@@ -330,90 +232,28 @@ export function formatMoney(value: string | number, currency: Trip['currency'], 
   return prefix ? `${symbol} ${amount}` : `${amount} ${symbol}`;
 }
 
-// ---------- Übersicht ----------
-export type SuggestionKind = 'packing-empty' | 'packing' | 'tasks' | 'budget' | 'ready';
-export interface TripSuggestion {
-  kind: SuggestionKind;
-  title: string;
-  text: string;
-  /** Knopf und Ziel-Reiter; ohne Knopf, wenn alles vorbereitet ist */
-  action: string | null;
-  target: 'packlisten' | 'erinnerungen' | 'budget' | null;
-}
-/** Der eine nächste sinnvolle Schritt für die Reise — in fester Reihenfolge, Zurückgestelltes wird übersprungen. */
-export function tripSuggestion(
-  trip: Pick<Trip, 'title'>,
-  state: { packed: number; packingTotal: number; tasksOpen: number; budgetTotal: number },
-  skipped: ReadonlySet<SuggestionKind> = new Set(),
-): TripSuggestion {
-  const candidates: TripSuggestion[] = [];
-  const missing = state.packingTotal - state.packed;
-  if (state.packingTotal === 0) {
-    candidates.push({
-      kind: 'packing-empty',
-      title: 'Packliste anlegen',
-      text: `Für „${trip.title}“ gibt es noch keine Packliste. Passende Vorschläge helfen dir beim Start.`,
-      action: 'Zur Packliste',
-      target: 'packlisten',
-    });
-  } else if (missing > 0) {
-    candidates.push({
-      kind: 'packing',
-      title: 'Packliste noch unvollständig',
-      text: `Es fehlen noch ${missing} von ${state.packingTotal} Punkten auf deiner Packliste. Prüfe die offenen Dinge, damit du entspannt startest.`,
-      action: 'Zur Packliste',
-      target: 'packlisten',
-    });
-  }
-  if (state.tasksOpen > 0) {
-    candidates.push({
-      kind: 'tasks',
-      title: state.tasksOpen === 1 ? 'Eine Aufgabe ist noch offen' : `${state.tasksOpen} Aufgaben sind noch offen`,
-      text: 'Erledige die offenen Aufgaben rechtzeitig vor der Abreise – mit Datum und Uhrzeit verpasst du nichts.',
-      action: 'Zu den Erinnerungen',
-      target: 'erinnerungen',
-    });
-  }
-  if (state.budgetTotal <= 0) {
-    candidates.push({
-      kind: 'budget',
-      title: 'Budget planen',
-      text: 'Lege fest, wie viel du für Unterkunft, Transport, Essen und Aktivitäten ausgeben möchtest.',
-      action: 'Budget planen',
-      target: 'budget',
-    });
-  }
-  return (
-    candidates.find((c) => !skipped.has(c.kind)) ?? {
-      kind: 'ready',
-      title: candidates.length ? 'Für heute ist alles im Blick' : 'Alles vorbereitet',
-      text: candidates.length
-        ? 'Du hast die Hinweise für heute zurückgestellt. Morgen erinnern wir dich wieder.'
-        : 'Packliste, Aufgaben und Budget sind erledigt. Gute Reise!',
-      action: null,
-      target: null,
-    }
-  );
-}
-const ACTIVE_STATUSES: TripStatus[] = ['PLANNED', 'CONFIRMED', 'ACTIVE'];
-/** Laufende und bevorstehende Reisen (ohne Ideen, Abgeschlossenes und Storniertes) und ein kurzer Satz dazu. */
-export function activeTripsSummary(trips: Trip[], today: string): { count: number; text: string } {
-  const active = trips.filter((t) => ACTIVE_STATUSES.includes(t.status) && t.end_date >= today);
-  const parts = (['ACTIVE', 'CONFIRMED', 'PLANNED'] as TripStatus[])
-    .map((status) => ({ status, n: active.filter((t) => t.status === status).length }))
-    .filter((p) => p.n > 0)
-    .map((p) => (p.status === 'ACTIVE' ? `${p.n} unterwegs` : p.status === 'CONFIRMED' ? `${p.n} bestätigt` : `${p.n} in Planung`));
-  return { count: active.length, text: parts.length ? parts.join(' · ') : 'keine geplant' };
-}
-/** „Heute“ (auch für Überfälliges) oder „12. März“ — für die To-do-Liste. */
+// ---------- Planung ----------
+/** „Heute“ (auch für Überfälliges) oder „12. März“ — für die Aufgabenliste. */
 export function dueLabel(date: string | null, today: string): { text: string; urgent: boolean } {
   if (!date) return { text: 'Ohne Datum', urgent: false };
   if (date <= today) return { text: date < today ? 'Überfällig' : 'Heute', urgent: true };
   return { text: noon(date).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' }), urgent: false };
 }
-/** „12. März, 18:00“ */
-export function shortWhen(date: string | null, time: string | null): string {
-  if (!date) return 'Ohne Datum';
-  const day = noon(date).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
-  return time ? `${day}, ${time.slice(0, 5)}` : day;
+export type TaskView = 'open' | 'done' | 'mine';
+/** Offene nach Fälligkeit (ohne Datum zuletzt), erledigte zuletzt erledigt zuerst; „Meine“ = mir zugewiesen. */
+export function filterTasks(tasks: TripTask[], view: TaskView, me: number | null): TripTask[] {
+  const byDue = (a: TripTask, b: TripTask) =>
+    (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999') || (a.due_time ?? '').localeCompare(b.due_time ?? '') || a.id - b.id;
+  if (view === 'done') return tasks.filter((t) => t.status === 'DONE').sort((a, b) => b.id - a.id);
+  if (view === 'mine') return tasks.filter((t) => t.status === 'OPEN' && me !== null && t.assignee === me).sort(byDue);
+  return tasks.filter((t) => t.status === 'OPEN').sort(byDue);
+}
+/** Wenige, allgemeine und aus den Reisedaten abgeleitete Hinweise — keine Rechts-, Gesundheits- oder Finanzberatung. */
+export function planningTips(trip: Pick<Trip, 'transport_type' | 'start_date' | 'end_date'>): string[] {
+  const tips = ['Ausweis oder Reisepass rechtzeitig auf Gültigkeit prüfen.'];
+  if (trip.transport_type === 'FLIGHT') tips.push('Online Check-in öffnet oft 24–48 Stunden vor Abflug.');
+  if (trip.transport_type === 'TRAIN' || trip.transport_type === 'BUS') tips.push('Tickets auch offline speichern.');
+  if (trip.transport_type === 'CAR') tips.push('Route und Pausen vorab planen.');
+  tips.push('Klären, wie du vor Ort bezahlst (Karte, Bargeld).');
+  return tips.slice(0, 3);
 }

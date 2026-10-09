@@ -115,7 +115,13 @@ class ShoppingListViewSet(_WriteThrottleMixin, ModelViewSet):
             return ShoppingList.objects.none()
         # Beim ersten Aufruf gibt es die Standardliste noch nicht.
         services.active_shopping_list(membership.household)
-        return _lists_with_counts(membership.household)
+        queryset = _lists_with_counts(membership.household)
+        if self.action == 'list' and self.request.query_params.get('archiviert') != '1':
+            # Archivierte Listen sind ausgeblendet; ?archiviert=1 zeigt nur sie.
+            return queryset.filter(archived=False)
+        if self.action == 'list':
+            return queryset.filter(archived=True)
+        return queryset
 
     def perform_create(self, serializer):
         household = _require_membership(self.request).household
@@ -127,6 +133,11 @@ class ShoppingListViewSet(_WriteThrottleMixin, ModelViewSet):
         serializer.save(household=household, created_by=self.request.user)
 
     def perform_update(self, serializer):
+        instance = serializer.instance
+        if serializer.validated_data.get('archived') and not instance.archived:
+            active = ShoppingList.objects.filter(household=instance.household, archived=False).count()
+            if active <= 1:
+                raise ValidationError('Die letzte aktive Einkaufsliste kann nicht archiviert werden.')
         serializer.save(updated_at=timezone.now())
 
     def perform_destroy(self, instance):
@@ -279,23 +290,38 @@ class TaskViewSet(_WriteThrottleMixin, ModelViewSet):
 
 
 class HaushaltOverviewView(APIView):
-    """Kurzüberblick für „Heute“ und die Dashboard-Karte: Zahl offener
-    Aufgaben, überfällige und heute fällige Aufgaben (höchstens 5), offene
-    Einkaufseinträge und Geräte. Der Haushalt kommt nur aus request.user;
-    ohne Haushalt ist alles leer, statt einen Fehler zu liefern."""
+    """„Heute“ im Haushalt und die Dashboard-Karte in einer Antwort:
+    Zusammenfassung (Zählwerte), heute fällige und überfällige Aufgaben
+    (höchstens 5), „Demnächst“ (Fristen der nächsten services.UPCOMING_DAYS
+    Tage) und der offene Einkauf. Der Haushalt kommt nur aus request.user;
+    ohne Haushalt ist alles leer, statt einen Fehler zu liefern. Kind-Konten
+    sehen keine Geräte und Verträge (NoChildAccount)."""
 
     permission_classes = [IsAuthenticated]
     LIMIT = 5
+    SHOPPING_PREVIEW = 4
+
+    @staticmethod
+    def _summary(**values) -> dict:
+        keys = (
+            'open_tasks', 'due_today', 'overdue_tasks', 'recurring_tasks', 'done_this_week',
+            'open_shopping_items', 'active_lists', 'devices', 'devices_in_repair',
+            'contracts', 'contracts_expiring', 'upcoming',
+        )
+        return {key: values.get(key, 0) for key in keys}
 
     def get(self, request):
         membership = services.membership_for(request.user)
         if membership is None:
             return Response(
                 {
+                    'summary': self._summary(),
                     'open_tasks': 0,
                     'overdue_tasks': 0,
                     'today': [],
                     'upcoming': [],
+                    'deadlines': [],
+                    'shopping': {'open_items': 0, 'preview': [], 'list_id': None},
                     'open_shopping_items': 0,
                     'devices': 0,
                     'device_list': [],
@@ -306,6 +332,7 @@ class HaushaltOverviewView(APIView):
             )
         household = membership.household
         today = timezone.localdate()
+        is_child = services.is_child_account(membership)
         open_tasks = Task.objects.filter(household=household, is_done=False, is_paused=False)
         due = (
             open_tasks.filter(due_date__lte=today)
@@ -319,55 +346,109 @@ class HaushaltOverviewView(APIView):
             .prefetch_related('rotation_members')
             .order_by(F('due_date').asc(nulls_last=True), F('due_time').asc(nulls_last=True), 'id')[: self.LIMIT]
         )
+
+        open_items = ShoppingItem.objects.filter(
+            shopping_list__household=household, shopping_list__archived=False, is_checked=False
+        )
+        default_list = services.active_shopping_list(household)
+        shopping = {
+            'open_items': open_items.count(),
+            'preview': list(open_items.order_by('-created_at', '-id').values_list('name', flat=True)[: self.SHOPPING_PREVIEW]),
+            'list_id': default_list.pk,
+        }
+
         devices = []
         contracts = []
+        deadlines = []
         contracts_monthly = Decimal('0')
-        contract_count = 0
-        if not services.is_child_account(membership):
+        device_rows = []
+        contract_rows = []
+        if not is_child:
+            entries = list(FolderEntry.objects.filter(household=household))
+            contract_rows = [e for e in entries if e.kind == FolderEntry.Kind.CONTRACT]
+            device_rows = [e for e in entries if e.kind == FolderEntry.Kind.DEVICE]
+            running = [
+                e for e in contract_rows
+                if services.contract_status(e, today) not in (FolderEntry.Status.CANCELLED, FolderEntry.Status.ENDED)
+            ]
+            contracts_monthly = sum((services.monthly_equivalent(e) or Decimal('0') for e in running), Decimal('0'))
             # Verträge mit der nächsten Kündigungsfrist zuerst, ohne Frist zuletzt.
-            rows = list(FolderEntry.objects.filter(household=household, kind=FolderEntry.Kind.CONTRACT))
-            contract_count = len(rows)
-            contracts_monthly = sum((e.monthly_cost or Decimal('0') for e in rows), Decimal('0'))
-            rows.sort(key=lambda e: (services.cancel_by(e) is None, services.cancel_by(e) or today, e.name.lower()))
+            running.sort(
+                key=lambda e: (
+                    services.cancellation_deadline(e) is None,
+                    services.cancellation_deadline(e) or today,
+                    e.name.lower(),
+                )
+            )
             contracts = [
                 {
                     'id': entry.id,
                     'name': entry.name,
                     'provider': entry.provider,
-                    'monthly_cost': str(entry.monthly_cost) if entry.monthly_cost is not None else None,
-                    'cancel_by': services.cancel_by(entry),
-                    'notice_period_months': entry.notice_period_months,
+                    'cost': str(entry.cost) if entry.cost is not None else None,
+                    'billing_cycle': entry.billing_cycle,
+                    'cancellation_deadline': services.cancellation_deadline(entry),
+                    'effective_status': services.contract_status(entry, today),
                 }
-                for entry in rows[: self.LIMIT]
+                for entry in running[: self.LIMIT]
             ]
             devices = [
                 {
                     'id': entry.id,
                     'name': entry.name,
                     'provider': entry.provider,
-                    'next_maintenance': entry.next_maintenance,
-                    'warranty_until': entry.warranty_until,
+                    'status': entry.status,
+                    'maintenance_due_date': entry.maintenance_due_date,
+                    'warranty_end_date': entry.warranty_end_date,
                 }
-                for entry in FolderEntry.objects.filter(household=household, kind=FolderEntry.Kind.DEVICE).order_by(
-                    'name'
+                for entry in sorted(
+                    (e for e in device_rows if e.status != FolderEntry.Status.RETIRED), key=lambda e: e.name.lower()
                 )[: self.LIMIT]
             ]
+            deadlines = [
+                {**row, 'date': row['date'].isoformat()} for row in services.upcoming_deadlines(household, today)
+            ]
+
+        week_start, week_end = services.calendar_week(today)
+        summary = self._summary(
+            open_tasks=open_tasks.count(),
+            due_today=open_tasks.filter(due_date=today).count(),
+            overdue_tasks=open_tasks.filter(due_date__lt=today).count(),
+            recurring_tasks=Task.objects.filter(household=household)
+            .filter(Q(recurrence_days__isnull=False) | Q(recurrence_months__isnull=False))
+            .count(),
+            done_this_week=TaskCompletion.objects.filter(
+                household=household, done_at__date__gte=week_start, done_at__date__lte=week_end
+            ).count(),
+            open_shopping_items=shopping['open_items'],
+            active_lists=ShoppingList.objects.filter(household=household, archived=False).count(),
+            devices=sum(1 for e in device_rows if e.status != FolderEntry.Status.RETIRED),
+            devices_in_repair=sum(1 for e in device_rows if e.status == FolderEntry.Status.REPAIR),
+            contracts=sum(
+                1
+                for e in contract_rows
+                if services.contract_status(e, today) not in (FolderEntry.Status.CANCELLED, FolderEntry.Status.ENDED)
+            ),
+            contracts_expiring=sum(
+                1 for e in contract_rows if services.contract_status(e, today) == FolderEntry.Status.EXPIRING
+            ),
+            upcoming=len(deadlines),
+        )
         return Response(
             {
-                'open_tasks': open_tasks.count(),
-                'overdue_tasks': open_tasks.filter(due_date__lt=today).count(),
+                'summary': summary,
+                'open_tasks': summary['open_tasks'],
+                'overdue_tasks': summary['overdue_tasks'],
                 'today': TaskSerializer(due, many=True, context={'request': request}).data,
                 'upcoming': TaskSerializer(upcoming, many=True, context={'request': request}).data,
+                'deadlines': deadlines[: self.LIMIT + 3],
+                'shopping': shopping,
                 'device_list': devices,
-                'contracts': contract_count,
+                'contracts': summary['contracts'],
                 'contracts_monthly': f'{contracts_monthly:.2f}',
                 'contract_list': contracts,
-                'open_shopping_items': ShoppingItem.objects.filter(
-                    shopping_list__household=household, is_checked=False
-                ).count(),
-                'devices': 0
-                if services.is_child_account(membership)
-                else FolderEntry.objects.filter(household=household, kind=FolderEntry.Kind.DEVICE).count(),
+                'open_shopping_items': summary['open_shopping_items'],
+                'devices': summary['devices'],
             }
         )
 

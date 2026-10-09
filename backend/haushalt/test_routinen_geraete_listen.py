@@ -243,3 +243,11 @@ def test_list_icon_must_be_known_and_lists_are_limited(anna, household, client_f
 def test_folder_entry_model_is_untouched_for_existing_rows(household):
     entry = FolderEntry.objects.create(household=household, kind='geraet', name='Heizung')
     assert entry.room == '' and entry.model == '' and entry.last_maintenance is None
+
+
+def test_calendar_week_runs_monday_to_sunday():
+    from datetime import date
+    from haushalt.services import calendar_week
+    assert calendar_week(date(2026, 10, 6)) == (date(2026, 10, 5), date(2026, 10, 11))
+    assert calendar_week(date(2026, 10, 11)) == (date(2026, 10, 5), date(2026, 10, 11))  # Sonntag
+    assert calendar_week(date(2026, 10, 12)) == (date(2026, 10, 12), date(2026, 10, 18))  # Montag

@@ -1,112 +1,195 @@
+<div class="section-switch" role="group" aria-label="Bereich in Zuhause">
+  <button type="button" [attr.aria-pressed]="!isContracts()" (click)="selectSection('geraete')"><app-icon name="smartphone" aria-hidden="true" />Geräte</button>
+  <button type="button" [attr.aria-pressed]="isContracts()" (click)="selectSection('vertraege')"><app-icon name="finance" aria-hidden="true" />Verträge</button>
+</div>
+
 @if (forbidden()) {
   <div class="load-error">
-    <p>Verträge enthalten Kosten und sind deshalb nur für Erwachsene im Haushalt sichtbar.</p>
+    <p>Geräte und Verträge enthalten Kosten und sind deshalb nur für Erwachsene im Haushalt sichtbar.</p>
   </div>
 } @else if (loadError()) {
   <div class="load-error">
-    <p [appErrorNotice]="'Die Verträge konnten nicht geladen werden.'">Die Verträge konnten nicht geladen werden.</p>
+    <p [appErrorNotice]="'Zuhause konnte nicht geladen werden.'">Zuhause konnte nicht geladen werden.</p>
     <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
   </div>
 } @else if (entries()) {
-  @let s = stats();
   <!-- Kennzahlen -->
-  <div class="stats">
-    <button type="button" class="stat" (click)="showStatus('')">
-      <span class="stat__icon" aria-hidden="true"><app-icon name="finance" /></span>
-      <span class="stat__body">
-        <span class="stat__value">{{ s.total }}</span>
-        <span class="stat__label">{{ s.total === 1 ? 'Vertrag' : 'Verträge' }}</span>
-        <span class="stat__hint">im Haushalt</span>
-      </span>
-      <app-icon class="stat__chevron" name="arrow" />
-    </button>
-    <div class="stat stat--blue stat--static">
-      <span class="stat__icon" aria-hidden="true"><app-icon name="bars" /></span>
-      <span class="stat__body">
-        <span class="stat__value">{{ euro(s.monthly) }}</span>
-        <span class="stat__label">pro Monat</span>
-        <span class="stat__hint">{{ euro(s.yearly) }} im Jahr</span>
-      </span>
+  @if (isContracts()) {
+    @let s = stats();
+    <div class="stats">
+      <button type="button" class="stat" (click)="showStatus('')">
+        <span class="stat__icon" aria-hidden="true"><app-icon name="finance" /></span>
+        <span class="stat__body">
+          <span class="stat__value">{{ s.total }}</span>
+          <span class="stat__label">{{ s.total === 1 ? 'laufender Vertrag' : 'laufende Verträge' }}</span>
+          <span class="stat__hint">im Haushalt</span>
+        </span>
+        <app-icon class="stat__chevron" name="arrow" />
+      </button>
+      <div class="stat stat--blue stat--static">
+        <span class="stat__icon" aria-hidden="true"><app-icon name="bars" /></span>
+        <span class="stat__body">
+          <span class="stat__value">{{ euro(s.monthly) }}</span>
+          <span class="stat__label">pro Monat</span>
+          <span class="stat__hint">{{ euro(s.yearly) }} im Jahr</span>
+        </span>
+      </div>
+      <button type="button" class="stat stat--amber" (click)="showStatus('EXPIRING')">
+        <span class="stat__icon" aria-hidden="true"><app-icon name="calendar" /></span>
+        <span class="stat__body">
+          <span class="stat__value">{{ s.expiring }}</span>
+          <span class="stat__label">läuft aus</span>
+          <span class="stat__hint">Kündigung in {{ upcomingDays }} Tagen</span>
+        </span>
+        <app-icon class="stat__chevron" name="arrow" />
+      </button>
+      <button type="button" class="stat stat--green" (click)="showStatus('ohne-frist')">
+        <span class="stat__icon" aria-hidden="true"><app-icon name="help" /></span>
+        <span class="stat__body">
+          <span class="stat__value">{{ s.withoutDeadline }}</span>
+          <span class="stat__label">ohne Frist</span>
+          <span class="stat__hint">Vertragsende fehlt</span>
+        </span>
+        <app-icon class="stat__chevron" name="arrow" />
+      </button>
     </div>
-    <button type="button" class="stat stat--amber" (click)="showStatus('bald')">
-      <span class="stat__icon" aria-hidden="true"><app-icon name="calendar" /></span>
-      <span class="stat__body">
-        <span class="stat__value">{{ s.soon }}</span>
-        <span class="stat__label">Kündigung bald</span>
-        <span class="stat__hint">in den nächsten 3 Monaten</span>
-      </span>
-      <app-icon class="stat__chevron" name="arrow" />
-    </button>
-    <button type="button" class="stat stat--green" (click)="showStatus('offen')">
-      <span class="stat__icon" aria-hidden="true"><app-icon name="help" /></span>
-      <span class="stat__body">
-        <span class="stat__value">{{ s.withoutDeadline }}</span>
-        <span class="stat__label">ohne Frist</span>
-        <span class="stat__hint">Vertragsende fehlt</span>
-      </span>
-      <app-icon class="stat__chevron" name="arrow" />
-    </button>
-  </div>
+  } @else {
+    @let d = dStats();
+    <div class="stats">
+      <button type="button" class="stat" (click)="showStatus('')">
+        <span class="stat__icon" aria-hidden="true"><app-icon name="smartphone" /></span>
+        <span class="stat__body">
+          <span class="stat__value">{{ d.total }}</span>
+          <span class="stat__label">{{ d.total === 1 ? 'Gerät in Betrieb' : 'Geräte in Betrieb' }}</span>
+          <span class="stat__hint">im Haushalt</span>
+        </span>
+        <app-icon class="stat__chevron" name="arrow" />
+      </button>
+      <button type="button" class="stat stat--amber" (click)="showStatus('REPAIR')">
+        <span class="stat__icon" aria-hidden="true"><app-icon name="settings" /></span>
+        <span class="stat__body">
+          <span class="stat__value">{{ d.repair }}</span>
+          <span class="stat__label">in Reparatur</span>
+          <span class="stat__hint">{{ d.repair ? 'noch nicht zurück' : 'alles läuft' }}</span>
+        </span>
+        <app-icon class="stat__chevron" name="arrow" />
+      </button>
+      <div class="stat stat--blue stat--static">
+        <span class="stat__icon" aria-hidden="true"><app-icon name="clock" /></span>
+        <span class="stat__body">
+          <span class="stat__value">{{ d.maintenanceSoon }}</span>
+          <span class="stat__label">Wartung bald</span>
+          <span class="stat__hint">in {{ upcomingDays }} Tagen</span>
+        </span>
+      </div>
+      <div class="stat stat--green stat--static">
+        <span class="stat__icon" aria-hidden="true"><app-icon name="check-circle" /></span>
+        <span class="stat__body">
+          <span class="stat__value">{{ d.warrantySoon }}</span>
+          <span class="stat__label">Garantie endet</span>
+          <span class="stat__hint">in {{ upcomingDays }} Tagen</span>
+        </span>
+      </div>
+    </div>
+  }
 
   <div class="board">
     <!-- Liste -->
-    <section class="card list-card" aria-labelledby="contracts-heading">
+    <section class="card list-card" aria-labelledby="zuhause-heading">
       <div class="list-head">
         <div>
-          <h2 id="contracts-heading"><app-icon name="finance" aria-hidden="true" />Meine Verträge</h2>
-          @if (s.monthly > 0) {
-            <p class="muted small head-sub">zusammen {{ s.monthly | number: '1.2-2' : 'de' }} € im Monat</p>
+          <h2 id="zuhause-heading">
+            <app-icon [name]="isContracts() ? 'finance' : 'smartphone'" aria-hidden="true" />{{ isContracts() ? 'Meine Verträge' : 'Meine Geräte' }}
+          </h2>
+          @if (isContracts() && stats().monthly > 0) {
+            <p class="muted small head-sub">zusammen {{ stats().monthly | number: '1.2-2' : 'de' }} € im Monat · nicht in Finanzen gebucht</p>
           }
         </div>
-        <button type="button" class="add-btn" aria-label="Vertrag hinzufügen" (click)="openNew()">
-          <app-icon name="plus" /><span>Vertrag hinzufügen</span>
-        </button>
       </div>
 
       <div class="filters">
         <label class="search">
           <app-icon name="search" aria-hidden="true" />
-          <span class="sr-only">Verträge suchen</span>
-          <input type="search" placeholder="Verträge suchen …" autocomplete="off" [value]="query()" (input)="query.set($any($event.target).value)" />
+          <span class="sr-only">{{ isContracts() ? 'Verträge suchen' : 'Geräte suchen' }}</span>
+          <input
+            type="search"
+            [placeholder]="isContracts() ? 'Verträge suchen …' : 'Geräte suchen …'"
+            autocomplete="off"
+            [value]="query()"
+            (input)="query.set($any($event.target).value)"
+          />
         </label>
-        <span class="sr-only" id="con-status">Status</span>
-        <app-select class="filters__status" ariaLabelledby="con-status" [options]="statusOptions" [value]="status()" (valueChange)="status.set($any($event))" />
+        <span class="sr-only" id="zh-status">Nach Status filtern</span>
+        <app-select class="filters__status" ariaLabelledby="zh-status" [options]="statusOptions()" [value]="status()" (valueChange)="status.set($event)" />
       </div>
 
       <div class="table-head">
-        <span aria-hidden="true">Vertrag</span>
-        <span aria-hidden="true">Status</span>
-        <span aria-hidden="true">Kosten</span>
-        <span aria-hidden="true">Kündbar bis</span>
-        <button type="button" class="sort-btn" [attr.aria-label]="'Sortiert ' + sortLabel[sort()] + ' – Sortierung wechseln'" (click)="toggleSort()">
-          <app-icon name="sort" />
-        </button>
+        @if (isContracts()) {
+          <span aria-hidden="true">Vertrag</span>
+          <span aria-hidden="true">Status</span>
+          <span aria-hidden="true">Kosten</span>
+          <span aria-hidden="true">Kündbar bis</span>
+          <button type="button" class="sort-btn" [attr.aria-label]="'Sortiert ' + sortLabel[sort()] + ' – Sortierung wechseln'" (click)="toggleSort()">
+            <app-icon name="sort" />
+          </button>
+        } @else {
+          <span aria-hidden="true">Gerät</span>
+          <span aria-hidden="true">Status</span>
+          <span aria-hidden="true">Garantie bis</span>
+          <span aria-hidden="true">Nächste Frist</span>
+          <span aria-hidden="true"></span>
+        }
       </div>
 
       <ul class="rows">
         @for (c of visible(); track c.id) {
-          @let st = contractState(c);
           @let isSel = selected()?.id === c.id;
-          <li class="row" [class.is-selected]="isSel">
+          <li class="row" [class.is-selected]="isSel" [class.is-retired]="c.status === 'RETIRED' || c.effective_status === 'ENDED'">
             <button type="button" class="row__main" [attr.aria-current]="isSel ? 'true' : null" (click)="select(c)">
-              <span class="thumb" aria-hidden="true"><app-icon name="finance" /></span>
-              <span class="row__name">
-                <b>{{ c.name }}</b>
-                <small>{{ c.provider || 'Anbieter nicht angegeben' }}</small>
-              </span>
-              <span class="row__state">
-                <span [class]="'pill pill--' + st.state"><i aria-hidden="true"></i>{{ st.label }}</span>
-                <small class="row__cost-mobile">{{ c.monthly_cost ? euro(monthly(c)) + ' / Monat' : '' }}</small>
-              </span>
-              <span class="row__cost amount">{{ c.monthly_cost ? euro(monthly(c)) : '—' }}</span>
-              <span class="row__date">
-                @if (c.cancel_by) {
-                  <span [class.is-due]="st.state === 'bald'" [class.is-late]="st.state === 'verpasst'">{{ formatDate(c.cancel_by) }}</span>
-                  <small [class.is-due]="st.state === 'bald'" [class.is-late]="st.state === 'verpasst'">{{ fromNow(c.cancel_by) }}</small>
-                } @else {
-                  <small>kein Vertragsende</small>
-                }
-              </span>
+              @if (c.kind === 'vertrag') {
+                @let st = contractState(c);
+                <span class="thumb" aria-hidden="true"><app-icon name="finance" /></span>
+                <span class="row__name">
+                  <b>{{ c.name }}</b>
+                  <small>{{ c.provider || 'Anbieter nicht angegeben' }}{{ c.category ? ' · ' + c.category : '' }}</small>
+                </span>
+                <span class="row__state">
+                  <span [class]="'pill pill--' + st.state"><i aria-hidden="true"></i>{{ st.label }}</span>
+                  <small class="row__cost-mobile">{{ costLabel(c) }}</small>
+                </span>
+                <span class="row__cost amount">{{ costLabel(c) || '—' }}</span>
+                <span class="row__date">
+                  @if (c.cancellation_deadline) {
+                    <span [class.is-due]="st.status === 'EXPIRING'">{{ formatDate(c.cancellation_deadline) }}</span>
+                    <small [class.is-due]="st.status === 'EXPIRING'">{{ fromNow(c.cancellation_deadline) }}</small>
+                  } @else {
+                    <small>kein Vertragsende</small>
+                  }
+                </span>
+              } @else {
+                @let st = deviceState(c);
+                @let next = nextDeviceDeadline(c);
+                <span class="thumb" aria-hidden="true"><app-icon [name]="deviceIcon(c)" /></span>
+                <span class="row__name">
+                  <b>{{ c.name }}</b>
+                  <small>{{ c.provider || 'Hersteller nicht angegeben' }}{{ c.model ? ' · ' + c.model : '' }}</small>
+                </span>
+                <span class="row__state">
+                  <span [class]="'pill pill--' + st.state"><i aria-hidden="true"></i>{{ st.label }}</span>
+                  <!-- Kompakte Tabelle: die ausgeblendete Garantie-Spalte; am Handy: die nächste Frist. -->
+                  <small class="row__cost-mobile">{{ c.warranty_end_date ? 'Garantie bis ' + formatDate(c.warranty_end_date) : 'ohne Garantie' }}</small>
+                  <small class="row__next-mobile">{{ next ? next.titel.split(':')[0] + ' ' + fromNow(next.datum) : '' }}</small>
+                </span>
+                <span class="row__cost">{{ c.warranty_end_date ? formatDate(c.warranty_end_date) : '—' }}</span>
+                <span class="row__date">
+                  @if (next) {
+                    <span [class.is-due]="deadlineSoon(next.datum)">{{ formatDate(next.datum) }}</span>
+                    <small [class.is-due]="deadlineSoon(next.datum)">{{ next.art === 'wartung' ? 'Wartung' : 'Garantieende' }} · {{ fromNow(next.datum) }}</small>
+                  } @else {
+                    <small>keine Frist</small>
+                  }
+                </span>
+              }
               <app-icon class="row__chevron" name="arrow" aria-hidden="true" />
             </button>
             <app-row-menu class="row__menu" [items]="rowMenu" [label]="'Aktionen für ' + c.name" (selected)="openEdit(c)" />
@@ -114,10 +197,12 @@
         } @empty {
           <li class="empty">
             @if (query() || status()) {
-              <p class="muted">Keine Verträge passen zu diesen Filtern.</p>
+              <p class="muted">Nichts passt zu diesen Filtern.</p>
               <button type="button" class="btn-link" (click)="showStatus('')">Filter zurücksetzen</button>
-            } @else {
+            } @else if (isContracts()) {
               <p class="muted">Strom, Internet, Handy, Versicherungen … Leg Verträge ab – 4inOne erinnert rechtzeitig an die Kündigungsfrist.</p>
+            } @else {
+              <p class="muted">Waschmaschine, Heizung, Kühlschrank … Leg Geräte ab – 4inOne erinnert an Wartung und Garantieende.</p>
             }
           </li>
         }
@@ -126,34 +211,54 @@
 
     <!-- Detailkarte (Handy: Blatt von unten) -->
     @if (selected(); as c) {
-      @let st = contractState(c);
       @if (sheetOpen()) {
         <div class="sheet-backdrop" aria-hidden="true" (click)="sheetOpen.set(false)"></div>
       }
-      <aside class="card detail" [class.is-open]="sheetOpen()" aria-labelledby="contract-detail-heading" (keydown.escape)="sheetOpen.set(false)">
-        <div class="detail__media">
-          <span class="photo" aria-hidden="true"><app-icon name="finance" /></span>
-          <div class="price">
-            <b>{{ c.monthly_cost ? euro(monthly(c)) : '—' }}</b>
-            <small>{{ c.monthly_cost ? 'pro Monat · ' + euro(monthly(c) * 12) + ' im Jahr' : 'keine Kosten hinterlegt' }}</small>
+      <aside class="card detail" [class.is-open]="sheetOpen()" aria-labelledby="zuhause-detail-heading" (keydown.escape)="sheetOpen.set(false)">
+        @if (c.kind === 'vertrag') {
+          @let st = contractState(c);
+          <div class="detail__media">
+            <span class="photo" aria-hidden="true"><app-icon name="finance" /></span>
+            <div class="price">
+              <b>{{ c.cost ? euro(+c.cost) : '—' }}</b>
+              <small>{{ c.cost ? billingLabel[c.billing_cycle] + (c.monthly_equivalent && c.billing_cycle !== 'MONTHLY' ? ' · ' + euro(monthly(c)) + ' im Monat' : '') : 'keine Kosten hinterlegt' }}</small>
+            </div>
+            <button type="button" class="sheet-close" aria-label="Details schließen" (click)="sheetOpen.set(false)">
+              <app-icon name="close" />
+            </button>
           </div>
-          <button type="button" class="sheet-close" aria-label="Details schließen" (click)="sheetOpen.set(false)">
-            <app-icon name="close" />
-          </button>
-        </div>
-        <div class="detail__title">
-          <h2 id="contract-detail-heading">{{ c.name }}</h2>
-          <span [class]="'pill pill--' + st.state"><i aria-hidden="true"></i>{{ st.label }}</span>
-        </div>
-        <p class="detail__sub">{{ c.provider || 'Anbieter nicht angegeben' }}</p>
+          <div class="detail__title">
+            <h2 id="zuhause-detail-heading">{{ c.name }}</h2>
+            <span [class]="'pill pill--' + st.state"><i aria-hidden="true"></i>{{ st.label }}</span>
+          </div>
+          <p class="detail__sub">{{ c.provider || 'Anbieter nicht angegeben' }}{{ c.category ? ' · ' + c.category : '' }}</p>
+        } @else {
+          @let st = deviceState(c);
+          @let next = nextDeviceDeadline(c);
+          <div class="detail__media">
+            <span class="photo" aria-hidden="true"><app-icon [name]="deviceIcon(c)" /></span>
+            <div class="price">
+              <b>{{ next ? formatDate(next.datum) : 'Keine Frist' }}</b>
+              <small>{{ next ? (next.art === 'wartung' ? 'Nächste Wartung' : 'Garantie endet') + ' · ' + fromNow(next.datum) : 'Wartung und Garantie ohne Termin' }}</small>
+            </div>
+            <button type="button" class="sheet-close" aria-label="Details schließen" (click)="sheetOpen.set(false)">
+              <app-icon name="close" />
+            </button>
+          </div>
+          <div class="detail__title">
+            <h2 id="zuhause-detail-heading">{{ c.name }}</h2>
+            <span [class]="'pill pill--' + st.state"><i aria-hidden="true"></i>{{ st.label }}</span>
+          </div>
+          <p class="detail__sub">{{ c.provider || 'Hersteller nicht angegeben' }}{{ c.category ? ' · ' + c.category : '' }}</p>
+        }
 
-        <div class="detail-tabs" role="tablist" aria-label="Angaben zum Vertrag" (keydown)="onDetailKey($event)">
+        <div class="detail-tabs" role="tablist" aria-label="Angaben" (keydown)="onDetailKey($event)">
           @for (t of detailTabs; track t.key) {
             <button
               type="button"
               role="tab"
               [id]="'ct-' + t.key"
-              aria-controls="contract-panel"
+              aria-controls="zuhause-panel"
               [attr.aria-selected]="detailTab() === t.key"
               [attr.tabindex]="detailTab() === t.key ? 0 : -1"
               (click)="detailTab.set(t.key)"
@@ -162,69 +267,143 @@
             </button>
           }
         </div>
-        <div id="contract-panel" class="detail__panel" role="tabpanel" [attr.aria-labelledby]="'ct-' + detailTab()">
+        <div id="zuhause-panel" class="detail__panel" role="tabpanel" [attr.aria-labelledby]="'ct-' + detailTab()">
           @if (detailTab() === 'details') {
-            <dl class="facts">
-              <div class="fact fact--status">
-                <dt><app-icon name="check-circle" aria-hidden="true" />Status</dt>
-                <dd>
-                  <span [class]="'state state--' + st.state"><i aria-hidden="true"></i>{{ st.label }}</span>
-                  @if (c.cancel_by) {
-                    <small>Letzter Kündigungstag {{ fromNow(c.cancel_by) }}</small>
-                  }
-                </dd>
-              </div>
-              <div class="fact">
-                <dt><app-icon name="tag" aria-hidden="true" />Anbieter</dt>
-                <dd>{{ c.provider || '—' }}</dd>
-              </div>
-              <div class="fact">
-                <dt><app-icon name="finance" aria-hidden="true" />Kosten</dt>
-                <dd>{{ c.monthly_cost ? euro(monthly(c)) + ' / Monat' : '—' }}</dd>
-              </div>
-              <div class="fact">
-                <dt><app-icon name="calendar" aria-hidden="true" />Vertragsende</dt>
-                <dd>{{ c.contract_end ? formatDate(c.contract_end) : '—' }}</dd>
-              </div>
-              <div class="fact">
-                <dt><app-icon name="clock" aria-hidden="true" />Kündigungsfrist</dt>
-                <dd>{{ noticeLabel(c.notice_period_months) }}</dd>
-              </div>
-              <div class="fact">
-                <dt><app-icon name="calendar-check" aria-hidden="true" />Kündbar bis</dt>
-                <dd>
-                  @if (c.cancel_by) {
-                    <span [class.is-due]="st.state === 'bald'" [class.is-late]="st.state === 'verpasst'">{{ formatDate(c.cancel_by) }}</span>
-                    <small>({{ fromNow(c.cancel_by) }})</small>
-                  } @else {
-                    —
-                  }
-                </dd>
-              </div>
-            </dl>
-            <p class="muted small">Die Kündigungsfrist erscheint rechtzeitig unter „Heute“.</p>
+            @if (c.kind === 'vertrag') {
+              @let st = contractState(c);
+              <dl class="facts">
+                <div class="fact fact--status">
+                  <dt><app-icon name="check-circle" aria-hidden="true" />Status</dt>
+                  <dd>
+                    <span [class]="'state state--' + st.state"><i aria-hidden="true"></i>{{ st.label }}</span>
+                    @if (c.cancellation_deadline && (st.status === 'ACTIVE' || st.status === 'EXPIRING')) {
+                      <small>Letzter Kündigungstag {{ fromNow(c.cancellation_deadline) }}</small>
+                    }
+                  </dd>
+                </div>
+                <div class="fact">
+                  <dt><app-icon name="finance" aria-hidden="true" />Kosten</dt>
+                  <dd>{{ costLabel(c) || '—' }}</dd>
+                </div>
+                <div class="fact">
+                  <dt><app-icon name="calendar" aria-hidden="true" />Laufzeit</dt>
+                  <dd>
+                    {{ c.start_date ? formatDate(c.start_date) : 'offen' }} – {{ c.end_date ? formatDate(c.end_date) : 'offen' }}
+                    @if (c.auto_renewal) {<small>verlängert sich automatisch</small>}
+                  </dd>
+                </div>
+                <div class="fact">
+                  <dt><app-icon name="clock" aria-hidden="true" />Kündigungsfrist</dt>
+                  <dd>{{ noticeLabel(c.notice_period_days) }}</dd>
+                </div>
+                <div class="fact">
+                  <dt><app-icon name="calendar-check" aria-hidden="true" />Kündbar bis</dt>
+                  <dd>
+                    @if (c.cancellation_deadline) {
+                      <span [class.is-due]="st.status === 'EXPIRING'">{{ formatDate(c.cancellation_deadline) }}</span>
+                      <small>({{ fromNow(c.cancellation_deadline) }})</small>
+                    } @else {
+                      —
+                    }
+                  </dd>
+                </div>
+                <div class="fact">
+                  <dt><app-icon name="tag" aria-hidden="true" />Vertragsnummer</dt>
+                  <dd>{{ contractNumber()?.id === c.id ? contractNumber()!.value || '—' : '…' }}</dd>
+                </div>
+              </dl>
+              <p class="muted small">Die Kündigungsfrist erscheint {{ upcomingDays }} Tage vorher unter „Heute“. Kosten werden nicht in Finanzen gebucht.</p>
+            } @else {
+              @let st = deviceState(c);
+              <dl class="facts">
+                <div class="fact fact--status">
+                  <dt><app-icon name="check-circle" aria-hidden="true" />Status</dt>
+                  <dd><span [class]="'state state--' + st.state"><i aria-hidden="true"></i>{{ st.label }}</span></dd>
+                </div>
+                <div class="fact">
+                  <dt><app-icon name="tag" aria-hidden="true" />Hersteller / Modell</dt>
+                  <dd>{{ c.provider || '—' }}{{ c.model ? ' · ' + c.model : '' }}</dd>
+                </div>
+                <div class="fact">
+                  <dt><app-icon name="calendar" aria-hidden="true" />Gekauft am</dt>
+                  <dd>{{ c.purchase_date ? formatDate(c.purchase_date) : '—' }}</dd>
+                </div>
+                <div class="fact">
+                  <dt><app-icon name="calendar-check" aria-hidden="true" />Garantie bis</dt>
+                  <dd>
+                    @if (c.warranty_end_date) {
+                      <span [class.is-due]="deadlineSoon(c.warranty_end_date)">{{ formatDate(c.warranty_end_date) }}</span>
+                      <small>({{ fromNow(c.warranty_end_date) }})</small>
+                    } @else {
+                      —
+                    }
+                  </dd>
+                </div>
+                <div class="fact">
+                  <dt><app-icon name="clock" aria-hidden="true" />Nächste Wartung</dt>
+                  <dd>
+                    @if (c.maintenance_due_date) {
+                      <span [class.is-due]="deadlineSoon(c.maintenance_due_date)">{{ formatDate(c.maintenance_due_date) }}</span>
+                      <small>({{ fromNow(c.maintenance_due_date) }}){{ c.maintenance_interval_months ? ' · alle ' + c.maintenance_interval_months + ' Monate' : '' }}</small>
+                    } @else {
+                      —
+                    }
+                  </dd>
+                </div>
+                @if (c.updated_at) {
+                  <div class="fact">
+                    <dt><app-icon name="edit" aria-hidden="true" />Zuletzt geändert</dt>
+                    <dd>{{ formatDate(c.updated_at.slice(0, 10)) }}</dd>
+                  </div>
+                }
+              </dl>
+            }
           } @else {
             @if (c.notes) {
               <p class="notes">{{ c.notes }}</p>
             } @else {
-              <p class="muted">Noch keine Notizen – z. B. Kundennummer, Vertragsnummer oder Ansprechpartner.</p>
+              <p class="muted">Noch keine Notizen.</p>
             }
             <button type="button" class="btn-link" (click)="openEdit(c)">Notizen bearbeiten</button>
           }
         </div>
         <div class="detail__actions">
-          <button type="button" class="btn-edit" (click)="openEdit(c)"><app-icon name="edit" />Vertrag bearbeiten</button>
+          <button type="button" class="btn-edit" (click)="openEdit(c)"><app-icon name="edit" />Bearbeiten</button>
+          @if (c.kind === 'vertrag') {
+            @if (c.status === 'ACTIVE' && c.effective_status !== 'ENDED') {
+              <button type="button" class="btn-link" [disabled]="busy()" (click)="setStatus(c, 'CANCELLED', '„' + c.name + '“ als gekündigt markiert.')">Als gekündigt markieren</button>
+            } @else if (c.status !== 'ACTIVE') {
+              <button type="button" class="btn-link" [disabled]="busy()" (click)="setStatus(c, 'ACTIVE', '„' + c.name + '“ ist wieder aktiv.')">Wieder aktiv setzen</button>
+            }
+          } @else {
+            @if (c.maintenance_due_date && c.status !== 'RETIRED') {
+              <button type="button" class="btn-link" [disabled]="busy()" (click)="maintenanceDone(c)">Wartung erledigt</button>
+            }
+            @if (c.status === 'RETIRED' || c.status === 'REPAIR') {
+              <button type="button" class="btn-link" [disabled]="busy()" (click)="setStatus(c, 'ACTIVE', '„' + c.name + '“ ist wieder in Betrieb.')">Wieder in Betrieb</button>
+            }
+            @if (c.status === 'ACTIVE') {
+              <button type="button" class="btn-link" [disabled]="busy()" (click)="setStatus(c, 'REPAIR', '„' + c.name + '“ ist in Reparatur.')">In Reparatur</button>
+            }
+            @if (c.status !== 'RETIRED') {
+              <button type="button" class="btn-link" [disabled]="busy()" (click)="setStatus(c, 'RETIRED', '„' + c.name + '“ außer Betrieb gesetzt.')">Außer Betrieb setzen</button>
+            }
+          }
         </div>
       </aside>
     }
   </div>
 } @else {
-  <p class="muted" aria-live="polite">Verträge werden geladen …</p>
+  <p class="muted" aria-live="polite">{{ isContracts() ? 'Verträge' : 'Geräte' }} werden geladen …</p>
 }
 
 <app-modal-form
-  icon="finance"
-  [title]="editingId() === null ? 'Neuer Vertrag' : 'Vertrag bearbeiten'"
+  [icon]="formKind() === 'vertrag' ? 'finance' : 'smartphone'"
+  [title]="
+    editingId() === null
+      ? formKind() === 'vertrag' ? 'Neuer Vertrag' : 'Neues Gerät'
+      : formKind() === 'vertrag' ? 'Vertrag bearbeiten' : 'Gerät bearbeiten'
+  "
   [open]="formOpen()"
   [saving]="formSaving()"
   [error]="formError() ?? ''"
@@ -236,28 +415,95 @@
 >
   <div class="field-row">
     <app-field label="Name">
-      <input id="folder-name" required type="text" maxlength="120" placeholder="z. B. Stromvertrag" [value]="formName()" (input)="formName.set($any($event.target).value)" />
+      <input
+        id="folder-name"
+        required
+        type="text"
+        maxlength="120"
+        [placeholder]="formKind() === 'vertrag' ? 'z. B. Stromvertrag' : 'z. B. Waschmaschine'"
+        [value]="formName()"
+        (input)="formName.set($any($event.target).value)"
+      />
     </app-field>
-    <app-field label="Anbieter" [optional]="true">
+    <app-field [label]="formKind() === 'vertrag' ? 'Anbieter' : 'Hersteller'" [optional]="true">
       <input id="folder-provider" type="text" maxlength="120" [value]="formProvider()" (input)="formProvider.set($any($event.target).value)" />
     </app-field>
   </div>
+  <div class="field-row">
+    <app-field label="Kategorie" [optional]="true">
+      <input
+        id="folder-category"
+        type="text"
+        maxlength="60"
+        [placeholder]="formKind() === 'vertrag' ? 'z. B. Versicherung' : 'z. B. Küche'"
+        [value]="formCategory()"
+        (input)="formCategory.set($any($event.target).value)"
+      />
+    </app-field>
+    <app-field label="Status">
+      <app-select [options]="formStatusOptions()" [value]="formStatus()" (valueChange)="formStatus.set($any($event))" />
+    </app-field>
+  </div>
 
-  <fieldset class="form-section"><legend>Kosten und Fristen</legend>
-    <app-field label="Monatliche Kosten" [optional]="true" hint="Gilt für den ganzen Haushalt. Wer was bezahlt, bucht jede Person privat in Finanzen.">
-      <input id="folder-cost" type="text" inputmode="decimal" maxlength="10" placeholder="z. B. 39,99" [value]="formCost()" (input)="formCost.set($any($event.target).value)" />
-    </app-field>
-    <div class="field-row">
-      <app-field label="Vertragsende">
-        <app-date-picker mode="date" [clearable]="true" [value]="formContractEnd()" (valueChange)="formContractEnd.set($event)" />
+  @if (formKind() === 'vertrag') {
+    <fieldset class="form-section"><legend>Kosten und Laufzeit</legend>
+      <div class="field-row">
+        <app-field label="Kosten" [optional]="true" hint="Gehört dem Haushalt – wird nicht in Finanzen gebucht.">
+          <input id="folder-cost" type="text" inputmode="decimal" maxlength="10" placeholder="z. B. 39,99" [value]="formCost()" (input)="formCost.set($any($event.target).value)" />
+        </app-field>
+        <app-field label="Abrechnung">
+          <app-select [options]="billingOptions" [value]="formBilling()" (valueChange)="formBilling.set($any($event))" />
+        </app-field>
+      </div>
+      <div class="field-row">
+        <app-field label="Beginn" [optional]="true">
+          <app-date-picker mode="date" [clearable]="true" [value]="formStart()" (valueChange)="formStart.set($event)" />
+        </app-field>
+        <app-field label="Vertragsende" [optional]="true">
+          <app-date-picker mode="date" [clearable]="true" [value]="formEnd()" (valueChange)="formEnd.set($event)" />
+        </app-field>
+      </div>
+      <div class="field-row">
+        <app-field label="Kündigungsfrist (Tage)" [optional]="true">
+          <input id="folder-notice" type="number" inputmode="numeric" min="0" max="1095" placeholder="z. B. 30" [value]="formNotice()" (input)="formNotice.set($any($event.target).value)" />
+        </app-field>
+        <label class="checkbox check-field">
+          <input type="checkbox" [checked]="formAutoRenewal()" (change)="formAutoRenewal.set($any($event.target).checked)" />
+          Verlängert sich automatisch
+        </label>
+      </div>
+      @if (formDeadline(); as deadline) {
+        <p class="field-hint">Letzter Kündigungstag: <b>{{ formatDate(deadline) }}</b> – erscheint rechtzeitig unter „Heute“.</p>
+      }
+      <app-field label="Vertragsnummer" [optional]="true" hint="Nur in der Detailansicht sichtbar.">
+        <input id="folder-number" type="text" maxlength="60" autocomplete="off" [value]="formContractNumber()" (input)="formContractNumber.set($any($event.target).value)" />
       </app-field>
-      <app-field label="Kündigungsfrist (Monate)">
-        <input id="folder-notice" type="number" inputmode="numeric" min="0" max="36" placeholder="z. B. 3" [value]="formNotice()" (input)="formNotice.set($any($event.target).value)" />
+    </fieldset>
+  } @else {
+    <fieldset class="form-section"><legend>Gerät und Fristen</legend>
+      <app-field label="Modell" [optional]="true">
+        <input id="folder-model" type="text" maxlength="120" [value]="formModel()" (input)="formModel.set($any($event.target).value)" />
       </app-field>
-    </div>
-    <p class="field-hint">4inOne erinnert euch unter „Heute“ rechtzeitig an den letzten Kündigungstag.</p>
-    <app-field label="Notizen" [optional]="true">
-      <textarea id="folder-notes" maxlength="1000" placeholder="z. B. Kundennummer, Vertragsnummer, Ansprechpartner" [value]="formNotes()" (input)="formNotes.set($any($event.target).value)"></textarea>
-    </app-field>
-  </fieldset>
+      <div class="field-row">
+        <app-field label="Gekauft am" [optional]="true">
+          <app-date-picker mode="date" [clearable]="true" [value]="formPurchase()" (valueChange)="formPurchase.set($event)" />
+        </app-field>
+        <app-field label="Garantie bis" [optional]="true">
+          <app-date-picker mode="date" [clearable]="true" [value]="formWarranty()" (valueChange)="formWarranty.set($event)" />
+        </app-field>
+      </div>
+      <div class="field-row">
+        <app-field label="Nächste Wartung" [optional]="true">
+          <app-date-picker mode="date" [clearable]="true" [value]="formMaintenance()" (valueChange)="formMaintenance.set($event)" />
+        </app-field>
+        <app-field label="Wartung alle (Monate)" [optional]="true">
+          <input id="folder-interval" type="number" inputmode="numeric" min="1" max="120" placeholder="z. B. 12" [value]="formInterval()" (input)="formInterval.set($any($event.target).value)" />
+        </app-field>
+      </div>
+      <p class="field-hint">Wartung und Garantieende erscheinen {{ upcomingDays }} Tage vorher unter „Heute“. Vergangene Daten sind erlaubt.</p>
+    </fieldset>
+  }
+  <app-field label="Notizen" [optional]="true">
+    <textarea id="folder-notes" maxlength="1000" [value]="formNotes()" (input)="formNotes.set($any($event.target).value)"></textarea>
+  </app-field>
 </app-modal-form>

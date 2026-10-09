@@ -1,44 +1,62 @@
-<div class="bar">
+@if (notes().length) {
   <label class="search">
     <app-icon name="search" aria-hidden="true" />
     <span class="sr-only">Notizen durchsuchen</span>
     <input type="search" placeholder="Notizen durchsuchen …" [value]="search()" (input)="search.set($any($event.target).value)" />
   </label>
-  <span class="muted">{{ notes().length }} {{ notes().length === 1 ? 'Notiz' : 'Notizen' }}</span>
-</div>
+}
 
-<ul class="grid">
-  @for (n of visible(); track n.id) {
-    <li class="note" [class.is-pinned]="n.pinned">
-      <button type="button" class="note__main" (click)="openNote.emit(n)">
-        <span class="note__head"><app-icon name="file-text" aria-hidden="true" /><b>{{ n.title }}</b></span>
-        @for (line of noteLines(n, 6); track $index) {
-          <span class="note__line">{{ line }}</span>
-        } @empty {
-          <span class="note__line muted">Noch kein Inhalt</span>
-        }
-        <small class="note__when">Bearbeitet {{ editedAt(n.updated_at) }}</small>
-      </button>
-      <button
-        type="button"
-        class="pin"
-        [attr.aria-pressed]="n.pinned"
-        [attr.aria-label]="n.pinned ? n.title + ' lösen' : n.title + ' anheften'"
-        (click)="togglePin.emit(n)"
-      >
-        <app-icon name="star" />
-      </button>
-    </li>
-  } @empty {
-    <li class="card empty">
-      @if (search().trim()) {
-        <h3>Keine Notiz gefunden</h3>
-        <p class="muted">Für „{{ search().trim() }}“ gibt es keinen Treffer.</p>
-      } @else {
-        <h3>Noch keine Notizen</h3>
-        <p class="muted">Halte Ideen, Gesprächsnotizen oder Listen fest – nur für dich sichtbar.</p>
-        <button type="button" class="link" (click)="openNote.emit(undefined)"><app-icon name="plus" />Neue Notiz</button>
+<ng-template #row let-n>
+  <li class="note">
+    <button type="button" class="note__main" (click)="openNote.emit(n)">
+      <span class="note__title">{{ title(n) }}</span>
+      @if (preview(n); as line) {
+        <span class="note__preview">{{ line }}</span>
       }
-    </li>
+    </button>
+    <span class="note__when">{{ edited(n.updated_at) }}</span>
+    <button
+      type="button"
+      class="pin"
+      [attr.aria-pressed]="n.pinned"
+      [attr.aria-label]="n.pinned ? title(n) + ' lösen' : title(n) + ' anheften'"
+      (click)="togglePin.emit(n)"
+    >
+      <app-icon name="star" />
+    </button>
+  </li>
+</ng-template>
+
+@if (!notes().length) {
+  <section class="card empty">
+    <h3>Noch keine Notizen</h3>
+    <p class="muted">Halte Ideen und wichtige Informationen fest.</p>
+    <button type="button" class="link-btn" (click)="openNote.emit(undefined)"><app-icon name="plus" />Notiz erstellen</button>
+  </section>
+} @else if (!pinned().length && !others().length) {
+  <section class="card empty">
+    <h3>Keine Notiz gefunden</h3>
+    <p class="muted">Für „{{ search().trim() }}“ gibt es keinen Treffer.</p>
+  </section>
+} @else {
+  @if (pinned().length) {
+    <section class="card group" aria-labelledby="notes-pinned">
+      <h2 id="notes-pinned">Angeheftet</h2>
+      <ul class="notes">
+        @for (n of pinned(); track n.id) {
+          <ng-container *ngTemplateOutlet="row; context: { $implicit: n }" />
+        }
+      </ul>
+    </section>
   }
-</ul>
+  @if (others().length) {
+    <section class="card group" aria-labelledby="notes-all">
+      <h2 id="notes-all">{{ pinned().length ? 'Alle Notizen' : 'Notizen' }}</h2>
+      <ul class="notes">
+        @for (n of others(); track n.id) {
+          <ng-container *ngTemplateOutlet="row; context: { $implicit: n }" />
+        }
+      </ul>
+    </section>
+  }
+}

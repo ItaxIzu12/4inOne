@@ -17,6 +17,8 @@ async function mockApi(page: Page, connections: any[]) {
     const path = new URL(r.request().url()).pathname;
     if (path.endsWith('/today/'))
       return r.fulfill({ json: { date: '2026-09-25', timezone: 'Europe/Berlin', items: [], event_count: 1, open_task_count: 1, overdue_count: 0 } });
+    // Einzelabruf (/events/9/) liefert den Termin selbst, die Liste ein Array — wie die echte API.
+    if (/\/events\/\d+\/$/.test(path)) return r.fulfill({ json: event });
     return r.fulfill({ json: path.includes('/events/') ? [event] : [task] });
   });
   await page.route('**/api/v1/finanzen/private/**', (r) => {

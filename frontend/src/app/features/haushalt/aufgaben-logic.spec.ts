@@ -1,5 +1,5 @@
 import { TaskDto } from './haushalt-api.service';
-import { dueLabel, durationLabel, endOfWeekIso, filterTasks, groupTasks, initials, NO_FILTERS, room } from './aufgaben-logic';
+import { dueLabel, durationLabel, filterTasks, initials, NO_FILTERS, room } from './aufgaben-logic';
 
 const today = new Date(2026, 9, 4); // Sonntag, 4. Oktober 2026
 const t = (id: number, over: Partial<TaskDto> = {}): TaskDto =>
@@ -11,16 +11,6 @@ const t = (id: number, over: Partial<TaskDto> = {}): TaskDto =>
   }) as TaskDto;
 
 describe('Aufgaben-Reiter: Anzeigeregeln', () => {
-  it('groups tasks into overdue, today, this week, later and undated — dropping empty groups', () => {
-    const groups = groupTasks(
-      [t(1, { due_date: '2026-10-03' }), t(2, { due_date: '2026-10-04' }), t(3, { due_date: '2026-10-09' }), t(4)],
-      today,
-    );
-    expect(groups.map((g) => [g.key, g.tasks.map((x) => x.id)])).toEqual([
-      ['overdue', [1]], ['today', [2]], ['week', [3]], ['undated', [4]],
-    ]);
-  });
-
   it('labels due dates the way the design does', () => {
     expect(dueLabel(t(1, { due_date: '2026-10-03' }), today)).toEqual({ text: 'Gestern', tone: 'late' });
     expect(dueLabel(t(1, { due_date: '2026-09-30' }), today)).toEqual({ text: '30. September', tone: 'late' });
@@ -53,10 +43,5 @@ describe('Aufgaben-Reiter: Anzeigeregeln', () => {
     expect(ids({ person: 'none' })).toEqual([2]);
     expect(ids({ priority: 'hoch', status: 'today' })).toEqual([1]);
     expect(ids({ status: 'overdue' })).toEqual([2]);
-  });
-
-  it('finds the end of the week for “Diese Woche”', () => {
-    expect(endOfWeekIso(today)).toBe('2026-10-04'); // Sonntag selbst
-    expect(endOfWeekIso(new Date(2026, 9, 5))).toBe('2026-10-11');
   });
 });

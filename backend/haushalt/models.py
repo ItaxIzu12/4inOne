@@ -68,6 +68,8 @@ class ShoppingList(models.Model):
     # „Zuletzt bearbeitet“: rückt bei jeder Änderung an der Liste oder ihren
     # Einträgen vor (services.touch_list), nicht nur beim Speichern der Liste.
     updated_at = models.DateTimeField(default=timezone.now)
+    # Archivierte Listen bleiben erhalten, sind aber ausgeblendet und nie Standardliste.
+    archived = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f'{self.name} ({self.household})'
@@ -93,6 +95,8 @@ class ShoppingItem(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
     )
     created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    notes = models.CharField(max_length=200, blank=True, default='')
 
     def __str__(self) -> str:
         return self.name
@@ -171,7 +175,7 @@ class Task(models.Model):
 
     class Priority(models.TextChoices):
         LOW = 'niedrig', 'Niedrig'
-        MEDIUM = 'mittel', 'Mittel'
+        MEDIUM = 'mittel', 'Normal'
         HIGH = 'hoch', 'Hoch'
 
     household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='tasks')
@@ -181,6 +185,7 @@ class Task(models.Model):
     )
     is_done = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
     )
@@ -212,10 +217,12 @@ class Task(models.Model):
 
     @property
     def recurrence(self) -> str | None:
-        """Die drei V1-Wiederholungen; andere Intervalle (z. B. alle 3 Tage,
+        """Die einfachen Wiederholungen; andere Intervalle (z. B. alle 3 Tage,
         aus älteren Aufgaben) bleiben über recurrence_days erhalten."""
         if self.recurrence_months == 1:
             return 'monthly'
+        if self.recurrence_months == 12:
+            return 'yearly'
         return {1: 'daily', 7: 'weekly'}.get(self.recurrence_days)
 
     def __str__(self) -> str:
@@ -247,13 +254,33 @@ class FolderEntry(models.Model):
 
     Die Fristen (Kündigung, Garantieende, nächste Wartung) werden NICHT als
     Kopie in einen Kalender geschrieben, sondern von „Heute“ direkt gelesen
-    (services.folder_deadlines). Die monatlichen Kosten gehören dem Haushalt
-    und stehen hier selbst — die alten Haushaltsfinanzen (feste Abzüge) sind
+    (services.folder_deadlines). Die Kosten gehören dem Haushalt und stehen
+    hier selbst — sie werden nicht in Finanzen übertragen — die alten Haushaltsfinanzen (feste Abzüge) sind
     eingefroren (ADR-001)."""
 
     class Kind(models.TextChoices):
         CONTRACT = 'vertrag', 'Vertrag'
         DEVICE = 'geraet', 'Gerät'
+
+    class Status(models.TextChoices):
+        # Gemeinsame Spalte; welche Werte erlaubt sind, hängt von der Art ab
+        # (CONTRACT_STATUSES / DEVICE_STATUSES). EXPIRING wird nie gespeichert,
+        # sondern berechnet (services.contract_status).
+        ACTIVE = 'ACTIVE', 'Aktiv'
+        EXPIRING = 'EXPIRING', 'Läuft aus'
+        CANCELLED = 'CANCELLED', 'Gekündigt'
+        ENDED = 'ENDED', 'Beendet'
+        REPAIR = 'REPAIR', 'In Reparatur'
+        RETIRED = 'RETIRED', 'Außer Betrieb'
+
+    class BillingCycle(models.TextChoices):
+        MONTHLY = 'MONTHLY', 'Monatlich'
+        QUARTERLY = 'QUARTERLY', 'Vierteljährlich'
+        YEARLY = 'YEARLY', 'Jährlich'
+        ONE_TIME = 'ONE_TIME', 'Einmalig'
+
+    CONTRACT_STATUSES = (Status.ACTIVE, Status.CANCELLED, Status.ENDED)
+    DEVICE_STATUSES = (Status.ACTIVE, Status.REPAIR, Status.RETIRED)
 
     household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='folder_entries')
     created_by = models.ForeignKey(
@@ -261,22 +288,31 @@ class FolderEntry(models.Model):
     )
     kind = models.CharField(max_length=10, choices=Kind.choices)
     name = models.CharField(max_length=120)
+    # Vertrag: Anbieter; Gerät: Hersteller.
     provider = models.CharField(max_length=120, blank=True, default='')
+    category = models.CharField(max_length=60, blank=True, default='')
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
     notes = models.TextField(max_length=1000, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # --- Vertrag ---
-    monthly_cost = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
-    contract_end = models.DateField(null=True, blank=True)
-    notice_period_months = models.PositiveSmallIntegerField(null=True, blank=True)
+    cost = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    billing_cycle = models.CharField(max_length=10, choices=BillingCycle.choices, default=BillingCycle.MONTHLY)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    notice_period_days = models.PositiveSmallIntegerField(null=True, blank=True)
+    auto_renewal = models.BooleanField(default=False)
+    # Sensibel: nur in der Detailansicht (serializers.FolderEntrySerializer).
+    contract_number = models.CharField(max_length=60, blank=True, default='')
 
     # --- Gerät ---
     purchase_date = models.DateField(null=True, blank=True)
-    warranty_until = models.DateField(null=True, blank=True)
+    warranty_end_date = models.DateField(null=True, blank=True)
     maintenance_interval_months = models.PositiveSmallIntegerField(null=True, blank=True)
-    next_maintenance = models.DateField(null=True, blank=True)
+    maintenance_due_date = models.DateField(null=True, blank=True)
     last_maintenance = models.DateField(null=True, blank=True)
-    # Hersteller steht in provider; Modell und Raum nur zum Erkennen und Filtern.
+    # Modell und Raum nur zum Erkennen und Filtern.
     model = models.CharField(max_length=120, blank=True, default='')
     room = models.CharField(max_length=20, choices=Room.choices, blank=True, default='')
 

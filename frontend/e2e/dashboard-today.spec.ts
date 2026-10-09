@@ -65,7 +65,7 @@ async function mockApi(page: Page) {
   await page.route('**/api/v1/notifications/**', (r) => r.fulfill({ json: [] }));
 }
 
-test('Heute mixes every area, overdue first, with one explained suggestion', async ({ page }) => {
+test('Heute mixes every area, overdue first, at most five rows', async ({ page }) => {
   await mockApi(page);
   await page.goto('/');
 
@@ -75,10 +75,11 @@ test('Heute mixes every area, overdue first, with one explained suggestion', asy
   await expect(page.getByRole('searchbox', { name: 'Demo-Überblick durchsuchen' })).toHaveCount(0);
   const card = page.locator('section.today');
   await expect(card.locator('.today-row strong')).toHaveText([
-    'Müll rausbringen', 'Zug nach Wien', 'Zahnarzt', 'Blumen gießen', 'Kündigen bis: Stromvertrag', '4 Sachen auf der Einkaufsliste',
+    'Müll rausbringen', 'Zug nach Wien', 'Zahnarzt', 'Blumen gießen', 'Kündigen bis: Stromvertrag',
   ]);
   await expect(card).toContainText('Haushalt · überfällig');
-  await expect(page.locator('.today-suggestion')).toHaveAttribute('href', '/reisen?trip=9');
+  // Vorschläge stehen in der jeweiligen Reise, nicht auf der knappen Startseite.
+  await expect(page.locator('.today-suggestion')).toHaveCount(0);
   await page.screenshot({ path: 'test-results/dashboard-today.png', fullPage: true });
 
   const axe = await new AxeBuilder({ page }).analyze();
@@ -99,25 +100,13 @@ test('Heute works at phone width without horizontal scroll', async ({ page }) =>
 });
 
 
-test('personal dashboard creates and completes own tasks and never links into the demo', async ({ page }) => {
+test('personal dashboard finds own tasks in the search and never links into the demo', async ({ page }) => {
   await mockApi(page);
-  const tasks: any[] = [];
-  await page.route('**/api/v1/organisation/tasks/**', async route => {
-    const request = route.request();
-    if (request.method() === 'POST') { const task = {id: 123, ...request.postDataJSON(), due_date: null}; tasks.push(task); return route.fulfill({json: task}); }
-    if (request.method() === 'PATCH') { Object.assign(tasks[0], request.postDataJSON()); return route.fulfill({json: tasks[0]}); }
-    return route.fulfill({json: tasks});
-  });
+  await page.route('**/api/v1/organisation/tasks/**', route =>
+    route.fulfill({json: [{id: 123, title: 'Mein privater Plan', status: 'OPEN', priority: 'MEDIUM', due_date: null}]}),
+  );
   await page.goto('/');
   await expect(page.locator('h1')).toContainText('Mira');
-  await page.getByRole('button', {name: 'Neue Aufgabe', exact: true}).click();
-  await page.getByLabel('Neue Aufgabe', {exact: true}).fill('Mein privater Plan');
-  await page.getByRole('button', {name: 'Hinzufügen', exact: true}).click();
-  const task = page.getByRole('checkbox', {name: 'Mein privater Plan'});
-  await task.click();
-  await expect(task).toHaveAttribute('aria-checked', 'true');
-  await task.click();
-  await expect(task).toHaveAttribute('aria-checked', 'false');
   await page.getByRole('searchbox', {name: 'Deinen Überblick durchsuchen'}).fill('privater');
   await expect(page.locator('.search-results a')).toHaveAttribute('href', '/organisation?kind=task&id=123');
   await expect(page.locator('main a[href^="/demo"]')).toHaveCount(0);
@@ -129,10 +118,7 @@ test('an empty personal account has empty states instead of example content', as
   await page.route('**/api/v1/finanzen/private/summary/**', r => r.fulfill({json: {month: overview.finanzen.month, budget: null, total: null, available: null, income: '0.00', expenses: '0.00', saved: '0.00', recent: [], has_data: false}}));
   await page.goto('/');
   await expect(page.locator('.today')).toContainText('Heute ist noch nichts geplant.');
-  await expect(page.locator('.tasks')).toContainText('Alles erledigt.');
-  await expect(page.locator('.month')).toContainText('Noch kein Monatsbudget');
-  await expect(page.locator('.transactions')).toContainText('Keine Buchungen');
-  await expect(page.locator('.suggestions')).toContainText('Aktuell gibt es keine Vorschläge');
+  await expect(page.locator('.domain.finance')).toContainText('Starte mit deinem Monatsbudget');
   await expect(page.locator('main')).not.toContainText('Berlin Wochenende');
   await expect(page.locator('main')).not.toContainText('Sophie');
   expect((await new AxeBuilder({page}).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);

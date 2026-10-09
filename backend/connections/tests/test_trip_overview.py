@@ -111,7 +111,7 @@ def test_savings_shows_only_own_linked_goals(people):
 def test_trip_details_status_and_expense_category(people):
     client, trip = _client(people['anna']), people['trip']
     response = client.patch(f'{REISEN}trips/{trip.pk}/', {
-        'status': 'IDEA', 'accommodation': 'Hotel Central', 'accommodation_area': 'Berlin Mitte', 'transport_note': 'Hin- und Rückfahrt gebucht',
+        'status': 'CONFIRMED', 'accommodation': 'Hotel Central', 'accommodation_area': 'Berlin Mitte', 'transport_note': 'Hin- und Rückfahrt gebucht',
     }, format='json')
     assert response.status_code == 200, response.data
     assert response.data['accommodation'] == 'Hotel Central'
@@ -155,10 +155,10 @@ def test_packed_at_follows_the_checkbox_and_reset_needs_write_access(people):
     assert (reset.is_packed, reset.packed_at) == (False, None)
 
 
-def test_an_idea_gets_no_suggestions_but_a_confirmed_trip_does(people):
+def test_a_cancelled_trip_gets_no_suggestions_but_a_confirmed_trip_does(people):
     anna, trip = people['anna'], people['trip']
     HouseholdTask.objects.create(household=people['home'], title='Pflanzen gießen', due_date=trip.start_date)
     url = '/api/v1/connections/suggestions/'
     assert any(s['kind'] == 'TRIP_HOUSEHOLD_TASK' for s in _client(anna).get(url, {'trip': trip.pk}).data)
-    Trip.objects.filter(pk=trip.pk).update(status=Trip.Status.IDEA)
+    Trip.objects.filter(pk=trip.pk).update(status=Trip.Status.CANCELLED)
     assert _client(anna).get(url, {'trip': trip.pk}).data == []

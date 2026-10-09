@@ -1,16 +1,33 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { API_BASE_URL } from '../../core/api.config';
+import { EventImportRow } from './org-import';
 /** Art eines Termins — backend organisation/models.py EventCategory. */
 export type EventCategory = 'gesundheit' | 'sport' | 'familie' | 'arbeit' | 'freizeit' | 'sonstiges';
+/** Wiederholung eines Termins oder einer Aufgabe — backend core/recurrence.py SIMPLE. */
+export type Repeat = 'daily' | 'weekly' | 'monthly' | 'yearly';
 export interface PersonalEvent {
   id: number;
   title: string;
+  /** In der Zeitraum-Liste: Beginn dieses Vorkommens (bei Wiederholungen). */
   starts_at: string;
   ends_at: string | null;
+  all_day: boolean;
+  recurrence: Repeat | '';
   location: string;
   description: string;
   category?: EventCategory;
+  /** Nur in der Zeitraum-Liste: Beginn der Serie (zum Bearbeiten). */
+  series_starts_at?: string;
+}
+export type EventInput = Omit<PersonalEvent, 'id' | 'series_starts_at'>;
+/** Ergebnis von POST events/import/ — je Termin „new“, „duplicate“ oder „invalid“ (mit Grund). */
+export interface EventImportResult {
+  new: number;
+  duplicates: number;
+  invalid: number;
+  created: number;
+  rows: { row: number; status: 'new' | 'duplicate' | 'invalid'; message: string }[];
 }
 export interface PersonalTask {
   id: number;
@@ -22,8 +39,15 @@ export interface PersonalTask {
   status: 'OPEN' | 'IN_PROGRESS' | 'DONE';
   /** Freies Projekt zum Gruppieren („Familie“, „Hausbau“); leer = ohne Projekt. */
   project?: string;
+  /** Lesend: die Wiederholung; 'custom' für ältere Intervalle. */
+  repeat?: Repeat | 'custom' | null;
+  recurrence_days?: number | null;
+  recurrence_months?: number | null;
+  last_done_at?: string | null;
   updated_at?: string;
 }
+/** Schreibend: `recurrence` setzt die Wiederholung (null = einmalig). */
+export type TaskInput = Partial<Omit<PersonalTask, 'id' | 'repeat'>> & { recurrence?: Repeat | null };
 export interface PersonalNote {
   id: number;
   title: string;
@@ -31,23 +55,6 @@ export interface PersonalNote {
   pinned: boolean;
   created_at: string;
   updated_at: string;
-}
-/** Kategorie einer Datei — backend organisation/models.py FileCategory. */
-export type FileCategory = 'reise' | 'buchung' | 'persoenlich' | 'checkliste' | 'bild' | 'sonstiges';
-export interface PersonalFile {
-  id: number;
-  name: string;
-  content_type: string;
-  size: number;
-  category: FileCategory;
-  favorite: boolean;
-  created_at: string;
-  updated_at: string;
-  used_at: string;
-}
-export interface FileStorage {
-  used: number;
-  quota: number;
 }
 export interface TodayItem {
   kind: 'event' | 'task';
@@ -67,14 +74,38 @@ export interface TodayData {
   open_task_count: number;
   overdue_count: number;
 }
+/** GET /organisation/summary/ — Kennzahlen für das Dashboard. */
+export interface OrganisationSummary {
+  date: string;
+  events_today: number;
+  tasks_today: number;
+  overdue_tasks: number;
+}
+export interface DayRange {
+  start: string;
+  end: string;
+}
 export const organisationTimezone = () =>
   Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Berlin';
 @Injectable({ providedIn: 'root' })
 export class OrganisationApi {
   private http = inject(HttpClient);
   private base = `${API_BASE_URL}/organisation`;
-  events() {
-    return this.http.get<PersonalEvent[]>(`${this.base}/events/`);
+  /** Termine des Zeitraums (Tage einschließlich), wiederkehrende einmal pro Vorkommen. */
+  events(range: DayRange) {
+    return this.http.get<PersonalEvent[]>(`${this.base}/events/`, {
+      params: { start: range.start, end: range.end, timezone: organisationTimezone() },
+    });
+  }
+  event(id: number) {
+    return this.http.get<PersonalEvent>(`${this.base}/events/${id}/`);
+  }
+  /** Kalenderdatei übernehmen (Termine aus org-import.ts); dryRun = nur prüfen für die Vorschau. */
+  importEvents(rows: EventImportRow[], dryRun: boolean) {
+    return this.http.post<EventImportResult>(`${this.base}/events/import/`, { rows, dry_run: dryRun });
+  }
+  summary() {
+    return this.http.get<OrganisationSummary>(`${this.base}/summary/`, { params: { timezone: organisationTimezone() } });
   }
   tasks() {
     return this.http.get<PersonalTask[]>(`${this.base}/tasks/`);
@@ -84,12 +115,12 @@ export class OrganisationApi {
       params: { timezone: organisationTimezone() },
     });
   }
-  saveEvent(data: Omit<PersonalEvent, 'id'>, id?: number) {
+  saveEvent(data: EventInput, id?: number) {
     return id
       ? this.http.patch<PersonalEvent>(`${this.base}/events/${id}/`, data)
       : this.http.post<PersonalEvent>(`${this.base}/events/`, data);
   }
-  saveTask(data: Partial<Omit<PersonalTask, 'id'>>, id?: number) {
+  saveTask(data: TaskInput, id?: number) {
     return id
       ? this.http.patch<PersonalTask>(`${this.base}/tasks/${id}/`, data)
       : this.http.post<PersonalTask>(`${this.base}/tasks/`, data);
@@ -109,32 +140,5 @@ export class OrganisationApi {
   }
   removeNote(id: number) {
     return this.http.delete<void>(`${this.base}/notes/${id}/`);
-  }
-
-  // ---------- Dateien ----------
-  files() {
-    return this.http.get<PersonalFile[]>(`${this.base}/files/`);
-  }
-  fileStorage() {
-    return this.http.get<FileStorage>(`${this.base}/files/speicher/`);
-  }
-  uploadFile(file: File, category: FileCategory | null) {
-    const body = new FormData();
-    body.append('file', file, file.name);
-    if (category) body.append('category', category);
-    return this.http.post<PersonalFile>(`${this.base}/files/`, body);
-  }
-  updateFile(id: number, data: Partial<Pick<PersonalFile, 'name' | 'category' | 'favorite'>>) {
-    return this.http.patch<PersonalFile>(`${this.base}/files/${id}/`, data);
-  }
-  removeFile(id: number) {
-    return this.http.delete<void>(`${this.base}/files/${id}/`);
-  }
-  /** Inhalt als Blob (mit Anmeldung) — für Vorschau und Download, nie über eine öffentliche URL. */
-  fileContent(id: number, download = false) {
-    return this.http.get(`${this.base}/files/${id}/inhalt/`, {
-      responseType: 'blob',
-      params: download ? { download: '1' } : {},
-    });
   }
 }

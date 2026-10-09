@@ -58,8 +58,20 @@ class EventCategory(models.TextChoices):
     OTHER = 'sonstiges', 'Sonstiges'
 
 
+class Recurrence(models.TextChoices):
+    """Wiederholung eines Termins — berechnet über core/recurrence.py, es
+    entstehen keine Datensätze pro Vorkommen."""
+    NONE = '', 'Einmalig'
+    DAILY = 'daily', 'Täglich'
+    WEEKLY = 'weekly', 'Wöchentlich'
+    MONTHLY = 'monthly', 'Monatlich'
+    YEARLY = 'yearly', 'Jährlich'
+
+
 class PersonalEvent(models.Model):
-    """Private appointments, separate from the existing shared household calendar."""
+    """Privater Termin, getrennt vom alten gemeinsamen Haushaltskalender
+    (CalendarEvent). Ganztägig: starts_at ist Mitternacht (Zeitzone der
+    Person) des ersten Tags, ends_at Mitternacht des letzten Tags."""
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_events')
     title = models.CharField(max_length=120)
     starts_at = models.DateTimeField()
@@ -68,6 +80,8 @@ class PersonalEvent(models.Model):
     description = models.TextField(blank=True, max_length=5000)
     # Art des Termins — färbt ihn im Kalender und lässt sich filtern.
     category = models.CharField(max_length=12, choices=EventCategory.choices, default=EventCategory.OTHER)
+    all_day = models.BooleanField(default=False)
+    recurrence = models.CharField(max_length=8, choices=Recurrence.choices, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -85,7 +99,7 @@ class PersonalTask(models.Model):
 
     class Priority(models.TextChoices):
         LOW = 'LOW', 'Niedrig'
-        MEDIUM = 'MEDIUM', 'Mittel'
+        MEDIUM = 'MEDIUM', 'Normal'
         HIGH = 'HIGH', 'Hoch'
 
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_tasks')
@@ -97,6 +111,11 @@ class PersonalTask(models.Model):
     status = models.CharField(max_length=11, choices=Status.choices, default=Status.OPEN)
     # Freies Projekt („Familie“, „Hausbau“) zum Gruppieren und Filtern; leer = ohne Projekt.
     project = models.CharField(max_length=60, blank=True, default='')
+    # Wiederholung wie im Haushalt (core/recurrence.py): alle N Tage ODER alle N Monate.
+    # Erledigen rückt die Fälligkeit weiter, die Aufgabe bleibt offen.
+    recurrence_days = models.PositiveSmallIntegerField(null=True, blank=True)
+    recurrence_months = models.PositiveSmallIntegerField(null=True, blank=True)
+    last_done_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -107,10 +126,11 @@ class PersonalTask(models.Model):
 
 
 class PersonalNote(models.Model):
-    """Private Notiz — nur für die eigene Person sichtbar wie Termine und Aufgaben."""
+    """Private Notiz — nur für die eigene Person sichtbar wie Termine und Aufgaben.
+    Der Titel ist optional; ohne Titel zeigt die Liste die erste Zeile des Inhalts."""
 
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_notes')
-    title = models.CharField(max_length=120)
+    title = models.CharField(max_length=120, blank=True, default='')
     body = models.TextField(blank=True, max_length=10000)
     pinned = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

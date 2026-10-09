@@ -1,4 +1,8 @@
-from django.db.models import Q
+from decimal import Decimal
+
+from django.db.models import Count, DecimalField, IntegerField, OuterRef, Prefetch, Q, Subquery, Sum, Value
+from django.db.models.functions import Coalesce
+from django.utils import timezone
 from django.utils.dateparse import parse_date
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -25,6 +29,33 @@ def trips_visible_to(user):
     return Trip.objects.filter(Q(owner=user) | Q(participants__user=user)).distinct()
 
 
+def _subquery_count(model, **filters):
+    rows = model.objects.filter(trip=OuterRef('pk'), **filters).order_by().values('trip').annotate(n=Count('id')).values('n')
+    return Coalesce(Subquery(rows, output_field=IntegerField()), Value(0))
+
+
+def annotate_trip_counts(queryset):
+    """Alle Kennzahlen der Reisekarten in EINER Abfrage (Subqueries statt Joins, damit sich die Zählungen nicht
+    gegenseitig vervielfachen) plus Teilnehmer vorab — kein N+1 bei vielen Reisen."""
+    spent = TripExpense.objects.filter(trip=OuterRef('pk')).order_by().values('trip').annotate(s=Sum('amount')).values('s')
+    return queryset.annotate(
+        n_packing=_subquery_count(PackingItem),
+        n_packed=_subquery_count(PackingItem, is_packed=True),
+        n_tasks=_subquery_count(TripTask),
+        n_tasks_open=_subquery_count(TripTask, status=TripTask.Status.OPEN),
+        n_events=_subquery_count(TripEvent),
+        sum_spent=Coalesce(
+            Subquery(spent, output_field=DecimalField(max_digits=12, decimal_places=2)),
+            Value(Decimal('0')),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        ),
+    ).prefetch_related(Prefetch('participants', queryset=TripParticipant.objects.select_related('user')))
+
+
+def _money(value):
+    return None if value is None else str(Decimal(value).quantize(Decimal('0.01')))
+
+
 class PrivateResponseMixin:
     def finalize_response(self, request, response, *args, **kwargs):
         response = super().finalize_response(request, response, *args, **kwargs)
@@ -43,7 +74,36 @@ class TripViewSet(PrivateResponseMixin, viewsets.ModelViewSet):
     queryset = Trip.objects.all()
 
     def get_queryset(self):
-        return trips_visible_to(self.request.user)
+        queryset = annotate_trip_counts(trips_visible_to(self.request.user))
+        # Meine Reisen: ?scope=upcoming (läuft noch oder kommt), past (vorbei) oder cancelled (abgesagt).
+        scope = self.request.query_params.get('scope')
+        today = timezone.localdate()
+        if scope == 'upcoming':
+            queryset = queryset.filter(end_date__gte=today).exclude(status=Trip.Status.CANCELLED)
+        elif scope == 'past':
+            queryset = queryset.filter(end_date__lt=today).exclude(status=Trip.Status.CANCELLED)
+        elif scope == 'cancelled':
+            queryset = queryset.filter(status=Trip.Status.CANCELLED)
+        return queryset
+
+    @action(detail=True, methods=['get'])
+    def summary(self, request, pk=None):
+        """Die Zahlen für Reise › Übersicht in einer Antwort — Berechtigung wie beim Lesen der Reise selbst."""
+        trip = self.get_object()
+        spent = trip.sum_spent
+        planned = trip.tripbudgetcategorys.aggregate(total=Sum('planned_amount'))['total'] or Decimal('0')
+        budget = trip.budget_amount if trip.budget_amount else (planned if planned > 0 else None)
+        return Response({
+            'open_tasks': trip.n_tasks_open,
+            'tasks_total': trip.n_tasks,
+            'packing_total': trip.n_packing,
+            'packing_completed': trip.n_packed,
+            'participants': len(trip.participants.all()),
+            'budget_total': _money(budget),
+            'budget_spent': _money(spent),
+            'budget_remaining': _money(budget - spent) if budget is not None else None,
+            'currency': trip.currency,
+        })
 
     def perform_create(self, serializer):
         trip = serializer.save(owner=self.request.user)
@@ -63,7 +123,7 @@ class TripViewSet(PrivateResponseMixin, viewsets.ModelViewSet):
         end = parse_date(request.query_params.get('end_date') or '')
         if not start or not end:
             return Response([])
-        queryset = trips_visible_to(request.user).filter(
+        queryset = annotate_trip_counts(trips_visible_to(request.user)).filter(
             start_date__isnull=False, end_date__isnull=False, start_date__lte=end, end_date__gte=start,
         )
         exclude_id = request.query_params.get('exclude')

@@ -1,192 +1,114 @@
 @if (loadError()) {
   <div class="load-error">
-    <p [appErrorNotice]="'Die Übersicht konnte nicht geladen werden.'">Die Übersicht konnte nicht geladen werden.</p>
+    <p [appErrorNotice]="'Heute konnte nicht geladen werden.'">Heute konnte nicht geladen werden.</p>
     <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
   </div>
 } @else if (overview(); as data) {
-  <div class="stats">
-    <button type="button" class="stat stat--tasks" (click)="openTab.emit('aufgaben')">
-      <span class="stat__icon" aria-hidden="true"><app-icon name="check-circle" /></span>
-      <span class="stat__body">
-        <span class="stat__value">{{ data.open_tasks }}</span>
-        <span class="stat__label">{{ data.open_tasks === 1 ? 'offene Aufgabe' : 'offene Aufgaben' }}</span>
-        <span class="stat__hint">{{ data.overdue_tasks ? data.overdue_tasks + ' überfällig' : 'nichts überfällig' }}</span>
-      </span>
-      <app-icon class="stat__chevron" name="arrow" />
-    </button>
-    <button type="button" class="stat stat--routines" (click)="openTab.emit('routinen')">
-      <span class="stat__icon" aria-hidden="true"><app-icon name="repeat" /></span>
-      <span class="stat__body">
-        <span class="stat__value">{{ routines().length }}</span>
-        <span class="stat__label">{{ routines().length === 1 ? 'aktive Routine' : 'aktive Routinen' }}</span>
-        <span class="stat__hint">{{ routinesOverdue() ? routinesOverdue() + ' überfällig' : 'laufen planmäßig' }}</span>
-      </span>
-      <app-icon class="stat__chevron" name="arrow" />
-    </button>
-    <button type="button" class="stat stat--devices" (click)="openTab.emit('ordner')">
-      <span class="stat__icon" aria-hidden="true"><app-icon name="finance" /></span>
-      <span class="stat__body">
-        <span class="stat__value">{{ data.contracts }}</span>
-        <span class="stat__label">{{ data.contracts === 1 ? 'Vertrag' : 'Verträge' }}</span>
-        <span class="stat__hint">{{ data.contracts ? euro(+data.contracts_monthly) + ' im Monat' : 'noch keine erfasst' }}</span>
-      </span>
-      <app-icon class="stat__chevron" name="arrow" />
-    </button>
-    <button type="button" class="stat stat--shopping" (click)="openTab.emit('einkauf')">
-      <span class="stat__icon" aria-hidden="true"><app-icon name="cart" /></span>
-      <span class="stat__body">
-        <span class="stat__value">{{ openItems() }}</span>
-        <span class="stat__label">{{ openItems() === 1 ? 'offener Artikel' : 'offene Artikel' }}</span>
-        <span class="stat__hint">{{ items().length }} auf der Einkaufsliste</span>
-      </span>
-      <app-icon class="stat__chevron" name="arrow" />
-    </button>
-  </div>
-
-  @if (actionError()) {
-    <p class="field-error" [appErrorNotice]="actionError()">{{ actionError() }}</p>
-  }
-
-  <div class="board">
-    <section class="card" aria-labelledby="today-heading">
-      <div class="card-head">
-        <h2 id="today-heading"><app-icon name="calendar" aria-hidden="true" />{{ showsUpcoming() ? 'Als Nächstes im Haushalt' : 'Heute im Haushalt' }}</h2>
-        <button type="button" class="head-link" (click)="openTab.emit('aufgaben')">Alle Aufgaben <app-icon name="arrow" /></button>
+  @if (isEmpty()) {
+    <section class="card welcome" aria-labelledby="welcome-heading">
+      <span class="welcome__icon" aria-hidden="true"><app-icon name="household" /></span>
+      <h2 id="welcome-heading">Dein Zuhause im Blick</h2>
+      <p class="muted">Aufgaben, Einkauf, Geräte und Verträge an einem Ort. Fang mit dem an, was gerade ansteht.</p>
+      <div class="welcome__actions">
+        <button type="button" class="btn-primary" (click)="create.emit('aufgabe')"><app-icon name="plus" />Aufgabe hinzufügen</button>
+        <button type="button" class="btn-secondary" (click)="create.emit('einkauf')"><app-icon name="cart" />Einkauf planen</button>
+        <button type="button" class="btn-secondary" (click)="create.emit('geraet')"><app-icon name="smartphone" />Gerät hinzufügen</button>
+        <button type="button" class="btn-secondary" (click)="create.emit('vertrag')"><app-icon name="finance" />Vertrag hinzufügen</button>
       </div>
-      <ul class="task-list">
-        @for (task of todayTasks(); track task.id) {
-          <li class="task">
-            <button
-              type="button"
-              class="box"
-              [attr.aria-label]="
-                notYetDue(task)
-                  ? task.title + ' – erst ' + relativeDay(task.due_date!) + ' fällig, noch nicht abhakbar'
-                  : task.title + ' als erledigt markieren'
-              "
-              [attr.title]="notYetDue(task) ? 'Erst ' + relativeDay(task.due_date!) + ' fällig' : null"
-              [disabled]="completing() === task.id || notYetDue(task)"
-              (click)="complete(task)"
-            ></button>
-            <span class="task__title">{{ task.title }}</span>
-            <span class="tag" [class.tag--warn]="task.is_overdue">{{ dueChip(task) }}</span>
-            <span class="task__meta">{{ task.assigned_to_name || effortLabel[task.effort] }}</span>
-            <button type="button" class="more" [attr.aria-label]="'„' + task.title + '“ in den Aufgaben öffnen'" (click)="openTab.emit('aufgaben')">
-              <app-icon name="more" />
-            </button>
-          </li>
-        } @empty {
-          <li class="empty">
-            <p class="muted">
-              @if (data.open_tasks === 0) {
-                Noch keine Aufgaben. Lege deine erste Aufgabe oder Routine an.
-              } @else {
-                Heute ist nichts fällig. Alles im Griff.
-              }
-            </p>
-          </li>
-        }
-      </ul>
     </section>
-
-    <section class="card" aria-labelledby="contracts-heading">
-      <div class="card-head">
-        <h2 id="contracts-heading"><app-icon name="finance" aria-hidden="true" />Verträge</h2>
-        <button type="button" class="head-link" (click)="openTab.emit('ordner')">Alle Verträge <app-icon name="arrow" /></button>
-      </div>
-      @if (data.contract_list.length) {
-        <ul class="device-list">
-          @for (contract of data.contract_list; track contract.id) {
-            @let status = contractState(contract);
-            <li class="device">
-              <span class="device__art" aria-hidden="true"><app-icon name="finance" /></span>
-              <span class="device__name"
-                ><strong>{{ contract.name }}</strong>
-                <small>{{ contract.monthly_cost ? euro(+contract.monthly_cost) + ' / Monat' : contract.provider }}</small>
+  } @else {
+    @if (actionError()) {
+      <p class="field-error" [appErrorNotice]="actionError()">{{ actionError() }}</p>
+    }
+    <div class="today">
+      <!-- Heute fällig -->
+      <section class="card today__tasks" aria-labelledby="due-heading">
+        <div class="card-head">
+          <h2 id="due-heading">
+            <app-icon name="check-circle" aria-hidden="true" />Heute fällig
+            @if (dueCount()) {<span class="count">{{ dueCount() }}</span>}
+          </h2>
+          <button type="button" class="head-link" (click)="openTab.emit('aufgaben')">Alle Aufgaben <app-icon name="arrow" /></button>
+        </div>
+        @if (data.summary.overdue_tasks) {
+          <p class="hint hint--warn">{{ data.summary.overdue_tasks === 1 ? '1 Aufgabe ist überfällig.' : data.summary.overdue_tasks + ' Aufgaben sind überfällig.' }}</p>
+        }
+        <ul class="task-list">
+          @for (task of data.today; track task.id) {
+            <li class="task">
+              <button
+                type="button"
+                class="box"
+                [attr.aria-label]="task.title + ' als erledigt markieren'"
+                [disabled]="completing() === task.id"
+                (click)="complete(task)"
+              ></button>
+              <span class="task__title">
+                {{ task.title }}
+                @if (repeatLabel(task); as repeat) {<small><app-icon name="repeat" aria-hidden="true" />{{ repeat }}</small>}
               </span>
-              <span class="device__status" [class.device__status--due]="status.state === 'bald' || status.state === 'verpasst'"
-                ><span class="dot" aria-hidden="true"></span><b>{{ status.label }}</b
-                ><small>{{ contract.cancel_by ? 'kündbar bis ' + formatDate(contract.cancel_by) : 'kein Vertragsende' }}</small></span
-              >
-              <button type="button" class="more" [attr.aria-label]="'„' + contract.name + '“ im Reiter Verträge öffnen'" (click)="openTab.emit('ordner')">
-                <app-icon name="more" />
-              </button>
+              <span class="tag" [class.tag--warn]="task.is_overdue">{{ dueChip(task) }}</span>
+              @if (task.priority === 'hoch') {
+                <span class="tag tag--prio">{{ priorityLabel[task.priority] }}</span>
+              }
+            </li>
+          } @empty {
+            <li class="empty">
+              <p class="muted">
+                Heute ist nichts fällig.
+                @if (nextTask(); as next) {
+                  Als Nächstes: <b>{{ next.title }}</b> {{ relativeDay(next.due_date!) }}.
+                }
+              </p>
+              <button type="button" class="add" (click)="create.emit('aufgabe')"><app-icon name="plus" />Aufgabe hinzufügen</button>
             </li>
           }
         </ul>
-      } @else {
-        <p class="muted">Noch keine Verträge. Trage z. B. Strom, Internet oder Versicherungen mit Kündigungsfrist ein.</p>
-      }
-    </section>
+      </section>
 
-    <section class="card" aria-labelledby="shopping-heading">
-      <div class="card-head">
-        <h2 id="shopping-heading"><app-icon name="cart" aria-hidden="true" />Einkauf</h2>
-        <button type="button" class="head-link" (click)="openTab.emit('einkauf')">Zur Liste <app-icon name="arrow" /></button>
-      </div>
-      <div class="shop">
-        <div class="shop__head">
-          <span><strong>Einkaufsliste</strong><small>{{ shoppingDone() }} von {{ items().length }} im Wagen</small></span>
-          <button type="button" class="more" aria-label="Einkaufsliste öffnen" (click)="openTab.emit('einkauf')"><app-icon name="more" /></button>
+      <!-- Demnächst -->
+      <section class="card today__soon" aria-labelledby="soon-heading">
+        <div class="card-head">
+          <h2 id="soon-heading"><app-icon name="calendar" aria-hidden="true" />Demnächst</h2>
+          <span class="muted small">nächste {{ upcomingDays }} Tage</span>
         </div>
-        <span class="shop__bar" role="progressbar" aria-valuemin="0" [attr.aria-valuemax]="items().length" [attr.aria-valuenow]="shoppingDone()" aria-label="Einkauf erledigt"
-          ><span [style.width.%]="items().length ? (shoppingDone() / items().length) * 100 : 0"></span
-        ></span>
-        @if (items().length) {
-          <ul class="shop__items">
-            @for (item of shopping(); track item.id) {
-              <li>
-                <button
-                  type="button"
-                  class="box"
-                  [class.box--checked]="item.is_checked"
-                  role="checkbox"
-                  [attr.aria-checked]="item.is_checked"
-                  [attr.aria-label]="item.name + (item.quantity ? ', ' + item.quantity : '') + ' im Wagen'"
-                  [disabled]="toggling() === item.id"
-                  (click)="toggleItem(item)"
-                >
-                  @if (item.is_checked) { <app-icon name="check" /> }
-                </button>
-                <span [class.done]="item.is_checked">{{ item.name }}@if (item.quantity) {<small>, {{ item.quantity }}</small>}</span>
-              </li>
-            }
+        <ul class="soon-list">
+          @for (deadline of data.deadlines; track deadline.entry_id + deadline.art) {
             <li>
-              <button type="button" class="add" (click)="openTab.emit('einkauf')"><app-icon name="plus" />Artikel hinzufügen</button>
+              <button type="button" class="soon" (click)="openDeadline(deadline)">
+                <span class="soon__icon" [class.soon__icon--warn]="deadline.days <= 7" aria-hidden="true"><app-icon [name]="deadlineIcon[deadline.art]" /></span>
+                <span class="soon__text"><b>{{ deadline.name }}</b><small>{{ deadlineLabel[deadline.art] }}</small></span>
+                <span class="soon__date"><b>{{ formatDate(deadline.date) }}</b><small>{{ fromNow(deadline.date) }}</small></span>
+              </button>
             </li>
+          } @empty {
+            <li class="empty"><p class="muted">In den nächsten {{ upcomingDays }} Tagen stehen keine Wartungen, Garantie- oder Kündigungsfristen an.</p></li>
+          }
+        </ul>
+      </section>
+
+      <!-- Einkauf -->
+      <section class="card today__shop" aria-labelledby="shop-heading">
+        <div class="card-head">
+          <h2 id="shop-heading"><app-icon name="cart" aria-hidden="true" />Einkauf</h2>
+        </div>
+        @if (data.shopping.open_items) {
+          <p class="shop__count"><b>{{ data.shopping.open_items }}</b> {{ data.shopping.open_items === 1 ? 'Artikel offen' : 'Artikel offen' }}</p>
+          <ul class="shop__preview" aria-label="Einige offene Artikel">
+            @for (name of data.shopping.preview; track $index) {
+              <li>{{ name }}</li>
+            }
+            @if (data.shopping.open_items > data.shopping.preview.length) {
+              <li class="shop__more">+{{ data.shopping.open_items - data.shopping.preview.length }} weitere</li>
+            }
           </ul>
         } @else {
-          <p class="muted">Die Liste ist leer.</p>
-          <button type="button" class="add" (click)="openTab.emit('einkauf')"><app-icon name="plus" />Artikel hinzufügen</button>
+          <p class="muted">Die Einkaufsliste ist leer.</p>
         }
-      </div>
-    </section>
-
-    <section class="card" aria-labelledby="routines-heading">
-      <div class="card-head">
-        <h2 id="routines-heading"><app-icon name="repeat" aria-hidden="true" />Routinen</h2>
-        <button type="button" class="head-link" (click)="openTab.emit('routinen')">Alle Routinen <app-icon name="arrow" /></button>
-      </div>
-      <ul class="routine-list">
-        @for (routine of routineRows(); track routine.id) {
-          <li class="routine">
-            <span class="routine__icon" aria-hidden="true"><app-icon [name]="routineIcon(routine.title)" /></span>
-            <span class="routine__name"><small>{{ routineFrequency(routine) }}</small><strong>{{ routine.title }}</strong></span>
-            @if (doneToday(routine)) {
-              <span class="done-chip"><app-icon name="check" />Heute erledigt</span>
-            } @else {
-              <span class="routine__next" [class.routine__next--warn]="routine.is_overdue"><small>Nächster Termin</small>{{ nextDue(routine) }}</span>
-            }
-            <button type="button" class="more" [attr.aria-label]="'„' + routine.title + '“ in den Routinen öffnen'" (click)="openTab.emit('routinen')">
-              <app-icon name="more" />
-            </button>
-          </li>
-        } @empty {
-          <li class="empty"><p class="muted">Noch keine Routinen. Wiederkehrende Aufgaben erscheinen hier.</p></li>
-        }
-      </ul>
-    </section>
-  </div>
+        <button type="button" class="btn-secondary shop__open" (click)="openTab.emit('einkaufen')">Einkauf öffnen <app-icon name="arrow" /></button>
+      </section>
+    </div>
+  }
 } @else {
-  <p class="muted" aria-live="polite">Übersicht wird geladen …</p>
+  <p class="muted" aria-live="polite">Heute wird geladen …</p>
 }

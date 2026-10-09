@@ -20,6 +20,7 @@
       (input)="formTitle.set($any($event.target).value)"
     />
   </app-field>
+  <app-scope-note scope="shared">Für den ganzen Haushalt – alle Mitglieder sehen diese Aufgabe.</app-scope-note>
 <fieldset class="form-section"><legend>Planung und weitere Angaben</legend>
   <app-field label="Beschreibung" [optional]="true">
     <input
@@ -35,10 +36,23 @@
     <app-field label="Wie oft?">
       <app-select [options]="recurrenceSelectOptions" [value]="formRecurrence() ?? ''" (valueChange)="setRecurrence($event)" />
     </app-field>
-    <app-field [label]="formRecurrence() ? 'Nächstes Mal' : 'Fällig am'">
+    <app-field [label]="formRecurrence() ? 'Nächstes Mal' : 'Fällig am'" [hint]="weekdayHint()">
       <app-date-picker mode="date" [clearable]="true" [value]="formDue()" (valueChange)="formDue.set($event)" />
     </app-field>
   </div>
+  @if (isEvery()) {
+    <app-field [label]="formRecurrence() === 'every_weeks' ? 'Alle wie viele Wochen?' : 'Alle wie viele Tage?'">
+      <input
+        id="task-every"
+        type="number"
+        inputmode="numeric"
+        min="1"
+        [attr.max]="formRecurrence() === 'every_weeks' ? 52 : 365"
+        [value]="formEvery()"
+        (input)="formEvery.set($any($event.target).value)"
+      />
+    </app-field>
+  }
 
   <app-field label="Uhrzeit" [optional]="true">
     <app-time-picker [clearable]="true" [disabled]="!formDue()" [value]="formTime()" (valueChange)="formTime.set($event)" />

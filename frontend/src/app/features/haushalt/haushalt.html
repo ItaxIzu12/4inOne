@@ -1,12 +1,12 @@
 <app-save-feedback [message]="saveMessage()" (dismissed)="dismissSaved()" />
 <app-shell>
   <main id="main-content" class="hh-main domain-page" tabindex="-1">
-      <div class="domain-sticky">
-    <header class="page-head domain-heading">
+    <div class="domain-sticky">
+      <header class="page-head domain-heading">
         <span class="page-head__icon domain-icon" aria-hidden="true"><app-icon name="household" /></span>
         <div class="page-head__text">
           <h1>Haushalt</h1>
-          <p class="page-subtitle">Ein Zuhause zum Wohlfühlen. Aufgaben, Verträge, Einkäufe und Routinen an einem Ort.</p>
+          <p class="page-subtitle">Wer was erledigt, was fehlt und welche Frist ansteht – gemeinsam im Blick.</p>
         </div>
         @if (headAction()) {
           <button type="button" class="btn-primary page-head__action" [attr.aria-label]="headAction()" (click)="headActionClick()">
@@ -32,28 +32,29 @@
           </button>
         }
       </div>
-
-
     </div>
-      <div id="hh-panel" role="tabpanel" [attr.aria-labelledby]="'hh-tab-' + activeTab()">
-        @switch (activeTab()) {
-          @case ('uebersicht') {
-            <app-uebersicht-tab (saved)="showSaved($event)" (openTab)="selectTab($event)" />
-          }
-          @case ('routinen') {
-            <app-routinen-tab [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />
-          }
-          @case ('einkauf') {
-            <app-einkauf-tab [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />
-          }
-          @case ('aufgaben') {
-            <app-aufgaben-tab [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />
-          }
-          @case ('ordner') {
-            <app-ordner-tab [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />
-          }
+
+    <div id="hh-panel" role="tabpanel" [attr.aria-labelledby]="'hh-tab-' + activeTab()">
+      @switch (activeTab()) {
+        @case ('heute') {
+          <app-uebersicht-tab
+            (saved)="showSaved($event)"
+            (openTab)="selectTab($event)"
+            (openZuhause)="openZuhause($event)"
+            (create)="createFromToday($event)"
+          />
         }
-      </div>
+        @case ('aufgaben') {
+          <app-aufgaben-tab [newRequest]="newTaskRequest()" [view]="aufgabenView()" (viewChange)="setView($event)" (saved)="showSaved($event)" />
+        }
+        @case ('einkaufen') {
+          <app-einkauf-tab [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />
+        }
+        @case ('zuhause') {
+          <app-ordner-tab [newRequest]="newTaskRequest()" [section]="zuhauseSection()" (sectionChange)="setSection($event)" (saved)="showSaved($event)" />
+        }
+      }
+    </div>
     @if (headAction()) {
       <app-mobile-action [label]="headAction()" (pressed)="headActionClick()" />
     }

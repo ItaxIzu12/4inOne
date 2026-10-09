@@ -830,3 +830,28 @@ def test_savings_warning_needs_budget_even_if_income_is_recorded(ctx):
     assert result.status_code == 200
     assert result.data['month_over'] is None
     assert not SavingsGoal.objects.exists()
+
+
+def test_budget_v1_example_bound_and_remaining(ctx):
+    """Budgets V1: 3.000 € − 1.272,71 € Ausgaben − 1.025 € Sparbeiträge = 702,29 € übrig; gebunden 2.297,71 €.
+    Einnahmen ändern nichts; ein Sparziel ohne Beitrag bindet nichts; Sparbeiträge zählen nie als Ausgabe."""
+    a,b,home,c=ctx
+    MonthlyBudget.objects.create(owner=a,amount=Decimal('3000.00'),month=date(2026,4,1),open_ended=True)
+    cat=Category.objects.create(owner=a,name='Wohnen')
+    Transaction.objects.create(owner=a,category=cat,amount=Decimal('1272.71'),type='EXPENSE',datum=date(2026,10,5),currency='EUR')
+    Transaction.objects.create(owner=a,category=cat,amount=Decimal('4000.00'),type='INCOME',datum=date(2026,10,1),currency='EUR')
+    japan=SavingsGoal.objects.create(owner=a,title='Japan',target_amount=Decimal('2000.00'),current_amount=Decimal('0'))
+    before=c.get(BASE+'summary/?month=2026-10').data
+    assert (before['saved'],before['available'])==('0.00','1727.29')  # das Ziel allein bindet nichts
+    SavingsContribution.objects.create(owner=a,goal=japan,amount=Decimal('1025.00'),date=date(2026,10,6))
+    data=c.get(BASE+'summary/?month=2026-10').data
+    assert (data['total'],data['expenses'],data['saved'],data['available'])==('3000.00','1272.71','1025.00','702.29')
+    assert Decimal(data['expenses'])+Decimal(data['saved'])==Decimal('2297.71')
+    assert data['income']=='4000.00'
+    # November: nur November-Daten; Jahreswechsel Dezember → Januar mit demselben laufenden Budget
+    nov=c.get(BASE+'summary/?month=2026-11').data
+    assert (nov['expenses'],nov['saved'],nov['available'])==('0.00','0.00','3000.00')
+    assert c.get(BASE+'summary/?month=2027-01').data['total']=='3000.00'
+    # Vor dem Startmonat: kein Budget, keine künstliche Restanzeige
+    march=c.get(BASE+'summary/?month=2026-03').data
+    assert (march['total'],march['available'])==(None,None)

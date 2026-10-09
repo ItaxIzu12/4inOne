@@ -1,242 +1,82 @@
-@if (loadError()) {
+<div class="views" role="group" aria-label="Aufgaben anzeigen">
+  @for (v of views; track v) {
+    <button type="button" class="view-chip" [id]="'task-view-' + v" [attr.aria-pressed]="view() === v" (click)="selectView(v)">
+      @if (v === 'wiederkehrend') {<app-icon name="repeat" aria-hidden="true" />}
+      {{ viewLabel[v] }}
+      @if (counts()[v]) {<span class="view-chip__count" [class.is-late]="v === 'ueberfaellig'">{{ counts()[v] }}</span>}
+    </button>
+  }
+</div>
+<app-scope-note scope="shared"
+  >Gemeinsame Aufgaben – alle im Haushalt sehen und erledigen sie. Persönliches, das nur du siehst:
+  <a routerLink="../organisation" [queryParams]="{ tab: 'tasks' }">Organisation → Aufgaben</a></app-scope-note
+>
+
+@if (view() === 'wiederkehrend') {
+  <app-routinen-tab [newRequest]="routineRequest()" (saved)="saved.emit($event)" />
+} @else if (loadError()) {
   <div class="load-error">
     <p [appErrorNotice]="'Die Aufgaben konnten nicht geladen werden.'">Die Aufgaben konnten nicht geladen werden.</p>
     <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
   </div>
 } @else if (tasks()) {
-  <div class="tasks-page">
-    <!-- Filterleiste -->
-    <div class="toolbar" role="group" aria-label="Aufgaben filtern">
-      <span class="sr-only" id="flt-status">Status</span>
-      <span class="sr-only" id="flt-room">Raum</span>
-      <span class="sr-only" id="flt-person">Person</span>
-      <span class="sr-only" id="flt-priority">Priorität</span>
-      <div class="filter">
-        <app-icon name="check-circle" aria-hidden="true" />
-        <app-select ariaLabelledby="flt-status" [options]="statusOptions" [value]="filters().status" (valueChange)="setFilter('status', $event)" />
-      </div>
-      <div class="filter">
-        <app-icon name="home" aria-hidden="true" />
-        <app-select ariaLabelledby="flt-room" [options]="roomFilterOptions" [value]="filters().room" (valueChange)="setFilter('room', $event)" />
-      </div>
-      <div class="filter filter--more" [class.is-open]="filtersOpen()">
-        <app-icon name="user" aria-hidden="true" />
-        <app-select ariaLabelledby="flt-person" [options]="personFilterOptions()" [value]="filters().person" (valueChange)="setFilter('person', $event)" />
-      </div>
-      <div class="filter filter--more" [class.is-open]="filtersOpen()">
-        <app-icon name="flag" aria-hidden="true" />
-        <app-select ariaLabelledby="flt-priority" [options]="priorityFilterOptions" [value]="filters().priority" (valueChange)="setFilter('priority', $event)" />
-      </div>
-      <button
-        type="button"
-        class="icon-btn filter-toggle"
-        [attr.aria-expanded]="filtersOpen()"
-        aria-label="Weitere Filter"
-        (click)="filtersOpen.set(!filtersOpen())"
-      >
-        <app-icon name="filter" />
-      </button>
-      @if (hasFilters()) {
-        <button type="button" class="icon-btn" aria-label="Filter zurücksetzen" title="Filter zurücksetzen" (click)="resetFilters()">
-          <app-icon name="close" />
-        </button>
-      }
-      <button type="button" class="add-btn" (click)="openNew()">
-        <app-icon name="plus" />Aufgabe hinzufügen
-      </button>
-    </div>
-
-    <!-- Tabelle nach Gruppen -->
-    <div class="main">
-      @if (actionError()) {
-        <p class="field-error" [appErrorNotice]="actionError()">{{ actionError() }}</p>
-      }
-
-      @if (showsDone()) {
-        <section class="group" aria-labelledby="grp-done">
-          <header class="group__head">
-            <h2 id="grp-done"><app-icon name="check-circle" aria-hidden="true" />Erledigt</h2>
-          </header>
-          <ul class="rows">
-            @for (task of filteredDone(); track task.id) {
-              <li class="task-row task-row--done">
-                <span class="box box--checked" aria-hidden="true"><app-icon name="check" /></span>
-                <span class="cell-title">{{ task.title }}</span>
-                <button type="button" class="link-btn" [attr.aria-label]="task.title + ' wieder öffnen'" [disabled]="reopening() === task.id" (click)="reopen(task)">
-                  Wieder öffnen
-                </button>
-              </li>
-            } @empty {
-              <li class="empty"><p class="muted">Noch keine erledigten Aufgaben.</p></li>
-            }
-          </ul>
-        </section>
-      } @else {
-        @for (group of groups(); track group.key) {
-          <section class="group" [class.group--overdue]="group.key === 'overdue'" [attr.aria-labelledby]="'grp-' + group.key">
-            <header class="group__head">
-              <h2 [id]="'grp-' + group.key">
-                <app-icon name="calendar" aria-hidden="true" />{{ group.label }}<span class="count">{{ group.tasks.length }}</span>
-              </h2>
-              <span class="col-heads" aria-hidden="true"
-                ><span>Raum</span><span>Zuständig</span><span>Fällig am</span><span>Dauer</span><span>Priorität</span></span
-              >
-              <button
-                type="button"
-                class="collapse"
-                [attr.aria-expanded]="!collapsed().has(group.key)"
-                [attr.aria-label]="group.label + (collapsed().has(group.key) ? ' aufklappen' : ' zuklappen')"
-                (click)="toggleGroup(group.key)"
-              >
-                <app-icon name="chevron-down" />
-              </button>
-            </header>
-            @if (!collapsed().has(group.key)) {
-              <ul class="rows">
-                @for (task of group.tasks; track task.id) {
-                  @let due = dueLabel(task);
-                  <li class="task-row">
-                    <button
-                      type="button"
-                      class="box"
-                      [attr.aria-label]="
-                        notYetDue(task)
-                          ? task.title + ' – erst ' + relativeDay(task.due_date!) + ' fällig, noch nicht abhakbar'
-                          : task.title + ' als erledigt markieren'
-                      "
-                      [attr.title]="notYetDue(task) ? 'Erst ' + relativeDay(task.due_date!) + ' fällig' : null"
-                      [disabled]="completing() === task.id || notYetDue(task)"
-                      (click)="complete(task)"
-                    ></button>
-                    <button type="button" class="cell-title row__edit" (click)="openEdit(task)">
-                      <span class="title-text">{{ task.title }}</span>
-                      @if (room(task.room) || task.duration_minutes) {
-                        <small class="title-room">
-                          @if (room(task.room); as r) {<span class="title-place"><app-icon [name]="r.icon" />{{ r.label }}</span>}
-                          @if (task.duration_minutes) {<span class="title-dur"><app-icon name="clock" />{{ durationLabel(task.duration_minutes) }}</span>}
-                        </small>
-                      }
-                    </button>
-                    <span class="cell-room">
-                      @if (room(task.room); as r) {
-                        <app-icon [name]="r.icon" aria-hidden="true" />{{ r.label }}
-                      }
-                    </span>
-                    <span class="cell-person">
-                      @if (task.assigned_to_name) {
-                        <span class="avatar" [title]="task.assigned_to_name + (task.rotate ? ' (reihum)' : '')">{{ initials(task.assigned_to_name) }}</span>
-                        <span class="sr-only">{{ task.assigned_to_name }}</span>
-                      } @else {
-                        <app-icon name="people" aria-hidden="true" />Alle
-                      }
-                    </span>
-                    <span class="cell-due"><span class="due" [class]="'due due--' + due.tone">{{ due.text }}</span></span>
-                    <span class="cell-duration">
-                      @if (task.duration_minutes) {
-                        <app-icon name="clock" aria-hidden="true" />{{ durationLabel(task.duration_minutes) }}
-                      }
-                    </span>
-                    <span class="cell-priority"><span class="prio" [class]="'prio prio--' + task.priority">{{ priorityLabel[task.priority] }}</span></span>
-                    <button type="button" class="more" [attr.aria-label]="task.title + ' bearbeiten'" (click)="openEdit(task)">
-                      <app-icon name="more" />
-                    </button>
-                  </li>
-                }
-              </ul>
-            }
-          </section>
-        } @empty {
-          <div class="group empty">
-            <p class="muted">
-              @if (hasFilters()) {
-                Keine Aufgaben passen zu diesen Filtern.
-                <button type="button" class="link-btn" (click)="resetFilters()">Filter zurücksetzen</button>
-              } @else {
-                Keine offenen Aufgaben. Leg eine Aufgabe an oder richte wiederkehrende Routinen ein.
-              }
-            </p>
-          </div>
-        }
-      }
-    </div>
-
-      <section class="side-card overview" aria-labelledby="ov-heading">
-        <header class="side-head">
-          <h2 id="ov-heading"><app-icon name="bars" aria-hidden="true" />Aufgaben im Überblick</h2>
-          <button type="button" class="head-link" (click)="resetFilters()">Alle Aufgaben <app-icon name="arrow" /></button>
-        </header>
-        <div class="tiles">
-          <div class="tile tile--open">
-            <span class="tile__icon" aria-hidden="true"><app-icon name="check-circle" /></span>
-            <b>{{ week()?.open_total ?? visibleTasks().length }}</b>
-            <span>offene Aufgaben</span>
-            <small>{{ todayCount() }} heute fällig</small>
-          </div>
-          <div class="tile tile--done">
-            <span class="tile__icon" aria-hidden="true"><app-icon name="check" /></span>
-            <b>{{ week()?.done_this_week ?? 0 }}</b>
-            <span>erledigt diese Woche</span>
-            <small>{{ weekDelta() }}</small>
-          </div>
-          <button type="button" class="tile tile--late" (click)="setFilter('status', 'overdue')">
-            <span class="tile__icon" aria-hidden="true"><app-icon name="calendar" /></span>
-            <b>{{ overdueTasks().length }}</b>
-            <span>überfällig</span>
-            <small>{{ overdueSpan() }}</small>
-          </button>
-          <div class="tile tile--mine">
-            <span class="tile__icon" aria-hidden="true"><app-icon name="user" /></span>
-            <b>{{ week()?.assigned_to_me ?? 0 }}</b>
-            <span>mir zugewiesen</span>
-            <small>von {{ week()?.open_total ?? 0 }} offenen</small>
-          </div>
-        </div>
-      </section>
-
-      <section class="side-card next" aria-labelledby="next-heading">
-        <header class="side-head">
-          <h2 id="next-heading"><app-icon name="calendar" aria-hidden="true" />Nächste Fälligkeiten</h2>
-          <button type="button" class="head-link" (click)="setFilter('status', 'week')">Alle anzeigen <app-icon name="arrow" /></button>
-        </header>
-        <ul class="next-list">
-          @for (task of upcoming(); track task.id) {
-            @let due = dueLabel(task);
-            <li>
-              <span class="next__icon" aria-hidden="true"><app-icon [name]="room(task.room)?.icon ?? 'household'" /></span>
-              <span class="next__name"
-                ><b>{{ task.title }}</b
-                ><small>{{ room(task.room)?.label ?? '' }}{{ room(task.room) && task.duration_minutes ? ' · ' : '' }}{{ durationLabel(task.duration_minutes) }}</small></span
-              >
-              <span class="due" [class]="'due due--' + due.tone">{{ due.text }}</span>
-              <button type="button" class="more" [attr.aria-label]="task.title + ' bearbeiten'" (click)="openEdit(task)"><app-icon name="more" /></button>
-            </li>
-          } @empty {
-            <li class="muted">Nichts geplant. Schön ruhig.</li>
+  @if (actionError()) {
+    <p class="field-error" [appErrorNotice]="actionError()">{{ actionError() }}</p>
+  }
+  <section class="list" aria-labelledby="tasks-h">
+    <h2 id="tasks-h" class="sr-only">Aufgaben</h2>
+    <label class="search">
+      <app-icon name="search" aria-hidden="true" />
+      <span class="sr-only">Aufgaben durchsuchen</span>
+      <input type="search" placeholder="Aufgaben durchsuchen …" autocomplete="off" [value]="search()" (input)="search.set($any($event.target).value)" />
+    </label>
+    <ul class="tasks">
+      @for (task of visible(); track task.id) {
+        @let m = meta(task);
+        <li class="task" [class.is-done]="view() === 'erledigt'">
+          @if (view() === 'erledigt') {
+            <button
+              type="button"
+              class="box box--checked"
+              [attr.aria-label]="task.title + ' wieder öffnen'"
+              [disabled]="reopening() === task.id"
+              (click)="reopen(task)"
+            >
+              <app-icon name="check" />
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="box"
+              [attr.aria-label]="
+                notYetDue(task)
+                  ? task.title + ' – erst ' + relativeDay(task.due_date!) + ' fällig, noch nicht abhakbar'
+                  : task.title + ' als erledigt markieren'
+              "
+              [attr.title]="notYetDue(task) ? 'Erst ' + relativeDay(task.due_date!) + ' fällig' : null"
+              [disabled]="completing() === task.id || notYetDue(task)"
+              (click)="complete(task)"
+            ></button>
           }
-        </ul>
-      </section>
-
-      <section class="side-card quick" aria-labelledby="quick-heading">
-        <h2 id="quick-heading"><app-icon name="plus" aria-hidden="true" />Schnell eine Aufgabe erfassen</h2>
-        <form class="quick__row" (submit)="$event.preventDefault(); quickAdd('none')">
-          <input
-            type="text"
-            maxlength="120"
-            aria-labelledby="quick-heading"
-            placeholder="Was soll erledigt werden?"
-            [value]="quickTitle()"
-            (input)="quickTitle.set($any($event.target).value)"
-          />
-          <button type="submit" class="quick__add" aria-label="Ohne Datum hinzufügen" [disabled]="!quickTitle().trim() || quickSaving()">
-            <app-icon name="plus" />
+          <button type="button" class="task__main" (click)="openEdit(task)">
+            <span class="task__title">{{ task.title }}</span>
+            @if (m.due || m.parts.length) {
+              <small class="task__meta">
+                @if (m.due) {
+                  <span [class.late]="m.late">{{ m.late ? 'Überfällig · ' : '' }}{{ m.due }}</span>
+                }
+                @for (p of m.parts; track $index) {
+                  <span [class.is-high]="p === 'Hoch'">{{ p }}</span>
+                }
+              </small>
+            }
           </button>
-        </form>
-        <div class="quick__when">
-          <button type="button" [disabled]="!quickTitle().trim() || quickSaving()" (click)="quickAdd('today')"><app-icon name="calendar" />Heute</button>
-          <button type="button" [disabled]="!quickTitle().trim() || quickSaving()" (click)="quickAdd('week')"><app-icon name="calendar" />Diese Woche</button>
-        </div>
-      </section>
-  </div>
+        </li>
+      } @empty {
+        <li class="empty"><p class="muted">{{ emptyText() }}</p></li>
+      }
+    </ul>
+  </section>
 } @else {
   <p class="muted" aria-live="polite">Aufgaben werden geladen …</p>
 }

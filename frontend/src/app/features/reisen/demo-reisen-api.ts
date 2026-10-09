@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { ContactOption, PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripReminder, TripReminders, TripSavingsGoal, TripTask } from './reisen-api.service';
+import { ContactOption, PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask } from './reisen-api.service';
 
 // Feste Demo-Kontakte, nur für diese Instanz: die Demo hat keinen eigenen Login und keine zweite Person, die
 // wirklich existiert, daher ist "meine Rolle" hier immer OWNER (siehe withSummary()) und der Kontaktpicker
@@ -35,6 +35,7 @@ type TripBase = Omit<
 >;
 const BLANK: Omit<TripBase, 'id' | 'title' | 'start_date' | 'end_date'> = {
   destination: '',
+  departure: '',
   notes: '',
   status: 'PLANNED',
   travel_type: '',
@@ -68,6 +69,7 @@ export class DemoReisenApi {
       id: 1,
       title: 'Berlin Wochenende',
       destination: 'Berlin, Deutschland',
+      departure: 'Düsseldorf',
       start_date: dateOnly(BERLIN),
       end_date: dateOnly(BERLIN + 2),
       status: 'CONFIRMED',
@@ -103,12 +105,27 @@ export class DemoReisenApi {
       destination: 'Davos, Schweiz',
       start_date: dateOnly(150),
       end_date: dateOnly(155),
-      status: 'IDEA',
+      status: 'PLANNED',
       travel_type: 'ACTIVE',
       transport_type: 'CAR',
       currency: 'CHF',
       created_at: at(-1, '18:00'),
       updated_at: at(-1, '18:00'),
+    },
+    {
+      ...BLANK,
+      id: 4,
+      title: 'Lissabon',
+      destination: 'Lissabon, Portugal',
+      departure: 'DUS',
+      start_date: dateOnly(-60),
+      end_date: dateOnly(-55),
+      status: 'DONE',
+      travel_type: 'CITY_TRIP',
+      transport_type: 'FLIGHT',
+      budget_amount: '900.00',
+      created_at: at(-90, '18:00'),
+      updated_at: at(-54, '18:00'),
     },
   ];
   private packingList: PackingItem[] = [
@@ -135,17 +152,15 @@ export class DemoReisenApi {
       }),
     ),
   ];
+  // Berlin: 4 offene Aufgaben (wie im Entwurf), eine erledigt; Erinnerungen sind Aufgaben mit Uhrzeit.
   private taskList: TripTask[] = [
-    { id: 1, trip: 1, title: 'Online Check-in öffnen', due_date: dateOnly(BERLIN - 2), due_time: '18:00', status: 'OPEN', note: '' },
-    { id: 2, trip: 1, title: 'Reisedokumente prüfen', due_date: dateOnly(BERLIN - 1), due_time: '09:00', status: 'OPEN', note: '' },
-    { id: 3, trip: 1, title: 'Koffer packen', due_date: dateOnly(BERLIN - 1), due_time: '18:00', status: 'OPEN', note: '' },
-    { id: 4, trip: 1, title: 'Museumstickets kaufen', due_date: null, due_time: null, status: 'OPEN', note: '' },
-    { id: 7, trip: 1, title: 'Reiseversicherung prüfen', due_date: dateOnly(0), due_time: null, status: 'OPEN', note: '' },
-    { id: 8, trip: 1, title: 'Hotel-Check-in bestätigen', due_date: dateOnly(BERLIN - 2), due_time: null, status: 'OPEN', note: '' },
-    { id: 9, trip: 1, title: 'Bahn-Tickets in der Wallet speichern', due_date: dateOnly(BERLIN - 2), due_time: null, status: 'OPEN', note: '' },
-    { id: 10, trip: 1, title: 'Reiseapotheke prüfen', due_date: dateOnly(BERLIN - 1), due_time: null, status: 'OPEN', note: '' },
-    { id: 5, trip: 1, title: 'Hotel bestätigen', due_date: dateOnly(-1), due_time: null, status: 'DONE', note: '' },
-    { id: 6, trip: 2, title: 'Mietwagen vergleichen', due_date: dateOnly(30), due_time: null, status: 'OPEN', note: '' },
+    { id: 1, trip: 1, title: 'Online Check-in', due_date: dateOnly(BERLIN - 2), due_time: '18:00', status: 'OPEN', note: '', assignee: 1, assignee_name: 'Anna' },
+    { id: 2, trip: 1, title: 'Reisepass prüfen', due_date: dateOnly(BERLIN - 1), due_time: null, status: 'OPEN', note: '', assignee: 1, assignee_name: 'Anna' },
+    { id: 3, trip: 1, title: 'Restaurant reservieren', due_date: dateOnly(5), due_time: null, status: 'OPEN', note: '', assignee: 201, assignee_name: 'Tom Schulz' },
+    { id: 4, trip: 1, title: 'Museumstickets kaufen', due_date: null, due_time: null, status: 'OPEN', note: '', assignee: null, assignee_name: '' },
+    { id: 5, trip: 1, title: 'Hotel buchen', due_date: dateOnly(-8), due_time: null, status: 'DONE', note: '', assignee: 1, assignee_name: 'Anna' },
+    { id: 6, trip: 2, title: 'Mietwagen vergleichen', due_date: dateOnly(30), due_time: null, status: 'OPEN', note: '', assignee: null, assignee_name: '' },
+    { id: 7, trip: 4, title: 'Flug buchen', due_date: dateOnly(-100), due_time: null, status: 'DONE', note: '', assignee: null, assignee_name: '' },
   ];
   private eventList: TripEvent[] = [
     { id: 1, trip: 1, title: 'Museumsbesuch', starts_at: at(BERLIN + 1, '11:00'), ends_at: at(BERLIN + 1, '13:00'), location: 'Museumsinsel' },
@@ -159,6 +174,8 @@ export class DemoReisenApi {
     { id: 6, trip: 1, title: 'Frühstück vorab bezahlt', amount: '15.00', date: dateOnly(-2), category: 'ESSEN' },
     { id: 7, trip: 1, title: 'Kurtaxe', amount: '40.00', date: dateOnly(-2), category: 'UNTERKUNFT' },
     { id: 8, trip: 2, title: 'Flüge (Anzahlung)', amount: '600.00', date: dateOnly(-10), category: 'TRANSPORT' },
+    { id: 9, trip: 4, title: 'Flüge', amount: '340.00', date: dateOnly(-100), category: 'TRANSPORT' },
+    { id: 10, trip: 4, title: 'Hotel', amount: '420.00', date: dateOnly(-55), category: 'UNTERKUNFT' },
   ];
   private budgetCategoryList: TripBudgetCategory[] = [
     { id: 1, trip: 1, category: 'UNTERKUNFT', planned_amount: '300.00' },
@@ -176,13 +193,8 @@ export class DemoReisenApi {
     { id: 6, trip: 2, user: 203, display_name: 'Jonas', is_self: false, role: 'VIEWER', added_at: at(-3, '10:00') },
     { id: 7, trip: 3, user: 1, display_name: 'Anna', is_self: true, role: 'OWNER', added_at: at(-1, '18:00') },
     { id: 8, trip: 3, user: 202, display_name: 'Lena', is_self: false, role: 'EDITOR', added_at: at(-1, '18:00') },
+    { id: 9, trip: 4, user: 1, display_name: 'Anna', is_self: true, role: 'OWNER', added_at: at(-90, '18:00') },
   ];
-  /** Eigene Haushalts- und Kalendereinträge der Demo-Person rund um die Berlin-Reise (backend: connections/trip_overview.py). */
-  private readonly homeReminders: TripReminder[] = [
-    { key: 'household-task:1', source: 'HOUSEHOLD_TASK', area: 'HAUSHALT', id: 1, title: 'Pflanzen gießen', date: dateOnly(BERLIN), time: '09:00', place: 'Zuhause', done: false },
-    { key: 'org-event:1', source: 'ORG_EVENT', area: 'ORGANISATION', id: 1, title: 'Abreise', date: dateOnly(BERLIN), time: '08:00', place: 'Berlin Wochenende', done: false },
-  ];
-
   private withSummary(trip: TripBase): Trip {
     const packing = this.packingList.filter((p) => p.trip === trip.id);
     const tasks = this.taskList.filter((t) => t.trip === trip.id);
@@ -286,11 +298,18 @@ export class DemoReisenApi {
       if (index === -1) return throwError(() => ({ status: 404 }));
       this.taskList[index] = { ...this.taskList[index], ...data };
       if (data.due_date === null) this.taskList[index].due_time = null;
+      if ('assignee' in data) this.taskList[index].assignee_name = this.nameOf(this.taskList[index].trip, data.assignee ?? null);
       return of({ ...this.taskList[index] });
     }
-    const created: TripTask = { id: this.nextId++, trip: 0, title: '', due_date: null, due_time: null, status: 'OPEN', note: '', ...data };
+    const created: TripTask = { id: this.nextId++, trip: 0, title: '', due_date: null, due_time: null, status: 'OPEN', note: '', assignee: null, ...data };
+    created.assignee_name = this.nameOf(created.trip, created.assignee ?? null);
     this.taskList.push(created);
     return of(created);
+  }
+  /** Wie das Backend: zuständig kann nur sein, wer mitreist. */
+  private nameOf(tripId: number, user: number | null): string {
+    if (user === null) return '';
+    return this.participantList.find((p) => p.trip === tripId && p.user === user)?.display_name ?? '';
   }
   removeTask(id: number): Observable<void> {
     const index = this.taskList.findIndex((t) => t.id === id);
@@ -375,29 +394,6 @@ export class DemoReisenApi {
     });
     return of({ reset });
   }
-  reminders(tripId: number): Observable<TripReminders> {
-    const trip = this.tripList.find((t) => t.id === tripId);
-    if (!trip) return throwError(() => ({ status: 404 }));
-    const local = (iso: string) => {
-      const d = new Date(iso);
-      return { date: dateOnly(Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - new Date(new Date().setHours(0, 0, 0, 0)).getTime()) / 86_400_000)), time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` };
-    };
-    const items: TripReminder[] = [
-      ...this.taskList
-        .filter((t) => t.trip === tripId)
-        .map((t) => ({ key: `trip-task:${t.id}`, source: 'TRIP_TASK' as const, area: 'REISEN' as const, id: t.id, title: t.title, date: t.due_date, time: t.due_time ? t.due_time.slice(0, 5) : null, place: trip.title, done: t.status === 'DONE' })),
-      ...this.eventList
-        .filter((e) => e.trip === tripId)
-        .map((e) => ({ key: `trip-event:${e.id}`, source: 'TRIP_EVENT' as const, area: 'REISEN' as const, id: e.id, title: e.title, ...local(e.starts_at), place: e.location || trip.title, done: false })),
-      ...(tripId === 1 ? this.homeReminders.map((r) => ({ ...r })) : []),
-    ];
-    items.sort((a, b) => Number(a.date === null) - Number(b.date === null) || (a.date ?? '').localeCompare(b.date ?? '') || (a.time ?? '').localeCompare(b.time ?? '') || a.title.localeCompare(b.title, 'de'));
-    return of({ window_start: dateOnly(0), window_end: trip.end_date, items });
-  }
-  savings(tripId: number): Observable<TripSavingsGoal[]> {
-    return of(tripId === 1 ? [{ id: 1, title: 'Reise: Berlin Wochenende', current_amount: '150.00', target_amount: '300.00' }] : []);
-  }
-
   contacts(): Observable<ContactOption[]> {
     return of(DEMO_CONTACTS.map((c) => ({ ...c })));
   }

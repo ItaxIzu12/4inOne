@@ -1,10 +1,11 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
+import { isInCalendarWeek } from '../../shared/dates/calendar-week';
 import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { AmountInput } from '../../shared/directives/amount-input';
 import { afterNextRender, Injector, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { catchError, forkJoin, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
@@ -15,6 +16,7 @@ import { BudgetYearOverview } from './budget-timeline';
 import { budgetBand, categoryVisual, daysLeftInMonth, groupByDay, shiftMonth, splitAmount } from './finance-overview';
 import {
   axis,
+  categoryBudgetStatus,
   categoryBudgets,
   categoryIcon,
   categorySlices,
@@ -43,7 +45,9 @@ import { defaultDateInMonth, display } from '../../shared/form/date-utils';
 import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
 import { SaveFeedback } from '../../shared/save-feedback/save-feedback';
+import { FinanceImportDialog } from './finance-import-dialog';
 import { ModalForm } from '../../shared/form/modal-form';
+import { Modal } from '../../shared/modal/modal';
 import {
   PrivateFinanceApi,
   FinanceCategory,
@@ -56,6 +60,7 @@ import {
   budgetCovers,
   budgetRange,
   budgetSpan,
+  winningBudget,
   budgetOverride,
   planRange,
   goalCovers,
@@ -65,14 +70,26 @@ import {
   UNCATEGORISED_COLOR,
 } from './private-finance-api.service';
 import { CategoryManager } from './category-manager';
+import { FinancePeriodView } from './finance-period';
+import { FinancePeriod, PeriodRange, addDays, customRangeError, todayIso, weekTitle } from './finance-periods';
 type Resource = 'transactions' | 'budgets' | 'goals';
-export type FinanceTab = 'overview' | 'expenses' | 'income' | 'budgets' | 'goals';
+/** Hauptreiter. Ausgaben und Einnahmen sind keine eigenen Reiter mehr, sondern Ansichten unter „Transaktionen“ —
+ * dieselben Daten (ein Transaction-Modell mit type EXPENSE/INCOME), nur anders gruppiert. */
+export type FinanceTab = 'overview' | 'transactions' | 'budgets' | 'goals';
+/** Ansicht innerhalb von „Transaktionen“ */
+export type TransactionKind = 'all' | 'expenses' | 'income';
+/** Frühere Reiter-Schlüssel (Links, Lesezeichen, interne Sprünge) → neue Navigation */
+type LegacyTab = 'expenses' | 'income';
 const FINANCE_TABS: { key: FinanceTab; label: string; icon: IconName }[] = [
   { key: 'overview', label: 'Übersicht', icon: 'home' },
-  { key: 'expenses', label: 'Ausgaben', icon: 'arrow-down' },
-  { key: 'income', label: 'Einnahmen', icon: 'trend-up' },
+  { key: 'transactions', label: 'Transaktionen', icon: 'list' },
   { key: 'budgets', label: 'Budgets', icon: 'bars' },
   { key: 'goals', label: 'Sparziele', icon: 'piggy' },
+];
+const TRANSACTION_KINDS: { key: TransactionKind; label: string }[] = [
+  { key: 'all', label: 'Alle' },
+  { key: 'expenses', label: 'Ausgaben' },
+  { key: 'income', label: 'Einnahmen' },
 ];
 /** Die erste verständliche Fehlermeldung aus der API-Antwort (z. B. „gespart darf das Ziel nicht überschreiten“). */
 function apiMessage(body: unknown): string | null {
@@ -111,7 +128,7 @@ function payloadAmount(payload: object): string {
 @Component({
   selector: 'app-private-finance',
   standalone: true,
-  imports: [MobileAction, ErrorNoticeDirective, AmountInput, ReactiveFormsModule, DatePipe, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview, CategoryManager],
+  imports: [Modal, NgTemplateOutlet, MobileAction, ErrorNoticeDirective, AmountInput, ReactiveFormsModule, DatePipe, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview, CategoryManager, FinancePeriodView, FinanceImportDialog],
   templateUrl: './private-finance.html',
   // Abschnitte zuerst, damit die Handy-Regeln in private-finance.scss sie überschreiben.
   styleUrls: ['./finance-sections.scss', './private-finance.scss'],
@@ -124,15 +141,71 @@ export class PrivateFinance {
   private router = inject(Router);
   /** Reiter: Übersicht, Ausgaben, Einnahmen, Budgets, Sparziele. */
   readonly tab = signal<FinanceTab>('overview');
+  readonly txKind = signal<TransactionKind>('all');
+  readonly txKinds = TRANSACTION_KINDS;
+  /** Kontoauszug-Import (CSV) geöffnet. */
+  readonly importOpen = signal(false);
+  /** Was gerade zu sehen ist: Übersicht, Alle/Ausgaben/Einnahmen (unter Transaktionen), Budgets oder Sparziele. */
+  readonly section = computed(() => (this.tab() === 'transactions' ? this.txKind() : this.tab()));
+  /** Zeitraum der Übersicht: Monat ist die Budgetansicht (Standard), Tag/Woche/eigener Zeitraum zeigen nur Bewegungen. */
+  readonly period = signal<FinancePeriod>('month');
+  readonly periodDay = signal(todayIso());
+  readonly periodRange = signal<PeriodRange>({ from: `${todayIso().slice(0, 7)}-01`, to: todayIso() });
+  /** Die Monatsauswahl im Kopf gilt überall — außer in der Übersicht mit Tag, Woche oder eigenem Zeitraum. */
+  readonly monthNavigation = computed(() => this.tab() !== 'overview' || this.period() === 'month');
+  /** Welche Datumsauswahl oben steht: in der Übersicht folgt sie dem Zeitraum, sonst immer der Monat. */
+  readonly navMode = computed<FinancePeriod>(() => (this.tab() === 'overview' ? this.period() : 'month'));
+  readonly todayDay = todayIso();
+  /** Zurück zum aktuellen Zeitraum der Ansicht — nur, wenn man ihn verlassen hat (wie im Organisation-Kalender):
+   * „Aktueller Tag“, „Aktuelle Woche“ (Mo–So) oder „Aktueller Monat“. Der eigene Zeitraum hat keinen. */
+  readonly jumpLabel = computed(() => {
+    switch (this.navMode()) {
+      case 'day':
+        return this.periodDay() !== this.todayDay ? 'Aktueller Tag' : '';
+      case 'week':
+        return isInCalendarWeek(this.periodDay(), this.todayDay) ? '' : 'Aktuelle Woche';
+      case 'month':
+        return this.month() !== this.todayDay.slice(0, 7) ? 'Aktueller Monat' : '';
+      default:
+        return '';
+    }
+  });
+  jumpToCurrent() {
+    if (this.navMode() === 'month') this.setMonth(this.todayDay.slice(0, 7));
+    else this.setDay(this.todayDay);
+  }
+  readonly weekLabel = computed(() => weekTitle(this.periodDay()));
+  readonly rangeIssue = computed(() => (this.navMode() === 'custom' ? customRangeError(this.periodRange()) : null));
+  stepPeriod(delta: number) {
+    this.setDay(addDays(this.periodDay(), this.period() === 'week' ? delta * 7 : delta));
+  }
+  /** Tag und Woche teilen sich mit dem Monat EIN Bezugsdatum: wandert der Tag in einen anderen Monat,
+   * folgt der Monat (Budgets, Transaktionen, Sparziele zeigen dann diesen Monat). */
+  setDay(day: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+    this.periodDay.set(day);
+    if (day.slice(0, 7) !== this.month()) this.setMonth(day.slice(0, 7), false);
+  }
+  setRangeFrom(value: string) {
+    this.periodRange.update((r) => ({ ...r, from: value }));
+  }
+  setRangeTo(value: string) {
+    this.periodRange.update((r) => ({ ...r, to: value }));
+  }
+  /** Wird nach jedem Laden hochgezählt, damit die Zeitraumansicht ihre Sparbeiträge neu holt. */
+  readonly dataVersion = signal(0);
   /** Hauptknopf je Reiter (Kopf am Rechner, fest unten am Handy). Auf der Übersicht bewusst keiner. */
   readonly headAction = computed(() => {
-    switch (this.tab()) {
+    switch (this.section()) {
+      case 'all':
+        return 'Transaktion erfassen';
       case 'expenses':
         return 'Ausgabe erfassen';
       case 'income':
         return 'Einnahme erfassen';
       case 'budgets':
-        return this.activeBudget() ? 'Budget ändern' : 'Budget festlegen';
+        // Ohne Budget trägt der leere Zustand „Budget festlegen“ — kein zweiter Knopf im Kopf.
+        return this.activeBudget() ? 'Budget ändern' : '';
       case 'goals':
         return 'Sparziel erstellen';
       default:
@@ -140,7 +213,8 @@ export class PrivateFinance {
     }
   });
   headActionClick() {
-    switch (this.tab()) {
+    switch (this.section()) {
+      case 'all':
       case 'expenses':
         return this.open('transactions');
       case 'income':
@@ -183,8 +257,22 @@ export class PrivateFinance {
     const noun = { transactions: 'Buchung', budgets: 'Budget', goals: 'Sparziel' }[this.editor() ?? 'goals'];
     return `${noun} ${this.editId() ? 'bearbeiten' : 'erstellen'}`;
   });
-  /** Nur gebuchte Ausgaben verbrauchen das Monatsbudget. */
+  /** Gebundenes Budget: Ausgaben plus Gespartes — Sparen ist nicht „verbraucht“, bindet aber Budget (Balken der Rest-Karte). */
   readonly used = computed(() => String(Number(this.summary()?.expenses ?? 0) + Number(this.summary()?.saved ?? 0)));
+  /** Davon nur eingeplante Sparraten (noch nicht verbucht) — getrennt ausgewiesen, nie als Ausgabe. */
+  readonly plannedSaved = computed(() => Number(this.summary()?.saved_planned ?? 0));
+  /** Tatsächlich gespart (verbuchte Sparbeiträge) im Monat. */
+  readonly bookedSaved = computed(() => Math.max(0, Number(this.summary()?.saved ?? 0) - this.plannedSaved()));
+  readonly budgetStatus = categoryBudgetStatus;
+  /** Jahresübersicht als Dialog statt dauerhaft unter dem Budget. */
+  readonly yearOpen = signal(false);
+  readonly monthYear = computed(() => this.month().slice(0, 4));
+  readonly yearPlanned = computed(() => {
+    const year = this.monthYear();
+    return Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`).filter((m) =>
+      winningBudget(this.budgets(), m),
+    ).length;
+  });
   /** Um wie viel das verfügbare Budget überschritten ist (positiver Betrag), sonst null. */
   readonly overBudget = computed(() => {
     const available = this.summary()?.available;
@@ -259,8 +347,6 @@ export class PrivateFinance {
   );
   readonly prevIncome = computed(() => monthTotal(this.transactions(), this.prevMonth(), 'INCOME'));
   readonly catBudgets = computed(() => categoryBudgets(this.transactions(), this.categories(), this.month()));
-  /** Budget-Nutzung: Anteile der Kategorien an allem Ausgegebenen. */
-  readonly usageDonut = computed(() => donut(this.expenseSlices()));
   readonly spentShare = computed(() => this.percent(this.used(), this.summary()?.total));
   readonly monthExpenses = computed(() =>
     this.transactions().filter((t) => t.type === 'EXPENSE' && t.date.startsWith(this.month())).slice(0, 6),
@@ -309,10 +395,24 @@ export class PrivateFinance {
   rowTitle(row: FinanceTransaction): string {
     return row.note || this.categoryName(row.category);
   }
-  selectTab(tab: FinanceTab) {
+  /** Hauptreiter wählen. Die früheren Schlüssel „expenses“/„income“ führen zu Transaktionen › Ausgaben/Einnahmen. */
+  selectTab(tab: FinanceTab | LegacyTab) {
+    if (tab === 'expenses' || tab === 'income') {
+      this.tab.set('transactions');
+      this.selectKind(tab);
+      return;
+    }
     this.tab.set(tab);
-    // Ausgaben/Einnahmen zeigen in der Liste nur ihren Typ.
-    this.typeFilter.set(tab === 'expenses' ? 'EXPENSE' : tab === 'income' ? 'INCOME' : 'ALL');
+    if (tab === 'transactions') this.selectKind(this.txKind());
+    else this.resetListFilters('ALL');
+  }
+  /** Ansicht unter „Transaktionen“: die Liste zeigt nur den passenden Typ. */
+  selectKind(kind: TransactionKind) {
+    this.txKind.set(kind);
+    this.resetListFilters(kind === 'expenses' ? 'EXPENSE' : kind === 'income' ? 'INCOME' : 'ALL');
+  }
+  private resetListFilters(type: string) {
+    this.typeFilter.set(type);
     this.categoryFilter.set('');
     this.transactionSearch.set('');
   }
@@ -325,7 +425,7 @@ export class PrivateFinance {
     queueMicrotask(() => document.getElementById(`fin-tab-${next}`)?.focus());
   }
   /** Zur vollständigen Liste im Reiter springen. */
-  showAll(tab: FinanceTab) {
+  showAll(tab: FinanceTab | LegacyTab) {
     this.selectTab(tab);
     afterNextRender(() => document.getElementById('all-rows')?.scrollIntoView({ block: 'start' }), {
       injector: this.renderInjector,
@@ -449,9 +549,16 @@ export class PrivateFinance {
     { value: 'COMPLETED', label: 'Erreicht' },
     { value: 'PAUSED', label: 'Pausiert' },
   ];
-  readonly categoryOptions = computed<SelectOption[]>(() =>
-    this.categories().map((c) => ({ value: String(c.id), label: c.name, color: c.color })),
-  );
+  /** Kategorien als Chips im Buchungsformular — die zuletzt am häufigsten genutzten zuerst, damit die übliche Wahl
+   * ein Tipp ist (Schnellerfassung). Gleichstand: Reihenfolge der Kategorienliste. */
+  readonly categoryChips = computed(() => {
+    const uses = new Map<number, number>();
+    for (const t of this.transactions()) uses.set(t.category, (uses.get(t.category) ?? 0) + 1);
+    return this.categories()
+      .map((c, index) => ({ c, index, n: uses.get(c.id) ?? 0 }))
+      .sort((a, b) => b.n - a.n || a.index - b.index)
+      .map(({ c }) => ({ value: String(c.id), label: c.name, color: c.color }));
+  });
   /** „September 2026“ für Überschriften, die den gewählten Monat nennen. */
   readonly monthLabel = computed(() => display(this.month(), 'month'));
   protected readonly Number = Number;
@@ -518,7 +625,10 @@ export class PrivateFinance {
   constructor() {
     // Reiter aus der Adresse (?tab=expenses …), wie in Haushalt, Organisation und Reisen.
     const linkedTab = this.route.snapshot.queryParamMap.get('tab');
-    if (FINANCE_TABS.some((t) => t.key === linkedTab)) this.selectTab(linkedTab as FinanceTab);
+    if (FINANCE_TABS.some((t) => t.key === linkedTab) || linkedTab === 'expenses' || linkedTab === 'income')
+      this.selectTab(linkedTab as FinanceTab | LegacyTab);
+    const linkedKind = this.route.snapshot.queryParamMap.get('art');
+    if (linkedTab === 'transactions' && TRANSACTION_KINDS.some((k) => k.key === linkedKind)) this.selectKind(linkedKind as TransactionKind);
     this.load();
     this.destroy.onDestroy(() => clearTimeout(this.noticeTimer));
     // Ändert sich etwas im Dialog, gilt die Warnung nicht mehr.
@@ -527,8 +637,15 @@ export class PrivateFinance {
       this.goalWarning.set(null);
     });
   }
+  /** Nach dem Import: Daten neu laden und kurz bestätigen, wie viele Buchungen dazugekommen sind. */
+  onImported(created: number) {
+    this.notice.set(created === 1 ? '1 Buchung importiert.' : `${created} Buchungen importiert.`);
+    this.load();
+  }
   load() {
-    this.loading.set(true);
+    // Nur beim ersten Laden den Ladezustand zeigen: beim Blättern bleibt die Seite (samt Datumsleiste) stehen,
+    // sonst verschwindet die Leiste kurz und der Fokus auf dem Pfeil geht verloren.
+    this.loading.set(this.summary() === null);
     this.error.set('');
     forkJoin({
       summary: this.api.summary(this.month()),
@@ -548,6 +665,7 @@ export class PrivateFinance {
           this.budgets.set(r.budgets);
           this.goals.set(r.goals);
           this.contributions.set(r.contributions);
+          this.dataVersion.update((v) => v + 1);
           this.loading.set(false);
           this.announcePending(r.summary);
           this.openGoalFromQuery();
@@ -622,14 +740,23 @@ export class PrivateFinance {
   }
   private readonly renderInjector = inject(Injector);
   private budgetFocus: 'year' | 'month' | null = null;
-  setBudgetMonth(value: string) {
-    if (value === this.month()) return;
-    this.budgetFocus = document.activeElement?.tagName === 'SELECT' ? 'year' : 'month';
+  /** Monat aus der Jahresübersicht: Dialog schließen, Monat anzeigen; ein Jahreswechsel im Dialog lädt nur nach. */
+  pickYearMonth(value: string) {
+    if (value === this.month()) return this.yearOpen.set(false);
+    const sameYear = value.slice(0, 4) === this.month().slice(0, 4);
+    // Jahr gewechselt: der Dialog bleibt offen, der Fokus kehrt zur Jahresauswahl zurück.
+    this.budgetFocus = sameYear ? null : 'year';
     this.setMonth(value);
+    if (sameYear) this.yearOpen.set(false);
   }
-  setMonth(value: string) {
+  /** Monat wechseln. Der Tag folgt (gemeinsames Bezugsdatum): im laufenden Monat heute, sonst der zuletzt
+   * gewählte Tag, wenn er im Monat liegt, sonst der 1. — so landet man in Tag und Woche dort, wo man ist. */
+  setMonth(value: string, moveDay = true) {
     if (!/^\d{4}-\d{2}$/.test(value)) return;
     this.month.set(value);
+    if (moveDay && this.periodDay().slice(0, 7) !== value) {
+      this.periodDay.set(value === this.todayDay.slice(0, 7) ? this.todayDay : `${value}-01`);
+    }
     this.load();
   }
   percent(current: string | null | undefined, target: string | null | undefined) {
@@ -648,7 +775,8 @@ export class PrivateFinance {
     this.form.reset({
       amount: '',
       type: 'EXPENSE',
-      category: String(this.categories()[0]?.id || ''),
+      // Vorauswahl: die meistgenutzte Kategorie (erster Chip) — oft genügen dann Betrag und Speichern.
+      category: this.categoryChips()[0]?.value ?? '',
       date: defaultDateInMonth(this.month()),
       note: '',
       recurring: false,

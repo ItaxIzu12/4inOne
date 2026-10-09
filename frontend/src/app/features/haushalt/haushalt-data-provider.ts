@@ -29,11 +29,11 @@ import {
 export interface HaushaltDataProvider {
   // listId null = Standardliste des Haushalts (Übersicht, Dashboard).
   getShopping(listId?: Id | null): Observable<ShoppingOverviewDto>;
-  getShoppingLists(): Observable<ShoppingListDto[]>;
+  getShoppingLists(archived?: boolean): Observable<ShoppingListDto[]>;
   createShoppingList(input: ShoppingListInput): Observable<ShoppingListDto>;
   updateShoppingList(id: Id, input: Partial<ShoppingListInput>): Observable<ShoppingListDto>;
   deleteShoppingList(id: Id): Observable<void>;
-  addItem(name: string, quantity: string, section: SectionKey | null, listId?: Id | null): Observable<ShoppingItemDto>;
+  addItem(name: string, quantity: string, section: SectionKey | null, listId?: Id | null, notes?: string): Observable<ShoppingItemDto>;
   updateItem(id: Id, patch: ShoppingItemPatch): Observable<ShoppingItemDto>;
   deleteItem(id: Id): Observable<void>;
   // amount null = Einkauf ohne Ausgabe abschließen.
@@ -52,6 +52,8 @@ export interface HaushaltDataProvider {
   reopenTask(id: Id): Observable<TaskDto>;
 
   getFolder(): Observable<FolderEntryDto[]>;
+  getFolderEntry(id: Id): Observable<FolderEntryDto>;
+  updateFolderStatus(id: Id, status: FolderEntryDto['status']): Observable<FolderEntryDto>;
   createFolderEntry(input: FolderEntryInput): Observable<FolderEntryDto>;
   updateFolderEntry(id: Id, input: FolderEntryInput): Observable<FolderEntryDto>;
   deleteFolderEntry(id: Id): Observable<void>;

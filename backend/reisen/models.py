@@ -21,13 +21,13 @@ class Trip(models.Model):
     """
 
     class Status(models.TextChoices):
-        # Reihenfolge = Lebenslauf einer Reise: Idee → in Planung → bestätigt (gebucht) → unterwegs → abgeschlossen.
-        IDEA = 'IDEA', 'Idee'
+        # Reisen V1: vier Zustände, kein Entwurf. „Unterwegs“ ist kein gespeicherter Status, sondern ergibt sich aus
+        # dem Zeitraum (siehe Frontend reisen-logic.ts). Frühere Werte IDEA/ACTIVE migriert 0009 (IDEA → PLANNED,
+        # ACTIVE → CONFIRMED), damit keine Reise verloren geht.
         PLANNED = 'PLANNED', 'In Planung'
         CONFIRMED = 'CONFIRMED', 'Bestätigt'
-        ACTIVE = 'ACTIVE', 'Unterwegs'
         DONE = 'DONE', 'Abgeschlossen'
-        CANCELLED = 'CANCELLED', 'Storniert'
+        CANCELLED = 'CANCELLED', 'Abgesagt'
 
     class TravelType(models.TextChoices):
         CITY_TRIP = 'CITY_TRIP', 'Städtereise'
@@ -60,6 +60,8 @@ class Trip(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='trips')
     title = models.CharField(max_length=120)
     destination = models.CharField(max_length=160, blank=True)
+    # Optionaler Abreiseort („Düsseldorf“ oder „DUS“) — reine Reiseinformation, keine Flughafen-/Flug-API.
+    departure = models.CharField(max_length=120, blank=True, default='')
     start_date = models.DateField()
     end_date = models.DateField()
     notes = models.TextField(blank=True, max_length=5000)
@@ -142,10 +144,15 @@ class TripTask(TripScopedModel):
 
     title = models.CharField(max_length=120)
     due_date = models.DateField(null=True, blank=True)
-    # Optional, nur mit Datum sinnvoll („Online Check-in öffnen, Mi 18:00“) — im Reiter „Erinnerungen“.
+    # Optional, nur mit Datum sinnvoll („Online Check-in öffnen, Mi 18:00“) — steht in Reise › Planung bei der Aufgabe.
     due_time = models.TimeField(null=True, blank=True)
     status = models.CharField(max_length=4, choices=Status.choices, default=Status.OPEN)
     note = models.CharField(max_length=240, blank=True, default='')
+    # Wer sich kümmert — nur der Ersteller oder ein Teilnehmer dieser Reise (siehe TripTaskSerializer). Verlässt die
+    # Person die Reise, bleibt die Aufgabe ohne Zuständigkeit bestehen.
+    assignee = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='assigned_trip_tasks'
+    )
 
     class Meta:
         ordering = ['status', 'due_date', 'id']

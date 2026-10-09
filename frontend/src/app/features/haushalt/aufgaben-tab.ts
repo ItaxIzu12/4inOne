@@ -1,43 +1,46 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
-import { Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, computed, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AppIcon } from '../../shared/icons/app-icon';
-import { AppSelect, SelectOption } from '../../shared/form/select';
-import { Id, MemberLoadDto, TaskDto, TaskWeekStatsDto } from './haushalt-api.service';
+import { Id, MemberLoadDto, TaskDto } from './haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
-import { daysUntil, recurrenceLabel, relativeDay, todayIso } from './haushalt-logic';
-import {
-  GroupKey,
-  NO_FILTERS,
-  PRIORITY_FILTER_OPTIONS,
-  PRIORITY_LABEL,
-  ROOM_FILTER_OPTIONS,
-  STATUS_OPTIONS,
-  TaskFilters,
-  dueLabel,
-  durationLabel,
-  endOfWeekIso,
-  filterTasks,
-  groupTasks,
-  initials,
-  room,
-} from './aufgaben-logic';
+import { recurrenceLabel, relativeDay, todayIso } from './haushalt-logic';
+import { NO_FILTERS, PRIORITY_LABEL, TaskFilters, dueLabel, durationLabel, filterTasks, room } from './aufgaben-logic';
+import { ScopeNote } from '../../shared/scope-note/scope-note';
+import { RoutinenTab } from './routinen-tab';
 import { TaskForm, TaskFormChange } from './task-form';
 
+/** Ansichten im Reiter Aufgaben — „Wiederkehrend“ ersetzt den früheren Reiter Routinen. */
+export type AufgabenView = 'alle' | 'heute' | 'ueberfaellig' | 'wiederkehrend' | 'erledigt';
+export const AUFGABEN_VIEWS: AufgabenView[] = ['alle', 'heute', 'ueberfaellig', 'wiederkehrend', 'erledigt'];
+const VIEW_LABEL: Record<AufgabenView, string> = {
+  alle: 'Alle',
+  heute: 'Heute',
+  ueberfaellig: 'Überfällig',
+  wiederkehrend: 'Wiederkehrend',
+  erledigt: 'Erledigt',
+};
+const VIEW_STATUS: Record<AufgabenView, TaskFilters['status']> = {
+  alle: '',
+  heute: 'today',
+  ueberfaellig: 'overdue',
+  wiederkehrend: '',
+  erledigt: 'done',
+};
+
 /**
- * Haushaltsaufgaben nach Entwurf: Filterleiste (Status, Räume, Personen,
- * Prioritäten), Gruppen als Tabelle (Raum, Zuständig, Fällig am, Dauer,
- * Priorität), daneben „Aufgaben im Überblick“, „Nächste Fälligkeiten“ und
- * „Schnell eine Aufgabe erfassen“. Wiederkehrende Aufgaben wechseln auf
- * Wunsch reihum; jede Erledigung zählt Aufwandspunkte für „Wer macht wie viel“
- * (im Routinen-Reiter). Fällige Aufgaben erscheinen automatisch unter „Heute“.
- * Das Formular teilt sich der Reiter mit den Routinen (task-form.ts).
+ * Haushaltsaufgaben — derselbe Aufbau wie Organisation → Aufgaben: Ansichten
+ * (mit Anzahl), darüber eine Suche, darunter eine ruhige Liste (Haken, Titel,
+ * darunter Fälligkeit · Raum · Zuständig · Dauer · Priorität). Gemeinsame
+ * Haushaltsangaben stehen in der Zeile statt in Spalten. „Wiederkehrend“ zeigt
+ * die Serien mit „Wer macht wie viel“ (routinen-tab). Das Formular teilt sich
+ * der Reiter mit den wiederkehrenden Aufgaben (task-form.ts).
  */
 @Component({
   selector: 'app-aufgaben-tab',
   standalone: true,
-  imports: [ErrorNoticeDirective, AppIcon, AppSelect, TaskForm],
+  imports: [ErrorNoticeDirective, AppIcon, RouterLink, TaskForm, RoutinenTab, ScopeNote],
   templateUrl: './aufgaben-tab.html',
   styleUrls: ['./haushalt-common.scss', './aufgaben-tab.scss'],
 })
@@ -48,10 +51,15 @@ export class AufgabenTab {
   readonly saved = output<string>();
   /** Steigt bei jedem „Neue Aufgabe“ im Seitenkopf; > 0 öffnet das Formular. */
   readonly newRequest = input(0);
+  /** Alle · Heute · Überfällig · Wiederkehrend · Erledigt — in der URL (?ansicht=). */
+  readonly view = model<AufgabenView>('alle');
+  protected readonly views = AUFGABEN_VIEWS;
+  protected readonly viewLabel = VIEW_LABEL;
+  /** „Aufgabe hinzufügen“ in der Ansicht Wiederkehrend öffnet das Formular der Routinen. */
+  protected readonly routineRequest = signal(0);
 
   protected readonly tasks = signal<TaskDto[] | null>(null);
   protected readonly doneTasks = signal<TaskDto[] | null>(null);
-  protected readonly showDone = signal(false);
   protected readonly reopening = signal<Id | null>(null);
   protected readonly members = signal<MemberLoadDto[]>([]);
   protected readonly loadError = signal(false);
@@ -71,116 +79,80 @@ export class AufgabenTab {
   /** Pausierte Routinen ruhen — sie stehen nur im Routinen-Reiter. */
   protected readonly visibleTasks = computed(() => (this.tasks() ?? []).filter((t) => !t.is_paused));
 
-  // ---------- Filter und Gruppen ----------
-  protected readonly filters = signal<TaskFilters>({ ...NO_FILTERS });
-  protected readonly filtersOpen = signal(false);
-  protected readonly collapsed = signal<Set<GroupKey>>(new Set());
-  protected readonly hasFilters = computed(() => Object.values(this.filters()).some((v) => v !== ''));
-  protected readonly statusOptions = STATUS_OPTIONS;
-  protected readonly roomFilterOptions = ROOM_FILTER_OPTIONS;
-  protected readonly priorityFilterOptions = PRIORITY_FILTER_OPTIONS;
-  protected readonly personFilterOptions = computed<SelectOption[]>(() => [
-    { value: '', label: 'Alle Personen' },
-    ...this.members().map((m) => ({ value: String(m.user_id), label: m.name })),
-    { value: 'none', label: 'Nicht zugeteilt' },
-  ]);
-  protected readonly showsDone = computed(() => this.filters().status === 'done');
-
-  protected readonly groups = computed(() => groupTasks(filterTasks(this.visibleTasks(), this.filters())));
-  protected readonly filteredDone = computed(() => filterTasks(this.doneTasks() ?? [], { ...this.filters(), status: '' }));
-
-  protected setFilter<K extends keyof TaskFilters>(key: K, value: string): void {
-    this.filters.update((f) => ({ ...f, [key]: value }));
-    if (key === 'status' && value === 'done') this.loadDone();
+  // ---------- Ansicht und Suche ----------
+  /** Suche über Titel, Beschreibung, Raum und zuständige Person — innerhalb der Ansicht. */
+  protected readonly search = signal('');
+  private matches(t: TaskDto, q: string): boolean {
+    return !q || [t.title, t.description, room(t.room)?.label ?? '', t.assigned_to_name ?? ''].some((v) => v.toLocaleLowerCase('de').includes(q));
   }
-  protected resetFilters(): void {
-    this.filters.set({ ...NO_FILTERS });
+  private byDue(list: TaskDto[]): TaskDto[] {
+    return [...list].sort(
+      (a, b) =>
+        (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999') ||
+        (a.due_time ?? '99').localeCompare(b.due_time ?? '99') ||
+        String(a.id).localeCompare(String(b.id)),
+    );
   }
-  protected toggleGroup(key: GroupKey): void {
-    this.collapsed.update((set) => {
-      const next = new Set(set);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+  private inView(view: AufgabenView): TaskDto[] {
+    if (view === 'erledigt') return this.doneTasks() ?? [];
+    const filters: TaskFilters = { ...NO_FILTERS, status: VIEW_STATUS[view] };
+    return this.byDue(filterTasks(this.visibleTasks(), filters));
   }
-
-  // ---------- Überblick ----------
-  protected readonly week = signal<TaskWeekStatsDto | null>(null);
-  protected readonly overdueTasks = computed(() => this.visibleTasks().filter((t) => t.is_overdue));
-  protected readonly todayCount = computed(() => this.visibleTasks().filter((t) => t.due_date === todayIso()).length);
-  /** „seit 1–2 Tagen“ — Spanne, wie lange überfällige Aufgaben schon liegen. */
-  protected readonly overdueSpan = computed(() => {
-    const days = this.overdueTasks().map((t) => -daysUntil(t.due_date!));
-    if (!days.length) return 'nichts überfällig';
-    const min = Math.min(...days);
-    const max = Math.max(...days);
-    const unit = max === 1 ? 'Tag' : 'Tagen';
-    return min === max ? `seit ${max} ${unit}` : `seit ${min}–${max} Tagen`;
+  protected readonly visible = computed(() => {
+    const q = this.search().trim().toLocaleLowerCase('de');
+    return this.inView(this.view()).filter((t) => this.matches(t, q));
   });
-  protected readonly weekDelta = computed(() => {
-    const week = this.week();
-    if (!week) return '';
-    const delta = week.done_this_week - week.done_last_week;
-    return delta === 0 ? 'wie in der Vorwoche' : `${delta > 0 ? '+' : '−'}${Math.abs(delta)} zur Vorwoche`;
+  /** Anzahl je Ansicht für die Chips (Alle ohne Zahl). */
+  protected readonly counts = computed(() => ({
+    heute: this.inView('heute').length,
+    ueberfaellig: this.inView('ueberfaellig').length,
+    wiederkehrend: this.visibleTasks().filter((t) => !!(t.recurrence_days || t.recurrence_months)).length,
+    erledigt: (this.doneTasks() ?? []).length,
+  }) as Partial<Record<AufgabenView, number>>);
+  protected readonly emptyText = computed(() => {
+    if (this.search().trim()) return `Keine Aufgabe passt zu „${this.search().trim()}“.`;
+    return {
+      alle: 'Keine offenen Aufgaben. Leg eine Aufgabe an oder richte eine wiederkehrende Aufgabe ein.',
+      heute: 'Heute ist nichts fällig.',
+      ueberfaellig: 'Nichts überfällig – alles im Griff.',
+      wiederkehrend: '',
+      erledigt: 'Noch nichts erledigt.',
+    }[this.view()];
   });
-  /** „Nächste Fälligkeiten“: ab heute, nach Datum — überfällige stehen schon oben in der Tabelle. */
-  protected readonly upcoming = computed(() =>
-    this.visibleTasks()
-      .filter((t) => !!t.due_date && t.due_date >= todayIso())
-      .sort((a, b) => a.due_date!.localeCompare(b.due_date!))
-      .slice(0, 4),
-  );
 
-  // ---------- Darstellung ----------
-  protected readonly room = room;
-  protected readonly dueLabel = dueLabel;
-  protected readonly durationLabel = durationLabel;
-  protected readonly initials = initials;
-  protected readonly priorityLabel = PRIORITY_LABEL;
-
-  // ---------- Schnell erfassen ----------
-  protected readonly quickTitle = signal('');
-  protected readonly quickSaving = signal(false);
-  protected quickAdd(when: 'none' | 'today' | 'week'): void {
-    const title = this.quickTitle().trim();
-    if (!title || this.quickSaving()) return;
-    this.quickSaving.set(true);
-    this.actionError.set(null);
-    const due = when === 'today' ? todayIso() : when === 'week' ? endOfWeekIso() : null;
-    this.provider
-      .createTask({
-        title, description: '', recurrence: null, due_date: due, due_time: null, effort: 1, assigned_to: null,
-        rotate: false, rotation_member_ids: [], room: '', duration_minutes: null, priority: 'mittel',
-      })
-      .subscribe({
-        next: () => {
-          this.quickSaving.set(false);
-          this.quickTitle.set('');
-          this.load();
-          this.saved.emit(`„${title}“ angelegt.`);
-        },
-        error: () => {
-          this.quickSaving.set(false);
-          this.actionError.set('Die Aufgabe konnte nicht angelegt werden. Bitte noch einmal versuchen.');
-        },
-      });
+  protected selectView(view: AufgabenView): void {
+    this.view.set(view);
   }
 
+  /** Zeile unter dem Titel: nur, was etwas aussagt (Priorität „Normal“ fällt weg). */
+  protected meta(t: TaskDto): { due: string; late: boolean; parts: string[] } {
+    const due = dueLabel(t);
+    const parts: string[] = [];
+    const r = room(t.room);
+    if (r) parts.push(r.label);
+    if (t.assigned_to_name) parts.push(t.rotate ? `${t.assigned_to_name} (reihum)` : t.assigned_to_name);
+    if (t.duration_minutes) parts.push(durationLabel(t.duration_minutes));
+    if (t.priority !== 'mittel') parts.push(PRIORITY_LABEL[t.priority]);
+    if (t.recurrence_days || t.recurrence_months) parts.push(recurrenceLabel(t.recurrence_days, t.recurrence_months));
+    return { due: t.due_date ? due.text : '', late: due.tone === 'late', parts };
+  }
 
   constructor() {
     this.load();
     effect(() => {
-      if (this.newRequest() > 0) untracked(() => this.openNew());
+      if (this.newRequest() > 0) {
+        untracked(() => (this.view() === 'wiederkehrend' ? this.routineRequest.update((n) => n + 1) : this.openNew()));
+      }
     });
   }
 
   protected load(): void {
-    forkJoin({ tasks: this.provider.getTasks(), members: this.provider.getTaskLoad(), week: this.provider.getTaskWeek() }).subscribe({
-      next: ({ tasks, members, week }) => {
+    // Erledigte gleich mitladen: der Chip „Erledigt“ zeigt ihre Anzahl.
+    forkJoin({ tasks: this.provider.getTasks(), done: this.provider.getTasks('done'), members: this.provider.getTaskLoad() }).subscribe({
+      next: ({ tasks, done, members }) => {
         this.tasks.set(tasks);
+        this.doneTasks.set(done);
         this.members.set(members);
-        this.week.set(week);
         this.loadError.set(false);
         this.openTaskFromQuery(tasks);
       },
@@ -205,18 +177,12 @@ export class AufgabenTab {
         this.doneTasks.set(rows);
         const done = rows.find((t) => t.id === id);
         if (done) {
-          this.showDone.set(true);
+          this.view.set('erledigt');
           this.openEdit(done);
         }
       },
       error: () => undefined,
     });
-  }
-
-  protected toggleDone(): void {
-    const next = !this.showDone();
-    this.showDone.set(next);
-    if (next) this.loadDone();
   }
 
   private loadDone(): void {
@@ -234,7 +200,6 @@ export class AufgabenTab {
       next: () => {
         this.reopening.set(null);
         this.load();
-        this.loadDone();
         this.saved.emit(`„${task.title}“ ist wieder offen.`);
       },
       error: () => {
@@ -246,7 +211,6 @@ export class AufgabenTab {
 
   private reloadLoad(): void {
     this.provider.getTaskLoad().subscribe({ next: (members) => this.members.set(members), error: () => undefined });
-    this.provider.getTaskWeek().subscribe({ next: (week) => this.week.set(week), error: () => undefined });
   }
 
   protected complete(task: TaskDto): void {
@@ -263,7 +227,7 @@ export class AufgabenTab {
             .sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999')),
         );
         this.reloadLoad();
-        if (this.showDone()) this.loadDone();
+        this.loadDone();
         if (updated.is_done) {
           this.saved.emit(`„${task.title}“ erledigt.`);
         } else {

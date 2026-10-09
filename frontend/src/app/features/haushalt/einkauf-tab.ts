@@ -28,8 +28,6 @@ import {
   editedLabel,
   groupItems,
   listIcon,
-  longDate,
-  recentItems,
   splitQuantity,
 } from './einkauf-logic';
 import { RowMenu, RowMenuItem } from './row-menu';
@@ -57,7 +55,7 @@ function formatEuro(value: number): string {
  * Einkaufslisten nach Entwurf: links alle Listen des Haushalts (Wocheneinkauf,
  * Drogerie …) mit Fortschritt, in der Mitte die gewählte Liste nach
  * Ladenbereich gruppiert (abgehakte bleiben durchgestrichen stehen), rechts
- * Listen-Details, Mitglieder und „Kürzlich hinzugefügt“.
+ * Mitglieder und der Hinweis, dass ein Einkauf zur Ausgabe wird.
  *
  * Erhalten aus der bisherigen Einkaufsliste (GESAMTKONZEPT.md §5.1):
  * Einkaufsmodus (nur was fehlt, abgehakte wandern in den Wagen), Schnell
@@ -99,14 +97,13 @@ export class EinkaufTab {
   protected readonly collapsed = signal<ReadonlySet<SectionKey>>(new Set());
   protected readonly sectionOptions = computed<SelectOption[]>(() => this.sections().map((s) => ({ value: s.key, label: s.label })));
   protected readonly addSectionOptions = computed<SelectOption[]>(() => [
-    { value: '', label: 'Kategorie' },
+    { value: '', label: 'Automatisch einsortieren' },
     ...this.sectionOptions(),
   ]);
   protected readonly groups = computed(() => groupItems(this.items(), this.sections(), this.shoppingMode(), this.settling()));
   protected readonly openCount = computed(() => this.items().filter((i) => !i.is_checked).length);
   protected readonly checkedItems = computed(() => this.items().filter((i) => i.is_checked));
   protected readonly cartItems = computed(() => this.checkedItems().filter((i) => !this.settling().has(i.id)));
-  protected readonly recent = computed(() => recentItems(this.items()));
   protected readonly pricePerItem = computed(() => Number(this.data()?.price_per_item ?? 3.5));
   protected readonly estimate = computed(() => estimateAmount(this.pricePerItem(), this.checkedItems().length));
   protected readonly canBook = computed(() => this.data()?.can_book_expense ?? false);
@@ -131,7 +128,6 @@ export class EinkaufTab {
   protected readonly splitQuantity = splitQuantity;
   protected readonly ago = ago;
   protected readonly editedLabel = editedLabel;
-  protected readonly longDate = longDate;
   protected readonly initials = initials;
   protected readonly avatarTone = avatarTone;
   protected readonly itemMenu: RowMenuItem[] = [
@@ -146,8 +142,18 @@ export class EinkaufTab {
     { key: 'mode', label: this.shoppingMode() ? 'Einkaufsmodus beenden' : 'Einkaufsmodus starten', icon: 'cart' },
     { key: 'edit', label: 'Liste bearbeiten', icon: 'edit' },
     { key: 'complete', label: 'Einkauf abschließen', icon: 'check-circle', disabled: this.checkedItems().length === 0 },
+    { key: 'archive', label: 'Liste archivieren', icon: 'archive', disabled: this.lists().length <= 1 },
   ]);
-  protected readonly listCardMenu: RowMenuItem[] = [{ key: 'edit', label: 'Liste bearbeiten', icon: 'edit' }];
+  protected readonly listCardMenu = computed<RowMenuItem[]>(() => [
+    { key: 'edit', label: 'Liste bearbeiten', icon: 'edit' },
+    { key: 'archive', label: 'Liste archivieren', icon: 'archive', disabled: this.lists().length <= 1 },
+  ]);
+
+  // ---------- Archiv ----------
+  /** Archivierte Listen bleiben erhalten, sind aber ausgeblendet — hier wiederherstellbar. */
+  protected readonly archiveOpen = signal(false);
+  protected readonly archived = signal<ShoppingListDto[] | null>(null);
+  protected readonly archiving = signal(false);
 
   // ---------- Eintrag bearbeiten ----------
   protected readonly editing = signal<ShoppingItemDto | null>(null);
@@ -192,6 +198,7 @@ export class EinkaufTab {
   }
 
   protected load(): void {
+    if (this.archived() === null) this.loadArchived();
     this.provider.getShoppingLists().subscribe({
       next: (lists) => {
         this.lists.set(lists);
@@ -244,6 +251,53 @@ export class EinkaufTab {
     if (key === 'mode') this.toggleMode();
     else if (key === 'edit') this.openEditList();
     else if (key === 'complete') this.openComplete();
+    else if (key === 'archive') {
+      const list = this.lists().find((l) => l.id === this.currentId());
+      if (list) this.archive(list, true);
+    }
+  }
+
+  protected onListCardMenu(list: ShoppingListDto, key: string): void {
+    if (key === 'archive') this.archive(list, true);
+    else this.openEditList(list);
+  }
+
+  protected toggleArchive(): void {
+    const next = !this.archiveOpen();
+    this.archiveOpen.set(next);
+    if (next) this.loadArchived();
+  }
+
+  private loadArchived(): void {
+    this.provider.getShoppingLists(true).subscribe({
+      next: (lists) => this.archived.set(lists),
+      error: () => this.actionError.set('Das Archiv konnte nicht geladen werden.'),
+    });
+  }
+
+  /** Archivieren oder wiederherstellen. Die letzte aktive Liste bleibt immer aktiv. */
+  protected archive(list: ShoppingListDto, archived: boolean): void {
+    if (this.archiving()) return;
+    if (archived && this.lists().length <= 1) {
+      this.actionError.set('Die letzte aktive Einkaufsliste kann nicht archiviert werden.');
+      return;
+    }
+    this.archiving.set(true);
+    this.actionError.set(null);
+    this.provider.updateShoppingList(list.id, { archived }).subscribe({
+      next: () => {
+        this.archiving.set(false);
+        if (archived && this.currentId() === list.id) this.currentId.set(null);
+        if (!archived) this.currentId.set(list.id);
+        this.load();
+        if (this.archiveOpen() || archived) this.loadArchived();
+        this.saved.emit(archived ? `Liste „${list.name}“ archiviert.` : `Liste „${list.name}“ wiederhergestellt.`);
+      },
+      error: () => {
+        this.archiving.set(false);
+        this.actionError.set(archived ? 'Archivieren hat nicht geklappt.' : 'Wiederherstellen hat nicht geklappt.');
+      },
+    });
   }
 
   protected onGroupMenu(key: string, items: ShoppingItemDto[]): void {
@@ -262,12 +316,17 @@ export class EinkaufTab {
 
   // ---------- Einträge ----------
 
+  /** Auch per Enter direkt im Feld: der Knopf ist bei leerem Feld gesperrt, und nach schnellem Einfügen kann er beim
+   * Drücken von Enter noch gesperrt sein — dann würde der Browser das Formular nicht abschicken. */
   protected submitNew(event: Event): void {
     event.preventDefault();
-    const name = this.newName().trim();
+    const input = (event.target as HTMLElement).closest('form')?.querySelector<HTMLInputElement>('#new-item-name');
+    const name = (input?.value ?? this.newName()).trim();
     if (!name || this.adding()) return;
     this.add(name, '', this.newSection() || null, () => {
       this.newName.set('');
+      // Ausdrücklich leeren: hat Angular den getippten Wert nie gerendert, wäre „leer → leer“ keine Änderung.
+      if (input) input.value = '';
     });
   }
 

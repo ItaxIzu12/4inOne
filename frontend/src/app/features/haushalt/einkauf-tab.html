@@ -9,7 +9,6 @@
     <nav class="lists" aria-labelledby="lists-heading">
       <div class="lists__head">
         <h2 id="lists-heading">Einkaufslisten</h2>
-        <button type="button" class="new-list" (click)="openNewList()"><app-icon name="plus" />Neue Liste</button>
         <button type="button" class="btn-link lists__edit" (click)="openEditList()">Bearbeiten</button>
       </div>
       <ul class="list-cards">
@@ -26,10 +25,34 @@
                 <span [style.width.%]="list.item_count ? (list.checked_count / list.item_count) * 100 : 0"></span>
               </span>
             </button>
-            <app-row-menu class="list-card__menu" [items]="listCardMenu" [label]="'Aktionen für Liste ' + list.name" (selected)="openEditList(list)" />
+            <app-row-menu class="list-card__menu" [items]="listCardMenu()" [label]="'Aktionen für Liste ' + list.name" (selected)="onListCardMenu(list, $event)" />
           </li>
         }
+        <!-- Handy: neue Liste am Ende der Leiste (der feste Knopf unten gehört dort dem Einkauf) -->
+        <li class="list-card list-card--new">
+          <button type="button" class="list-card__main" (click)="openNewList()">
+            <span class="list-card__icon" aria-hidden="true"><app-icon name="plus" /></span>
+            <span class="list-card__text list-card__new-label">Neue Liste</span>
+          </button>
+        </li>
       </ul>
+      @if (archived()?.length) {
+        <button type="button" class="btn-link archive-toggle" [attr.aria-expanded]="archiveOpen()" aria-controls="archived-lists" (click)="toggleArchive()">
+          <app-icon name="archive" aria-hidden="true" />Archiv ({{ archived()!.length }})
+        </button>
+        @if (archiveOpen()) {
+          <ul id="archived-lists" class="archived">
+            @for (list of archived(); track list.id) {
+              <li>
+                <span>{{ list.name }}<small>{{ list.item_count }} {{ list.item_count === 1 ? 'Artikel' : 'Artikel' }}</small></span>
+                <button type="button" class="btn-link" [disabled]="archiving()" [attr.aria-label]="'Liste ' + list.name + ' wiederherstellen'" (click)="archive(list, false)">
+                  Wiederherstellen
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      }
     </nav>
 
     <!-- Gewählte Liste -->
@@ -44,7 +67,7 @@
           @if (d.list.description) {
             <p class="muted small">{{ d.list.description }}</p>
           }
-          <p class="current__count">{{ checkedItems().length }} von {{ items().length }} erledigt</p>
+          <p class="current__count">{{ checkedItems().length }} von {{ items().length }} erledigt · zuletzt bearbeitet {{ editedLabel(d.list.updated_at) }}</p>
         </div>
         <app-row-menu [items]="listMenu()" [label]="'Aktionen für ' + d.list.name" (selected)="onListMenu($event)" />
       </header>
@@ -66,17 +89,6 @@
         <span class="muted small">Geteilt mit {{ members().length }} {{ members().length === 1 ? 'Person' : 'Personen' }}</span>
       </div>
 
-      <div class="tiles">
-        <div class="tile">
-          <span class="tile__icon" aria-hidden="true"><app-icon name="check-circle" /></span>
-          <span><b>{{ checkedItems().length }}</b><small>von {{ items().length }} erledigt</small></span>
-        </div>
-        <div class="tile">
-          <span class="tile__icon tile__icon--open" aria-hidden="true"><app-icon name="list" /></span>
-          <span><b>{{ openCount() }}</b><small>offen</small></span>
-        </div>
-      </div>
-
       @if (shoppingMode()) {
         <div class="mode-hint">
           <app-icon name="cart" aria-hidden="true" />
@@ -84,23 +96,29 @@
           <button type="button" class="btn-link" (click)="toggleMode()">Beenden</button>
         </div>
       } @else {
+        <!-- Eine Eingabezeile: Artikel eintippen, Enter oder „Hinzufügen“. Der Bereich im Laden ist optional,
+             ohne Auswahl sortiert 4inOne selbst ein. -->
+        <div class="add-wrap">
         <form class="add" (submit)="submitNew($event)">
-          <button type="submit" class="add__plus" aria-label="Artikel hinzufügen" [disabled]="!newName().trim() || adding()">
-            <app-icon name="plus" />
-          </button>
-          <label class="sr-only" for="new-item-name">Artikel</label>
-          <input
-            id="new-item-name"
-            type="text"
-            autocomplete="off"
-            maxlength="120"
-            placeholder="Artikel zur Liste hinzufügen …"
-            [value]="newName()"
-            (input)="newName.set($any($event.target).value)"
-          />
-          <span class="sr-only" id="new-item-section">Kategorie</span>
+          <label class="add__field" for="new-item-name">
+            <app-icon name="plus" aria-hidden="true" />
+            <span class="sr-only">Artikel</span>
+            <input
+              id="new-item-name"
+              type="text"
+              autocomplete="off"
+              maxlength="120"
+              placeholder="Artikel hinzufügen, z. B. Milch"
+              [value]="newName()"
+              (input)="newName.set($any($event.target).value)"
+              (keydown.enter)="submitNew($event)"
+            />
+          </label>
+          <span class="sr-only" id="new-item-section">Bereich im Laden</span>
           <app-select class="add__section" ariaLabelledby="new-item-section" [options]="addSectionOptions()" [value]="newSection()" (valueChange)="newSection.set($any($event))" />
+          <button type="submit" class="add__submit" [disabled]="!newName().trim() || adding()">Hinzufügen</button>
         </form>
+        </div>
         @if (d.suggestions.length > 0) {
           <div class="suggest">
             <span class="muted small" id="suggest-label">Oft gekauft:</span>
@@ -208,18 +226,6 @@
 
     <!-- Rechte Spalte -->
     <aside class="side">
-      <section class="card side-card" aria-labelledby="details-heading">
-        <div class="side-card__head">
-          <h2 id="details-heading">Listen-Details</h2>
-          <app-row-menu [items]="listCardMenu" label="Aktionen für Listen-Details" (selected)="openEditList()" />
-        </div>
-        <dl class="facts">
-          <div><dt><app-icon name="calendar" aria-hidden="true" />Erstellt am</dt><dd>{{ longDate(d.list.created_at) }}</dd></div>
-          <div><dt><app-icon name="clock" aria-hidden="true" />Zuletzt bearbeitet</dt><dd>{{ editedLabel(d.list.updated_at) }}</dd></div>
-          <div><dt><app-icon name="people" aria-hidden="true" />Geteilt mit</dt><dd>{{ members().length }} {{ members().length === 1 ? 'Person' : 'Personen' }}</dd></div>
-        </dl>
-      </section>
-
       <section class="card side-card" aria-labelledby="members-heading">
         <div class="side-card__head">
           <h2 id="members-heading">Mitglieder</h2>
@@ -236,23 +242,6 @@
         @if (!isDemo) {
           <button type="button" class="invite" (click)="inviteMember()"><app-icon name="user-plus" aria-hidden="true" />Person einladen</button>
         }
-      </section>
-
-      <section class="card side-card" aria-labelledby="recent-heading">
-        <div class="side-card__head">
-          <h2 id="recent-heading">Kürzlich hinzugefügt</h2>
-        </div>
-        <ul class="recent">
-          @for (item of recent(); track item.id) {
-            <li>
-              <span [class]="'avatar avatar--' + avatarTone(item.added_by_name)" aria-hidden="true">{{ initials(item.added_by_name) || '?' }}</span>
-              <span class="recent__text"><b>{{ item.name }}</b><small>{{ ago(item.created_at) }}{{ item.added_by_name ? ' · ' + item.added_by_name : '' }}</small></span>
-              <app-row-menu [items]="itemMenu" [label]="itemLabel(item) + ': Aktionen'" (selected)="onItemMenu(item, $event)" />
-            </li>
-          } @empty {
-            <li class="muted small">Noch nichts eingetragen.</li>
-          }
-        </ul>
       </section>
 
       <section class="card side-card side-card--soft" aria-labelledby="link-heading">

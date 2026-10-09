@@ -65,11 +65,11 @@ describe('Budget year overview', () => {
   });
   it('shows the viewed year next to the heading, and it follows the year switch', () => {
     const { fixture, el } = setup([budget(1, '2027-05', null)]);
-    expect(el.querySelector('h3')!.textContent).toContain('2026');
+    expect(el.querySelector('h2')!.textContent).toContain('2026');
     const select = el.querySelector('select')!;
     select.value = '2027';
     select.dispatchEvent(new Event('change'));
     fixture.detectChanges();
-    expect(el.querySelector('h3')!.textContent).toContain('2027');
+    expect(el.querySelector('h2')!.textContent).toContain('2027');
   });
 });

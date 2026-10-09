@@ -1,165 +1,89 @@
-@let t = trip();
-<div class="head">
-  <button type="button" class="back" aria-label="Zurück zu den Reisen" (click)="back.emit()"><app-icon name="arrow-left" /></button>
-  <div class="head__text">
-    <div class="head__title">
-      <h2 class="trip-name">{{ t.title }}</h2>
-      <span class="status" [class]="'status status--' + tone[t.status]">{{ labels[t.status] }}</span>
+@if (!items().length) {
+  <section class="card empty" aria-labelledby="pk-empty">
+    <app-icon name="luggage" />
+    <h2 id="pk-empty">Noch keine Packliste</h2>
+    <p class="muted">Füge Dinge hinzu, die du für diese Reise brauchst.</p>
+    @if (canEdit()) {
+      <div class="empty__actions">
+        <button type="button" class="primary" (click)="add.emit()"><app-icon name="plus" />Artikel hinzufügen</button>
+        <button type="button" class="soft" (click)="suggest.emit()"><app-icon name="bulb" />Vorlage verwenden</button>
+      </div>
+    }
+  </section>
+} @else {
+  <section class="card progress" aria-labelledby="pk-progress">
+    <div class="progress__top">
+      <h2 id="pk-progress" class="num">{{ packed() }} von {{ items().length }} gepackt</h2>
+      <div class="chips" role="group" aria-label="Packliste anzeigen">
+        <button type="button" [attr.aria-pressed]="view() === 'all'" (click)="view.set('all')">Alle <span class="num">{{ items().length }}</span></button>
+        <button type="button" [attr.aria-pressed]="view() === 'open'" (click)="view.set('open')">Offen <span class="num">{{ items().length - packed() }}</span></button>
+        <button type="button" [attr.aria-pressed]="view() === 'done'" (click)="view.set('done')">Gepackt <span class="num">{{ packed() }}</span></button>
+      </div>
     </div>
-    <p class="head__date">
-      <app-icon name="calendar" aria-hidden="true" />{{ range(t) }}
-      @if (when(); as w) {
-        <span class="when">{{ w }}</span>
-      }
-    </p>
-  </div>
-  <div class="head__actions">
-    <app-trip-switcher variant="button" [trips]="trips()" [trip]="t" (changed)="switchTrip.emit($event)" />
-  </div>
-</div>
+    <span class="bar" role="progressbar" aria-label="Packliste" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="pct()"><span [style.width.%]="pct()"></span></span>
 
-<div class="layout">
-  <div class="main">
-    <section class="card progress-card" aria-labelledby="pk-progress">
-      <div class="progress-card__top">
-        <div>
-          <p class="eyebrow">Packliste</p>
-          <h2 id="pk-progress" class="big">{{ packed() }} von {{ items().length }} erledigt</h2>
-        </div>
-        <div class="views" role="group" aria-label="Packliste anzeigen">
-          <button type="button" [attr.aria-pressed]="view() === 'all'" (click)="view.set('all')">Alle<span class="desktop-only">&nbsp;Listen</span> ({{ items().length }})</button>
-          <button type="button" [attr.aria-pressed]="view() === 'open'" (click)="view.set('open')">Offen ({{ items().length - packed() }})</button>
-          <button type="button" [attr.aria-pressed]="view() === 'done'" (click)="view.set('done')">Erledigt ({{ packed() }})</button>
-        </div>
-      </div>
-      <div class="progress-row">
-        <span class="bar" aria-hidden="true"><span [style.width.%]="pct()"></span></span>
-        <span class="num">{{ pct() }} %</span>
-      </div>
-      @if (hint(); as h) {
-        <p class="hint"><app-icon name="bulb" aria-hidden="true" />{{ h }}</p>
-      }
-    </section>
+    @if (canEdit()) {
+      <form class="quick" (submit)="submit($event)">
+        <label class="quick__field" for="packing-quick">
+          <app-icon name="plus" aria-hidden="true" />
+          <span class="sr-only">Artikel</span>
+          <input id="packing-quick" type="text" maxlength="120" autocomplete="off" placeholder="Artikel hinzufügen, z. B. Ladekabel" [value]="draft()" (input)="draft.set($any($event.target).value)" (keydown.enter)="submit($event)" />
+        </label>
+        <span class="sr-only" id="packing-quick-category">Kategorie</span>
+        <app-select class="quick__category" ariaLabelledby="packing-quick-category" [options]="categoryOptions" [value]="category()" (valueChange)="category.set($any($event))" />
+        <button type="submit" class="quick__submit" [disabled]="!draft().trim() || busy()">Hinzufügen</button>
+      </form>
+    }
+  </section>
 
-    @for (g of groups(); track g.category) {
-      @let open = !collapsed().has(g.category);
-      <section class="card group" [attr.aria-labelledby]="'pk-' + g.category">
-        <button type="button" class="group__head" [attr.aria-expanded]="open" (click)="toggleGroup(g.category)">
+  @for (g of groups(); track g.category) {
+    @let open = !collapsed().has(g.category);
+    <section class="card group" [attr.aria-labelledby]="'pk-' + g.category">
+      <h3 class="group__heading">
+        <button type="button" class="group__head" [attr.aria-expanded]="open" [attr.aria-controls]="'pk-list-' + g.category" (click)="toggleGroup(g.category)">
           <app-icon class="group__icon" [name]="g.icon" aria-hidden="true" />
-          <h3 [id]="'pk-' + g.category">{{ g.label }}</h3>
-          <span class="group__count">{{ g.packed }} von {{ g.total }}</span>
+          <span [id]="'pk-' + g.category" class="group__label">{{ g.label }}</span>
+          <span class="group__count num">{{ g.packed }} von {{ g.total }}</span>
           <app-icon class="chev" [name]="open ? 'chevron-up' : 'chevron-down'" aria-hidden="true" />
         </button>
-        @if (open) {
-          <ul class="items">
-            @for (item of g.items; track item.id) {
-              <li class="item" [class.is-done]="item.is_packed">
-                <label class="check">
-                  <input type="checkbox" [checked]="item.is_packed" [disabled]="!canEdit()" (change)="toggle.emit(item)" />
-                  <span class="item__title">{{ item.title }}@if (item.quantity > 1) { <span class="qty">({{ item.quantity }})</span> }</span>
-                </label>
-                @if (item.is_packed && item.packed_at) {
-                  <small class="item__date">Erledigt am {{ packedOn(item) }}</small>
-                }
-                @if (canEdit()) {
-                  <button type="button" class="item__more" [attr.aria-label]="item.title + ' bearbeiten'" (click)="edit.emit(item)">
-                    <app-icon name="more" />
-                  </button>
-                }
-              </li>
-            }
-          </ul>
-          @if (canEdit()) {
-            <button type="button" class="link group__add" (click)="add.emit(g.category)"><app-icon name="plus" />Zu „{{ g.label }}“ hinzufügen</button>
-          }
-        }
-      </section>
-    } @empty {
-      <div class="card empty">
-        <app-icon name="luggage" />
-        @if (items().length) {
-          <h3>{{ view() === 'done' ? 'Noch nichts erledigt' : 'Alles eingepackt' }}</h3>
-          <button type="button" class="link" (click)="view.set('all'); hideDone.set(false)">Alle anzeigen</button>
-        } @else {
-          <h3>Die Packliste ist noch leer</h3>
-          <p class="muted">Füge Dinge hinzu oder übernimm passende Vorschläge für diese Reise.</p>
-          @if (canEdit()) {
-            <button type="button" class="soft" (click)="suggest.emit()"><app-icon name="bulb" />Vorschläge ansehen</button>
-          }
-        }
-      </div>
-    }
-  </div>
-
-  <aside class="side">
-    <section class="card" aria-labelledby="pk-overview">
-      <h2 id="pk-overview" class="card-title"><app-icon name="travel" aria-hidden="true" />Reiseübersicht</h2>
-      <div class="ov-trip">
-        <div class="ov-trip__title"><b>{{ t.title }}</b><span class="status" [class]="'status status--' + tone[t.status]">{{ labels[t.status] }}</span></div>
-        <p class="ov-trip__date"><app-icon name="calendar" aria-hidden="true" />{{ range(t) }}</p>
-        @if (when(); as w) {
-          <p class="when when--right">{{ w }}</p>
-        }
-      </div>
-      <div class="ov-progress">
-        <div class="ov-progress__row"><b>Packliste</b><span class="num">{{ packed() }} von {{ items().length }}</span></div>
-        <div class="progress-row">
-          <span class="bar" aria-hidden="true"><span [style.width.%]="pct()"></span></span>
-          <span class="num">{{ pct() }} %</span>
-        </div>
-      </div>
-      <button type="button" class="ov-link" (click)="openTab.emit('erinnerungen')">
-        <app-icon name="check-circle" aria-hidden="true" /><span>Aufgaben</span>
-        <b [class.late]="tasksOpen() > 0">{{ tasksOpen() }} offen</b><app-icon class="chev" name="arrow" aria-hidden="true" />
-      </button>
-      <button type="button" class="ov-link" (click)="openTab.emit('budget')">
-        <app-icon name="coins" aria-hidden="true" /><span>Budget</span>
-        <b class="num">{{ money(budgetSpent()) }}@if (budgetTotal()) { <small> von {{ money(budgetTotal()) }}</small> }</b>
-        <app-icon class="chev" name="arrow" aria-hidden="true" />
-      </button>
-    </section>
-
-    <section class="card" aria-labelledby="pk-actions">
-      <h2 id="pk-actions" class="card-title"><app-icon name="sun" aria-hidden="true" />Schnellaktionen</h2>
-      <ul class="actions">
-        <li><button type="button" (click)="share.emit()"><app-icon name="share" aria-hidden="true" /><span>Packliste teilen</span><app-icon class="chev" name="arrow" aria-hidden="true" /></button></li>
-        @if (canEdit()) {
-          <li><button type="button" (click)="suggest.emit()"><app-icon name="bulb" aria-hidden="true" /><span>Vorschläge hinzufügen</span><app-icon class="chev" name="arrow" aria-hidden="true" /></button></li>
-        }
-        <li><button type="button" (click)="print()"><app-icon name="printer" aria-hidden="true" /><span>Liste drucken</span><app-icon class="chev" name="arrow" aria-hidden="true" /></button></li>
-        <li>
-          <button type="button" [attr.aria-pressed]="hideDone()" (click)="hideDone.set(!hideDone())">
-            <app-icon [name]="hideDone() ? 'eye-off' : 'check'" aria-hidden="true" /><span>{{ hideDone() ? 'Erledigte wieder einblenden' : 'Alle erledigten ausblenden' }}</span><app-icon class="chev" name="arrow" aria-hidden="true" />
-          </button>
-        </li>
-        @if (canEdit() && packed() > 0) {
-          <li>
-            @if (confirmReset()) {
-              <div class="confirm" role="alert">
-                <p>Alle {{ packed() }} Häkchen entfernen?</p>
-                <div class="confirm__btns">
-                  <button type="button" class="soft" (click)="confirmReset.set(false)">Abbrechen</button>
-                  <button type="button" class="soft soft--danger" (click)="doReset()">Zurücksetzen</button>
-                </div>
-              </div>
-            } @else {
-              <button type="button" (click)="askReset()"><app-icon name="repeat" aria-hidden="true" /><span>Packliste zurücksetzen</span><app-icon class="chev" name="arrow" aria-hidden="true" /></button>
-            }
-          </li>
-        }
-      </ul>
-    </section>
-
-    @if (tips().length) {
-      <section class="card" aria-labelledby="pk-tips">
-        <h2 id="pk-tips" class="card-title"><app-icon name="bulb" aria-hidden="true" />Tipps für diese Reise</h2>
-        <ul class="tips">
-          @for (tip of tips(); track tip) {
-            <li>{{ tip }}</li>
+      </h3>
+      @if (open) {
+        <ul class="items" [id]="'pk-list-' + g.category">
+          @for (item of g.items; track item.id) {
+            <li class="item" [class.is-done]="item.is_packed">
+              <label class="check">
+                <input type="checkbox" [checked]="item.is_packed" [disabled]="!canEdit()" (change)="toggle.emit(item)" />
+                <span class="item__title">{{ item.title }}@if (item.quantity > 1) { <span class="qty">× {{ item.quantity }}</span> }</span>
+              </label>
+              @if (canEdit()) {
+                <button type="button" class="icon-btn" [attr.aria-label]="item.title + ' bearbeiten'" (click)="edit.emit(item)"><app-icon name="edit" /></button>
+              }
+            </li>
           }
         </ul>
-      </section>
-    }
-  </aside>
-</div>
+      }
+    </section>
+  } @empty {
+    <div class="card empty">
+      <h3>{{ view() === 'done' ? 'Noch nichts gepackt' : 'Alles gepackt' }}</h3>
+      <button type="button" class="link" (click)="view.set('all')">Alle anzeigen</button>
+    </div>
+  }
 
+  @if (canEdit()) {
+    <div class="foot">
+      <button type="button" class="link" (click)="suggest.emit()"><app-icon name="bulb" />Vorlage verwenden</button>
+      @if (packed() > 0) {
+        @if (confirmReset()) {
+          <div class="confirm" role="alert">
+            <span>Alle {{ packed() }} Häkchen entfernen?</span>
+            <button type="button" class="soft" (click)="confirmReset.set(false)">Abbrechen</button>
+            <button type="button" class="soft soft--danger" (click)="doReset()">Zurücksetzen</button>
+          </div>
+        } @else {
+          <button type="button" class="link" (click)="confirmReset.set(true)"><app-icon name="repeat" />Alle Häkchen entfernen</button>
+        }
+      }
+    </div>
+  }
+}

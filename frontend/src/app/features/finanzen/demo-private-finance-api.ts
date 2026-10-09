@@ -8,12 +8,14 @@ import {
   FinanceSummary,
   FinanceTransaction,
   GoalPreview,
+  ImportResult,
   SavingsContributionDto,
   SavingsGoal,
   financeMonth,
   goalCovers,
   winningBudget,
 } from './private-finance-api.service';
+import { ImportRow } from './finance-import';
 
 // Sicherheitskritisch wie demo-finanzen-data-provider.ts (dieselbe Regel gilt hier): diese Datei importiert KEINEN
 // HttpClient. Sie ersetzt PrivateFinanceApi nur für die öffentliche Demo-Route (siehe app.routes.ts) und hält ihren
@@ -35,6 +37,10 @@ function ym(monthsAgo: number, day = 1): string {
   // und nicht alles auf „Heute“ fällt.
   const safe = monthsAgo === 0 ? Math.max(1, Math.min(today, Math.round((day * today) / last))) : Math.min(day, last);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(safe).padStart(2, '0')}`;
+}
+function todayDate(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 /** Monate in die Zukunft — für Zieltermine. */
 function ahead(months: number): string {
@@ -85,6 +91,9 @@ function monthRows(monthsAgo: number): Row[] {
       { amount: '100.00', type: INCOME, category: 6, date: ym(0, 2), note: 'Verkauf' },
       { amount: '80.00', type: INCOME, category: 6, date: ym(0, 2), note: 'Rückerstattung' },
       { amount: '20.00', type: INCOME, category: 6, date: ym(0, 1), note: 'Bonus' },
+      // Heute — damit die Tagesansicht der Übersicht in der Demo etwas zeigt
+      { amount: '28.30', type: EXPENSE, category: 2, date: todayDate(), note: 'REWE' },
+      { amount: '6.50', type: EXPENSE, category: 2, date: todayDate(), note: 'Bäckerei' },
     );
   } else if (monthsAgo === 1) {
     rows.push({ amount: '50.00', type: INCOME, category: 6, date: ym(1, 18), note: 'Verkauf' });
@@ -193,14 +202,51 @@ export class DemoPrivateFinanceApi {
   transactions(): Observable<FinanceTransaction[]> {
     return of([...this.txs].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id));
   }
+  /** Wie das Backend (finanzen/private_api.py import_rows): Dubletten überspringen, unbekannte Kategorien → Sonstiges. */
+  importTransactions(rows: ImportRow[], dryRun: boolean): Observable<ImportResult> {
+    const seen = new Set<string>();
+    const result: ImportResult = { new: 0, duplicates: 0, invalid: 0, created: 0, rows: [] };
+    const fresh: { row: ImportRow; category: FinanceCategory | undefined }[] = [];
+    rows.forEach((row, i) => {
+      const amount = Number(row.amount);
+      if (!(amount >= 0.01 && amount <= 999999.99)) {
+        result.invalid++;
+        result.rows.push({ row: i + 1, status: 'invalid', message: 'Betrag: ungültig' });
+        return;
+      }
+      const key = `${row.date}|${amount.toFixed(2)}|${row.type}|${row.note.trim().toLocaleLowerCase('de')}`;
+      const exists = this.txs.some((t) => `${t.date}|${Number(t.amount).toFixed(2)}|${t.type}|${t.note.trim().toLocaleLowerCase('de')}` === key);
+      if (seen.has(key) || exists) {
+        result.duplicates++;
+        result.rows.push({ row: i + 1, status: 'duplicate', message: 'Schon vorhanden' });
+        return;
+      }
+      seen.add(key);
+      const category = this.categoryList.find((c) => row.category && c.name.toLocaleLowerCase('de') === row.category.trim().toLocaleLowerCase('de'));
+      result.new++;
+      result.rows.push({ row: i + 1, status: 'new', message: '', category: category?.name ?? FALLBACK_CATEGORY });
+      fresh.push({ row, category });
+    });
+    if (dryRun || !fresh.length) return of(result);
+    let fallback = this.categoryList.find((c) => c.name === FALLBACK_CATEGORY);
+    if (!fallback && fresh.some((f) => !f.category)) {
+      fallback = { id: this.nextId++, name: FALLBACK_CATEGORY, color: '#8a94a6', monthly_goal: null };
+      this.categoryList.push(fallback);
+    }
+    for (const { row, category } of fresh) {
+      this.txs.push({ id: this.nextId++, amount: Number(row.amount).toFixed(2), type: row.type, category: (category ?? fallback)!.id, date: row.date, note: row.note.trim(), currency: 'EUR' });
+    }
+    return of({ ...result, created: fresh.length });
+  }
   budgets(): Observable<FinanceBudget[]> {
     return of([...this.budgetList]);
   }
   goals(month: string): Observable<SavingsGoal[]> {
     return of(this.goalList.filter((g) => goalCovers(g, month)));
   }
-  contributions(): Observable<SavingsContributionDto[]> {
-    return of([...this.contributionList].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id));
+  contributions(from?: string, to?: string): Observable<SavingsContributionDto[]> {
+    const rows = from && to ? this.contributionList.filter((c) => c.date >= from && c.date <= to) : this.contributionList;
+    return of([...rows].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id));
   }
   // Wie PrivateFinanceApi.summary(): ohne Angabe gilt der laufende Monat.
   summary(month: string = financeMonth()): Observable<FinanceSummary> {

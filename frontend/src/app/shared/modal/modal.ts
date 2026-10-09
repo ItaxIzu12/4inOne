@@ -1,6 +1,7 @@
 import { ErrorNoticeService } from '../error-notice/error-notice';
 import { Component, HostListener, ElementRef, DestroyRef, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { IconClose } from '../icons/icon-close';
+import { ScrollLockHandle } from '../scroll-lock/scroll-lock';
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -39,6 +40,8 @@ export class Modal {
 
   private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
   private previouslyFocused: HTMLElement | null = null;
+  private readonly scrollLock = new ScrollLockHandle();
+  private wasOpen = false;
 
   constructor() {
     effect(() => {
@@ -48,16 +51,17 @@ export class Modal {
         // erst @if(open()) neu rendern (Zero-Frame-Verzögerung nötig) —
         // ein Mikrotask reicht dafür zuverlässig aus.
         queueMicrotask(() => this.focusFirstElement());
-        document.body.style.overflow = 'hidden';
+        this.scrollLock.set(true);
       } else {
-        document.body.style.overflow = '';
-        this.previouslyFocused?.focus();
+        // Nur ein Dialog, der wirklich offen war, gibt seine Sperre frei — geschlossene Dialoge auf derselben
+        // Seite dürfen die Sperre eines anderen nicht aufheben.
+        if (this.wasOpen) this.previouslyFocused?.focus();
+        this.scrollLock.set(false);
       }
+      this.wasOpen = this.open();
     });
 
-    inject(DestroyRef).onDestroy(() => {
-      document.body.style.overflow = '';
-    });
+    inject(DestroyRef).onDestroy(() => this.scrollLock.set(false));
   }
 
   private focusableElements(): HTMLElement[] {
@@ -69,9 +73,11 @@ export class Modal {
     ];
   }
 
+  /** Ein Feld mit `data-autofocus` hat Vorrang (z. B. der Betrag beim schnellen Erfassen), sonst das erste fokussierbare. */
   private focusFirstElement(): void {
+    const preferred = this.panel()?.nativeElement.querySelector<HTMLElement>('[data-autofocus]');
     const [first] = this.focusableElements();
-    first?.focus();
+    (preferred ?? first)?.focus();
   }
 
   /** Klick auf den Hintergrund: schließen — oder bei Formularen kurz „anstupsen“, damit klar ist, dass der Klick

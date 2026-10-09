@@ -56,14 +56,6 @@ export interface WeekBar {
   saved: number;
 }
 
-function isoWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const day = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
-}
-
 const iso = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
@@ -85,7 +77,8 @@ export function weeklyBars(rows: FinanceTransaction[], contributions: SavingsCon
     const a = monday < first ? first : monday;
     const b = sunday > last ? last : sunday;
     bars.push({
-      label: `KW ${isoWeek(monday)}`,
+      // „Woche 1“ … des Monats — keine Kalenderwoche (KW), der Zeitraum steht darunter.
+      label: `Woche ${bars.length + 1}`,
       range: a.getMonth() === b.getMonth() ? `${a.getDate()}.–${b.getDate()}. ${SHORT[b.getMonth()]}.` : `${a.getDate()}. ${SHORT[a.getMonth()]}.–${b.getDate()}. ${SHORT[b.getMonth()]}.`,
       income: sum('INCOME'),
       expense: sum('EXPENSE'),
@@ -211,8 +204,7 @@ export function recurringItems(rows: FinanceTransaction[], type: FinanceTransact
 export interface ExpenseSplit {
   fixed: number;
   variable: number;
-  /** Monatliche Verpflichtung aller wiederkehrenden Ausgaben (auch noch nicht gebuchter). */
-  recurringTotal: number;
+  /** Anzahl der festen (wiederkehrenden) Ausgabeposten bis zu diesem Monat. */
   recurringCount: number;
 }
 
@@ -221,7 +213,7 @@ export function expenseSplit(rows: FinanceTransaction[], month: string): Expense
   const fixed = monthRows.filter((t) => t.recurring).reduce((s, t) => s + num(t.amount), 0);
   const total = monthRows.reduce((s, t) => s + num(t.amount), 0);
   const items = recurringItems(rows, 'EXPENSE', month);
-  return { fixed, variable: total - fixed, recurringTotal: items.reduce((s, i) => s + i.amount, 0), recurringCount: items.length };
+  return { fixed, variable: total - fixed, recurringCount: items.length };
 }
 
 // ---------------------------------------------------------------------------
@@ -247,6 +239,16 @@ export function categoryBudgets(rows: FinanceTransaction[], categories: FinanceC
       const pct = Math.round((spent / limit) * 100);
       return { category: c, spent, limit, left: limit - spent, pct, tone: pct >= 90 ? 'over' : pct >= 80 ? 'warn' : 'ok' } as CategoryBudget;
     });
+}
+
+/** Status in Worten — nie nur über die Farbe: „Im Rahmen“, „Bald erreicht“ (ab 80 %), „Fast ausgeschöpft“ (ab 90 %),
+ * „Ausgeschöpft“ (genau das Limit), „Überschritten“. */
+export function categoryBudgetStatus(b: Pick<CategoryBudget, 'spent' | 'limit' | 'pct'>): string {
+  if (b.spent > b.limit) return 'Überschritten';
+  if (b.spent === b.limit) return 'Ausgeschöpft';
+  if (b.pct >= 90) return 'Fast ausgeschöpft';
+  if (b.pct >= 80) return 'Bald erreicht';
+  return 'Im Rahmen';
 }
 
 // ---------------------------------------------------------------------------

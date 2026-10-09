@@ -1,6 +1,7 @@
 import { FinanceCategory, FinanceTransaction, SavingsGoal } from './private-finance-api.service';
 import {
   axis,
+  categoryBudgetStatus,
   categoryBudgets,
   categorySlices,
   dayLabel,
@@ -44,7 +45,7 @@ describe('Finanz-Reiter: Rechenregeln', () => {
   it('groups a month into calendar weeks with income, expenses and savings', () => {
     const rows = [tx(3000, '2026-10-01', { type: 'INCOME' }), tx(50, '2026-10-05'), tx(20, '2026-10-31')];
     const weeks = weeklyBars(rows, [{ id: 1, goal: 1, goal_title: 'Japan', amount: '300.00', date: '2026-10-01' }], '2026-10');
-    expect(weeks.map((w) => w.label)).toEqual(['KW 40', 'KW 41', 'KW 42', 'KW 43', 'KW 44']);
+    expect(weeks.map((w) => w.label)).toEqual(['Woche 1', 'Woche 2', 'Woche 3', 'Woche 4', 'Woche 5']);
     expect(weeks[0]).toMatchObject({ range: '1.–4. Okt.', income: 3000, expense: 0, saved: 300 });
     expect(weeks[1].expense).toBe(50);
     expect(weeks[4].expense).toBe(20);
@@ -78,7 +79,7 @@ describe('Finanz-Reiter: Rechenregeln', () => {
     expect(income).toHaveLength(1);
     expect(income[0]).toMatchObject({ title: 'Gehalt', next: '2026-11-01' });
     expect(recurringItems(rows, 'EXPENSE', '2026-10')[0].next).toBe('2026-11-30');
-    expect(expenseSplit(rows, '2026-10')).toEqual({ fixed: 500, variable: 60, recurringTotal: 500, recurringCount: 1 });
+    expect(expenseSplit(rows, '2026-10')).toEqual({ fixed: 500, variable: 60, recurringCount: 1 });
     expect(sourceIcon('Gehalt')).toBe('finance');
     expect(sourceIcon('Verkauf eBay')).toBe('tag');
   });
@@ -110,5 +111,15 @@ describe('Finanz-Reiter: Rechenregeln', () => {
     expect(dayLabel('2026-10-04', today)).toBe('Heute');
     expect(dayLabel('2026-10-03', today)).toBe('Gestern');
     expect(dayLabel('2026-03-03', today)).toBe('03. Mär. 2026');
+  });
+});
+
+describe('Kategorie-Budget: Status in Worten', () => {
+  it('names the state instead of relying on color', () => {
+    expect(categoryBudgetStatus({ spent: 130.49, limit: 300, pct: 43 })).toBe('Im Rahmen');
+    expect(categoryBudgetStatus({ spent: 85, limit: 100, pct: 85 })).toBe('Bald erreicht');
+    expect(categoryBudgetStatus({ spent: 90, limit: 100, pct: 90 })).toBe('Fast ausgeschöpft');
+    expect(categoryBudgetStatus({ spent: 100, limit: 100, pct: 100 })).toBe('Ausgeschöpft');
+    expect(categoryBudgetStatus({ spent: 120, limit: 100, pct: 120 })).toBe('Überschritten');
   });
 });

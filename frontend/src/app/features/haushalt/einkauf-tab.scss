@@ -1,5 +1,5 @@
-// Einkaufslisten nach Entwurf: Listen | gewählte Liste | Details, Mitglieder,
-// Kürzlich hinzugefügt. Mobil: Listen als waagerechte Kartenreihe.
+// Einkaufslisten: Listen | gewählte Liste | Mitglieder und Ausgabe-Hinweis.
+// Mobil: Listen als waagerechte Kartenreihe mit „Neue Liste“ am Ende.
 .shop {
   display: grid;
   grid-template-columns: minmax(220px, 0.78fr) minmax(0, 1.45fr) minmax(250px, 0.9fr);
@@ -30,25 +30,6 @@ small {
 .lists__head h2 {
   font-size: 18px;
 }
-.new-list {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--accent-soft);
-  color: var(--accent-hover);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.new-list app-icon {
-  width: 16px;
-  height: 16px;
-}
 .lists__edit {
   display: none;
 }
@@ -58,6 +39,38 @@ small {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+.archive-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: 6px;
+}
+.archive-toggle app-icon {
+  width: 16px;
+  height: 16px;
+}
+.archived {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.archived li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 48px;
+  border-top: 1px solid var(--border);
+}
+.archived span {
+  display: grid;
+  min-width: 0;
+}
+.archived small {
+  color: var(--text-muted);
+  font-size: 12.5px;
 }
 .list-card {
   position: relative;
@@ -215,74 +228,41 @@ small {
   width: 16px;
   height: 16px;
 }
-.tiles {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
+// Die Eingabe richtet sich nach der Breite der Listen-Spalte, nicht des Fensters.
+.add-wrap {
+  container-type: inline-size;
 }
-.tile {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-}
-.tile b {
-  display: block;
-  font-size: 20px;
-}
-.tile__icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--accent-soft);
-  color: #c03c78;
-}
-.tile__icon--open {
-  background: #fdf1f5;
-}
-.tile__icon app-icon {
-  width: 22px;
-  height: 22px;
-}
-
 .add {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) minmax(130px, 0.45fr);
+  grid-template-columns: minmax(0, 1fr) minmax(150px, auto) auto;
   align-items: center;
+  gap: 0;
+  padding: 4px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--surface);
 }
 .add:focus-within {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
-.add__plus {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  background: none;
-  color: #c03c78;
-  cursor: pointer;
-}
-.add__plus:disabled {
-  color: #e3a6c1;
-  cursor: default;
-}
-.add__plus app-icon {
-  width: 20px;
-  height: 20px;
-}
-.add input {
+.add__field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
-  height: 46px;
+  padding: 0 10px;
+}
+.add__field app-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  color: #c03c78;
+}
+.add__field input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
   border: 0;
   background: none;
   color: var(--text);
@@ -290,8 +270,66 @@ small {
   font-size: 15px;
   outline: none;
 }
+// Bereich im Laden: optional und leise — ohne eigenen Rahmen, nur durch einen Strich getrennt.
 .add__section {
+  min-width: 0;
   border-left: 1px solid var(--border);
+}
+.add__section ::ng-deep .select__trigger {
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  box-shadow: none;
+}
+// Die Zeile trägt schon den Fokusring – die Auswahl zeigt Fokus/offen nur als weiche Fläche.
+.add__section ::ng-deep .select__trigger:focus-visible,
+.add__section ::ng-deep .select__trigger[aria-expanded='true'] {
+  outline: 0;
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.add__submit {
+  min-height: 40px;
+  margin-left: 4px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.add__submit:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.add__submit:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+// Schmale Spalte: Artikel über die volle Breite, darunter Bereich und „Hinzufügen“.
+@container (max-width: 520px) {
+  .add {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .add__field {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--border);
+  }
+  .add__section {
+    border-left: 0;
+  }
+}
+.list-card__new-label {
+  font-weight: 700;
+}
+
+.list-card--new {
+  display: none;
 }
 .suggest {
   display: flex;
@@ -560,36 +598,7 @@ small {
 .side-card h2 {
   font-size: 17px;
 }
-.facts {
-  display: grid;
-  gap: 4px;
-  margin: 0;
-}
-.facts div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 36px;
-  font-size: 14px;
-}
-.facts dt {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--text-muted);
-}
-.facts dt app-icon {
-  width: 17px;
-  height: 17px;
-}
-.facts dd {
-  margin: 0;
-  font-weight: 500;
-  text-align: right;
-}
-.members,
-.recent {
+.members {
   display: grid;
   gap: 4px;
   margin: 0;
@@ -643,22 +652,6 @@ small {
   margin-left: 6px;
   color: var(--text-muted);
 }
-.recent li {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 40px;
-  align-items: center;
-  gap: 12px;
-  min-height: 52px;
-}
-.recent__text {
-  display: grid;
-  min-width: 0;
-  font-size: 14px;
-}
-.recent__text small {
-  font-size: 12.5px;
-}
-
 // Symbolwahl im Listenformular
 .icon-choice {
   margin: 0;
@@ -743,9 +736,7 @@ small {
 .centered {
   text-align: center;
 }
-
 .list-card__main:focus-visible,
-.new-list:focus-visible,
 .pen:focus-visible,
 .avatar--add:focus-visible,
 .add__plus:focus-visible,
@@ -766,25 +757,18 @@ small {
     grid-column: 1 / -1;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
 }
 @media (max-width: 960px) {
   .checkout-bar {
     // Über der unteren Navigation (Sidebar wird mobil zur Leiste unten).
     bottom: calc(96px + env(safe-area-inset-bottom));
   }
-}
-@media (max-width: 760px) {
-  .checkout-bar {
-    // zusätzlich über dem festen Hauptknopf „Neue Liste“ (shared/mobile-action)
-    bottom: calc(142px + env(safe-area-inset-bottom));
-  }
+
 }
 @media (max-width: 900px) {
   .shop {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .lists__head .new-list {
-    display: none;
   }
   .lists__edit {
     display: inline-flex;
@@ -834,6 +818,13 @@ small {
   .list-card__menu {
     display: none;
   }
+  .list-card--new {
+    display: block;
+    border-style: dashed;
+  }
+  .list-card--new .list-card__icon {
+    color: var(--accent);
+  }
   .current__count,
   .current__bar {
     display: block;
@@ -847,23 +838,17 @@ small {
     height: 5px;
     margin: 12px 0 0 54px;
   }
-  .current__title .muted.small,
-  .tiles {
+  .current__title .muted.small {
     display: none;
   }
   .side {
     grid-template-columns: minmax(0, 1fr);
   }
+
 }
 @media (max-width: 560px) {
   .card {
     padding: 16px;
-  }
-  .add {
-    grid-template-columns: 44px minmax(0, 1fr);
-  }
-  .add__section {
-    display: none;
   }
   .group__head {
     grid-template-columns: 28px minmax(0, 1fr) auto 32px 36px;
@@ -876,4 +861,5 @@ small {
     grid-template-columns: 36px minmax(0, 1fr) 44px 48px 36px;
     font-size: 13.5px;
   }
+
 }

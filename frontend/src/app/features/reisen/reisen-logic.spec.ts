@@ -1,30 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { PackingItem, Trip, TripReminder } from './reisen-api.service';
+import { PackingItem, Trip, TripTask } from './reisen-api.service';
 import {
-  activeTripsSummary,
   budgetRows,
   countdown,
   dueLabel,
-  shortWhen,
-  tripSuggestion,
-  filterReminders,
-  filterTrips,
+  filterTasks,
   formatMoney,
-  groupReminders,
-  householdConflicts,
+  groupTrips,
   initials,
+  longRange,
   nights,
-  notPackedHint,
   packingGroups,
-  reminderIcon,
-  sortTrips,
+  planningTips,
+  shortRange,
   tripDays,
   tripIcon,
+  tripPhase,
+  whenText,
 } from './reisen-logic';
 
 function trip(extra: Partial<Trip>): Trip {
   return {
-    id: 1, title: 'Reise', destination: '', start_date: '2026-03-14', end_date: '2026-03-16', notes: '', status: 'PLANNED',
+    id: 1, title: 'Reise', destination: '', departure: '', start_date: '2026-03-14', end_date: '2026-03-16', notes: '', status: 'PLANNED',
     travel_type: '', transport_type: '', baggage_type: '', budget_amount: null, currency: 'EUR', accommodation: '',
     accommodation_area: '', transport_note: '', created_at: '', updated_at: '2026-01-01', packing_total: 0, packing_packed: 0,
     tasks_open: 0, tasks_total: 0, events_count: 0, budget_spent: '0.00', participants: [], my_role: 'OWNER', ...extra,
@@ -33,8 +30,8 @@ function trip(extra: Partial<Trip>): Trip {
 function item(id: number, title: string, category: PackingItem['category'], is_packed = false): PackingItem {
   return { id, trip: 1, title, category, is_packed, quantity: 1, note: '' };
 }
-function reminder(extra: Partial<TripReminder>): TripReminder {
-  return { key: String(Math.random()), source: 'TRIP_TASK', area: 'REISEN', id: 1, title: 'X', date: null, time: null, place: '', done: false, ...extra };
+function task(id: number, extra: Partial<TripTask> = {}): TripTask {
+  return { id, trip: 1, title: `Aufgabe ${id}`, due_date: null, due_time: null, status: 'OPEN', note: '', assignee: null, ...extra };
 }
 
 describe('reisen-logic', () => {
@@ -57,19 +54,6 @@ describe('reisen-logic', () => {
     expect(initials('Anna')).toBe('AN');
   });
 
-  it('filters trips by status, period and person, and sorts them', () => {
-    const a = trip({ id: 1, title: 'B', start_date: '2025-05-01', end_date: '2025-05-03', status: 'DONE' });
-    const b = trip({ id: 2, title: 'A', start_date: '2026-08-01', end_date: '2026-08-10', participants: [{ id: 1, trip: 2, user: 1, display_name: 'Lena', is_self: false, role: 'VIEWER', added_at: '' }] });
-    const today = '2026-03-01';
-    expect(filterTrips([a, b], { status: 'DONE', period: '', person: '' }, today)).toEqual([a]);
-    expect(filterTrips([a, b], { status: '', period: 'upcoming', person: '' }, today)).toEqual([b]);
-    expect(filterTrips([a, b], { status: '', period: 'past', person: '' }, today)).toEqual([a]);
-    expect(filterTrips([a, b], { status: '', period: '', person: 'Lena' }, today)).toEqual([b]);
-    expect(sortTrips([b, a], 'date-asc').map((t) => t.id)).toEqual([1, 2]);
-    expect(sortTrips([a, b], 'date-desc').map((t) => t.id)).toEqual([2, 1]);
-    expect(sortTrips([a, b], 'title').map((t) => t.title)).toEqual(['A', 'B']);
-  });
-
   it('groups the packing list and keeps the count of the whole category in every view', () => {
     const items = [item(1, 'Pass', 'DOKUMENTE', true), item(2, 'Ticket', 'DOKUMENTE'), item(3, 'Jacke', 'KLEIDUNG', true)];
     const open = packingGroups(items, 'open');
@@ -77,14 +61,6 @@ describe('reisen-logic', () => {
     expect(open[0].packed).toBe(1);
     expect(open[0].total).toBe(2);
     expect(packingGroups(items, 'done').map((g) => g.category)).toEqual(['DOKUMENTE', 'KLEIDUNG']);
-  });
-
-  it('names the most important items not packed yet', () => {
-    expect(notPackedHint([item(1, 'Socken', 'KLEIDUNG'), item(2, 'Ladegerät', 'TECHNIK'), item(3, 'Reiseapotheke', 'GESUNDHEIT')])).toBe(
-      'Noch nicht eingepackt: Ladegerät, Reiseapotheke und 1 weitere.',
-    );
-    expect(notPackedHint([item(1, 'Ladegerät', 'TECHNIK')])).toBe('Noch nicht eingepackt: Ladegerät.');
-    expect(notPackedHint([item(1, 'Pass', 'DOKUMENTE', true)])).toBeNull();
   });
 
   it('compares planned and spent per category, only where something is planned or spent', () => {
@@ -103,23 +79,6 @@ describe('reisen-logic', () => {
     ]);
   });
 
-  it('filters and groups reminders by day, and finds household items during the trip', () => {
-    const items = [
-      reminder({ title: 'Online Check-in öffnen', date: '2026-03-12' }),
-      reminder({ title: 'Pflanzen gießen', date: '2026-03-14', area: 'HAUSHALT', source: 'HOUSEHOLD_TASK' }),
-      reminder({ title: 'Abreise', date: '2026-03-14', area: 'ORGANISATION', source: 'ORG_EVENT' }),
-      reminder({ title: 'Museumstickets', date: null }),
-    ];
-    expect(groupReminders(items).map((d) => [d.date, d.items.length])).toEqual([['2026-03-12', 1], ['2026-03-14', 2], [null, 1]]);
-    const all = { range: 'all' as const, area: '' as const, kind: '' as const };
-    expect(filterReminders(items, { ...all, range: 'today' }, '2026-03-14').map((r) => r.title)).toEqual(['Pflanzen gießen', 'Abreise']);
-    expect(filterReminders(items, { ...all, range: 'week' }, '2026-03-10').length).toBe(3);
-    expect(filterReminders(items, { ...all, kind: 'event' }, '2026-03-10').map((r) => r.title)).toEqual(['Abreise']);
-    expect(householdConflicts(items, trip({})).map((r) => r.title)).toEqual(['Pflanzen gießen']);
-    expect(reminderIcon(items[0])).toBe('travel');
-    expect(reminderIcon(items[1])).toBe('plant');
-  });
-
   it('formats money compactly only for whole amounts', () => {
     expect(formatMoney(700, 'EUR', true)).toBe('700 €');
     expect(formatMoney('45.5', 'EUR', true)).toBe('45,50 €');
@@ -127,30 +86,64 @@ describe('reisen-logic', () => {
     expect(formatMoney(700, 'EUR')).toBe('700,00 €');
   });
 
-  it('suggests one next step in a fixed order and skips what was put off', () => {
-    const state = { packed: 12, packingTotal: 24, tasksOpen: 4, budgetTotal: 700 };
-    expect(tripSuggestion(trip({}), state).title).toBe('Packliste noch unvollständig');
-    expect(tripSuggestion(trip({}), state).text).toContain('12 von 24 Punkten');
-    expect(tripSuggestion(trip({}), state, new Set(['packing'])).title).toBe('4 Aufgaben sind noch offen');
-    expect(tripSuggestion(trip({}), { ...state, packingTotal: 0, packed: 0 }).title).toBe('Packliste anlegen');
-    expect(tripSuggestion(trip({}), { packed: 3, packingTotal: 3, tasksOpen: 0, budgetTotal: 0 }).target).toBe('budget');
-    const ready = tripSuggestion(trip({}), { packed: 3, packingTotal: 3, tasksOpen: 0, budgetTotal: 100 });
-    expect([ready.title, ready.action]).toEqual(['Alles vorbereitet', null]);
-    expect(tripSuggestion(trip({}), state, new Set(['packing', 'tasks'])).title).toBe('Für heute ist alles im Blick');
+  it('derives the phase of a trip from its dates — "unterwegs" is not a stored status', () => {
+    const t = trip({ start_date: '2026-11-12', end_date: '2026-11-15' });
+    expect(tripPhase(t, '2026-10-06')).toBe('upcoming');
+    expect(tripPhase(t, '2026-11-13')).toBe('ongoing');
+    expect(tripPhase(t, '2026-11-16')).toBe('past');
+    expect(tripPhase({ ...t, status: 'CANCELLED' }, '2026-10-06')).toBe('cancelled');
+    expect(whenText(t, '2026-10-06')).toBe('In 37 Tagen');
+    expect(whenText(t, '2026-11-11')).toBe('Morgen');
+    expect(whenText(t, '2026-11-12')).toBe('Unterwegs · Tag 1 von 4');
+    expect(whenText(t, '2026-11-20')).toBe('Vorbei');
   });
 
-  it('counts only running and upcoming trips, and labels due dates', () => {
-    const today = '2026-03-01';
+  it('formats date ranges compactly in German', () => {
+    expect(shortRange(trip({ start_date: '2026-11-12', end_date: '2026-11-15' }))).toBe('12.–15. Nov. 2026');
+    expect(shortRange(trip({ start_date: '2026-11-30', end_date: '2026-12-02' }))).toBe('30. Nov. – 2. Dez. 2026');
+    expect(shortRange(trip({ start_date: '2026-12-30', end_date: '2027-01-02' }))).toBe('30. Dez. 2026 – 2. Jan. 2027');
+    expect(longRange(trip({ start_date: '2026-11-12', end_date: '2026-11-15' }))).toBe('12.–15. November 2026');
+  });
+
+  it('groups Meine Reisen: upcoming (incl. running) earliest first, past newest first, cancelled apart', () => {
+    const today = '2026-10-06';
     const trips = [
-      trip({ id: 1, status: 'CONFIRMED', end_date: '2026-03-16' }),
-      trip({ id: 2, status: 'PLANNED', end_date: '2026-08-01' }),
-      trip({ id: 3, status: 'IDEA', end_date: '2026-09-01' }),
-      trip({ id: 4, status: 'PLANNED', end_date: '2025-01-01' }),
+      trip({ id: 1, start_date: '2027-05-01', end_date: '2027-05-10' }),
+      trip({ id: 2, start_date: '2026-10-05', end_date: '2026-10-08' }),
+      trip({ id: 3, start_date: '2026-01-01', end_date: '2026-01-05', status: 'DONE' }),
+      trip({ id: 4, start_date: '2026-09-01', end_date: '2026-09-05' }),
+      trip({ id: 5, start_date: '2026-12-01', end_date: '2026-12-03', status: 'CANCELLED' }),
     ];
-    expect(activeTripsSummary(trips, today)).toEqual({ count: 2, text: '1 bestätigt · 1 in Planung' });
+    const g = groupTrips(trips, today);
+    expect(g.upcoming.map((t) => t.id)).toEqual([2, 1]);
+    expect(g.past.map((t) => t.id)).toEqual([4, 3]);
+    expect(g.cancelled.map((t) => t.id)).toEqual([5]);
+  });
+
+  it('filters trip tasks into open (by due date), done and mine', () => {
+    const tasks = [
+      task(1, { due_date: '2026-11-10' }),
+      task(2),
+      task(3, { due_date: '2026-11-01', assignee: 7 }),
+      task(4, { status: 'DONE', assignee: 7 }),
+    ];
+    expect(filterTasks(tasks, 'open', 7).map((t) => t.id)).toEqual([3, 1, 2]);
+    expect(filterTasks(tasks, 'done', 7).map((t) => t.id)).toEqual([4]);
+    expect(filterTasks(tasks, 'mine', 7).map((t) => t.id)).toEqual([3]);
+    expect(filterTasks(tasks, 'mine', null)).toEqual([]);
+  });
+
+  it('gives at most three general planning tips that fit the transport', () => {
+    expect(planningTips(trip({ transport_type: 'FLIGHT' }))).toContain('Online Check-in öffnet oft 24–48 Stunden vor Abflug.');
+    expect(planningTips(trip({ transport_type: 'TRAIN' }))).toContain('Tickets auch offline speichern.');
+    expect(planningTips(trip({})).length).toBeLessThanOrEqual(3);
+  });
+
+  it('labels due dates', () => {
+    const today = '2026-03-01';
     expect(dueLabel('2026-03-01', today)).toEqual({ text: 'Heute', urgent: true });
     expect(dueLabel('2026-02-27', today)).toEqual({ text: 'Überfällig', urgent: true });
     expect(dueLabel('2026-03-12', today)).toEqual({ text: '12. März', urgent: false });
-    expect(shortWhen('2026-03-12', '18:00:00')).toBe('12. März, 18:00');
+    expect(dueLabel(null, today)).toEqual({ text: 'Ohne Datum', urgent: false });
   });
 });

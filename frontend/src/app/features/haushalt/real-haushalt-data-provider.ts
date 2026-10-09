@@ -30,8 +30,8 @@ export class RealHaushaltDataProvider implements HaushaltDataProvider {
   getShopping(listId: Id | null = null): Observable<ShoppingOverviewDto> {
     return this.api.getShopping(listId);
   }
-  getShoppingLists(): Observable<ShoppingListDto[]> {
-    return this.api.getShoppingLists();
+  getShoppingLists(archived = false): Observable<ShoppingListDto[]> {
+    return this.api.getShoppingLists(archived);
   }
   createShoppingList(input: ShoppingListInput): Observable<ShoppingListDto> {
     return this.api.createShoppingList(input);
@@ -42,8 +42,8 @@ export class RealHaushaltDataProvider implements HaushaltDataProvider {
   deleteShoppingList(id: Id): Observable<void> {
     return this.api.deleteShoppingList(id);
   }
-  addItem(name: string, quantity: string, section: SectionKey | null, listId: Id | null = null): Observable<ShoppingItemDto> {
-    return this.api.addItem(name, quantity, section, listId);
+  addItem(name: string, quantity: string, section: SectionKey | null, listId: Id | null = null, notes = ''): Observable<ShoppingItemDto> {
+    return this.api.addItem(name, quantity, section, listId, notes);
   }
   updateItem(id: Id, patch: ShoppingItemPatch): Observable<ShoppingItemDto> {
     return this.api.updateItem(id, patch);
@@ -91,6 +91,12 @@ export class RealHaushaltDataProvider implements HaushaltDataProvider {
 
   getFolder(): Observable<FolderEntryDto[]> {
     return this.api.getFolder();
+  }
+  getFolderEntry(id: Id): Observable<FolderEntryDto> {
+    return this.api.getFolderEntry(id);
+  }
+  updateFolderStatus(id: Id, status: FolderEntryDto['status']): Observable<FolderEntryDto> {
+    return this.api.updateFolderStatus(id, status);
   }
   createFolderEntry(input: FolderEntryInput): Observable<FolderEntryDto> {
     return this.api.createFolderEntry(input);

@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+/** Transaktionen › Alle/Ausgaben/Einnahmen (Ausgaben und Einnahmen sind keine eigenen Reiter mehr). */
+async function txView(page: import('@playwright/test').Page, label: 'Alle' | 'Ausgaben' | 'Einnahmen') {
+  await page.getByRole('button', { name: 'Transaktionen', exact: true }).click();
+  await page.locator('.tx-switch').getByRole('button', { name: label, exact: true }).click();
+}
 
 /** Eigene Kategorien im Reiter Budgets und direkt im Buchungsformular — mit den Demo-Daten (kein Backend). */
 for (const width of [390, 1440]) {
@@ -41,22 +46,24 @@ for (const width of [390, 1440]) {
     await expect(budgets).not.toContainText('Gesundheit');
 
     // Neue Kategorie direkt beim Buchen anlegen und gleich auswählen
-    await page.getByRole('button', { name: 'Ausgaben', exact: true }).click();
+    await txView(page, 'Ausgaben');
     await page.getByRole('button', { name: 'Ausgabe erfassen', exact: true }).click();
     await page.getByRole('button', { name: 'Neue Kategorie', exact: true }).click();
     await expect(page.getByLabel('Name der neuen Kategorie')).toBeFocused();
     await page.getByLabel('Name der neuen Kategorie').fill('Geschenke');
     await page.getByLabel('Name der neuen Kategorie').press('Enter');
     await expect(page.getByLabel('Name der neuen Kategorie')).toHaveCount(0);
-    await expect(page.getByRole('dialog').getByLabel('Kategorie', { exact: true })).toContainText('Geschenke');
+    // Die neue Kategorie ist als Chip gewählt.
+    await expect(page.getByRole('dialog').getByRole('button', { name: 'Geschenke', pressed: true })).toBeVisible();
     // Vorhandener Name wird einfach ausgewählt statt doppelt angelegt
     await page.getByRole('button', { name: 'Neue Kategorie', exact: true }).click();
     await page.getByLabel('Name der neuen Kategorie').fill('haustier');
     await page.getByRole('button', { name: 'Anlegen', exact: true }).click();
-    await expect(page.getByRole('dialog').getByLabel('Kategorie', { exact: true })).toContainText('Haustier');
-    // im Dialog (der Reiter „Ausgaben“ hat selbst einen Kategorie-Filter)
-    await page.getByRole('dialog').getByLabel('Kategorie', { exact: true }).click();
-    await page.getByRole('option', { name: 'Geschenke', exact: true }).click();
+    await expect(page.getByRole('dialog').getByRole('button', { name: 'Haustier', pressed: true })).toBeVisible();
+    // Ein Tipp auf einen anderen Chip wechselt die Kategorie.
+    await page.getByRole('dialog').getByRole('button', { name: 'Geschenke' }).click();
+    await expect(page.getByRole('dialog').getByRole('button', { name: 'Geschenke', pressed: true })).toBeVisible();
+    await expect(page.getByRole('dialog').getByRole('button', { name: 'Haustier', pressed: true })).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }

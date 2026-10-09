@@ -1,4 +1,5 @@
 <app-save-feedback [message]="notice()" (dismissed)="notice.set('')" />
+<app-finance-import-dialog [open]="importOpen()" (closed)="importOpen.set(false)" (imported)="onImported($event)" />
 <app-shell
   ><main id="main-content" class="finance-page domain-page" [class.finance-overview]="tab() === 'overview'" tabindex="-1">
     <div class="domain-sticky">
@@ -7,7 +8,7 @@
           <span class="wallet domain-icon"><app-icon name="finance" /></span>
           <div>
             <h1>Finanzen</h1>
-            <p class="overview-intro">Behalte dein Geld klar im Blick.</p>
+            <p class="overview-intro">Was diesen Monat noch übrig ist – auf einen Blick.</p>
           </div>
         </div>
         @if (headAction()) {
@@ -25,21 +26,6 @@
           </button>
         }
       </nav>
-      <!-- Monat: am Rechner rechts neben den Reitern, auf dem Handy als eigene Zeile -->
-      <div class="period-bar">
-        <div class="month-switch">
-          <button type="button" class="month-step" aria-label="Vorheriger Monat" (click)="stepMonth(-1)">
-            <app-icon name="chevron-left" />
-          </button>
-          <label for="finance-month" class="month-pick"
-            ><span class="sr-only">Monat</span>
-            <app-date-picker mode="month" inputId="finance-month" [value]="month()" (valueChange)="setMonth($event)" />
-          </label>
-          <button type="button" class="month-step" aria-label="Nächster Monat" (click)="stepMonth(1)">
-            <app-icon name="arrow" />
-          </button>
-        </div>
-      </div>
     </div>
 
     @if (loading()) {
@@ -51,18 +37,31 @@
       </div>
     } @else {
       @let s = summary();
-      @if (overBudget(); as over) {
+      @if (monthNavigation() && overBudget(); as over) {
         <p class="alert-note" role="status">
           <strong>Budget überschritten:</strong> Du hast {{ money(over) }} mehr ausgegeben oder für Sparziele
           zurückgelegt, als dein Monatsbudget vorsieht.
         </p>
       }
-      @if (planAlertText(); as alert) {
+      @if (monthNavigation() && planAlertText(); as alert) {
         <p class="alert-note alert-note--plan" role="status"><strong>Sparplanung prüfen:</strong> {{ alert }}</p>
       }
 
       <!-- ============================== Übersicht ============================== -->
       @if (tab() === 'overview') {
+        <app-finance-period
+          [(period)]="period"
+          [(day)]="periodDay"
+          [(range)]="periodRange"
+          [transactions]="transactions()"
+          [categories]="categories()"
+          [version]="dataVersion()"
+          (openTransaction)="open('transactions', $event)"
+          (showExpenses)="selectTab('expenses')"
+        >
+          <ng-container *ngTemplateOutlet="dateNav" />
+        </app-finance-period>
+        @if (period() === 'month') {
         @if (s && s.total === null) {
           <div class="budget-empty">
             <span class="kpi__icon" aria-hidden="true"><app-icon name="finance" /></span>
@@ -177,7 +176,7 @@
         <div class="grid grid--half">
           <section class="card statement" aria-labelledby="tx-h">
             <div class="card-head">
-              <h2 id="tx-h">Letzte Transaktionen</h2>
+              <h2 id="tx-h">Transaktionen <small class="h-note">{{ monthLabel() }} · die neuesten</small></h2>
               <button type="button" class="link" (click)="showAll('expenses')">Alle anzeigen <app-icon name="arrow" /></button>
             </div>
             <ul class="rows">
@@ -237,10 +236,41 @@
         </div>
       }
 
+        }
+      <!-- ============================== Transaktionen ============================== -->
+      @if (tab() === 'transactions') {
+        <div class="tx-bar">
+          <div class="tx-switch" role="group" aria-label="Transaktionen anzeigen">
+            @for (k of txKinds; track k.key) {
+              <button type="button" [id]="'fin-kind-' + k.key" [attr.aria-pressed]="txKind() === k.key" (click)="selectKind(k.key)">{{ k.label }}</button>
+            }
+          </div>
+          <button type="button" class="tx-import" (click)="importOpen.set(true)"><app-icon name="upload" aria-hidden="true" />Kontoauszug importieren</button>
+        </div>
+        <ng-container *ngTemplateOutlet="dateNav" />
+      }
+      @if (section() === 'all') {
+        <!-- Alle: dieselben Kennzahlen wie in der Übersicht, darunter die vollständige Liste -->
+        <div class="kpis kpis--three">
+          <div class="kpi">
+            <span class="kpi__icon" aria-hidden="true"><app-icon name="trend-up" /></span>
+            <span class="kpi__body"><span class="kpi__label">Einnahmen</span><b class="kpi__value">{{ eur(incomeNow()) }}</b><span class="kpi__hint">im {{ monthShort() }}</span></span>
+          </div>
+          <div class="kpi">
+            <span class="kpi__icon kpi__icon--down" aria-hidden="true"><app-icon name="arrow-down" /></span>
+            <span class="kpi__body"><span class="kpi__label">Ausgaben</span><b class="kpi__value">{{ eur(expenseNow()) }}</b><span class="kpi__hint">im {{ monthShort() }}</span></span>
+          </div>
+          <div class="kpi">
+            <span class="kpi__icon kpi__icon--blue" aria-hidden="true"><app-icon name="piggy" /></span>
+            <span class="kpi__body"><span class="kpi__label">Gespart</span><b class="kpi__value">{{ eur(savedNow()) }}</b><span class="kpi__hint">für deine Sparziele – keine Ausgabe</span></span>
+          </div>
+        </div>
+      }
       <!-- ============================== Ausgaben ============================== -->
-      @if (tab() === 'expenses') {
+      @if (section() === 'expenses') {
         @let sp = split();
-        <div class="kpis">
+        <!-- Drei Kennzahlen: gesamt, fest (inkl. Anzahl der festen Posten), variabel — „Wiederkehrend“ war dieselbe Zahl. -->
+        <div class="kpis kpis--three">
           <div class="kpi">
             <span class="kpi__icon kpi__icon--down" aria-hidden="true"><app-icon name="arrow-down" /></span>
             <span class="kpi__body">
@@ -254,7 +284,7 @@
             <span class="kpi__body">
               <span class="kpi__label">Fixkosten</span>
               <b class="kpi__value">{{ eur(sp.fixed) }}</b>
-              <span class="kpi__hint">{{ share(sp.fixed, expenseNow()) }} % der Ausgaben</span>
+              <span class="kpi__hint">{{ sp.recurringCount }} {{ sp.recurringCount === 1 ? 'fester Posten' : 'feste Posten' }} · {{ share(sp.fixed, expenseNow()) }} % der Ausgaben</span>
             </span>
           </div>
           <div class="kpi">
@@ -263,14 +293,6 @@
               <span class="kpi__label">Variable Ausgaben</span>
               <b class="kpi__value">{{ eur(sp.variable) }}</b>
               <span class="kpi__hint">{{ share(sp.variable, expenseNow()) }} % der Ausgaben</span>
-            </span>
-          </div>
-          <div class="kpi">
-            <span class="kpi__icon" aria-hidden="true"><app-icon name="repeat" /></span>
-            <span class="kpi__body">
-              <span class="kpi__label">Wiederkehrend</span>
-              <b class="kpi__value">{{ eur(sp.recurringTotal) }}</b>
-              <span class="kpi__hint">{{ sp.recurringCount }} {{ sp.recurringCount === 1 ? 'fester Posten' : 'feste Posten' }} pro Monat</span>
             </span>
           </div>
         </div>
@@ -371,7 +393,7 @@
       }
 
       <!-- ============================== Einnahmen ============================== -->
-      @if (tab() === 'income') {
+      @if (section() === 'income') {
         @let top = sources()[0];
         <div class="kpis">
           <div class="kpi">
@@ -511,11 +533,11 @@
         </div>
       }
 
-      <!-- Vollständige Liste für Ausgaben und Einnahmen -->
-      @if (tab() === 'expenses' || tab() === 'income') {
+      <!-- Vollständige Liste: Alle, Ausgaben oder Einnahmen -->
+      @if (tab() === 'transactions') {
         <section class="card all-rows" id="all-rows" aria-labelledby="all-rows-h" tabindex="-1">
           <div class="card-head">
-            <h2 id="all-rows-h">{{ tab() === 'expenses' ? 'Alle Ausgaben' : 'Alle Einnahmen' }} im {{ monthLabel() }}</h2>
+            <h2 id="all-rows-h">{{ section() === 'expenses' ? 'Alle Ausgaben' : section() === 'income' ? 'Alle Einnahmen' : 'Alle Transaktionen' }} im {{ monthLabel() }}</h2>
           </div>
           <div class="transaction-controls">
             <label class="filter"
@@ -545,7 +567,7 @@
               @if (transactionSearch().trim() || categoryFilter()) {
                 <li class="empty">Keine Buchung gefunden. Prüfe die Schreibweise, die Kategorie oder den Filter.</li>
               } @else {
-                <li class="empty">Für diesen Monat gibt es noch keine {{ tab() === 'expenses' ? 'Ausgaben' : 'Einnahmen' }}.</li>
+                <li class="empty">Für diesen Monat gibt es noch keine {{ section() === 'expenses' ? 'Ausgaben' : section() === 'income' ? 'Einnahmen' : 'Transaktionen' }}.</li>
               }
             }
           </ul>
@@ -559,54 +581,85 @@
 
       <!-- ============================== Budgets ============================== -->
       @if (tab() === 'budgets') {
-        <div class="kpis kpis--three">
-          <div class="kpi">
-            <span class="kpi__icon" aria-hidden="true"><app-icon name="bars" /></span>
-            <span class="kpi__body">
-              <span class="kpi__label">Monatsbudget</span>
-              @if (activeBudget(); as budget) {
+        <ng-container *ngTemplateOutlet="dateNav" />
+        @if (activeBudget(); as budget) {
+          <!-- Zwei Karten: das Budget und was davon übrig ist — mit der Rechnung, warum (Sparen bindet Budget). -->
+          <div class="kpis kpis--budget">
+            <div class="kpi">
+              <span class="kpi__icon" aria-hidden="true"><app-icon name="bars" /></span>
+              <span class="kpi__body">
+                <span class="kpi__label">Monatsbudget</span>
                 <b class="kpi__value">{{ eur(budget.amount) }}</b>
                 <span class="kpi__hint">für {{ monthLabel() }} · Gültig: {{ span(budget) }}</span>
-              } @else {
-                <b class="kpi__value">—</b>
-                <span class="kpi__hint">Für diesen Monat hast du noch kein Budget festgelegt.</span>
+              </span>
+            </div>
+            <div class="kpi kpi--left" [class.kpi--danger]="!!overBudget()">
+              <span class="kpi__icon" aria-hidden="true"><app-icon name="finance" /></span>
+              <span class="kpi__body">
+                <span class="kpi__label">{{ overBudget() ? 'Über dem Monatsbudget' : 'Vom Monatsbudget übrig' }}</span>
+                <b class="kpi__value">{{ eur(overBudget() ?? s?.available) }}</b>
+                <span
+                  class="budget-bar"
+                  [class.is-over]="!!overBudget()"
+                  role="progressbar"
+                  aria-label="Monatsbudget verbraucht"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  [attr.aria-valuenow]="spentShare()"
+                  [attr.aria-valuetext]="spentShare() + ' Prozent des Monatsbudgets gebunden'"
+                  ><span [style.width.%]="spentShare()"></span
+                ></span>
+                <span class="kpi__hint">{{ overBudget() ? 'Budget überschritten' : freeShare() + ' % verfügbar' }}</span>
+                <span class="kpi__calc">
+                  {{ eur(budget.amount) }} − {{ eur(expenseNow()) }} ausgegeben − {{ eur(bookedSaved()) }} gespart@if (plannedSaved() > 0) { − {{ eur(plannedSaved()) }} für Sparraten eingeplant}
+                </span>
+              </span>
+            </div>
+          </div>
+        } @else {
+          <section class="card budget-empty" aria-labelledby="budget-empty-h">
+            <span class="tile tile--green" aria-hidden="true"><app-icon name="bars" /></span>
+            <div class="budget-empty__text">
+              <h2 id="budget-empty-h">Noch kein Budget für {{ monthLabel() }}</h2>
+              <p class="muted">Lege ein Budget fest, um deine Ausgaben für diesen Monat einzuordnen.</p>
+              @if (expenseNow() > 0 || savedNow() > 0) {
+                <p class="budget-empty__facts">
+                  Im {{ monthShort() }} ausgegeben: <b>{{ eur(expenseNow()) }}</b>
+                  @if (savedNow() > 0) { · gespart: <b>{{ eur(savedNow()) }}</b> }
+                </p>
               }
-            </span>
-          </div>
-          <div class="kpi" [class.kpi--danger]="!!overBudget()">
-            <span class="kpi__icon" aria-hidden="true"><app-icon name="finance" /></span>
-            <span class="kpi__body">
-              <span class="kpi__label">{{ overBudget() ? 'Über dem Monatsbudget' : 'Vom Monatsbudget übrig' }}</span>
-              <b class="kpi__value">{{ s?.total ? eur(overBudget() ?? s!.available) : '—' }}</b>
-              <span class="kpi__hint">{{ s?.total ? (overBudget() ? 'Budget überschritten' : freeShare() + ' % verbleibend') : 'ohne Monatsbudget' }}</span>
-            </span>
-          </div>
-          <div class="kpi kpi--ring">
-            <span class="ring" aria-hidden="true" [style.--p]="spentShare()"><b>{{ spentShare() }} %</b></span>
-            <span class="kpi__body">
-              <span class="kpi__label">Bereits verbraucht</span>
-              <b class="kpi__value">{{ eur(used()) }}</b>
-              <span class="kpi__hint">{{ s?.total ? 'von ' + eur(s!.total) + ' · ' : '' }}{{ eur(expenseNow()) }} Ausgaben + {{ eur(s?.saved) }} Sparen</span>
-            </span>
-          </div>
-        </div>
+            </div>
+            <button type="button" class="primary" (click)="open('budgets')"><app-icon name="plus" />Budget festlegen</button>
+          </section>
+        }
 
-        <div class="grid grid--chart">
+        <div class="grid grid--chart" [class.grid--single]="!catBudgets().length && !activeBudget()">
           <section class="card" aria-labelledby="catbudget-h">
             <div class="card-head">
               <h2 id="catbudget-h">Kategorie-Budgets</h2>
-              <button type="button" class="soft" (click)="openCategories()"><app-icon name="tag" />Kategorien verwalten</button>
+              @if (catBudgets().length) {
+                <button type="button" class="soft" (click)="openCategories()"><app-icon name="tag" />Kategorien verwalten</button>
+              }
             </div>
             @if (catBudgets().length) {
-              <div class="table-head" aria-hidden="true"><span>Kategorie</span><span>Ausgegeben / Limit</span><span>Übrig</span><span>Fortschritt</span></div>
+              <div class="table-head table-head--budget" aria-hidden="true"><span>Kategorie</span><span>Ausgegeben / Limit</span><span>Übrig</span><span>Fortschritt</span></div>
               <ul class="rows">
                 @for (b of catBudgets(); track b.category.id) {
                   <li>
-                    <button type="button" class="row-btn budget-row" (click)="openCategories()">
+                    <button
+                      type="button"
+                      class="row-btn budget-row"
+                      [attr.aria-label]="b.category.name + ': ' + eur(b.spent) + ' von ' + eur(b.limit) + ' ausgegeben, ' + (b.left >= 0 ? eur(b.left) + ' übrig' : eur(-b.left) + ' über dem Limit') + ', ' + b.pct + ' Prozent, ' + budgetStatus(b) + '. Kategorien verwalten'"
+                      (click)="openCategories()"
+                    >
                       <span class="tile" aria-hidden="true" [style.--cat]="b.category.color"><app-icon [name]="categoryIcon(b.category.name)" /></span>
-                      <span class="budget-row__name"><b>{{ b.category.name }}</b><span class="track" [class]="'track track--' + b.tone"><span [style.width.%]="Math.min(100, b.pct)"></span></span></span>
+                      <span class="budget-row__name">
+                        <b>{{ b.category.name }}</b>
+                        <span class="track" [class]="'track track--' + b.tone" aria-hidden="true"><span [style.width.%]="Math.min(100, b.pct)"></span></span>
+                        <small class="budget-row__status" [class]="'budget-row__status tone--' + b.tone">{{ budgetStatus(b) }}</small>
+                      </span>
                       <span class="budget-row__nums">{{ eur(b.spent) }} / {{ eur(b.limit) }}</span>
-                      <span class="budget-row__left" [class.is-bad]="b.tone === 'over'">{{ b.left >= 0 ? eur(b.left) : '−' + eur(-b.left) }}</span>
+                      <span class="budget-row__left" [class.is-bad]="b.left < 0">{{ b.left >= 0 ? eur(b.left) + ' übrig' : eur(-b.left) + ' drüber' }}</span>
                       <span class="budget-row__pct" [class]="'budget-row__pct tone--' + b.tone">{{ b.pct }} %</span>
                       <app-icon class="chev" name="arrow" aria-hidden="true" />
                     </button>
@@ -614,11 +667,15 @@
                 }
               </ul>
             } @else {
-              <p class="muted">Noch keine Limits. Lege fest, wie viel du pro Monat z. B. für Lebensmittel oder Freizeit ausgeben möchtest.</p>
+              <div class="cat-empty">
+                <h3>Noch keine Kategorie-Budgets</h3>
+                <p class="muted">Teile dein Monatsbudget optional auf Kategorien auf.</p>
+                <button type="button" class="soft" (click)="openCategories()"><app-icon name="plus" />Kategorie-Budget hinzufügen</button>
+              </div>
             }
           </section>
 
-          <div class="stack">
+          @if (activeBudget() || catBudgets().length) {
             <section class="card" aria-labelledby="status-h">
               <div class="card-head">
                 <h2 id="status-h">Budgetstatus</h2>
@@ -628,59 +685,50 @@
                   @if (b.tone !== 'ok') {
                     <li class="status" [class]="'status status--' + b.tone">
                       <span class="status__icon" aria-hidden="true"><app-icon [name]="categoryIcon(b.category.name)" /></span>
-                      <span class="row-text"><b>{{ b.category.name }}</b><small>{{ b.tone === 'over' ? (b.left >= 0 ? 'Nur noch ' + eur(b.left) + ' übrig (' + b.pct + ' % erreicht)' : eur(-b.left) + ' über dem Limit') : b.pct + ' % des Budgets genutzt' }}</small></span>
+                      <span class="row-text">
+                        <b>{{ b.category.name }}</b>
+                        <small>{{ b.left >= 0 ? 'Nur noch ' + eur(b.left) + ' übrig.' : eur(-b.left) + ' über dem Limit.' }}</small>
+                        <small>{{ b.pct }} % des Kategorie-Budgets verwendet.</small>
+                      </span>
                     </li>
                   }
                 }
-                <li class="status status--ok">
-                  <span class="status__icon" aria-hidden="true"><app-icon name="check" /></span>
-                  <span class="row-text"><b>{{ catBudgets().length ? 'Alle anderen Budgets' : 'Monatsbudget' }}</b><small>{{ overBudget() ? 'Monatsbudget überschritten' : 'Im geplanten Rahmen' }}</small></span>
-                </li>
+                @if (activeBudget()) {
+                  <li class="status" [class]="overBudget() ? 'status status--over' : 'status status--ok'">
+                    <span class="status__icon" aria-hidden="true"><app-icon [name]="overBudget() ? 'info' : 'check'" /></span>
+                    <span class="row-text">
+                      <b>{{ catBudgets().length ? 'Alle anderen Budgets' : 'Monatsbudget' }}</b>
+                      <small>{{ overBudget() ? 'Monatsbudget um ' + eur(overBudget()) + ' überschritten.' : 'Im geplanten Rahmen.' }}</small>
+                    </span>
+                  </li>
+                } @else {
+                  <li class="status status--ok">
+                    <span class="status__icon" aria-hidden="true"><app-icon name="check" /></span>
+                    <span class="row-text"><b>Alle anderen Kategorie-Budgets</b><small>Im geplanten Rahmen.</small></span>
+                  </li>
+                }
               </ul>
             </section>
-
-            <section class="card" aria-labelledby="usage-h">
-              <div class="card-head">
-                <h2 id="usage-h">Budget-Nutzung</h2>
-              </div>
-              @if (expenseSlices().length) {
-                <div class="usage">
-                  <div class="donut-wrap donut-wrap--small">
-                    <svg class="donut" viewBox="0 0 42 42" role="img" [attr.aria-label]="'Budget-Nutzung nach Kategorien'">
-                      <circle class="donut__bg" cx="21" cy="21" r="15.9155" />
-                      @for (seg of usageDonut(); track seg.key) {
-                        <circle class="donut__seg" cx="21" cy="21" r="15.9155" [attr.stroke]="seg.color" [attr.stroke-dasharray]="seg.dash" [attr.stroke-dashoffset]="seg.offset" />
-                      }
-                    </svg>
-                    <div class="donut__center"><b>{{ eur(expenseNow()) }}</b><small>ausgegeben</small></div>
-                  </div>
-                  <ul class="legend-list legend-list--compact">
-                    @for (seg of expenseSlices(); track seg.key) {
-                      <li><i class="dot" [style.background]="seg.color"></i><span>{{ seg.label }}</span><small>{{ Math.round(seg.share) }} %</small></li>
-                    }
-                  </ul>
-                </div>
-              } @else {
-                <p class="muted">Noch keine Ausgaben in diesem Monat.</p>
-              }
-            </section>
-          </div>
+          }
         </div>
 
-        <section class="card period-card" aria-labelledby="period-h">
-          <div class="period-card__head">
-            <span class="tile tile--green" aria-hidden="true"><app-icon name="calendar" /></span>
-            <div>
-              <h2 id="period-h">Budget-Zeitraum</h2>
-              <p class="muted">Wähle den Monat für deine Budgets – im Jahresüberblick siehst du, wann welches Budget gilt.</p>
-            </div>
+        <section class="year-plan" aria-labelledby="year-plan-h">
+          <span class="tile tile--green" aria-hidden="true"><app-icon name="calendar" /></span>
+          <div class="year-plan__text">
+            <h2 id="year-plan-h">Jahresplanung</h2>
+            <p class="muted">{{ yearPlanned() }} von 12 Monaten {{ monthYear() }} mit Budget</p>
           </div>
-          <app-budget-year [budgets]="budgets()" [month]="month()" (monthPick)="setBudgetMonth($event)" />
+          <button type="button" class="link" (click)="yearOpen.set(true)">Jahresübersicht ansehen <app-icon name="arrow" /></button>
         </section>
+
+        <app-modal [open]="yearOpen()" labelledBy="budget-year-title" closeLabel="Jahresübersicht schließen" (closed)="yearOpen.set(false)">
+          <app-budget-year [budgets]="budgets()" [month]="month()" (monthPick)="pickYearMonth($event)" />
+        </app-modal>
       }
 
       <!-- ============================== Sparziele ============================== -->
       @if (tab() === 'goals') {
+        <ng-container *ngTemplateOutlet="dateNav" />
         <div class="kpis kpis--three">
           <div class="kpi">
             <span class="kpi__icon kpi__icon--blue" aria-hidden="true"><app-icon name="piggy" /></span>
@@ -711,7 +759,6 @@
         <section class="card goals-table" aria-labelledby="goals-h">
           <div class="card-head">
             <h2 id="goals-h">Deine Sparziele</h2>
-            <button type="button" class="link" (click)="open('goals')">Neues Sparziel <app-icon name="plus" /></button>
           </div>
           @if (goals().length) {
             <div class="table-head table-head--goals" aria-hidden="true"><span>Sparziel</span><span>Fortschritt</span><span>Gespart / Ziel</span><span>Zieltermin</span><span>Sparrate / Monat</span></div>
@@ -732,8 +779,7 @@
             } @empty {
               <li class="empty text-align-center">
                 <h3>Für diesen Monat gibt es noch kein Sparziel</h3>
-                <p>Zum Beispiel eine Reise, ein Notgroschen oder eine neue Waschmaschine. Ein Ziel gilt nur für die Monate, die du dafür wählst.</p>
-                <button class="secondary" (click)="open('goals')"><app-icon name="plus" />Sparziel erstellen</button>
+                <p>Zum Beispiel eine Reise, ein Notgroschen oder eine neue Waschmaschine. Ein Ziel gilt nur für die Monate, die du dafür wählst. Lege es über „Sparziel erstellen“ an.</p>
               </li>
             }
           </ul>
@@ -812,22 +858,45 @@
     }
   </div>
   @if (editor() === 'transactions') {
-    <app-field label="Typ">
-      <app-select formControlName="type" [options]="typeOptions" />
-    </app-field>
+    <!-- Schnellerfassung: Art per Umschalter, Betrag hat sofort den Fokus (Zahlentastatur am Handy), Kategorie als
+         Chips — die häufigsten zuerst. Datum ist heute vorbelegt. -->
+    <div class="kind-toggle" role="group" aria-label="Typ">
+      @for (t of typeOptions; track t.value) {
+        <button
+          type="button"
+          [attr.aria-pressed]="form.controls.type.value === t.value"
+          [class.is-income]="t.value === 'INCOME'"
+          (click)="form.controls.type.setValue(t.value)"
+        >{{ t.label }}</button>
+      }
+    </div>
     <app-field label="Betrag in EUR">
       <input
         id="booking-amount"
+        class="amount-input"
         required
         inputmode="decimal"
+        autocomplete="off"
+        placeholder="0,00"
         formControlName="amount"
         aria-required="true"
+        [attr.data-autofocus]="editId() ? null : ''"
       />
     </app-field>
     @if (categories().length) {
-      <app-field label="Kategorie">
-        <app-select formControlName="category" [options]="categoryOptions()" />
-      </app-field>
+      <div class="cat-field">
+        <span class="cat-field__label" id="booking-category-label">Kategorie</span>
+        <div class="cat-chips" role="group" aria-labelledby="booking-category-label">
+          @for (c of categoryChips(); track c.value) {
+            <button
+              type="button"
+              class="cat-chip"
+              [attr.aria-pressed]="form.controls.category.value === c.value"
+              (click)="form.controls.category.setValue(c.value)"
+            ><i class="dot" [style.background]="c.color" aria-hidden="true"></i>{{ c.label }}</button>
+          }
+        </div>
+      </div>
       @if (quickCategory() === null) {
         <button type="button" id="booking-new-category" class="quick-cat__toggle" (click)="startQuickCategory()">
           <app-icon name="plus" />Neue Kategorie
@@ -1010,3 +1079,66 @@
   (changed)="load()"
   (closed)="categoriesOpen.set(false)"
 />
+
+<!-- Datumsauswahl: in jedem Reiter unter dem Unterreiter (wie in Organisation), immer im selben Rahmen ‹ … ›.
+     „Zu heute“ steht abseits der Pfeile, damit man beim Blättern nicht versehentlich zurückspringt. -->
+<ng-template #dateNav>
+  <div class="date-row">
+    <div class="period-bar">
+      @switch (navMode()) {
+        @case ('day') {
+          <div class="month-switch">
+            <button type="button" class="month-step" aria-label="Vorheriger Tag" (click)="stepPeriod(-1)"><app-icon name="chevron-left" /></button>
+            <label for="finance-day" class="month-pick"
+              ><span class="sr-only">Tag</span>
+              <app-date-picker appearance="inline" mode="date" inputId="finance-day" [value]="periodDay()" (valueChange)="setDay($event)" />
+            </label>
+            <button type="button" class="month-step" aria-label="Nächster Tag" (click)="stepPeriod(1)"><app-icon name="arrow" /></button>
+          </div>
+        }
+        @case ('week') {
+          <div class="month-switch">
+            <button type="button" class="month-step" aria-label="Vorherige Woche" (click)="stepPeriod(-1)"><app-icon name="chevron-left" /></button>
+            <span class="month-pick week-label" aria-live="polite">{{ weekLabel() }}</span>
+            <button type="button" class="month-step" aria-label="Nächste Woche" (click)="stepPeriod(1)"><app-icon name="arrow" /></button>
+          </div>
+        }
+        @case ('custom') {
+          <div class="month-switch range-switch" role="group" aria-label="Eigener Zeitraum">
+            <label for="finance-from" class="month-pick range-pick" [class.is-invalid]="rangeIssue()?.field === 'from'"
+              ><span class="sr-only">Von</span>
+              <app-date-picker appearance="inline" mode="date" inputId="finance-from" [value]="periodRange().from"
+                [invalid]="rangeIssue()?.field === 'from'"
+                [ariaDescribedby]="rangeIssue()?.field === 'from' ? 'finance-range-error' : null" (valueChange)="setRangeFrom($event)" />
+            </label>
+            <span class="range-arrow" aria-hidden="true">→</span>
+            <label for="finance-to" class="month-pick range-pick" [class.is-invalid]="rangeIssue()?.field === 'to'"
+              ><span class="sr-only">Bis</span>
+              <app-date-picker appearance="inline" mode="date" inputId="finance-to" [value]="periodRange().to"
+                [invalid]="rangeIssue()?.field === 'to'"
+                [ariaDescribedby]="rangeIssue()?.field === 'to' ? 'finance-range-error' : null" (valueChange)="setRangeTo($event)" />
+            </label>
+          </div>
+        }
+        @default {
+          <div class="month-switch">
+            <button type="button" class="month-step" aria-label="Vorheriger Monat" (click)="stepMonth(-1)"><app-icon name="chevron-left" /></button>
+            <label for="finance-month" class="month-pick"
+              ><span class="sr-only">Monat</span>
+              <app-date-picker appearance="inline" mode="month" inputId="finance-month" [value]="month()" (valueChange)="setMonth($event)" />
+            </label>
+            <button type="button" class="month-step" aria-label="Nächster Monat" (click)="stepMonth(1)"><app-icon name="arrow" /></button>
+          </div>
+        }
+      }
+    </div>
+    @if (jumpLabel(); as label) {
+      <button type="button" class="to-today" (click)="jumpToCurrent()"><app-icon name="calendar" aria-hidden="true" />{{ label }}</button>
+    }
+  </div>
+  @if (rangeIssue(); as issue) {
+    <p class="range-error" id="finance-range-error" role="alert">
+      <app-icon name="info" aria-hidden="true" />{{ issue.message }}
+    </p>
+  }
+</ng-template>

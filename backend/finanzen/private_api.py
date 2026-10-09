@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.db import IntegrityError, transaction
 from django.db.models import Sum
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -22,6 +23,7 @@ ZERO = Decimal('0.00')
 MAX_AMOUNT = Decimal('999999.99')
 BOOKING_YEARS_BACK = 10    # Aufbewahrungsfrist für Steuerunterlagen
 BOOKING_YEARS_AHEAD = 1    # geplante Ausgaben, z. B. die Miete nächsten Monat
+MAX_RANGE_DAYS = 366     # eigener Zeitraum in der Übersicht: höchstens ein Jahr
 CONTRIBUTION_LIMIT = 100   # „Letzte Einzahlungen“ und Monatsverlauf brauchen nicht mehr
 
 def booking_date_bounds(today=None):
@@ -187,9 +189,82 @@ class PrivateViewSet(PrivateMixin, viewsets.ModelViewSet):
         except IntegrityError:
             raise ValidationError('Dieser Eintrag besteht bereits oder ist ungültig.')
 
+IMPORT_MAX_ROWS = 1000
+
+
+class ImportRowSerializer(serializers.Serializer):
+    """Eine Zeile aus einem Kontoauszug (CSV), schon im Browser gelesen. Es gelten dieselben Grenzen wie beim
+    Buchen von Hand; die Kategorie kommt als Name und wird nur unter den EIGENEN Kategorien gesucht."""
+
+    date = serializers.DateField()
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('.01'), max_value=MAX_AMOUNT, error_messages=MAX_AMOUNT_MESSAGES)
+    type = serializers.ChoiceField(choices=['INCOME', 'EXPENSE'])
+    note = serializers.CharField(max_length=255, allow_blank=True, required=False, default='')
+    category = serializers.CharField(max_length=MAX_CATEGORY_NAME, allow_blank=True, required=False, default='')
+
+    def validate_date(self, value):
+        return PrivateTransactionSerializer.validate_date(self, value)
+
+
+class TransactionImportSerializer(serializers.Serializer):
+    rows = serializers.ListField(child=serializers.DictField(), allow_empty=False, max_length=IMPORT_MAX_ROWS,
+                                 error_messages={'max_length': f'Höchstens {IMPORT_MAX_ROWS} Buchungen auf einmal.'})
+    dry_run = serializers.BooleanField(default=False)
+
+
 class PrivateTransactionViewSet(PrivateViewSet):
     queryset = Transaction.objects.order_by('-datum', '-id')
     serializer_class = PrivateTransactionSerializer
+
+    @action(detail=False, methods=['post'], url_path='import')
+    def import_rows(self, request):
+        """Kontoauszug übernehmen. Jede Zeile wird wie eine Buchung von Hand geprüft. Dubletten (gleiches Datum,
+        gleicher Betrag, gleiche Art und gleicher Text — schon vorhanden oder doppelt in der Datei) werden
+        übersprungen, fehlerhafte Zeilen gemeldet. Unbekannte oder leere Kategorien landen in „Sonstiges“; neue
+        Kategorien entstehen aus einer Datei nie. Mit dry_run wird nur geprüft (Vorschau), sonst alles Gültige
+        in einem Schritt gespeichert."""
+        payload = TransactionImportSerializer(data=request.data)
+        payload.is_valid(raise_exception=True)
+        user = request.user
+        categories = {c.name.casefold(): c for c in Category.objects.filter(owner=user)}
+        seen = set()
+        results, valid = [], []
+        for index, raw in enumerate(payload.validated_data['rows'], start=1):
+            row = ImportRowSerializer(data=raw)
+            if not row.is_valid():
+                field, messages = next(iter(row.errors.items()))
+                label = {'date': 'Datum', 'amount': 'Betrag', 'type': 'Art', 'note': 'Text', 'category': 'Kategorie'}.get(field, field)
+                results.append({'row': index, 'status': 'invalid', 'message': f'{label}: {messages[0]}'})
+                continue
+            data = row.validated_data
+            note = data['note'].strip()
+            key = (data['date'], data['amount'], data['type'], note.casefold())
+            if key in seen or Transaction.objects.filter(owner=user, datum=data['date'], amount=data['amount'], type=data['type'], description__iexact=note).exists():
+                results.append({'row': index, 'status': 'duplicate', 'message': 'Schon vorhanden'})
+                continue
+            seen.add(key)
+            category = categories.get(data['category'].strip().casefold()) if data['category'] else None
+            results.append({'row': index, 'status': 'new', 'message': '', 'category': category.name if category else FALLBACK_CATEGORY})
+            valid.append((data, note, category))
+        summary = {
+            'new': len(valid),
+            'duplicates': sum(1 for r in results if r['status'] == 'duplicate'),
+            'invalid': sum(1 for r in results if r['status'] == 'invalid'),
+            'rows': results,
+        }
+        if payload.validated_data['dry_run'] or not valid:
+            return Response({**summary, 'created': 0})
+        with transaction.atomic():
+            fallback = None
+            if any(category is None for _, _, category in valid):
+                fallback, _ = Category.objects.get_or_create(owner=user, name=FALLBACK_CATEGORY, defaults={'color': color_for_name(FALLBACK_CATEGORY)})
+            Transaction.objects.bulk_create([
+                Transaction(owner=user, created_by=user, datum=data['date'], amount=data['amount'], type=data['type'],
+                            description=note, category=category or fallback, currency='EUR')
+                for data, note, category in valid
+            ])
+        return Response({**summary, 'created': len(valid)}, status=201)
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user, created_by=self.request.user)
     def perform_update(self, serializer):
@@ -291,9 +366,23 @@ class SavingsGoalViewSet(PrivateViewSet):
     @action(detail=False, methods=['get'], url_path='einzahlungen')
     def contributions(self, request):
         """Die letzten Einzahlungen (und Entnahmen) in die eigenen Sparziele,
-        neueste zuerst — für „Letzte Einzahlungen“ und den Monatsverlauf."""
-        rows = (SavingsContribution.objects.filter(owner=request.user).select_related('goal')
-                .order_by('-date', '-id')[:CONTRIBUTION_LIMIT])
+        neueste zuerst — für „Letzte Einzahlungen“ und den Monatsverlauf.
+
+        Mit ?von=JJJJ-MM-TT&bis=JJJJ-MM-TT alle Einzahlungen in diesem Zeitraum (beide Tage eingeschlossen,
+        höchstens ein Jahr) — für die Zeitraumansichten der Übersicht (Heute, Woche, eigener Zeitraum)."""
+        rows = SavingsContribution.objects.filter(owner=request.user).select_related('goal').order_by('-date', '-id')
+        start, end = request.query_params.get('von'), request.query_params.get('bis')
+        if start or end:
+            start_date, end_date = parse_date(start or ''), parse_date(end or '')
+            if not start_date or not end_date:
+                raise ValidationError({'von': 'Bitte gib Beginn und Ende als Datum an (JJJJ-MM-TT).'})
+            if end_date < start_date:
+                raise ValidationError({'bis': 'Das Ende darf nicht vor dem Beginn liegen.'})
+            if (end_date - start_date).days > MAX_RANGE_DAYS:
+                raise ValidationError({'bis': 'Der Zeitraum darf höchstens ein Jahr umfassen.'})
+            rows = rows.filter(date__gte=start_date, date__lte=end_date)
+        else:
+            rows = rows[:CONTRIBUTION_LIMIT]
         return Response([
             {'id': c.id, 'goal': c.goal_id, 'goal_title': c.goal.title, 'amount': money(c.amount), 'date': c.date.isoformat()}
             for c in rows

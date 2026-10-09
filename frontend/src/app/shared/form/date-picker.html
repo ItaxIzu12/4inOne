@@ -7,6 +7,8 @@
   [attr.aria-labelledby]="labelledBy()"
   [attr.aria-label]="ariaLabel()"
   [attr.aria-expanded]="open()"
+  [attr.aria-invalid]="invalid() ? 'true' : null"
+  [attr.aria-describedby]="ariaDescribedby()"
   [disabled]="disabled()"
   (click)="toggle()"
 >

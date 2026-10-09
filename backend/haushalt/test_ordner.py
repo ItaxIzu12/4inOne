@@ -27,33 +27,35 @@ def test_add_months_clamps_to_month_end():
     assert services.add_months(date(2026, 11, 15), 3) == date(2027, 2, 15)
 
 
-def test_contract_cancel_by_date_is_a_deadline(anna, household, client_for):
+def test_contract_cancellation_deadline_date_is_a_deadline(anna, household, client_for):
     end = timezone.localdate() + timedelta(days=200)
     response = client_for(anna).post(
         URL,
-        {'kind': 'vertrag', 'name': 'Stromvertrag', 'contract_end': end.isoformat(), 'notice_period_months': 3},
+        {'kind': 'vertrag', 'name': 'Stromvertrag', 'end_date': end.isoformat(), 'notice_period_days': 90},
         format='json',
     )
 
     assert response.status_code == 201, response.data
-    expected = services.add_months(end, -3)
-    assert response.data['cancel_by'] == expected.isoformat()
+    expected = end - timedelta(days=90)
+    assert response.data['cancellation_deadline'] == expected.isoformat()
     assert _deadline_days(response.data) == {'Kündigen bis: Stromvertrag': expected}
 
 
-def test_contract_has_its_own_monthly_cost(anna, client_for):
+def test_contract_has_its_own_cost(anna, client_for):
     client = client_for(anna)
-    response = client.post(URL, {'kind': 'vertrag', 'name': 'Internet', 'monthly_cost': '39.99'}, format='json')
+    response = client.post(URL, {'kind': 'vertrag', 'name': 'Internet', 'cost': '39.99'}, format='json')
     assert response.status_code == 201, response.data
-    assert response.data['monthly_cost'] == '39.99'
+    assert response.data['cost'] == '39.99'
 
-    changed = client.patch(f'{URL}{response.data["id"]}/', {'monthly_cost': None}, format='json')
-    assert changed.data['monthly_cost'] is None
+    changed = client.patch(f'{URL}{response.data["id"]}/', {'cost': None}, format='json')
+    assert changed.data['cost'] is None
 
-    too_much = client.post(URL, {'kind': 'vertrag', 'name': 'X', 'monthly_cost': '100000.00'}, format='json')
+    too_much = client.post(URL, {'kind': 'vertrag', 'name': 'X', 'cost': '100000.00'}, format='json')
     assert too_much.status_code == 400
-    negative = client.post(URL, {'kind': 'vertrag', 'name': 'X', 'monthly_cost': '-1.00'}, format='json')
+    negative = client.post(URL, {'kind': 'vertrag', 'name': 'X', 'cost': '-1.00'}, format='json')
     assert negative.status_code == 400
+    zero = client.post(URL, {'kind': 'vertrag', 'name': 'X', 'cost': '0.00'}, format='json')
+    assert zero.status_code == 400
 
 
 def test_folder_no_longer_touches_frozen_household_finances(anna, household, client_for):
@@ -65,12 +67,12 @@ def test_folder_no_longer_touches_frozen_household_finances(anna, household, cli
     )
     assert 'recurring_deduction_id' not in response.data
     assert 'deduction_active' not in response.data
-    assert response.data['monthly_cost'] is None
+    assert response.data['cost'] is None
 
 
-def test_device_has_no_monthly_cost(anna, client_for):
-    response = client_for(anna).post(URL, {'kind': 'geraet', 'name': 'Föhn', 'monthly_cost': '5.00'}, format='json')
-    assert FolderEntry.objects.get(pk=response.data['id']).monthly_cost is None
+def test_device_has_no_cost(anna, client_for):
+    response = client_for(anna).post(URL, {'kind': 'geraet', 'name': 'Föhn', 'cost': '5.00'}, format='json')
+    assert FolderEntry.objects.get(pk=response.data['id']).cost is None
 
 
 def test_device_warranty_and_maintenance_are_deadlines(anna, household, client_for):
@@ -80,7 +82,7 @@ def test_device_warranty_and_maintenance_are_deadlines(anna, household, client_f
         {
             'kind': 'geraet',
             'name': 'Heizung',
-            'warranty_until': warranty.isoformat(),
+            'warranty_end_date': warranty.isoformat(),
             'maintenance_interval_months': 12,
         },
         format='json',
@@ -88,7 +90,7 @@ def test_device_warranty_and_maintenance_are_deadlines(anna, household, client_f
 
     assert response.status_code == 201, response.data
     first_maintenance = services.add_months(timezone.localdate(), 12)
-    assert response.data['next_maintenance'] == first_maintenance.isoformat()
+    assert response.data['maintenance_due_date'] == first_maintenance.isoformat()
     assert _deadline_days(response.data) == {
         'Garantie endet: Heizung': warranty,
         'Wartung: Heizung': first_maintenance,
@@ -102,7 +104,7 @@ def test_old_device_gets_next_upcoming_maintenance_not_one_in_the_past(anna, cli
         {'kind': 'geraet', 'name': 'Rauchmelder', 'purchase_date': bought.isoformat(), 'maintenance_interval_months': 12},
         format='json',
     )
-    assert date.fromisoformat(response.data['next_maintenance']) >= timezone.localdate()
+    assert date.fromisoformat(response.data['maintenance_due_date']) >= timezone.localdate()
 
 
 def test_maintenance_done_schedules_the_next_one(anna, household, client_for):
@@ -113,7 +115,7 @@ def test_maintenance_done_schedules_the_next_one(anna, household, client_for):
             'kind': 'geraet',
             'name': 'Heizung',
             'maintenance_interval_months': 6,
-            'next_maintenance': timezone.localdate().isoformat(),
+            'maintenance_due_date': timezone.localdate().isoformat(),
         },
         format='json',
     ).data
@@ -121,29 +123,29 @@ def test_maintenance_done_schedules_the_next_one(anna, household, client_for):
     response = client.post(f'{URL}{entry["id"]}/wartung-erledigt/')
 
     expected = services.add_months(timezone.localdate(), 6)
-    assert response.data['next_maintenance'] == expected.isoformat()
+    assert response.data['maintenance_due_date'] == expected.isoformat()
     assert _deadline_days(response.data) == {'Wartung: Heizung': expected}
 
 
 def test_folder_deadlines_are_not_copied_into_the_old_calendar(anna, household, client_for):
     client = client_for(anna)
     entry = client.post(
-        URL, {'kind': 'geraet', 'name': 'Waschmaschine', 'warranty_until': '2030-01-01'}, format='json'
+        URL, {'kind': 'geraet', 'name': 'Waschmaschine', 'warranty_end_date': '2030-01-01'}, format='json'
     ).data
     assert _deadline_days(entry) == {'Garantie endet: Waschmaschine': date(2030, 1, 1)}
 
-    cleared = client.patch(f'{URL}{entry["id"]}/', {'warranty_until': None}, format='json').data
+    cleared = client.patch(f'{URL}{entry["id"]}/', {'warranty_end_date': None}, format='json').data
     assert cleared['deadlines'] == []
     assert not CalendarEvent.objects.filter(household=household).exists()
 
 
 def test_fields_of_the_other_kind_are_ignored(anna, client_for):
     response = client_for(anna).post(
-        URL, {'kind': 'geraet', 'name': 'Föhn', 'notice_period_months': 3, 'contract_end': '2030-01-01'}, format='json'
+        URL, {'kind': 'geraet', 'name': 'Föhn', 'notice_period_days': 30, 'end_date': '2030-01-01'}, format='json'
     )
     entry = FolderEntry.objects.get(pk=response.data['id'])
-    assert entry.notice_period_months is None
-    assert entry.contract_end is None
+    assert entry.notice_period_days is None
+    assert entry.end_date is None
 
 
 def test_child_accounts_have_no_access(kind, client_for):

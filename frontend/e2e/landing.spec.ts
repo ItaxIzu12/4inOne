@@ -74,7 +74,7 @@ for (const width of [360, 820, 1440]) {
     await page.getByRole('link', { name: 'Demo entdecken', exact: true }).click();
     await expect(page).toHaveURL('/demo');
     await expect(page.locator('.demo-banner')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Hallo Sophie!' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^(Guten Morgen|Hallo|Guten Abend),? Sophie!$/ })).toBeVisible();
     expect(calls).toEqual([]);
   });
 }
@@ -88,10 +88,10 @@ test('login returns to root, reload restores real dashboard, logout returns to l
   await page.locator('[formControlName="password"]').fill('TestPassword123!');
   await page.getByRole('button', { name: 'Anmelden', exact: true }).click();
   await expect(page).toHaveURL('/');
-  await expect(page.getByRole('heading', { name: 'Hallo Mira!' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^(Guten Morgen|Hallo|Guten Abend),? Mira!$/ })).toBeVisible();
   await expect(page.locator('.demo-banner')).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Hallo Mira!' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^(Guten Morgen|Hallo|Guten Abend),? Mira!$/ })).toBeVisible();
   await page.getByRole('button', { name: 'Kontomenü' }).click();
   await page.getByRole('menuitem', { name: 'Abmelden' }).click();
   await expect(page).toHaveURL('/');
@@ -117,7 +117,7 @@ test('registration routes new accounts to onboarding without app prefix', async 
 test('demo stays isolated for signed-in users and its links stay in demo', async ({ page }) => {
   const calls = await session(page, true);
   await page.goto('/demo');
-  await expect(page.getByRole('heading', { name: 'Hallo Sophie!' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^(Guten Morgen|Hallo|Guten Abend),? Sophie!$/ })).toBeVisible();
   await page.getByRole('link', { name: 'Finanzen', exact: true }).first().click();
   await expect(page).toHaveURL('/demo/finanzen');
   await expect(page.locator('.demo-banner')).toBeVisible();
@@ -142,5 +142,5 @@ test('private links require login; legacy bookmarks retain query and fragment', 
   await expect(page).toHaveURL('/finanzen?month=2026-10#budget');
   await page.goto('/app');
   await expect(page).toHaveURL('/');
-  await expect(page.getByRole('heading', { name: 'Hallo Mira!' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^(Guten Morgen|Hallo|Guten Abend),? Mira!$/ })).toBeVisible();
 });

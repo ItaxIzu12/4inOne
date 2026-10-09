@@ -1,3 +1,5 @@
+<app-save-feedback [message]="notice()" (dismissed)="notice.set('')" />
+<app-org-import-dialog [open]="importOpen()" (closed)="importOpen.set(false)" (imported)="onImported($event)" />
 <app-shell
   ><main id="main-content" class="organisation-page domain-page" tabindex="-1">
     <div class="domain-sticky">
@@ -6,14 +8,12 @@
           <span class="heading-icon domain-icon"><app-icon name="calendar" /></span>
           <div>
             <h1>Organisation</h1>
-            <p class="subtitle">Dein Alltag. Klar organisiert.</p>
+            <p class="subtitle">Dein Tag, deine Aufgaben, deine Notizen – nur für dich.</p>
           </div>
         </div>
-        @if (headAction()) {
-          <button class="primary" [attr.aria-label]="headAction()" (click)="headActionClick()">
-            <app-icon [name]="tab() === 'files' ? 'upload' : 'plus'" /><span>{{ headAction() }}</span>
-          </button>
-        }
+        <button class="primary" [attr.aria-label]="headAction()" (click)="headActionClick()">
+          <app-icon name="plus" /><span>{{ headAction() }}</span>
+        </button>
       </header>
       <nav class="tabs domain-tabs" aria-label="Organisation Ansichten" (keydown)="onTabKeydown($event)">
         @for (t of tabs; track t.key) {
@@ -24,66 +24,60 @@
       </nav>
     </div>
 
-    @if (loading()) {
-      <p class="state" role="status">Deine Einträge werden geladen …</p>
-    } @else if (error() && !events().length && !tasks().length) {
-      <div class="state">
+    @if (error()) {
+      <div class="inline-error">
         <p [appErrorNotice]="error()">{{ error() }}</p>
         <button class="secondary" (click)="load()">Erneut versuchen</button>
       </div>
-    } @else {
-      @if (error()) {
-        <p class="inline-error" [appErrorNotice]="error()">{{ error() }}</p>
+    }
+    @switch (tab()) {
+      @case ('calendar') {
+        @if (eventsError()) {
+          <p class="inline-error" [appErrorNotice]="eventsError()">{{ eventsError() }}</p>
+        }
+        <app-org-calendar
+          [events]="events()"
+          [loading]="eventsLoading()"
+          [(selectedDay)]="selectedDay"
+          [(view)]="calendarView"
+          (rangeChange)="loadEvents($event)"
+          (openEvent)="open('event', $event)"
+          (addEvent)="open('event', undefined, $event)"
+        />
+        <p class="cal-import">
+          <span>Termine aus Google, Apple oder Outlook übernehmen?</span>
+          <button type="button" class="link-btn" (click)="importOpen.set(true)"><app-icon name="upload" aria-hidden="true" />Kalender importieren</button>
+        </p>
       }
-      @switch (tab()) {
-        @case ('overview') {
-          <app-org-overview
-            [events]="events()"
-            [tasks]="tasks()"
-            [notes]="notes()"
-            [todayItems]="today()?.items ?? []"
-            (openEvent)="open('event', $event)"
-            (openTask)="open('task', $event)"
-            (toggleTask)="toggle($event)"
-            (openNote)="openNote($event)"
-            (showTab)="selectTab($event)"
-          />
-        }
-        @case ('calendar') {
-          <app-org-calendar
-            [events]="events()"
-            [(selectedDay)]="selectedDay"
-            (openEvent)="open('event', $event)"
-            (newEvent)="newEventOn($event)"
-          />
-        }
-        @case ('tasks') {
+      @case ('tasks') {
+        @if (loading()) {
+          <p class="state" role="status">Aufgaben werden geladen …</p>
+        } @else {
           <app-org-tasks
             [tasks]="tasks()"
-            [events]="events()"
+            [busy]="saving()"
             (openTask)="open('task', $event)"
             (toggleTask)="toggle($event)"
-            (showCalendar)="selectTab('calendar')"
+            (addTask)="open('task')"
           />
         }
-        @case ('notes') {
+      }
+      @case ('notes') {
+        @if (loading()) {
+          <p class="state" role="status">Notizen werden geladen …</p>
+        } @else {
           <app-org-notes [notes]="notes()" (openNote)="openNote($event)" (togglePin)="togglePin($event)" />
-        }
-        @case ('files') {
-          <app-org-files [uploadRequest]="uploadRequest()" />
         }
       }
     }
-    @if (headAction()) {
-      <app-mobile-action [label]="headAction()" [icon]="tab() === 'files' ? 'upload' : 'plus'" (pressed)="headActionClick()" />
-    }
+    <app-mobile-action [label]="headAction()" icon="plus" (pressed)="headActionClick()" />
   </main></app-shell
 >
 
 <app-modal-form
   icon="calendar"
   [formGroup]="form"
-  [title]="(editor() === 'event' ? 'Termin' : 'Aufgabe') + (editId() ? ' bearbeiten' : ' erstellen')"
+  [title]="(editor() === 'event' ? 'Termin' : 'Aufgabe') + (editId() ? ' bearbeiten' : ' hinzufügen')"
   [open]="editor() !== null"
   [saving]="saving()"
   [error]="formError()"
@@ -92,17 +86,40 @@
   (closed)="close()"
   (deleted)="remove()"
 >
-  <app-field label="Titel">
-    <input id="entry-title" formControlName="title" maxlength="120" required />
+  <app-field label="Titel" [error]="titleError()">
+    <input id="entry-title" formControlName="title" maxlength="120" required [placeholder]="editor() === 'event' ? 'z. B. Teammeeting' : 'z. B. Präsentation vorbereiten'" />
   </app-field>
   @if (editor() === 'event') {
-    <!-- untereinander: Datum + Uhrzeit brauchen die volle Breite -->
-    <app-field label="Beginn">
-      <app-date-time-picker formControlName="starts_at" />
-    </app-field>
-    <app-field label="Ende" [optional]="true">
-      <app-date-time-picker formControlName="ends_at" [clearable]="true" />
-    </app-field>
+    @if (editingSeries()) {
+      <p class="series-note" role="note"><app-icon name="repeat" aria-hidden="true" />Änderungen gelten für alle Wiederholungen dieses Termins.</p>
+    }
+    <div class="field-row">
+      <app-field label="Datum" [error]="dateError()">
+        <app-date-picker mode="date" formControlName="date" />
+      </app-field>
+      <label class="checkbox-row checkbox-row--inline">
+        <input type="checkbox" formControlName="all_day" />
+        <span>Ganztägig</span>
+      </label>
+    </div>
+    @if (!form.controls.all_day.value) {
+      <div class="field-row">
+        <app-field label="Beginn" [optional]="true">
+          <app-time-picker formControlName="start_time" [clearable]="true" />
+        </app-field>
+        <app-field label="Ende" [optional]="true" [error]="endError()">
+          <app-time-picker formControlName="end_time" [clearable]="true" />
+        </app-field>
+      </div>
+    }
+    <div class="field-row">
+      <app-field label="Endet am" [optional]="true" hint="Nur bei Terminen über mehrere Tage." [error]="endDateError()">
+        <app-date-picker mode="date" formControlName="end_date" [clearable]="true" />
+      </app-field>
+      <app-field label="Wiederholung">
+        <app-select formControlName="recurrence" [options]="repeatOptions" />
+      </app-field>
+    </div>
     <div class="field-row">
       <app-field label="Ort" [optional]="true">
         <input id="event-location" formControlName="location" maxlength="240" />
@@ -112,11 +129,12 @@
       </app-field>
     </div>
   } @else {
+    <app-scope-note scope="private">Nur für dich sichtbar – nicht für andere im Haushalt.</app-scope-note>
     <div class="field-row">
-      <app-field label="Fällig am" [optional]="true">
+      <app-field label="Fällig am" [optional]="true" [error]="dueError()">
         <app-date-picker mode="date" formControlName="due_date" [clearable]="true" />
       </app-field>
-      <app-field label="Uhrzeit" [optional]="true">
+      <app-field label="Uhrzeit" [optional]="true" [error]="timeError()">
         <app-time-picker formControlName="due_time" [clearable]="true" />
       </app-field>
     </div>
@@ -124,19 +142,22 @@
       <app-field label="Priorität">
         <app-select formControlName="priority" [options]="priorityOptions" />
       </app-field>
+      <app-field label="Wiederholung">
+        <app-select formControlName="recurrence" [options]="repeatOptions" />
+      </app-field>
+    </div>
+    @if (editId()) {
       <app-field label="Status">
         <app-select formControlName="status" [options]="statusOptions" />
       </app-field>
-    </div>
+    }
     <app-field label="Projekt" [optional]="true" hint="Zum Gruppieren, z. B. Familie, Beruf oder Hausbau.">
       <input id="task-project" formControlName="project" maxlength="60" placeholder="z. B. Familie" />
     </app-field>
   }
-  <fieldset class="form-section"><legend>Optional: Notizen</legend>
-    <app-field label="Beschreibung" [optional]="true">
-      <textarea id="entry-description" formControlName="description" rows="3" maxlength="5000"></textarea>
-    </app-field>
-  </fieldset>
+  <app-field label="Beschreibung" [optional]="true">
+    <textarea id="entry-description" formControlName="description" rows="3" maxlength="5000"></textarea>
+  </app-field>
   @if (editId()) {
     <app-connections [objectType]="editor() === 'event' ? 'CALENDAR_EVENT' : 'TASK'" [objectId]="editId()!" />
   }
@@ -154,10 +175,10 @@
   (closed)="noteOpen.set(false)"
   (deleted)="removeNote()"
 >
-  <app-field label="Titel der Notiz">
-    <input id="note-title" maxlength="120" required [value]="noteTitle()" (input)="noteTitle.set($any($event.target).value)" />
+  <app-field label="Titel" [optional]="true">
+    <input id="note-title" maxlength="120" [value]="noteTitle()" (input)="noteTitle.set($any($event.target).value)" />
   </app-field>
-  <app-field label="Inhalt" [optional]="true" hint="Eine Zeile mit „•“ oder „-“ am Anfang wird zur Aufzählung.">
+  <app-field label="Inhalt" [error]="noteBodyError()" hint="Eine Zeile mit „•“ oder „-“ am Anfang wird zur Aufzählung.">
     <textarea id="note-body" rows="8" maxlength="10000" [value]="noteBody()" (input)="noteBody.set($any($event.target).value)"></textarea>
   </app-field>
   <label class="checkbox-row">

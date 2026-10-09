@@ -35,6 +35,8 @@ export interface ShoppingListDto {
   name: string;
   description: string;
   icon: ShoppingListIcon;
+  /** Archivierte Listen sind ausgeblendet und nie Standardliste. */
+  archived: boolean;
   item_count: number;
   checked_count: number;
   created_at: string;
@@ -46,6 +48,7 @@ export interface ShoppingListInput {
   name: string;
   description: string;
   icon: ShoppingListIcon;
+  archived?: boolean;
 }
 
 /** Wer die Liste sieht und bearbeitet: alle im Haushalt; is_owner = hat sie angelegt. */
@@ -60,12 +63,14 @@ export interface ShoppingItemDto {
   shopping_list: Id;
   name: string;
   quantity: string;
+  notes: string;
   section: SectionKey;
   is_checked: boolean;
   checked_at: string | null;
   checked_by_name: string | null;
   added_by_name: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface ItemSuggestionDto {
@@ -92,6 +97,7 @@ export interface ShoppingOverviewDto {
 export interface ShoppingItemPatch {
   name?: string;
   quantity?: string;
+  notes?: string;
   section?: SectionKey;
   is_checked?: boolean;
 }
@@ -104,7 +110,7 @@ export interface CompleteShoppingResult {
 
 export type Effort = 1 | 2 | 3;
 
-export type Recurrence = 'daily' | 'weekly' | 'monthly';
+export type Recurrence = 'daily' | 'weekly' | 'monthly' | 'yearly';
 /** Wo eine Aufgabe anfällt — backend haushalt/models.py Task.Room; '' = ohne Raum. */
 export type TaskRoom =
   | ''
@@ -162,6 +168,7 @@ export interface TaskDto {
   is_overdue: boolean;
   last_done_at: string | null;
   last_done_by_name: string | null;
+  updated_at?: string;
 }
 
 export interface TaskInput {
@@ -170,7 +177,9 @@ export interface TaskInput {
   assigned_to: Id | null;
   due_date: string | null;
   due_time: string | null;
-  recurrence: Recurrence | null;
+  /** Einfache Wiederholung; für „alle X Tage/Wochen“ stattdessen recurrence_days (ohne recurrence). */
+  recurrence?: Recurrence | null;
+  recurrence_days?: number;
   effort: Effort;
   room: TaskRoom;
   duration_minutes: number | null;
@@ -179,32 +188,65 @@ export interface TaskInput {
   rotation_member_ids: Id[];
 }
 
-/** GET /haushalt/uebersicht/ — Zahlen für „Übersicht“ und die Dashboard-Karte. */
+/** GET /haushalt/uebersicht/ — Gerät in der Übersicht (ohne außer Betrieb gesetzte). */
 export interface OverviewDeviceDto {
   id: Id;
   name: string;
   provider: string;
-  next_maintenance: string | null;
-  warranty_until: string | null;
+  status: DeviceStatus;
+  maintenance_due_date: string | null;
+  warranty_end_date: string | null;
 }
 
-/** Vertrag in der Übersicht — die nächste Kündigungsfrist zuerst. */
+/** Vertrag in der Übersicht — die nächste Kündigungsfrist zuerst; nie mit Vertragsnummer. */
 export interface OverviewContractDto {
   id: Id;
   name: string;
   provider: string;
-  monthly_cost: string | null;
-  cancel_by: string | null;
-  notice_period_months: number | null;
+  cost: string | null;
+  billing_cycle: BillingCycle;
+  cancellation_deadline: string | null;
+  effective_status: ContractStatus;
+}
+
+/** „Demnächst“: Wartung, Garantieende, Kündigungsfrist in den nächsten 30 Tagen (backend services.UPCOMING_DAYS). */
+export interface UpcomingDeadlineDto {
+  entry_id: Id;
+  kind: FolderKind;
+  art: DeadlineDto['art'];
+  title: string;
+  name: string;
+  date: string;
+  days: number;
+}
+
+/** Zählwerte für „Heute“ und die Dashboard-Karte — nur der eigene Haushalt. */
+export interface HaushaltSummaryDto {
+  open_tasks: number;
+  due_today: number;
+  overdue_tasks: number;
+  recurring_tasks: number;
+  done_this_week: number;
+  open_shopping_items: number;
+  active_lists: number;
+  devices: number;
+  devices_in_repair: number;
+  contracts: number;
+  contracts_expiring: number;
+  upcoming: number;
 }
 
 export interface HaushaltOverviewDto {
+  summary: HaushaltSummaryDto;
   open_tasks: number;
   overdue_tasks: number;
-  /** Überfällig oder heute fällig. */
+  /** Überfällig oder heute fällig (höchstens 5). */
   today: TaskDto[];
   /** Später fällig oder ohne Datum. */
   upcoming: TaskDto[];
+  deadlines: UpcomingDeadlineDto[];
+  /** Offener Einkauf: Anzahl, einige Artikel, Standardliste. */
+  shopping: { open_items: number; preview: string[]; list_id: Id | null };
   open_shopping_items: number;
   devices: number;
   device_list: OverviewDeviceDto[];
@@ -229,41 +271,63 @@ export interface DeadlineDto {
   titel: string;
 }
 
+export type DeviceStatus = 'ACTIVE' | 'REPAIR' | 'RETIRED';
+/** EXPIRING wird berechnet (effective_status), nie gespeichert. */
+export type ContractStatus = 'ACTIVE' | 'EXPIRING' | 'CANCELLED' | 'ENDED';
+export type BillingCycle = 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'ONE_TIME';
+
 export interface FolderEntryDto {
   id: Id;
   kind: FolderKind;
   name: string;
+  /** Vertrag: Anbieter; Gerät: Hersteller. */
   provider: string;
+  category: string;
+  /** Gespeicherter Status (Vertrag: ACTIVE/CANCELLED/ENDED, Gerät: ACTIVE/REPAIR/RETIRED). */
+  status: Exclude<ContractStatus, 'EXPIRING'> | DeviceStatus;
+  effective_status: ContractStatus | DeviceStatus;
   notes: string;
-  // Monatliche Kosten eines Vertrags — gehören dem Haushalt (ADR-001),
-  // keine Verknüpfung mehr zu den eingefrorenen Haushaltsfinanzen.
-  monthly_cost: string | null;
-  contract_end: string | null;
-  notice_period_months: number | null;
-  cancel_by: string | null;
+  // Kosten eines Vertrags — gehören dem Haushalt, werden nicht in Finanzen übertragen.
+  cost: string | null;
+  billing_cycle: BillingCycle;
+  monthly_equivalent: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  notice_period_days: number | null;
+  cancellation_deadline: string | null;
+  auto_renewal: boolean;
+  /** Sensibel: nur in der Detailantwort (getFolderEntry), nie in Listen. */
+  contract_number?: string;
   purchase_date: string | null;
-  warranty_until: string | null;
+  warranty_end_date: string | null;
   maintenance_interval_months: number | null;
-  next_maintenance: string | null;
+  maintenance_due_date: string | null;
   last_maintenance: string | null;
-  /** Gerät: Modell und Raum (Hersteller steht in provider). */
   model: string;
   room: TaskRoom;
   deadlines: DeadlineDto[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface FolderEntryInput {
   kind: FolderKind;
   name: string;
   provider: string;
+  category: string;
+  status: FolderEntryDto['status'];
   notes: string;
-  monthly_cost: string | null;
-  contract_end: string | null;
-  notice_period_months: number | null;
+  cost: string | null;
+  billing_cycle: BillingCycle;
+  start_date: string | null;
+  end_date: string | null;
+  notice_period_days: number | null;
+  auto_renewal: boolean;
+  contract_number: string;
   purchase_date: string | null;
-  warranty_until: string | null;
+  warranty_end_date: string | null;
   maintenance_interval_months: number | null;
-  next_maintenance: string | null;
+  maintenance_due_date: string | null;
   last_maintenance: string | null;
   model: string;
   room: TaskRoom;
@@ -281,8 +345,10 @@ export class HaushaltApiService {
     return this.http.get<ShoppingOverviewDto>(`${this.base}/einkauf/`, { params });
   }
 
-  getShoppingLists(): Observable<ShoppingListDto[]> {
-    return this.http.get<ShoppingListDto[]>(`${this.base}/einkauf/listen/`);
+  /** archived = true: nur die archivierten Listen. */
+  getShoppingLists(archived = false): Observable<ShoppingListDto[]> {
+    const params: Record<string, string> = archived ? { archiviert: '1' } : {};
+    return this.http.get<ShoppingListDto[]>(`${this.base}/einkauf/listen/`, { params });
   }
 
   createShoppingList(input: ShoppingListInput): Observable<ShoppingListDto> {
@@ -297,8 +363,15 @@ export class HaushaltApiService {
     return this.http.delete<void>(`${this.base}/einkauf/listen/${id}/`);
   }
 
-  addItem(name: string, quantity: string, section: SectionKey | null, listId: Id | null = null): Observable<ShoppingItemDto> {
+  addItem(
+    name: string,
+    quantity: string,
+    section: SectionKey | null,
+    listId: Id | null = null,
+    notes = '',
+  ): Observable<ShoppingItemDto> {
     const body: Record<string, string | Id> = { name, quantity };
+    if (notes) body['notes'] = notes;
     if (section) body['section'] = section;
     if (listId !== null) body['shopping_list'] = listId;
     return this.http.post<ShoppingItemDto>(`${this.base}/einkauf/eintraege/`, body);
@@ -345,7 +418,7 @@ export class HaushaltApiService {
   getTaskLoad(): Observable<MemberLoadDto[]> {
     return this.http
       .get<{ members: MemberLoadDto[] }>(`${this.base}/aufgaben/verteilung/`)
-      .pipe(map((response) => response.members));
+      .pipe(map((response) => response.members ?? []));
   }
 
   createTask(input: TaskInput): Observable<TaskDto> {
@@ -366,6 +439,15 @@ export class HaushaltApiService {
 
   getFolder(): Observable<FolderEntryDto[]> {
     return this.http.get<FolderEntryDto[]>(`${this.base}/ordner/`);
+  }
+
+  /** Detail mit Vertragsnummer. */
+  getFolderEntry(id: Id): Observable<FolderEntryDto> {
+    return this.http.get<FolderEntryDto>(`${this.base}/ordner/${id}/`);
+  }
+
+  updateFolderStatus(id: Id, status: FolderEntryDto['status']): Observable<FolderEntryDto> {
+    return this.http.patch<FolderEntryDto>(`${this.base}/ordner/${id}/`, { status });
   }
 
   createFolderEntry(input: FolderEntryInput): Observable<FolderEntryDto> {

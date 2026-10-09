@@ -49,9 +49,10 @@ PACKING_LEAD_DAYS = 7
 TODAY_TRIP_LIMIT = 10
 MAX_MONTH_SPAN = 240  # Schutz gegen Endlosschleifen bei monatlichen Aufgaben
 
-# Eine bloße Idee löst noch keine Vorschläge aus; geplant oder schon gebucht schon.
+# Abgesagte und abgeschlossene Reisen lösen keine Vorschläge aus; geplant oder schon gebucht schon.
+# („Unterwegs“ ist seit Reisen V1 kein eigener Status mehr, sondern ergibt sich aus dem Zeitraum.)
 PLANNING_TRIP_STATUSES = (Trip.Status.PLANNED, Trip.Status.CONFIRMED)
-ACTIVE_TRIP_STATUSES = (*PLANNING_TRIP_STATUSES, Trip.Status.ACTIVE)
+ACTIVE_TRIP_STATUSES = PLANNING_TRIP_STATUSES
 
 
 class SuggestionError(services.ConnectionRuleError):

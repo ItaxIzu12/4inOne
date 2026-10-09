@@ -3,8 +3,8 @@ import { SECTIONS } from './haushalt-logic';
 import { ago, editedLabel, groupItems, recentItems, splitQuantity } from './einkauf-logic';
 
 const item = (id: number, name: string, section: ShoppingItemDto['section'], checked = false, created = ''): ShoppingItemDto => ({
-  id, shopping_list: 1, name, quantity: '', section, is_checked: checked, checked_at: null, checked_by_name: null,
-  added_by_name: null, created_at: created,
+  id, shopping_list: 1, name, quantity: '', notes: '', section, is_checked: checked, checked_at: null, checked_by_name: null,
+  added_by_name: null, created_at: created, updated_at: created,
 });
 
 describe('Einkaufslisten: Anzeigeregeln', () => {

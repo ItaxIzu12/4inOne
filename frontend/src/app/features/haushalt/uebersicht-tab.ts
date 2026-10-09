@@ -1,112 +1,102 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { Component, computed, inject, output, signal } from '@angular/core';
-import { forkJoin } from 'rxjs';
-import { AppIcon } from '../../shared/icons/app-icon';
-import { HaushaltOverviewDto, Id, ShoppingItemDto, TaskDto } from './haushalt-api.service';
+import { AppIcon, IconName } from '../../shared/icons/app-icon';
+import { HaushaltOverviewDto, Id, TaskDto, UpcomingDeadlineDto } from './haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
-import { relativeDay, todayIso } from './haushalt-logic';
-import {
-  EFFORT_LABEL,
-  doneToday,
-  nextDue,
-  routineFrequency,
-  routineIcon,
-} from './uebersicht-logic';
-import { contractState, euro, formatDate } from './vertraege-logic';
+import { recurrenceLabel, relativeDay, todayIso } from './haushalt-logic';
+import { PRIORITY_LABEL } from './aufgaben-logic';
+import type { ZuhauseSection } from './ordner-tab';
+import { UPCOMING_DAYS, formatDate, fromNow } from './vertraege-logic';
 
-export type HaushaltTabKey = 'uebersicht' | 'aufgaben' | 'ordner' | 'einkauf' | 'routinen';
+/** Die vier Reiter im Haushalt. */
+export type HaushaltTabKey = 'heute' | 'aufgaben' | 'einkaufen' | 'zuhause';
+/** Was der leere Zustand anlegen lässt. */
+export type HaushaltCreate = 'aufgabe' | 'einkauf' | 'geraet' | 'vertrag';
 
-/** So viele Einträge zeigt jede Karte; der Rest steht im jeweiligen Reiter. */
-const ROWS = 5;
-const SHOPPING_ROWS = 8;
+const DEADLINE_ICON: Record<UpcomingDeadlineDto['art'], IconName> = {
+  wartung: 'clock',
+  garantie: 'check-circle',
+  kuendigung: 'finance',
+};
+const DEADLINE_LABEL: Record<UpcomingDeadlineDto['art'], string> = {
+  wartung: 'Wartung',
+  garantie: 'Garantie endet',
+  kuendigung: 'Kündigungsfrist',
+};
 
 /**
- * Übersicht des Haushalts: vier Kennzahlen als Einstieg in die Reiter, darunter
- * „Heute im Haushalt“, Verträge, Einkauf und Routinen. Die Daten kommen aus
- * drei vorhandenen Antworten (Übersicht, Aufgaben, Einkaufsliste) — kein eigener
- * Endpunkt, keine erfundenen Werte.
+ * Reiter „Heute“: nur das Relevante für heute — fällige und überfällige
+ * Aufgaben (höchstens 5), „Demnächst“ (Wartung, Garantieende, Kündigungsfrist
+ * in den nächsten 30 Tagen; eine Definition im Backend, services.UPCOMING_DAYS)
+ * und eine Zusammenfassung des Einkaufs. Alles aus einer Antwort
+ * (GET /haushalt/uebersicht/). Ist noch nichts angelegt: „Dein Zuhause im Blick“.
  */
 @Component({
   selector: 'app-uebersicht-tab',
   standalone: true,
   imports: [ErrorNoticeDirective, AppIcon],
   templateUrl: './uebersicht-tab.html',
-  styleUrls: ['./haushalt-common.scss', './haushalt-stats.scss', './uebersicht-tab.scss'],
+  styleUrls: ['./haushalt-common.scss', './uebersicht-tab.scss'],
 })
 export class UebersichtTab {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
   readonly saved = output<string>();
   readonly openTab = output<HaushaltTabKey>();
+  readonly openZuhause = output<ZuhauseSection>();
+  readonly create = output<HaushaltCreate>();
 
   protected readonly overview = signal<HaushaltOverviewDto | null>(null);
-  protected readonly tasks = signal<TaskDto[]>([]);
-  protected readonly items = signal<ShoppingItemDto[]>([]);
   protected readonly loadError = signal(false);
   protected readonly actionError = signal<string | null>(null);
   protected readonly completing = signal<Id | null>(null);
-  protected readonly toggling = signal<Id | null>(null);
 
-  protected readonly relativeDay = relativeDay;
-  protected readonly effortLabel = EFFORT_LABEL;
-  protected readonly contractState = contractState;
-  protected readonly euro = euro;
+  protected readonly upcomingDays = UPCOMING_DAYS;
   protected readonly formatDate = formatDate;
-  protected readonly routineIcon = routineIcon;
-  protected readonly routineFrequency = routineFrequency;
-  protected readonly doneToday = doneToday;
-  protected readonly nextDue = nextDue;
+  protected readonly fromNow = fromNow;
+  protected readonly relativeDay = relativeDay;
+  protected readonly priorityLabel = PRIORITY_LABEL;
+  protected readonly deadlineIcon = DEADLINE_ICON;
+  protected readonly deadlineLabel = DEADLINE_LABEL;
 
-  // ---------- Kennzahlen ----------
-  protected readonly routines = computed(() =>
-    this.tasks()
-      .filter((t) => !!(t.recurrence_days || t.recurrence_months))
-      .sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999')),
-  );
-  protected readonly routinesOverdue = computed(() => this.routines().filter((t) => t.is_overdue).length);
-  protected readonly openItems = computed(() => this.items().filter((i) => !i.is_checked).length);
-
-  // ---------- Karten ----------
-  /** Überfällige und heute fällige Aufgaben; ohne solche die nächsten anstehenden. */
-  protected readonly todayTasks = computed(() => {
+  /** Noch gar nichts angelegt → leerer Zustand mit Einstiegen statt leerer Karten. */
+  protected readonly isEmpty = computed(() => {
     const data = this.overview();
-    if (!data) return [];
-    return (data.today.length ? data.today : data.upcoming).slice(0, ROWS);
+    if (!data) return false;
+    const s = data.summary;
+    return !s.open_tasks && !s.recurring_tasks && !s.open_shopping_items && !s.devices && !s.contracts && !data.deadlines.length;
   });
-  protected readonly showsUpcoming = computed(() => !!this.overview() && this.overview()!.today.length === 0);
-  protected readonly shopping = computed(() => this.items().slice(0, SHOPPING_ROWS));
-  protected readonly shoppingDone = computed(() => this.items().filter((i) => i.is_checked).length);
-  protected readonly routineRows = computed(() => this.routines().slice(0, 3));
+  /** Nichts fällig: die nächste anstehende Aufgabe als Ausblick. */
+  protected readonly nextTask = computed(() => this.overview()?.upcoming.find((t) => !!t.due_date) ?? null);
+  protected readonly dueCount = computed(() => {
+    const s = this.overview()?.summary;
+    return s ? s.due_today + s.overdue_tasks : 0;
+  });
 
   constructor() {
     this.load();
   }
 
   protected load(): void {
-    forkJoin({
-      overview: this.provider.getOverview(),
-      tasks: this.provider.getTasks(),
-      shopping: this.provider.getShopping(),
-    }).subscribe({
-      next: ({ overview, tasks, shopping }) => {
+    this.provider.getOverview().subscribe({
+      next: (overview) => {
         this.overview.set(overview);
-        this.tasks.set(tasks);
-        this.items.set(shopping.items);
         this.loadError.set(false);
       },
       error: () => this.loadError.set(true),
     });
   }
 
-  /** Wie im Aufgaben-Tab: erst heute oder überfällig lässt sich abhaken. */
-  protected notYetDue(task: TaskDto): boolean {
-    return !!task.due_date && task.due_date > todayIso();
+  protected dueChip(task: TaskDto): string {
+    if (task.is_overdue) return task.due_date ? relativeDay(task.due_date) : 'Überfällig';
+    return task.due_time ? `Heute, ${task.due_time.slice(0, 5)} Uhr` : 'Heute';
   }
 
-  protected dueChip(task: TaskDto): string {
-    if (!task.due_date) return 'Ohne Datum';
-    if (task.is_overdue) return 'Überfällig';
-    const day = relativeDay(task.due_date);
-    return day.charAt(0).toUpperCase() + day.slice(1);
+  protected repeatLabel(task: TaskDto): string {
+    return task.recurrence_days || task.recurrence_months ? recurrenceLabel(task.recurrence_days, task.recurrence_months) : '';
+  }
+
+  protected openDeadline(deadline: UpcomingDeadlineDto): void {
+    this.openZuhause.emit(deadline.kind === 'vertrag' ? 'vertraege' : 'geraete');
   }
 
   protected complete(task: TaskDto): void {
@@ -114,10 +104,14 @@ export class UebersichtTab {
     this.completing.set(task.id);
     this.actionError.set(null);
     this.provider.completeTask(task.id).subscribe({
-      next: () => {
+      next: (updated) => {
         this.completing.set(null);
         this.load();
-        this.saved.emit(`„${task.title}“ erledigt.`);
+        this.saved.emit(
+          updated.is_done || !updated.due_date
+            ? `„${task.title}“ erledigt.`
+            : `„${task.title}“ erledigt · wieder fällig ${relativeDay(updated.due_date)}.`,
+        );
       },
       error: () => {
         this.completing.set(null);
@@ -126,19 +120,5 @@ export class UebersichtTab {
     });
   }
 
-  protected toggleItem(item: ShoppingItemDto): void {
-    if (this.toggling() !== null) return;
-    this.toggling.set(item.id);
-    this.actionError.set(null);
-    this.provider.updateItem(item.id, { is_checked: !item.is_checked }).subscribe({
-      next: (updated) => {
-        this.toggling.set(null);
-        this.items.update((items) => items.map((i) => (i.id === updated.id ? updated : i)));
-      },
-      error: () => {
-        this.toggling.set(null);
-        this.actionError.set(`„${item.name}“ konnte nicht abgehakt werden. Bitte noch einmal versuchen.`);
-      },
-    });
-  }
+  protected readonly today = todayIso();
 }

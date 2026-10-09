@@ -1,449 +1,76 @@
 <app-shell [dashboardHeader]="true" [searchValue]="boardQuery()" (dashboardQuery)="boardQuery.set($event)">
-  <main id="main-content" class="dashboard dashboard--overview" tabindex="-1">
+  <!-- Startseite, bewusst knapp: Begrüßung, die vier Bereiche mit je einem Stand, und was heute ansteht.
+       Alles Weitere (Aufgaben, Buchungen, Reisen) steht in den Bereichen selbst. -->
+  <main id="main-content" class="dashboard" tabindex="-1">
     <header class="greeting">
-      <div>
-        <h1>{{ greeting }}, {{ name() }}!</h1>
-        <p>Schön, dass du da bist. Hier ist dein Überblick für heute.</p>
-      </div>
+      <h1>{{ greeting }}, {{ name() }}!</h1>
+      <p>Das steht heute an.</p>
     </header>
     <p class="preview-note sr-only">
-      {{
-        live()
-          ? 'Heute zeigt ausschließlich deine eigenen, privaten Daten.'
-          : 'Vorschau mit Beispieldaten.'
-      }}
+      {{ live() ? 'Heute zeigt ausschließlich deine eigenen, privaten Daten.' : 'Vorschau mit Beispieldaten.' }}
     </p>
 
     <div class="board-overview">
       @if (boardQuery().trim()) {
-        <section class="panel search-results" aria-labelledby="demo-results-title">
-          <h2 id="demo-results-title">
-            {{ demo ? 'Suche im Demo-Überblick' : 'Suche in deinem Überblick' }}
-          </h2>
+        <section class="search-results" aria-labelledby="demo-results-title">
+          <h2 id="demo-results-title">{{ demo ? 'Suche im Demo-Überblick' : 'Suche in deinem Überblick' }}</h2>
           <p role="status">{{ boardResults().length }} Treffer für „{{ boardQuery() }}“</p>
           @for (result of boardResults(); track $index) {
             <a [routerLink]="result.path" [queryParams]="result.params"
-              ><strong>{{ result.title }}</strong
-              ><span>{{ result.area }} <app-icon name="arrow" /></span
+              ><strong>{{ result.title }}</strong><span>{{ result.area }} <app-icon name="arrow" /></span
             ></a>
           }
-          <small>Durchsucht die Aufgaben, die angezeigten Buchungen und die nächste Reise.</small>
         </section>
       }
-      <div class="board-layout">
-        <div class="board-primary">
-          <ng-container [ngTemplateOutlet]="domainCards" />
-          <div class="board-day">
-            <ng-container [ngTemplateOutlet]="todayCard" />
-            <section class="panel tasks" aria-labelledby="demo-tasks-title">
-              <header>
-                <h2 id="demo-tasks-title">Aktuelle Aufgaben</h2>
-                <a [routerLink]="domainPath('organisation')"
-                  >Alle anzeigen <app-icon name="arrow"
-                /></a>
-              </header>
-              @if (boardTasksLoading()) {
-                <p role="status">Aufgaben werden geladen …</p>
-              }
-              @if (boardTaskError()) {
-                <p [appErrorNotice]="boardTaskError()">{{ boardTaskError() }}</p>
-                <button class="link" (click)="boardLoadTasks()">Erneut laden</button>
-              }
-              <div class="task-list">
-                @for (task of boardDisplayedTasks(); track task.id) {
-                  <div class="task-row">
-                    <button
-                      class="task-check"
-                      [disabled]="boardBusy()"
-                      role="checkbox"
-                      [attr.aria-checked]="task.status === 'DONE'"
-                      [attr.aria-label]="task.title"
-                      (click)="boardToggleTask(task)"
-                    >
-                      <span></span>
-                    </button>
-                    <a
-                      [routerLink]="domainPath('organisation')"
-                      [queryParams]="{ kind: 'task', id: task.id }"
-                      >{{ task.title }}
-                      @if (task.due_date) {
-                        <small>{{ task.due_date | date: 'dd.MM.' }}</small>
-                      }
-                    </a>
-                  </div>
-                } @empty {
-                  @if (!boardTasksLoading() && !boardTaskError()) {
-                    <p class="muted">Alles erledigt. Platz für deinen nächsten Plan.</p>
-                  }
-                }
-              </div>
-              @if (boardAdding()) {
-                <form (ngSubmit)="boardAddTask()" class="new-task">
-                  <label for="demo-task-title">Neue Aufgabe</label>
-                  <input
-                    id="demo-task-title"
-                    name="boardTaskTitle"
-                    [(ngModel)]="boardTaskTitle"
-                    required
-                    maxlength="200"
-                    placeholder="Was möchtest du erledigen?"
-                  />
-                  <div>
-                    <button type="submit" [disabled]="boardBusy() || !boardTaskTitle.trim()">
-                      Hinzufügen</button
-                    ><button type="button" (click)="boardCloseTaskForm()">Abbrechen</button>
-                  </div>
-                </form>
-              } @else {
-                <button class="link new-action" (click)="boardShowTaskForm()">
-                  <app-icon name="plus" />Neue Aufgabe
-                </button>
-              }
-            </section>
-            <ng-container [ngTemplateOutlet]="tripCard" />
-          </div>
-          <section class="panel suggestions" aria-labelledby="demo-suggestions-title">
-            <header><h2 id="demo-suggestions-title">Vorschläge für dich</h2></header>
-            @if (demo) {
-              <div class="suggestion-grid">
-                @if (nextTrip(); as trip) {
-                  <a
-                    class="suggestion travel"
-                    [routerLink]="domainPath('reisen')"
-                    [queryParams]="{ trip: trip.id }"
-                    ><span class="icon"><app-icon name="travel" /></span
-                    ><span
-                      ><strong>Packliste vorbereiten</strong
-                      ><small>Für deine Reise: {{ trip.title }}</small></span
-                    ><app-icon name="arrow"
-                  /></a>
-                }
-                <a class="suggestion finance" [routerLink]="domainPath('finanzen')"
-                  ><span class="icon"><app-icon name="finance" /></span
-                  ><span
-                    ><strong>Monatsbudget prüfen</strong
-                    ><small>Ausgaben und Sparziele im Blick behalten.</small></span
-                  ><app-icon name="arrow"
-                /></a>
-                <a class="suggestion household" [routerLink]="domainPath('haushalt')"
-                  ><span class="icon"><app-icon name="household" /></span
-                  ><span
-                    ><strong>Zuhause im Blick</strong
-                    ><small>Deine nächsten Aufgaben im Haushalt.</small></span
-                  ><app-icon name="arrow"
-                /></a>
-                <a class="suggestion organisation" [routerLink]="domainPath('organisation')"
-                  ><span class="icon"><app-icon name="calendar" /></span
-                  ><span
-                    ><strong>Die Woche planen</strong
-                    ><small>Zeit für deine Termine und Pläne.</small></span
-                  ><app-icon name="arrow"
-                /></a>
-              </div>
-            } @else {
-              <div class="suggestion-grid">
-                @for (s of suggestions(); track s.key) {
-                  <a
-                    class="suggestion today-suggestion travel"
-                    [routerLink]="travelPath()"
-                    [queryParams]="{ trip: s.trip.id }"
-                  >
-                    <span class="icon"><app-icon name="bulb" /></span>
-                    <span
-                      ><strong>{{ s.title }}</strong
-                      ><small>{{ s.reason }}</small></span
-                    ><app-icon name="arrow" />
-                  </a>
-                } @empty {
-                  <p class="muted">Aktuell gibt es keine Vorschläge für dich.</p>
-                }
-              </div>
-            }
-          </section>
-        </div>
-        <aside class="board-rail" aria-label="Deine Finanzen im Überblick">
-          <section
-            class="panel month"
-            aria-labelledby="demo-month-title"
-            [attr.aria-busy]="boardLoading()"
-          >
-            <h2 id="demo-month-title">Monatsübersicht</h2>
-            <div class="month-picker">
-              <button aria-label="Vorheriger Monat" (click)="boardChangeMonth(-1)">
-                <app-icon name="arrow" /></button
-              ><span aria-live="polite">{{ boardMonthLabel() }}</span
-              ><button aria-label="Nächster Monat" (click)="boardChangeMonth(1)">
-                <app-icon name="arrow" />
-              </button>
-            </div>
-            @if (boardLoading()) {
-              <p role="status">Monat wird geladen …</p>
-            } @else if (boardFinanceError()) {
-              <p>Finanzen konnten nicht geladen werden.</p>
-              <button class="link" (click)="boardLoadMonth()">Erneut versuchen</button>
-            } @else if (boardSummary(); as s) {
-              <dl class="monthly-values">
-                <div>
-                  <dt>
-                    <span class="icon finance"><app-icon name="finance" /></span>Einnahmen
-                  </dt>
-                  <dd class="positive">{{ boardMoney(s.income) }}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <span class="icon household"><app-icon name="basket" /></span>Ausgaben
-                  </dt>
-                  <dd class="negative">−{{ boardMoney(s.expenses) }}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <span class="icon travel"><app-icon name="finance" /></span>Für Sparziele
-                  </dt>
-                  <dd>{{ boardMoney(s.saved) }}</dd>
-                </div>
-              </dl>
-              <div class="remaining">
-                @if (s.budget !== null) {
-                  <span>Vom Monatsbudget übrig</span>
-                  <p>
-                    <strong>{{ boardMoney(s.available) }}</strong> von {{ boardMoney(s.total) }}
-                  </p>
-                  <progress
-                    [value]="boardUsed()"
-                    max="100"
-                    aria-label="Monatsbudget verbraucht"
-                  ></progress
-                  ><small>{{ boardUsed() }} % verplant oder ausgegeben</small>
-                } @else {
-                  <strong>Noch kein Monatsbudget</strong
-                  ><a [routerLink]="domainPath('finanzen')"
-                    >Budget anlegen <app-icon name="arrow"
-                  /></a>
-                }
-              </div>
-            }
-          </section>
-          <section class="panel transactions" aria-labelledby="demo-transactions-title">
-            <header>
-              <h2 id="demo-transactions-title">Letzte Transaktionen</h2>
-              <a [routerLink]="domainPath('finanzen')" aria-label="Alle Transaktionen anzeigen"
-                ><app-icon name="arrow"
-              /></a>
-            </header>
-            @for (t of boardSummary()?.recent?.slice(0, 4) ?? []; track t.id) {
-              <a class="transaction" [routerLink]="domainPath('finanzen')"
-                ><span [class]="'icon ' + (t.type === 'INCOME' ? 'finance' : 'household')"
-                  ><app-icon [name]="t.type === 'INCOME' ? 'finance' : 'basket'" /></span
-                ><span class="transaction-copy"
-                  ><strong>{{ t.note || (t.type === 'INCOME' ? 'Einnahme' : 'Ausgabe') }}</strong
-                  ><small>{{ t.date | date: 'dd. MMM' }}</small></span
-                ><span [class]="t.type === 'INCOME' ? 'positive' : 'negative'"
-                  >{{ t.type === 'INCOME' ? '+' : '−' }}{{ boardMoney(t.amount) }}</span
-                ></a
-              >
-            } @empty {
-              <p class="muted">
-                {{
-                  boardLoading()
-                    ? 'Buchungen werden geladen …'
-                    : boardFinanceError()
-                      ? 'Buchungen derzeit nicht verfügbar.'
-                      : 'Keine Buchungen in diesem Monat.'
-                }}
-              </p>
-            }
-          </section>
-        </aside>
-      </div>
-    </div>
-    <ng-template #domainCards>
-      <section class="domains" aria-label="Deine vier Bereiche">
+
+      <nav class="domains" aria-label="Deine vier Bereiche">
         @for (domain of domains(); track domain.name) {
-          <a
-            [routerLink]="domain.path"
-            [class]="'domain ' + domain.tone"
-            [class.domain--highlighted]="domain.highlighted"
-          >
+          <a [routerLink]="domain.path" [class]="'domain ' + domain.tone" [class.domain--highlighted]="domain.highlighted">
             <span class="domain-icon"><app-icon [name]="domain.icon" /></span>
-            <h2>
-              {{ domain.name }}
-              @if (domain.highlighted) {
-                <span class="domain-pick"> · für dich ausgewählt</span>
-              }
-            </h2>
-            <app-icon class="chevron" name="arrow" />
-            <p>{{ domain.summary }}</p>
-            @if (domain.name === 'Finanzen' && finance()?.budget != null) {
-              <progress
-                [class.over]="!!finance()?.available?.startsWith('-')"
-                [value]="financeProgress()"
-                max="100"
-                aria-label="Monatsbudget verbraucht"
-              ></progress>
-            }
+            <span class="domain-copy">
+              <h2>
+                {{ domain.name }}
+                @if (domain.highlighted) {
+                  <span class="domain-pick"> · für dich ausgewählt</span>
+                }
+              </h2>
+              <p>{{ domain.summary }}</p>
+            </span>
           </a>
         }
-      </section>
-    </ng-template>
-    <ng-template #todayCard>
-      <section class="card today" aria-labelledby="today-title">
-        <header class="card-heading">
-          <h2 id="today-title">
-            <span class="section-icon organisation"><app-icon name="calendar" /></span>Heute
-          </h2>
-          <button class="text-button" (click)="showDay()">
-            Alle anzeigen <app-icon name="arrow" />
-          </button>
+      </nav>
+
+      <section class="today" aria-labelledby="today-title">
+        <header class="today-head">
+          <h2 id="today-title">Heute</h2>
+          <button class="head-link" (click)="showDay()">Kalender <app-icon name="arrow" /></button>
         </header>
         @if (todayLoading()) {
-          <p class="state" role="status">Dein Tag wird geladen …</p>
+          <div class="skeleton" role="status" aria-label="Dein Tag wird geladen"><span></span><span></span><span></span></div>
         } @else if (todayError()) {
           <div class="state">
             <p [appErrorNotice]="todayError()">{{ todayError() }}</p>
-            <button class="text-button" (click)="loadToday()">Erneut versuchen</button>
+            <button class="head-link" (click)="loadToday()">Erneut versuchen</button>
           </div>
         } @else if (!items.length) {
           <div class="state">
-            <span class="empty-icon"><app-icon name="calendar" /></span>
             <h3>Heute ist noch nichts geplant.</h3>
             <p>Platz für das, was dir wichtig ist.</p>
-            <a [routerLink]="organisationPath()" class="text-button"
-              >Termin oder Aufgabe hinzufügen <app-icon name="arrow"
-            /></a>
+            <a [routerLink]="organisationPath()" class="head-link">Termin oder Aufgabe hinzufügen <app-icon name="arrow" /></a>
           </div>
         } @else {
           <div class="today-list">
             @for (item of items; track $index) {
-              <button class="today-row" (click)="openItem(item)">
+              <button class="today-row" [class.is-late]="item.note === 'Überfällig' || item.note.endsWith('überfällig')" (click)="openItem(item)">
                 <span class="time">{{ item.time }}</span>
-                <span [class]="'icon-disc ' + item.tone"><app-icon [name]="item.icon" /></span>
-                <span class="item-copy"
-                  ><strong>{{ item.title }}</strong
-                  ><small>{{ item.note }}</small></span
-                >
-                <app-icon class="chevron" name="arrow" />
+                <span class="item-copy"><strong>{{ item.title }}</strong>@if (item.note) {<small>{{ item.note }}</small>}</span>
+                <span [class]="'dot ' + item.tone" aria-hidden="true"></span>
               </button>
             }
           </div>
         }
       </section>
-    </ng-template>
-    <ng-template #tripCard>
-      <section class="card next-trip" aria-labelledby="trip-title">
-        <header class="card-heading">
-          <h2 id="trip-title">
-            <span class="section-icon travel"><app-icon name="travel" /></span
-            >{{ nextTrip()?.status === 'ACTIVE' ? 'Deine Reise' : 'Nächste Reise' }}
-          </h2>
-          <a class="text-button" [routerLink]="travelPath()" aria-label="Reisen anzeigen">
-            <app-icon name="arrow"
-          /></a>
-        </header>
-        @if (tripsLoading()) {
-          <p class="state" role="status">Deine Reisen werden geladen …</p>
-        } @else if (tripsError()) {
-          <div class="state">
-            <p>Deine Reisen konnten nicht geladen werden.</p>
-            <a class="text-button" [routerLink]="travelPath()"
-              >Zum Reisebereich <app-icon name="arrow"
-            /></a>
-          </div>
-        } @else if (nextTrip(); as trip) {
-          <div class="trip-copy">
-            @if (demo && trip.destination.toLowerCase().includes('berlin')) {
-              <img
-                class="trip-photo"
-                src="/images/dashboard/berlin-photo.jpg"
-                alt="Brandenburger Tor in Berlin"
-                width="320"
-                height="160"
-              />
-            }
-            <span class="trip-countdown">{{ tripDaysUntilLabel(trip) }}</span>
-            <h3>{{ trip.title }}</h3>
-            <p class="destination">{{ trip.destination }}</p>
-            <p class="trip-dates">
-              <app-icon name="calendar" />{{ trip.start_date | date: 'dd. MMM' }} –
-              {{ trip.end_date | date: 'dd. MMM yyyy' }}
-            </p>
-            <dl class="trip-facts">
-              <div>
-                <dt>Packliste</dt>
-                <dd>
-                  {{ trip.packing_packed }} / {{ trip.packing_total }}
-                </dd>
-              </div>
-              <div>
-                <dt>Aufgaben</dt>
-                <dd>{{ trip.tasks_open }} offen</dd>
-              </div>
-              @if (trip.budget_amount !== null) {
-                <div>
-                  <dt>Reisebudget</dt>
-                  <dd>{{ tripBudgetPercent(trip) }} % genutzt</dd>
-                </div>
-              }
-            </dl>
-            @if (trip.budget_amount !== null) {
-              <progress
-                [value]="tripBudgetPercent(trip)"
-                max="100"
-                aria-label="Reisebudget verbraucht"
-              ></progress>
-            }
-            @if (trip.budget_amount === null && trip.packing_total + trip.tasks_total > 0) {
-              <div class="trip-progress">
-                <span>Vorbereitung</span><strong>{{ tripProgress(trip) }} %</strong>
-              </div>
-              <progress
-                [value]="tripProgress(trip)"
-                max="100"
-                aria-label="Reisevorbereitung erledigt"
-              ></progress>
-            }
-          </div>
-        } @else {
-          <div class="state">
-            <span class="empty-icon travel"><app-icon name="travel" /></span>
-            <h3>Wohin geht es als Nächstes?</h3>
-            <p>
-              Noch keine bevorstehende Reise. Plane dein nächstes Ziel mit Packliste, Aufgaben und
-              Budget.
-            </p>
-            <a class="text-button" [routerLink]="travelPath()"
-              >Reise planen <app-icon name="arrow"
-            /></a>
-          </div>
-        }</section
-    ></ng-template>
-
-    <details class="photo-credit">
-      <summary>Bildnachweis</summary>
-      <p>
-        Hintergrund: „Panoramic view of Varenna – Lake Como“,
-        <a
-          href="https://commons.wikimedia.org/wiki/File:Panoramic_view_of_Varenna_-_Lake_Como.jpg"
-          target="_blank"
-          rel="noopener noreferrer"
-          >Gabrielle Merk</a
-        >,
-        <a
-          href="https://creativecommons.org/licenses/by-sa/4.0/"
-          target="_blank"
-          rel="noopener noreferrer"
-          >CC BY-SA 4.0</a
-        >. Verkleinert, als Ausschnitt mit heller Überlagerung dargestellt.
-      </p>
-      <p>
-        Reisefoto:
-        <a
-          href="https://commons.wikimedia.org/wiki/File:Brandenberg_Gate.jpg"
-          target="_blank"
-          rel="noopener noreferrer"
-          >Rudolph A. Furtado · Brandenburger Tor</a
-        >, CC0.
-      </p>
-    </details>
+    </div>
   </main>
 </app-shell>
 <app-modal [open]="detail() !== ''" labelledBy="dashboard-detail" (closed)="detail.set('')">
@@ -452,9 +79,7 @@
     <p>Beispielansicht · Keine Änderung an deinen persönlichen Daten.</p>
     @if (detail() === 'Dein Tag') {
       @for (item of items; track $index) {
-        <button class="text-button" (click)="openItem(item)">
-          {{ item.time }} · {{ item.title }} <app-icon name="arrow" />
-        </button>
+        <button class="text-button" (click)="openItem(item)">{{ item.time }} · {{ item.title }} <app-icon name="arrow" /></button>
       }
     } @else {
       @for (item of items; track $index) {
@@ -463,8 +88,6 @@
         }
       }
     }
-    <a class="text-button" [routerLink]="organisationPath()"
-      >Zur Organisation <app-icon name="arrow"
-    /></a>
+    <a class="text-button" [routerLink]="organisationPath()">Zur Organisation <app-icon name="arrow" /></a>
   </div>
 </app-modal>

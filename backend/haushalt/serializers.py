@@ -13,7 +13,7 @@ from haushalt.models import FolderEntry, ItemMemory, Section, ShoppingItem, Shop
 # Wie in finanzen/serializers.py: deutlich unter dem technisch Möglichen,
 # fängt Tippfehler (eine Null zu viel) ab.
 _MAX_AMOUNT = Decimal('1000000')
-MAX_MONTHLY_COST = Decimal('99999.99')
+MAX_COST = Decimal('99999.99')
 
 
 def _display_name(user) -> str | None:
@@ -65,6 +65,7 @@ class ShoppingListSerializer(serializers.ModelSerializer):
             'name',
             'description',
             'icon',
+            'archived',
             'item_count',
             'checked_count',
             'created_at',
@@ -72,7 +73,11 @@ class ShoppingListSerializer(serializers.ModelSerializer):
             'created_by_name',
         ]
         read_only_fields = ['id', 'item_count', 'checked_count', 'created_at', 'updated_at', 'created_by_name']
-        extra_kwargs = {'description': {'required': False, 'allow_blank': True}, 'icon': {'required': False}}
+        extra_kwargs = {
+            'description': {'required': False, 'allow_blank': True},
+            'icon': {'required': False},
+            'archived': {'required': False},
+        }
 
     def get_created_by_name(self, obj) -> str | None:
         return _display_name(obj.created_by)
@@ -101,14 +106,17 @@ class ShoppingItemSerializer(serializers.ModelSerializer):
             'shopping_list',
             'name',
             'quantity',
+            'notes',
             'section',
             'is_checked',
             'checked_at',
             'checked_by_name',
             'added_by_name',
             'created_at',
+            'updated_at',
         ]
-        read_only_fields = ['id', 'checked_at', 'checked_by_name', 'added_by_name', 'created_at']
+        read_only_fields = ['id', 'checked_at', 'checked_by_name', 'added_by_name', 'created_at', 'updated_at']
+        extra_kwargs = {'notes': {'required': False, 'allow_blank': True}}
 
     def get_checked_by_name(self, obj) -> str | None:
         return _display_name(obj.checked_by)
@@ -120,6 +128,9 @@ class ShoppingItemSerializer(serializers.ModelSerializer):
         return _clean_name(value)
 
     def validate_quantity(self, value):
+        return value.strip()
+
+    def validate_notes(self, value):
         return value.strip()
 
 
@@ -187,7 +198,9 @@ class TaskSerializer(serializers.ModelSerializer):
     last_done_by_name = serializers.SerializerMethodField()
     is_overdue = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
-    recurrence = serializers.ChoiceField(choices=['daily', 'weekly', 'monthly'], required=False, allow_null=True)
+    recurrence = serializers.ChoiceField(
+        choices=['daily', 'weekly', 'monthly', 'yearly'], required=False, allow_null=True
+    )
     streak = serializers.SerializerMethodField()
 
     class Meta:
@@ -216,9 +229,10 @@ class TaskSerializer(serializers.ModelSerializer):
             'is_overdue',
             'last_done_at',
             'last_done_by_name',
+            'updated_at',
         ]
         read_only_fields = [
-            'id', 'is_done', 'last_done_at', 'last_done_by_name', 'assigned_to_name', 'is_overdue', 'streak'
+            'id', 'is_done', 'last_done_at', 'last_done_by_name', 'assigned_to_name', 'is_overdue', 'streak', 'updated_at'
         ]
         extra_kwargs = {'description': {'required': False, 'allow_blank': True}}
 
@@ -277,13 +291,13 @@ class TaskSerializer(serializers.ModelSerializer):
                 return getattr(self.instance, field)
             return default
 
-        # Die einfache Auswahl (täglich/wöchentlich/monatlich) setzt genau eines
+        # Die einfache Auswahl (täglich/wöchentlich/monatlich/jährlich) setzt genau eines
         # der beiden Intervallfelder; ein direkt gesetztes Intervall löscht das
         # andere, damit nie beide gelten.
         if 'recurrence' in attrs:
             choice = attrs.pop('recurrence')
             attrs['recurrence_days'] = {'daily': 1, 'weekly': 7}.get(choice)
-            attrs['recurrence_months'] = 1 if choice == 'monthly' else None
+            attrs['recurrence_months'] = {'monthly': 1, 'yearly': 12}.get(choice)
         elif attrs.get('recurrence_days'):
             attrs['recurrence_months'] = None
         elif attrs.get('recurrence_months'):
@@ -333,7 +347,18 @@ class TaskSerializer(serializers.ModelSerializer):
 
 
 class FolderEntrySerializer(serializers.ModelSerializer):
-    cancel_by = serializers.SerializerMethodField()
+    """Gerät oder Vertrag. Die Vertragsnummer ist sensibel und steht nur in
+    der Detailantwort (und der Antwort auf das eigene Speichern) — nie in
+    Listen."""
+
+    DETAIL_ACTIONS = ('retrieve', 'create', 'partial_update', 'update')
+
+    status = serializers.ChoiceField(
+        choices=[c for c in FolderEntry.Status.choices if c[0] != FolderEntry.Status.EXPIRING], required=False
+    )
+    effective_status = serializers.SerializerMethodField()
+    cancellation_deadline = serializers.SerializerMethodField()
+    monthly_equivalent = serializers.SerializerMethodField()
     deadlines = serializers.SerializerMethodField()
 
     class Meta:
@@ -343,25 +368,53 @@ class FolderEntrySerializer(serializers.ModelSerializer):
             'kind',
             'name',
             'provider',
+            'category',
+            'status',
+            'effective_status',
             'notes',
-            'monthly_cost',
-            'contract_end',
-            'notice_period_months',
-            'cancel_by',
+            'cost',
+            'billing_cycle',
+            'monthly_equivalent',
+            'start_date',
+            'end_date',
+            'notice_period_days',
+            'cancellation_deadline',
+            'auto_renewal',
+            'contract_number',
             'purchase_date',
-            'warranty_until',
+            'warranty_end_date',
             'maintenance_interval_months',
-            'next_maintenance',
+            'maintenance_due_date',
             'last_maintenance',
             'model',
             'room',
             'deadlines',
+            'created_at',
+            'updated_at',
         ]
-        read_only_fields = ['id', 'cancel_by', 'deadlines']
+        read_only_fields = [
+            'id', 'effective_status', 'cancellation_deadline', 'monthly_equivalent', 'deadlines', 'created_at', 'updated_at'
+        ]
 
-    def get_cancel_by(self, obj) -> str | None:
-        day = services.cancel_by(obj) if obj.kind == FolderEntry.Kind.CONTRACT else None
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        view = self.context.get('view')
+        if instance.kind != FolderEntry.Kind.CONTRACT or getattr(view, 'action', None) not in self.DETAIL_ACTIONS:
+            data.pop('contract_number', None)
+        return data
+
+    def get_effective_status(self, obj) -> str:
+        if obj.kind == FolderEntry.Kind.CONTRACT:
+            return services.contract_status(obj)
+        return obj.status
+
+    def get_cancellation_deadline(self, obj) -> str | None:
+        day = services.cancellation_deadline(obj)
         return day.isoformat() if day else None
+
+    def get_monthly_equivalent(self, obj) -> str | None:
+        value = services.monthly_equivalent(obj)
+        return f'{value:.2f}' if value is not None else None
 
     def get_deadlines(self, obj) -> list[dict]:
         return [
@@ -372,14 +425,23 @@ class FolderEntrySerializer(serializers.ModelSerializer):
     def validate_name(self, value):
         return _clean_name(value)
 
-    def validate_monthly_cost(self, value):
-        if value is not None and not Decimal('0') <= value <= MAX_MONTHLY_COST:
-            raise serializers.ValidationError('Die monatlichen Kosten müssen zwischen 0 und 99.999,99 € liegen.')
+    def validate_provider(self, value):
+        return value.strip()
+
+    def validate_category(self, value):
+        return value.strip()
+
+    def validate_contract_number(self, value):
+        return value.strip()
+
+    def validate_cost(self, value):
+        if value is not None and not Decimal('0') < value <= MAX_COST:
+            raise serializers.ValidationError('Die Kosten müssen größer als 0 und höchstens 99.999,99 € sein.')
         return value
 
-    def validate_notice_period_months(self, value):
-        if value is not None and value > 36:
-            raise serializers.ValidationError('Die Kündigungsfrist darf höchstens 36 Monate betragen.')
+    def validate_notice_period_days(self, value):
+        if value is not None and value > 1095:
+            raise serializers.ValidationError('Die Kündigungsfrist darf höchstens 1095 Tage (3 Jahre) betragen.')
         return value
 
     def validate_model(self, value):
@@ -400,14 +462,19 @@ class FolderEntrySerializer(serializers.ModelSerializer):
         if self.instance is not None and 'kind' in attrs and attrs['kind'] != self.instance.kind:
             raise serializers.ValidationError({'kind': 'Die Art eines Eintrags kann nicht geändert werden.'})
 
+        def current(field):
+            return attrs.get(field, getattr(self.instance, field, None))
+
         # Felder der jeweils anderen Art werden verworfen, statt stillschweigend
         # gespeichert zu werden (ein Gerät hat keine Kündigungsfrist).
-        contract_fields = ('monthly_cost', 'contract_end', 'notice_period_months')
+        contract_fields = (
+            'cost', 'billing_cycle', 'start_date', 'end_date', 'notice_period_days', 'auto_renewal', 'contract_number'
+        )
         device_fields = (
             'purchase_date',
-            'warranty_until',
+            'warranty_end_date',
             'maintenance_interval_months',
-            'next_maintenance',
+            'maintenance_due_date',
             'last_maintenance',
             'model',
             'room',
@@ -416,12 +483,20 @@ class FolderEntrySerializer(serializers.ModelSerializer):
         for field in foreign:
             attrs.pop(field, None)
 
+        if 'status' in attrs:
+            allowed = FolderEntry.CONTRACT_STATUSES if kind == FolderEntry.Kind.CONTRACT else FolderEntry.DEVICE_STATUSES
+            if attrs['status'] not in allowed:
+                raise serializers.ValidationError({'status': 'Dieser Status passt nicht zur Art des Eintrags.'})
+
+        if kind == FolderEntry.Kind.CONTRACT:
+            start, end = current('start_date'), current('end_date')
+            if start and end and end < start:
+                raise serializers.ValidationError({'end_date': 'Das Vertragsende darf nicht vor dem Beginn liegen.'})
         if kind == FolderEntry.Kind.DEVICE:
-            interval = attrs.get('maintenance_interval_months', getattr(self.instance, 'maintenance_interval_months', None))
-            next_maintenance = attrs.get('next_maintenance', getattr(self.instance, 'next_maintenance', None))
-            if interval and next_maintenance is None:
+            interval = current('maintenance_interval_months')
+            if interval and current('maintenance_due_date') is None:
                 # Ohne Angabe: erste Wartung ein Intervall nach Kauf (oder heute).
-                base = attrs.get('purchase_date', getattr(self.instance, 'purchase_date', None))
-                attrs['next_maintenance'] = services.first_maintenance(base or timezone.localdate(), interval)
+                base = current('purchase_date')
+                attrs['maintenance_due_date'] = services.first_maintenance(base or timezone.localdate(), interval)
 
         return attrs

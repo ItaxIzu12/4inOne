@@ -25,7 +25,7 @@ from connections.registry import KINDS
 from finanzen.private_api import money, month_figures
 from finanzen.services import month_bounds
 from haushalt import services as haushalt_services
-from haushalt.models import FolderEntry, ShoppingItem, Task as HouseholdTask
+from haushalt.models import ShoppingItem, Task as HouseholdTask
 from organisation.views import today_data
 from reisen.models import Trip, TripEvent
 
@@ -59,20 +59,18 @@ def _haushalt(user, today):
     ]
     deadlines = []
     if not haushalt_services.is_child_account(membership):
-        horizon = today + timedelta(days=DEADLINE_DAYS)
-        for entry in FolderEntry.objects.filter(household=household):
-            for deadline in haushalt_services.folder_deadlines(entry):
-                if today <= deadline['datum'] <= horizon:
-                    deadlines.append(
-                        {
-                            'entry_id': entry.pk,
-                            'art': deadline['art'],
-                            'title': deadline['titel'],
-                            'date': deadline['datum'].isoformat(),
-                            'days': (deadline['datum'] - today).days,
-                        }
-                    )
-        deadlines.sort(key=lambda d: (d['date'], d['title']))
+        # Dieselbe Fristenlogik wie „Demnächst“ im Haushalt, nur mit dem
+        # kürzeren Horizont des Tagesüberblicks.
+        deadlines = [
+            {
+                'entry_id': row['entry_id'],
+                'art': row['art'],
+                'title': row['title'],
+                'date': row['date'].isoformat(),
+                'days': row['days'],
+            }
+            for row in haushalt_services.upcoming_deadlines(household, today, DEADLINE_DAYS)
+        ]
     return {
         'tasks': tasks,
         'task_count': due.count(),
@@ -84,7 +82,7 @@ def _haushalt(user, today):
 
 
 def _reisen(user, today, tz):
-    trips = KINDS[ObjectType.TRIP].visible(user).exclude(status__in=(Trip.Status.IDEA, Trip.Status.CANCELLED, Trip.Status.DONE))
+    trips = KINDS[ObjectType.TRIP].visible(user).exclude(status__in=(Trip.Status.CANCELLED, Trip.Status.DONE))
     current = trips.filter(start_date__lte=today, end_date__gte=today).order_by('start_date', 'id').first()
     upcoming = (
         trips.filter(start_date__gt=today, start_date__lte=today + timedelta(days=TRIP_LEAD_DAYS))

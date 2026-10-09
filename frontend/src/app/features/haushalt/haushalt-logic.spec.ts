@@ -16,16 +16,25 @@ function item(id: number, name: string, section: ShoppingItemDto['section'], che
     shopping_list: 1,
     name,
     quantity: '',
+    notes: '',
     section,
     is_checked: checked,
     checked_at: null,
     checked_by_name: null,
     added_by_name: null,
     created_at: '',
+    updated_at: '',
   };
 }
 
 describe('haushalt-logic', () => {
+  it('labels yearly and every-x-weeks repeats', () => {
+    expect(recurrenceLabel(null, 12)).toBe('jährlich');
+    expect(recurrenceLabel(14)).toBe('alle 2 Wochen');
+    expect(recurrenceLabel(21)).toBe('alle 3 Wochen');
+    expect(recurrenceLabel(3)).toBe('alle 3 Tage');
+  });
+
   it('estimates the shopping amount rounded to 50 cents', () => {
     expect(estimateAmount(3.5, 2)).toBe(7);
     expect(estimateAmount(3.33, 5)).toBe(16.5);

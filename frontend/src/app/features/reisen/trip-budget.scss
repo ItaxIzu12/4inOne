@@ -1,128 +1,74 @@
-// Reiter „Budget“
-.top {
-  margin-bottom: 16px;
+// Reise › Budget: Übersicht, Kategorien, Ausgaben. Alles in einer Spalte, damit es am Handy gleich bleibt.
+:host {
+  display: grid;
+  gap: 14px;
+  max-width: 880px;
 }
 .kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 14px;
 }
-.kpi {
-  display: flex;
-  gap: 14px;
-  padding: 18px;
-  border: 1px solid #e6e9f0;
-  border-radius: 16px;
-  background: #fff;
-}
-.kpi__icon {
-  display: grid;
-  place-items: center;
-  flex: 0 0 36px;
-  height: 36px;
-  color: var(--blue);
-}
-.kpi__icon app-icon {
-  width: 28px;
-  height: 28px;
-}
-.kpi__icon--gold {
-  color: #c98a00;
-}
-.kpi__icon--green {
-  color: #1f9d55;
-}
-.kpi__icon--violet {
-  color: #6d3fc4;
-}
-.kpi__body {
-  display: grid;
-  flex: 1;
-  align-content: start;
-  gap: 4px;
-  min-width: 0;
-}
-.kpi__label {
-  color: #39465c;
-  font-size: 14px;
-}
-.kpi__value {
-  font-size: 26px;
-  letter-spacing: -0.5px;
-  font-variant-numeric: tabular-nums;
-}
-.kpi .bar {
-  margin-top: 8px;
-}
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 16px;
-  align-items: start;
-}
-.main {
-  display: grid;
-  gap: 16px;
-  min-width: 0;
-}
-.cats__head,
-.cats__row {
-  display: grid;
-  grid-template-columns: minmax(130px, 1.4fr) 0.8fr 0.9fr 0.9fr minmax(130px, 1.3fr);
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-}
-.cats__head,
-.exp__head {
-  padding: 10px 10px;
-  border-radius: 10px;
-  background: #f6f8fb;
+.kpis dt {
   color: var(--text-muted);
   font-size: 13px;
 }
-.cats__row {
-  min-height: 52px;
-  padding: 0 10px;
-  border-bottom: 1px solid var(--line);
+.kpis dd {
+  margin: 2px 0 0;
+  color: #16233a;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
 }
-.cats__row:last-child {
-  border-bottom: 0;
+.calc {
+  margin-top: 8px;
+  font-size: 13px;
 }
-.cats__name {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px 12px;
-}
-.cats__name app-icon {
-  width: 22px;
-  height: 22px;
-  color: #39465c;
-}
-.cats__name b {
-  font-weight: 500;
-}
-.cats__progress {
+.cats {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 44px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.cat {
+  display: grid;
+  // Feste rechte Spalte, damit alle Balken gleich lang sind.
+  grid-template-columns: minmax(0, 1fr) 10.5rem;
+  gap: 6px 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.cat:first-child {
+  border-top: 0;
+}
+.cat__name {
+  display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  color: #16233a;
+}
+.cat__name app-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  color: #53627a;
+}
+.cat__nums {
+  color: #16233a;
+  font-size: 14px;
+  font-weight: 600;
   text-align: right;
 }
-.cats__progress .bar {
-  height: 8px;
+.cat__nums .muted {
+  font-size: 13px;
+  font-weight: 400;
 }
-.mobile-only {
-  display: none;
+.cat .bar {
+  align-self: center;
 }
-.exp__head {
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr) 150px 100px;
-  gap: 10px;
-}
-.exp__head span:last-child {
+.cat__left {
   text-align: right;
 }
 .exp {
@@ -130,22 +76,20 @@
   padding: 0;
   list-style: none;
 }
-.exp > li + li {
+.exp li + li {
   border-top: 1px solid var(--line);
 }
 .exp__row {
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr) 150px 100px;
+  display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  min-height: 44px;
-  padding: 6px 10px;
+  min-height: 56px;
+  padding: 8px 0;
   border: 0;
   background: none;
   color: inherit;
   font: inherit;
-  font-size: 14px;
   text-align: left;
   cursor: pointer;
 }
@@ -153,114 +97,60 @@
   cursor: default;
   opacity: 1;
 }
-.exp__row:not(:disabled):hover {
-  background: #fafbfe;
-}
-.exp__date {
-  color: #39465c;
+.exp__icon {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  color: #53627a;
 }
 .exp__title {
   display: grid;
+  flex: 1;
   min-width: 0;
 }
 .exp__title b {
-  font-weight: 500;
+  color: #16233a;
+  font-size: 15px;
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
-.exp__cat {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #39465c;
-}
-.exp__cat app-icon,
-.exp__icon {
-  width: 19px;
-  height: 19px;
-}
 .exp__amount {
-  color: #c4214a;
+  color: #16233a;
+  font-size: 15px;
   font-weight: 600;
-  text-align: right;
 }
-.finance {
-  display: grid;
-  gap: 14px;
+.more {
+  margin-top: 4px;
 }
-.features {
-  display: grid;
-  gap: 16px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.features li {
+.empty__actions {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
 }
-.features .tile {
-  flex-basis: 40px;
-  width: 40px;
-  height: 40px;
-  background: #f3f5f9;
-  color: #39465c;
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
 }
-.features b {
-  display: block;
-  font-size: 14px;
+.note app-icon {
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
 }
-.finance__go {
-  width: 100%;
-  color: var(--blue-text);
-  font-weight: 600;
-}
-.finance__go app-icon {
-  width: 16px;
-  height: 16px;
-}
-@media (max-width: 1280px) {
+@media (max-width: 560px) {
   .kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
-}
-@media (max-width: 1100px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
+  .kpis div:first-child {
+    grid-column: 1 / -1;
   }
-}
-@media (max-width: 760px) {
-  .kpis {
-    gap: 10px;
-  }
-  .kpi {
-    flex-direction: column;
-    gap: 8px;
-    padding: 14px;
-  }
-  .kpi__value {
-    font-size: 22px;
-  }
-  .desktop-only,
-  .cats__head,
-  .exp__head,
-  .exp__date,
-  .exp__cat {
-    display: none;
-  }
-  .mobile-only {
-    display: block;
-  }
-  .cats__row {
-    grid-template-columns: minmax(0, 1fr) minmax(110px, 0.9fr);
-    padding: 8px 0;
-  }
-  .cats__name small {
-    flex: 1 1 100%;
-    padding-left: 34px;
-  }
-  .exp__row {
-    grid-template-columns: 22px minmax(0, 1fr) auto;
-    gap: 12px;
-    padding: 10px 0;
+  .kpis dd {
+    font-size: 19px;
   }
 }

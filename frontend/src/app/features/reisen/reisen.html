@@ -1,27 +1,53 @@
 <app-shell
   ><main id="main-content" class="reisen-page domain-page" tabindex="-1">
+    @let trip = selectedTrip();
     <div class="domain-sticky">
-      <header class="page-heading domain-heading">
-        <div class="heading-copy">
-          <span class="heading-icon domain-icon"><app-icon name="travel" /></span>
-          <div>
-            <h1>Reisen</h1>
-            <p class="subtitle">Plane deine Reisen. Ohne Chaos.</p>
+      @if (trip) {
+        <!-- Eine konkrete Reise: Name, Zeitraum, vier Reiter. -->
+        <button type="button" class="back" (click)="backToList()"><app-icon name="arrow-left" aria-hidden="true" />Meine Reisen</button>
+        <header class="page-heading domain-heading trip-heading">
+          <div class="heading-copy">
+            <span class="heading-icon domain-icon" aria-hidden="true"><app-icon [name]="tripIcon(trip)" /></span>
+            <div class="trip-heading__text">
+              <h1>{{ trip.title }}</h1>
+              <p class="subtitle">
+                <span>{{ longRange(trip) }}</span>
+                @if (trip.destination) {
+                  <span class="subtitle__sep" aria-hidden="true">·</span><span>{{ trip.destination }}</span>
+                }
+                <span [class]="'status status--' + statusTone[trip.status]">{{ statusLabels[trip.status] }}</span>
+              </p>
+            </div>
           </div>
-        </div>
-        @if (headAction()) {
-          <button class="primary" [attr.aria-label]="headAction()" (click)="headActionClick()">
-            <app-icon name="plus" /><span>{{ headAction() }}</span>
-          </button>
-        }
-      </header>
-      <nav class="tabs domain-tabs" aria-label="Reisen Ansichten" (keydown)="onTabKeydown($event)">
-        @for (t of tabs; track t.key) {
-          <button [id]="'reisen-tab-' + t.key" [attr.aria-current]="tab() === t.key ? 'page' : null" (click)="selectTab(t.key)">
-            <app-icon [name]="t.icon" aria-hidden="true" />{{ t.label }}
-          </button>
-        }
-      </nav>
+          @if (isOwner()) {
+            <!-- Eigener Container: am Handy blendet das Bereichslayout direkte Kopf-Knöpfe aus (dort übernimmt sonst der
+                 schwebende Knopf) — Bearbeiten hat aber keinen Ersatz und muss sichtbar bleiben. -->
+            <div class="trip-edit">
+              <button type="button" class="secondary" aria-label="Reise bearbeiten" (click)="openTripEditor(trip)"><app-icon name="edit" aria-hidden="true" /><span>Bearbeiten</span></button>
+            </div>
+          }
+        </header>
+        <nav class="tabs domain-tabs" aria-label="Bereiche dieser Reise" (keydown)="onTabKeydown($event)">
+          @for (t of tabs; track t.key) {
+            <button [id]="'reisen-tab-' + t.key" [attr.aria-current]="tab() === t.key ? 'page' : null" (click)="selectTab(t.key)">
+              <app-icon [name]="t.icon" aria-hidden="true" />{{ t.label }}
+            </button>
+          }
+        </nav>
+      } @else {
+        <header class="page-heading domain-heading">
+          <div class="heading-copy">
+            <span class="heading-icon domain-icon"><app-icon name="travel" /></span>
+            <div>
+              <h1>Reisen</h1>
+              <p class="subtitle">Wohin, wann und was noch fehlt – jede Reise auf einen Blick.</p>
+            </div>
+          </div>
+          @if (trips().length) {
+            <button class="primary" (click)="openTripEditor()"><app-icon name="plus" /><span>Reise erstellen</span></button>
+          }
+        </header>
+      }
     </div>
 
     @if (loading()) {
@@ -31,198 +57,178 @@
         <p [appErrorNotice]="error()">{{ error() }}</p>
         <button class="secondary" (click)="load()">Erneut versuchen</button>
       </div>
-    } @else if (tab() === 'uebersicht') {
-      @if (selectedTrip(); as trip) {
-        @if (detailLoading()) {
-          <p class="state" role="status">Wird geladen …</p>
-        } @else if (detailError()) {
-          <div class="state">
-            <p class="field-error" [appErrorNotice]="detailError()">{{ detailError() }}</p>
-            <button class="secondary" (click)="retryTripDetail()">Erneut versuchen</button>
-          </div>
-        } @else {
-          <app-trip-overview
-            [trip]="trip"
-            [trips]="trips()"
-            [isNext]="nextTrip()?.id === trip.id"
-            [readiness]="readiness()?.percent ?? 0"
-            [packed]="packingPackedCount()"
-            [packingTotal]="packing().length"
-            [tasks]="tasks()"
-            [budgetSpent]="budgetSpent()"
-            [budgetTotal]="budgetTotal()"
-            [version]="reminderVersion()"
-            [canEdit]="canEdit()"
-            (openTab)="selectTab($event)"
-            (toggleTask)="toggleReminder($event)"
-          />
-        }
-      } @else {
-        <div class="empty">
-          <app-icon name="travel" />
-          <h3>Noch keine Reise geplant.</h3>
-          <p>Wohin soll es als Nächstes gehen?</p>
-          <button class="primary" (click)="openTripEditor()"><app-icon name="plus" />Erste Reise planen</button>
-        </div>
-      }
-    } @else if (tab() === 'reisen') {
-      <app-trip-list
-        [trips]="trips()"
-        [selectedId]="selectedTripId()"
-        (select)="selectTrip($event)"
-        (newTrip)="openTripEditor()"
-        (edit)="openTripEditor($event)"
-        (participants)="openParticipantsEditor($event)"
-        (openTab)="openTarget($event)"
-      />
-    } @else if (!selectedTrip()) {
-      <div class="empty">
+    } @else if (missingTrip()) {
+      <div class="card-state">
         <app-icon name="travel" />
-        <h3>Noch keine Reise ausgewählt</h3>
-        <p>Lege eine Reise an, um Packliste, Budget und Erinnerungen zu planen.</p>
-        <button class="primary" (click)="openTripEditor()"><app-icon name="plus" />Neue Reise</button>
+        <h2>Reise nicht gefunden</h2>
+        <p>Diese Reise gibt es nicht mehr, oder du hast keinen Zugriff darauf.</p>
+        <button class="secondary" (click)="backToList()">Zu Meine Reisen</button>
       </div>
+    } @else if (!trip) {
+      <app-trip-list [trips]="trips()" (open)="openTrip($event)" (create)="openTripEditor()" />
     } @else {
       @if (actionError()) {
         <p class="field-error" [appErrorNotice]="actionError()">{{ actionError() }}</p>
       }
       @if (detailLoading()) {
-        <p class="state" role="status">Wird geladen …</p>
+        <p class="state" role="status">Reise wird geladen …</p>
       } @else if (detailError()) {
         <div class="state">
           <p class="field-error" [appErrorNotice]="detailError()">{{ detailError() }}</p>
           <button class="secondary" (click)="retryTripDetail()">Erneut versuchen</button>
         </div>
-      } @else if (tab() === 'packlisten') {
-        <app-trip-packing
-          [trip]="selectedTrip()!"
-          [trips]="trips()"
-          [items]="packing()"
-          [tasksOpen]="openTasks().length"
-          [budgetSpent]="budgetSpent()"
-          [budgetTotal]="budgetTotal()"
-          [canEdit]="canEdit()"
-          (switchTrip)="selectTrip($event)"
-          (back)="selectTab('reisen')"
-          (toggle)="togglePacking($event)"
-          (edit)="openPackingEditor($event)"
-          (add)="openPackingEditor(undefined, $event)"
-          (share)="openParticipantsEditor(selectedTrip()!)"
-          (suggest)="openSuggestionsForSelected()"
-          (reset)="resetPacking()"
-          (openTab)="openTarget($event)"
-        />
-      } @else if (tab() === 'budget') {
-        <app-trip-budget
-          [trip]="selectedTrip()!"
-          [trips]="trips()"
-          [planned]="budgetCategories()"
-          [expenses]="expenses()"
-          [canEdit]="canEdit()"
-          (switchTrip)="selectTrip($event)"
-          (addExpense)="openExpenseEditor()"
-          (editExpense)="openExpenseEditor($event)"
-          (editPlan)="openPlanEditor()"
-        />
       } @else {
-        <app-trip-reminders
-          [trip]="selectedTrip()!"
-          [trips]="trips()"
-          [packed]="packingPackedCount()"
-          [packingTotal]="packing().length"
-          [version]="reminderVersion()"
-          [canEdit]="canEdit()"
-          (switchTrip)="selectTrip($event)"
-          (add)="openTaskEditor()"
-          (editTask)="openTaskById($event)"
-          (toggleTask)="toggleReminder($event)"
-          (openTab)="openTarget($event)"
-        />
+        @switch (tab()) {
+          @case ('uebersicht') {
+            <app-trip-overview
+              [trip]="trip"
+              [packed]="packingPackedCount()"
+              [packingTotal]="packing().length"
+              [tasksOpen]="openTasks().length"
+              [tasksTotal]="tasks().length"
+              [budgetSpent]="budgetSpent()"
+              [budgetTotal]="budgetTotal()"
+              [canEdit]="canEdit()"
+              (openTab)="selectTab($event)"
+            />
+          }
+          @case ('planung') {
+            <app-trip-planning
+              [trip]="trip"
+              [tasks]="tasks()"
+              [canEdit]="canEdit()"
+              [busy]="quickBusy()"
+              (quickAdd)="quickAddTask($event)"
+              (addTask)="openTaskEditor(undefined, $event)"
+              (editTask)="openTaskEditor($event)"
+              (toggleTask)="toggleTask($event)"
+              (manageParticipants)="openParticipantsEditor()"
+              (suggest)="openSuggestionsForSelected()"
+            />
+          }
+          @case ('packliste') {
+            <app-trip-packing
+              [items]="packing()"
+              [canEdit]="canEdit()"
+              [busy]="quickBusy()"
+              (quickAdd)="quickAddPacking($event)"
+              (toggle)="togglePacking($event)"
+              (edit)="openPackingEditor($event)"
+              (add)="openPackingEditor()"
+              (suggest)="openSuggestionsForSelected()"
+              (reset)="resetPacking()"
+            />
+          }
+          @case ('budget') {
+            <app-trip-budget
+              [trip]="trip"
+              [planned]="budgetCategories()"
+              [expenses]="expenses()"
+              [canEdit]="canEdit()"
+              (addExpense)="openExpenseEditor()"
+              (editExpense)="openExpenseEditor($event)"
+              (editPlan)="openPlanEditor()"
+            />
+          }
+        }
       }
     }
-    @if (headAction()) {
-      <app-mobile-action [label]="headAction()" (pressed)="headActionClick()" />
+    @if (!trip && trips().length) {
+      <app-mobile-action label="Reise erstellen" (pressed)="openTripEditor()" />
     }
   </main></app-shell
 >
+
 <app-modal-form
   icon="travel"
   [formGroup]="tripForm"
-  [title]="tripOverlaps().length ? 'Terminüberschneidung' : editTripId() ? 'Reise bearbeiten' : 'Neue Reise'"
+  [title]="tripOverlaps().length ? 'Zeitraum überschneidet sich' : editTripId() ? 'Reise bearbeiten' : 'Reise erstellen'"
   [open]="tripEditor()"
   [saving]="tripSaving()"
   [error]="tripOverlaps().length ? '' : tripFormError()"
   [deleteLabel]="!tripOverlaps().length && editTripId() ? 'Reise löschen' : ''"
-  [cancelLabel]="tripOverlaps().length ? 'Daten ändern' : 'Abbrechen'"
-  [submitLabel]="tripOverlaps().length ? 'Trotzdem erstellen' : 'Speichern'"
+  [cancelLabel]="tripOverlaps().length ? 'Daten prüfen' : 'Abbrechen'"
+  [submitLabel]="tripOverlaps().length ? 'Trotzdem speichern' : editTripId() ? 'Speichern' : 'Reise erstellen'"
   (submitted)="saveTrip()"
   (closed)="closeTripEditor()"
   (deleted)="removeTrip()"
 >
   @if (tripOverlaps().length) {
     <div class="overlap-warning" role="alert">
-      <p>Diese Reise überschneidet sich mit:</p>
-      <ul>
-        @for (o of tripOverlaps(); track o.id) {
-          <li>{{ o.title }} vom {{ o.start_date | date: 'dd.MM.yyyy' }} bis {{ o.end_date | date: 'dd.MM.yyyy' }}</li>
-        }
-      </ul>
-      <p class="muted small">Das kann gewollt sein, z. B. bei einer Teilreise oder einem Geschäftstermin während einer längeren Reise.</p>
+      @if (tripOverlaps().length === 1) {
+        <p>Diese Reise überschneidet sich mit {{ overlapText(tripOverlaps()[0]) }}.</p>
+      } @else {
+        <p>Diese Reise überschneidet sich mit:</p>
+        <ul>
+          @for (o of tripOverlaps(); track o.id) {
+            <li>{{ overlapText(o) }}</li>
+          }
+        </ul>
+      }
+      <p class="small">Das kann gewollt sein – etwa bei einer Weiterreise oder einem Ausflug während einer längeren Reise.</p>
     </div>
   } @else {
-<fieldset class="form-section"><legend>Reise und Zeitraum</legend>    <app-field label="Titel">
-      <input id="trip-title" formControlName="title" maxlength="120" required />
+    <app-field label="Name der Reise" [error]="titleError()">
+      <input id="trip-title" formControlName="title" maxlength="120" required placeholder="z. B. Berlin Wochenende" />
     </app-field>
-
+    <app-field label="Reiseziel" [error]="destinationError()">
+      <input id="trip-destination" formControlName="destination" maxlength="160" required placeholder="z. B. Berlin" />
+    </app-field>
     <div class="field-row">
-      <app-field label="Beginn">
-        <app-date-picker mode="date" formControlName="start_date" [min]="minStartDate()" />
+      <app-field label="Erster Tag" [error]="startError()">
+        <app-date-picker mode="date" formControlName="start_date" />
       </app-field>
-      <app-field label="Ende">
+      <app-field label="Letzter Tag" [error]="endError()">
         <app-date-picker mode="date" formControlName="end_date" [min]="tripForm.controls.start_date.value" />
       </app-field>
     </div>
-</fieldset>
-<fieldset class="form-section"><legend>Weitere Angaben</legend><p class="form-section__hint">Diese Angaben kannst du jetzt ergänzen oder später ändern.</p>    <app-field label="Reiseziel" [optional]="true">
-      <input id="trip-destination" formControlName="destination" maxlength="160" />
-    </app-field>    <div class="field-row">
+    @if (editTripId()) {
       <app-field label="Status">
         <app-select formControlName="status" [options]="statusOptions" />
       </app-field>
-      <app-field label="Budget" [optional]="true" hint="Geplante Gesamtsumme, z. B. 1500">
-        <input id="trip-budget" formControlName="budget_amount" type="text" inputmode="decimal" />
-      </app-field>
-    </div>
-    <app-field label="Währung">
-      <app-select formControlName="currency" [options]="currencyOptions" />
-    </app-field>
-    <div class="field-row">
-      <app-field label="Unterkunft" [optional]="true" hint="z. B. Hotel Central">
-        <input id="trip-accommodation" formControlName="accommodation" maxlength="160" />
-      </app-field>
-      <app-field label="Lage der Unterkunft" [optional]="true" hint="z. B. Berlin Mitte">
-        <input id="trip-accommodation-area" formControlName="accommodation_area" maxlength="120" />
-      </app-field>
-    </div>
-    <p class="setup-hint">Hilft bei passenden Packvorschlägen und Aufgaben — ganz optional.</p>
-    <div class="field-row">
-      <app-field label="Reisetyp" [optional]="true">
-        <app-select formControlName="travel_type" [options]="travelTypeOptions" />
-      </app-field>
-      <app-field label="Transportart" [optional]="true">
-        <app-select formControlName="transport_type" [options]="transportTypeOptions" />
-      </app-field>
-    </div>
-    <app-field label="Transport-Notiz" [optional]="true" hint="z. B. Hin- und Rückfahrt gebucht">
-      <input id="trip-transport-note" formControlName="transport_note" maxlength="160" />
-    </app-field>
-    <app-field label="Gepäck" [optional]="true">
-      <app-select formControlName="baggage_type" [options]="baggageTypeOptions" />
-    </app-field>
-    <app-field label="Notizen" [optional]="true">
-      <textarea id="trip-notes" formControlName="notes" rows="3" maxlength="5000"></textarea>
-    </app-field>
-</fieldset>
+    }
+
+    <button type="button" class="more-toggle" [attr.aria-expanded]="tripMoreOpen()" aria-controls="trip-more" (click)="tripMoreOpen.set(!tripMoreOpen())">
+      <app-icon [name]="tripMoreOpen() ? 'chevron-up' : 'chevron-down'" aria-hidden="true" />
+      Weitere Angaben <span class="muted">– optional</span>
+    </button>
+    @if (tripMoreOpen()) {
+      <div id="trip-more" class="more">
+        <app-field label="Abreiseort" [optional]="true" hint="z. B. Düsseldorf oder DUS">
+          <input id="trip-departure" formControlName="departure" maxlength="120" />
+        </app-field>
+        <div class="field-row">
+          <app-field label="Transport" [optional]="true">
+            <app-select formControlName="transport_type" [options]="transportTypeOptions" />
+          </app-field>
+          <app-field label="Transport-Notiz" [optional]="true" hint="z. B. Hin- und Rückfahrt gebucht">
+            <input id="trip-transport-note" formControlName="transport_note" maxlength="160" />
+          </app-field>
+        </div>
+        <div class="field-row">
+          <app-field label="Unterkunft" [optional]="true" hint="z. B. Hotel Central">
+            <input id="trip-accommodation" formControlName="accommodation" maxlength="160" />
+          </app-field>
+          <app-field label="Lage" [optional]="true" hint="z. B. Berlin Mitte">
+            <input id="trip-accommodation-area" formControlName="accommodation_area" maxlength="120" />
+          </app-field>
+        </div>
+        <div class="field-row">
+          <app-field label="Reiseart" [optional]="true" hint="Für passende Vorschläge">
+            <app-select formControlName="travel_type" [options]="travelTypeOptions" />
+          </app-field>
+          <app-field label="Gepäck" [optional]="true">
+            <app-select formControlName="baggage_type" [options]="baggageTypeOptions" />
+          </app-field>
+        </div>
+        <app-field label="Notiz" [optional]="true">
+          <textarea id="trip-notes" formControlName="notes" rows="3" maxlength="5000"></textarea>
+        </app-field>
+      </div>
+    }
+    @if (editTripId()) {
+      <app-connections objectType="TRIP" [objectId]="editTripId()!" />
+    }
   }
 </app-modal-form>
 
@@ -255,28 +261,33 @@
 </app-modal-form>
 
 <app-modal-form
-  icon="bell"
+  icon="check-circle"
   [formGroup]="taskForm"
-  [title]="editTaskId() ? 'Erinnerung bearbeiten' : 'Erinnerung hinzufügen'"
+  [title]="editTaskId() ? 'Aufgabe bearbeiten' : 'Aufgabe hinzufügen'"
   [open]="taskEditor()"
   [saving]="taskSaving()"
   [error]="taskFormError()"
-  [deleteLabel]="editTaskId() ? 'Erinnerung löschen' : ''"
+  [deleteLabel]="editTaskId() ? 'Aufgabe löschen' : ''"
   (submitted)="saveTaskForm()"
   (closed)="closeTaskEditor()"
   (deleted)="removeTaskFromEditor()"
 >
   <app-field label="Titel">
-    <input id="task-item-title" formControlName="title" maxlength="120" required placeholder="z. B. Online Check-in öffnen" />
+    <input id="task-item-title" formControlName="title" maxlength="120" required placeholder="z. B. Online Check-in" />
   </app-field>
   <div class="field-row">
-    <app-field label="Datum" [optional]="true">
+    <app-field label="Fällig am" [optional]="true">
       <app-date-picker mode="date" formControlName="due_date" [clearable]="true" />
     </app-field>
     <app-field label="Uhrzeit" [optional]="true">
       <app-time-picker formControlName="due_time" [clearable]="true" />
     </app-field>
   </div>
+  @if ((selectedTrip()?.participants?.length ?? 0) > 1) {
+    <app-field label="Wer kümmert sich?" [optional]="true">
+      <app-select formControlName="assignee" [options]="assigneeOptions()" />
+    </app-field>
+  }
   <app-field label="Notiz" [optional]="true">
     <input id="task-item-note" formControlName="note" maxlength="240" />
   </app-field>
@@ -301,7 +312,7 @@
     <app-field [label]="'Betrag in ' + (selectedTrip()?.currency ?? 'EUR')">
       <input id="expense-amount" formControlName="amount" inputmode="decimal" required />
     </app-field>
-    <app-field label="Datum">
+    <app-field label="Bezahlt am" hint="Darf vor der Reise liegen.">
       <app-date-picker mode="date" formControlName="date" />
     </app-field>
   </div>
@@ -312,18 +323,23 @@
 
 <app-modal-form
   icon="coins"
-  title="Budget planen"
+  title="Reisebudget"
   [open]="planEditor()"
   [saving]="planSaving()"
   [error]="planError()"
-  closeLabel="Budget planen schließen"
+  closeLabel="Reisebudget schließen"
   (submitted)="savePlan()"
   (closed)="closePlanEditor()"
 >
-  <app-field [label]="'Gesamtbudget in ' + (selectedTrip()?.currency ?? 'EUR')" [optional]="true" hint="Leer lassen: die Summe der Kategorien gilt als Budget.">
-    <input id="plan-total" inputmode="decimal" [value]="planTotal()" (input)="planTotal.set($any($event.target).value)" />
-  </app-field>
-  <p class="setup-hint">Geplant je Kategorie – leer oder 0 heißt „nicht geplant“.</p>
+  <div class="field-row">
+    <app-field label="Gesamtbudget" [optional]="true" hint="Leer lassen: die Summe der Kategorien gilt.">
+      <input id="plan-total" inputmode="decimal" placeholder="z. B. 700" [value]="planTotal()" (input)="planTotal.set($any($event.target).value)" />
+    </app-field>
+    <app-field label="Währung">
+      <app-select [options]="currencyOptions" [value]="planCurrency()" (valueChange)="planCurrency.set($any($event))" />
+    </app-field>
+  </div>
+  <p class="setup-hint">Optional je Kategorie planen – leer heißt „nicht geplant“.</p>
   <ul class="budget-plan">
     @for (c of budgetCategoryOrder; track c) {
       <li>
@@ -333,15 +349,15 @@
       </li>
     }
   </ul>
-  <p class="budget-plan__sum">Geplant gesamt: <b>{{ formatMoney(planSum(), selectedTrip()?.currency ?? 'EUR', true) }}</b></p>
+  <p class="budget-plan__sum">Geplant je Kategorie: <b>{{ formatMoney(planSum(), planCurrency(), true) }}</b></p>
 </app-modal-form>
 
 <app-modal [open]="!!participantsEditorTrip()" labelledBy="participants-heading" closeLabel="Schließen" (closed)="closeParticipantsEditor()">
   <div class="form participants-editor">
     <h2 id="participants-heading">Teilnehmer – {{ participantsEditorTrip()?.title }}</h2>
-    <p class="muted small">Teilnehmer sehen nur diese Reise — nie deine privaten Finanzen, Haushaltsaufgaben, Organisation oder andere Reisen.</p>
+    <p class="muted small">Teilnehmer sehen nur diese Reise – nie deine Finanzen, deinen Haushalt, deine Organisation oder andere Reisen.</p>
     @if (participantsError()) {
-      <p class="field-error"  [appErrorNotice]="participantsError()">{{ participantsError() }}</p>
+      <p class="field-error" [appErrorNotice]="participantsError()">{{ participantsError() }}</p>
     }
     <ul class="list">
       @for (p of participantsEditorTrip()?.participants ?? []; track p.id) {
@@ -361,7 +377,7 @@
             <span class="row__meta">{{ participantRoleLabels[p.role] }}</span>
           }
           @if (canManageParticipants() || p.is_self) {
-            <button type="button" class="icon-btn" [attr.aria-label]="(p.is_self ? 'Reise verlassen' : p.display_name + ' entfernen')" (click)="removeParticipant(p)">
+            <button type="button" class="icon-btn" [attr.aria-label]="p.is_self ? 'Reise verlassen' : p.display_name + ' entfernen'" (click)="removeParticipant(p)">
               <app-icon name="trash" />
             </button>
           }
@@ -389,21 +405,37 @@
 <app-modal [open]="!!smartSetupTrip() && !smartSetupReview()" labelledBy="smart-setup-heading" closeLabel="Vorschläge überspringen" (closed)="skipSmartSetup()">
   <div class="form smart-setup">
     <span class="smart-setup-icon" aria-hidden="true"><app-icon name="bulb" /></span>
-    <h2 id="smart-setup-heading">Deine Reise ist vorbereitet.</h2>
-    <p class="muted">Wir haben passende Packvorschläge und Aufgaben für deine Reise vorbereitet.</p>
+    <h2 id="smart-setup-heading">Reise erstellt</h2>
+    <p class="muted">Möchtest du mit Vorschlägen für Packliste und Aufgaben starten? Du entscheidest, was übernommen wird.</p>
     <div class="smart-setup-actions">
-      <button type="button" class="secondary" (click)="reviewSmartSetup()">Vorschläge prüfen</button>
-      <button type="button" class="primary" [disabled]="smartSetupSaving()" (click)="acceptAllSmartSetup()">Alles passende übernehmen</button>
-      <button type="button" class="btn-link" (click)="skipSmartSetup()">Überspringen</button>
+      <button type="button" class="primary" (click)="reviewSmartSetup()">Vorschläge ansehen</button>
+      <button type="button" class="btn-link" (click)="skipSmartSetup()">Ohne Vorschläge starten</button>
     </div>
   </div>
 </app-modal>
 
-<app-modal [open]="!!smartSetupTrip() && smartSetupReview()" labelledBy="smart-setup-review-heading" closeLabel="Zurück" (closed)="smartSetupReview.set(false)">
+<app-modal [open]="!!smartSetupTrip() && smartSetupReview()" labelledBy="smart-setup-review-heading" closeLabel="Vorschläge schließen" (closed)="skipSmartSetup()">
   <div class="form smart-setup-review">
     <h2 id="smart-setup-review-heading">Vorschläge für {{ smartSetupTrip()?.title }}</h2>
+    <p class="muted small">Feste Vorlagen je nach Reiseart, Transport und Gepäck – angehakt wird übernommen.</p>
     @if (smartSetupError()) {
-      <p class="field-error"  [appErrorNotice]="smartSetupError()">{{ smartSetupError() }}</p>
+      <p class="field-error" [appErrorNotice]="smartSetupError()">{{ smartSetupError() }}</p>
+    }
+    @if (smartSetupEmpty()) {
+      <p class="muted">Alles Vorgeschlagene steht schon auf deinen Listen.</p>
+    }
+    @if (smartSetupSuggestions().tasks.length) {
+      <h3>Aufgaben</h3>
+      <ul class="suggestion-list">
+        @for (task of smartSetupSuggestions().tasks; track task.title; let i = $index) {
+          <li>
+            <label class="checkbox">
+              <input type="checkbox" [checked]="smartSetupTasksChecked()[i]" (change)="toggleTaskSuggestion(i)" />
+              {{ task.title }}
+            </label>
+          </li>
+        }
+      </ul>
     }
     @if (smartSetupSuggestions().packing.length) {
       <h3>Packliste</h3>
@@ -421,27 +453,14 @@
         </ul>
       }
     }
-    @if (smartSetupSuggestions().tasks.length) {
-      <h3>Aufgaben</h3>
-      <ul class="suggestion-list">
-        @for (task of smartSetupSuggestions().tasks; track task.title; let i = $index) {
-          <li>
-            <label class="checkbox">
-              <input type="checkbox" [checked]="smartSetupTasksChecked()[i]" (change)="toggleTaskSuggestion(i)" />
-              {{ task.title }}
-            </label>
-          </li>
-        }
-      </ul>
-    }
     <div class="smart-setup-actions">
-      <button type="button" class="btn-link" [disabled]="smartSetupSaving()" (click)="skipSmartSetup()">Überspringen</button>
-      <button type="button" class="primary" [disabled]="smartSetupSaving()" (click)="acceptSelectedSmartSetup()">
+      <button type="button" class="primary" [disabled]="smartSetupSaving() || smartSetupEmpty()" (click)="acceptSelectedSmartSetup()">
         @if (smartSetupSaving()) {
           <span class="save-spinner" aria-hidden="true"></span>
         }
-        Übernehmen
+        Angehakte übernehmen
       </button>
+      <button type="button" class="btn-link" [disabled]="smartSetupSaving()" (click)="skipSmartSetup()">Nichts übernehmen</button>
     </div>
   </div>
 </app-modal>

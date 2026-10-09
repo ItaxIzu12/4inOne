@@ -96,5 +96,6 @@ def test_datum_is_independent_of_the_technical_created_at_timestamp(client_and_c
     from finanzen.models import Transaction
 
     transaction = Transaction.objects.get(pk=response.data['id'])
-    assert transaction.created_at.date() == timezone.localdate()
+    # In Ortszeit vergleichen — sonst schlägt der Test zwischen Mitternacht und 2 Uhr fehl (UTC ist noch „gestern“).
+    assert timezone.localtime(transaction.created_at).date() == timezone.localdate()
     assert transaction.datum == gewaehltes_datum

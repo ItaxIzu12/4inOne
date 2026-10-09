@@ -68,6 +68,22 @@ def test_contributions_list_is_own_and_newest_first(users):
     ]
 
 
+def test_contributions_in_a_date_range_are_complete_and_validated(users):
+    a, b, c = users
+    MonthlyBudget.objects.create(owner=a, amount=Decimal('100000'), month=date(2000, 1, 1), open_ended=True)
+    goal = SavingsGoal.objects.create(owner=a, title='Japan', target_amount=Decimal('3000'))
+    for day in (1, 5, 6, 7, 20):
+        SavingsContribution.objects.create(owner=a, goal=goal, amount=Decimal('10'), date=date(2026, 10, day))
+    foreign = SavingsGoal.objects.create(owner=b, title='Fremd', target_amount=Decimal('100'))
+    SavingsContribution.objects.create(owner=b, goal=foreign, amount=Decimal('99'), date=date(2026, 10, 6))
+
+    rows = c.get(BASE + 'goals/einzahlungen/', {'von': '2026-10-05', 'bis': '2026-10-07'}).data
+    assert [r['date'] for r in rows] == ['2026-10-07', '2026-10-06', '2026-10-05']
+    assert c.get(BASE + 'goals/einzahlungen/', {'von': '2026-10-07', 'bis': '2026-10-05'}).status_code == 400
+    assert c.get(BASE + 'goals/einzahlungen/', {'von': '2026-01-01', 'bis': '2027-06-01'}).status_code == 400
+    assert c.get(BASE + 'goals/einzahlungen/', {'von': 'gestern', 'bis': '2026-10-05'}).status_code == 400
+
+
 def test_contributions_need_login():
     assert APIClient().get(BASE + 'goals/einzahlungen/').status_code in (401, 403)
 

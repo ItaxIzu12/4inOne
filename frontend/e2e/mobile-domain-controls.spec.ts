@@ -6,14 +6,17 @@ for (const width of [320, 360, 390]) {
     await page.route('http://localhost:8000/api/**', route => route.abort());
     let geometry: number[] | undefined;
     for (const [domain, tab, label] of [
-      ['finanzen', 'expenses', 'Ausgabe erfassen'], ['haushalt', 'aufgaben', 'Neue Aufgabe'],
-      ['organisation', 'calendar', 'Termin erstellen'], ['reisen', 'reisen', 'Neue Reise'],
+      ['finanzen', 'expenses', 'Ausgabe erfassen'], ['haushalt', 'aufgaben', 'Aufgabe hinzufügen'],
+      ['organisation', 'calendar', 'Termin hinzufügen'],
     ]) {
-      // Übersicht: bewusst kein Hauptknopf — weder im Kopf noch unten.
+      // Übersicht: bewusst kein Hauptknopf — weder im Kopf noch unten. Organisation hat keine eigene
+      // Übersicht (das Dashboard übernimmt sie) und startet direkt im Kalender.
       await page.goto(`/demo/${domain}`);
       await expect(page.locator('.domain-tabs')).toBeVisible();
-      await expect(page.locator('app-mobile-action')).toHaveCount(0);
-      await expect(page.locator('.domain-heading button')).toHaveCount(0);
+      if (domain !== 'organisation') {
+        await expect(page.locator('app-mobile-action')).toHaveCount(0);
+        await expect(page.locator('.domain-heading button')).toHaveCount(0);
+      }
       if (domain === 'finanzen') {
         // Die Kennzahlen beginnen unter dem Kopf (mit der Monatsauswahl), nie darüber oder darin
         const card = await page.locator('.domain-sticky').boundingBox();
@@ -40,20 +43,6 @@ for (const width of [320, 360, 390]) {
       if (geometry) expect(current).toEqual(geometry);
       geometry = current;
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      if (domain === 'reisen') {
-        const tabs = page.locator('nav.tabs button');
-        await expect(tabs).toHaveCount(5);
-        const tops = await tabs.evaluateAll(els => els.map(el => el.getBoundingClientRect().top));
-        expect(new Set(tops).size).toBe(1);
-        await tabs.filter({ hasText: 'Budget' }).click();
-        await expect(tabs.filter({ hasText: 'Budget' })).toHaveAttribute('aria-current');
-        // der Hauptknopf folgt dem Reiter
-        await expect(button).toHaveText('Ausgabe erfassen');
-        await tabs.filter({ hasText: 'Reisen' }).click();
-        // der Reiterwechsel schreibt die Adresse um; erst danach scrollen
-        await expect(page).toHaveURL(/tab=reisen/);
-        await expect(button).toHaveText('Neue Reise');
-      }
       const sticky = page.locator('.domain-sticky');
       await expect(sticky).toHaveCSS('box-shadow', 'none');
       await expect(sticky).toHaveCSS('border-radius', '20px');
@@ -79,5 +68,33 @@ for (const width of [320, 360, 390]) {
       }
       await page.screenshot({ path: `test-results/mobile-controls-${domain}-${width}.png` });
     }
+  });
+}
+
+// Reisen V1: Meine Reisen hat keine Reiter, nur „Reise erstellen“ (am Handy unten); in einer Reise vier Reiter in einer
+// Zeile, „Bearbeiten“ bleibt im Kopf erreichbar und es gibt keinen schwebenden Knopf.
+for (const width of [320, 360, 390]) {
+  test(`Reisen: mobile actions at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 850 });
+    await page.route('http://localhost:8000/api/**', (route) => route.abort());
+    await page.goto('/demo/reisen');
+    const action = page.locator('app-mobile-action button');
+    await expect(action).toHaveText('Reise erstellen');
+    await expect(page.locator('.domain-heading > button')).toBeHidden();
+    await expect(page.locator('nav.tabs')).toHaveCount(0);
+
+    await page.goto('/demo/reisen?trip=1&tab=budget');
+    const tabs = page.locator('nav.tabs button');
+    await expect(tabs).toHaveCount(4);
+    const tops = await tabs.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().top));
+    expect(new Set(tops).size).toBe(1);
+    await expect(tabs.filter({ hasText: 'Budget' })).toHaveAttribute('aria-current');
+    await expect(page.locator('app-mobile-action')).toHaveCount(0);
+    const edit = page.getByRole('button', { name: 'Reise bearbeiten' });
+    await expect(edit).toBeVisible();
+    const box = await edit.boundingBox();
+    expect(box!.width).toBeGreaterThanOrEqual(44);
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }

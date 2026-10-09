@@ -1,6 +1,5 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
-import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,34 +14,54 @@ import { ModalForm } from '../../shared/form/modal-form';
 import { AppTimePicker } from '../../shared/form/time-picker';
 import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { Modal } from '../../shared/modal/modal';
-import { BudgetCategory, ContactOption, PackingCategory, PackingItem, ReisenApi, Trip, TripBudgetCategory, TripExpense, TripParticipant, TripTask } from './reisen-api.service';
+import { ConnectionsSection } from '../../shared/connections/connections-section';
+import {
+  BudgetCategory,
+  ContactOption,
+  PackingCategory,
+  PackingItem,
+  ReisenApi,
+  Trip,
+  TripBudgetCategory,
+  TripExpense,
+  TripParticipant,
+  TripTask,
+} from './reisen-api.service';
 import { buildTripSuggestions, SuggestedPackingItem, SuggestedTask } from './trip-suggestions';
-import { buildTripReadiness, TripReadiness } from './trip-readiness';
-import { TripList, TripTarget } from './trip-list';
+import { TripList } from './trip-list';
 import { TripPacking } from './trip-packing';
 import { TripBudget } from './trip-budget';
-import { TripReminders } from './trip-reminders';
-import { TripOverview } from './trip-overview';
-import { BUDGET_META, BUDGET_ORDER, PACKING_META, PACKING_ORDER, STATUS_LABELS, STATUS_ORDER, formatMoney, localDay, totalBudget, tripIcon } from './reisen-logic';
+import { TripPlanning } from './trip-planning';
+import { TripOverview, TripTab } from './trip-overview';
+import {
+  BUDGET_META,
+  BUDGET_ORDER,
+  PACKING_META,
+  PACKING_ORDER,
+  STATUS_LABELS,
+  STATUS_ORDER,
+  STATUS_TONE,
+  dateRange,
+  formatMoney,
+  localDay,
+  longRange,
+  shortRange,
+  totalBudget,
+  tripIcon,
+} from './reisen-logic';
 
 export { formatMoney, localDay } from './reisen-logic';
+export type { TripTab } from './trip-overview';
 
-export type ReisenTab = 'uebersicht' | 'reisen' | 'packlisten' | 'budget' | 'erinnerungen';
-const TABS: { key: ReisenTab; label: string; icon: IconName }[] = [
+/** Innerhalb einer Reise genau vier Reiter (docs/REISEN_V1.md). */
+const TABS: { key: TripTab; label: string; icon: IconName }[] = [
   { key: 'uebersicht', label: 'Übersicht', icon: 'home' },
-  { key: 'reisen', label: 'Reisen', icon: 'travel' },
-  { key: 'packlisten', label: 'Packlisten', icon: 'luggage' },
+  { key: 'planung', label: 'Planung', icon: 'check-circle' },
+  { key: 'packliste', label: 'Packliste', icon: 'luggage' },
   { key: 'budget', label: 'Budget', icon: 'coins' },
-  { key: 'erinnerungen', label: 'Erinnerungen', icon: 'bell' },
 ];
-// Hauptknopf im Seitenkopf, passend zum Reiter.
-const HEAD_ACTIONS: Record<ReisenTab, string> = {
-  uebersicht: '',
-  reisen: 'Neue Reise',
-  packlisten: 'Element hinzufügen',
-  budget: 'Ausgabe erfassen',
-  erinnerungen: 'Erinnerung hinzufügen',
-};
+/** Alte Links (vor V1) landen im passenden neuen Reiter. */
+const LEGACY_TABS: Record<string, TripTab> = { packlisten: 'packliste', erinnerungen: 'planung' };
 
 @Component({
   selector: 'app-reisen',
@@ -59,12 +78,12 @@ const HEAD_ACTIONS: Record<ReisenTab, string> = {
     AppSelect,
     AppDatePicker,
     AppTimePicker,
-    DatePipe,
+    ConnectionsSection,
     TripList,
+    TripOverview,
+    TripPlanning,
     TripPacking,
     TripBudget,
-    TripReminders,
-    TripOverview,
     MobileAction,
   ],
   templateUrl: './reisen.html',
@@ -78,39 +97,34 @@ export class Reisen {
   private router = inject(Router);
   protected readonly formatMoney = formatMoney;
   protected readonly tripIcon = tripIcon;
+  protected readonly range = dateRange;
+  protected readonly shortRange = shortRange;
+  protected readonly longRange = longRange;
 
   readonly tabs = TABS;
-  readonly tab = signal<ReisenTab>(tabFromQuery(this.route.snapshot.queryParamMap.get('tab')));
-  /** Ohne gewählte Reise oder ohne Schreibrecht führt der Hauptknopf zu „Neue Reise“ — Text und Aktion passen zusammen. */
-  readonly headAction = computed(() => {
-    const tab = this.tab();
-    const tripTab = tab === 'packlisten' || tab === 'budget' || tab === 'erinnerungen';
-    return tripTab && (!this.selectedTrip() || !this.canEdit()) ? HEAD_ACTIONS.reisen : HEAD_ACTIONS[tab];
-  });
+  readonly statusLabels = STATUS_LABELS;
+  readonly statusTone = STATUS_TONE;
+
+  // ---------- Navigation: Meine Reisen ↔ eine Reise ----------
+  /** Aus ?trip= — null zeigt „Meine Reisen“. */
+  readonly selectedTripId = signal<number | null>(null);
+  readonly tab = signal<TripTab>('uebersicht');
+
   readonly trips = signal<Trip[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
-  readonly selectedTripId = signal<number | null>(null);
   readonly selectedTrip = computed(() => this.trips().find((t) => t.id === this.selectedTripId()) ?? null);
-  readonly tripOptions = computed<SelectOption[]>(() =>
-    this.trips().map((t) => ({ value: String(t.id), label: t.title })),
-  );
-  readonly selectedTripValue = computed(() => (this.selectedTripId() !== null ? String(this.selectedTripId()) : ''));
-  /** Nächste bevorstehende Reise (heute oder später) für die Hervorhebung in der Übersicht — sonst, falls keine
-   * bevorstehende existiert, die zuletzt angelegte, damit die Karte nie grundlos leer bleibt, obwohl Reisen
-   * existieren. */
-  readonly nextTrip = computed(() => {
-    const today = localDay(new Date());
-    const upcoming = this.trips()
-      .filter((t) => t.status !== 'CANCELLED' && t.start_date >= today)
-      .sort((a, b) => a.start_date.localeCompare(b.start_date));
-    return upcoming[0] ?? this.trips()[0] ?? null;
+  /** ?trip= zeigt auf eine Reise, die es nicht (mehr) gibt oder die man nicht sehen darf — gleiche Meldung für beides. */
+  readonly missingTrip = computed(() => !this.loading() && !this.error() && this.selectedTripId() !== null && !this.selectedTrip());
+  /** Schreiben darf, wer die Reise angelegt hat oder als Besitzer/Bearbeiter mitreist. */
+  readonly canEdit = computed(() => {
+    const role = this.selectedTrip()?.my_role;
+    return role === 'OWNER' || role === 'EDITOR';
   });
+  readonly isOwner = computed(() => this.selectedTrip()?.my_role === 'OWNER');
 
   readonly statusOptions: SelectOption[] = STATUS_ORDER.map((value) => ({ value, label: STATUS_LABELS[value] }));
-  readonly statusLabels = STATUS_LABELS;
-  // Alle drei mit führender "Keine Angabe"-Option: ausschließlich als Grundlage für die Smart-Setup-Vorschläge
-  // gedacht, deshalb nie erzwungen (siehe trip-suggestions.ts).
+  // Optional und nur Grundlage für die Vorschläge (trip-suggestions.ts) — deshalb immer mit „Keine Angabe“.
   readonly travelTypeOptions: SelectOption[] = [
     { value: '', label: 'Keine Angabe' },
     { value: 'CITY_TRIP', label: 'Städtereise' },
@@ -136,23 +150,17 @@ export class Reisen {
     { value: 'CAR_LUGGAGE', label: 'Gepäck im Auto' },
     { value: 'UNKNOWN', label: 'Noch unklar' },
   ];
-  // Reihenfolge, in der die Packliste gruppiert angezeigt wird (siehe packingGroups()).
   readonly packingCategoryOrder: PackingCategory[] = PACKING_ORDER;
   readonly packingCategoryLabels = Object.fromEntries(PACKING_ORDER.map((c) => [c, PACKING_META[c].label])) as Record<PackingCategory, string>;
-  readonly packingCategoryOptions: SelectOption[] = this.packingCategoryOrder.map((value) => ({
-    value,
-    label: this.packingCategoryLabels[value],
-  }));
+  readonly packingCategoryOptions: SelectOption[] = PACKING_ORDER.map((value) => ({ value, label: PACKING_META[value].label }));
   readonly currencyOptions: SelectOption[] = [
     { value: 'EUR', label: 'Euro (€)' },
     { value: 'USD', label: 'US-Dollar ($)' },
     { value: 'GBP', label: 'Britisches Pfund (£)' },
     { value: 'CHF', label: 'Schweizer Franken (CHF)' },
   ];
-  // Reihenfolge, in der das geplante Budget je Kategorie angezeigt wird (siehe budgetCategoryRows()).
   readonly budgetCategoryOrder: BudgetCategory[] = BUDGET_ORDER;
   readonly budgetMeta = BUDGET_META;
-  readonly budgetCategoryLabels = Object.fromEntries(BUDGET_ORDER.map((c) => [c, BUDGET_META[c].label])) as Record<BudgetCategory, string>;
   readonly budgetCategoryOptions: SelectOption[] = BUDGET_ORDER.map((value) => ({ value, label: BUDGET_META[value].label }));
   readonly participantRoleOptions: SelectOption[] = [
     { value: 'VIEWER', label: 'Betrachter' },
@@ -170,100 +178,53 @@ export class Reisen {
   readonly editTripId = signal<number | undefined>(undefined);
   readonly tripSaving = signal(false);
   readonly tripFormError = signal('');
-  /** Reisen desselben Nutzers, die sich mit dem gerade eingegebenen Zeitraum überschneiden — siehe
-   * checkTripOverlaps() in reisen-api.service.ts. Nicht leer: die Warnung ersetzt die Formularfelder,
-   * bis der Nutzer "Daten ändern" oder "Trotzdem erstellen" wählt (dismissOverlapWarning()/erneuter
-   * saveTrip()-Aufruf). Rein informativ, blockiert das Speichern nie automatisch. */
+  readonly tripMoreOpen = signal(false);
+  /** Reisen, die sich mit dem eingegebenen Zeitraum überschneiden. Nicht leer: die Warnung ersetzt das Formular,
+   * bis „Daten prüfen“ oder „Trotzdem speichern“ gewählt wird. Blockiert nie von selbst. */
   readonly tripOverlaps = signal<Trip[]>([]);
   readonly tripForm = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(120)]],
-    destination: ['', Validators.maxLength(160)],
+    destination: ['', [Validators.required, Validators.maxLength(160)]],
+    departure: ['', Validators.maxLength(120)],
     start_date: ['', Validators.required],
     end_date: ['', Validators.required],
     status: ['PLANNED'],
     travel_type: [''],
     transport_type: [''],
     baggage_type: [''],
-    budget_amount: [''],
-    currency: ['EUR'],
     accommodation: ['', Validators.maxLength(160)],
     accommodation_area: ['', Validators.maxLength(120)],
     transport_note: ['', Validators.maxLength(160)],
     notes: ['', Validators.maxLength(5000)],
   });
+  readonly tripTouched = signal(false);
+  readonly titleError = computed(() => (this.tripTouched() && !this.tripValue().title.trim() ? 'Bitte gib der Reise einen Namen.' : ''));
+  readonly destinationError = computed(() => (this.tripTouched() && !this.tripValue().destination.trim() ? 'Bitte gib ein Reiseziel an.' : ''));
+  readonly startError = computed(() => (this.tripTouched() && !this.tripValue().start_date ? 'Bitte wähle den ersten Reisetag.' : ''));
+  readonly endError = computed(() => {
+    const v = this.tripValue();
+    if (!this.tripTouched()) return '';
+    if (!v.end_date) return 'Bitte wähle den letzten Reisetag.';
+    return v.start_date && v.end_date < v.start_date ? 'Das Ende darf nicht vor dem Beginn liegen.' : '';
+  });
+  private readonly tripValue = signal(this.tripForm.getRawValue());
 
-  // ---------- Reisedetails der ausgewählten Reise ----------
+  // ---------- Inhalte der geöffneten Reise ----------
   readonly packing = signal<PackingItem[]>([]);
   readonly tasks = signal<TripTask[]>([]);
   readonly expenses = signal<TripExpense[]>([]);
   readonly budgetCategories = signal<TripBudgetCategory[]>([]);
   readonly detailLoading = signal(false);
   readonly detailError = signal('');
+  readonly actionError = signal('');
+  readonly quickBusy = signal(false);
 
   readonly packingPackedCount = computed(() => this.packing().filter((i) => i.is_packed).length);
-  /** Kein irreführendes 100 %, wenn noch gar keine Packitems existieren (siehe Anforderung) — dann einfach 0. */
-  readonly packingProgress = computed(() => {
-    const items = this.packing();
-    return items.length ? Math.round((this.packingPackedCount() / items.length) * 100) : 0;
-  });
-  /** Gruppiert nach Kategorie, in fester Reihenfolge, leere Kategorien werden ausgeblendet — siehe
-   * packingCategoryOrder. Abgehakte Artikel landen innerhalb ihrer Gruppe ans Ende (is_packed zuletzt in der
-   * Server-Sortierung), das bleibt hier erhalten, weil die Reihenfolge von packing() übernommen wird. */
-  readonly packingGroups = computed(() => {
-    const items = this.packing();
-    return this.packingCategoryOrder
-      .map((category) => ({
-        category,
-        label: this.packingCategoryLabels[category],
-        items: items.filter((i) => i.category === category),
-      }))
-      .filter((group) => group.items.length > 0);
-  });
   readonly openTasks = computed(() => this.tasks().filter((t) => t.status === 'OPEN'));
-  /** Reisebereitschaft der GEÖFFNETEN (ausgewählten) Reise — siehe trip-readiness.ts für die Berechnungsregel.
-   * Packliste/Aufgaben kommen bewusst aus packing()/tasks() (den geladenen Detail-Listen), nicht aus den in
-   * Trip eingebetteten Summenfeldern: togglePacking()/toggleTask() aktualisieren nur diese Listen optimistisch,
-   * ohne die Trip-Liste neu zu laden — sonst würde die Prozentzahl nach dem Abhaken nicht sofort mitziehen. */
-  readonly readiness = computed<TripReadiness | null>(() => {
-    const trip = this.selectedTrip();
-    if (!trip) return null;
-    return buildTripReadiness({
-      start_date: trip.start_date,
-      end_date: trip.end_date,
-      packing_total: this.packing().length,
-      packing_packed: this.packingPackedCount(),
-      tasks_total: this.tasks().length,
-      tasks_open: this.openTasks().length,
-      budget_amount: trip.budget_amount,
-    });
-  });
   readonly budgetTotal = computed(() => totalBudget(this.selectedTrip(), this.budgetCategories()));
-  /** Schreiben darf, wer die Reise angelegt hat oder als Besitzer/Bearbeiter mitreist. */
-  readonly canEdit = computed(() => {
-    const role = this.selectedTrip()?.my_role;
-    return role === 'OWNER' || role === 'EDITOR';
-  });
-  /** Hochzählen lädt die Erinnerungen neu (nach Anlegen/Ändern einer Erinnerung). */
-  readonly reminderVersion = signal(0);
   readonly budgetSpent = computed(() => this.expenses().reduce((sum, e) => sum + Number(e.amount), 0));
-  readonly budgetProgress = computed(() => {
-    const total = this.budgetTotal();
-    return total > 0 ? Math.min(100, (this.budgetSpent() / total) * 100) : this.budgetSpent() > 0 ? 100 : 0;
-  });
-  /** Feste Reihenfolge, jede Kategorie erscheint immer (auch ohne gespeicherte Zeile, dann 0) — siehe
-   * ANZEIGE-Beispiel: "Geplant: Transport 500 €, Unterkunft 400 €, ...". Bewusst kein Ist-je-Kategorie, nur
-   * geplant (siehe TripBudgetCategory-Docstring im Backend). */
-  readonly budgetCategoryRows = computed(() => {
-    const rows = this.budgetCategories();
-    return this.budgetCategoryOrder.map((category) => ({
-      category,
-      label: this.budgetCategoryLabels[category],
-      row: rows.find((r) => r.category === category) ?? null,
-    }));
-  });
-  readonly budgetCategoryTotal = computed(() => this.budgetCategories().reduce((sum, r) => sum + Number(r.planned_amount), 0));
 
-  // ---------- Packliste anlegen/bearbeiten ----------
+  // ---------- Packliste: Formular ----------
   readonly packingEditor = signal(false);
   readonly editPackingId = signal<number | undefined>(undefined);
   readonly packingSaving = signal(false);
@@ -275,7 +236,7 @@ export class Reisen {
     note: ['', Validators.maxLength(240)],
   });
 
-  // ---------- Aufgaben anlegen/bearbeiten ----------
+  // ---------- Aufgaben: Formular ----------
   readonly taskEditor = signal(false);
   readonly editTaskId = signal<number | undefined>(undefined);
   readonly taskSaving = signal(false);
@@ -284,10 +245,16 @@ export class Reisen {
     title: ['', [Validators.required, Validators.maxLength(120)]],
     due_date: [''],
     due_time: [''],
+    assignee: [''],
     note: ['', Validators.maxLength(240)],
   });
+  /** Zuständig sein kann jede Person, die mitreist (Backend prüft dasselbe). */
+  readonly assigneeOptions = computed<SelectOption[]>(() => [
+    { value: '', label: 'Niemand bestimmtes' },
+    ...(this.selectedTrip()?.participants ?? []).map((p) => ({ value: String(p.user), label: p.is_self ? `${p.display_name} (Du)` : p.display_name })),
+  ]);
 
-  // ---------- Ausgaben anlegen/bearbeiten ----------
+  // ---------- Ausgaben: Formular ----------
   readonly expenseEditor = signal(false);
   readonly editExpenseId = signal<number | undefined>(undefined);
   readonly expenseSaving = signal(false);
@@ -299,31 +266,36 @@ export class Reisen {
     category: ['SONSTIGES'],
   });
 
-  // ---------- Budget planen ----------
+  // ---------- Budget festlegen ----------
   readonly planEditor = signal(false);
   readonly planSaving = signal(false);
   readonly planError = signal('');
   readonly planTotal = signal('');
+  readonly planCurrency = signal<Trip['currency']>('EUR');
   readonly planDraft = signal<Record<string, string>>({});
   readonly planSum = computed(() =>
     Object.values(this.planDraft()).reduce((sum, raw) => sum + (Number(raw.replace(',', '.')) || 0), 0),
   );
-  readonly actionError = signal('');
 
   constructor() {
+    this.tripForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.tripValue.set(this.tripForm.getRawValue()));
+    // Die Adresse ist die Quelle: ?trip= öffnet eine Reise, ?tab= den Reiter — so funktionieren Zurück-Taste und
+    // Links aus Dashboard oder Verknüpfungen.
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const id = Number(params.get('trip'));
+      this.selectedTripId.set(Number.isInteger(id) && id > 0 ? id : null);
+      const raw = params.get('tab') ?? '';
+      const tab = (LEGACY_TABS[raw] ?? raw) as TripTab;
+      this.tab.set(TABS.some((t) => t.key === tab) ? tab : 'uebersicht');
+      this.actionError.set('');
+    });
     this.load();
-    // Ein Wechsel der ausgewählten Reise lädt Packliste/Aufgaben/Ausgaben neu — dieselbe Reise bleibt über
-    // Übersicht, Packliste, Aufgaben und Budget hinweg ausgewählt (siehe selectTrip()).
     effect(() => {
-      const id = this.selectedTripId();
+      const trip = this.selectedTrip();
+      const id = trip?.id ?? null;
       untracked(() => {
         if (id !== null) this.loadTripDetail(id);
-        else {
-          this.packing.set([]);
-          this.tasks.set([]);
-          this.expenses.set([]);
-          this.budgetCategories.set([]);
-        }
+        else this.clearDetail();
       });
     });
   }
@@ -338,17 +310,6 @@ export class Reisen {
         next: (trips) => {
           this.trips.set(trips);
           this.loading.set(false);
-          // Deep-Link aus einer Verknüpfung (?trip=), z. B. vom Sparziel in Finanzen.
-          const linked = Number(this.route.snapshot.queryParamMap.get('trip'));
-          if (linked && trips.some((t) => t.id === linked)) {
-            // Der Reiter kommt aus ?tab= (Standard: Übersicht).
-            this.selectedTripId.set(linked);
-            return;
-          }
-          const current = this.selectedTripId();
-          if (current === null || !trips.some((t) => t.id === current)) {
-            this.selectedTripId.set(this.nextTrip()?.id ?? trips[0]?.id ?? null);
-          }
         },
         error: () => {
           this.loading.set(false);
@@ -356,23 +317,29 @@ export class Reisen {
         },
       });
   }
-
-  /** Zähler der Reisen (gepackt, offene Aufgaben, ausgegeben) leise neu laden — ohne Ladezustand, damit die
-   * Reiter ihren Zustand (Filter, aufgeklappte Gruppen) behalten. */
+  /** Zähler auf den Karten leise aktualisieren — ohne Ladezustand, damit nichts springt. */
   refreshTrips(): void {
     this.api
       .trips()
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({ next: (trips) => this.trips.set(trips), error: () => undefined });
   }
-
-  /** Erneuter Ladeversuch nach einem detailError() — ein zweites selectTrip(id) mit DERSELBEN ID würde den
-   * Signal-Effect nicht erneut auslösen (kein Werte­wechsel), deshalb ein eigener Einstiegspunkt fürs Template. */
+  private detailFor: number | null = null;
+  private clearDetail(): void {
+    this.detailFor = null;
+    this.packing.set([]);
+    this.tasks.set([]);
+    this.expenses.set([]);
+    this.budgetCategories.set([]);
+  }
   retryTripDetail(): void {
     const id = this.selectedTripId();
-    if (id !== null) this.loadTripDetail(id);
+    if (id !== null) this.loadTripDetail(id, true);
   }
-  private loadTripDetail(tripId: number): void {
+  private loadTripDetail(tripId: number, force = false): void {
+    // Dieselbe Reise nach refreshTrips() nicht neu laden — die Listen sind schon aktuell.
+    if (!force && this.detailFor === tripId) return;
+    this.detailFor = tripId;
     this.detailLoading.set(true);
     this.detailError.set('');
     forkJoin({
@@ -384,6 +351,7 @@ export class Reisen {
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (r) => {
+          if (this.detailFor !== tripId) return;
           this.packing.set(r.packing);
           this.tasks.set(r.tasks);
           this.expenses.set(r.expenses);
@@ -392,18 +360,18 @@ export class Reisen {
         },
         error: () => {
           this.detailLoading.set(false);
-          this.detailError.set('Die Details dieser Reise konnten nicht geladen werden.');
+          this.detailError.set('Diese Reise konnte nicht geladen werden.');
         },
       });
   }
 
-  selectTrip(id: number): void {
-    this.selectedTripId.set(id);
+  openTrip(id: number, tab: TripTab = 'uebersicht'): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { trip: id, tab: tab === 'uebersicht' ? null : tab } });
   }
-
-  selectTab(tab: ReisenTab): void {
-    this.tab.set(tab);
-    this.actionError.set('');
+  backToList(): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { trip: null, tab: null } });
+  }
+  selectTab(tab: TripTab): void {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab: tab === 'uebersicht' ? null : tab },
@@ -417,44 +385,28 @@ export class Reisen {
     const index = keys.indexOf(this.tab());
     const next = keys[(index + (event.key === 'ArrowRight' ? 1 : keys.length - 1)) % keys.length];
     this.selectTab(next);
-    queueMicrotask(() => document.getElementById(`reisen-tab-${next}`)?.focus());
-  }
-  /** Hauptknopf im Kopf — öffnet das passende Formular des Reiters (ohne gewählte Reise: eine neue Reise). */
-  headActionClick(): void {
-    const tab = this.tab();
-    if (tab === 'uebersicht' || tab === 'reisen' || !this.selectedTrip() || !this.canEdit()) return this.openTripEditor();
-    if (tab === 'packlisten') return this.openPackingEditor();
-    if (tab === 'budget') return this.openExpenseEditor();
-    return this.openTaskEditor();
-  }
-  /** Aus einem Reiter heraus („Zur Packliste“, „Budget“ in den Reisedetails …). */
-  openTarget(target: TripTarget): void {
-    this.selectTab(target);
+    setTimeout(() => document.getElementById(`reisen-tab-${next}`)?.focus());
   }
 
   // ---------- Reise anlegen/bearbeiten ----------
-  /** Frühester wählbarer Beginn: heute bei einer neuen Reise oder einer, die noch nicht begonnen hat — sonst
-   * (die Reise läuft schon oder ist vorbei) keine Einschränkung, sonst ließe sich ihr Datum gar nicht mehr
-   * anfassen oder korrigieren. */
-  readonly minStartDate = signal(localDay(new Date()));
   openTripEditor(trip?: Trip): void {
     this.tripForm.reset({
       title: trip?.title ?? '',
       destination: trip?.destination ?? '',
+      departure: trip?.departure ?? '',
       start_date: trip?.start_date ?? '',
       end_date: trip?.end_date ?? '',
       status: trip?.status ?? 'PLANNED',
       travel_type: trip?.travel_type ?? '',
       transport_type: trip?.transport_type ?? '',
       baggage_type: trip?.baggage_type ?? '',
-      budget_amount: trip?.budget_amount ?? '',
-      currency: trip?.currency ?? 'EUR',
       accommodation: trip?.accommodation ?? '',
       accommodation_area: trip?.accommodation_area ?? '',
       transport_note: trip?.transport_note ?? '',
       notes: trip?.notes ?? '',
     });
-    this.minStartDate.set(trip && trip.start_date < localDay(new Date()) ? '' : localDay(new Date()));
+    this.tripTouched.set(false);
+    this.tripMoreOpen.set(false);
     this.editTripId.set(trip?.id);
     this.tripFormError.set('');
     this.tripOverlaps.set([]);
@@ -462,45 +414,31 @@ export class Reisen {
   }
   closeTripEditor(): void {
     if (this.tripSaving()) return;
-    // "Daten ändern" (Abbrechen-Button während der Überschneidungs-Warnung): nur die Warnung verwerfen und im
-    // Formular bleiben, nicht den ganzen Dialog schließen.
+    // „Daten prüfen“ während der Überschneidungs-Warnung: zurück ins Formular, nicht schließen.
     if (this.tripOverlaps().length) {
       this.tripOverlaps.set([]);
       return;
     }
     this.tripEditor.set(false);
   }
+  overlapText(trip: Trip): string {
+    return `„${trip.title}“ vom ${shortRange(trip)}`;
+  }
   saveTrip(): void {
     if (this.tripSaving()) return;
     this.tripForm.markAllAsTouched();
+    this.tripTouched.set(true);
     const v = this.tripForm.getRawValue();
-    if (!v.title.trim() || v.title.length > 120) {
-      this.tripFormError.set('Bitte gib einen Titel ein (maximal 120 Zeichen).');
-      return;
-    }
-    // Pflichtfelder: eine Reise ohne konkreten Zeitraum wird in V1 nicht gespeichert (siehe
-    // reisen-api.service.ts Trip.start_date-Docstring) — "Reiseideen" sind ein eigenes, hier noch
-    // nicht gebautes Konzept.
-    if (!v.start_date || !v.end_date) {
-      this.tripFormError.set('Bitte gib Beginn und Ende der Reise an.');
-      return;
-    }
-    if (v.end_date < v.start_date) {
-      this.tripFormError.set('Das Ende darf nicht vor dem Beginn liegen.');
-      return;
-    }
-    if (v.budget_amount && Number(v.budget_amount) < 0) {
-      this.tripFormError.set('Das Budget darf nicht negativ sein.');
+    if (this.titleError() || this.destinationError() || this.startError() || this.endError()) {
+      this.tripFormError.set('');
       return;
     }
     this.tripFormError.set('');
-
-    // "Trotzdem erstellen": die Warnung steht schon, der Nutzer hat sich trotz Überschneidung entschieden.
+    // „Trotzdem speichern“: die Warnung steht schon, der Nutzer hat entschieden.
     if (this.tripOverlaps().length) {
       this.commitTrip(v);
       return;
     }
-
     this.tripSaving.set(true);
     this.api
       .checkTripOverlaps(v.start_date, v.end_date, this.editTripId())
@@ -508,11 +446,11 @@ export class Reisen {
       .subscribe({
         next: (overlaps) => {
           this.tripSaving.set(false);
-          if (overlaps.length) this.tripOverlaps.set(overlaps);
+          const relevant = overlaps.filter((t) => t.status !== 'CANCELLED');
+          if (relevant.length) this.tripOverlaps.set(relevant);
           else this.commitTrip(v);
         },
-        // Ein fehlgeschlagener Prüf-Aufruf darf das Speichern nicht verhindern — die serverseitige Prüfung beim
-        // nächsten Bearbeiten bleibt die eigentliche Absicherung, das Frontend zeigt die Warnung nur zusätzlich.
+        // Die Prüfung ist nur ein Hinweis — schlägt sie fehl, wird trotzdem gespeichert.
         error: () => {
           this.tripSaving.set(false);
           this.commitTrip(v);
@@ -520,8 +458,6 @@ export class Reisen {
       });
   }
   private commitTrip(v: ReturnType<typeof this.tripForm.getRawValue>): void {
-    // Vor dem eigentlichen Speichern festhalten: ein Edit darf das Smart Setup nicht erneut auslösen, nur eine
-    // wirklich neue Reise soll das (editTripId() wird erst wieder in openTripEditor() verändert).
     const wasCreate = !this.editTripId();
     this.tripSaving.set(true);
     this.api
@@ -529,14 +465,13 @@ export class Reisen {
         {
           title: v.title.trim(),
           destination: v.destination.trim(),
+          departure: v.departure.trim(),
           start_date: v.start_date,
           end_date: v.end_date,
           status: v.status as Trip['status'],
           travel_type: v.travel_type as Trip['travel_type'],
           transport_type: v.transport_type as Trip['transport_type'],
           baggage_type: v.baggage_type as Trip['baggage_type'],
-          budget_amount: v.budget_amount ? v.budget_amount : null,
-          currency: v.currency as Trip['currency'],
           accommodation: v.accommodation.trim(),
           accommodation_area: v.accommodation_area.trim(),
           transport_note: v.transport_note.trim(),
@@ -546,17 +481,23 @@ export class Reisen {
       )
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
-        next: (savedTrip) => {
+        next: (saved) => {
           this.tripSaving.set(false);
           this.tripEditor.set(false);
           this.tripOverlaps.set([]);
-          this.load();
-          if (wasCreate) this.openSmartSetup(savedTrip);
+          if (wasCreate) {
+            this.trips.update((list) => [...list, saved]);
+            this.openTrip(saved.id);
+            this.openSmartSetup(saved);
+          } else {
+            this.trips.update((list) => list.map((t) => (t.id === saved.id ? { ...t, ...saved } : t)));
+          }
+          this.refreshTrips();
         },
         error: () => {
           this.tripSaving.set(false);
           this.tripOverlaps.set([]);
-          this.tripFormError.set('Speichern fehlgeschlagen. Bitte prüfe deine Angaben und versuche es erneut.');
+          this.tripFormError.set('Die Reise konnte nicht gespeichert werden. Bitte prüfe deine Angaben und versuche es erneut.');
         },
       });
   }
@@ -571,24 +512,20 @@ export class Reisen {
         next: () => {
           this.tripSaving.set(false);
           this.tripEditor.set(false);
-          if (this.selectedTripId() === id) this.selectedTripId.set(null);
-          this.load();
+          this.trips.update((list) => list.filter((t) => t.id !== id));
+          this.backToList();
         },
         error: () => {
           this.tripSaving.set(false);
-          this.tripFormError.set('Löschen fehlgeschlagen. Bitte versuche es erneut.');
+          this.tripFormError.set('Die Reise konnte nicht gelöscht werden. Bitte versuche es erneut.');
         },
       });
   }
 
   // ---------- Teilnehmer ----------
-  /** Nicht null: der Teilnehmer-Dialog für genau diese Reise ist offen. Als ID statt als Snapshot-Objekt
-   * gespeichert, damit participantsEditorTrip() automatisch aktuell bleibt, sobald load() die Teilnehmerliste
-   * dieser Reise (eingebettet in Trip, siehe reisen-api.service.ts) neu lädt. */
   readonly participantsEditorTripId = signal<number | null>(null);
   readonly participantsEditorTrip = computed(() => this.trips().find((t) => t.id === this.participantsEditorTripId()) ?? null);
-  /** Teilnehmer verwalten (hinzufügen/Rolle ändern/jemand anderen entfernen) darf nur, wer OWNER ist — Ersteller
-   * oder Teilnehmer mit Rolle OWNER (siehe reisen/permissions.py TripParticipantManagePermission). */
+  /** Teilnehmer verwalten darf nur, wer OWNER ist (reisen/permissions.py TripParticipantManagePermission). */
   readonly canManageParticipants = computed(() => this.participantsEditorTrip()?.my_role === 'OWNER');
   readonly participantsSaving = signal(false);
   readonly participantsError = signal('');
@@ -598,11 +535,14 @@ export class Reisen {
   readonly newParticipantContactValue = computed(() => (this.newParticipantContactId() !== null ? String(this.newParticipantContactId()) : ''));
   readonly newParticipantRole = signal<TripParticipant['role']>('VIEWER');
 
-  openParticipantsEditor(trip: Trip): void {
+  openParticipantsEditor(): void {
+    const trip = this.selectedTrip();
+    if (!trip) return;
     this.participantsEditorTripId.set(trip.id);
     this.participantsError.set('');
     this.newParticipantContactId.set(null);
     this.newParticipantRole.set('VIEWER');
+    if (trip.my_role !== 'OWNER') return;
     this.api
       .contacts()
       .pipe(takeUntilDestroyed(this.destroy))
@@ -633,7 +573,7 @@ export class Reisen {
         },
         error: () => {
           this.participantsSaving.set(false);
-          this.participantsError.set('Hinzufügen fehlgeschlagen. Ist diese Person schon Teilnehmer dieser Reise?');
+          this.participantsError.set('Die Person konnte nicht hinzugefügt werden. Reist sie vielleicht schon mit?');
         },
       });
   }
@@ -644,7 +584,7 @@ export class Reisen {
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: () => this.refreshTrips(),
-        error: () => this.participantsError.set(`Rolle von „${participant.display_name}“ konnte nicht geändert werden.`),
+        error: () => this.participantsError.set(`Die Rolle von „${participant.display_name}“ konnte nicht geändert werden.`),
       });
   }
   removeParticipant(participant: TripParticipant): void {
@@ -654,27 +594,27 @@ export class Reisen {
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: () => {
-          // Verlässt man die Reise selbst, bleibt kein Zugriff mehr auf sie — der Dialog muss sich dann
-          // schließen, sonst zeigt participantsEditorTrip() nach load() plötzlich eine Reise, die gar nicht
-          // mehr in trips() auftaucht.
-          if (participant.is_self) this.participantsEditorTripId.set(null);
+          // Wer die Reise selbst verlässt, sieht sie danach nicht mehr — zurück zu Meine Reisen.
+          if (participant.is_self && this.participantsEditorTrip()?.my_role !== 'OWNER') {
+            this.participantsEditorTripId.set(null);
+            this.backToList();
+            this.load();
+            return;
+          }
           this.refreshTrips();
         },
         error: () => this.participantsError.set(`„${participant.display_name}“ konnte nicht entfernt werden.`),
       });
   }
 
-  // ---------- Smart Setup ----------
-  /** Nicht null: die Teaser- oder Review-Stufe des Smart Setups ist offen (siehe smartSetupReview). Erscheint nur
-   * direkt nach dem ERSTELLEN einer Reise (siehe commitTrip()), nie beim Bearbeiten — sonst stünde man nach jeder
-   * Änderung wieder vor denselben Vorschlägen. */
+  // ---------- Vorschläge (Smart Setup, regelbasiert und optional) ----------
+  /** Nicht null: Teaser- oder Prüf-Stufe ist offen. Erscheint direkt nach dem Anlegen einer Reise oder auf Wunsch
+   * („Vorlage verwenden“, „Vorschläge ansehen“) — nie beim Bearbeiten, und übernommen wird nur, was angehakt ist. */
   readonly smartSetupTrip = signal<Trip | null>(null);
   readonly smartSetupReview = signal(false);
   readonly smartSetupSuggestions = signal<{ packing: SuggestedPackingItem[]; tasks: SuggestedTask[] }>({ packing: [], tasks: [] });
   readonly smartSetupPackingChecked = signal<boolean[]>([]);
   readonly smartSetupTasksChecked = signal<boolean[]>([]);
-  /** Für die Anzeige gruppiert wie die eigentliche Packliste — der Index zeigt weiter auf die ungruppierte Liste,
-   * damit togglePackingSuggestion()/smartSetupPackingChecked() unverändert funktionieren. */
   readonly smartSetupPackingGroups = computed(() => {
     const items = this.smartSetupSuggestions().packing;
     return this.packingCategoryOrder
@@ -685,10 +625,10 @@ export class Reisen {
       }))
       .filter((group) => group.entries.length > 0);
   });
+  readonly smartSetupEmpty = computed(() => !this.smartSetupSuggestions().packing.length && !this.smartSetupSuggestions().tasks.length);
   readonly smartSetupSaving = signal(false);
   readonly smartSetupError = signal('');
 
-  /** Vorschläge auch für eine bestehende Reise (Packlisten › „Vorschläge hinzufügen“) — ohne das, was schon da ist. */
   openSuggestionsForSelected(): void {
     const trip = this.selectedTrip();
     if (!trip) return;
@@ -708,12 +648,7 @@ export class Reisen {
     this.smartSetupTrip.set(trip);
   }
   skipSmartSetup(): void {
-    if (this.smartSetupSaving()) return;
-    // Egal ob übernommen oder übersprungen: die gerade erstellte Reise soll danach ausgewählt bleiben, statt dass
-    // load()s Datums-Sortierung (nextTrip()) unbemerkt eine andere, zeitlich frühere Reise auswählt.
-    const trip = this.smartSetupTrip();
-    this.smartSetupTrip.set(null);
-    if (trip) this.selectTrip(trip.id);
+    if (!this.smartSetupSaving()) this.smartSetupTrip.set(null);
   }
   reviewSmartSetup(): void {
     this.smartSetupReview.set(true);
@@ -724,27 +659,18 @@ export class Reisen {
   toggleTaskSuggestion(index: number): void {
     this.smartSetupTasksChecked.update((flags) => flags.map((v, i) => (i === index ? !v : v)));
   }
-  acceptAllSmartSetup(): void {
-    const { packing, tasks } = this.smartSetupSuggestions();
-    this.commitSmartSetup(packing.map(() => true), tasks.map(() => true));
-  }
   acceptSelectedSmartSetup(): void {
-    this.commitSmartSetup(this.smartSetupPackingChecked(), this.smartSetupTasksChecked());
-  }
-  private commitSmartSetup(packingFlags: boolean[], taskFlags: boolean[]): void {
     const trip = this.smartSetupTrip();
     if (!trip || this.smartSetupSaving()) return;
-    const packing = this.smartSetupSuggestions().packing.filter((_, i) => packingFlags[i]);
-    const tasks = this.smartSetupSuggestions().tasks.filter((_, i) => taskFlags[i]);
+    const packing = this.smartSetupSuggestions().packing.filter((_, i) => this.smartSetupPackingChecked()[i]);
+    const tasks = this.smartSetupSuggestions().tasks.filter((_, i) => this.smartSetupTasksChecked()[i]);
     if (!packing.length && !tasks.length) {
       this.smartSetupTrip.set(null);
       return;
     }
     this.smartSetupSaving.set(true);
     this.smartSetupError.set('');
-    // Alles wird ganz normal über die bestehenden Endpunkte angelegt (is_packed: false, status: 'OPEN') — es gibt
-    // keine eigene "Vorschlag"-Markierung, weil damit nichts fälschlich als erledigt gelten kann und die Einträge
-    // sich später wie jeder andere Eintrag bearbeiten/löschen lassen.
+    // Ganz normale Einträge über die bestehenden Endpunkte — danach wie jeder andere bearbeit- und löschbar.
     forkJoin([
       ...packing.map((item) =>
         this.api.savePackingItem({ trip: trip.id, title: item.title, quantity: item.quantity, category: item.category, is_packed: false }),
@@ -756,11 +682,8 @@ export class Reisen {
         next: () => {
           this.smartSetupSaving.set(false);
           this.smartSetupTrip.set(null);
-          this.selectTrip(trip.id);
-          // dieselbe Reise: Details und Zähler neu laden, damit die neuen Einträge sofort erscheinen
-          this.loadTripDetail(trip.id);
+          if (this.selectedTripId() === trip.id) this.loadTripDetail(trip.id, true);
           this.refreshTrips();
-          this.reminderVersion.update((v) => v + 1);
         },
         error: () => {
           this.smartSetupSaving.set(false);
@@ -770,10 +693,30 @@ export class Reisen {
   }
 
   // ---------- Packliste ----------
-  openPackingEditor(item?: PackingItem, category?: PackingCategory | null): void {
+  quickAddPacking(entry: { title: string; category: PackingCategory }): void {
+    const tripId = this.selectedTripId();
+    if (!tripId || this.quickBusy()) return;
+    this.quickBusy.set(true);
+    this.actionError.set('');
+    this.api
+      .savePackingItem({ trip: tripId, title: entry.title, category: entry.category, quantity: 1, is_packed: false })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (saved) => {
+          this.quickBusy.set(false);
+          this.packing.update((items) => [...items, saved]);
+          this.refreshTrips();
+        },
+        error: () => {
+          this.quickBusy.set(false);
+          this.actionError.set(`„${entry.title}“ konnte nicht hinzugefügt werden. Bitte versuche es erneut.`);
+        },
+      });
+  }
+  openPackingEditor(item?: PackingItem): void {
     this.packingForm.reset({
       title: item?.title ?? '',
-      category: item?.category ?? category ?? 'SONSTIGES',
+      category: item?.category ?? 'SONSTIGES',
       quantity: String(item?.quantity ?? 1),
       note: item?.note ?? '',
     });
@@ -793,15 +736,12 @@ export class Reisen {
       this.packingFormError.set('Bitte gib einen Namen ein (maximal 120 Zeichen).');
       return;
     }
-    const quantity = Math.max(1, Number(v.quantity) || 1);
+    const quantity = Math.min(99, Math.max(1, Number(v.quantity) || 1));
     this.packingSaving.set(true);
     this.packingFormError.set('');
     const id = this.editPackingId();
     this.api
-      .savePackingItem(
-        { trip: tripId, title: v.title.trim(), category: v.category as PackingCategory, quantity, note: v.note.trim() },
-        id,
-      )
+      .savePackingItem({ trip: tripId, title: v.title.trim(), category: v.category as PackingCategory, quantity, note: v.note.trim() }, id)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (saved) => {
@@ -812,7 +752,7 @@ export class Reisen {
         },
         error: () => {
           this.packingSaving.set(false);
-          this.packingFormError.set('Speichern fehlgeschlagen. Bitte versuche es erneut.');
+          this.packingFormError.set('Der Artikel konnte nicht gespeichert werden. Bitte versuche es erneut.');
         },
       });
   }
@@ -832,7 +772,7 @@ export class Reisen {
         },
         error: () => {
           this.packingSaving.set(false);
-          this.packingFormError.set('Löschen fehlgeschlagen. Bitte versuche es erneut.');
+          this.packingFormError.set('Der Artikel konnte nicht gelöscht werden. Bitte versuche es erneut.');
         },
       });
   }
@@ -845,14 +785,16 @@ export class Reisen {
       .savePackingItem({ is_packed: packed }, item.id)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
-        next: (saved) => this.packing.update((items) => items.map((i) => (i.id === saved.id ? saved : i))),
+        next: (saved) => {
+          this.packing.update((items) => items.map((i) => (i.id === saved.id ? saved : i)));
+          this.refreshTrips();
+        },
         error: () => {
           this.packing.update((items) => items.map((i) => (i.id === item.id ? { ...i, is_packed: !packed } : i)));
           this.actionError.set(`„${item.title}“ konnte nicht gespeichert werden.`);
         },
       });
   }
-
   resetPacking(): void {
     const tripId = this.selectedTripId();
     if (!tripId) return;
@@ -869,12 +811,33 @@ export class Reisen {
       });
   }
 
-  // ---------- Erinnerungen (Reise-Aufgaben) ----------
-  openTaskEditor(item?: TripTask): void {
+  // ---------- Aufgaben ----------
+  quickAddTask(title: string): void {
+    const tripId = this.selectedTripId();
+    if (!tripId || this.quickBusy()) return;
+    this.quickBusy.set(true);
+    this.actionError.set('');
+    this.api
+      .saveTask({ trip: tripId, title, status: 'OPEN' })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (saved) => {
+          this.quickBusy.set(false);
+          this.tasks.update((items) => [...items, saved]);
+          this.refreshTrips();
+        },
+        error: () => {
+          this.quickBusy.set(false);
+          this.actionError.set(`„${title}“ konnte nicht hinzugefügt werden. Bitte versuche es erneut.`);
+        },
+      });
+  }
+  openTaskEditor(item?: TripTask, title = ''): void {
     this.taskForm.reset({
-      title: item?.title ?? '',
+      title: item?.title ?? title,
       due_date: item?.due_date ?? '',
       due_time: item?.due_time ? item.due_time.slice(0, 5) : '',
+      assignee: item?.assignee ? String(item.assignee) : '',
       note: item?.note ?? '',
     });
     this.editTaskId.set(item?.id);
@@ -893,27 +856,36 @@ export class Reisen {
       this.taskFormError.set('Bitte gib einen Titel ein (maximal 120 Zeichen).');
       return;
     }
-    const id = this.editTaskId();
     if (v.due_time && !v.due_date) {
       this.taskFormError.set('Bitte wähle zur Uhrzeit auch ein Datum.');
       return;
     }
+    const id = this.editTaskId();
     this.taskSaving.set(true);
     this.taskFormError.set('');
     this.api
-      .saveTask({ trip: tripId, title: v.title.trim(), due_date: v.due_date || null, due_time: v.due_date && v.due_time ? v.due_time : null, note: v.note.trim() }, id)
+      .saveTask(
+        {
+          trip: tripId,
+          title: v.title.trim(),
+          due_date: v.due_date || null,
+          due_time: v.due_date && v.due_time ? v.due_time : null,
+          assignee: v.assignee ? Number(v.assignee) : null,
+          note: v.note.trim(),
+        },
+        id,
+      )
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (saved) => {
           this.taskSaving.set(false);
           this.taskEditor.set(false);
           this.tasks.update((items) => (id ? items.map((i) => (i.id === id ? saved : i)) : [...items, saved]));
-          this.reminderVersion.update((v) => v + 1);
           this.refreshTrips();
         },
         error: () => {
           this.taskSaving.set(false);
-          this.taskFormError.set('Speichern fehlgeschlagen. Bitte versuche es erneut.');
+          this.taskFormError.set('Die Aufgabe konnte nicht gespeichert werden. Bitte versuche es erneut.');
         },
       });
   }
@@ -929,35 +901,13 @@ export class Reisen {
           this.taskSaving.set(false);
           this.taskEditor.set(false);
           this.tasks.update((items) => items.filter((i) => i.id !== id));
-          this.reminderVersion.update((v) => v + 1);
           this.refreshTrips();
         },
         error: () => {
           this.taskSaving.set(false);
-          this.taskFormError.set('Löschen fehlgeschlagen. Bitte versuche es erneut.');
+          this.taskFormError.set('Die Aufgabe konnte nicht gelöscht werden. Bitte versuche es erneut.');
         },
       });
-  }
-  /** Aus den Erinnerungen: eine Reise-Aufgabe abhaken oder wieder öffnen. */
-  toggleReminder(change: { id: number; done: boolean }): void {
-    const item = this.tasks().find((t) => t.id === change.id);
-    const status = change.done ? 'DONE' : 'OPEN';
-    if (item) this.tasks.update((items) => items.map((i) => (i.id === change.id ? { ...i, status } : i)));
-    this.api
-      .saveTask({ status }, change.id)
-      .pipe(takeUntilDestroyed(this.destroy))
-      .subscribe({
-        next: () => this.refreshTrips(),
-        error: () => {
-          if (item) this.tasks.update((items) => items.map((i) => (i.id === change.id ? { ...i, status: item.status } : i)));
-          this.reminderVersion.update((v) => v + 1);
-          this.actionError.set('Die Erinnerung konnte nicht gespeichert werden. Bitte versuche es erneut.');
-        },
-      });
-  }
-  openTaskById(id: number): void {
-    const task = this.tasks().find((t) => t.id === id);
-    if (task) this.openTaskEditor(task);
   }
   toggleTask(item: TripTask): void {
     const status = item.status === 'OPEN' ? 'DONE' : 'OPEN';
@@ -966,6 +916,7 @@ export class Reisen {
       .saveTask({ status }, item.id)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
+        next: () => this.refreshTrips(),
         error: () => {
           this.tasks.update((items) => items.map((i) => (i.id === item.id ? { ...i, status: item.status } : i)));
           this.actionError.set(`„${item.title}“ konnte nicht gespeichert werden.`);
@@ -998,8 +949,8 @@ export class Reisen {
       this.expenseFormError.set('Bitte beschreibe die Ausgabe, z. B. „Hotel“ (maximal 120 Zeichen).');
       return;
     }
-    if (!v.amount.trim() || !Number.isFinite(amount) || amount < 0) {
-      this.expenseFormError.set('Bitte gib einen gültigen Betrag ein, z. B. 45,50.');
+    if (!v.amount.trim() || !Number.isFinite(amount) || amount <= 0) {
+      this.expenseFormError.set('Bitte gib einen Betrag größer als 0 ein, z. B. 45,50.');
       return;
     }
     if (!v.date) {
@@ -1021,7 +972,7 @@ export class Reisen {
         },
         error: () => {
           this.expenseSaving.set(false);
-          this.expenseFormError.set('Speichern fehlgeschlagen. Bitte versuche es erneut.');
+          this.expenseFormError.set(id ? 'Die Ausgabe konnte nicht gespeichert werden.' : 'Die Ausgabe konnte nicht hinzugefügt werden.');
         },
       });
   }
@@ -1041,12 +992,12 @@ export class Reisen {
         },
         error: () => {
           this.expenseSaving.set(false);
-          this.expenseFormError.set('Löschen fehlgeschlagen. Bitte versuche es erneut.');
+          this.expenseFormError.set('Die Ausgabe konnte nicht gelöscht werden. Bitte versuche es erneut.');
         },
       });
   }
 
-  // ---------- Budget planen (Gesamtbudget + je Kategorie) ----------
+  // ---------- Budget festlegen (Gesamtbudget, Währung, je Kategorie) ----------
   openPlanEditor(): void {
     const trip = this.selectedTrip();
     if (!trip) return;
@@ -1057,6 +1008,7 @@ export class Reisen {
     }
     this.planDraft.set(draft);
     this.planTotal.set(trip.budget_amount ? trip.budget_amount.replace('.', ',') : '');
+    this.planCurrency.set(trip.currency);
     this.planError.set('');
     this.planEditor.set(true);
   }
@@ -1066,7 +1018,7 @@ export class Reisen {
   closePlanEditor(): void {
     if (!this.planSaving()) this.planEditor.set(false);
   }
-  /** Speichert nur, was sich geändert hat: leer oder 0 entfernt eine geplante Kategorie (wie zuvor im Reiter). */
+  /** Speichert nur Änderungen: leer oder 0 entfernt eine geplante Kategorie. */
   savePlan(): void {
     const trip = this.selectedTrip();
     if (!trip || this.planSaving()) return;
@@ -1093,8 +1045,10 @@ export class Reisen {
       else if (value > 0 && (!existing || Number(existing.planned_amount) !== value))
         steps.push(this.api.saveBudgetCategory({ trip: trip.id, category, planned_amount: value.toFixed(2) }, existing?.id));
     }
-    const before = Number(trip.budget_amount || 0);
-    if (total !== before) steps.push(this.api.saveTrip({ budget_amount: total > 0 ? total.toFixed(2) : null }, trip.id));
+    const tripChanges: Partial<Trip> = {};
+    if (total !== Number(trip.budget_amount || 0)) tripChanges.budget_amount = total > 0 ? total.toFixed(2) : null;
+    if (this.planCurrency() !== trip.currency) tripChanges.currency = this.planCurrency();
+    if (Object.keys(tripChanges).length) steps.push(this.api.saveTrip(tripChanges, trip.id));
     if (!steps.length) {
       this.planEditor.set(false);
       return;
@@ -1107,19 +1061,15 @@ export class Reisen {
         next: () => {
           this.planSaving.set(false);
           this.planEditor.set(false);
-          this.loadTripDetail(trip.id);
+          this.loadTripDetail(trip.id, true);
           this.refreshTrips();
         },
         error: () => {
           this.planSaving.set(false);
-          this.planError.set('Nicht alles konnte gespeichert werden. Bitte prüfe die Beträge und versuche es erneut.');
-          this.loadTripDetail(trip.id);
+          this.planError.set('Das Budget konnte nicht vollständig gespeichert werden. Bitte prüfe die Beträge und versuche es erneut.');
+          this.loadTripDetail(trip.id, true);
           this.refreshTrips();
         },
       });
   }
-}
-
-function tabFromQuery(value: string | null): ReisenTab {
-  return TABS.some((t) => t.key === value) ? (value as ReisenTab) : 'uebersicht';
 }

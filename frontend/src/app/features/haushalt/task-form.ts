@@ -5,16 +5,22 @@ import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
 import { AppTimePicker } from '../../shared/form/time-picker';
 import { ModalForm } from '../../shared/form/modal-form';
+import { ScopeNote } from '../../shared/scope-note/scope-note';
 import { Effort, Id, MemberLoadDto, Recurrence, TaskDto, TaskInput, TaskPriority, TaskRoom } from './haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
 import { todayIso } from './haushalt-logic';
 import { PRIORITIES, ROOMS } from './aufgaben-logic';
 
-const RECURRENCE_OPTIONS: { value: Recurrence | null; label: string }[] = [
+/** Wiederholung im Formular: die einfachen Rhythmen oder „alle X Tage/Wochen“ (→ recurrence_days). */
+type RepeatChoice = Recurrence | 'every_days' | 'every_weeks';
+const RECURRENCE_OPTIONS: { value: RepeatChoice | null; label: string }[] = [
   { value: null, label: 'Einmalig' },
   { value: 'daily', label: 'Täglich' },
   { value: 'weekly', label: 'Wöchentlich' },
   { value: 'monthly', label: 'Monatlich' },
+  { value: 'yearly', label: 'Jährlich' },
+  { value: 'every_days', label: 'Alle X Tage' },
+  { value: 'every_weeks', label: 'Alle X Wochen' },
 ];
 
 export const EFFORT_LABELS: Record<Effort, string> = { 1: 'Klein', 2: 'Mittel', 3: 'Groß' };
@@ -34,7 +40,7 @@ export interface TaskFormChange {
 @Component({
   selector: 'app-task-form',
   standalone: true,
-  imports: [ConnectionsSection, Field, ModalForm, AppSelect, AppDatePicker, AppTimePicker],
+  imports: [ConnectionsSection, Field, ModalForm, AppSelect, AppDatePicker, AppTimePicker, ScopeNote],
   templateUrl: './task-form.html',
   styleUrls: ['./haushalt-common.scss'],
 })
@@ -60,7 +66,18 @@ export class TaskForm {
   protected readonly editingId = signal<Id | null>(null);
   protected readonly formTitle = signal('');
   protected readonly formDescription = signal('');
-  protected readonly formRecurrence = signal<Recurrence | null>(null);
+  protected readonly formRecurrence = signal<RepeatChoice | null>(null);
+  /** X bei „alle X Tage/Wochen“. */
+  protected readonly formEvery = signal('2');
+  protected readonly isEvery = computed(() => this.formRecurrence() === 'every_days' || this.formRecurrence() === 'every_weeks');
+  /** Wochentag einer wöchentlichen Wiederholung — ergibt sich aus dem Datum. */
+  protected readonly weekdayHint = computed(() => {
+    const due = this.formDue();
+    const choice = this.formRecurrence();
+    if (!due || !(choice === 'weekly' || choice === 'every_weeks')) return '';
+    const [y, m, d] = due.split('-').map(Number);
+    return `Immer ${new Intl.DateTimeFormat('de-DE', { weekday: 'long' }).format(new Date(y, m - 1, d))}s`;
+  });
   protected readonly formDue = signal('');
   protected readonly formTime = signal('');
   protected readonly formEffort = signal<Effort>(1);
@@ -80,6 +97,7 @@ export class TaskForm {
     this.formTitle.set('');
     this.formDescription.set('');
     this.formRecurrence.set(this.kind() === 'routine' ? 'weekly' : null);
+    this.formEvery.set('2');
     this.formTime.set('');
     this.formDue.set(todayIso());
     this.formEffort.set(1);
@@ -97,7 +115,7 @@ export class TaskForm {
     this.editingId.set(task.id);
     this.formTitle.set(task.title);
     this.formDescription.set(task.description ?? '');
-    this.formRecurrence.set(task.recurrence);
+    this.formRecurrence.set(this.choiceFor(task));
     this.formTime.set(task.due_time ? task.due_time.slice(0, 5) : '');
     this.formDue.set(task.due_date ?? '');
     this.formEffort.set(task.effort);
@@ -111,12 +129,24 @@ export class TaskForm {
     this.formOpen.set(true);
   }
 
+  /** Gespeicherte Intervalle → Auswahl im Formular (z. B. 14 Tage → „alle 2 Wochen“). */
+  private choiceFor(task: TaskDto): RepeatChoice | null {
+    if (task.recurrence) return task.recurrence;
+    if (task.recurrence_days) {
+      const weeks = task.recurrence_days % 7 === 0;
+      this.formEvery.set(String(weeks ? task.recurrence_days / 7 : task.recurrence_days));
+      return weeks ? 'every_weeks' : 'every_days';
+    }
+    if (task.recurrence_months) return 'monthly';
+    return null;
+  }
+
   protected closeForm(): void {
     this.formOpen.set(false);
   }
 
   protected setRecurrence(value: string): void {
-    this.formRecurrence.set(value === '' ? null : (value as Recurrence));
+    this.formRecurrence.set(value === '' ? null : (value as RepeatChoice));
     if (value === '') this.formRotate.set(false);
   }
 
@@ -153,6 +183,16 @@ export class TaskForm {
       this.formError.set('Bitte die Dauer in ganzen Minuten angeben (1 bis 600).');
       return;
     }
+    let everyDays: number | null = null;
+    if (this.isEvery()) {
+      const n = Number(this.formEvery());
+      const weeks = this.formRecurrence() === 'every_weeks';
+      if (!Number.isInteger(n) || n < 1 || n * (weeks ? 7 : 1) > 365) {
+        this.formError.set(weeks ? 'Bitte alle 1 bis 52 Wochen angeben.' : 'Bitte alle 1 bis 365 Tage angeben.');
+        return;
+      }
+      everyDays = n * (weeks ? 7 : 1);
+    }
     const rotate = this.canRotate() && this.formRotate();
     if (rotate && this.formRotation().length < 2) {
       this.formError.set('Für „reihum“ bitte mindestens zwei Personen auswählen.');
@@ -161,7 +201,7 @@ export class TaskForm {
     const input: TaskInput = {
       title,
       description: this.formDescription().trim(),
-      recurrence: this.formRecurrence(),
+      ...(everyDays !== null ? { recurrence_days: everyDays } : { recurrence: this.formRecurrence() as Recurrence | null }),
       due_date: this.formDue() || null,
       due_time: this.formDue() && this.formTime() ? this.formTime() : null,
       effort: this.formEffort(),

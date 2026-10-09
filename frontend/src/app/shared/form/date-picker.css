@@ -49,6 +49,38 @@
   stroke-linejoin: round;
 }
 
+/* Inline (Datumsleiste): ruhig, ohne Rahmen im Rahmen; der Fokus bleibt deutlich sichtbar. */
+:host(.dp--inline) .dp__trigger {
+  justify-content: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.1px;
+  font-variant-numeric: tabular-nums;
+}
+:host(.dp--inline) .dp__trigger:hover:not(:disabled) {
+  background: var(--accent-soft, #e3f6ec);
+}
+:host(.dp--inline) .dp__trigger:focus-visible,
+:host(.dp--inline) .dp__trigger[aria-expanded='true'] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  background: var(--accent-soft, #e3f6ec);
+}
+:host(.dp--inline) .dp__text {
+  flex: 0 1 auto;
+}
+:host(.dp--inline) .dp__icon {
+  order: -1;
+  width: 18px;
+  height: 18px;
+  stroke: var(--text-muted);
+}
+
 .dp__panel {
   overscroll-behavior: contain; /* Scrollen im Kalender scrollt nicht die Seite dahinter */
   position: fixed;

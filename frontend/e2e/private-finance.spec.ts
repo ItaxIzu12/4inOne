@@ -1,10 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { choose, pickDate, pickMonth } from './helpers';
 import AxeBuilder from '@axe-core/playwright';
+/** Transaktionen › Alle/Ausgaben/Einnahmen (Ausgaben und Einnahmen sind keine eigenen Reiter mehr). */
+async function txView(page: import('@playwright/test').Page, label: 'Alle' | 'Ausgaben' | 'Einnahmen') {
+  await page.getByRole('button', { name: 'Transaktionen', exact: true }).click();
+  await page.locator('.tx-switch').getByRole('button', { name: label, exact: true }).click();
+}
 
 /** Neue Buchung: über den Reiter „Ausgaben“ bzw. „Einnahmen“ (die Übersicht hat keinen Hauptknopf). */
 async function newBooking(page: import('@playwright/test').Page, kind: 'Ausgabe' | 'Einnahme' = 'Ausgabe') {
-  await page.getByRole('button', { name: kind === 'Ausgabe' ? 'Ausgaben' : 'Einnahmen', exact: true }).click();
+  await txView(page, kind === 'Ausgabe' ? 'Ausgaben' : 'Einnahmen');
   await page.getByRole('button', { name: `${kind} erfassen`, exact: true }).click();
 }
 /** Nach dem Speichern zurück zur Übersicht, deren Kennzahlen die Tests prüfen. */
@@ -155,7 +160,7 @@ for (const width of [390, 1440]) {
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await newBooking(page, 'Einnahme');
     // „Einnahme erfassen“ startet bereits als Einnahme
-    await expect(page.getByLabel('Typ', { exact: true })).toContainText('Einnahme');
+    await expect(page.getByRole('group', { name: 'Typ' }).getByRole('button', { name: 'Einnahme', pressed: true })).toBeVisible();
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('3100');
     await page.getByLabel('Notiz (optional)').fill('Gehalt');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
@@ -167,13 +172,13 @@ for (const width of [390, 1440]) {
     const budgetKpis = page.locator('.kpis');
     await expect(budgetKpis).toContainText('3.000 €');
     await expect(budgetKpis).toContainText('2.950 €');
-    await expect(budgetKpis).toContainText('50 € Ausgaben');
+    await expect(budgetKpis).toContainText('50 € ausgegeben');
     await expect(budgetKpis).not.toContainText('Einnahmen');
     await expect(page.getByRole('status').filter({ hasText: 'Einnahme' })).toContainText(
       'Einnahme von 3.100,00 € gespeichert. Vom Monatsbudget übrig: 2.950,00 €.',
     );
     await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
-    await page.getByRole('button', { name: 'Neues Sparziel', exact: true }).click();
+    await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
     await page.getByLabel('Titel', { exact: true }).fill('Neue Waschmaschine');
     await page.getByLabel('Zielbetrag in EUR').fill('700');
     // Gespartes darf das Sparziel nicht überschreiten
@@ -213,7 +218,7 @@ for (const width of [390, 1440]) {
     // Gespartes mindert das verfügbare Budget und steht in der Aufschlüsselung
     await expect(page.locator('.kpis')).toContainText('2.470 €');
     await page.getByRole('button', { name: 'Budgets', exact: true }).click();
-    await expect(page.locator('.kpis')).toContainText('480 € Sparen');
+    await expect(page.locator('.kpis')).toContainText('480 € gespart');
     await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -224,7 +229,7 @@ for (const width of [390, 1440]) {
     ).toEqual([]);
     await page.screenshot({ path: `test-results/finance-${width}.png`, fullPage: true });
     await page.goto('/');
-    await expect(page.locator('.domain.finance')).toContainText('2.470,00 € vom Budget übrig');
+    await expect(page.locator('.domain.finance')).toContainText('2.470,00 € übrig');
     await page.locator('.domain.finance').click();
     await page.getByRole('button', { name: /Supermarkt/ }).click();
     await page.getByRole('button', { name: 'Eintrag löschen', exact: true }).click();
@@ -403,7 +408,7 @@ test('warns BEFORE saving a savings goal that exceeds the budget and saves only 
 
   await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
-  await page.getByRole('button', { name: 'Neues Sparziel', exact: true }).click();
+  await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
   const dialog = page.getByRole('dialog');
   const popup = page.locator('app-error-notice aside');
   // Regression: empty -> still incomplete -> valid but over budget.
@@ -450,7 +455,7 @@ test('warns BEFORE saving a savings goal that exceeds the budget and saves only 
   expect(created[0].current_amount).toBe('100.00');
 
   // Sparrate, die in einem späteren Monat nicht mehr reicht → Warnung nennt den Monat; „Trotzdem speichern“ speichert
-  await page.getByRole('button', { name: 'Neues Sparziel', exact: true }).click();
+  await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
   await dialog.getByLabel('Titel', { exact: true }).fill('Reise');
   await dialog.getByLabel('Zielbetrag in EUR').fill('5000');
   await dialog.getByLabel('Sparrate pro Monat').fill('120');
@@ -484,7 +489,7 @@ test('a goal for another month is saved but not shown, and says so', async ({ pa
   });
   await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
-  await page.getByRole('button', { name: 'Neues Sparziel', exact: true }).click();
+  await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Titel', { exact: true }).fill('Urlaub');
   await dialog.getByLabel('Zielbetrag in EUR').fill('900');
@@ -562,7 +567,7 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
   const kpiBox = (await page.locator('.kpis').boundingBox())!;
   expect(monthBox.y + monthBox.height).toBeLessThanOrEqual(kpiBox.y);
 
-  for (const tab of ['Ausgaben', 'Einnahmen', 'Budgets', 'Sparziele', 'Übersicht']) {
+  for (const tab of ['Transaktionen', 'Budgets', 'Sparziele', 'Übersicht']) {
     await page.getByRole('button', { name: tab, exact: true }).click();
     await expect(selector).toHaveCount(1); // in jedem Reiter derselbe, nie doppelt
   }
@@ -571,7 +576,7 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
   await expect(selector).toContainText('Oktober 2026');
   await expect(page.locator('.kpis')).toContainText('80 €'); // Oktober: 100 − 20 (Übersicht)
 
-  await page.getByRole('button', { name: 'Ausgaben', exact: true }).click();
+  await txView(page, 'Ausgaben');
   await expect(page.getByRole('button', { name: /Oktoberkauf/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /Septemberkauf/ })).toHaveCount(0);
 
@@ -587,7 +592,7 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
   await pickMonth(page, selector, SEP);
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
   await expect(page.locator('.goal')).toContainText('Nur September');
-  await page.getByRole('button', { name: 'Ausgaben', exact: true }).click();
+  await txView(page, 'Ausgaben');
   await expect(page.getByRole('button', { name: /Septemberkauf/ }).first()).toBeVisible();
 });
 
@@ -646,20 +651,24 @@ test('month picker: the selected month stays readable on hover, presses that sli
   await expect(panel).toHaveCount(0);
 });
 
-test('budget year selects months while editing remains explicit', async ({ page }) => {
+test('the year overview opens one level deeper, picking a month closes it; editing remains explicit', async ({ page }) => {
   await mockTwoMonths(page);
   await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
-  const timeline = page.locator('app-budget-year');
-  await expect(timeline).toBeVisible();
-  await expect(page.getByText('Alle Budgets')).toHaveCount(0);
-  const bar = timeline.locator('.budget-month.is-selected');
-  await expect(bar).toHaveAttribute('aria-pressed', 'true');
+  // Keine dauerhafte 12-Monats-Liste mehr, sondern „Jahresplanung“ mit Einstieg
+  await expect(page.locator('app-budget-year')).toHaveCount(0);
+  await expect(page.locator('.year-plan')).toContainText('von 12 Monaten');
+  await page.getByRole('button', { name: 'Jahresübersicht ansehen' }).click();
+  const yearDialog = page.getByRole('dialog', { name: /Budgetjahr/ });
+  await expect(yearDialog).toBeVisible();
+  const timeline = yearDialog.locator('app-budget-year');
+  await expect(timeline.locator('.budget-month')).toHaveCount(12);
+  await expect(timeline.locator('.budget-month.is-selected')).toHaveAttribute('aria-pressed', 'true');
+  // erst nach dem Einblenden prüfen (während der Animation sind die Farben noch gedimmt)
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'));
   expect((await new AxeBuilder({ page }).include('app-budget-year').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
-
-  // Balken sind reine Anzeige: ein Klick darauf öffnet nichts (kein Fehlgriff auf falsche Werte)
-  await bar.click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(yearDialog).toBeHidden();
 
   // Dialog nur über „Budget ändern“; Klick daneben schließt ihn NICHT, Escape schon
   await page.getByRole('button', { name: 'Budget ändern', exact: true }).click();
@@ -716,7 +725,7 @@ test('savings can be saved independently of a spending limit', async ({ page }) 
   });
   await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
-  await page.getByRole('button', { name: 'Neues Sparziel', exact: true }).click();
+  await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Titel', { exact: true }).fill('Auto');
   await dialog.getByLabel('Zielbetrag in EUR').fill('500');
@@ -763,11 +772,13 @@ test('a budget that another budget overrides warns in the dialog and shows one v
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
 
   // Each month shows exactly one effective amount, including overlapping budgets.
+  await page.getByRole('button', { name: 'Jahresübersicht ansehen' }).click();
   const rows = page.locator('app-budget-year .budget-month');
   await expect(rows).toHaveCount(12);
   await expect(rows.nth(6)).toContainText('3.000,00');
   await expect(rows.nth(7)).toContainText('3.500,00');
   await expect(rows.nth(8)).toContainText('3.000,00');
+  await page.keyboard.press('Escape');
 
   // Dialog: Hinweis, Speichern bleibt möglich
   await page.getByRole('button', { name: 'Budget ändern', exact: true }).click();
@@ -822,7 +833,7 @@ test('bookings: category filter, search by title, and 5-at-a-time with "weitere 
     return r.fulfill({ json: [] });
   });
   await page.goto('/finanzen');
-  await page.getByRole('button', { name: 'Ausgaben', exact: true }).click();
+  await txView(page, 'Ausgaben');
 
   // Die vollständige Liste unten im Reiter: nur Ausgaben, 5 auf einmal
   const rows = page.locator('#all-rows .transaction');
@@ -846,8 +857,8 @@ test('bookings: category filter, search by title, and 5-at-a-time with "weitere 
   await page.getByPlaceholder('Buchung suchen …').fill('nichts passt');
   await expect(page.getByText('Keine Buchung gefunden. Prüfe die Schreibweise, die Kategorie oder den Filter.')).toBeVisible();
 
-  // Einnahmen haben ihren eigenen Reiter
-  await page.getByRole('button', { name: 'Einnahmen', exact: true }).click();
+  // Einnahmen: eigene Ansicht unter „Transaktionen“
+  await txView(page, 'Einnahmen');
   await expect(page.locator('#all-rows .transaction')).toHaveText([/Gehalt/]);
 });
 
@@ -876,4 +887,23 @@ test('legacy household finance links lead to current finances without a legacy e
   await expect(page).toHaveURL(/\/finanzen$/);
   await expect(page.getByRole('heading', { name: 'Finanzen', exact: true })).toBeVisible();
   await expect(page.locator('a[href="/haushaltsfinanzen"]')).toHaveCount(0);
+});
+
+// Schnellerfassung: am Handy Betrag tippen, Speichern — der Betrag hat sofort den Fokus, die meistgenutzte
+// Kategorie ist vorgewählt, das Datum ist heute.
+test('quick capture: an expense in three steps on a phone', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route('http://localhost:8000/api/**', (route) => route.abort());
+  await page.goto('/demo/finanzen?tab=expenses');
+  await page.locator('app-mobile-action button').click();
+  const dialog = page.getByRole('dialog');
+  await expect(page.locator('#booking-amount')).toBeFocused();
+  await expect(dialog.getByRole('group', { name: 'Typ' }).getByRole('button', { name: 'Ausgabe', pressed: true })).toBeVisible();
+  const chips = dialog.getByRole('group', { name: 'Kategorie' }).getByRole('button');
+  await expect(chips.first()).toHaveAttribute('aria-pressed', 'true');
+  for (const chip of await chips.all()) expect((await chip.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await page.keyboard.type('4,50');
+  await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator('main')).toContainText('4,50');
 });
