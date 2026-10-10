@@ -24,7 +24,7 @@ test('the profile button opens an account menu with name, email and the account 
   await expect(trigger).toHaveAttribute('aria-expanded', 'true');
   await expect(menu).toContainText('Mira Beispiel');
   await expect(menu).toContainText('mira@example.com');
-  for (const item of ['Familie & Freunde', 'Einstellungen', 'Zwei-Faktor-Authentifizierung', 'Datenschutz', 'Barrierefreiheit', 'Abmelden'])
+  for (const item of ['Personen & Gruppen', 'Einstellungen', 'Zwei-Faktor-Authentifizierung', 'Datenschutz', 'Barrierefreiheit', 'Abmelden'])
     await expect(menu.getByRole('menuitem', { name: item })).toBeVisible();
   // Fokus liegt im Menü, Pfeiltasten wandern
   await expect(menu.getByRole('menuitem').first()).toBeFocused();
@@ -265,15 +265,15 @@ test('the mobile bottom bar has only Start and the four areas', async ({ page })
   await expect(page).toHaveURL(/\/finanzen$/);
 });
 
-test('on the phone the account menu leads to Familie & Freunde', async ({ page }) => {
+test('on the phone the account menu leads to Personen & Gruppen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await signedIn(page);
   await page.route('**/api/v1/contacts/', (r) => r.fulfill({ json: { contacts: [], sent: [], received: [] } }));
   await page.goto('/');
   await page.getByRole('button', { name: 'Kontomenü' }).click();
-  await page.getByRole('menuitem', { name: 'Familie & Freunde' }).click();
+  await page.getByRole('menuitem', { name: 'Personen & Gruppen' }).click();
   await expect(page).toHaveURL(/\/familie$/);
-  await expect(page.getByRole('heading', { name: 'Familie & Freunde', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Personen & Gruppen', level: 1 })).toBeVisible();
 });
 
 test('the preview (guest) account menu offers only "Anmelden", not "Konto erstellen"', async ({ page }) => {

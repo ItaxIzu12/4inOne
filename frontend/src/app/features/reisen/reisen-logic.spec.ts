@@ -22,7 +22,7 @@ import {
 function trip(extra: Partial<Trip>): Trip {
   return {
     id: 1, title: 'Reise', destination: '', departure: '', start_date: '2026-03-14', end_date: '2026-03-16', notes: '', status: 'PLANNED',
-    travel_type: '', transport_type: '', baggage_type: '', budget_amount: null, currency: 'EUR', accommodation: '',
+    travel_type: '', transport_type: '', baggage_type: '', climate: '', budget_amount: null, currency: 'EUR', accommodation: '',
     accommodation_area: '', transport_note: '', created_at: '', updated_at: '2026-01-01', packing_total: 0, packing_packed: 0,
     tasks_open: 0, tasks_total: 0, events_count: 0, budget_spent: '0.00', participants: [], my_role: 'OWNER', ...extra,
   };

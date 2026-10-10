@@ -256,6 +256,21 @@ export class Organisation {
   /** Deep-Link (?kind=task|event&id=…) aus Dashboard und „Verknüpft“: öffnet das Objekt und räumt die Adresse auf. */
   private openFromQuery() {
     const q = this.route.snapshot.queryParamMap;
+    // Schnellerfassung von der Startseite: nur diese festen Werte, danach Adresse aufräumen.
+    const fresh = q.get('neu');
+    if (fresh === 'termin' || fresh === 'aufgabe' || fresh === 'notiz') {
+      const tab: OrgTab = fresh === 'termin' ? 'calendar' : fresh === 'aufgabe' ? 'tasks' : 'notes';
+      this.tab.set(tab);
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { neu: null, tab: tab === 'calendar' ? null : tab },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+      if (fresh === 'notiz') this.openNote();
+      else this.open(fresh === 'termin' ? 'event' : 'task');
+      return;
+    }
     const kind = q.get('kind');
     const id = Number(q.get('id'));
     if ((kind !== 'event' && kind !== 'task') || !id) return;
@@ -287,7 +302,14 @@ export class Organisation {
     for (const s of [this.formError, this.titleError, this.dateError, this.endError, this.endDateError, this.dueError, this.timeError]) s.set('');
   }
 
+  /** Termin von einem angeklickten Tag (Monatsansicht): der Tag steht fest und ist im Formular gesperrt. */
+  readonly dateLocked = signal(false);
+  openOnDay(day: string) {
+    this.open('event', undefined, day);
+    this.dateLocked.set(true);
+  }
   open(kind: 'event' | 'task', item?: PersonalEvent | PersonalTask, day?: string) {
+    this.dateLocked.set(false);
     this.form.reset({
       title: '', description: '', date: day ?? localDay(new Date()), all_day: false, start_time: '09:00', end_date: '',
       end_time: '', recurrence: '', location: '', category: 'sonstiges', due_date: '', due_time: '', priority: 'MEDIUM',

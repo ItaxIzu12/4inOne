@@ -1,8 +1,8 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
 import { DecimalPipe } from '@angular/common';
-import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, DestroyRef, Injector, afterNextRender, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HouseholdInviteModalService } from '../../core/household/household-invite-modal.service';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { Field } from '../../shared/form/field';
@@ -184,6 +184,20 @@ export class EinkaufTab {
     effect(() => {
       if (this.newRequest() > 0) untracked(() => this.openNewList());
     });
+    // Schnellerfassung von der Startseite (?neu=artikel): Fokus ins Feld „Artikel hinzufügen“, sobald die Liste da ist.
+    const route = inject(ActivatedRoute);
+    const router = inject(Router);
+    const injector = inject(Injector);
+    if (route.snapshot.queryParamMap.get('neu') === 'artikel') {
+      const focusOnce = effect(() => {
+        if (!this.data()) return;
+        focusOnce.destroy();
+        untracked(() => {
+          void router.navigate([], { relativeTo: route, queryParams: { neu: null }, queryParamsHandling: 'merge', replaceUrl: true });
+          afterNextRender(() => document.getElementById('new-item-name')?.focus(), { injector });
+        });
+      });
+    }
     // Die Listen teilen sich mehrere Personen: kommt man in den Tab zurück
     // (Handy aus der Tasche), zeigt er, was andere inzwischen eingetragen
     // oder abgehakt haben. Echtzeit-Sync folgt später (siehe Konzept).

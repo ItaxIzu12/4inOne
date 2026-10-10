@@ -27,7 +27,7 @@ import {
   TripParticipant,
   TripTask,
 } from './reisen-api.service';
-import { buildTripSuggestions, SuggestedPackingItem, SuggestedTask } from './trip-suggestions';
+import { buildTripSuggestions, guessClimate, SuggestedPackingItem, SuggestedTask } from './trip-suggestions';
 import { TripList } from './trip-list';
 import { TripPacking } from './trip-packing';
 import { TripBudget } from './trip-budget';
@@ -42,6 +42,7 @@ import {
   STATUS_ORDER,
   STATUS_TONE,
   dateRange,
+  dueLabel,
   formatMoney,
   localDay,
   longRange,
@@ -51,6 +52,7 @@ import {
 } from './reisen-logic';
 
 export { formatMoney, localDay } from './reisen-logic';
+export type SuggestionScope = 'all' | 'tasks' | 'packing';
 export type { TripTab } from './trip-overview';
 
 /** Innerhalb einer Reise genau vier Reiter (docs/REISEN_V1.md). */
@@ -132,6 +134,7 @@ export class Reisen {
     { value: 'BUSINESS', label: 'Geschäftsreise' },
     { value: 'ROAD_TRIP', label: 'Roadtrip' },
     { value: 'ACTIVE', label: 'Aktivurlaub' },
+    { value: 'WINTER', label: 'Wintersport' },
     { value: 'FAMILY', label: 'Familienreise' },
     { value: 'GENERAL', label: 'Allgemein' },
   ];
@@ -142,6 +145,13 @@ export class Reisen {
     { value: 'CAR', label: 'Auto' },
     { value: 'BUS', label: 'Bus' },
     { value: 'OTHER', label: 'Sonstiges' },
+  ];
+  readonly climateOptions: SelectOption[] = [
+    { value: '', label: 'Keine Angabe' },
+    { value: 'WARM', label: 'Warm' },
+    { value: 'MILD', label: 'Mild' },
+    { value: 'COLD', label: 'Kalt' },
+    { value: 'SNOW', label: 'Schnee' },
   ];
   readonly baggageTypeOptions: SelectOption[] = [
     { value: '', label: 'Keine Angabe' },
@@ -192,12 +202,20 @@ export class Reisen {
     travel_type: [''],
     transport_type: [''],
     baggage_type: [''],
+    climate: [''],
     accommodation: ['', Validators.maxLength(160)],
     accommodation_area: ['', Validators.maxLength(120)],
     transport_note: ['', Validators.maxLength(160)],
     notes: ['', Validators.maxLength(5000)],
   });
   readonly tripTouched = signal(false);
+  /** Wetter am Ziel ist vorbelegt (aus Reisemonat oder Wintersport), nicht selbst gewählt — dann darf es mitwandern. */
+  readonly climateGuessed = signal(false);
+  private settingTripForm = false;
+  readonly climateHint = computed(() => {
+    if (!this.climateGuessed()) return '';
+    return this.tripValue().travel_type === 'WINTER' ? 'Aus „Wintersport“ übernommen – bitte prüfen' : 'Geschätzt nach Reisemonat – bitte prüfen';
+  });
   readonly titleError = computed(() => (this.tripTouched() && !this.tripValue().title.trim() ? 'Bitte gib der Reise einen Namen.' : ''));
   readonly destinationError = computed(() => (this.tripTouched() && !this.tripValue().destination.trim() ? 'Bitte gib ein Reiseziel an.' : ''));
   readonly startError = computed(() => (this.tripTouched() && !this.tripValue().start_date ? 'Bitte wähle den ersten Reisetag.' : ''));
@@ -279,6 +297,13 @@ export class Reisen {
 
   constructor() {
     this.tripForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.tripValue.set(this.tripForm.getRawValue()));
+    // Wetter am Ziel folgt Datum und Reiseart, solange es nur vorgeschlagen ist; eine eigene Wahl bleibt stehen.
+    const { start_date, travel_type, climate } = this.tripForm.controls;
+    start_date.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.suggestClimate());
+    travel_type.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.suggestClimate());
+    climate.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      if (!this.settingTripForm) this.climateGuessed.set(false);
+    });
     // Die Adresse ist die Quelle: ?trip= öffnet eine Reise, ?tab= den Reiter — so funktionieren Zurück-Taste und
     // Links aus Dashboard oder Verknüpfungen.
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
@@ -310,6 +335,11 @@ export class Reisen {
         next: (trips) => {
           this.trips.set(trips);
           this.loading.set(false);
+          // Schnellerfassung von der Startseite (?neu=reise): das bestehende Formular öffnen, Adresse aufräumen.
+          if (this.route.snapshot.queryParamMap.get('neu') === 'reise') {
+            void this.router.navigate([], { relativeTo: this.route, queryParams: { neu: null }, queryParamsHandling: 'merge', replaceUrl: true });
+            this.openTripEditor();
+          }
         },
         error: () => {
           this.loading.set(false);
@@ -389,7 +419,18 @@ export class Reisen {
   }
 
   // ---------- Reise anlegen/bearbeiten ----------
+  private suggestClimate(): void {
+    if (this.settingTripForm) return;
+    const { climate, start_date, travel_type } = this.tripForm.getRawValue();
+    if (climate && !this.climateGuessed()) return;
+    const guess = travel_type === 'WINTER' ? 'SNOW' : guessClimate(start_date);
+    this.settingTripForm = true;
+    this.tripForm.controls.climate.setValue(guess);
+    this.settingTripForm = false;
+    this.climateGuessed.set(!!guess);
+  }
   openTripEditor(trip?: Trip): void {
+    this.settingTripForm = true;
     this.tripForm.reset({
       title: trip?.title ?? '',
       destination: trip?.destination ?? '',
@@ -400,11 +441,14 @@ export class Reisen {
       travel_type: trip?.travel_type ?? '',
       transport_type: trip?.transport_type ?? '',
       baggage_type: trip?.baggage_type ?? '',
+      climate: trip?.climate ?? '',
       accommodation: trip?.accommodation ?? '',
       accommodation_area: trip?.accommodation_area ?? '',
       transport_note: trip?.transport_note ?? '',
       notes: trip?.notes ?? '',
     });
+    this.settingTripForm = false;
+    this.climateGuessed.set(false);
     this.tripTouched.set(false);
     this.tripMoreOpen.set(false);
     this.editTripId.set(trip?.id);
@@ -472,6 +516,7 @@ export class Reisen {
           travel_type: v.travel_type as Trip['travel_type'],
           transport_type: v.transport_type as Trip['transport_type'],
           baggage_type: v.baggage_type as Trip['baggage_type'],
+          climate: v.climate as Trip['climate'],
           accommodation: v.accommodation.trim(),
           accommodation_area: v.accommodation_area.trim(),
           transport_note: v.transport_note.trim(),
@@ -612,6 +657,8 @@ export class Reisen {
    * („Vorlage verwenden“, „Vorschläge ansehen“) — nie beim Bearbeiten, und übernommen wird nur, was angehakt ist. */
   readonly smartSetupTrip = signal<Trip | null>(null);
   readonly smartSetupReview = signal(false);
+  /** Aus der Planung nur Aufgaben, aus der Packliste nur Packstücke; direkt nach dem Anlegen beides. */
+  readonly smartSetupScope = signal<SuggestionScope>('all');
   readonly smartSetupSuggestions = signal<{ packing: SuggestedPackingItem[]; tasks: SuggestedTask[] }>({ packing: [], tasks: [] });
   readonly smartSetupPackingChecked = signal<boolean[]>([]);
   readonly smartSetupTasksChecked = signal<boolean[]>([]);
@@ -621,31 +668,84 @@ export class Reisen {
       .map((category) => ({
         category,
         label: this.packingCategoryLabels[category],
+        icon: PACKING_META[category].icon,
         entries: items.map((item, index) => ({ item, index })).filter((entry) => entry.item.category === category),
       }))
       .filter((group) => group.entries.length > 0);
   });
   readonly smartSetupEmpty = computed(() => !this.smartSetupSuggestions().packing.length && !this.smartSetupSuggestions().tasks.length);
+  readonly smartSetupTotal = computed(() => this.smartSetupSuggestions().packing.length + this.smartSetupSuggestions().tasks.length);
+  readonly smartSetupSelected = computed(
+    () => this.smartSetupPackingChecked().filter(Boolean).length + this.smartSetupTasksChecked().filter(Boolean).length,
+  );
+  readonly smartSetupAllSelected = computed(() => this.smartSetupSelected() === this.smartSetupTotal());
+  readonly smartSetupHead = computed(() => {
+    const scope = this.smartSetupScope();
+    if (scope === 'tasks') return { title: 'Vorschläge für die Planung', icon: 'list' as IconName, empty: 'Alle vorgeschlagenen Aufgaben stehen schon in deiner Planung.' };
+    if (scope === 'packing') return { title: 'Vorschläge für die Packliste', icon: 'luggage' as IconName, empty: 'Alle vorgeschlagenen Dinge stehen schon auf deiner Packliste.' };
+    return { title: `Vorschläge für ${this.smartSetupTrip()?.title ?? 'deine Reise'}`, icon: 'bulb' as IconName, empty: 'Alles Vorgeschlagene steht schon auf deinen Listen.' };
+  });
+  /** Worauf die (festen, regelbasierten) Vorlagen beruhen — ehrlich, ohne „KI“. */
+  readonly smartSetupBasis = computed(() => {
+    const trip = this.smartSetupTrip();
+    if (!trip) return '';
+    const label = (options: SelectOption[], value: string) => (value ? options.find((o) => o.value === value)?.label : undefined);
+    const facts = [
+      label(this.travelTypeOptions, trip.travel_type),
+      label(this.climateOptions, trip.climate),
+      label(this.transportTypeOptions, trip.transport_type),
+      label(this.baggageTypeOptions, trip.baggage_type),
+    ].filter((f): f is string => !!f);
+    return facts.length
+      ? `Passend zu ${facts.join(' · ')}. Wähle aus, was du übernehmen möchtest.`
+      : 'Allgemeine Vorlage. Mit Reiseart, Wetter am Ziel, Transport und Gepäck werden die Vorschläge genauer.';
+  });
+  readonly smartSetupSubmitLabel = computed(() => {
+    const n = this.smartSetupSelected();
+    if (!n) return 'Nichts ausgewählt';
+    if (this.smartSetupScope() === 'tasks') return n === 1 ? '1 Aufgabe übernehmen' : `${n} Aufgaben übernehmen`;
+    if (this.smartSetupScope() === 'packing') return `${n} Artikel übernehmen`;
+    return n === 1 ? '1 Vorschlag übernehmen' : `${n} Vorschläge übernehmen`;
+  });
   readonly smartSetupSaving = signal(false);
   readonly smartSetupError = signal('');
 
-  openSuggestionsForSelected(): void {
+  suggestionDue(date: string | null): string {
+    if (!date) return '';
+    const due = dueLabel(date, localDay(new Date()));
+    return due.urgent ? due.text : `Bis ${due.text}`;
+  }
+  openSuggestionsForSelected(scope: SuggestionScope = 'all'): void {
     const trip = this.selectedTrip();
     if (!trip) return;
     const packed = new Set(this.packing().map((i) => i.title.toLocaleLowerCase('de')));
     const tasks = new Set(this.tasks().map((t) => t.title.toLocaleLowerCase('de')));
-    this.openSmartSetup(trip, (title) => packed.has(title.toLocaleLowerCase('de')), (title) => tasks.has(title.toLocaleLowerCase('de')));
+    this.openSmartSetup(trip, (title) => packed.has(title.toLocaleLowerCase('de')), (title) => tasks.has(title.toLocaleLowerCase('de')), scope);
     this.smartSetupReview.set(true);
   }
-  private openSmartSetup(trip: Trip, hasItem: (title: string) => boolean = () => false, hasTask: (title: string) => boolean = () => false): void {
+  private openSmartSetup(
+    trip: Trip,
+    hasItem: (title: string) => boolean = () => false,
+    hasTask: (title: string) => boolean = () => false,
+    scope: SuggestionScope = 'all',
+  ): void {
     const all = buildTripSuggestions(trip);
-    const suggestions = { packing: all.packing.filter((i) => !hasItem(i.title)), tasks: all.tasks.filter((t) => !hasTask(t.title)) };
+    const suggestions = {
+      packing: scope === 'tasks' ? [] : all.packing.filter((i) => !hasItem(i.title)),
+      tasks: scope === 'packing' ? [] : all.tasks.filter((t) => !hasTask(t.title)),
+    };
+    this.smartSetupScope.set(scope);
     this.smartSetupSuggestions.set(suggestions);
     this.smartSetupPackingChecked.set(suggestions.packing.map(() => true));
     this.smartSetupTasksChecked.set(suggestions.tasks.map(() => true));
     this.smartSetupReview.set(false);
     this.smartSetupError.set('');
     this.smartSetupTrip.set(trip);
+  }
+  toggleAllSuggestions(): void {
+    const next = !this.smartSetupAllSelected();
+    this.smartSetupPackingChecked.update((flags) => flags.map(() => next));
+    this.smartSetupTasksChecked.update((flags) => flags.map(() => next));
   }
   skipSmartSetup(): void {
     if (!this.smartSetupSaving()) this.smartSetupTrip.set(null);

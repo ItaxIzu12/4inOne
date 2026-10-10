@@ -34,8 +34,8 @@
             [class.is-selected]="d.key === selectedDay()"
             [attr.aria-current]="d.today ? 'date' : null"
             [attr.aria-pressed]="d.key === selectedDay()"
-            [attr.aria-label]="dayLabel(d.key, d.events.length)"
-            (click)="select(d.key)"
+            [attr.aria-label]="dayLabel(d.key, d.events.length) + ' – Termin hinzufügen'"
+            (click)="pickDay(d.key)"
           >
             <span class="cell__num" [class.is-today]="d.today">{{ d.number }}</span>
             <span class="cell__events" aria-hidden="true">

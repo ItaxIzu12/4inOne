@@ -669,6 +669,7 @@ export class PrivateFinance {
           this.loading.set(false);
           this.announcePending(r.summary);
           this.openGoalFromQuery();
+          this.openNewFromQuery();
           if (this.budgetFocus) {
             const target = this.budgetFocus;
             this.budgetFocus = null;
@@ -713,6 +714,14 @@ export class PrivateFinance {
   }
   /** Deep-Link (?goal=<id>) aus „Verknüpft“: zeigt das Sparziel und öffnet es.
    * ?goal=new&title=… öffnet ein neues Sparziel mit vorgeschlagenem Titel (z. B. aus einer Reise in Fremdwährung). */
+  /** Schnellerfassung von der Startseite (?neu=buchung): öffnet das bestehende Buchungsformular. Nur dieser feste
+   * Wert wird angenommen; die Adresse wird danach aufgeräumt. */
+  private openNewFromQuery() {
+    if (this.route.snapshot.queryParamMap.get('neu') !== 'buchung') return;
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { neu: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    this.selectTab('transactions');
+    this.open('transactions');
+  }
   private openGoalFromQuery() {
     const params = this.route.snapshot.queryParamMap;
     const raw = params.get('goal');

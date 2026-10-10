@@ -268,3 +268,35 @@ test.describe('demo preview', () => {
     expect(strip.y).toBeLessThan(agenda.y);
   });
 });
+
+// Monatsansicht: ein Klick auf einen Tag legt direkt einen Termin an diesem Tag an — das Datum steht fest.
+test('month view: clicking a day opens "Termin hinzufügen" with that day locked', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route('http://localhost:8000/api/**', (r) => r.abort());
+  await page.goto('/demo/organisation');
+  await page.getByRole('button', { name: 'Monat', exact: true }).click();
+  const d = new Date();
+  d.setDate(d.getDate() + 3);
+  const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const label = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  // Tag aus dem aktuellen Monat (bei Monatsende ggf. der nächste Monat)
+  if (d.getMonth() !== new Date().getMonth()) await page.getByRole('button', { name: 'Nächster Monat' }).click();
+  await page.locator('.month .cell').filter({ has: page.locator('.cell__num', { hasText: new RegExp(`^${d.getDate()}$`) }) }).filter({ hasNot: page.locator('.is-outside') }).first().click();
+
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { name: 'Termin hinzufügen' })).toBeVisible();
+  const date = dialog.getByLabel('Datum', { exact: true });
+  await expect(date).toBeDisabled();
+  await expect(date).toContainText(label);
+  await expect(dialog).toContainText('Im Kalender gewählt');
+  await expect(dialog.locator('#entry-title')).toBeFocused();
+
+  await dialog.locator('#entry-title').fill('Elternabend');
+  await dialog.getByRole('button', { name: 'Speichern' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator(`#agenda-${iso}`)).toContainText('Elternabend');
+
+  // Über „Termin hinzufügen“ oben bleibt das Datum frei wählbar.
+  await page.getByRole('button', { name: 'Termin hinzufügen' }).first().click();
+  await expect(page.getByRole('dialog').getByLabel('Datum', { exact: true })).toBeEnabled();
+});

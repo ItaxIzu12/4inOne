@@ -18,7 +18,11 @@ import {
 import { ReisenApi, Trip } from '../reisen/reisen-api.service';
 import {
   Component,
+  ElementRef,
+  HostListener,
   computed,
+  effect,
+  untracked,
   inject,
   signal,
   DestroyRef,
@@ -41,13 +45,54 @@ export interface TodayRow {
   tone: string;
   source?: TodayItem;
   link?: { path: string[]; query: Record<string, string | number> };
+  /** Überfällig — steht immer auch als Text in `note`, die Farbe unterstützt nur. */
+  late?: boolean;
 }
+/** Schnellerfassung: führt zum bestehenden Formular des Bereichs (?neu=…), keine eigenen Formulare hier. */
+export interface QuickAddItem {
+  label: string;
+  icon: IconName;
+  tone: string;
+  path: string;
+  query: Record<string, string>;
+}
+/** „Für dich“: höchstens eine Karte aus echten Daten — sonst nichts. */
+export interface ForYou {
+  tone: string;
+  icon: IconName;
+  area: string;
+  title: string;
+  facts: string[];
+  action: string;
+  path: string;
+  query: Record<string, string | number>;
+}
+const FOR_YOU_DAYS = 30;
+const DEADLINE_LABEL: Record<string, string> = { kuendigung: 'Kündigungsfrist', wartung: 'Wartung', garantie: 'Garantie endet' };
 
 /** Heute fokussiert halten: höchstens fünf Zeilen, der Rest liegt in den Bereichen. */
 const TODAY_ROWS = 5;
 
 function hhmm(iso: string): string {
   return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+}
+/** Haushalt tagesbezogen: „3 Aufgaben heute“ + „1 überfällig“ — nicht die Gesamtzahl offener Aufgaben. */
+function householdFigures(data: HaushaltOverviewDto | null): { summary: string; detail: string } {
+  if (!data) return { summary: '', detail: '' };
+  const today = data.summary?.due_today ?? 0;
+  const overdue = data.overdue_tasks ?? 0;
+  if (today > 0) return { summary: `${today} ${today === 1 ? 'Aufgabe' : 'Aufgaben'} heute`, detail: overdue ? `${overdue} überfällig` : '' };
+  if (overdue > 0) return { summary: `${overdue} überfällig`, detail: '' };
+  return { summary: 'Keine Aufgabe heute', detail: '' };
+}
+/** „Berlin“ aus „Berlin, Deutschland“ — sonst der Titel der Reise. Nie ein erfundenes Ziel. */
+function place(trip: Trip): string {
+  return trip.destination?.split(',')[0].trim() || trip.title;
+}
+/** Sortierschlüssel für „Heute“: 0 überfällig, 1 mit Uhrzeit (chronologisch), 2 ganztägig/ohne Uhrzeit. */
+function todayOrder(item: TodayItem): string {
+  if (item.overdue) return `0${item.at}`;
+  return item.all_day ? `2${item.kind}${item.id}` : `1${hhmm(item.at)}`;
 }
 function ddmm(isoDate: string): string {
   const [, month, day] = isoDate.split('-');
@@ -112,6 +157,84 @@ export class Dashboard {
   /** Für die Suche oben: Buchungen des Monats und eigene Aufgaben (die Startseite zeigt sie selbst nicht). */
   readonly boardSummary = signal<FinanceSummary | null>(null);
   readonly boardTasks = signal<PersonalTask[]>([]);
+  /** „Für dich“: die eine nächste Sache aus echten Daten, die nicht schon unter „Heute“ steht — eine Frist im
+   * Haushalt oder die nächste Reise mit offener Vorbereitung, jeweils innerhalb von 30 Tagen. Sonst keine Karte. */
+  readonly forYou = computed<ForYou | null>(() => {
+    const candidates: (ForYou & { days: number; rank: number })[] = [];
+    const deadline = (this.household()?.deadlines ?? []).find((d) => d.days > 0 && d.days <= FOR_YOU_DAYS);
+    if (deadline) {
+      candidates.push({
+        days: deadline.days,
+        rank: 0,
+        tone: 'household',
+        icon: deadline.kind === 'vertrag' ? 'finance' : 'device',
+        area: 'Haushalt',
+        title: deadline.name,
+        facts: [`${DEADLINE_LABEL[deadline.art] ?? 'Frist'} in ${deadline.days} ${deadline.days === 1 ? 'Tag' : 'Tagen'}`],
+        action: deadline.kind === 'vertrag' ? 'Vertrag ansehen' : 'Gerät ansehen',
+        path: this.domainPath('haushalt'),
+        query: { tab: 'zuhause', bereich: deadline.kind === 'vertrag' ? 'vertraege' : 'geraete' },
+      });
+    }
+    const trip = this.nextTrip();
+    const days = trip ? this.daysUntil(trip) : -1;
+    const unpacked = trip ? trip.packing_total - trip.packing_packed : 0;
+    if (trip && days > 0 && days <= FOR_YOU_DAYS && (trip.tasks_open > 0 || unpacked > 0)) {
+      candidates.push({
+        days,
+        rank: 1,
+        tone: 'travel',
+        icon: 'travel',
+        area: 'Nächste Reise',
+        title: trip.title,
+        facts: [
+          `in ${days} ${days === 1 ? 'Tag' : 'Tagen'}`,
+          ...(trip.tasks_open ? [`${trip.tasks_open} ${trip.tasks_open === 1 ? 'Aufgabe' : 'Aufgaben'} offen`] : []),
+          ...(trip.packing_total ? [`${trip.packing_packed} / ${trip.packing_total} gepackt`] : []),
+        ],
+        action: 'Reise ansehen',
+        path: this.travelPath(),
+        query: { trip: trip.id },
+      });
+    }
+    candidates.sort((a, b) => a.days - b.days || a.rank - b.rank);
+    return candidates[0] ?? null;
+  });
+  /** Schnellerfassung — nur Formulare, die es in den Bereichen schon gibt. */
+  readonly quickAdd = computed((): QuickAddItem[] => [
+    <QuickAddItem>{ label: 'Buchung', icon: 'finance', tone: 'finance', path: this.domainPath('finanzen'), query: { tab: 'transactions', neu: 'buchung' } },
+    <QuickAddItem>{ label: 'Aufgabe', icon: 'check-circle', tone: 'organisation', path: this.domainPath('organisation'), query: { tab: 'tasks', neu: 'aufgabe' } },
+    <QuickAddItem>{ label: 'Termin', icon: 'calendar', tone: 'organisation', path: this.domainPath('organisation'), query: { neu: 'termin' } },
+    <QuickAddItem>{ label: 'Notiz', icon: 'file-text', tone: 'organisation', path: this.domainPath('organisation'), query: { tab: 'notes', neu: 'notiz' } },
+    <QuickAddItem>{ label: 'Einkauf', icon: 'basket', tone: 'household', path: this.domainPath('haushalt'), query: { tab: 'einkaufen', neu: 'artikel' } },
+    <QuickAddItem>{ label: 'Reise', icon: 'travel', tone: 'travel', path: this.domainPath('reisen'), query: { neu: 'reise' } },
+  ]);
+  readonly quickOpen = signal(false);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  toggleQuick(event?: Event) {
+    // Sonst erreicht derselbe Klick den Dokument-Listener unten und schließt die Liste sofort wieder
+    // (z. B. vom „Hinzufügen“ im leeren Tag aus, der außerhalb des Kopf-Knopfs liegt).
+    event?.stopPropagation();
+    this.quickOpen.update((open) => !open);
+    // Beim Öffnen den ersten Eintrag fokussieren (Tastatur), beim Schließen zurück zum Knopf.
+    if (this.quickOpen()) setTimeout(() => this.host.nativeElement.querySelector<HTMLElement>('.quick__list a')?.focus());
+  }
+  closeQuick(refocus = false) {
+    if (!this.quickOpen()) return;
+    this.quickOpen.set(false);
+    if (refocus) this.host.nativeElement.querySelector<HTMLElement>('.quick__toggle')?.focus();
+  }
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event) {
+    if (this.quickOpen() && !this.host.nativeElement.querySelector('.quick')?.contains(event.target as Node)) this.quickOpen.set(false);
+  }
+  /** Ist ein Bereich nicht ladbar, bleibt der Rest sichtbar; hier lässt sich gezielt erneut laden. */
+  readonly someFailed = computed(() => this.financeError() || this.householdError() || this.tripsError());
+  retryFailed() {
+    if (this.financeError()) this.loadFinance();
+    if (this.householdError()) this.loadHousehold();
+    if (this.tripsError()) this.loadTrips();
+  }
   readonly boardResults = computed(() => {
     const boardQuery = this.boardQuery().trim().toLocaleLowerCase('de');
     if (!boardQuery) return [];
@@ -150,7 +273,9 @@ export class Dashboard {
       .slice(0, 8);
   });
   /** Finanzen des laufenden Monats (Stand im Band, Buchungen für die Suche) und eigene Aufgaben (Suche). */
-  private initializeOverview() {
+  /** Finanzen des laufenden Monats: Stand im Band, Buchungen nur für die Suche. */
+  loadFinance() {
+    this.financeError.set(false);
     this.financeApi
       .summary(financeMonth())
       .pipe(takeUntilDestroyed(this.destroy))
@@ -161,20 +286,9 @@ export class Dashboard {
         },
         error: () => this.financeError.set(true),
       });
-    if (!this.demo && !this.live()) return;
-    this.api
-      .tasks()
-      .pipe(takeUntilDestroyed(this.destroy))
-      .subscribe({ next: (tasks) => this.boardTasks.set(tasks.filter((t) => t.status !== 'DONE')), error: () => undefined });
   }
-
-  constructor() {
-    inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(params => this.boardQuery.set((params.get('q') ?? '').slice(0, 200)));
-    this.initializeOverview();
-    // Ohne Anmeldung liefern dieselben Aufrufe die Demo-Daten der Routengruppe (siehe app.routes.ts) — die vier
-    // Kacheln unten zeigen dadurch echte Zahlen aus den jeweiligen Demo-Reitern, statt erfundener Beispielwerte,
-    // die von dort abweichen konnten.
-    this.loadToday();
+  loadHousehold() {
+    this.householdError.set(false);
     this.haushaltApi
       .getOverview()
       .pipe(takeUntilDestroyed(this.destroy))
@@ -182,8 +296,13 @@ export class Dashboard {
         next: (data) => this.household.set(data),
         error: () => this.householdError.set(true),
       });
+  }
+  /** Für ein echtes Konto nur bevorstehende Reisen (?scope=upcoming) — nicht die ganze Reisehistorie. */
+  loadTrips() {
+    this.tripsError.set(false);
+    this.tripsLoading.set(true);
     this.reisenApi
-      .trips()
+      .trips(this.live() ? 'upcoming' : undefined)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (data) => {
@@ -195,6 +314,28 @@ export class Dashboard {
           this.tripsLoading.set(false);
         },
       });
+  }
+  /** Eigene Aufgaben werden erst geladen, wenn jemand sucht — die Startseite listet sie nicht. */
+  private tasksRequested = false;
+  private loadTasksForSearch() {
+    if (this.tasksRequested || (!this.demo && !this.live())) return;
+    this.tasksRequested = true;
+    this.api
+      .tasks()
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({ next: (tasks) => this.boardTasks.set(tasks.filter((t) => t.status !== 'DONE')), error: () => (this.tasksRequested = false) });
+  }
+
+  constructor() {
+    inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(params => this.boardQuery.set((params.get('q') ?? '').slice(0, 200)));
+    effect(() => {
+      if (this.boardQuery().trim()) untracked(() => this.loadTasksForSearch());
+    });
+    // Ohne Anmeldung liefern dieselben Aufrufe die Demo-Daten der Routengruppe (siehe app.routes.ts).
+    this.loadFinance();
+    this.loadToday();
+    this.loadHousehold();
+    this.loadTrips();
     if (this.live()) {
       this.onboardingApi
         .getProfile()
@@ -241,21 +382,33 @@ export class Dashboard {
         },
       });
   }
-  get items(): TodayRow[] {
-    if (this.demo)
-      return (this.organisationToday()?.items ?? []).slice(0, TODAY_ROWS).map((item) => ({
-        title: item.title,
-        mobile: item.title,
-        time: item.overdue ? ddmm(item.at.slice(0, 10)) : item.all_day ? 'Heute' : hhmm(item.at),
-        note: item.overdue
-          ? 'Überfällig'
-          : item.location || (item.kind === 'task' ? 'Aufgabe' : ''),
-        icon: item.kind === 'event' ? 'calendar' : 'check',
-        tone: 'organisation',
-        source: item,
-      }));
+  /** Alles, was heute ansteht: überfällig → mit Uhrzeit (chronologisch) → heute ohne Uhrzeit → Sonstiges. */
+  get allItems(): TodayRow[] {
+    if (this.demo) {
+      return [...(this.organisationToday()?.items ?? [])]
+        .sort((a, b) => todayOrder(a).localeCompare(todayOrder(b)))
+        .map((item) => ({
+          title: item.title,
+          mobile: item.title,
+          time: item.overdue ? ddmm(item.at.slice(0, 10)) : item.all_day ? 'Heute' : hhmm(item.at),
+          note: item.overdue ? 'Überfällig' : item.location || 'Organisation',
+          icon: item.kind === 'event' ? 'calendar' : 'check',
+          tone: 'organisation',
+          source: item,
+          late: item.overdue,
+        }));
+    }
     if (!this.live()) return this.boardItems;
     return this.liveRows();
+  }
+  /** Höchstens fünf Zeilen; „Alle anzeigen“ klappt den Rest an Ort und Stelle auf. */
+  readonly todayExpanded = signal(false);
+  get items(): TodayRow[] {
+    const all = this.allItems;
+    return this.todayExpanded() ? all : all.slice(0, TODAY_ROWS);
+  }
+  get hiddenToday(): number {
+    return Math.max(0, this.allItems.length - TODAY_ROWS);
   }
   /** Alle Bereiche in einer Liste: Überfälliges zuerst, dann nach Uhrzeit, Ganztägiges und Fristen danach. */
   private readonly liveRows = computed<TodayRow[]>(() => {
@@ -273,10 +426,11 @@ export class Dashboard {
             : timed
               ? hhmm(item.at)
               : 'Heute',
-          note: item.overdue ? 'Überfällig' : item.location || '',
+          note: item.overdue ? 'Überfällig' : item.location || 'Organisation',
           icon: (item.kind === 'event' ? 'calendar' : 'check') as IconName,
           tone: 'organisation',
           source: item,
+          late: item.overdue,
         },
       });
     }
@@ -295,6 +449,7 @@ export class Dashboard {
           icon: 'household',
           tone: 'household',
           link: { path: ['/haushalt'], query: { tab: 'aufgaben', task: task.id } },
+          late: task.overdue,
         },
       });
     }
@@ -312,45 +467,22 @@ export class Dashboard {
         },
       });
     }
-    for (const deadline of data?.haushalt?.deadlines ?? []) {
+    // Nur Fristen, die HEUTE enden — spätere stehen unter „Für dich“, nicht in der Tagesliste.
+    for (const deadline of (data?.haushalt?.deadlines ?? []).filter((d) => d.days === 0)) {
       rows.push({
-        order: `3${deadline.date}`,
+        order: '3',
         row: {
           title: deadline.title,
           mobile: deadline.title,
-          time: deadline.days === 0 ? 'Heute' : ddmm(deadline.date),
-          note:
-            deadline.days === 0
-              ? 'Frist unter Zuhause'
-              : `Frist in ${deadline.days} ${deadline.days === 1 ? 'Tag' : 'Tagen'}`,
+          time: 'Heute',
+          note: 'Frist · Haushalt',
           icon: 'device',
           tone: 'household',
           link: { path: ['/haushalt'], query: { tab: 'zuhause', bereich: deadline.art === 'kuendigung' ? 'vertraege' : 'geraete' } },
         },
       });
     }
-    const shopping = data?.haushalt?.shopping_open ?? 0;
-    if (shopping > 0) {
-      rows.push({
-        order: '4',
-        row: {
-          title:
-            shopping === 1
-              ? '1 Sache auf der Einkaufsliste'
-              : `${shopping} Sachen auf der Einkaufsliste`,
-          mobile: 'Einkaufsliste',
-          time: '',
-          note: 'Haushalt',
-          icon: 'basket',
-          tone: 'household',
-          link: { path: ['/haushalt'], query: { tab: 'einkaufen' } },
-        },
-      });
-    }
-    return rows
-      .sort((a, b) => a.order.localeCompare(b.order))
-      .slice(0, TODAY_ROWS)
-      .map((r) => r.row);
+    return rows.sort((a, b) => a.order.localeCompare(b.order)).map((r) => r.row);
   });
   openItem(item: TodayRow) {
     if (this.live() && item.link)
@@ -417,8 +549,13 @@ export class Dashboard {
   ];
   readonly domains = computed(() => {
     const live = this.live();
-    // Dieselbe Berechnung für Demo und echtes Konto: beide beziehen ihre Daten aus derselben Routengruppe
-    // (app.routes.ts), nur einmal von der Demo-, einmal von der echten Datenquelle.
+    // Je Bereich höchstens zwei Angaben, tagesbezogen. `loading` zeigt einen Platzhalter statt „Wird geladen …“,
+    // `failed` einen ruhigen Hinweis (keine technischen Fehlertexte); Wiederholen gibt es unter dem Band.
+    const finance = this.finance();
+    const household = this.household();
+    const org = this.organisationToday();
+    const trip = this.nextTrip();
+    const orgTasksToday = (org?.items ?? []).filter((i) => i.kind === 'task' && !i.overdue).length;
     const tiles = [
       {
         key: 'finanzen',
@@ -426,17 +563,18 @@ export class Dashboard {
         tone: 'finance',
         icon: 'finance' as IconName,
         path: live ? '/finanzen' : '/demo/finanzen',
-        summary: this.financeError()
-          ? 'Finanzen konnten nicht geladen werden'
-          : !this.finance()
-            ? 'Wird geladen …'
-            : this.finance()!.available !== null
-              ? this.finance()!.available!.startsWith('-')
-                ? `${euros(this.finance()!.available!.slice(1))} über dem Budget`
-                : `${euros(this.finance()!.available)} übrig`
-              : this.finance()!.has_data
-                ? `${euros(this.finance()!.expenses)} Ausgaben · Budget anlegen`
-                : 'Starte mit deinem Monatsbudget',
+        loading: !finance && !this.financeError(),
+        failed: this.financeError(),
+        summary: !finance
+          ? ''
+          : finance.available !== null
+            ? finance.available.startsWith('-')
+              ? `${euros(finance.available.slice(1))} über dem Budget`
+              : `${euros(finance.available)} übrig`
+            : finance.has_data
+              ? `${euros(finance.expenses)} ausgegeben`
+              : 'Starte mit deinem Monatsbudget',
+        detail: finance?.available !== null && finance?.available !== undefined ? 'vom Monatsbudget' : '',
       },
       {
         key: 'haushalt',
@@ -444,13 +582,9 @@ export class Dashboard {
         tone: 'household',
         icon: 'household' as IconName,
         path: live ? '/haushalt' : '/demo/haushalt',
-        summary: this.householdError()
-          ? 'Haushalt konnte nicht geladen werden'
-          : !this.household()
-            ? 'Wird geladen …'
-            : this.household()!.open_tasks === 0
-              ? 'Keine offenen Aufgaben'
-              : `${this.household()!.open_tasks} ${this.household()!.open_tasks === 1 ? 'offene Aufgabe' : 'offene Aufgaben'}`,
+        loading: !household && !this.householdError(),
+        failed: this.householdError(),
+        ...householdFigures(household),
       },
       {
         key: 'organisation',
@@ -458,9 +592,10 @@ export class Dashboard {
         tone: 'organisation',
         icon: 'calendar' as IconName,
         path: live ? '/organisation' : '/demo/organisation',
-        summary: this.organisationToday()
-          ? `${this.organisationToday()!.event_count} ${this.organisationToday()!.event_count === 1 ? 'Termin heute' : 'Termine heute'}`
-          : 'Dein Kalender & Aufgaben',
+        loading: !org && !this.todayError(),
+        failed: !!this.todayError(),
+        summary: !org ? '' : org.event_count === 0 ? 'Keine Termine heute' : `${org.event_count} ${org.event_count === 1 ? 'Termin' : 'Termine'} heute`,
+        detail: orgTasksToday ? `${orgTasksToday} ${orgTasksToday === 1 ? 'Aufgabe' : 'Aufgaben'} heute` : '',
       },
       {
         key: 'reisen',
@@ -468,13 +603,10 @@ export class Dashboard {
         tone: 'travel',
         icon: 'travel' as IconName,
         path: live ? '/reisen' : '/demo/reisen',
-        summary: this.tripsError()
-          ? 'Reisen konnten nicht geladen werden'
-          : this.nextTrip()
-            ? this.tripDaysUntilLabel(this.nextTrip()!).replace(/^in /, 'In ')
-            : this.trips().length
-              ? 'Keine bevorstehende Reise'
-              : 'Noch keine Reise geplant',
+        loading: this.tripsLoading(),
+        failed: this.tripsError(),
+        summary: trip ? place(trip) : 'Keine Reise geplant',
+        detail: trip ? this.tripDaysUntilLabel(trip) : '',
       },
     ];
     // Nur ab zwei im Onboarding gewählten Bereichen sortieren/hervorheben — bei genau einem leitet das
@@ -495,19 +627,18 @@ export class Dashboard {
         return 0;
       });
   });
+  daysUntil(trip: Trip): number {
+    return Math.round((new Date(`${trip.start_date}T00:00`).getTime() - new Date(new Date().toDateString()).getTime()) / 86_400_000);
+  }
   tripDaysUntilLabel(trip: Trip): string {
-    const days = Math.round(
-      (new Date(`${trip.start_date}T00:00`).getTime() -
-        new Date(new Date().toDateString()).getTime()) /
-        86_400_000,
-    );
+    const days = this.daysUntil(trip);
     if (days < 0) return 'Gerade unterwegs';
     if (days === 0) return "Heute geht's los";
     return days === 1 ? 'in 1 Tag' : `in ${days} Tagen`;
   }
   readonly greeting = (() => {
     const hour = new Date().getHours();
-    return hour < 11 ? 'Guten Morgen' : hour < 18 ? 'Hallo' : 'Guten Abend';
+    return hour < 11 ? 'Guten Morgen' : hour < 18 ? 'Guten Tag' : 'Guten Abend';
   })();
   readonly travelPath = computed(() => (this.live() ? '/reisen' : '/demo/reisen'));
   readonly organisationPath = computed(() =>

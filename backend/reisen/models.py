@@ -35,6 +35,7 @@ class Trip(models.Model):
         BUSINESS = 'BUSINESS', 'Geschäftsreise'
         ROAD_TRIP = 'ROAD_TRIP', 'Roadtrip'
         ACTIVE = 'ACTIVE', 'Aktivurlaub'
+        WINTER = 'WINTER', 'Wintersport'
         FAMILY = 'FAMILY', 'Familienreise'
         GENERAL = 'GENERAL', 'Allgemein'
 
@@ -50,6 +51,14 @@ class Trip(models.Model):
         CHECKED_BAGGAGE = 'CHECKED_BAGGAGE', 'Aufgabegepäck'
         CAR_LUGGAGE = 'CAR_LUGGAGE', 'Gepäck im Auto'
         UNKNOWN = 'UNKNOWN', 'Noch unklar'
+
+    class Climate(models.TextChoices):
+        # Vom Nutzer gewählt (das Formular schlägt nur nach Reisemonat vor) — kein Wetterdienst: das Ziel ist Freitext,
+        # und es verlässt 4inOne nicht.
+        WARM = 'WARM', 'Warm'
+        MILD = 'MILD', 'Mild'
+        COLD = 'COLD', 'Kalt'
+        SNOW = 'SNOW', 'Schnee'
 
     class Currency(models.TextChoices):
         EUR = 'EUR', 'Euro'
@@ -72,6 +81,7 @@ class Trip(models.Model):
     travel_type = models.CharField(max_length=10, choices=TravelType.choices, blank=True, default='')
     transport_type = models.CharField(max_length=6, choices=TransportType.choices, blank=True, default='')
     baggage_type = models.CharField(max_length=16, choices=BaggageType.choices, blank=True, default='')
+    climate = models.CharField(max_length=4, choices=Climate.choices, blank=True, default='')
     # Das geplante Reisebudget bleibt ein eigenständiger, einfacher Wert je Reise — bewusst kein zweites
     # vollständiges Finanzsystem und keine Verbindung zu core/finanzen (siehe TripExpense-Docstring). Currency
     # ist explizit (kein Float, kein impliziter Euro-Zwang), Decimal wie überall bei Geldbeträgen im Projekt.

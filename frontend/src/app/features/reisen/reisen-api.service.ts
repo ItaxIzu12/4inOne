@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../../core/api.config';
 /** Reisen V1: in Planung → bestätigt (gebucht) → abgeschlossen, oder abgesagt. Kein Entwurf; „Unterwegs“ ergibt
  * sich aus dem Zeitraum (reisen-logic.ts tripPhase()). */
 export type TripStatus = 'PLANNED' | 'CONFIRMED' | 'DONE' | 'CANCELLED';
+export type TripClimate = 'WARM' | 'MILD' | 'COLD' | 'SNOW' | '';
 export interface Trip {
   id: number;
   title: string;
@@ -21,9 +22,11 @@ export interface Trip {
   status: TripStatus;
   /** Alle drei optional (leerer String = keine Angabe) — dienen nur dazu, die Smart-Setup-Vorschläge
    * (siehe trip-suggestions.ts) sinnvoller zu wählen; Reisen funktioniert auch ganz ohne sie. */
-  travel_type: 'CITY_TRIP' | 'BEACH' | 'BUSINESS' | 'ROAD_TRIP' | 'ACTIVE' | 'FAMILY' | 'GENERAL' | '';
+  travel_type: 'CITY_TRIP' | 'BEACH' | 'BUSINESS' | 'ROAD_TRIP' | 'ACTIVE' | 'WINTER' | 'FAMILY' | 'GENERAL' | '';
   transport_type: 'FLIGHT' | 'TRAIN' | 'CAR' | 'BUS' | 'OTHER' | '';
   baggage_type: 'HAND_LUGGAGE' | 'CHECKED_BAGGAGE' | 'CAR_LUGGAGE' | 'UNKNOWN' | '';
+  /** „Wetter am Ziel“ — vom Nutzer gewählt; das Formular schlägt nur nach Reisemonat vor (kein Wetterdienst). */
+  climate: TripClimate;
   budget_amount: string | null;
   /** Explizit statt eines impliziten Euro-Zwangs — kein Float, immer als String (Decimal) übertragen. */
   currency: 'EUR' | 'USD' | 'GBP' | 'CHF';
@@ -115,8 +118,9 @@ export class ReisenApi {
   private http = inject(HttpClient);
   private base = `${API_BASE_URL}/reisen`;
 
-  trips() {
-    return this.http.get<Trip[]>(`${this.base}/trips/`);
+  /** Optional nur bevorstehende/vergangene/abgesagte Reisen (backend TripViewSet ?scope=). */
+  trips(scope?: 'upcoming' | 'past' | 'cancelled') {
+    return this.http.get<Trip[]>(`${this.base}/trips/`, scope ? { params: { scope } } : {});
   }
   saveTrip(data: Partial<Omit<Trip, 'id'>>, id?: number) {
     return id

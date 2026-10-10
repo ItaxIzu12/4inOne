@@ -106,6 +106,66 @@ test('Überschneidung wird erklärt; „Daten prüfen“ führt zurück, „Trot
   await expect(page.locator('main h1')).toHaveText('Potsdam');
 });
 
+test('Wetter am Ziel: nach Reisemonat vorgeschlagen, Wintersport → Schnee, eigene Wahl bleibt — und prägt die Vorschläge', async ({ page }) => {
+  await openDemo(page);
+  await createTrip(page, 'Bergwoche', 'Arlberg', iso(60), iso(64));
+  await page.getByRole('button', { name: /Weitere Angaben/ }).click();
+  const month = Number(iso(60).slice(5, 7));
+  const expected = month >= 6 && month <= 8 ? 'Warm' : month >= 11 || month <= 2 ? 'Kalt' : 'Mild';
+  const weather = page.getByLabel(/^Wetter am Ziel/);
+  await expect(weather).toContainText(expected);
+  await expect(page.getByText('Geschätzt nach Reisemonat – bitte prüfen')).toBeVisible();
+
+  await choose(page, 'Reiseart (optional)', 'Wintersport');
+  await expect(weather).toContainText('Schnee');
+  await expect(page.getByText('Aus „Wintersport“ übernommen – bitte prüfen')).toBeVisible();
+
+  // Eigene Wahl: bleibt, auch wenn sich das Datum ändert.
+  await weather.click();
+  await page.getByRole('option', { name: 'Mild', exact: true }).click();
+  await expect(page.getByText(/bitte prüfen/)).toHaveCount(0);
+  await pickDate(page, page.getByLabel('Erster Tag', { exact: true }), iso(61));
+  await expect(weather).toContainText('Mild');
+
+  await submit(page);
+  await page.getByRole('button', { name: 'Vorschläge ansehen' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('Passend zu Wintersport · Mild');
+  await expect(dialog).toContainText('Skibrille');
+  await expect(dialog).toContainText('Regenjacke');
+  await expect(dialog).toContainText('Skipass kaufen');
+});
+
+test('Vorschläge: aus der Planung nur Aufgaben, aus der Packliste nur Packstücke — angehakt wird übernommen', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openDemo(page, '/demo/reisen?trip=3&tab=planung');
+  await page.getByRole('button', { name: 'Vorschläge ansehen' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { name: 'Vorschläge für die Planung' })).toBeVisible();
+  await expect(dialog).toContainText('Unterkunft prüfen');
+  await expect(dialog).not.toContainText('Reisepass');
+  await expect(dialog).toContainText(/(\d+) von \1 ausgewählt/);
+  await axe(page);
+
+  await dialog.getByRole('button', { name: 'Alle abwählen' }).click();
+  await expect(dialog.getByRole('button', { name: 'Nichts ausgewählt' })).toBeDisabled();
+  await dialog.getByRole('checkbox', { name: 'Unterkunft prüfen' }).check();
+  await dialog.getByRole('checkbox', { name: /^Koffer packen/ }).check();
+  await dialog.getByRole('button', { name: '2 Aufgaben übernehmen' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator('app-trip-planning .row', { hasText: 'Unterkunft prüfen' })).toBeVisible();
+  await expect(page.locator('app-trip-planning .row', { hasText: 'Koffer packen' })).toBeVisible();
+
+  await tab(page, 'Packliste');
+  await page.getByRole('button', { name: 'Vorlage verwenden' }).click();
+  await expect(dialog.getByRole('heading', { name: 'Vorschläge für die Packliste' })).toBeVisible();
+  await expect(dialog).toContainText('Reisepass / Ausweis');
+  await expect(dialog).not.toContainText('Unterkunft prüfen');
+  await expect(dialog.getByRole('heading', { name: /Wichtige Dokumente/ })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Abbrechen' }).click();
+  await expect(dialog).toHaveCount(0);
+});
+
 test('Planung: Aufgabe hinzufügen und erledigen — der Zähler folgt überall', async ({ page }) => {
   await openDemo(page, '/demo/reisen?trip=1&tab=planung');
   await page.locator('#trip-task-quick').fill('Hotel buchen');

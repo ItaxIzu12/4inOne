@@ -86,7 +86,7 @@ class TripSerializer(serializers.ModelSerializer):
         model = Trip
         fields = [
             'id', 'title', 'destination', 'departure', 'start_date', 'end_date', 'notes', 'status',
-            'travel_type', 'transport_type', 'baggage_type', 'budget_amount', 'currency',
+            'travel_type', 'transport_type', 'baggage_type', 'climate', 'budget_amount', 'currency',
             'accommodation', 'accommodation_area', 'transport_note',
             'created_at', 'updated_at',
             'packing_total', 'packing_packed', 'tasks_open', 'tasks_total', 'events_count', 'budget_spent',

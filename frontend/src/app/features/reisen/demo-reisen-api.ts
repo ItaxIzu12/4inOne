@@ -41,6 +41,7 @@ const BLANK: Omit<TripBase, 'id' | 'title' | 'start_date' | 'end_date'> = {
   travel_type: '',
   transport_type: '',
   baggage_type: '',
+  climate: '',
   budget_amount: null,
   currency: 'EUR',
   accommodation: '',
@@ -106,8 +107,9 @@ export class DemoReisenApi {
       start_date: dateOnly(150),
       end_date: dateOnly(155),
       status: 'PLANNED',
-      travel_type: 'ACTIVE',
+      travel_type: 'WINTER',
       transport_type: 'CAR',
+      climate: 'SNOW',
       currency: 'CHF',
       created_at: at(-1, '18:00'),
       updated_at: at(-1, '18:00'),
@@ -216,7 +218,7 @@ export class DemoReisenApi {
 
   // Kopien statt Live-Referenzen, siehe demo-organisation-api.ts-Docstring: sonst erkennt Angular ein signal.set()
   // derselben (nur in-place veränderten) Array-Referenz fälschlich als unverändert.
-  trips(): Observable<Trip[]> {
+  trips(_scope?: 'upcoming' | 'past' | 'cancelled'): Observable<Trip[]> {
     return of(this.tripList.map((t) => this.withSummary(t)));
   }
   saveTrip(data: Partial<Omit<Trip, 'id'>>, id?: number): Observable<Trip> {

@@ -117,7 +117,7 @@ test('an empty personal account has empty states instead of example content', as
   await page.route('**/api/v1/today/**', r => r.fulfill({json: {...overview, organisation: {...overview.organisation, items: []}, haushalt: null, reisen: {events: []}, suggestions: []}}));
   await page.route('**/api/v1/finanzen/private/summary/**', r => r.fulfill({json: {month: overview.finanzen.month, budget: null, total: null, available: null, income: '0.00', expenses: '0.00', saved: '0.00', recent: [], has_data: false}}));
   await page.goto('/');
-  await expect(page.locator('.today')).toContainText('Heute ist noch nichts geplant.');
+  await expect(page.locator('.today')).toContainText('Heute ist nichts Dringendes offen');
   await expect(page.locator('.domain.finance')).toContainText('Starte mit deinem Monatsbudget');
   await expect(page.locator('main')).not.toContainText('Berlin Wochenende');
   await expect(page.locator('main')).not.toContainText('Sophie');

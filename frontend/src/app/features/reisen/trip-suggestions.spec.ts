@@ -1,4 +1,4 @@
-import { buildTripSuggestions, TripSetupInput } from './trip-suggestions';
+import { buildTripSuggestions, guessClimate, TripSetupInput } from './trip-suggestions';
 
 function input(overrides: Partial<TripSetupInput> = {}): TripSetupInput {
   return {
@@ -7,6 +7,7 @@ function input(overrides: Partial<TripSetupInput> = {}): TripSetupInput {
     travel_type: '',
     transport_type: '',
     baggage_type: '',
+    climate: '',
     ...overrides,
   };
 }
@@ -99,5 +100,49 @@ describe('buildTripSuggestions', () => {
       expect(seen.has(item.title)).toBe(false);
       seen.add(item.title);
     }
+  });
+
+  it('weather at the destination shapes the packing list: warm, mild, cold — no clothing counts', () => {
+    const warm = titles(buildTripSuggestions(input({ climate: 'WARM' })).packing);
+    expect(warm).toEqual(expect.arrayContaining(['Sonnenhut / Kappe', 'Leichte Kleidung', 'Sonnencreme']));
+    expect(warm).not.toContain('Mütze');
+
+    const mild = titles(buildTripSuggestions(input({ climate: 'MILD' })).packing);
+    expect(mild).toEqual(expect.arrayContaining(['Regenjacke', 'Pullover']));
+
+    const cold = buildTripSuggestions(input({ climate: 'COLD' }));
+    expect(titles(cold.packing)).toEqual(expect.arrayContaining(['Warme Jacke', 'Mütze', 'Schal', 'Handschuhe', 'Lippenpflege']));
+    // Eine Jacke, nicht zwei; Wintertipps fürs Auto nur, wenn man mit dem Auto fährt.
+    expect(titles(cold.packing)).not.toContain('Jacke');
+    expect(titles(cold.tasks)).not.toContain('Winterreifen prüfen');
+    expect(cold.packing.every((i) => i.quantity === 1)).toBe(true);
+  });
+
+  it('snow by car adds thermal wear, winter tyres and snow chains', () => {
+    const { packing, tasks } = buildTripSuggestions(input({ climate: 'SNOW', transport_type: 'CAR' }));
+    expect(titles(packing)).toEqual(expect.arrayContaining(['Thermowäsche', 'Winterschuhe', 'Eiskratzer', 'Sonnencreme']));
+    expect(titles(tasks)).toContain('Winterreifen und Schneeketten prüfen');
+  });
+
+  it('winter sports: ski items and tasks, and snow rules even without a weather choice', () => {
+    const { packing, tasks } = buildTripSuggestions(input({ travel_type: 'WINTER', baggage_type: 'HAND_LUGGAGE' }));
+    expect(titles(packing)).toEqual(expect.arrayContaining(['Skibrille', 'Skisocken', 'Thermowäsche', 'Mütze']));
+    expect(titles(tasks)).toEqual(expect.arrayContaining(['Skipass kaufen', 'Skiausrüstung leihen oder reservieren']));
+    expect(titles(packing)).not.toContain('Wanderschuhe');
+  });
+
+  it('without a weather choice nothing seasonal is assumed', () => {
+    const plain = titles(buildTripSuggestions(input({ start_date: '2026-01-10', end_date: '2026-01-12' })).packing);
+    expect(plain).not.toContain('Mütze');
+    expect(plain).not.toContain('Sonnenhut / Kappe');
+  });
+
+  it('guessClimate: a rough month-based default for the form, never snow', () => {
+    expect(guessClimate('2026-07-01')).toBe('WARM');
+    expect(guessClimate('2026-12-20')).toBe('COLD');
+    expect(guessClimate('2026-02-01')).toBe('COLD');
+    expect(guessClimate('2026-04-15')).toBe('MILD');
+    expect(guessClimate('2026-10-03')).toBe('MILD');
+    expect(guessClimate('')).toBe('');
   });
 });

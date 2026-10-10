@@ -103,7 +103,7 @@
               (editTask)="openTaskEditor($event)"
               (toggleTask)="toggleTask($event)"
               (manageParticipants)="openParticipantsEditor()"
-              (suggest)="openSuggestionsForSelected()"
+              (suggest)="openSuggestionsForSelected('tasks')"
             />
           }
           @case ('packliste') {
@@ -115,7 +115,7 @@
               (toggle)="togglePacking($event)"
               (edit)="openPackingEditor($event)"
               (add)="openPackingEditor()"
-              (suggest)="openSuggestionsForSelected()"
+              (suggest)="openSuggestionsForSelected('packing')"
               (reset)="resetPacking()"
             />
           }
@@ -217,10 +217,13 @@
           <app-field label="Reiseart" [optional]="true" hint="Für passende Vorschläge">
             <app-select formControlName="travel_type" [options]="travelTypeOptions" />
           </app-field>
-          <app-field label="Gepäck" [optional]="true">
-            <app-select formControlName="baggage_type" [options]="baggageTypeOptions" />
+          <app-field label="Wetter am Ziel" [optional]="true" [hint]="climateHint()">
+            <app-select formControlName="climate" [options]="climateOptions" />
           </app-field>
         </div>
+        <app-field label="Gepäck" [optional]="true">
+          <app-select formControlName="baggage_type" [options]="baggageTypeOptions" />
+        </app-field>
         <app-field label="Notiz" [optional]="true">
           <textarea id="trip-notes" formControlName="notes" rows="3" maxlength="5000"></textarea>
         </app-field>
@@ -388,7 +391,7 @@
     @if (canManageParticipants()) {
       <h3>Teilnehmer hinzufügen</h3>
       @if (!contacts().length) {
-        <p class="muted small">Du hast noch keine Kontakte zum Hinzufügen. Lege zuerst eine Verbindung unter Familie &amp; Freunde an.</p>
+        <p class="muted small">Du hast noch keine Kontakte zum Hinzufügen. Lege zuerst eine Verbindung unter Personen &amp; Gruppen an.</p>
       } @else {
         <form class="add-form" (submit)="$event.preventDefault(); addParticipant()">
           <span id="participant-contact-label" class="sr-only">Person</span>
@@ -414,53 +417,109 @@
   </div>
 </app-modal>
 
-<app-modal [open]="!!smartSetupTrip() && smartSetupReview()" labelledBy="smart-setup-review-heading" closeLabel="Vorschläge schließen" (closed)="skipSmartSetup()">
-  <div class="form smart-setup-review">
-    <h2 id="smart-setup-review-heading">Vorschläge für {{ smartSetupTrip()?.title }}</h2>
-    <p class="muted small">Feste Vorlagen je nach Reiseart, Transport und Gepäck – angehakt wird übernommen.</p>
-    @if (smartSetupError()) {
-      <p class="field-error" [appErrorNotice]="smartSetupError()">{{ smartSetupError() }}</p>
+<app-modal
+  [open]="!!smartSetupTrip() && smartSetupReview()"
+  [flush]="true"
+  labelledBy="smart-setup-review-heading"
+  closeLabel="Vorschläge schließen"
+  (closed)="skipSmartSetup()"
+>
+  <!-- Prüfen und übernehmen: Kopf · Auswahlleiste · scrollende Liste · feste Fußleiste. Aus der Planung nur Aufgaben,
+       aus der Packliste nur Packstücke. -->
+  <div class="suggest" [attr.aria-busy]="smartSetupSaving()">
+    <header class="suggest__head">
+      <span class="suggest__icon" aria-hidden="true"><app-icon [name]="smartSetupHead().icon" /></span>
+      <div class="suggest__intro">
+        <h2 id="smart-setup-review-heading">{{ smartSetupHead().title }}</h2>
+        <p>{{ smartSetupBasis() }}</p>
+      </div>
+    </header>
+
+    @if (!smartSetupEmpty()) {
+      <div class="suggest__bar">
+        <span aria-live="polite">{{ smartSetupSelected() }} von {{ smartSetupTotal() }} ausgewählt</span>
+        <button type="button" class="suggest__all" [disabled]="smartSetupSaving()" (click)="toggleAllSuggestions()">
+          {{ smartSetupAllSelected() ? 'Alle abwählen' : 'Alle auswählen' }}
+        </button>
+      </div>
     }
-    @if (smartSetupEmpty()) {
-      <p class="muted">Alles Vorgeschlagene steht schon auf deinen Listen.</p>
-    }
-    @if (smartSetupSuggestions().tasks.length) {
-      <h3>Aufgaben</h3>
-      <ul class="suggestion-list">
-        @for (task of smartSetupSuggestions().tasks; track task.title; let i = $index) {
-          <li>
-            <label class="checkbox">
-              <input type="checkbox" [checked]="smartSetupTasksChecked()[i]" (change)="toggleTaskSuggestion(i)" />
-              {{ task.title }}
-            </label>
-          </li>
-        }
-      </ul>
-    }
-    @if (smartSetupSuggestions().packing.length) {
-      <h3>Packliste</h3>
-      @for (group of smartSetupPackingGroups(); track group.category) {
-        <p class="suggestion-group-label">{{ group.label }}</p>
-        <ul class="suggestion-list">
-          @for (entry of group.entries; track entry.index) {
-            <li>
-              <label class="checkbox">
-                <input type="checkbox" [checked]="smartSetupPackingChecked()[entry.index]" (change)="togglePackingSuggestion(entry.index)" />
-                {{ entry.item.title }}
-              </label>
-            </li>
-          }
-        </ul>
+
+    <div class="suggest__body">
+      @if (smartSetupError()) {
+        <p class="suggest__error" [appErrorNotice]="smartSetupError()">{{ smartSetupError() }}</p>
       }
-    }
-    <div class="smart-setup-actions">
-      <button type="button" class="primary" [disabled]="smartSetupSaving() || smartSetupEmpty()" (click)="acceptSelectedSmartSetup()">
-        @if (smartSetupSaving()) {
-          <span class="save-spinner" aria-hidden="true"></span>
-        }
-        Angehakte übernehmen
-      </button>
-      <button type="button" class="btn-link" [disabled]="smartSetupSaving()" (click)="skipSmartSetup()">Nichts übernehmen</button>
+      @if (smartSetupEmpty()) {
+        <div class="suggest__done">
+          <span aria-hidden="true"><app-icon name="check" /></span>
+          <p>{{ smartSetupHead().empty }}</p>
+        </div>
+      }
+      @if (smartSetupSuggestions().tasks.length) {
+        <section class="suggest__group" aria-labelledby="suggest-tasks">
+          <h3 id="suggest-tasks" [class.sr-only]="smartSetupScope() === 'tasks'">
+            <app-icon name="list" aria-hidden="true" />Aufgaben<span class="suggest__count">{{ smartSetupSuggestions().tasks.length }}</span>
+          </h3>
+          <ul class="suggest__list">
+            @for (task of smartSetupSuggestions().tasks; track task.title; let i = $index) {
+              <li>
+                <label class="suggest__row" [class.is-on]="smartSetupTasksChecked()[i]">
+                  <input type="checkbox" [checked]="smartSetupTasksChecked()[i]" [disabled]="smartSetupSaving()" (change)="toggleTaskSuggestion(i)" />
+                  <span class="suggest__text">{{ task.title }}</span>
+                  @if (suggestionDue(task.due_date); as due) {
+                    <span class="suggest__meta">{{ due }}</span>
+                  }
+                </label>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+      @for (group of smartSetupPackingGroups(); track group.category) {
+        <section class="suggest__group" [attr.aria-labelledby]="'suggest-' + group.category">
+          <h3 [id]="'suggest-' + group.category">
+            <app-icon [name]="group.icon" aria-hidden="true" />{{ group.label }}<span class="suggest__count">{{ group.entries.length }}</span>
+          </h3>
+          <ul class="suggest__list">
+            @for (entry of group.entries; track entry.index) {
+              <li>
+                <label class="suggest__row" [class.is-on]="smartSetupPackingChecked()[entry.index]">
+                  <input
+                    type="checkbox"
+                    [checked]="smartSetupPackingChecked()[entry.index]"
+                    [disabled]="smartSetupSaving()"
+                    (change)="togglePackingSuggestion(entry.index)"
+                  />
+                  <span class="suggest__text">{{ entry.item.title }}</span>
+                  @if (entry.item.quantity > 1) {
+                    <span class="suggest__meta">{{ entry.item.quantity }}×</span>
+                  }
+                </label>
+              </li>
+            }
+          </ul>
+        </section>
+      }
     </div>
+
+    <footer class="suggest__foot">
+      @if (smartSetupEmpty()) {
+        <button type="button" class="primary" (click)="skipSmartSetup()">Schließen</button>
+      } @else {
+        <button type="button" class="suggest__cancel" [disabled]="smartSetupSaving()" (click)="skipSmartSetup()">Abbrechen</button>
+        <button
+          type="button"
+          class="primary"
+          [disabled]="smartSetupSaving() || !smartSetupSelected()"
+          [attr.aria-busy]="smartSetupSaving()"
+          (click)="acceptSelectedSmartSetup()"
+        >
+          @if (smartSetupSaving()) {
+            <span class="save-spinner" aria-hidden="true"></span>Wird übernommen …
+          } @else {
+            {{ smartSetupSubmitLabel() }}
+          }
+        </button>
+      }
+    </footer>
   </div>
 </app-modal>

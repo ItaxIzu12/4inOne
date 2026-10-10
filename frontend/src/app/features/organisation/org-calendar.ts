@@ -34,6 +34,8 @@ export class OrgCalendar {
   );
   readonly openEvent = output<PersonalEvent>();
   readonly addEvent = output<string>();
+  /** Monatsansicht: Klick auf einen Tag legt direkt einen Termin an diesem Tag an. */
+  readonly addEventOnDay = output<string>();
   readonly rangeChange = output<DayRange>();
 
   protected readonly views: { key: CalendarView; label: string }[] = [
@@ -169,6 +171,12 @@ export class OrgCalendar {
     if (day < this.todayKey) this.showPast.set(true);
     if (!this.shownDays().some((g) => g.day === day)) this.showAll.set(true);
     setTimeout(() => document.getElementById(`agenda-${day}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+  }
+
+  /** Monat: Tag wählen und gleich einen Termin für ihn anlegen. */
+  protected pickDay(day: string): void {
+    this.select(day);
+    this.addEventOnDay.emit(day);
   }
 
   protected groupLabel(day: string): string {

@@ -25,7 +25,6 @@
     @if (canEdit()) {
       <form class="quick" (submit)="submit($event)">
         <label class="quick__field" for="packing-quick">
-          <app-icon name="plus" aria-hidden="true" />
           <span class="sr-only">Artikel</span>
           <input id="packing-quick" type="text" maxlength="120" autocomplete="off" placeholder="Artikel hinzufügen, z. B. Ladekabel" [value]="draft()" (input)="draft.set($any($event.target).value)" (keydown.enter)="submit($event)" />
         </label>

@@ -19,7 +19,7 @@ class FakeAuthService {
 // Finanzen-/Organisation-Aufrufe unten laufen bewusst über den echten HttpClient (HttpClientTesting fängt sie ab),
 // weil es für PrivateFinanceApi/OrganisationApi keinen zweiten, hier praktikablen Demo-Weg ohne Routen-Kontext gibt.
 const HAUSHALT_STUB: Pick<HaushaltDataProvider, 'getOverview'> = {
-  getOverview: () => of({ open_tasks: 3 } as HaushaltOverviewDto),
+  getOverview: () => of({ open_tasks: 10, overdue_tasks: 1, summary: { due_today: 3 }, deadlines: [] } as unknown as HaushaltOverviewDto),
 };
 
 const overview = (over: Partial<TodayOverview> = {}): TodayOverview => ({
@@ -60,9 +60,12 @@ describe('Dashboard', () => {
     request.flush({ available: '250.00', budget: '3000.00', has_data: true });
     f.detectChanges();
     expect(f.nativeElement.textContent).toContain('250,00 € übrig');
-    // Haushalt kommt über HAUSHALT_DATA_PROVIDER (der Stub oben), nicht über HttpClient — dieselbe Weiche wie in
-    // app.routes.ts zwischen Demo- und echter Datenquelle.
-    expect(f.nativeElement.textContent).toContain('3 offene Aufgaben');
+    // Haushalt kommt über HAUSHALT_DATA_PROVIDER (der Stub oben) — tagesbezogen: heute fällig + überfällig,
+    // nicht die Gesamtzahl offener Aufgaben (10).
+    const household = f.nativeElement.querySelector('.domain.household').textContent;
+    expect(household).toContain('3 Aufgaben heute');
+    expect(household).toContain('1 überfällig');
+    expect(household).not.toContain('10');
   });
   it('shows four compact destinations before Today without a static travel image or connection blocks', () => {
     const f = TestBed.createComponent(Dashboard);
@@ -83,7 +86,9 @@ describe('Dashboard', () => {
     f.detectChanges();
     expect(f.componentInstance.nextTrip()?.title).toBe('Wien entdecken');
     // Die Startseite zeigt nur den Stand im Band; Details stehen in Reisen.
-    expect(f.nativeElement.querySelector('.domain.travel').textContent).toMatch(/In \d+ Tagen/);
+    const travel = f.nativeElement.querySelector('.domain.travel').textContent;
+    expect(travel).toContain('Wien');
+    expect(travel).toMatch(/in \d+ Tagen/);
   });
   it('offers the shared dashboard search', () => {
     const f = TestBed.createComponent(Dashboard);
@@ -122,15 +127,16 @@ describe('Dashboard', () => {
       http.expectOne((req) => req.url.endsWith('/api/v1/today/')).flush(overview());
       f.detectChanges();
 
-      expect(f.nativeElement.textContent).toContain('Heute ist noch nichts geplant.');
-      const cta = (Array.from(f.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[]).find((a) =>
-        a.textContent?.includes('Termin oder Aufgabe hinzufügen'),
-      );
+      expect(f.nativeElement.textContent).toContain('Heute ist nichts Dringendes offen');
+      const cta = (Array.from(f.nativeElement.querySelectorAll('.today button')) as HTMLButtonElement[]).find((b) => b.textContent?.includes('Hinzufügen'));
       expect(cta).toBeTruthy();
-      expect(cta?.getAttribute('href')).toBe('/organisation');
-      http.expectOne(req => req.url.endsWith('/reisen/trips/')).flush([]);
+      cta!.click();
       f.detectChanges();
-      expect(f.nativeElement.querySelector('.domain.travel').textContent).toContain('Noch keine Reise geplant');
+      expect(f.nativeElement.querySelector('.quick__list')).toBeTruthy();
+      http.expectOne(req => req.url.includes('/reisen/trips/')).flush([]);
+      f.detectChanges();
+      expect(f.nativeElement.querySelector('.domain.travel').textContent).toContain('Keine Reise geplant');
+      expect(f.nativeElement.querySelector('.for-you')).toBeNull();
       expect(f.nativeElement.textContent).not.toContain('Berlin Wochenende');
     });
 
@@ -162,10 +168,11 @@ describe('Dashboard', () => {
 
       const rows = Array.from(f.nativeElement.querySelectorAll('.today-row strong') as NodeListOf<HTMLElement>).map((r) => r.textContent);
       expect(rows).toEqual([
-        'Müll rausbringen', 'Zug nach Wien', 'Zahnarzt', 'Blumen gießen', 'Kündigen bis: Strom',
+        'Müll rausbringen', 'Zug nach Wien', 'Zahnarzt', 'Blumen gießen',
       ]);
       expect(f.nativeElement.textContent).toContain('Haushalt · überfällig');
-      expect(f.nativeElement.textContent).toContain('Frist in 7 Tagen');
+      // Spätere Fristen gehören nicht in „Heute“.
+      expect(f.nativeElement.querySelector('.today').textContent).not.toContain('Kündigen bis: Strom');
     });
 
     it('keeps the start page minimal: greeting, the four areas and today — nothing else', () => {

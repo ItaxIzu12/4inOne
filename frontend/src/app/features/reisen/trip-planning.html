@@ -17,7 +17,6 @@
     @if (canEdit() && tasks().length) {
       <form class="quick" (submit)="submit($event)">
         <label class="quick__field" for="trip-task-quick">
-          <app-icon name="plus" aria-hidden="true" />
           <span class="sr-only">Neue Aufgabe</span>
           <input id="trip-task-quick" type="text" maxlength="120" autocomplete="off" placeholder="Aufgabe, z. B. Hotel buchen" [value]="draft()" (input)="draft.set($any($event.target).value)" (keydown.enter)="submit($event)" />
         </label>

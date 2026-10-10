@@ -30,7 +30,7 @@ export interface ContactsOverview {
   received: ReceivedInviteDto[];
 }
 
-/** Familie & Freunde (Backend: core/contact_views.py). Eine Verbindung teilt nichts. */
+/** Personen & Gruppen (Backend: core/contact_views.py). Eine Verbindung teilt nichts. */
 @Injectable({ providedIn: 'root' })
 export class ContactsApiService {
   private readonly http = inject(HttpClient);

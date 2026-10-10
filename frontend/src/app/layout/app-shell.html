@@ -16,7 +16,7 @@
       }
       <div class="nav-space"></div>
       <a [routerLink]="isDemoRoute() ? '/demo/familie' : '/familie'" routerLinkActive="active" ariaCurrentWhenActive="page"
-        ><app-icon name="people" />Familie &amp; Freunde</a
+        ><app-icon name="people" />Personen &amp; Gruppen</a
       >
     </nav>
     <p class="sidebar-note">Alles Wichtige.<br />Ein guter Überblick.</p>
@@ -93,7 +93,7 @@
               </div>
               @if (auth.isAuthenticated()) {
                 <div class="account-group" role="none">
-                  <a role="menuitem" routerLink="/familie" (click)="closeMenu()"><app-icon name="people" />Familie &amp; Freunde</a>
+                  <a role="menuitem" routerLink="/familie" (click)="closeMenu()"><app-icon name="people" />Personen &amp; Gruppen</a>
                   <a role="menuitem" routerLink="/einstellungen" (click)="closeMenu()"><icon-settings />Einstellungen</a>
                   <a role="menuitem" routerLink="/einstellungen/zwei-faktor" (click)="closeMenu()"><icon-two-factor />Zwei-Faktor-Authentifizierung</a>
                 </div>

@@ -461,3 +461,31 @@ def test_migration_converts_notice_months_to_exact_days():
     assert (heizung.warranty_end_date, heizung.maintenance_due_date, heizung.status) == (
         date(2027, 1, 1), date(2026, 11, 1), 'ACTIVE',
     )
+
+
+# ---------------------------------------------------------------------------
+# Dashboard V1: tagesbezogene Zahlen und Fristen für „Für dich“ — nur der eigene Haushalt
+# ---------------------------------------------------------------------------
+
+def test_dashboard_day_counts_and_deadlines_never_leak(anna, kind, fremd, household, client_for):
+    from haushalt.models import FolderEntry
+
+    today = timezone.localdate()
+    Task.objects.create(household=household, title='Heute 1', due_date=today)
+    Task.objects.create(household=household, title='Heute 2', due_date=today)
+    Task.objects.create(household=household, title='Überfällig', due_date=today - timedelta(days=1))
+    Task.objects.create(household=household, title='Pausiert', due_date=today, is_paused=True)
+    FolderEntry.objects.create(household=household, kind='geraet', name='Geschirrspüler', maintenance_due_date=today + timedelta(days=10))
+
+    mine = client_for(anna).get(OVERVIEW).data
+    assert (mine['summary']['due_today'], mine['overdue_tasks']) == (2, 1)
+    assert [d['name'] for d in mine['deadlines']] == ['Geschirrspüler']
+
+    # Kind-Konto: dieselben Aufgaben-Zahlen, aber keine Geräte-/Vertragsfristen (keine indirekten Hinweise).
+    child = client_for(kind).get(OVERVIEW).data
+    assert (child['summary']['due_today'], child['overdue_tasks']) == (2, 1)
+    assert child['deadlines'] == []
+
+    # Fremder Haushalt: weder Zahlen noch Fristen.
+    other = client_for(fremd).get(OVERVIEW).data
+    assert (other['summary']['due_today'], other['overdue_tasks'], other['deadlines']) == (0, 0, [])

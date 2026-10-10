@@ -86,12 +86,13 @@ def test_trip_setup_fields_are_optional_but_usable(client):
     assert minimal.data['travel_type'] == ''
     assert minimal.data['transport_type'] == ''
     assert minimal.data['baggage_type'] == ''
+    assert minimal.data['climate'] == ''
 
     full = client.post(
         BASE + 'trips/',
         {
             'title': 'Flug nach Rom', 'destination': 'Rom', 'start_date': '2026-09-24', 'end_date': '2026-09-26',
-            'travel_type': 'BUSINESS', 'transport_type': 'FLIGHT', 'baggage_type': 'HAND_LUGGAGE',
+            'travel_type': 'BUSINESS', 'transport_type': 'FLIGHT', 'baggage_type': 'HAND_LUGGAGE', 'climate': 'MILD',
         },
         format='json',
     )
@@ -99,6 +100,12 @@ def test_trip_setup_fields_are_optional_but_usable(client):
     assert full.data['travel_type'] == 'BUSINESS'
     assert full.data['transport_type'] == 'FLIGHT'
     assert full.data['baggage_type'] == 'HAND_LUGGAGE'
+    assert full.data['climate'] == 'MILD'
+
+    winter = client.patch(BASE + f"trips/{full.data['id']}/", {'travel_type': 'WINTER', 'climate': 'SNOW'}, format='json')
+    assert winter.status_code == 200
+    assert (winter.data['travel_type'], winter.data['climate']) == ('WINTER', 'SNOW')
+    assert client.patch(BASE + f"trips/{full.data['id']}/", {'climate': 'HOT'}, format='json').status_code == 400
 
     assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': '2026-09-24', 'end_date': '2026-09-26', 'travel_type': 'NOPE'}, format='json').status_code == 400
 

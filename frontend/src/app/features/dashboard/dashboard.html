@@ -3,8 +3,34 @@
        Alles Weitere (Aufgaben, Buchungen, Reisen) steht in den Bereichen selbst. -->
   <main id="main-content" class="dashboard" tabindex="-1">
     <header class="greeting">
-      <h1>{{ greeting }}, {{ name() }}!</h1>
-      <p>Das steht heute an.</p>
+      <div>
+        <h1>{{ greeting }}, {{ name() }}!</h1>
+        <p>Das steht heute an.</p>
+      </div>
+      <!-- Schnellerfassung: führt zum bestehenden Formular des Bereichs. Liste von Links (kein ARIA-Menü). -->
+      <div class="quick" (keydown.escape)="closeQuick(true)">
+        <button
+          type="button"
+          class="quick__toggle"
+          aria-label="Hinzufügen"
+          aria-controls="quick-add-list"
+          [attr.aria-expanded]="quickOpen()"
+          (click)="toggleQuick($event)"
+        >
+          <app-icon name="plus" aria-hidden="true" /><span>Hinzufügen</span>
+        </button>
+        @if (quickOpen()) {
+          <ul id="quick-add-list" class="quick__list" aria-label="Neu hinzufügen">
+            @for (q of quickAdd(); track q.label) {
+              <li>
+                <a [routerLink]="q.path" [queryParams]="q.query" [class]="q.tone" (click)="quickOpen.set(false)">
+                  <span class="quick__icon" aria-hidden="true"><app-icon [name]="q.icon" /></span>{{ q.label }}
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </div>
     </header>
     <p class="preview-note sr-only">
       {{ live() ? 'Heute zeigt ausschließlich deine eigenen, privaten Daten.' : 'Vorschau mit Beispieldaten.' }}
@@ -25,7 +51,7 @@
 
       <nav class="domains" aria-label="Deine vier Bereiche">
         @for (domain of domains(); track domain.name) {
-          <a [routerLink]="domain.path" [class]="'domain ' + domain.tone" [class.domain--highlighted]="domain.highlighted">
+          <a [routerLink]="domain.path" [class]="'domain ' + domain.tone" [class.domain--highlighted]="domain.highlighted" [attr.aria-busy]="domain.loading">
             <span class="domain-icon"><app-icon [name]="domain.icon" /></span>
             <span class="domain-copy">
               <h2>
@@ -34,16 +60,36 @@
                   <span class="domain-pick"> · für dich ausgewählt</span>
                 }
               </h2>
-              <p>{{ domain.summary }}</p>
+              @if (domain.loading) {
+                <span class="line-skeleton" aria-hidden="true"></span><span class="sr-only">Wird geladen</span>
+              } @else if (domain.failed) {
+                <p class="domain-failed">Gerade nicht verfügbar</p>
+              } @else {
+                <p>{{ domain.summary }}</p>
+                @if (domain.detail) {
+                  <small>{{ domain.detail }}</small>
+                }
+              }
             </span>
           </a>
         }
       </nav>
+      @if (someFailed()) {
+        <p class="partial-error" role="status">
+          Einige Bereiche konnten gerade nicht geladen werden.
+          <button type="button" class="head-link" (click)="retryFailed()">Erneut versuchen</button>
+        </p>
+      }
 
       <section class="today" aria-labelledby="today-title">
         <header class="today-head">
           <h2 id="today-title">Heute</h2>
-          <button class="head-link" (click)="showDay()">Kalender <app-icon name="arrow" /></button>
+          @if (hiddenToday > 0 || todayExpanded()) {
+            <button type="button" class="head-link" aria-controls="today-list" [attr.aria-expanded]="todayExpanded()" (click)="todayExpanded.set(!todayExpanded())">
+              {{ todayExpanded() ? 'Weniger anzeigen' : 'Alle anzeigen (' + allItems.length + ')' }}
+              <app-icon [name]="todayExpanded() ? 'chevron-up' : 'arrow'" />
+            </button>
+          }
         </header>
         @if (todayLoading()) {
           <div class="skeleton" role="status" aria-label="Dein Tag wird geladen"><span></span><span></span><span></span></div>
@@ -54,22 +100,39 @@
           </div>
         } @else if (!items.length) {
           <div class="state">
-            <h3>Heute ist noch nichts geplant.</h3>
-            <p>Platz für das, was dir wichtig ist.</p>
-            <a [routerLink]="organisationPath()" class="head-link">Termin oder Aufgabe hinzufügen <app-icon name="arrow" /></a>
+            <h3>Heute ist nichts Dringendes offen</h3>
+            <p>Du hast heute keine fälligen Aufgaben oder Termine.</p>
+            <button type="button" class="head-link" (click)="toggleQuick($event)"><app-icon name="plus" />Hinzufügen</button>
           </div>
         } @else {
-          <div class="today-list">
+          <ul class="today-list" id="today-list">
             @for (item of items; track $index) {
-              <button class="today-row" [class.is-late]="item.note === 'Überfällig' || item.note.endsWith('überfällig')" (click)="openItem(item)">
-                <span class="time">{{ item.time }}</span>
-                <span class="item-copy"><strong>{{ item.title }}</strong>@if (item.note) {<small>{{ item.note }}</small>}</span>
-                <span [class]="'dot ' + item.tone" aria-hidden="true"></span>
-              </button>
+              <li>
+                <button class="today-row" [class.is-late]="item.late" (click)="openItem(item)">
+                  <span class="time">{{ item.time }}</span>
+                  <span class="item-copy"><strong>{{ item.title }}</strong>@if (item.note) {<small>{{ item.note }}</small>}</span>
+                  <app-icon class="chevron" name="arrow" aria-hidden="true" />
+                </button>
+              </li>
             }
-          </div>
+          </ul>
         }
       </section>
+
+      @if (forYou(); as f) {
+        <section class="for-you" aria-labelledby="for-you-title">
+          <h2 id="for-you-title">Für dich</h2>
+          <a class="for-you__card" [class]="'for-you__card ' + f.tone" [routerLink]="f.path" [queryParams]="f.query">
+            <span class="domain-icon" aria-hidden="true"><app-icon [name]="f.icon" /></span>
+            <span class="for-you__copy">
+              <small>{{ f.area }}</small>
+              <strong>{{ f.title }}</strong>
+              <span>{{ f.facts.join(' · ') }}</span>
+            </span>
+            <span class="for-you__action">{{ f.action }} <app-icon name="arrow" aria-hidden="true" /></span>
+          </a>
+        </section>
+      }
     </div>
   </main>
 </app-shell>

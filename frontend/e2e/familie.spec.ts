@@ -48,7 +48,7 @@ test('empty state explains the idea; inviting adds an open invite, cancelling re
   const state: Overview = { contacts: [], sent: [], received: [] };
   const calls = await mockContacts(page, state);
   await page.goto('/familie');
-  await expect(page.getByRole('heading', { name: 'Familie & Freunde', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Personen & Gruppen', level: 1 })).toBeVisible();
   await expect(page.getByText('Eine Verbindung teilt noch nichts')).toBeVisible();
   await expect(page.getByText('Noch niemand hier.')).toBeVisible();
 
@@ -94,13 +94,13 @@ test('a received invite can be accepted; contacts are grouped and removal asks f
   expect(calls).toEqual(['POST /invites/abc/accept/', 'DELETE /1/']);
 });
 
-test('from the public demo, "Familie & Freunde" works without signing in and shows example data plus a short explanation', async ({ page }) => {
+test('from the public demo, "Personen & Gruppen" works without signing in and shows example data plus a short explanation', async ({ page }) => {
   await page.goto('/demo');
-  await page.getByRole('link', { name: 'Familie & Freunde' }).click();
+  await page.getByRole('link', { name: 'Personen & Gruppen' }).click();
   await expect(page).toHaveURL(/\/demo\/familie$/);
   await expect(page).not.toHaveURL(/\/login/);
 
-  await expect(page.getByRole('heading', { name: 'Familie & Freunde', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Personen & Gruppen', level: 1 })).toBeVisible();
   // Kurze Erklärung, was die Verbindung bedeutet (und nicht bedeutet) — nur im Demo-Modus sichtbar.
   await expect(page.getByText('ist die Grundlage, um später gezielt eine Reise')).toBeVisible();
 

@@ -49,6 +49,21 @@ Reisen
   Verbleibend mit Rechenzeile, geplant vs. ausgegeben je Kategorie, Ausgabenliste („vor der Reise“ markiert).
   Gesamtbudget und Währung werden im Dialog „Reisebudget“ festgelegt.
 
+**Vorschläge** (feste Vorlagen aus `trip-suggestions.ts`, keine KI): aus der Planung nur Aufgaben, aus der Packliste
+nur Packstücke (nach Kategorie gruppiert), direkt nach dem Anlegen einer Reise beides. Schon vorhandene Einträge
+fehlen. Alle angehakt; „x von y ausgewählt“ mit „Alle abwählen/auswählen“, der Button nennt die Anzahl
+(„6 Aufgaben übernehmen“), Fußleiste bleibt beim Scrollen sichtbar.
+
+**Wetter am Ziel** (`Trip.climate`, optional: Warm · Mild · Kalt · Schnee, Migration `0010_trip_climate_winter`) und
+die Reiseart **Wintersport** (`WINTER`) steuern die Vorschläge mit: Warm → Sonnenhut, leichte Kleidung, Sonnencreme;
+Mild → Regenjacke, Pullover; Kalt → warme Jacke (statt „Jacke“), Mütze, Schal, Handschuhe, Lippenpflege; Schnee →
+zusätzlich Thermowäsche, Winterschuhe, Sonnencreme; mit dem Auto bei Kälte/Schnee Eiskratzer und „Winterreifen (und
+Schneeketten) prüfen“; Wintersport → Skibrille, Skisocken, „Skipass kaufen“, „Skiausrüstung leihen oder reservieren“
+(ohne Wetterangabe gilt Schnee). Keine Mengen nach Reisedauer — die Anzahl entscheidet jeder selbst. Das Formular
+schlägt das Wetter nur vor (Juni–August warm, November–Februar kalt, sonst mild; Wintersport → Schnee), sichtbar als
+„Geschätzt nach Reisemonat – bitte prüfen“; eine eigene Wahl bleibt stehen. Kein Wetterdienst: Das Ziel verlässt
+4inOne nicht. Ohne Angabe wird nichts Jahreszeitliches angenommen.
+
 Hauptaktion: auf Meine Reisen „Reise erstellen“ (am Handy unten). In einer Reise „Bearbeiten“ im Kopf (am Handy als
 44-px-Symbolknopf); Hinzufügen passiert im jeweiligen Reiter — kein schwebender Knopf, keine doppelten Knöpfe.
 

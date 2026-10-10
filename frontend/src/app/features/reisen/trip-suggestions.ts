@@ -1,4 +1,4 @@
-import { PackingCategory, Trip } from './reisen-api.service';
+import { PackingCategory, Trip, TripClimate } from './reisen-api.service';
 
 export interface SuggestedPackingItem {
   title: string;
@@ -14,7 +14,20 @@ export interface TripSuggestions {
   tasks: SuggestedTask[];
 }
 
-export type TripSetupInput = Pick<Trip, 'start_date' | 'end_date' | 'travel_type' | 'transport_type' | 'baggage_type'>;
+export type TripSetupInput = Pick<Trip, 'start_date' | 'end_date' | 'travel_type' | 'transport_type' | 'baggage_type' | 'climate'>;
+
+/**
+ * Schätzung „Wetter am Ziel“ aus dem Reisemonat, nur als Vorbelegung im Formular. Bewusst grob und für Mitteleuropa
+ * gedacht (Juni–August warm, November–Februar kalt, sonst mild) — Südhalbkugel, Höhenlagen und Klimazonen kennt sie
+ * nicht, deshalb steht sie sichtbar als Vorschlag da und der Nutzer korrigiert sie. „Schnee“ wird nie geraten.
+ */
+export function guessClimate(startDate: string): Exclude<TripClimate, '' | 'SNOW'> | '' {
+  const month = Number(startDate.slice(5, 7));
+  if (!month) return '';
+  if (month >= 6 && month <= 8) return 'WARM';
+  if (month >= 11 || month <= 2) return 'COLD';
+  return 'MILD';
+}
 
 function daysBefore(iso: string, days: number): string {
   const d = new Date(`${iso}T00:00`);
@@ -123,6 +136,11 @@ function addTravelTypeSuggestions(
     case 'ACTIVE':
       if (!compact) packing.push(item('Sportbekleidung', 'KLEIDUNG'), item('Wanderschuhe', 'KLEIDUNG'));
       break;
+    case 'WINTER':
+      // Nicht an !compact gebunden: ohne Skibrille und Skisocken geht es auf der Piste nicht.
+      packing.push(item('Skibrille', 'SONSTIGES'), item('Skisocken', 'KLEIDUNG'));
+      tasks.push({ title: 'Skipass kaufen', due_date: null }, { title: 'Skiausrüstung leihen oder reservieren', due_date: null });
+      break;
     case 'ROAD_TRIP':
       if (!compact) packing.push(item('Snacks für die Fahrt', 'SONSTIGES'));
       tasks.push({ title: 'Route planen', due_date: null });
@@ -137,6 +155,39 @@ function addTravelTypeSuggestions(
   }
 }
 
+/** Wetter am Ziel: vor allem die Packliste; Aufgaben nur, wo das Wetter wirklich etwas vorbereitet (Auto im Winter).
+ * Wintersport ohne Wetterangabe zählt als Schnee. */
+function addClimateSuggestions(
+  climate: TripClimate,
+  trip: Pick<TripSetupInput, 'travel_type' | 'transport_type'>,
+  packing: SuggestedPackingItem[],
+  tasks: SuggestedTask[],
+): void {
+  const weather = climate || (trip.travel_type === 'WINTER' ? 'SNOW' : '');
+  const byCar = trip.transport_type === 'CAR';
+  switch (weather) {
+    case 'WARM':
+      packing.push(item('Sonnenhut / Kappe', 'KLEIDUNG'), item('Leichte Kleidung', 'KLEIDUNG'), item('Sonnencreme', 'GESUNDHEIT'));
+      break;
+    case 'MILD':
+      packing.push(item('Regenjacke', 'KLEIDUNG'), item('Pullover', 'KLEIDUNG'));
+      break;
+    case 'COLD':
+    case 'SNOW': {
+      // Die Standard-„Jacke“ wird zur warmen Jacke, statt zwei Jacken vorzuschlagen.
+      const jacket = packing.findIndex((p) => p.title === 'Jacke');
+      if (jacket >= 0) packing[jacket] = item('Warme Jacke', 'KLEIDUNG');
+      packing.push(item('Mütze', 'KLEIDUNG'), item('Schal', 'KLEIDUNG'), item('Handschuhe', 'KLEIDUNG'), item('Lippenpflege', 'HYGIENE'));
+      if (weather === 'SNOW') packing.push(item('Thermowäsche', 'KLEIDUNG'), item('Winterschuhe', 'KLEIDUNG'), item('Sonnencreme', 'GESUNDHEIT'));
+      if (byCar) {
+        packing.push(item('Eiskratzer', 'UNTERWEGS'));
+        tasks.push({ title: weather === 'SNOW' ? 'Winterreifen und Schneeketten prüfen' : 'Winterreifen prüfen', due_date: null });
+      }
+      break;
+    }
+  }
+}
+
 function addBaggageSuggestions(baggage: Trip['baggage_type'], packing: SuggestedPackingItem[], tasks: SuggestedTask[]): void {
   if (baggage === 'HAND_LUGGAGE') tasks.push({ title: 'Handgepäck-Maße und Flüssigkeitsregel prüfen', due_date: null });
   else if (baggage === 'CHECKED_BAGGAGE') packing.push(item('Kofferanhänger', 'SONSTIGES'));
@@ -144,7 +195,7 @@ function addBaggageSuggestions(baggage: Trip['baggage_type'], packing: Suggested
 
 /**
  * Deterministische Startvorschläge für eine neu angelegte Reise (Smart Setup) — keine KI, nur feste Regeln je
- * Transportart/Reisetyp/Gepäck, dazu Standard-Packliste und Standard-Aufgaben. Funktioniert auch, wenn nur
+ * Transportart/Reisetyp/Gepäck/Wetter am Ziel, dazu Standard-Packliste und Standard-Aufgaben. Funktioniert auch, wenn nur
  * Ziel/Start-/Enddatum angegeben wurden: die Standardlisten gelten immer, alles andere kommt nur dazu, wenn die
  * jeweilige Information vorhanden ist.
  *
@@ -159,6 +210,7 @@ export function buildTripSuggestions(input: TripSetupInput): TripSuggestions {
 
   addTransportSuggestions(input.transport_type, input.start_date, packing, tasks);
   addTravelTypeSuggestions(input.travel_type, packing, tasks, compact);
+  addClimateSuggestions(input.climate ?? '', input, packing, tasks);
   addBaggageSuggestions(input.baggage_type, packing, tasks);
 
   return { packing: dedupe(packing), tasks: dedupe(tasks) };

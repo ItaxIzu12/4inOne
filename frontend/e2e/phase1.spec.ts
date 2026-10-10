@@ -7,7 +7,7 @@ for (const width of [360, 390, 768, 1440]) {
     await page.route('http://localhost:8000/api/**', (route) => route.abort());
     await page.goto('/demo');
     // Die Begrüßung folgt der Tageszeit (Guten Morgen / Hallo / Guten Abend).
-    await expect(page.getByRole('heading', { name: /^(Guten Morgen|Hallo|Guten Abend),? Sophie!$/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^(Guten Morgen|Guten Tag|Guten Abend),? Sophie!$/ })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (width < 761) await expect(page.locator('.mobile-nav')).toBeVisible();
     for (const area of ['Finanzen', 'Haushalt', 'Organisation', 'Reisen']) {

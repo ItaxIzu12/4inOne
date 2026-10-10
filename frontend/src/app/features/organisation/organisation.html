@@ -43,6 +43,7 @@
           (rangeChange)="loadEvents($event)"
           (openEvent)="open('event', $event)"
           (addEvent)="open('event', undefined, $event)"
+          (addEventOnDay)="openOnDay($event)"
         />
         <p class="cal-import">
           <span>Termine aus Google, Apple oder Outlook übernehmen?</span>
@@ -94,8 +95,8 @@
       <p class="series-note" role="note"><app-icon name="repeat" aria-hidden="true" />Änderungen gelten für alle Wiederholungen dieses Termins.</p>
     }
     <div class="field-row">
-      <app-field label="Datum" [error]="dateError()">
-        <app-date-picker mode="date" formControlName="date" />
+      <app-field label="Datum" [error]="dateError()" [hint]="dateLocked() ? 'Im Kalender gewählt' : ''">
+        <app-date-picker mode="date" formControlName="date" [disabled]="dateLocked()" />
       </app-field>
       <label class="checkbox-row checkbox-row--inline">
         <input type="checkbox" formControlName="all_day" />

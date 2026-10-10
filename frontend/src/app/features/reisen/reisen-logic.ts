@@ -122,6 +122,7 @@ export function peopleLabel(count: number): string {
 export function tripIcon(trip: Pick<Trip, 'travel_type' | 'transport_type'>): IconName {
   if (trip.travel_type === 'BEACH') return 'umbrella';
   if (trip.travel_type === 'ACTIVE') return 'mountain';
+  if (trip.travel_type === 'WINTER') return 'snowflake';
   if (trip.travel_type === 'ROAD_TRIP' || trip.transport_type === 'CAR') return 'car';
   return 'travel';
 }

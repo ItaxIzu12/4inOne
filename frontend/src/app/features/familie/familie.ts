@@ -10,7 +10,7 @@ import { DEMO_MODE } from '../../core/demo-context';
 
 const RELATION_LABEL: Record<Relation, string> = { FAMILY: 'Familie', FRIEND: 'Freund:in' };
 
-/** Familie & Freunde: Menschen, mit denen du verbunden bist. Eine Verbindung teilt nichts — sie ist nur die Grundlage,
+/** Personen & Gruppen: Menschen, mit denen du verbunden bist. Eine Verbindung teilt nichts — sie ist nur die Grundlage,
  * später jemanden ausdrücklich zu einer Reise oder einem gemeinsamen Haushalt einzuladen. */
 @Component({
   selector: 'app-familie',
