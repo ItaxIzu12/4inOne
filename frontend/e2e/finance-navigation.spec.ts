@@ -27,12 +27,13 @@ test('four main tabs; Ausgaben and Einnahmen live under Transaktionen', async ({
   await kinds.filter({ hasText: 'Einnahmen' }).click();
   await expect(page.locator('#all-rows-h')).toContainText('Alle Einnahmen');
   await expect(rows.filter({ hasText: '−' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Einnahme erfassen', exact: true })).toBeVisible();
+  // Eine feste Hauptaktion im ganzen Bereich: „+ Transaktion“ (auf „Einnahmen“ mit vorausgewählter Einnahme).
+  await expect(page.getByRole('button', { name: 'Transaktion erfassen', exact: true })).toBeVisible();
 
   await kinds.filter({ hasText: 'Ausgaben' }).click();
   await expect(page.locator('#all-rows-h')).toContainText('Alle Ausgaben');
   await expect(rows.filter({ hasText: '+' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Ausgabe erfassen', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Transaktion erfassen', exact: true })).toBeVisible();
 });
 
 test('old links to the former tabs still land in the right place', async ({ page }) => {

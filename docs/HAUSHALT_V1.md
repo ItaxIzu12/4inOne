@@ -95,3 +95,9 @@ OCR und KI.
 ## Eingefroren
 
 Haushalt V1 ist mit diesem Stand eingefroren. Änderungen nur noch als Fehlerbehebung oder als neue, eigene Version.
+
+## Design System V3 (10.10.2026)
+
+Haushalt nutzt das globale Design System (docs/DESIGN_SYSTEM.md). Untertitel „Alles rund um dein Zuhause.“ Einzelperson
+zuerst: Hinweise auf gemeinsames Arbeiten erscheinen nur bei mehr als einer Person im Haushalt. Reiter und
+Hauptaktionen unverändert (Heute · Aufgaben · Einkaufen · Zuhause; Zuhause mit Geräte/Verträge).

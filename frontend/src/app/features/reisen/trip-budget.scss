@@ -12,19 +12,19 @@
 }
 .kpis dt {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .kpis dd {
   margin: 2px 0 0;
-  color: #16233a;
-  font-size: 22px;
+  color: var(--text-primary);
+  font-size: var(--fs-metric);
   font-weight: 700;
   letter-spacing: -0.3px;
 }
 .kpis .approx {
   margin: 0;
-  color: #53627a;
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
   font-weight: 500;
   letter-spacing: 0;
 }
@@ -33,11 +33,11 @@
 }
 .calc {
   margin-top: 8px;
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .rate-note {
   margin: 8px 0 0;
-  font-size: 12.5px;
+  font-size: var(--fs-caption);
   line-height: 1.45;
 }
 .cats {
@@ -77,28 +77,28 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
-  color: #16233a;
+  color: var(--text-primary);
 }
 .cat__name app-icon {
   flex: 0 0 18px;
   width: 18px;
   height: 18px;
-  color: #53627a;
+  color: var(--text-secondary);
 }
 .cat__nums {
-  color: #16233a;
-  font-size: 14px;
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
   font-weight: 600;
   text-align: right;
 }
 .cat__home {
   display: block;
-  color: #53627a;
-  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
   font-weight: 500;
 }
 .cat__nums .muted {
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 400;
 }
 .cat .bar {
@@ -137,7 +137,7 @@
   flex: 0 0 20px;
   width: 20px;
   height: 20px;
-  color: #53627a;
+  color: var(--text-secondary);
 }
 .exp__title {
   display: grid;
@@ -145,22 +145,22 @@
   min-width: 0;
 }
 .exp__title b {
-  color: #16233a;
-  font-size: 15px;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 .exp__amount {
   display: grid;
   justify-items: end;
-  color: #16233a;
-  font-size: 15px;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
   font-weight: 600;
   white-space: nowrap;
 }
 .exp__amount small {
-  color: #53627a;
-  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
   font-weight: 500;
 }
 .more {
@@ -178,7 +178,7 @@
   align-items: flex-start;
   gap: 8px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
   line-height: 1.45;
 }
 .note app-icon {
@@ -195,6 +195,6 @@
     grid-column: 1 / -1;
   }
   .kpis dd {
-    font-size: 19px;
+    font-size: var(--fs-section);
   }
 }

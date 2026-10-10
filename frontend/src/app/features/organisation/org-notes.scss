@@ -7,8 +7,8 @@
   min-height: 44px;
   margin-bottom: 14px;
   padding: 0 12px;
-  border: 1px solid #e8e6f0;
-  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   background: #fff;
 }
 .search app-icon {
@@ -23,7 +23,7 @@
   border: 0;
   background: none;
   font: inherit;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 .search input:focus-visible {
   outline: none;
@@ -40,7 +40,7 @@
 .group h2 {
   margin: 0 8px 6px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 700;
   letter-spacing: 0.2px;
 }
@@ -66,7 +66,7 @@
   min-height: 52px;
   padding: 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--text);
   font: inherit;
@@ -75,11 +75,11 @@
   cursor: pointer;
 }
 .note__main:hover {
-  background: #fbfaff;
+  background: var(--surface-hover);
 }
 .note__title {
   overflow: hidden;
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -87,14 +87,14 @@
 .note__preview {
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 13.5px;
+  font-size: var(--fs-meta);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .note__when {
   flex: 0 0 auto;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-variant-numeric: tabular-nums;
 }
 .pin {
@@ -104,13 +104,13 @@
   width: 44px;
   height: 44px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: none;
   color: #b6b3c6;
   cursor: pointer;
 }
 .pin:hover {
-  background: #fbfaff;
+  background: var(--surface-hover);
 }
 .pin[aria-pressed='true'] {
   color: var(--accent);
@@ -128,7 +128,7 @@
 .empty h3 {
   margin: 0;
   color: var(--text);
-  font-size: 17px;
+  font-size: var(--fs-subsection);
 }
 .empty p {
   margin: 0;
@@ -139,12 +139,12 @@
   gap: 6px;
   min-height: 44px;
   padding: 0 14px;
-  border: 1px solid #e8e6f0;
-  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   background: #fff;
   color: var(--accent-hover, var(--accent));
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   font-weight: 600;
   cursor: pointer;
 }

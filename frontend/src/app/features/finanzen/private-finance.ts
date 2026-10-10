@@ -195,38 +195,13 @@ export class PrivateFinance {
   }
   /** Wird nach jedem Laden hochgezählt, damit die Zeitraumansicht ihre Sparbeiträge neu holt. */
   readonly dataVersion = signal(0);
-  /** Hauptknopf je Reiter (Kopf am Rechner, fest unten am Handy). Auf der Übersicht bewusst keiner. */
-  readonly headAction = computed(() => {
-    switch (this.section()) {
-      case 'all':
-        return 'Transaktion erfassen';
-      case 'expenses':
-        return 'Ausgabe erfassen';
-      case 'income':
-        return 'Einnahme erfassen';
-      case 'budgets':
-        // Ohne Budget trägt der leere Zustand „Budget festlegen“ — kein zweiter Knopf im Kopf.
-        return this.activeBudget() ? 'Budget ändern' : '';
-      case 'goals':
-        return 'Sparziel erstellen';
-      default:
-        return '';
-    }
-  });
+  /** Eine feste Hauptaktion im ganzen Bereich (Kopf am Rechner, fest unten am Handy): „+ Transaktion“.
+   * Budget ändern und Sparziel erstellen stehen als Sekundäraktionen in ihren Reitern. */
+  readonly headAction = computed(() => 'Transaktion');
   headActionClick() {
-    switch (this.section()) {
-      case 'all':
-      case 'expenses':
-        return this.open('transactions');
-      case 'income':
-        this.open('transactions');
-        this.form.controls.type.setValue('INCOME');
-        return;
-      case 'budgets':
-        return this.open('budgets', this.activeBudget() ?? undefined);
-      case 'goals':
-        return this.open('goals');
-    }
+    this.open('transactions');
+    // Auf „Einnahmen“ ist die Einnahme vorausgewählt — sonst wie bisher die Ausgabe.
+    if (this.section() === 'income') this.form.controls.type.setValue('INCOME');
   }
   readonly tabs = FINANCE_TABS;
   readonly month = signal(financeMonth());

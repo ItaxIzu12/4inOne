@@ -68,7 +68,7 @@ export function rhythm(task: TaskDto): { main: string; sub: string } {
 }
 
 export interface DueInfo {
-  /** Hervorgehobenes Etikett (rosa „Heute“, rot „Überfällig“) oder null für reinen Text. */
+  /** Hervorgehobenes Etikett (coral „Heute“, rot „Überfällig“) oder null für reinen Text. */
   badge: string | null;
   tone: 'today' | 'late' | 'plain' | 'paused';
   main: string;

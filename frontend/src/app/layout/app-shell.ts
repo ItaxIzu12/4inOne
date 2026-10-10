@@ -1,7 +1,7 @@
 import { ErrorNoticeDirective } from '../shared/error-notice/error-notice';
 import { Component, DestroyRef, input, output, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { IsActiveMatchOptions, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
 import { BackToTop } from '../shared/back-to-top/back-to-top';
@@ -23,6 +23,10 @@ import { Modal } from '../shared/modal/modal';
 })
 export class AppShell {
   /** Auf der Startseite filtert die Suche live (dashboardQuery); überall sonst führt Enter dorthin. */
+  /** Genau ein aktiver Navigationspunkt: Start nur auf der Startseite selbst, ein Bereich auch auf seinen Unterseiten
+   * (?tab=…, ?trip=…) — Query-Parameter zählen dabei nie mit. */
+  protected readonly startMatch: IsActiveMatchOptions = { paths: 'exact', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' };
+  protected readonly areaMatch: IsActiveMatchOptions = { paths: 'subset', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' };
   readonly dashboardHeader = input(false);
   readonly dashboardQuery = output<string>();
   /** Vorbelegung des Suchfelds, z. B. ein von einer anderen Seite mitgebrachter Suchbegriff. */

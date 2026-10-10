@@ -4,12 +4,12 @@
     <a [routerLink]="links()[0].path" aria-label="4inOne – Startseite"><app-brand /></a>
     <p class="claim">Dein Alltag. Alles verbunden.</p>
     <nav aria-label="Hauptnavigation">
-      @for (link of links(); track link.label) {
+      @for (link of links(); track link.label; let first = $first) {
         <a
           [routerLink]="link.path"
           [attr.data-domain]="link.icon"
           routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
+          [routerLinkActiveOptions]="first ? startMatch : areaMatch"
           ariaCurrentWhenActive="page"
           ><app-icon [name]="link.icon" [class]="link.icon" />{{ link.label }}</a
         >
@@ -132,7 +132,7 @@
       [routerLink]="link.path"
           [attr.data-domain]="link.icon"
       routerLinkActive="active"
-      [routerLinkActiveOptions]="{ exact: first }"
+      [routerLinkActiveOptions]="first ? startMatch : areaMatch"
       ariaCurrentWhenActive="page"
       ><app-icon [name]="link.icon" [class]="link.icon" />{{ first ? 'Start' : link.label }}</a
     >

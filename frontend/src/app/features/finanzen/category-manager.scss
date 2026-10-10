@@ -5,7 +5,7 @@
 .intro {
   margin: 0;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .head,
 .cat {
@@ -17,7 +17,7 @@
 .head {
   padding: 0 2px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
 }
 .head span:first-child {
@@ -48,12 +48,12 @@ input {
   width: 100%;
   min-height: 44px;
   padding: 0 12px;
-  border: 1px solid #d9dee6;
-  border-radius: 11px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   background: #fff;
   color: inherit;
   font: inherit;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 input:focus-visible {
   border-color: var(--accent);
@@ -75,12 +75,12 @@ input[readonly] {
   top: 12px;
   right: 12px;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   pointer-events: none;
 }
 .name small {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-caption);
 }
 .drop,
 .undo,
@@ -91,11 +91,11 @@ input[readonly] {
 .drop {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: var(--control-height);
+  height: var(--control-height);
   padding: 0;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: none;
   color: #6b7385;
 }
@@ -110,7 +110,7 @@ input[readonly] {
 .is-removed {
   grid-template-columns: 10px minmax(0, 1fr) auto;
   padding: 8px 10px 8px 0;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: #fdf3f5;
 }
 .is-removed .dot {
@@ -128,16 +128,16 @@ input[readonly] {
 }
 .removed small {
   color: #8f2a3d;
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .undo {
   min-height: 40px;
   padding: 0 12px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: #fff;
   color: var(--accent-hover);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   font-weight: 600;
 }
 .add {
@@ -148,10 +148,10 @@ input[readonly] {
   min-height: 44px;
   padding: 0 14px;
   border: 1px dashed var(--accent);
-  border-radius: 11px;
+  border-radius: var(--radius-md);
   background: none;
   color: var(--accent-hover);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   font-weight: 600;
 }
 .add app-icon {
@@ -160,7 +160,7 @@ input[readonly] {
 }
 .empty {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .drop:focus-visible,
 .undo:focus-visible,

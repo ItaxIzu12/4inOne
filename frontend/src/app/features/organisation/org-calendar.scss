@@ -1,8 +1,8 @@
 // Kalender: Ansichten, Monatsraster, Woche (Rechner: Spalten, Handy: Tagesstreifen) und die Agenda des Tags.
 // Ruhig: weiß, dünne Linien, violetter Akzent nur für Auswahl und Heute.
 .cal {
-  border: 1px solid #e8e6f0;
-  border-radius: 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   background: #fff;
 }
 .toolbar {
@@ -18,19 +18,19 @@
   display: inline-flex;
   gap: 2px;
   padding: 3px;
-  border: 1px solid #e8e6f0;
-  border-radius: 12px;
-  background: #faf9fd;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-hover);
 }
 .views button {
-  min-height: 38px;
+  min-height: var(--control-height);
   padding: 0 16px;
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   background: none;
   color: var(--text-muted);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   font-weight: 600;
   cursor: pointer;
 }
@@ -57,7 +57,7 @@
 .nav h2 {
   min-width: 190px;
   margin: 0;
-  font-size: 17px;
+  font-size: var(--fs-subsection);
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
@@ -67,7 +67,7 @@
   width: 44px;
   height: 44px;
   border: 0;
-  border-radius: 11px;
+  border-radius: var(--radius-md);
   background: none;
   color: var(--text);
   cursor: pointer;
@@ -86,12 +86,12 @@
   gap: 6px;
   min-height: 40px;
   padding: 0 12px;
-  border: 1px solid #e8e6f0;
-  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   background: #fff;
   color: var(--accent-hover, var(--accent));
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   font-weight: 600;
   cursor: pointer;
 }
@@ -117,7 +117,7 @@
 .month__wd {
   padding: 10px 8px 6px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   text-align: center;
 }
@@ -141,7 +141,7 @@
   border-left: 1px solid var(--line);
 }
 .cell:hover {
-  background: #fbfaff;
+  background: var(--surface-hover);
 }
 .cell.is-outside {
   color: #6b6880;
@@ -155,7 +155,7 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 600;
 }
 .cell__num.is-today {
@@ -172,8 +172,8 @@
   padding: 1px 6px;
   border-left: 2px solid var(--cat, var(--c-sonstiges));
   border-radius: 4px;
-  background: #f7f6fb;
-  font-size: 12px;
+  background: var(--surface-hover);
+  font-size: var(--fs-caption);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -204,7 +204,7 @@
   border-left: 1px solid var(--line);
 }
 .week__col.is-selected {
-  background: #fbfaff;
+  background: var(--surface-hover);
 }
 .week__head {
   display: grid;
@@ -212,7 +212,7 @@
   gap: 2px;
   min-height: 52px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: none;
   color: var(--text);
   font: inherit;
@@ -221,7 +221,7 @@
 .week__head small,
 .strip__day small {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
 }
 .week__head b,
@@ -231,7 +231,7 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 .week__head[aria-pressed='true'] b,
 .strip__day[aria-pressed='true'] b {
@@ -249,8 +249,8 @@
   min-width: 0;
   padding: 6px 8px;
   border: 0;
-  border-radius: 8px;
-  background: #f7f6fb;
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
   color: var(--text);
   font: inherit;
   text-align: left;
@@ -258,11 +258,11 @@
 }
 .week__ev small {
   color: var(--text-muted);
-  font-size: 11.5px;
+  font-size: var(--fs-caption);
 }
 .week__ev b {
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -278,7 +278,7 @@
 }
 .agenda h3 {
   margin: 0 0 8px;
-  font-size: 16px;
+  font-size: var(--fs-body);
 }
 .agenda__list {
   margin: 0;
@@ -296,7 +296,7 @@
   min-height: 56px;
   padding: 10px 4px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--text);
   font: inherit;
@@ -304,7 +304,7 @@
   cursor: pointer;
 }
 .agenda__row:hover {
-  background: #fbfaff;
+  background: var(--surface-hover);
 }
 .agenda__time {
   display: grid;
@@ -313,12 +313,12 @@
   font-variant-numeric: tabular-nums;
 }
 .agenda__time b {
-  font-size: 15px;
-  font-weight: 650;
+  font-size: var(--fs-body);
+  font-weight: 600;
 }
 .agenda__time small {
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: var(--fs-caption);
 }
 .agenda__text {
   display: grid;
@@ -337,7 +337,7 @@
   flex-wrap: wrap;
   gap: 4px 12px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .agenda__text small span {
   display: inline-flex;
@@ -359,7 +359,7 @@
 .empty h4 {
   margin: 0;
   color: var(--text);
-  font-size: 16px;
+  font-size: var(--fs-body);
 }
 .empty p,
 .agenda__none p {
@@ -379,8 +379,8 @@
 .agenda__day.is-selected {
   margin-inline: -8px;
   padding-inline: 8px;
-  border-radius: 12px;
-  background: #faf9fe;
+  border-radius: var(--radius-md);
+  background: var(--surface-hover);
 }
 .agenda__date {
   position: sticky;
@@ -390,7 +390,7 @@
   padding: 10px 0 4px;
   background: inherit;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 700;
 }
 .agenda__date.is-today {
@@ -405,11 +405,11 @@
   margin: 4px 0;
   padding: 0 10px;
   border: 1px dashed #dcd8ea;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: none;
   color: var(--accent-hover, var(--accent));
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   font-weight: 600;
   cursor: pointer;
 }
@@ -457,7 +457,7 @@
   .nav h2 {
     flex: 1;
     min-width: 0;
-    font-size: 16px;
+    font-size: var(--fs-body);
   }
   // Monat: keine Titel in winzigen Zellen, nur ein Punkt für Tage mit Terminen.
   .cell {
@@ -496,7 +496,7 @@
     min-height: 64px;
     padding: 4px 0;
     border: 0;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     background: none;
     color: var(--text);
     font: inherit;

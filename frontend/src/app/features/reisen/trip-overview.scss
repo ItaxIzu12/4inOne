@@ -5,8 +5,8 @@
   align-items: center;
   gap: 8px 12px;
   margin: 0 0 16px;
-  color: #1f2a44;
-  font-size: 15px;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
 }
 .countdown app-icon {
   width: 18px;
@@ -15,14 +15,14 @@
 }
 .countdown b {
   color: var(--blue-text);
-  font-size: 17px;
+  font-size: var(--fs-subsection);
 }
 .countdown--live b {
   color: #17723f;
 }
 .countdown__len {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .tiles {
   display: grid;
@@ -40,8 +40,8 @@
   width: 100%;
   height: 100%;
   padding: 16px 18px;
-  border: 1px solid #e6e9f0;
-  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   background: #fff;
   color: inherit;
   font: inherit;
@@ -56,7 +56,7 @@
   align-items: center;
   gap: 8px;
   color: var(--text-muted);
-  font-size: 13.5px;
+  font-size: var(--fs-meta);
   font-weight: 600;
 }
 .tile-card__label app-icon {
@@ -65,12 +65,12 @@
   color: var(--blue);
 }
 .tile-card__value {
-  color: #16233a;
-  font-size: 17px;
+  color: var(--text-primary);
+  font-size: var(--fs-subsection);
   line-height: 1.3;
 }
 .tile-card__value.is-open {
-  color: #1c4fae;
+  color: var(--accent-hover);
 }
 .tile-card__value.is-over {
   color: #a32038;
@@ -84,7 +84,7 @@
   gap: 4px;
   margin-top: auto;
   color: var(--blue-text);
-  font-size: 13.5px;
+  font-size: var(--fs-meta);
   font-weight: 600;
 }
 .tile-card__go app-icon {
@@ -103,16 +103,16 @@
   border: 2px solid #fff;
   border-radius: 50%;
   background: var(--blue-soft);
-  color: #1c4fae;
-  font-size: 11.5px;
+  color: var(--accent-hover);
+  font-size: var(--fs-caption);
   font-weight: 700;
 }
 .avatar:first-child {
   margin-left: 0;
 }
 .avatar--more {
-  background: #eef0f4;
-  color: #4b5568;
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
 }
 .facts {
   display: grid;
@@ -125,12 +125,12 @@
 }
 .facts dt {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .facts dd {
   margin: 2px 0 0;
-  color: #16233a;
-  font-size: 15px;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
   overflow-wrap: anywhere;
 }
 .facts__note {

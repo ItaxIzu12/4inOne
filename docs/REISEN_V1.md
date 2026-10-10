@@ -174,6 +174,12 @@ Connection Engine, Cross-Domain-Vorschläge, Automationen, Karten/POIs, Wetter, 
 APIs (außer den EZB-Referenzkursen für Umrechnungen), Kalender-Sync, Dokumente, Fotos, Reisejournal, Reiseideen (kein vorhandener Code), AI, globale Suche (gibt es
 noch nicht).
 
+## Design System V3 (10.10.2026)
+
+Reisen nutzt das globale Design System (docs/DESIGN_SYSTEM.md); Bereichsfarbe ist das Token `--travel-accent`.
+Hauptaktion auf Meine Reisen: „+ Reise“. Planung → „Vorschläge für Aufgaben“ zeigt nur Aufgaben, Packliste →
+„Vorlage verwenden“ nur Packstücke.
+
 ## Freeze
 
 Nach diesem Stand nur noch Bugfixes, Sicherheits-, Barrierefreiheits-, Performance- und UX-Korrekturen aus echten

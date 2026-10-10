@@ -10,7 +10,7 @@ async function txView(page: import('@playwright/test').Page, label: 'Alle' | 'Au
 /** Neue Buchung: über den Reiter „Ausgaben“ bzw. „Einnahmen“ (die Übersicht hat keinen Hauptknopf). */
 async function newBooking(page: import('@playwright/test').Page, kind: 'Ausgabe' | 'Einnahme' = 'Ausgabe') {
   await txView(page, kind === 'Ausgabe' ? 'Ausgaben' : 'Einnahmen');
-  await page.getByRole('button', { name: `${kind} erfassen`, exact: true }).click();
+  await page.getByRole('button', { name: 'Transaktion erfassen', exact: true }).click();
 }
 /** Nach dem Speichern zurück zur Übersicht, deren Kennzahlen die Tests prüfen. */
 async function overview(page: import('@playwright/test').Page) {
@@ -159,7 +159,7 @@ for (const width of [390, 1440]) {
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('50,00');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await newBooking(page, 'Einnahme');
-    // „Einnahme erfassen“ startet bereits als Einnahme
+    // „+ Transaktion“ auf „Einnahmen“ startet bereits als Einnahme
     await expect(page.getByRole('group', { name: 'Typ' }).getByRole('button', { name: 'Einnahme', pressed: true })).toBeVisible();
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('3100');
     await page.getByLabel('Notiz (optional)').fill('Gehalt');
@@ -577,7 +577,8 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
   await expect(page.locator('.kpis')).toContainText('80 €'); // Oktober: 100 − 20 (Übersicht)
 
   await txView(page, 'Ausgaben');
-  await expect(page.getByRole('button', { name: /Oktoberkauf/ })).toBeVisible();
+  // Die Buchung steht korrekt zweimal (Letzte Ausgaben + Alle Ausgaben) — geprüft wird die vollständige Liste.
+  await expect(page.locator('#all-rows').getByRole('button', { name: /Oktoberkauf/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /Septemberkauf/ })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();

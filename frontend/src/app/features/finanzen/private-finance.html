@@ -13,8 +13,8 @@
         </div>
         @if (headAction()) {
           <div class="head-actions">
-            <button class="primary" [attr.aria-label]="headAction()" (click)="headActionClick()">
-              <app-icon [name]="tab() === 'budgets' && activeBudget() ? 'edit' : 'plus'" /><span>{{ headAction() }}</span>
+            <button class="primary" aria-label="Transaktion erfassen" (click)="headActionClick()">
+              <app-icon name="plus" /><span>{{ headAction() }}</span>
             </button>
           </div>
         }
@@ -591,6 +591,7 @@
                 <span class="kpi__label">Monatsbudget</span>
                 <b class="kpi__value">{{ eur(budget.amount) }}</b>
                 <span class="kpi__hint">für {{ monthLabel() }} · Gültig: {{ span(budget) }}</span>
+                <button type="button" class="link kpi__action" (click)="open('budgets', budget)"><app-icon name="edit" aria-hidden="true" />Budget ändern</button>
               </span>
             </div>
             <div class="kpi kpi--left" [class.kpi--danger]="!!overBudget()">
@@ -759,6 +760,7 @@
         <section class="card goals-table" aria-labelledby="goals-h">
           <div class="card-head">
             <h2 id="goals-h">Deine Sparziele</h2>
+            <button type="button" class="secondary" (click)="open('goals')"><app-icon name="plus" aria-hidden="true" />Sparziel erstellen</button>
           </div>
           @if (goals().length) {
             <div class="table-head table-head--goals" aria-hidden="true"><span>Sparziel</span><span>Fortschritt</span><span>Gespart / Ziel</span><span>Zieltermin</span><span>Sparrate / Monat</span></div>
@@ -822,7 +824,7 @@
       }
     }
     @if (headAction()) {
-      <app-mobile-action [label]="headAction()" [icon]="tab() === 'budgets' && activeBudget() ? 'edit' : 'plus'" (pressed)="headActionClick()" />
+      <app-mobile-action label="Transaktion erfassen" icon="plus" (pressed)="headActionClick()" />
     }
   </main></app-shell
 >

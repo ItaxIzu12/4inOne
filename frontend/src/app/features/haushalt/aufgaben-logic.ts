@@ -70,7 +70,7 @@ export function initials(name: string | null): string {
   return (parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : parts[0].slice(0, 2)).toUpperCase();
 }
 
-/** Farbe eines Personenkreises: abwechselnd blau oder rosa, stabil pro Name. */
+/** Farbe eines Personenkreises: abwechselnd blau oder coral, stabil pro Name. */
 export function avatarTone(name: string | null): 'blue' | 'rose' {
   if (!name) return 'blue';
   let sum = 0;

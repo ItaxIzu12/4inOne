@@ -6,18 +6,31 @@
   // (shared/back-to-top). Der Klassenname bleibt, um nichts umzubenennen.
   .domain-sticky {
     padding: 20px;
-    margin-bottom: 32px;
-    border: 1px solid #e7ebf1;
-    border-radius: 24px;
-    background: #fff;
+    margin-bottom: var(--space-6);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-card);
     box-shadow: none;
+  }
+  // Seitenkopf (System V3): in allen Bereichen dieselben Rollen wie auf der Startseite —
+  // Titel --fs-page/700, Untertitel --fs-body in --text-secondary, 4 px darunter.
+  .domain-heading h1 {
+    font-size: var(--fs-page);
+    font-weight: var(--fw-bold);
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+  }
+  .domain-heading h1 + p {
+    margin-top: var(--space-1);
+    color: var(--text-secondary);
+    font-size: var(--fs-body);
   }
   // The card has inner padding; the following content gets a separate outer gap.
   .domain-sticky > .domain-tabs {
     margin-bottom: 0;
   }
   .domain-page {
-    max-width: 1440px;
+    max-width: var(--content-max-width);
   }
   @media (min-width: 761px) {
     .domain-page { padding-top: 16px; }
@@ -25,11 +38,11 @@
   @media (max-width: 760px) {
     .domain-sticky {
       padding: 10px;
-      margin-bottom: 24px;
-      border-radius: 20px;
+      margin-bottom: var(--space-5);
+      border-radius: var(--radius-lg);
     }
     .domain-page {
-      padding: 14px 18px 26px;
+      padding: 14px var(--content-padding-x) 26px;
     }
     .domain-heading {
       display: flex;
@@ -57,7 +70,7 @@
       flex: 0 0 44px;
       width: 44px;
       height: 44px;
-      border-radius: 13px;
+      border-radius: var(--radius-md);
     }
     .domain-icon app-icon {
       width: 28px;
@@ -75,16 +88,16 @@
       padding: 4px;
       gap: 0;
       min-height: 48px;
-      border-radius: 16px;
+      border-radius: var(--radius-lg);
       overflow-x: auto;
       scrollbar-width: none;
     }
     .domain-tabs button {
       flex: 1 0 auto;
       min-width: 0;
-      min-height: 44px;
+      min-height: var(--control-height);
       padding: 0 8px;
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       font-size: 14px;
       white-space: nowrap;
     }

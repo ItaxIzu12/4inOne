@@ -52,10 +52,9 @@
       <nav class="domains" aria-label="Deine vier Bereiche">
         @for (domain of domains(); track domain.name) {
           <a [routerLink]="domain.path" [class]="'domain ' + domain.tone" [class.domain--highlighted]="domain.highlighted" [attr.aria-busy]="domain.loading">
-            <span class="domain-icon"><app-icon [name]="domain.icon" /></span>
             <span class="domain-copy">
               <h2>
-                {{ domain.name }}
+                <app-icon class="domain-icon" [name]="domain.icon" aria-hidden="true" />{{ domain.name }}
                 @if (domain.highlighted) {
                   <span class="domain-pick"> · für dich ausgewählt</span>
                 }
@@ -123,9 +122,8 @@
         <section class="for-you" aria-labelledby="for-you-title">
           <h2 id="for-you-title">Für dich</h2>
           <a class="for-you__card" [class]="'for-you__card ' + f.tone" [routerLink]="f.path" [queryParams]="f.query">
-            <span class="domain-icon" aria-hidden="true"><app-icon [name]="f.icon" /></span>
             <span class="for-you__copy">
-              <small>{{ f.area }}</small>
+              <small><app-icon class="domain-icon" [name]="f.icon" aria-hidden="true" />{{ f.area }}</small>
               <strong>{{ f.title }}</strong>
               <span>{{ f.facts.join(' · ') }}</span>
             </span>

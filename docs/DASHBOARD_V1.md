@@ -87,6 +87,29 @@ schließt. Am Handy nur das Plus-Symbol (44 px, Name „Hinzufügen“).
 Connections, Suggestions-Anzeige, Automationen, Wetter, KI, Diagramme, News, zusätzliche Widgets oder Reiter,
 neuer Dashboard-Endpunkt.
 
+## Verfeinerung (10.10.2026, bewusste Ausnahme vom Freeze)
+
+Mit UI Taste + Impeccable geprüft, nur gezielte Änderungen — Struktur, Inhalte und Logik unverändert:
+- Bereichsband: Symbol klein (16 px) in der Bereichszeile statt getönter Kachel; der Wert trägt die Hierarchie
+  (16 px, tabellarische Ziffern). Am Handy dadurch ein kompaktes 2×2, „Heute“ rückt nach oben.
+- „Für dich“ ist sichtbar nachrangig (15 px, gedämpft); „Heute“ bleibt die Hauptüberschrift (20 px). Die Karte nutzt
+  dasselbe kleine Bereichssymbol statt einer Kachel.
+- Fehler behoben: im 2×2-Raster bekam „Organisation“ eine überflüssige linke Linie (Spezifität mit der Style-Kapselung).
+- Haushalt ist app-weit warmes Coral (`#b8432a`, Fläche `#fdeee9`), siehe docs/DESIGN_SYSTEM.md.
+
+Polish-Runde 2 (frontend-design / typeset / polish, Sidebar bewusst unverändert):
+- Breite 960 → 1120 px (seit System V3: gemeinsamer Container 1280 px wie alle Bereiche); Skalen fest: Typo 12/13/14/16/20/30 px, Gewichte 400–700, Radien 8/12/16, Abstände
+  4–48; Rhythmus Kopf→Band 32, Band→Heute 48, Heute→Für dich 40.
+- Heute: ein Raster (Zeit | Titel+Herkunft | Chevron), Zeit auf Titelzeile ausgerichtet, ganze Zeile als Klickfläche
+  mit Hover/Active; Chevron bewegt sich leicht. Reduzierte Bewegung abgeschaltet.
+- Demo-Hinweis oben ruhiger (ohne Kontur, gedämpft), ordnet sich Suche und Überschrift unter.
+- Geprüft: 360–1920 px + 200 % Zoom (720 px), axe ohne Befund, genau ein aktiver Navigationspunkt, Ziele ≥ 44 px,
+  lange Inhalte ohne Querscroll.
+
+Design System V3 (10.10.2026): Die Startseite ist der **Referenz-Screen** — alle Werte kommen aus den globalen Tokens
+(`styles.css`, beschrieben in docs/DESIGN_SYSTEM.md und DESIGN.md); Titel 30 px wie die Bereichsköpfe, Start auf
+derselben Kante und Höhe wie die Bereiche.
+
 ## Freeze
 
 Nur noch Bugfixes, Sicherheit, Barrierefreiheit, Performance und echte UX-Probleme aus Nutzertests. Keine Widgets,

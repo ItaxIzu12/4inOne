@@ -3,22 +3,22 @@
 :host {
   display: block;
   color: var(--text);
-  // Bereichsfarbe Haushalt (docs/DESIGN_SYSTEM.md: soft pink). Nur hier
+  // Bereichsfarbe Haushalt (docs/DESIGN_SYSTEM.md: warmes Coral). Nur hier
   // überschrieben — die Kindkomponenten erben die Variablen. Kontrast:
-  // Rosa auf Weiß 5,6:1, weiß auf Rosa 5,6:1.
-  --accent: #b8336f;
-  --accent-glow: #b8336f;
-  --accent-hover: #9a275c;
-  --accent-soft: #fce8f1;
-  --lavender: #fce8f1;
+  // Coral auf Weiß 5,4:1, weiß auf Coral 5,4:1, Coral auf Coral-Fläche 4,8:1.
+  --accent: #b8432a;
+  --accent-glow: #b8432a;
+  --accent-hover: #9c3722;
+  --accent-soft: #fdeee9;
+  --lavender: #fdeee9;
 }
 .hh-main {
   // Dunkleres Grau als in der Shell: Sekundärtext hält so auf Weiß, Grau und
-  // Rosa mindestens 5,2:1.
+  // Coral mindestens 5,2:1.
   --text-muted: #56627a;
-  max-width: 1440px;
+  max-width: var(--content-max-width);
   margin: 0 auto;
-  padding: 34px 34px 52px;
+  padding: 34px var(--content-padding-x) var(--space-8);
 }
 .page-head {
   display: flex;
@@ -31,7 +31,7 @@
   flex-shrink: 0;
   width: 52px;
   height: 52px;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--accent-soft);
   color: var(--accent);
   box-shadow: none;
@@ -44,34 +44,32 @@
   flex: 1;
   min-width: 0;
 }
-.page-head h1 {
-  margin: 0;
-  font-size: 28px;
-  line-height: 1.25;
-  letter-spacing: -0.5px;
-}
-.page-subtitle {
-  margin: 4px 0 0;
-  font-size: 15px;
-  color: var(--text-muted);
-}
+// Titel und Untertitel: Rollen aus dem gemeinsamen Seitenkopf (shared/styles/domain-layout.scss).
 .page-head__action {
   // Wie der Hauptknopf in Finanzen und Organisation.
-  min-height: 46px;
-  padding: 10px 16px;
-  border: 1px solid #a02b62;
-  border-radius: 13px;
-  background: #c03c78;
+  min-height: var(--control-height);
+  padding: 0 16px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: var(--accent);
   color: var(--accent-ink);
   box-shadow: none;
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-button);
+  font-weight: var(--fw-semibold);
+  transition: background-color var(--motion-fast) ease-out;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
   white-space: nowrap;
+}
+.page-head__action:hover {
+  background: var(--accent-hover);
+}
+.page-head__action:active {
+  transform: translateY(1px);
 }
 .page-head__action:focus-visible {
   outline: 3px solid var(--accent);
@@ -89,8 +87,8 @@
   margin: 28px 0 22px;
   padding: 5px;
   border: 1px solid #f3dde8;
-  border-radius: 16px;
-  background: #fdf8fb;
+  border-radius: var(--radius-lg);
+  background: #fefaf8;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -106,9 +104,9 @@
   min-height: 44px;
   padding: 0 18px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: none;
-  color: #5b4a55;
+  color: var(--text-secondary);
   font: inherit;
   white-space: nowrap;
   cursor: pointer;
@@ -117,9 +115,9 @@
   display: none;
 }
 .subtab.is-active {
-  background: #fdeef5;
+  background: #fdeee9;
   color: var(--accent-hover);
-  font-weight: 650;
+  font-weight: 600;
   box-shadow: none;
 }
 @media (min-width: 761px) {
@@ -140,7 +138,7 @@
     margin-bottom: -1px;
     border-bottom: 2.5px solid transparent;
     border-radius: 0;
-    font-size: 15px;
+    font-size: var(--fs-body);
   }
   .subtab app-icon {
     display: inline-flex;
@@ -164,10 +162,10 @@
     padding: 16px 24px 190px;
   }
   .page-head h1 {
-    font-size: 27px;
+    font-size: var(--fs-metric);
   }
   .page-subtitle {
-    font-size: 13px;
+    font-size: var(--fs-meta);
   }
   .page-head__icon {
     width: 44px;
@@ -182,7 +180,7 @@
   .subtab {
     flex: 1 1 auto;
     padding: 0 4px;
-    font-size: 13px;
+    font-size: var(--fs-meta);
   }
 }
 @media (max-width: 560px) {
@@ -196,7 +194,7 @@
   .page-head__action {
     margin-left: auto;
     white-space: nowrap;
-    font-size: 14px;
+    font-size: var(--fs-secondary);
   }
 }
 @media (max-width: 380px) {
@@ -214,27 +212,13 @@
   .page-head__icon {
     width: 60px;
     height: 60px;
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
   }
   .page-head__icon app-icon {
     width: 36px;
     height: 36px;
   }
-  .page-head h1 {
-    font-size: 32px;
-    line-height: 1.2;
-    letter-spacing: -1px;
-  }
-  .page-subtitle {
-    margin-top: 5px;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-  .page-head__action {
-    min-height: 46px;
-    padding: 10px 16px;
-    font-size: 14px;
-  }
+
 }
 
 // Seitenränder auf dem Handy wie in Finanzen und Organisation. Der Untertitel entfällt dort, damit der

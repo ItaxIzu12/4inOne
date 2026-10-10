@@ -17,19 +17,19 @@
   display: flex;
   gap: 4px;
   padding: 4px;
-  border: 1px solid #e3e9e6;
-  border-radius: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   background: #fff;
 }
 .switch button {
-  min-height: 40px;
+  min-height: var(--control-height);
   padding: 0 16px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: none;
-  color: #3c4a44;
+  color: #3d4a5c;
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -39,18 +39,18 @@
 .switch [aria-pressed='true'] {
   background: var(--accent-soft, #e3f6ec);
   color: var(--accent-hover, #186340);
-  font-weight: 650;
+  font-weight: 600;
 }
 .card {
   min-width: 0;
   padding: 18px 20px;
   border: 1px solid #e7ebef;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: #fff;
 }
 .card h2 {
   margin: 0 0 10px;
-  font-size: 16px;
+  font-size: var(--fs-body);
 }
 // Wie die Kennzahlen der Monatsansicht (private-finance.scss .kpi), damit jeder Zeitraum vertraut aussieht.
 .kpis {
@@ -67,8 +67,8 @@
   gap: 16px;
   min-width: 0;
   padding: 20px;
-  border: 1px solid #e7ece9;
-  border-radius: 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   background: #fff;
 }
 .kpi__icon {
@@ -76,7 +76,7 @@
   place-items: center;
   flex: 0 0 48px;
   height: 48px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: var(--accent-soft, #e3f6ec);
   color: var(--accent, #1e7a4d);
 }
@@ -99,22 +99,22 @@
 }
 .kpi__label {
   color: #3d4a5c;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .kpi__value {
-  font-size: 28px;
+  font-size: var(--fs-metric);
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.5px;
 }
 .kpi__hint {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .list-title small {
   margin-left: 6px;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   font-weight: 500;
 }
 .num {
@@ -180,7 +180,7 @@
 .row__text small,
 .muted {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .tops {
   display: grid;
@@ -193,7 +193,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 6px 10px;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .tops__name {
   display: flex;
@@ -228,19 +228,19 @@
 .empty p {
   margin: 0;
   color: #2b3a33;
-  font-size: 16px;
+  font-size: var(--fs-body);
   font-weight: 600;
 }
 .link {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  min-height: 40px;
+  min-height: var(--control-height);
   border: 0;
   background: none;
   color: var(--accent-hover, #186340);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   font-weight: 600;
   cursor: pointer;
 }
@@ -260,28 +260,28 @@
   display: grid;
   gap: 2px;
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: #f6f9f7;
 }
 .month__list b {
-  font-size: 18px;
+  font-size: var(--fs-subsection);
 }
 .month__list span {
   color: #3d4a5c;
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .month__list small {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-caption);
 }
 .note {
   margin: 0;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .note--info {
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: #eef4fd;
   color: #24406b;
 }
@@ -296,12 +296,12 @@
   min-height: 44px;
   margin-top: 8px;
   padding: 0 18px;
-  border: 1px solid #dfe5e2;
-  border-radius: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   background: #fff;
   color: var(--accent-hover, #186340);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   font-weight: 600;
   cursor: pointer;
 }
@@ -328,7 +328,7 @@ button:focus-visible {
   .switch button {
     flex: 1 1 auto;
     padding: 0 6px;
-    font-size: 13px;
+    font-size: var(--fs-meta);
   }
   // wie die Monatsansicht am Handy: zwei Spalten, die erste Karte über die volle Breite
   .kpis {
@@ -347,11 +347,11 @@ button:focus-visible {
     height: 38px;
   }
   .kpi__value {
-    font-size: 21px;
+    font-size: var(--fs-section);
   }
   .kpi__label,
   .kpi__hint {
-    font-size: 12px;
+    font-size: var(--fs-caption);
   }
   .month__list {
     grid-template-columns: minmax(0, 1fr);

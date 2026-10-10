@@ -28,6 +28,11 @@ For backend work, inspect existing Django apps, serializers/forms/views/services
 - tests for permissions and important workflows;
 - explain what changed and what remains intentionally unchanged.
 
+## Design documentation
+
+After any visual or design-system change, update `docs/DESIGN_SYSTEM.md` and `DESIGN.md` in the same step (see
+AGENTS.md › Design-Dokumentation). Read `DESIGN.md` before visual work.
+
 ## Completion report
 
 After substantial work, report:

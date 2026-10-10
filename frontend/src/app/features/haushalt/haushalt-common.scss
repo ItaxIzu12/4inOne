@@ -36,48 +36,49 @@
 // Schrift wie in Finanzen und Organisation (h2 19 px, h3 17 px).
 h2 {
   margin: 0;
-  font-size: 19px;
+  font-size: var(--fs-section);
   line-height: 1.3;
   letter-spacing: -0.3px;
 }
 h3 {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--fs-subsection);
   line-height: 1.4;
 }
 .muted {
   margin: 0;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   line-height: 1.6;
 }
 .small {
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .btn-primary,
 .btn-secondary {
-  // Buttons wie in Finanzen und Organisation: 13 px Rundung, 14 px Schrift, dezenter Farbverlauf beim Hauptknopf.
+  // Buttons wie in allen Bereichen (System V3): 44 px, --radius-md, 14 px/600, flache Fläche ohne Verlauf/Schatten.
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: 44px;
-  padding: 10px 16px;
-  border-radius: 13px;
+  padding: 0 16px; // Höhe kommt aus min-height (44 px), wie überall im System
+  border-radius: var(--radius-md);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-button);
+  font-weight: var(--fw-semibold);
   cursor: pointer;
 }
 .btn-primary {
-  border: 1px solid #a02b62;
-  background: linear-gradient(#c03c78, #a82d64);
+  border: 1px solid var(--accent);
+  background: var(--accent);
   color: var(--accent-ink);
-  box-shadow:
-    0 4px 9px #b8336f26,
-    inset 0 1px 1px #ffffff40;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
 }
 .btn-secondary {
-  border: 1px solid #f2cadd;
+  border: 1px solid #f0c7bb;
   background: var(--accent-soft);
   color: var(--accent-hover);
 }
@@ -93,7 +94,7 @@ h3 {
   background: none;
   color: var(--accent-hover);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   cursor: pointer;
 }
 .btn-danger-link {
@@ -114,7 +115,7 @@ textarea:focus-visible {
   height: 44px;
   flex-shrink: 0;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: none;
   color: var(--text-muted);
   cursor: pointer;
@@ -146,7 +147,7 @@ textarea:focus-visible {
   width: 26px;
   height: 26px;
   border: 2px solid var(--border-strong);
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   color: transparent;
   transition: background 0.15s, border-color 0.15s;
 }
@@ -195,7 +196,7 @@ textarea:focus-visible {
 }
 .row__title {
   display: block;
-  font-size: 16px;
+  font-size: var(--fs-body);
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -206,7 +207,7 @@ textarea:focus-visible {
 .row__meta {
   display: block;
   margin-top: 2px;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
   overflow-wrap: anywhere;
 }
@@ -216,7 +217,7 @@ textarea:focus-visible {
   border-radius: var(--radius-tags);
   background: var(--canvas);
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -266,7 +267,7 @@ textarea:focus-visible {
 .field label,
 .field legend {
   padding: 0;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 700;
   color: var(--text);
 }
@@ -281,7 +282,7 @@ textarea:focus-visible {
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 .field textarea {
   min-height: 88px;
@@ -290,30 +291,30 @@ textarea:focus-visible {
 }
 .field-hint {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
 }
 .field-error {
   margin: 0;
   color: var(--danger);
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 700;
 }
 .segmented {
   display: flex;
   padding: 4px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: var(--canvas);
 }
 .segmented button {
   flex: 1;
   min-height: 40px;
   border: 0;
-  border-radius: 11px;
+  border-radius: var(--radius-md);
   background: none;
   color: var(--text-muted);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   cursor: pointer;
 }
 .segmented button[aria-checked='true'] {
@@ -327,7 +328,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 12px;
   min-height: 44px;
-  font-size: 15px;
+  font-size: var(--fs-body);
   cursor: pointer;
 }
 .checkbox input {
@@ -351,7 +352,7 @@ textarea:focus-visible {
   width: 40px;
   height: 40px;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--accent-soft);
   color: var(--accent);
 }
@@ -373,7 +374,7 @@ textarea:focus-visible {
 .row__link:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 .chevron {
   width: 18px;

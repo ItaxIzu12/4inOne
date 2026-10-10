@@ -16,7 +16,7 @@
   min-height: 112px;
   padding: 20px 18px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   color: var(--text);
   text-align: left;
@@ -62,17 +62,17 @@
   min-width: 0;
 }
 .stat__value {
-  font-size: 26px;
+  font-size: var(--fs-metric);
   font-weight: 700;
   line-height: 1.1;
 }
 .stat__label {
   margin-top: 4px;
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 500;
 }
 .stat__hint {
-  font-size: 13px;
+  font-size: var(--fs-meta);
   color: var(--text-muted);
 }
 .stat__chevron {
@@ -125,13 +125,13 @@
     height: 21px;
   }
   .stat__value {
-    font-size: 22px;
+    font-size: var(--fs-metric);
   }
   .stat__label {
-    font-size: 13px;
+    font-size: var(--fs-meta);
   }
   .stat__hint {
-    font-size: 12px;
+    font-size: var(--fs-caption);
   }
   .stat__chevron {
     display: none;

@@ -6,17 +6,18 @@ for (const width of [320, 360, 390]) {
     await page.route('http://localhost:8000/api/**', route => route.abort());
     let geometry: number[] | undefined;
     for (const [domain, tab, label] of [
-      ['finanzen', 'expenses', 'Ausgabe erfassen'], ['haushalt', 'aufgaben', 'Aufgabe hinzufügen'],
+      ['finanzen', 'expenses', 'Transaktion erfassen'], ['haushalt', 'aufgaben', 'Aufgabe hinzufügen'],
       ['organisation', 'calendar', 'Termin hinzufügen'],
     ]) {
-      // Übersicht: bewusst kein Hauptknopf — weder im Kopf noch unten. Organisation hat keine eigene
-      // Übersicht (das Dashboard übernimmt sie) und startet direkt im Kalender.
+      // Haushalt-Übersicht: bewusst kein Hauptknopf — weder im Kopf noch unten. Finanzen hat eine feste
+      // Hauptaktion „+ Transaktion“ in allen Reitern (Design System V3). Organisation startet im Kalender.
       await page.goto(`/demo/${domain}`);
       await expect(page.locator('.domain-tabs')).toBeVisible();
-      if (domain !== 'organisation') {
+      if (domain === 'haushalt') {
         await expect(page.locator('app-mobile-action')).toHaveCount(0);
         await expect(page.locator('.domain-heading button')).toHaveCount(0);
       }
+      if (domain === 'finanzen') await expect(page.locator('app-mobile-action button')).toHaveText('Transaktion erfassen');
       if (domain === 'finanzen') {
         // Die Kennzahlen beginnen unter dem Kopf (mit der Monatsauswahl), nie darüber oder darin
         const card = await page.locator('.domain-sticky').boundingBox();
@@ -45,7 +46,7 @@ for (const width of [320, 360, 390]) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       const sticky = page.locator('.domain-sticky');
       await expect(sticky).toHaveCSS('box-shadow', 'none');
-      await expect(sticky).toHaveCSS('border-radius', '20px');
+      await expect(sticky).toHaveCSS('border-radius', '16px') // Radius-Skala: --radius-lg;
       // Die Bereichskarte scrollt mit (nicht mehr sticky); die globale Kopfzeile
       // bleibt, und „Nach oben“ bringt Titel und Reiter zurück.
       await expect(sticky).not.toHaveCSS('position', 'sticky');

@@ -1,11 +1,8 @@
 :host {
+  // Farben aus den globalen Tokens (styles.css, System V3) — die Shell überschreibt sie nicht mehr.
   display: block;
-  --text: #142143;
-  --text-body: #142143;
-  // #64728c erreichte auf --canvas (#f4f5fa) nur 4,46:1 — knapp unter WCAG AA.
-  --text-muted: #5f6d87;
-  color: var(--text);
-  background: #f8fafd;
+  color: var(--text-primary);
+  background: var(--surface-app);
   min-height: 100dvh;
 }
 a {
@@ -240,10 +237,6 @@ input:focus-visible {
 }
 
 /* Soft, floating surfaces shared by the dashboard and domain navigation. */
-:host {
-  --text: #111344;
-  background: #f6f8fb;
-}
 .shell {
   grid-template-columns: 280px minmax(0, 1fr);
   padding: 16px;
@@ -451,7 +444,7 @@ input:focus-visible {
 /* Domain icons remain colored; selected links also tint their label and background. */
 .sidebar nav a, .mobile-nav a { --nav-accent: #235bb5; --nav-soft: #edf3fc; color: #566176; }
 .sidebar nav a[data-domain="finance"], .mobile-nav a[data-domain="finance"] { --nav-accent: #1e7a4d; --nav-soft: #edf7f1; }
-.sidebar nav a[data-domain="household"], .mobile-nav a[data-domain="household"] { --nav-accent: #ad3169; --nav-soft: #fcf0f5; }
+.sidebar nav a[data-domain="household"], .mobile-nav a[data-domain="household"] { --nav-accent: #b8432a; --nav-soft: #fdf1ed; }
 .sidebar nav a[data-domain="calendar"], .mobile-nav a[data-domain="calendar"] { --nav-accent: #7541b5; --nav-soft: #f4effb; }
 .sidebar nav a[data-domain="travel"], .mobile-nav a[data-domain="travel"] { --nav-accent: #246db8; --nav-soft: #edf4fc; }
 .sidebar nav a app-icon, .mobile-nav a app-icon { color: var(--nav-accent); filter: none; width: 24px; height: 24px; }
@@ -498,17 +491,18 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   border: 0;
   background: transparent;
 }
+// Demo-Hinweis bleibt sichtbar, ordnet sich aber unter: keine Kontur, gedämpfter Text, normales Gewicht.
 .demo-banner .demo-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  border: 1px solid #dfe6f1;
+  border: 0;
   border-radius: 999px;
-  background: #fff;
-  color: #465875;
+  background: #eef2f7;
+  color: #56657c;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 16px;
   white-space: nowrap;
 }
@@ -672,7 +666,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2f6fd6, #6d4fd1);
+  background: var(--brand-primary); // flach (System V3) — vorher Blau-Violett-Verlauf
   color: #fff;
   font-size: 14px;
   font-weight: 700;

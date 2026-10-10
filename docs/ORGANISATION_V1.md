@@ -89,3 +89,10 @@ Teilen von Objekten, Projektmanagement.
 
 Organisation V1 ist eingefroren. Danach nur Bugfixes, Security, Accessibility, Performance und echte UX-Probleme
 aus Tests — keine neuen Reiter oder Funktionen, bis alle vier Kernbereiche getestet sind.
+
+
+## Design System V3 (10.10.2026)
+
+Organisation nutzt das globale Design System (docs/DESIGN_SYSTEM.md); Bereichsfarbe ist das Token
+`--organization-accent`. Reiter (Kalender · Aufgaben · Notizen), Untertitel und Hauptaktionen unverändert. Aufgaben-
+Kästchen wie im Haushalt (abgerundetes Quadrat statt Kreis).

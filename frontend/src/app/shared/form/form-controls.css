@@ -29,7 +29,8 @@ app-field textarea:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -1.5px; /* legt sich über den Rahmen statt daneben */
 }
-app-field .ng-invalid.ng-touched,
+/* Roter Rand erst, wenn das Feld nach „Speichern“ als ungültig markiert ist (Field setzt aria-invalid) —
+   nicht schon beim Verlassen des Feldes. */
 app-field [aria-invalid='true'] {
   border-color: var(--danger);
 }

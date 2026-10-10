@@ -1,28 +1,33 @@
 // Startseite, minimal: eine Spalte, viel Weißraum. Begrüßung → die vier Bereiche als schmales Band → Heute.
 // Struktur über Abstand und feine Linien statt Karten; Bereichsfarben nur als kleiner Akzent.
 :host {
+  // Referenz-Screen des Design Systems (docs/DESIGN_SYSTEM.md): alle Werte aus den globalen Tokens in styles.css.
   display: block;
-  --ink: #142143;
-  --muted: #5a6a82;
-  --line: #e6ebf2;
-  --link: #245fb0;
+  --ink: var(--text-primary);
+  --muted: var(--text-secondary);
+  --line: var(--border-subtle);
+  --hover: var(--surface-hover);
+  --link: var(--brand-primary);
+  --r-sm: var(--radius-sm);
+  --r-md: var(--radius-md);
+  --r-lg: var(--radius-lg);
   color: var(--ink);
 }
 .finance {
-  --tone: #1e7a4d;
-  --soft: #e9f6ef;
+  --tone: var(--finance-accent);
+  --soft: var(--finance-soft);
 }
 .household {
-  --tone: #ad3169;
-  --soft: #fcecf3;
+  --tone: var(--household-accent);
+  --soft: var(--household-soft);
 }
 .organisation {
-  --tone: #7541b5;
-  --soft: #f3ecfc;
+  --tone: var(--organization-accent);
+  --soft: var(--organization-soft);
 }
 .travel {
-  --tone: #246db8;
-  --soft: #e8f1fd;
+  --tone: var(--travel-accent);
+  --soft: var(--travel-soft);
 }
 .family {
   --tone: #a45a13;
@@ -30,10 +35,18 @@
 }
 
 .dashboard {
-  max-width: 960px;
+  // Gemeinsamer Inhalts-Container (wie die vier Bereiche); oben auf Höhe der Bereichsköpfe.
+  max-width: var(--content-max-width);
   margin: 0 auto;
-  padding: 40px 28px 56px;
+  padding: var(--space-4) var(--content-padding-x) var(--space-9);
 }
+@media (min-width: 761px) {
+  // Titel auf derselben Höhe wie die Bereichsköpfe (die in ihrer Kopfkarte stehen).
+  .dashboard {
+    padding-top: var(--space-5);
+  }
+}
+
 .greeting {
   display: flex;
   align-items: flex-start;
@@ -53,14 +66,17 @@
   min-height: 44px;
   padding: 0 16px;
   border: 1px solid #d6dfeb;
-  border-radius: 12px;
+  border-radius: var(--r-md);
   background: #fff;
   color: var(--ink);
   font: inherit;
-  font-size: 14.5px;
-  font-weight: 650;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: border-color 160ms ease-out, background-color 160ms ease-out;
+  transition: border-color 160ms ease-out, background-color 160ms ease-out, transform 120ms ease-out;
+}
+.quick__toggle:active {
+  transform: translateY(1px);
 }
 .quick__toggle:hover,
 .quick__toggle[aria-expanded='true'] {
@@ -79,9 +95,9 @@
   display: grid;
   min-width: 220px;
   margin: 0;
-  padding: 6px;
+  padding: 8px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: #fff;
   box-shadow: 0 12px 28px -12px rgb(20 33 67 / 25%);
   list-style: none;
@@ -91,22 +107,22 @@
   align-items: center;
   gap: 12px;
   min-height: 44px;
-  padding: 0 10px;
-  border-radius: 10px;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
   color: var(--ink);
-  font-size: 15px;
-  font-weight: 550;
+  font-size: 14px;
+  font-weight: 500;
   text-decoration: none;
 }
 .quick__list a:hover {
-  background: #f4f7fb;
+  background: var(--hover);
 }
 .quick__icon {
   display: grid;
   place-items: center;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   background: var(--soft);
   color: var(--tone);
 }
@@ -116,13 +132,14 @@
 }
 h1 {
   margin: 0;
-  font-size: 30px;
-  font-weight: 750;
-  letter-spacing: -0.03em;
+  font-size: var(--fs-page);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.025em;
   line-height: 1.2;
+  text-wrap: balance;
 }
 .greeting p {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: var(--muted);
   font-size: 16px;
 }
@@ -136,7 +153,10 @@ h1 {
 }
 .board-overview {
   display: grid;
-  gap: 40px;
+  gap: 48px;
+}
+.for-you {
+  margin-top: -8px;
 }
 
 // ---------- Die vier Bereiche ----------
@@ -144,16 +164,15 @@ h1 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   background: #fff;
   overflow: hidden;
 }
 .domain {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
   min-width: 0;
-  padding: 16px;
+  padding: 16px 18px 15px;
   color: inherit;
   text-decoration: none;
   transition: background-color 160ms ease-out;
@@ -163,29 +182,24 @@ h1 {
 }
 .domain:hover,
 .domain--highlighted {
-  background: color-mix(in srgb, var(--soft) 50%, #fff);
+  background: color-mix(in srgb, var(--soft) 45%, #fff);
 }
 .domain-icon {
-  display: grid;
-  flex: 0 0 34px;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: var(--soft);
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
   color: var(--tone);
-}
-.domain-icon app-icon {
-  width: 19px;
-  height: 19px;
 }
 .domain-copy {
   display: grid;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 .domain h2 {
-  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 3px;
   color: var(--muted);
   font-size: 13px;
   font-weight: 600;
@@ -193,8 +207,10 @@ h1 {
 .domain p {
   overflow: hidden;
   margin: 0;
-  font-size: 15px;
-  font-weight: 650;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -210,8 +226,8 @@ h1 {
   display: block;
   width: 70%;
   height: 16px;
-  margin-top: 3px;
-  border-radius: 6px;
+  margin-top: 4px;
+  border-radius: var(--r-sm);
   background: #edf1f6;
 }
 .partial-error {
@@ -219,7 +235,7 @@ h1 {
   flex-wrap: wrap;
   align-items: center;
   gap: 0 12px;
-  margin: -24px 0 0;
+  margin: -32px 0 0;
   color: var(--muted);
   font-size: 14px;
 }
@@ -237,7 +253,7 @@ h1 {
 }
 .today-head h2 {
   margin: 0;
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -267,13 +283,14 @@ h1 {
   list-style: none;
 }
 .today-row {
+  // Ein Raster für alle Zeilen: Zeit | Titel + Herkunft | Chevron. Die ganze Zeile ist die Klickfläche.
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) 16px;
+  grid-template-columns: 64px minmax(0, 1fr) 20px;
   align-items: center;
   gap: 16px;
   width: 100%;
   min-height: 64px;
-  padding: 10px 4px;
+  padding: 12px 8px 12px 4px;
   border: 0;
   border-top: 1px solid var(--line);
   background: none;
@@ -285,14 +302,26 @@ h1 {
 .today-list li:last-child .today-row {
   border-bottom: 1px solid var(--line);
 }
-.today-row:hover strong {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.today-row {
+  transition: background-color 150ms ease-out;
+}
+.today-row:hover {
+  background: var(--hover);
+}
+.today-row:active {
+  background: #eef2f7;
+}
+.today-row:hover .chevron {
+  color: var(--ink);
+  transform: translateX(2px);
 }
 .time {
+  align-self: start;
+  padding-top: 1px;
   color: var(--muted);
   font-size: 14px;
   font-weight: 600;
+  line-height: 22px;
   font-variant-numeric: tabular-nums;
 }
 .item-copy {
@@ -303,36 +332,40 @@ h1 {
 .item-copy strong {
   font-size: 16px;
   font-weight: 600;
+  line-height: 22px;
   overflow-wrap: anywhere;
 }
 .item-copy small {
   color: var(--muted);
   font-size: 14px;
+  line-height: 20px;
 }
 .today-row.is-late .time,
 .today-row.is-late small {
   color: #b32635;
 }
 .chevron {
+  justify-self: end;
   width: 16px;
   height: 16px;
-  color: #8a97ab;
+  color: #8592a6;
+  transition: color 150ms ease-out, transform 150ms ease-out;
 }
 // ---------- Für dich (höchstens eine Karte) ----------
 .for-you h2 {
   margin: 0 0 12px;
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 600;
 }
 .for-you__card {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  padding: 16px;
+  gap: 16px;
+  padding: 16px 20px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   background: #fff;
   color: inherit;
   text-decoration: none;
@@ -340,6 +373,13 @@ h1 {
 }
 .for-you__card:hover {
   border-color: #c7d3e6;
+  background: #fcfdfe;
+}
+.for-you__card:hover .for-you__action app-icon {
+  transform: translateX(2px);
+}
+.for-you__action app-icon {
+  transition: transform 150ms ease-out;
 }
 .for-you__copy {
   display: grid;
@@ -349,11 +389,17 @@ h1 {
 .for-you__copy small,
 .for-you__copy span {
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: 13px;
+}
+.for-you__copy small {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 2px;
 }
 .for-you__copy strong {
   font-size: 16px;
-  font-weight: 650;
+  font-weight: 600;
 }
 .for-you__action {
   display: inline-flex;
@@ -382,7 +428,7 @@ h1 {
 .state p {
   margin: 0;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 14px;
 }
 .skeleton {
   display: grid;
@@ -391,14 +437,14 @@ h1 {
 }
 .skeleton span {
   height: 44px;
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   background: #f0f3f8;
 }
 
 // ---------- Suche ----------
 .search-results h2 {
   margin: 0;
-  font-size: 17px;
+  font-size: 16px;
 }
 .search-results p {
   margin: 4px 0 8px;
@@ -434,14 +480,15 @@ a:focus-visible,
 button:focus-visible {
   outline: 3px solid var(--link);
   outline-offset: 2px;
-  border-radius: 8px;
+  border-radius: var(--r-sm);
 }
 
 @media (max-width: 1100px) {
   .domains {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .domain:nth-child(3) {
+  // Gleiche Spezifität wie `.domain + .domain`, sonst gewinnt deren Linie in der zweiten Zeile.
+  .domain + .domain:nth-child(3) {
     border-left: 0;
   }
   .domain:nth-child(n + 3) {
@@ -449,37 +496,27 @@ button:focus-visible {
   }
 }
 @media (max-width: 760px) {
-  .dashboard {
-    padding: 20px 16px 32px;
-  }
   .greeting {
-    margin-bottom: 20px;
-  }
-  h1 {
-    font-size: 25px;
+    margin-bottom: var(--space-5);
   }
   .board-overview {
-    gap: 28px;
+    gap: 32px;
   }
-  // Am Handy: Symbol über dem Text, damit die Zahlen im 2×2-Raster die volle Breite haben.
+  .for-you {
+    margin-top: 0;
+  }
+  // Am Handy: kompaktes 2×2 — Symbol in der Bereichszeile, die Werte dürfen umbrechen.
   .domain {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 14px 12px;
-  }
-  .domain-icon {
-    flex-basis: auto;
-    width: 30px;
-    height: 30px;
+    padding: 13px 14px 12px;
   }
   .domain p {
-    font-size: 14.5px;
+    font-size: 16px;
     white-space: normal;
   }
   .today-row {
     grid-template-columns: 52px minmax(0, 1fr) 16px;
     gap: 12px;
+    padding-right: 4px;
   }
   .quick__toggle span {
     display: none;
@@ -490,16 +527,21 @@ button:focus-visible {
     justify-content: center;
   }
   .for-you__card {
-    grid-template-columns: 34px minmax(0, 1fr);
-  }
-  .for-you__action {
-    grid-column: 2;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .domain,
   .quick__toggle,
-  .for-you__card {
+  .for-you__card,
+  .today-row,
+  .chevron,
+  .for-you__action app-icon {
     transition: none;
+  }
+  .today-row:hover .chevron,
+  .for-you__card:hover .for-you__action app-icon,
+  .quick__toggle:active {
+    transform: none;
   }
 }

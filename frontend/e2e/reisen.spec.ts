@@ -196,7 +196,8 @@ test('Planung: Aufgabe hinzufügen und erledigen — der Zähler folgt überall'
   await page.locator('#trip-task-quick').fill('Hotel buchen');
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: /Offen 5/ })).toBeVisible();
-  await page.locator('app-trip-planning .row', { hasText: 'Hotel buchen' }).getByRole('checkbox').check();
+  // Erledigt verschwindet die Aufgabe aus „Offen“ — deshalb klicken statt check() (das auf das Kästchen wartet).
+  await page.locator('app-trip-planning .row', { hasText: 'Hotel buchen' }).getByRole('checkbox').click();
   await expect(page.getByRole('button', { name: /Offen 4/ })).toBeVisible();
   await tab(page, 'Übersicht');
   await expect(page.locator('app-trip-overview .tile-card').first()).toContainText('4 Aufgaben offen');

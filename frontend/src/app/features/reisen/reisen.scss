@@ -3,16 +3,16 @@
 // haben eigene Stile (trip-*.scss). Blau ist die Bereichsfarbe.
 :host {
   display: block;
-  color: #16233a;
-  --accent: #2563eb;
-  --accent-hover: #1d4fd8;
-  --accent-soft: #eef4ff;
-  --text-muted: #5b6b83;
+  color: var(--text-primary);
+  // Dieselbe Reisefarbe wie Navigation und Startseite (Token), vorher eigenes #2563eb.
+  --accent: var(--travel-accent);
+  --accent-hover: #1d5a99;
+  --accent-soft: var(--travel-soft);
 }
 .reisen-page {
-  max-width: 1440px;
+  max-width: var(--content-max-width);
   margin: auto;
-  padding: 34px 34px 52px;
+  padding: 34px var(--content-padding-x) var(--space-8);
 }
 .page-heading,
 .heading-copy {
@@ -29,7 +29,7 @@
   place-items: center;
   width: 60px;
   height: 60px;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: var(--accent-soft);
   color: var(--accent);
 }
@@ -37,18 +37,16 @@
   width: 32px;
   height: 32px;
 }
+// Titelgröße: gemeinsamer Seitenkopf (shared/styles/domain-layout.scss).
 h1 {
   margin: 0;
-  font-size: 32px;
-  line-height: 1.2;
-  letter-spacing: -1px;
 }
 h2 {
-  font-size: 19px;
+  font-size: var(--fs-section);
   letter-spacing: -0.3px;
 }
 h3 {
-  font-size: 17px;
+  font-size: var(--fs-subsection);
 }
 p,
 small {
@@ -57,7 +55,7 @@ small {
 }
 .subtitle {
   margin: 5px 0 0;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 button,
 input,
@@ -88,12 +86,12 @@ textarea:focus-visible {
   gap: 8px;
   min-height: 44px;
   padding: 10px 16px;
-  border-radius: 12px;
-  font-size: 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-secondary);
 }
 .primary,
 .btn-primary {
-  border: 1px solid #1d4fd8;
+  border: 1px solid var(--accent-hover);
   background: var(--accent);
   color: #fff;
   font-weight: 600;
@@ -110,7 +108,7 @@ textarea:focus-visible {
 .secondary {
   border: 1px solid #d7e4fb;
   background: #f1f6ff;
-  color: #1c5ca8;
+  color: var(--accent-hover);
 }
 // Reiter: ruhige Leiste mit Symbol, aktiv blau unterstrichen (wie Organisation und Finanzen).
 .tabs {
@@ -132,7 +130,7 @@ textarea:focus-visible {
   border-bottom: 2.5px solid transparent;
   background: none;
   color: #4c5c72;
-  font-size: 15px;
+  font-size: var(--fs-body);
   white-space: nowrap;
 }
 .tabs button app-icon {
@@ -144,8 +142,8 @@ textarea:focus-visible {
 }
 .tabs button[aria-current] {
   border-bottom-color: var(--accent);
-  color: #1c4fae;
-  font-weight: 650;
+  color: var(--accent-hover);
+  font-weight: 600;
 }
 .back {
   display: inline-flex;
@@ -156,8 +154,8 @@ textarea:focus-visible {
   padding: 0 4px 0 0;
   border: 0;
   background: none;
-  color: #1c5ca8;
-  font-size: 14px;
+  color: var(--accent-hover);
+  font-size: var(--fs-secondary);
   font-weight: 600;
 }
 .back app-icon {
@@ -188,7 +186,7 @@ textarea:focus-visible {
   gap: 5px;
   padding: 1px 9px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   line-height: 1.6;
   white-space: nowrap;
@@ -206,11 +204,11 @@ textarea:focus-visible {
 }
 .status--blue {
   background: #e6efff;
-  color: #1c4fae;
+  color: var(--accent-hover);
 }
 .status--gray {
-  background: #eef0f4;
-  color: #4b5568;
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
 }
 .status--red {
   background: #fde8eb;
@@ -223,8 +221,8 @@ textarea:focus-visible {
   max-width: 520px;
   margin: 24px auto 0;
   padding: 36px 20px;
-  border: 1px solid #e6e9f0;
-  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   background: #fff;
   text-align: center;
 }
@@ -245,13 +243,13 @@ textarea:focus-visible {
   padding: 0;
   border: 0;
   background: none;
-  color: #1c5ca8;
-  font-size: 14px;
+  color: var(--accent-hover);
+  font-size: var(--fs-secondary);
   font-weight: 600;
   text-align: left;
 }
 .more-toggle .muted {
-  color: #5b6b83;
+  color: var(--text-secondary);
   font-weight: 400;
 }
 .more-toggle app-icon {
@@ -264,7 +262,7 @@ textarea:focus-visible {
   gap: 14px;
 }
 .overlap-warning .small {
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .budget-plan {
   display: grid;
@@ -289,20 +287,20 @@ textarea:focus-visible {
   min-height: 44px;
   padding: 0 12px;
   border: 1px solid #d9dee6;
-  border-radius: 11px;
+  border-radius: var(--radius-md);
   text-align: right;
 }
 .budget-plan__sum {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .btn-link {
   border: 0;
   background: none;
   padding: 0;
   min-height: 32px;
-  color: #1c5ca8;
-  font-size: 13px;
+  color: var(--accent-hover);
+  font-size: var(--fs-meta);
   font-weight: 600;
 }
 .btn-link:hover {
@@ -314,14 +312,14 @@ textarea:focus-visible {
 }
 .row__title {
   display: block;
-  font-size: 15px;
+  font-size: var(--fs-body);
   overflow-wrap: anywhere;
 }
 .row__meta {
   display: block;
   margin-top: 2px;
-  font-size: 13px;
-  color: #5b6b83;
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
 }
 .empty {
   text-align: center;
@@ -330,7 +328,7 @@ textarea:focus-visible {
 .empty > app-icon {
   width: 34px;
   height: 34px;
-  color: #2889ef;
+  color: var(--accent);
   margin-bottom: 14px;
 }
 .empty p {
@@ -348,13 +346,13 @@ textarea:focus-visible {
   height: 44px;
   flex-shrink: 0;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: none;
-  color: #53627a;
+  color: var(--text-secondary);
 }
 .icon-btn:hover {
   background: #f1f6fb;
-  color: #16233a;
+  color: var(--text-primary);
 }
 .icon-btn app-icon {
   width: 20px;
@@ -389,10 +387,10 @@ textarea:focus-visible {
   min-height: 44px;
   padding: 0 14px;
   border: 1.5px solid #d7e8fb;
-  border-radius: 13px;
+  border-radius: var(--radius-md);
   background: #fff;
-  color: #16233a;
-  font-size: 15px;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
 }
 .add-form input.qty {
   flex: 0 1 100px;
@@ -403,7 +401,7 @@ textarea:focus-visible {
 .field-error {
   margin: 0 0 12px;
   color: #b3261e;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 700;
 }
 .field-row {
@@ -416,8 +414,8 @@ textarea:focus-visible {
 }
 .setup-hint {
   margin: 4px 0 0;
-  font-size: 13px;
-  color: #53627a;
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
 }
 .form {
   display: flex;
@@ -434,13 +432,13 @@ textarea:focus-visible {
   place-items: center;
   width: 56px;
   height: 56px;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: #f1faff;
-  color: #2889ef;
+  color: var(--accent);
 }
 .smart-setup h2 {
   margin: 0;
-  font-size: 19px;
+  font-size: var(--fs-section);
 }
 .smart-setup-actions {
   display: flex;
@@ -475,7 +473,7 @@ textarea:focus-visible {
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: var(--accent-soft);
   color: var(--accent);
 }
@@ -485,15 +483,15 @@ textarea:focus-visible {
 }
 .suggest__intro h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--fs-section);
   line-height: 1.3;
   letter-spacing: -0.01em;
   text-wrap: balance;
 }
 .suggest__intro p {
   margin: 4px 0 0;
-  color: #53627a;
-  font-size: 14px;
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
   line-height: 1.45;
 }
 .suggest__bar {
@@ -503,9 +501,9 @@ textarea:focus-visible {
   gap: 12px;
   margin: 12px 24px 0;
   padding: 0 0 8px;
-  border-bottom: 1px solid #e6ebf2;
-  color: #53627a;
-  font-size: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
   font-variant-numeric: tabular-nums;
 }
 .suggest__all {
@@ -515,7 +513,7 @@ textarea:focus-visible {
   background: none;
   color: var(--accent);
   font: inherit;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
 }
 .suggest__all:hover:not(:disabled) {
@@ -537,9 +535,9 @@ textarea:focus-visible {
   align-items: center;
   gap: 8px;
   margin: 0 0 8px;
-  color: #1f2a44;
-  font-size: 14px;
-  font-weight: 650;
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  font-weight: 600;
 }
 .suggest__group h3 app-icon {
   width: 17px;
@@ -566,7 +564,7 @@ textarea:focus-visible {
   min-height: 48px;
   padding: 8px 14px 8px 12px;
   border: 1px solid #e3e9f2;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: #fff;
   cursor: pointer;
   transition:
@@ -578,10 +576,10 @@ textarea:focus-visible {
 }
 // Abgewählt tritt zurück; Angehakt bleibt ruhig weiß — das Kästchen trägt die Farbe.
 .suggest__row:not(.is-on) {
-  background: #f7f9fc;
+  background: var(--surface-hover);
 }
 .suggest__row:not(.is-on) .suggest__text {
-  color: #5b6b83;
+  color: var(--text-secondary);
 }
 .suggest__row:has(input:focus-visible) {
   outline: 3px solid var(--accent);
@@ -601,7 +599,7 @@ textarea:focus-visible {
   height: 22px;
   margin: 0;
   border: 1.5px solid #9fb0c8;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   background: #fff center / 14px no-repeat;
   cursor: inherit;
   transition:
@@ -619,14 +617,14 @@ textarea:focus-visible {
 .suggest__text {
   flex: 1;
   min-width: 0;
-  color: #16233a;
-  font-size: 15px;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
   overflow-wrap: anywhere;
 }
 .suggest__meta {
   flex: 0 0 auto;
-  color: #53627a;
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -654,16 +652,16 @@ textarea:focus-visible {
   max-width: 34ch;
   margin: 0;
   color: #34445e;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 .suggest__error {
   margin: 0;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: #fdecea;
   color: #b3261e;
-  font-size: 14px;
-  font-weight: 650;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
 }
 .suggest__foot {
   display: flex;
@@ -671,12 +669,12 @@ textarea:focus-visible {
   justify-content: flex-end;
   gap: 10px;
   padding: 14px 24px 20px;
-  border-top: 1px solid #e6ebf2;
-  background: #f7f9fc;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-hover);
 }
 .suggest__foot .primary {
   min-width: 180px;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 .suggest__foot .primary:disabled {
   border-color: #b9c8e6;
@@ -687,11 +685,11 @@ textarea:focus-visible {
   min-height: 44px;
   padding: 0 18px;
   border: 1px solid #d6dfeb;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: #fff;
-  color: #1f2a44;
+  color: var(--text-primary);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 600;
   cursor: pointer;
 }
@@ -717,7 +715,7 @@ textarea:focus-visible {
     padding-inline: 20px;
   }
   .suggest__text {
-    font-size: 16px;
+    font-size: var(--fs-body);
   }
   .suggest__foot {
     padding: 12px 20px calc(16px + env(safe-area-inset-bottom));
@@ -757,7 +755,7 @@ textarea:focus-visible {
 .overlap-warning {
   padding: 16px;
   border: 1px solid #f6dfa3;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: #fff9ec;
   color: #7a5a12;
 }
@@ -813,13 +811,20 @@ textarea:focus-visible {
     align-items: flex-start;
   }
   .trip-heading h1 {
-    font-size: 24px;
+    font-size: var(--fs-metric);
     letter-spacing: -0.5px;
   }
   // Der Zeitraum ist in einer Reise die wichtigste Zeile — auch am Handy sichtbar.
+  // Zeitraum, Ziel und Status umbrechen sauber als eigene Stücke — kein einzelnes „·“ am Zeilenende.
   .trip-heading .subtitle {
     display: flex;
-    font-size: 13.5px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 8px;
+    font-size: var(--fs-meta);
+  }
+  .trip-heading .subtitle__sep {
+    display: none;
   }
   .trip-heading .secondary span {
     display: none;
@@ -843,7 +848,7 @@ textarea:focus-visible {
     margin-bottom: 0;
     padding: 0 3px;
     border-bottom: 0;
-    font-size: 12.5px;
+    font-size: var(--fs-caption);
   }
   .tabs button app-icon {
     display: none;
@@ -860,8 +865,8 @@ textarea:focus-visible {
   gap: 8px;
 }
 .baggage-field__label {
-  color: var(--text, #16233a);
-  font-size: 14px;
+  color: var(--text, var(--text-primary));
+  font-size: var(--fs-secondary);
   font-weight: 700;
 }
 .baggage-field__label .muted {
@@ -883,7 +888,7 @@ textarea:focus-visible {
   background: #fff;
   color: #2c3a4e;
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   cursor: pointer;
   transition: border-color 150ms ease-out, background-color 150ms ease-out;
 }
@@ -894,7 +899,7 @@ textarea:focus-visible {
   border-color: var(--accent);
   background: var(--accent-soft);
   color: #1c3f8f;
-  font-weight: 650;
+  font-weight: 600;
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 .baggage-chip app-icon {

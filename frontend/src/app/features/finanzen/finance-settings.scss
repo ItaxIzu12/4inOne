@@ -3,7 +3,7 @@ app-finance-settings {
   margin-top: 28px;
   .settings-disclosure {
     border: 1px solid var(--border);
-    border-radius: 22px;
+    border-radius: var(--radius-lg);
     background: var(--surface);
     overflow: hidden;
   }
@@ -24,10 +24,10 @@ app-finance-settings {
     place-items: center;
     flex: 0 0 44px;
     height: 44px;
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     background: var(--lavender);
     color: var(--accent);
-    font-size: 24px;
+    font-size: var(--fs-metric);
   }
   .settings-summary-copy {
     display: grid;
@@ -36,11 +36,11 @@ app-finance-settings {
     min-width: 0;
   }
   .settings-summary-copy strong {
-    font-size: 16px;
+    font-size: var(--fs-body);
     line-height: 1.4;
   }
   .settings-summary-copy > span {
-    font-size: 13px;
+    font-size: var(--fs-meta);
     color: var(--text-muted);
     line-height: 1.5;
   }
@@ -68,7 +68,7 @@ app-finance-settings {
     min-width: 0;
     padding: 24px;
     border: 1px solid var(--border);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     background: var(--surface);
   }
   .settings-card[data-section='insights'] {
@@ -82,7 +82,7 @@ app-finance-settings {
     gap: 10px;
     margin: 0 0 18px;
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: var(--fs-caption);
     font-weight: 600;
   }
   .settings-icon {
@@ -90,23 +90,23 @@ app-finance-settings {
     place-items: center;
     width: 32px;
     height: 32px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     background: var(--lavender);
     color: var(--accent);
-    font-size: 20px;
+    font-size: var(--fs-section);
   }
   [data-section='buffer'] .settings-icon {
     background: var(--mint);
     color: var(--success);
   }
   .settings-card h2 {
-    font-size: 19px;
+    font-size: var(--fs-section);
     line-height: 1.35;
     margin: 0 0 10px;
   }
   .side-section__note {
     margin: 0 0 22px;
-    font-size: 13px;
+    font-size: var(--fs-meta);
     color: var(--text-muted);
     line-height: 1.65;
   }
@@ -119,7 +119,7 @@ app-finance-settings {
     gap: 10px;
   }
   label {
-    font-size: 13px;
+    font-size: var(--fs-meta);
     font-weight: 700;
   }
   .inline-field-form__row {
@@ -134,9 +134,9 @@ app-finance-settings {
     padding: 12px 14px;
     background: var(--canvas);
     border: 1px solid var(--border-strong);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     font: inherit;
-    font-size: 16px;
+    font-size: var(--fs-body);
     color: var(--text);
   }
   .inline-field-form__row input {
@@ -147,14 +147,14 @@ app-finance-settings {
     background: var(--accent);
     color: white;
     border: 1px solid var(--accent);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     padding: 0 18px;
   }
   .category-chips {
     display: flex;
     gap: 4px;
     padding: 4px;
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     background: var(--lavender);
   }
   .category-chip {
@@ -164,7 +164,7 @@ app-finance-settings {
     border: 0;
     background: transparent;
     color: var(--accent);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
   }
   .category-chip.is-selected {
     background: white;
@@ -182,7 +182,7 @@ app-finance-settings {
     min-height: 48px;
     padding: 10px;
     border: 1px solid var(--border-strong);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     background: white;
     color: var(--accent);
   }
@@ -194,7 +194,7 @@ app-finance-settings {
     margin-bottom: 16px;
   }
   .section-head__view-all {
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 0 12px;
     background: var(--lavender);
   }
@@ -206,14 +206,14 @@ app-finance-settings {
   .deduction-row__name {
     flex-wrap: wrap;
     min-width: 0;
-    font-size: 14px;
+    font-size: var(--fs-secondary);
   }
   .tx-amount {
-    font-size: 14px;
+    font-size: var(--fs-secondary);
   }
   .field-error {
     color: var(--danger);
-    font-size: 13px;
+    font-size: var(--fs-meta);
     margin-top: 10px;
   }
   button {
@@ -253,7 +253,7 @@ app-finance-settings {
       padding: 20px 16px;
     }
     .settings-summary-copy strong {
-      font-size: 15px;
+      font-size: var(--fs-body);
     }
     .report-downloads {
       grid-template-columns: 1fr;

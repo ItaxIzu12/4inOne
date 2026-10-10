@@ -7,10 +7,13 @@
     </button>
   }
 </div>
-<app-scope-note scope="shared"
-  >Gemeinsame Aufgaben – alle im Haushalt sehen und erledigen sie. Persönliches, das nur du siehst:
-  <a routerLink="../organisation" [queryParams]="{ tab: 'tasks' }">Organisation → Aufgaben</a></app-scope-note
->
+<!-- Nur wenn wirklich mehrere Personen im Haushalt sind — allein soll Haushalt nicht nach Familie klingen. -->
+@if (members().length > 1) {
+  <app-scope-note scope="shared"
+    >Gemeinsame Aufgaben – alle im Haushalt sehen und erledigen sie. Persönliches, das nur du siehst:
+    <a routerLink="../organisation" [queryParams]="{ tab: 'tasks' }">Organisation → Aufgaben</a></app-scope-note
+  >
+}
 
 @if (view() === 'wiederkehrend') {
   <app-routinen-tab [newRequest]="routineRequest()" (saved)="saved.emit($event)" />

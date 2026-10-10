@@ -1,44 +1,44 @@
 // Gemeinsame Bausteine der Reisen-Reiter: Karten, Status-Pillen, Fortschritt, Symbol-Kacheln, Zeilen.
-// Blau ist die Bereichsfarbe (#2889ef-Familie, geprüfte dunklere Stufen für Text).
+// Blau ist die Bereichsfarbe (var(--accent)-Familie, geprüfte dunklere Stufen für Text).
 :host {
   display: block;
-  --line: #edf0f5;
-  --blue: #2563eb;
-  --blue-text: #1c5ca8;
-  --blue-soft: #eef4ff;
+  --line: var(--border-subtle);
+  --blue: var(--travel-accent);
+  --blue-text: var(--accent-hover);
+  --blue-soft: var(--travel-soft);
   --green: #1f9d55;
-  --text-muted: #5b6b83;
+  --text-muted: var(--text-secondary);
 }
 .card {
   min-width: 0;
   padding: 18px 20px;
-  border: 1px solid #e6e9f0;
-  border-radius: 16px;
-  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
 }
 h2,
 h3 {
   margin: 0;
-  color: #16233a;
+  color: var(--text-primary);
 }
 h2 {
-  font-size: 17px;
+  font-size: var(--fs-subsection);
   line-height: 1.3;
 }
 h3 {
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 p {
   margin: 0;
 }
 .muted {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   line-height: 1.5;
 }
 small {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .card-head {
   display: flex;
@@ -64,7 +64,7 @@ small {
   flex: 0 0 44px;
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--blue-soft);
   color: var(--blue);
 }
@@ -76,7 +76,7 @@ small {
   flex-basis: 52px;
   width: 52px;
   height: 52px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
 }
 .tile--lg app-icon {
   width: 26px;
@@ -96,7 +96,7 @@ small {
   gap: 5px;
   padding: 2px 9px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -113,11 +113,11 @@ small {
 }
 .status--blue {
   background: #e6efff;
-  color: #1c4fae;
+  color: var(--accent-hover);
 }
 .status--gray {
-  background: #eef0f4;
-  color: #4b5568;
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
 }
 .status--violet {
   background: #f1ebfc;
@@ -150,13 +150,13 @@ small {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  min-height: 36px;
+  min-height: var(--control-height);
   padding: 0;
   border: 0;
   background: none;
   color: var(--blue-text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   font-weight: 600;
   cursor: pointer;
 }
@@ -171,12 +171,12 @@ small {
   gap: 8px;
   min-height: 44px;
   padding: 0 16px;
-  border: 1px solid #dfe6f2;
-  border-radius: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   background: #fff;
-  color: #1f2a44;
+  color: var(--text-primary);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   cursor: pointer;
 }
 .soft:hover {
@@ -195,16 +195,16 @@ small {
   min-height: 46px;
   padding: 0 18px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--blue);
   color: #fff;
   font: inherit;
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 600;
   cursor: pointer;
 }
 .primary:hover {
-  background: #1d4fd8;
+  background: var(--accent-hover);
 }
 .primary app-icon {
   width: 20px;

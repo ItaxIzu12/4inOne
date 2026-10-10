@@ -47,7 +47,7 @@ for (const width of [390, 1440]) {
 
     // Neue Kategorie direkt beim Buchen anlegen und gleich auswählen
     await txView(page, 'Ausgaben');
-    await page.getByRole('button', { name: 'Ausgabe erfassen', exact: true }).click();
+    await page.getByRole('button', { name: 'Transaktion erfassen', exact: true }).click();
     await page.getByRole('button', { name: 'Neue Kategorie', exact: true }).click();
     await expect(page.getByLabel('Name der neuen Kategorie')).toBeFocused();
     await page.getByLabel('Name der neuen Kategorie').fill('Geschenke');

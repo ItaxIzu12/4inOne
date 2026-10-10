@@ -5,7 +5,7 @@ for (const width of [390, 1440]) {
   test(`global errors outside modal at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/demo/finanzen?tab=expenses');
-    await page.getByRole('button', { name: 'Ausgabe erfassen', exact: true }).click();
+    await page.getByRole('button', { name: 'Transaktion erfassen', exact: true }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
     const popup = page.locator('app-error-notice aside');

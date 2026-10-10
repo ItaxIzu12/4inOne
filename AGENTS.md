@@ -59,6 +59,14 @@ The versions already installed in the repository are authoritative. Do not upgra
 
 Do not rewrite the project only to make it resemble a theoretical architecture diagram.
 
+## Design-Dokumentation (immer aktuell halten)
+
+Jede Änderung an Design-Tokens (`frontend/src/styles.css`), gemeinsamen UI-Komponenten (`frontend/src/app/shared`,
+`app-shell`), Layout-Regeln, Bereichsfarben oder am Referenz-Screen wird **im selben Schritt** in
+`docs/DESIGN_SYSTEM.md` (ausführlich) und `DESIGN.md` (Kurzfassung) nachgetragen. Bereichsspezifische Design-Entscheidungen
+zusätzlich im jeweiligen `docs/*_V1.md`. Der Abschnitt „Referenz und Migrationsstand“ zeigt, welche Bereiche das System
+schon vollständig nutzen.
+
 ## Product principles
 
 - Every domain is useful alone.

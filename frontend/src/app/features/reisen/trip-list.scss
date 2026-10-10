@@ -1,20 +1,25 @@
 // Meine Reisen: ruhige Karten ohne Coverbild, zwei bis drei je Zeile am Rechner, eine Spalte am Handy.
+:host {
+  // Abstand Seitenkopf → erste Gruppe wie Kopf → Reiter in den anderen Bereichen.
+  display: block;
+  margin-top: var(--space-6);
+}
 .group + .group {
-  margin-top: 28px;
+  margin-top: var(--space-6);
 }
 .group__title {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 0 0 12px;
-  font-size: 16px;
+  font-size: var(--fs-body);
 }
 .group__count {
   padding: 1px 8px;
   border-radius: 999px;
   background: #eef1f6;
-  color: #4b5568;
-  font-size: 12px;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
   font-weight: 600;
 }
 .group__toggle {
@@ -32,7 +37,7 @@
 .group__toggle app-icon {
   width: 18px;
   height: 18px;
-  color: #6b778a;
+  color: var(--text-secondary);
 }
 .none {
   display: flex;
@@ -54,8 +59,8 @@
   width: 100%;
   height: 100%;
   padding: 18px;
-  border: 1px solid #e6e9f0;
-  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   background: #fff;
   color: inherit;
   font: inherit;
@@ -71,7 +76,7 @@
   background: #fafbfc;
 }
 .trip--muted .trip__title b {
-  color: #4b5568;
+  color: var(--text-secondary);
 }
 .trip__head {
   display: flex;
@@ -86,8 +91,8 @@
 }
 .trip__title b {
   overflow: hidden;
-  color: #16233a;
-  font-size: 16px;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -106,18 +111,18 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #1f2a44;
-  font-size: 14px;
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
 }
 .trip__dates app-icon {
   width: 16px;
   height: 16px;
-  color: #6b778a;
+  color: var(--text-secondary);
 }
 .when {
   color: var(--blue-text);
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--fs-meta);
+  font-weight: 600;
 }
 .when--live {
   color: #17723f;
@@ -132,17 +137,17 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #3d4a60;
-  font-size: 13.5px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
 }
 .fact app-icon {
   flex: 0 0 16px;
   width: 16px;
   height: 16px;
-  color: #6b778a;
+  color: var(--text-secondary);
 }
 .fact--open {
-  color: #1f2a44;
+  color: var(--text-primary);
   font-weight: 600;
 }
 .empty--first {

@@ -80,7 +80,7 @@ test('the day view switches to the expenses tab from the empty state', async ({ 
   await view.getByRole('button', { name: /Zu den Ausgaben/ }).click();
   await expect(page.locator('nav.tabs [aria-current]')).toContainText('Transaktionen');
   await expect(page.locator('.tx-switch [aria-pressed="true"]')).toHaveText('Ausgaben');
-  await expect(page.getByRole('button', { name: 'Ausgabe erfassen', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Transaktion erfassen', exact: true })).toBeVisible();
 });
 
 test('another day never says "Heute": labels carry the date, and the month in view is named', async ({ page }) => {

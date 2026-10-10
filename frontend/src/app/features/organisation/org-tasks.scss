@@ -13,12 +13,12 @@
   gap: 6px;
   min-height: 40px;
   padding: 0 14px;
-  border: 1px solid #e8e6f0;
+  border: 1px solid var(--border-subtle);
   border-radius: 999px;
   background: #fff;
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   cursor: pointer;
 }
 .view-chip[aria-pressed='true'] {
@@ -30,8 +30,8 @@
 .view-chip__count {
   padding: 0 7px;
   border-radius: 999px;
-  background: #efedf6;
-  font-size: 12px;
+  background: var(--border-subtle);
+  font-size: var(--fs-caption);
   font-weight: 700;
 }
 .view-chip__count.is-late {
@@ -62,7 +62,7 @@
   background: none;
   color: var(--text);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 .search input:focus-visible {
   outline: none;
@@ -98,7 +98,7 @@
   min-height: 52px;
   padding: 6px 4px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--text);
   font: inherit;
@@ -107,10 +107,10 @@
   cursor: pointer;
 }
 .task__main:hover {
-  background: #fbfaff;
+  background: var(--surface-hover);
 }
 .task__title {
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -119,7 +119,7 @@
   flex-wrap: wrap;
   gap: 2px 0;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .task__meta span + span::before {
   padding: 0 6px;
@@ -142,7 +142,7 @@
 .empty h3 {
   margin: 0;
   color: var(--text);
-  font-size: 17px;
+  font-size: var(--fs-subsection);
 }
 .empty p {
   margin: 0;
@@ -153,12 +153,12 @@
   gap: 6px;
   min-height: 44px;
   padding: 0 14px;
-  border: 1px solid #e8e6f0;
-  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   background: #fff;
   color: var(--accent-hover, var(--accent));
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   font-weight: 600;
   cursor: pointer;
 }

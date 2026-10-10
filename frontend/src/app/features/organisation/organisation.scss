@@ -3,18 +3,18 @@
 // haben eigene Stile (org-*.scss). Lila ist die Bereichsfarbe.
 :host {
   display: block;
-  color: #18163f;
-  --accent: #6d3fc4;
-  --accent-glow: #6d3fc4;
+  color: var(--text-primary);
+  // Dieselbe Organisationsfarbe wie Navigation und Startseite (Token), vorher eigenes #6d3fc4.
+  --accent: var(--organization-accent);
+  --accent-glow: var(--organization-accent);
   --accent-hover: #5a2fa8;
-  --accent-soft: #f1ebfc;
-  --lavender: #f1ebfc;
+  --accent-soft: var(--organization-soft);
+  --lavender: var(--organization-soft);
 }
 .organisation-page {
-  --text-muted: #5a5f74;
-  max-width: 1440px;
+  max-width: var(--content-max-width);
   margin: auto;
-  padding: 34px 34px 52px;
+  padding: 34px var(--content-padding-x) var(--space-8);
 }
 .page-heading,
 .heading-copy {
@@ -31,7 +31,7 @@
   place-items: center;
   width: 60px;
   height: 60px;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: var(--accent-soft);
   color: var(--accent);
 }
@@ -39,34 +39,36 @@
   width: 32px;
   height: 32px;
 }
-h1 {
-  margin: 0;
-  font-size: 32px;
-  line-height: 1.2;
-  letter-spacing: -1px;
-}
-.subtitle {
-  margin: 5px 0 0;
-  color: var(--text-muted);
-  font-size: 15px;
-}
+// Titel und Untertitel: Rollen aus dem gemeinsamen Seitenkopf (shared/styles/domain-layout.scss).
 .primary,
 .secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 44px;
+  min-height: var(--control-height);
   padding: 10px 16px;
-  border-radius: 13px;
+  border-radius: var(--radius-md);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-button);
+  font-weight: var(--fw-semibold);
   cursor: pointer;
+  transition: background-color var(--motion-fast) ease-out, border-color var(--motion-fast) ease-out;
 }
 .primary {
-  border: 1px solid #5a2fa8;
+  border: 1px solid var(--accent);
   background: var(--accent);
-  color: #fff;
+  color: var(--text-on-accent);
+}
+.primary:hover {
+  background: var(--accent-hover);
+}
+.secondary:hover {
+  border-color: #cdb8ec;
+}
+.primary:active,
+.secondary:active {
+  transform: translateY(1px);
 }
 .primary app-icon {
   width: 20px;
@@ -74,7 +76,7 @@ h1 {
 }
 .secondary {
   border: 1px solid #e4d9f4;
-  background: #f2edf9;
+  background: var(--accent-soft);
   color: #5a3388;
 }
 // Reiter: am Rechner ruhige Leiste mit Symbol, aktiv lila unterstrichen.
@@ -82,7 +84,7 @@ h1 {
   display: flex;
   gap: 6px;
   margin: 22px 0 0;
-  border-bottom: 1px solid #ebe8f2;
+  border-bottom: 1px solid var(--border-subtle);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -98,7 +100,7 @@ h1 {
   background: none;
   color: #52516f;
   font: inherit;
-  font-size: 15px;
+  font-size: var(--fs-body);
   cursor: pointer;
 }
 .tabs button app-icon {
@@ -111,7 +113,7 @@ h1 {
 .tabs button[aria-current] {
   border-bottom-color: var(--accent);
   color: var(--accent-hover);
-  font-weight: 650;
+  font-weight: 600;
 }
 .tabs button:focus-visible,
 .primary:focus-visible {
@@ -126,16 +128,16 @@ h1 {
 .inline-error {
   margin: 0 0 14px;
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: #fde8eb;
   color: #8f2a3d;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .checkbox-row {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   cursor: pointer;
 }
 .checkbox-row input {
@@ -148,7 +150,7 @@ h1 {
   display: block;
   margin-top: 2px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 @media (max-width: 1100px) {
   .organisation-page {
@@ -186,7 +188,7 @@ h1 {
   .tabs {
     gap: 0;
     border: 1px solid #ebe5f6;
-    background: #faf8fe;
+    background: var(--surface-hover);
   }
   .tabs button {
     flex: 1 1 auto;
@@ -194,13 +196,13 @@ h1 {
     margin-bottom: 0;
     padding: 0 4px;
     border-bottom: 0;
-    font-size: 13px;
+    font-size: var(--fs-meta);
   }
   .tabs button app-icon {
     display: none;
   }
   .tabs button[aria-current] {
-    background: #f4e9ff;
+    background: var(--accent-soft);
   }
 }
 
@@ -215,10 +217,10 @@ h1 {
   gap: 8px;
   margin: 0;
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--accent-soft, #f1eefb);
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .series-note app-icon {
   flex: 0 0 16px;
@@ -235,7 +237,7 @@ h1 {
   gap: 4px 12px;
   margin: 14px 2px 0;
   color: var(--text-muted, #5b6478);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .link-btn {
   display: inline-flex;

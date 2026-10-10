@@ -12,7 +12,7 @@
   margin: 4px 0 12px;
 }
 .list-head h2 {
-  font-size: 19px;
+  font-size: var(--fs-section);
 }
 
 // ---------- Chips und Sortierung ----------
@@ -40,16 +40,16 @@
   background: var(--surface);
   color: var(--text-muted);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   white-space: nowrap;
   cursor: pointer;
 }
 .chip:hover {
-  border-color: #f2cadd;
+  border-color: #f0c7bb;
   color: var(--text);
 }
 .chip.is-active {
-  border-color: #f6c6d6;
+  border-color: #f3cdc2;
   background: var(--accent-soft);
   color: var(--accent-hover);
   font-weight: 600;
@@ -64,7 +64,7 @@
   gap: 10px;
   flex-shrink: 0;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .sort app-select {
   min-width: 150px;
@@ -101,7 +101,7 @@
   cursor: pointer;
 }
 .group__toggle h3 {
-  font-size: 17px;
+  font-size: var(--fs-subsection);
   font-weight: 700;
 }
 .group__count {
@@ -119,14 +119,14 @@
 }
 .col {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .rows {
   margin: 0;
   padding: 0;
   list-style: none;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   overflow: hidden;
 }
@@ -135,7 +135,7 @@
   padding: 8px 16px;
 }
 .row + .row {
-  border-top: 1px solid #eef0f4;
+  border-top: 1px solid var(--surface-sunken);
 }
 .row__icon {
   display: grid;
@@ -143,7 +143,7 @@
   width: 40px;
   height: 40px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: #fafbfc;
   color: #3d4a63;
 }
@@ -159,21 +159,21 @@
   min-width: 0;
 }
 .title-text {
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 600;
   overflow-wrap: break-word;
   hyphens: auto;
 }
 small {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .row__meta {
   display: none;
 }
 .row__rhythm span,
 .due-main {
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .due-main.is-paused {
   color: var(--text-muted);
@@ -181,13 +181,13 @@ small {
 .badge {
   justify-self: start;
   padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 12.5px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-caption);
   font-weight: 600;
 }
 .badge--today {
-  background: #fde7ee;
-  color: #b0204f;
+  background: #fdeee9;
+  color: #9c3722;
 }
 .badge--late {
   background: #fde2e2;
@@ -198,7 +198,7 @@ small {
   align-items: center;
   gap: 10px;
   min-width: 0;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .who-name {
   overflow: hidden;
@@ -212,7 +212,7 @@ small {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 700;
 }
 .avatar--blue {
@@ -220,12 +220,12 @@ small {
   color: #2a5bb8;
 }
 .avatar--rose {
-  background: #fde7ee;
-  color: #b0204f;
+  background: #fdeee9;
+  color: #9c3722;
 }
 .avatar--all {
-  background: #eef0f5;
-  color: #5b6577;
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
 }
 .avatar app-icon {
   width: 17px;
@@ -235,7 +235,7 @@ small {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   white-space: nowrap;
 }
 .row__streak app-icon {
@@ -294,14 +294,14 @@ small {
   color: var(--text-muted);
 }
 .row--paused .avatar {
-  background: #eef0f5;
+  background: var(--surface-sunken);
   color: #4b5567;
 }
 
 .empty {
   padding: 28px 20px;
   border: 1px dashed var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   text-align: center;
 }
 .empty .btn-primary {
@@ -339,12 +339,12 @@ small {
   grid-template-columns: 32px minmax(70px, 140px) minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
 }
 .load-track {
   height: 8px;
   border-radius: 999px;
-  background: #f1f2f5;
+  background: var(--surface-sunken);
   overflow: hidden;
 }
 .load-track span {
@@ -402,7 +402,7 @@ small {
   .chip {
     min-height: 34px;
     padding: 0 12px;
-    font-size: 13px;
+    font-size: var(--fs-meta);
   }
   .sort {
     display: none;
@@ -464,23 +464,23 @@ small {
     justify-self: end;
   }
   .due-main {
-    font-size: 11.5px;
+    font-size: var(--fs-caption);
     font-weight: 600;
     white-space: nowrap;
   }
   .title-text {
-    font-size: 14px;
+    font-size: var(--fs-secondary);
   }
   .row__meta {
-    font-size: 12px;
+    font-size: var(--fs-caption);
   }
   .badge {
-    font-size: 11.5px;
+    font-size: var(--fs-caption);
   }
   .row__streak {
     grid-area: streak;
     justify-content: flex-end;
-    font-size: 12.5px;
+    font-size: var(--fs-caption);
   }
   .row__streak app-icon {
     width: 14px;

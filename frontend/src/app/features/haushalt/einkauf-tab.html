@@ -248,7 +248,7 @@
         <p class="muted small">
           Beim Abschließen schlägt 4inOne den Betrag vor
           @if (d.price_from_history) {
-            (etwa {{ pricePerItem() | number: '1.2-2' : 'de' }} € pro Artikel, aus euren letzten Einkäufen).
+            (etwa {{ pricePerItem() | number: '1.2-2' : 'de' }} € pro Artikel, aus den letzten Einkäufen).
           } @else {
             (Startwert {{ pricePerItem() | number: '1.2-2' : 'de' }} € pro Artikel).
           }

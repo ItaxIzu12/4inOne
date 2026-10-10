@@ -19,7 +19,7 @@
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-secondary);
   cursor: pointer;
 }
 .view-chip app-icon {
@@ -35,8 +35,8 @@
 .view-chip__count {
   padding: 0 7px;
   border-radius: 999px;
-  background: #eef0f4;
-  font-size: 12px;
+  background: var(--surface-sunken);
+  font-size: var(--fs-caption);
   font-weight: 700;
 }
 .view-chip__count.is-late {
@@ -50,7 +50,7 @@
 .list {
   padding: 6px 8px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 .search {
@@ -58,7 +58,7 @@
   align-items: center;
   gap: 10px;
   padding: 4px 10px;
-  border-bottom: 1px solid #eef0f4;
+  border-bottom: 1px solid var(--surface-sunken);
 }
 .search > app-icon {
   flex: 0 0 18px;
@@ -74,7 +74,7 @@
   background: none;
   color: var(--text);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 .search input:focus-visible {
   outline: none;
@@ -96,7 +96,7 @@
   padding: 0 4px;
 }
 .task + .task {
-  border-top: 1px solid #eef0f4;
+  border-top: 1px solid var(--surface-sunken);
 }
 // Haken: 22 px sichtbar, 44 px Trefferfläche.
 .box {
@@ -115,8 +115,8 @@
 .box::before {
   position: absolute;
   inset: 11px;
-  border: 1.6px solid #8b94a6;
-  border-radius: 6px;
+  border: 1.6px solid #8592a6;
+  border-radius: var(--radius-sm);
   background: #fff;
   content: '';
 }
@@ -154,7 +154,7 @@
   min-height: 52px;
   padding: 6px 4px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--text);
   font: inherit;
@@ -165,7 +165,7 @@
   background: #f8faf9;
 }
 .task__title {
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -174,7 +174,7 @@
   flex-wrap: wrap;
   gap: 2px 0;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 .task__meta span + span::before {
   padding: 0 6px;
