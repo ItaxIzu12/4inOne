@@ -37,7 +37,7 @@ def _subquery_count(model, **filters):
 def annotate_trip_counts(queryset):
     """Alle Kennzahlen der Reisekarten in EINER Abfrage (Subqueries statt Joins, damit sich die Zählungen nicht
     gegenseitig vervielfachen) plus Teilnehmer vorab — kein N+1 bei vielen Reisen."""
-    spent = TripExpense.objects.filter(trip=OuterRef('pk')).order_by().values('trip').annotate(s=Sum('amount')).values('s')
+    spent = TripExpense.objects.filter(trip=OuterRef('pk')).order_by().values('trip').annotate(s=Sum('amount_trip')).values('s')
     return queryset.annotate(
         n_packing=_subquery_count(PackingItem),
         n_packed=_subquery_count(PackingItem, is_packed=True),

@@ -2,7 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { Trip } from './reisen-api.service';
-import { STATUS_LABELS, STATUS_TONE, formatMoney, groupTrips, localDay, shortRange, tripIcon, tripPhase, whenText } from './reisen-logic';
+import { STATUS_LABELS, STATUS_TONE, formatMoney, groupTrips, localDay, shortRange, tripPhase, whenText } from './reisen-logic';
 
 /** Meine Reisen: Bevorstehend, Vergangen und (eingeklappt) Abgesagt. Eine Karte zeigt nur das Nötigste —
  * Zeitraum, Countdown, Aufgaben, Packliste, Budget — und öffnet die Reise. Ohne Coverbild. */
@@ -20,7 +20,6 @@ export class TripList {
   readonly labels = STATUS_LABELS;
   readonly tone = STATUS_TONE;
   protected readonly range = shortRange;
-  protected readonly icon = tripIcon;
   readonly today = localDay(new Date());
   readonly groups = computed(() => groupTrips(this.trips(), this.today));
   readonly cancelledOpen = signal(false);

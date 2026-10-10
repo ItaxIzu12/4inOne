@@ -14,7 +14,7 @@ export interface TripSuggestions {
   tasks: SuggestedTask[];
 }
 
-export type TripSetupInput = Pick<Trip, 'start_date' | 'end_date' | 'travel_type' | 'transport_type' | 'baggage_type' | 'climate'>;
+export type TripSetupInput = Pick<Trip, 'start_date' | 'end_date' | 'travel_type' | 'transport_type' | 'baggage' | 'climate'>;
 
 /**
  * Schätzung „Wetter am Ziel“ aus dem Reisemonat, nur als Vorbelegung im Formular. Bewusst grob und für Mitteleuropa
@@ -188,9 +188,9 @@ function addClimateSuggestions(
   }
 }
 
-function addBaggageSuggestions(baggage: Trip['baggage_type'], packing: SuggestedPackingItem[], tasks: SuggestedTask[]): void {
-  if (baggage === 'HAND_LUGGAGE') tasks.push({ title: 'Handgepäck-Maße und Flüssigkeitsregel prüfen', due_date: null });
-  else if (baggage === 'CHECKED_BAGGAGE') packing.push(item('Kofferanhänger', 'SONSTIGES'));
+function addBaggageSuggestions(baggage: Trip['baggage'], packing: SuggestedPackingItem[], tasks: SuggestedTask[]): void {
+  if (baggage.includes('HAND_LUGGAGE')) tasks.push({ title: 'Handgepäck-Maße und Flüssigkeitsregel prüfen', due_date: null });
+  if (baggage.includes('CHECKED_BAGGAGE')) packing.push(item('Kofferanhänger', 'SONSTIGES'));
 }
 
 /**
@@ -204,14 +204,16 @@ function addBaggageSuggestions(baggage: Trip['baggage_type'], packing: Suggested
  * ableiten ließe.
  */
 export function buildTripSuggestions(input: TripSetupInput): TripSuggestions {
-  const compact = input.baggage_type === 'HAND_LUGGAGE';
+  // Kompakt nur, wenn ausschließlich Handgepäck mitkommt — mit Koffer oder Auto ist Platz.
+  const baggage = input.baggage ?? [];
+  const compact = baggage.length === 1 && baggage[0] === 'HAND_LUGGAGE';
   const packing: SuggestedPackingItem[] = baselinePacking();
   const tasks: SuggestedTask[] = baselineTasks(input.start_date);
 
   addTransportSuggestions(input.transport_type, input.start_date, packing, tasks);
   addTravelTypeSuggestions(input.travel_type, packing, tasks, compact);
   addClimateSuggestions(input.climate ?? '', input, packing, tasks);
-  addBaggageSuggestions(input.baggage_type, packing, tasks);
+  addBaggageSuggestions(baggage, packing, tasks);
 
   return { packing: dedupe(packing), tasks: dedupe(tasks) };
 }

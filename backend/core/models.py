@@ -3,6 +3,8 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import models
 
+from .currencies import CURRENCY_CHOICES, DEFAULT_HOME_CURRENCY
+
 
 class Household(models.Model):
     """Ein Haushalt/eine Familie — der gemeinsame Container, dem alle
@@ -218,3 +220,30 @@ class ContactInvite(models.Model):
         from django.utils import timezone
 
         return self.accepted_at is None and self.declined_at is None and self.expires_at > timezone.now()
+
+
+class ExchangeRate(models.Model):
+    """EZB-Referenzkurs je Kursdatum: 1 EUR = `rate` Einheiten `currency` (siehe core/fx.py). Bleibt gespeichert, damit
+    Umrechnungen nachvollziehbar sind und ein Ausfall der Quelle die App nicht blockiert."""
+
+    currency = models.CharField(max_length=3)
+    rate = models.DecimalField(max_digits=20, decimal_places=8)
+    rate_date = models.DateField()
+    fetched_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['currency', 'rate_date'], name='unique_exchange_rate_per_day')]
+        indexes = [models.Index(fields=['rate_date'])]
+
+
+class UserPreference(models.Model):
+    """Persönliche Anzeige-Einstellungen eines Nutzers — die einzige Stelle für die Heimatwährung (Umrechnungen in
+    Reisen). Fehlt der Datensatz, gilt DEFAULT_HOME_CURRENCY."""
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='preference')
+    home_currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default=DEFAULT_HOME_CURRENCY)
+
+
+def home_currency_for(user) -> str:
+    preference = UserPreference.objects.filter(user=user).only('home_currency').first()
+    return preference.home_currency if preference else DEFAULT_HOME_CURRENCY

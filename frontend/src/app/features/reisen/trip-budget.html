@@ -2,41 +2,58 @@
   <section class="card empty" aria-labelledby="tb-empty">
     <app-icon name="coins" />
     <h2 id="tb-empty">Noch kein Reisebudget</h2>
-    <p class="muted">Lege optional ein Budget für diese Reise fest. Die Reise funktioniert auch ohne.</p>
+    <p class="muted">Du kannst trotzdem schon Ausgaben erfassen – ein Budget ist optional.</p>
     @if (canEdit()) {
       <div class="empty__actions">
-        <button type="button" class="primary" (click)="editPlan.emit()"><app-icon name="plus" />Budget festlegen</button>
-        <button type="button" class="soft" (click)="addExpense.emit()">Ausgabe erfassen</button>
+        <button type="button" class="primary" (click)="addExpense.emit()"><app-icon name="plus" />Ausgabe hinzufügen</button>
+        <button type="button" class="soft" (click)="editPlan.emit()"><app-icon name="coins" />Gesamtbudget festlegen</button>
       </div>
     }
   </section>
 } @else {
   <section class="card summary" aria-labelledby="tb-summary">
     <div class="card-head">
-      <h2 id="tb-summary" class="card-title"><app-icon name="coins" aria-hidden="true" />Reisebudget</h2>
+      <h2 id="tb-summary" class="card-title"><app-icon name="coins" aria-hidden="true" />{{ total() ? 'Reisebudget' : 'Noch kein Gesamtbudget' }}</h2>
       @if (canEdit()) {
         <button type="button" class="link" (click)="editPlan.emit()"><app-icon name="edit" />{{ total() ? 'Budget bearbeiten' : 'Budget festlegen' }}</button>
       }
     </div>
-    <dl class="kpis">
-      <div>
-        <dt>Gesamtbudget</dt>
-        <dd class="num">{{ total() ? money(total()) : 'Nicht festgelegt' }}</dd>
-      </div>
-      <div>
-        <dt>Ausgegeben</dt>
-        <dd class="num">{{ money(spent()) }}</dd>
-      </div>
-      <div>
-        <dt>{{ left() < 0 ? 'Über Budget' : 'Verbleibend' }}</dt>
-        <dd class="num" [class.late]="left() < 0">{{ total() ? money(left() < 0 ? -left() : left()) : '—' }}</dd>
-      </div>
-    </dl>
     @if (total()) {
+      <dl class="kpis">
+        <div>
+          <dt>Gesamtbudget</dt>
+          <dd class="num">{{ money(total()) }}</dd>
+          @if (approx(total()); as a) { <dd class="approx num">{{ a }}</dd> }
+        </div>
+        <div>
+          <dt>Ausgegeben</dt>
+          <dd class="num">{{ money(spent()) }}</dd>
+          @if (approx(spent()); as a) { <dd class="approx num">{{ a }}</dd> }
+        </div>
+        <div>
+          <dt>{{ left() < 0 ? 'Über Budget' : 'Verbleibend' }}</dt>
+          <dd class="num" [class.late]="left() < 0">{{ money(left() < 0 ? -left() : left()) }}</dd>
+          @if (approx(left() < 0 ? -left() : left()); as a) { <dd class="approx num">{{ a }}</dd> }
+        </div>
+      </dl>
       <span class="bar" [class.bar--over]="spent() > total()" role="progressbar" aria-label="Reisebudget verbraucht" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="barWidth(spentPct())">
         <span [style.width.%]="barWidth(spentPct())"></span>
       </span>
       <p class="muted calc">{{ money(total()) }} − {{ money(spent()) }} ausgegeben = {{ left() < 0 ? '−' : '' }}{{ money(left() < 0 ? -left() : left()) }}</p>
+    } @else {
+      <dl class="kpis kpis--single">
+        <div>
+          <dt>Bisher ausgegeben</dt>
+          <dd class="num">{{ money(spent()) }}</dd>
+          @if (approx(spent()); as a) { <dd class="approx num">{{ a }}</dd> }
+        </div>
+      </dl>
+    }
+    @if (unconverted()) {
+      <p class="muted calc">{{ unconverted() === 1 ? '1 Ausgabe in anderer Währung ist' : unconverted() + ' Ausgaben in anderer Währung sind' }} ohne Umrechnung und nicht eingerechnet.</p>
+    }
+    @if (rateNote()) {
+      <p class="muted rate-note">{{ rateNote() }}</p>
     }
   </section>
 
@@ -45,7 +62,14 @@
       <h2 id="tb-cats" class="card-title"><app-icon name="bars" aria-hidden="true" />Nach Kategorien</h2>
       <ul class="cats">
         @for (r of rows(); track r.category) {
-          <li class="cat">
+          <li>
+            <button
+              type="button"
+              class="cat"
+              [disabled]="!canEdit()"
+              [attr.aria-label]="r.label + ': ' + money(r.spent) + ' ausgegeben' + (r.planned ? ' von ' + money(r.planned) : ', nicht geplant') + (canEdit() ? ' – Planung bearbeiten' : '')"
+              (click)="editCategory.emit(r.category)"
+            >
             <span class="cat__name"><app-icon [name]="r.icon" aria-hidden="true" /><b>{{ r.label }}</b></span>
             <span class="cat__nums num">
               {{ money(r.spent) }}@if (r.planned) { <span class="muted"> von {{ money(r.planned) }}</span> }
@@ -56,6 +80,7 @@
             } @else {
               <small class="cat__left">nicht geplant</small>
             }
+            </button>
           </li>
         }
       </ul>
@@ -66,7 +91,7 @@
     <div class="card-head">
       <h2 id="tb-expenses" class="card-title"><app-icon name="list" aria-hidden="true" />Ausgaben</h2>
       @if (canEdit()) {
-        <button type="button" class="soft" (click)="addExpense.emit()"><app-icon name="plus" />Ausgabe erfassen</button>
+        <button type="button" class="soft" (click)="addExpense.emit()"><app-icon name="plus" />Ausgabe hinzufügen</button>
       }
     </div>
     @if (shown().length) {
@@ -74,13 +99,22 @@
         @for (e of shown(); track e.id) {
           @let m = meta[e.category || 'SONSTIGES'];
           <li>
-            <button type="button" class="exp__row" [disabled]="!canEdit()" [attr.aria-label]="e.title + ', ' + m.label + ', ' + money(e.amount, false) + ', ' + shortDate(e.date) + (canEdit() ? ' – bearbeiten' : '')" (click)="editExpense.emit(e)">
+            <button
+              type="button"
+              class="exp__row"
+              [disabled]="!canEdit()"
+              [attr.aria-label]="e.title + ', ' + m.label + ', ' + original(e) + (homeValue(e) ? ' (' + homeValue(e).replace('≈', 'ungefähr') + ')' : '') + ', ' + shortDate(e.date) + (canEdit() ? ' – bearbeiten' : '')"
+              (click)="editExpense.emit(e)"
+            >
               <app-icon class="exp__icon" [name]="m.icon" aria-hidden="true" />
               <span class="exp__title">
                 <b>{{ e.title }}</b>
                 <small>{{ shortDate(e.date) }} · {{ m.label }}@if (e.date < before()) { · vor der Reise }</small>
               </span>
-              <span class="exp__amount num">{{ money(e.amount, false) }}</span>
+              <span class="exp__amount num">
+                {{ original(e) }}
+                @if (homeValue(e); as h) { <small>{{ h }}</small> }
+              </span>
             </button>
           </li>
         }

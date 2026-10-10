@@ -136,6 +136,31 @@ test('Wetter am Ziel: nach Reisemonat vorgeschlagen, Wintersport → Schnee, eig
   await expect(dialog).toContainText('Skipass kaufen');
 });
 
+test('Gepäck ist kombinierbar: Handgepäck und Aufgabegepäck, bleibt beim Bearbeiten erhalten und prägt die Vorschläge', async ({ page }) => {
+  await openDemo(page);
+  await createTrip(page, 'Mallorca', 'Palma, Spanien', iso(40), iso(47));
+  await page.getByRole('button', { name: /Weitere Angaben/ }).click();
+  const group = page.getByRole('group', { name: /Gepäck/ });
+  await expect(group.getByRole('button')).toHaveText(['Handgepäck', 'Aufgabegepäck', 'Gepäck im Auto']);
+  await expect(page.getByText('Nur Handgepäck')).toHaveCount(0);
+  await group.getByRole('button', { name: 'Handgepäck', exact: true }).click();
+  await group.getByRole('button', { name: 'Aufgabegepäck' }).click();
+  await expect(group.getByRole('button', { name: 'Handgepäck', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(group.getByRole('button', { name: 'Aufgabegepäck' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(group.getByRole('button', { name: 'Gepäck im Auto' })).toHaveAttribute('aria-pressed', 'false');
+  await submit(page);
+
+  await page.getByRole('button', { name: 'Vorschläge ansehen' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('Kofferanhänger');
+  await expect(dialog).toContainText('Handgepäck-Maße und Flüssigkeitsregel prüfen');
+  await dialog.getByRole('button', { name: 'Abbrechen' }).click();
+
+  await page.getByRole('button', { name: 'Reise bearbeiten' }).click();
+  await page.getByRole('button', { name: /Weitere Angaben/ }).click();
+  await expect(page.getByRole('group', { name: /Gepäck/ }).locator('[aria-pressed="true"]')).toHaveText(['Handgepäck', 'Aufgabegepäck']);
+});
+
 test('Vorschläge: aus der Planung nur Aufgaben, aus der Packliste nur Packstücke — angehakt wird übernommen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openDemo(page, '/demo/reisen?trip=3&tab=planung');
@@ -208,12 +233,12 @@ test('Packliste: Reisepass, Ladekabel, Jacke — zwei abgehakt ergibt 2 von 3', 
 test('Budget: 700 € Budget, Hotel 280 € und Zug 140 € ergeben 420 € ausgegeben, 280 € übrig — auch vor der Reise', async ({ page }) => {
   await openDemo(page, '/demo/reisen?trip=3&tab=budget');
   await expect(page.getByRole('heading', { name: 'Noch kein Reisebudget' })).toBeVisible();
-  await page.getByRole('button', { name: 'Budget festlegen' }).click();
+  await page.getByRole('button', { name: 'Gesamtbudget festlegen' }).click();
   await page.locator('#plan-total').fill('700');
-  await choose(page, 'Währung', 'Euro (€)');
+  await choose(page, 'Währung', 'EUR – Euro');
   await submit(page);
   for (const [title, amount, date] of [['Hotel', '280', iso(-20)], ['Zug', '140', iso(-3)]]) {
-    await page.locator('app-trip-budget').getByRole('button', { name: 'Ausgabe erfassen' }).click();
+    await page.locator('app-trip-budget').getByRole('button', { name: 'Ausgabe hinzufügen' }).click();
     await page.locator('#expense-title').fill(title);
     await page.locator('#expense-amount').fill(amount);
     await pickDate(page, page.getByLabel('Bezahlt am', { exact: true }), date);
@@ -222,6 +247,124 @@ test('Budget: 700 € Budget, Hotel 280 € und Zug 140 € ergeben 420 € ausg
   }
   await expect(page.locator('app-trip-budget .kpis dd')).toHaveText(['700 €', '420 €', '280 €']);
   await expect(page.locator('app-trip-budget .exp', { hasText: 'Hotel' })).toContainText('vor der Reise');
+});
+
+test('Reisebudget: leer speichern erklärt, was fehlt; „1.500“ wird 1.500 und bleibt sichtbar', async ({ page }) => {
+  await openDemo(page, '/demo/reisen?trip=3&tab=budget');
+  await page.getByRole('button', { name: 'Budget festlegen' }).first().click();
+  const dialog = page.getByRole('dialog');
+  await expect(page.locator('#plan-total')).toBeFocused();
+  await expect(page.getByText(/Bitte gib/)).toHaveCount(0);
+  await page.getByLabel('Währung', { exact: true }).click();
+  const options = page.getByRole('option');
+  await expect(options).toHaveCount(30);
+  await expect(options.filter({ hasText: 'JPY – Japanischer Yen' })).toHaveCount(1);
+  await expect(options.filter({ hasText: 'GBP – Britisches Pfund' })).toHaveCount(1);
+  await page.keyboard.press('Escape');
+  await submit(page);
+  await expect(dialog).toBeVisible();
+  await expect(page.getByText('Bitte gib ein Gesamtbudget größer als 0 ein.').first()).toBeVisible();
+
+  await page.locator('#plan-total').pressSequentially('1.500');
+  await expect(page.getByText('Bitte gib ein Gesamtbudget größer als 0 ein.')).toHaveCount(0);
+  // Umrechnung live, als Richtkurs gekennzeichnet (Demo: Beispielkurs).
+  await expect(dialog.locator('app-fx-hint')).toContainText('≈ 1.595,74 € in deiner Heimatwährung');
+  await expect(dialog.locator('app-fx-hint')).toContainText('Der tatsächliche Kurs deiner Bank, Karte oder Wechselstube kann abweichen.');
+  await submit(page);
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator('app-trip-budget .kpis')).toContainText('1.500 CHF');
+  await expect(page.locator('app-trip-budget .kpis')).toContainText('≈ 1.595,74 €');
+});
+
+test('Budget-Kategorie: Zeile antippen, Betrag ändern und Planung wieder entfernen', async ({ page }) => {
+  await openDemo(page, '/demo/reisen?trip=3&tab=budget');
+  await page.getByRole('button', { name: 'Budget festlegen' }).first().click();
+  await page.locator('#plan-total').pressSequentially('1000');
+  await page.locator('#plan-UNTERKUNFT').pressSequentially('300');
+  await submit(page);
+  const row = page.getByRole('button', { name: /^Unterkunft: .*Planung bearbeiten$/ });
+  await expect(row).toContainText('von 300 CHF');
+
+  await row.click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { name: 'Unterkunft planen' })).toBeVisible();
+  await expect(page.locator('#cat-plan-amount')).toHaveValue('300,00');
+  await expect(page.locator('#cat-plan-amount')).toBeFocused();
+  await page.locator('#cat-plan-amount').fill('450');
+  await submit(page);
+  await expect(dialog).toHaveCount(0);
+  await expect(row).toContainText('von 450 CHF');
+
+  await row.click();
+  await dialog.getByRole('button', { name: 'Planung entfernen' }).click();
+  await dialog.getByRole('button', { name: 'Ja, löschen' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Unterkunft: / })).toHaveCount(0);
+});
+
+test('Japan: Reisewährung aus dem Ziel, Ausgaben in Yen und Euro, ohne Budget nur „Bisher ausgegeben“', async ({ page }) => {
+  await openDemo(page);
+  await createTrip(page, 'Japanreise', 'Tokio, Japan', iso(200), iso(209));
+  await submit(page);
+  await page.getByRole('button', { name: 'Ohne Vorschläge starten' }).click();
+  await tab(page, 'Budget');
+
+  // Ausgabe ohne Budget: Yen vorausgewählt, Euro-Gegenwert live.
+  await page.locator('app-trip-budget').getByRole('button', { name: 'Ausgabe hinzufügen' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByLabel('Währung', { exact: true })).toContainText('JPY – Japanischer Yen');
+  await page.locator('#expense-title').fill('Restaurant');
+  await page.locator('#expense-amount').pressSequentially('8.500');
+  await expect(dialog.locator('app-fx-hint')).toContainText('≈ 48,71 € in deiner Heimatwährung');
+  await choose(page, 'Kategorie', 'Essen');
+  await submit(page);
+  await expect(dialog).toHaveCount(0);
+  const budget = page.locator('app-trip-budget');
+  await expect(budget.getByRole('heading', { name: 'Noch kein Gesamtbudget' })).toBeVisible();
+  await expect(budget.locator('.kpis')).toContainText('Bisher ausgegeben');
+  await expect(budget.locator('.kpis')).toContainText('8.500 JPY');
+  await expect(budget).not.toContainText(/Verbleibend|Über Budget|verbraucht/);
+  await expect(budget.locator('.exp li', { hasText: 'Restaurant' })).toContainText('8.500 JPY');
+  await expect(budget.locator('.exp li', { hasText: 'Restaurant' })).toContainText('≈ 48,71 €');
+
+  // Flug vorab in Euro bezahlt: bleibt 100 €, zählt mit 17.450 JPY ins Budget — nie 8.500 + 100.
+  await budget.getByRole('button', { name: 'Ausgabe hinzufügen' }).click();
+  await page.locator('#expense-title').fill('Flug');
+  await page.locator('#expense-amount').pressSequentially('100');
+  await choose(page, 'Währung', 'EUR – Euro');
+  await expect(dialog.locator('app-fx-hint')).toContainText('≈ 17.450 JPY in der Reisewährung');
+  await submit(page);
+  await expect(budget.locator('.exp li', { hasText: 'Flug' })).toContainText('100,00 €');
+  await expect(budget.locator('.exp li', { hasText: 'Flug' })).not.toContainText('≈');
+
+  await budget.getByRole('button', { name: 'Budget festlegen' }).click();
+  await expect(dialog.getByLabel('Währung', { exact: true })).toContainText('JPY – Japanischer Yen');
+  await page.locator('#plan-total').pressSequentially('250.000');
+  await submit(page);
+  await expect(budget.locator('.kpis dd.num:not(.approx)')).toHaveText(['250.000 JPY', '25.950 JPY', '224.050 JPY']);
+  await expect(budget.locator('.rate-note')).toContainText('Beispielkurs (Demo)');
+});
+
+test('Ausgabe: Fehler erst nach „Ausgabe speichern“, live korrigiert; Abbrechen prüft nichts', async ({ page }) => {
+  await openDemo(page, '/demo/reisen?trip=3&tab=budget');
+  const open = () => page.locator('app-trip-budget').getByRole('button', { name: 'Ausgabe hinzufügen' }).click();
+  await open();
+  const dialog = page.getByRole('dialog');
+  await page.locator('#expense-title').click();
+  await page.locator('#expense-amount').click();
+  await dialog.getByRole('heading').click();
+  await expect(dialog.locator('.field__error')).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Abbrechen' }).click();
+  await expect(dialog).toHaveCount(0);
+
+  await open();
+  await dialog.getByRole('button', { name: 'Ausgabe speichern' }).click();
+  await expect(dialog.locator('.field__error')).toHaveText(['Bitte Beschreibung angeben.', 'Bitte gib einen Betrag ein.']);
+  await expect(page.locator('#expense-title')).toBeFocused();
+  await page.locator('#expense-amount').pressSequentially('12');
+  await expect(dialog.locator('.field__error')).toHaveText(['Bitte Beschreibung angeben.']);
+  await page.locator('#expense-title').fill('Kaffee');
+  await expect(dialog.locator('.field__error')).toHaveCount(0);
 });
 
 test('alle Ansichten passen bei 360, 390, 430, Tablet und Desktop ohne Querscrollen und sind barrierearm', async ({ page }) => {

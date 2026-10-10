@@ -6,6 +6,8 @@ import { API_BASE_URL } from '../api.config';
 export interface AuthUser {
   name: string;
   email: string;
+  /** Heimatwährung für Umrechnungen (Einstellungen → Profil); fehlt bei älteren Antworten → EUR. */
+  home_currency?: string;
 }
 
 /** Ein angemeldetes Gerät (siehe Einstellungen → Aktive Sitzungen). */
@@ -129,9 +131,9 @@ export class AuthService {
   }
 
   /** Eigenen Namen ändern; die Anzeige (Menü, Begrüßung) folgt sofort. */
-  updateProfile(name: string): Observable<AuthUser> {
+  updateProfile(changes: { name?: string; home_currency?: string }): Observable<AuthUser> {
     return this.http
-      .patch<AuthUser>(`${API_BASE_URL}/auth/me/`, { name })
+      .patch<AuthUser>(`${API_BASE_URL}/auth/me/`, changes)
       .pipe(tap((user) => this._currentUser.set(user)));
   }
 

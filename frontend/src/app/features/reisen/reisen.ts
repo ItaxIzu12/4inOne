@@ -15,7 +15,11 @@ import { AppTimePicker } from '../../shared/form/time-picker';
 import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { Modal } from '../../shared/modal/modal';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
+import { AuthService } from '../../core/auth/auth.service';
+import { CURRENCY_OPTIONS, currencyForDestination } from '../../shared/currency/currencies';
+import { FxHint } from '../../shared/currency/fx-hint';
 import {
+  BaggageType,
   BudgetCategory,
   ContactOption,
   PackingCategory,
@@ -43,12 +47,12 @@ import {
   STATUS_TONE,
   dateRange,
   dueLabel,
+  parseBudgetAmount,
   formatMoney,
   localDay,
   longRange,
   shortRange,
   totalBudget,
-  tripIcon,
 } from './reisen-logic';
 
 export { formatMoney, localDay } from './reisen-logic';
@@ -69,6 +73,7 @@ const LEGACY_TABS: Record<string, TripTab> = { packlisten: 'packliste', erinneru
   selector: 'app-reisen',
   standalone: true,
   imports: [
+    FxHint,
     ErrorNoticeDirective,
     AmountInput,
     AppShell,
@@ -93,12 +98,14 @@ const LEGACY_TABS: Record<string, TripTab> = { packlisten: 'packliste', erinneru
 })
 export class Reisen {
   private api = inject(ReisenApi);
+  private auth = inject(AuthService);
+  /** Heimatwährung (Einstellungen → Profil) — die eine zentrale Einstellung; in der Demo Euro. */
+  readonly homeCurrency = computed(() => this.auth.currentUser()?.home_currency ?? 'EUR');
   private destroy = inject(DestroyRef);
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   protected readonly formatMoney = formatMoney;
-  protected readonly tripIcon = tripIcon;
   protected readonly range = dateRange;
   protected readonly shortRange = shortRange;
   protected readonly longRange = longRange;
@@ -153,22 +160,17 @@ export class Reisen {
     { value: 'COLD', label: 'Kalt' },
     { value: 'SNOW', label: 'Schnee' },
   ];
-  readonly baggageTypeOptions: SelectOption[] = [
-    { value: '', label: 'Keine Angabe' },
-    { value: 'HAND_LUGGAGE', label: 'Nur Handgepäck' },
+  /** Gepäck: kombinierbar als Chips — nichts gewählt = keine Angabe. */
+  readonly baggageOptions: { value: BaggageType; label: string }[] = [
+    { value: 'HAND_LUGGAGE', label: 'Handgepäck' },
     { value: 'CHECKED_BAGGAGE', label: 'Aufgabegepäck' },
     { value: 'CAR_LUGGAGE', label: 'Gepäck im Auto' },
-    { value: 'UNKNOWN', label: 'Noch unklar' },
   ];
   readonly packingCategoryOrder: PackingCategory[] = PACKING_ORDER;
   readonly packingCategoryLabels = Object.fromEntries(PACKING_ORDER.map((c) => [c, PACKING_META[c].label])) as Record<PackingCategory, string>;
   readonly packingCategoryOptions: SelectOption[] = PACKING_ORDER.map((value) => ({ value, label: PACKING_META[value].label }));
-  readonly currencyOptions: SelectOption[] = [
-    { value: 'EUR', label: 'Euro (€)' },
-    { value: 'USD', label: 'US-Dollar ($)' },
-    { value: 'GBP', label: 'Britisches Pfund (£)' },
-    { value: 'CHF', label: 'Schweizer Franken (CHF)' },
-  ];
+  /** Alle Währungen mit EZB-Referenzkurs, als „JPY – Japanischer Yen“. */
+  readonly currencyOptions = CURRENCY_OPTIONS;
   readonly budgetCategoryOrder: BudgetCategory[] = BUDGET_ORDER;
   readonly budgetMeta = BUDGET_META;
   readonly budgetCategoryOptions: SelectOption[] = BUDGET_ORDER.map((value) => ({ value, label: BUDGET_META[value].label }));
@@ -201,7 +203,7 @@ export class Reisen {
     status: ['PLANNED'],
     travel_type: [''],
     transport_type: [''],
-    baggage_type: [''],
+    baggage: [[] as BaggageType[]],
     climate: [''],
     accommodation: ['', Validators.maxLength(160)],
     accommodation_area: ['', Validators.maxLength(120)],
@@ -280,23 +282,45 @@ export class Reisen {
   readonly expenseForm = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(120)]],
     amount: ['', Validators.required],
+    currency: ['EUR'],
     date: [localDay(new Date()), Validators.required],
     category: ['SONSTIGES'],
+    note: ['', Validators.maxLength(240)],
+  });
+  /** Fehler am Feld — erst nach „Ausgabe speichern“, danach live (siehe Field). */
+  readonly expenseAmountError = signal('');
+  readonly expenseValue = signal(this.expenseForm.getRawValue());
+  readonly expenseAmountValue = computed(() => parseBudgetAmount(this.expenseValue().amount) || null);
+  /** Umrechnungsziel unter dem Betrag: die Heimatwährung; ist schon in Heimatwährung bezahlt, die Reisewährung. */
+  readonly expenseFxTarget = computed(() => {
+    const currency = this.expenseValue().currency;
+    const trip = this.selectedTrip()?.currency ?? 'EUR';
+    return currency === this.homeCurrency() ? { to: trip, label: 'in der Reisewährung' } : { to: this.homeCurrency(), label: 'in deiner Heimatwährung' };
   });
 
   // ---------- Budget festlegen ----------
   readonly planEditor = signal(false);
   readonly planSaving = signal(false);
   readonly planError = signal('');
+  /** Fehler direkt am Feld „Gesamtbudget“ (leer oder ungültig) — dort, wo man ihn behebt. */
+  readonly planTotalError = signal('');
+  /** Land, für das die Währung vorgeschlagen wurde („Vorgeschlagen für Japan“); leer = kein Vorschlag. */
+  readonly planSuggestion = signal('');
+  readonly planTotalValue = computed(() => parseBudgetAmount(this.planTotal()) || null);
+  readonly planTitle = computed(() => (Number(this.selectedTrip()?.budget_amount || 0) > 0 ? 'Reisebudget bearbeiten' : 'Gesamtbudget festlegen'));
   readonly planTotal = signal('');
   readonly planCurrency = signal<Trip['currency']>('EUR');
   readonly planDraft = signal<Record<string, string>>({});
   readonly planSum = computed(() =>
-    Object.values(this.planDraft()).reduce((sum, raw) => sum + (Number(raw.replace(',', '.')) || 0), 0),
+    Object.values(this.planDraft()).reduce((sum, raw) => sum + (parseBudgetAmount(raw) ?? 0), 0),
   );
 
   constructor() {
     this.tripForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.tripValue.set(this.tripForm.getRawValue()));
+    this.expenseForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.expenseValue.set(this.expenseForm.getRawValue());
+      this.expenseAmountError.set('');
+    });
     // Wetter am Ziel folgt Datum und Reiseart, solange es nur vorgeschlagen ist; eine eigene Wahl bleibt stehen.
     const { start_date, travel_type, climate } = this.tripForm.controls;
     start_date.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.suggestClimate());
@@ -429,6 +453,13 @@ export class Reisen {
     this.settingTripForm = false;
     this.climateGuessed.set(!!guess);
   }
+  readonly tripBaggage = computed(() => this.tripValue().baggage);
+  toggleBaggage(value: BaggageType): void {
+    const control = this.tripForm.controls.baggage;
+    const order = this.baggageOptions.map((o) => o.value);
+    const next = control.value.includes(value) ? control.value.filter((v) => v !== value) : [...control.value, value];
+    control.setValue(order.filter((v) => next.includes(v)));
+  }
   openTripEditor(trip?: Trip): void {
     this.settingTripForm = true;
     this.tripForm.reset({
@@ -440,7 +471,7 @@ export class Reisen {
       status: trip?.status ?? 'PLANNED',
       travel_type: trip?.travel_type ?? '',
       transport_type: trip?.transport_type ?? '',
-      baggage_type: trip?.baggage_type ?? '',
+      baggage: [...(trip?.baggage ?? [])],
       climate: trip?.climate ?? '',
       accommodation: trip?.accommodation ?? '',
       accommodation_area: trip?.accommodation_area ?? '',
@@ -515,12 +546,14 @@ export class Reisen {
           status: v.status as Trip['status'],
           travel_type: v.travel_type as Trip['travel_type'],
           transport_type: v.transport_type as Trip['transport_type'],
-          baggage_type: v.baggage_type as Trip['baggage_type'],
+          baggage: v.baggage,
           climate: v.climate as Trip['climate'],
           accommodation: v.accommodation.trim(),
           accommodation_area: v.accommodation_area.trim(),
           transport_note: v.transport_note.trim(),
           notes: v.notes,
+          // Neue Reise: die Landeswährung, wenn das Ziel eindeutig ein Land nennt („Tokio, Japan“ → JPY).
+          ...(wasCreate ? { currency: currencyForDestination(v.destination)?.code ?? this.homeCurrency() as Trip['currency'] } : {}),
         },
         this.editTripId(),
       )
@@ -694,7 +727,7 @@ export class Reisen {
       label(this.travelTypeOptions, trip.travel_type),
       label(this.climateOptions, trip.climate),
       label(this.transportTypeOptions, trip.transport_type),
-      label(this.baggageTypeOptions, trip.baggage_type),
+      ...this.baggageOptions.filter((o) => trip.baggage?.includes(o.value)).map((o) => o.label),
     ].filter((f): f is string => !!f);
     return facts.length
       ? `Passend zu ${facts.join(' · ')}. Wähle aus, was du übernehmen möchtest.`
@@ -1029,11 +1062,15 @@ export class Reisen {
     this.expenseForm.reset({
       title: item?.title ?? '',
       amount: item ? item.amount.replace('.', ',') : '',
+      // Neue Ausgabe: in der Reisewährung vorausgewählt — änderbar, wenn anders bezahlt wurde.
+      currency: item?.currency ?? this.selectedTrip()?.currency ?? 'EUR',
       date: item?.date ?? localDay(new Date()),
       category: item?.category ?? 'SONSTIGES',
+      note: item?.note ?? '',
     });
     this.editExpenseId.set(item?.id);
     this.expenseFormError.set('');
+    this.expenseAmountError.set('');
     this.expenseEditor.set(true);
   }
   closeExpenseEditor(): void {
@@ -1044,24 +1081,28 @@ export class Reisen {
     this.expenseForm.markAllAsTouched();
     const v = this.expenseForm.getRawValue();
     const tripId = this.selectedTripId();
-    const amount = Number(v.amount.trim().replace(',', '.'));
-    if (!v.title.trim() || !tripId) {
-      this.expenseFormError.set('Bitte beschreibe die Ausgabe, z. B. „Hotel“ (maximal 120 Zeichen).');
-      return;
+    const amount = parseBudgetAmount(v.amount);
+    // Beschreibung und Datum prüft das Feld selbst (Pflichtfeld); der Betrag braucht die Zahlenprüfung.
+    if (amount === null || amount <= 0) {
+      this.expenseAmountError.set(v.amount.trim() ? 'Bitte gib einen Betrag größer als 0 ein, z. B. 45,50.' : 'Bitte gib einen Betrag ein.');
     }
-    if (!v.amount.trim() || !Number.isFinite(amount) || amount <= 0) {
-      this.expenseFormError.set('Bitte gib einen Betrag größer als 0 ein, z. B. 45,50.');
-      return;
-    }
-    if (!v.date) {
-      this.expenseFormError.set('Bitte wähle ein Datum.');
-      return;
-    }
+    if (!v.title.trim() || !tripId || amount === null || amount <= 0 || !v.date || v.note.length > 240) return;
     this.expenseSaving.set(true);
     this.expenseFormError.set('');
     const id = this.editExpenseId();
     this.api
-      .saveExpense({ trip: tripId, title: v.title.trim(), amount: amount.toFixed(2), date: v.date, category: v.category as BudgetCategory }, id)
+      .saveExpense(
+        {
+          trip: tripId,
+          title: v.title.trim(),
+          amount: amount.toFixed(2),
+          currency: v.currency as TripExpense['currency'],
+          date: v.date,
+          category: v.category as BudgetCategory,
+          note: v.note.trim(),
+        },
+        id,
+      )
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (saved) => {
@@ -1108,8 +1149,13 @@ export class Reisen {
     }
     this.planDraft.set(draft);
     this.planTotal.set(trip.budget_amount ? trip.budget_amount.replace('.', ',') : '');
-    this.planCurrency.set(trip.currency);
+    // Noch nichts geplant oder ausgegeben: die Landeswährung des Ziels vorschlagen (sichtbar als Vorschlag).
+    const suggestion = currencyForDestination(trip.destination);
+    const untouched = !trip.budget_amount && !this.budgetCategories().length && !this.expenses().length;
+    this.planSuggestion.set(untouched && suggestion && suggestion.code !== trip.currency ? suggestion.country : '');
+    this.planCurrency.set(untouched && suggestion ? suggestion.code : trip.currency);
     this.planError.set('');
+    this.planTotalError.set('');
     this.planEditor.set(true);
   }
   setPlanAmount(category: BudgetCategory, value: string): void {
@@ -1118,19 +1164,86 @@ export class Reisen {
   closePlanEditor(): void {
     if (!this.planSaving()) this.planEditor.set(false);
   }
+  // ---------- Eine Kategorie planen (aus der Zeile „Nach Kategorien“) ----------
+  readonly catEditor = signal<BudgetCategory | null>(null);
+  readonly catAmount = signal('');
+  readonly catAmountError = signal('');
+  readonly catError = signal('');
+  readonly catSaving = signal(false);
+  readonly catExisting = computed(() => this.budgetCategories().find((r) => r.category === this.catEditor()) ?? null);
+  readonly catHint = computed(() => {
+    const category = this.catEditor();
+    const trip = this.selectedTrip();
+    if (!category || !trip) return '';
+    const spent = this.expenses().filter((e) => (e.category || 'SONSTIGES') === category).reduce((s, e) => s + Number(e.amount), 0);
+    const base = spent > 0 ? `Bisher ausgegeben: ${formatMoney(spent, trip.currency)}.` : 'Noch nichts ausgegeben.';
+    return this.catExisting() ? `${base} Entfernen löscht nur die Planung, keine Ausgaben.` : base;
+  });
+  openCategoryEditor(category: BudgetCategory): void {
+    if (!this.canEdit()) return;
+    const existing = this.budgetCategories().find((r) => r.category === category);
+    this.catAmount.set(existing ? existing.planned_amount.replace('.', ',') : '');
+    this.catAmountError.set('');
+    this.catError.set('');
+    this.catEditor.set(category);
+  }
+  closeCategoryEditor(): void {
+    if (!this.catSaving()) this.catEditor.set(null);
+  }
+  saveCategoryPlan(): void {
+    const trip = this.selectedTrip();
+    const category = this.catEditor();
+    if (!trip || !category || this.catSaving()) return;
+    const value = parseBudgetAmount(this.catAmount());
+    const existing = this.catExisting();
+    if (value === null) {
+      this.catAmountError.set('Bitte gib einen gültigen Betrag ein, z. B. 300 oder 1.200,50.');
+      return;
+    }
+    if (value === 0) {
+      // Leer oder 0: bei bestehender Planung wie „Planung entfernen“, sonst sagen, was fehlt.
+      if (existing) this.removeCategoryPlan();
+      else this.catAmountError.set('Bitte gib einen Betrag ein, z. B. 300.');
+      return;
+    }
+    if (existing && Number(existing.planned_amount) === value) {
+      this.catEditor.set(null);
+      return;
+    }
+    this.runCategoryChange(this.api.saveBudgetCategory({ trip: trip.id, category, planned_amount: value.toFixed(2) }, existing?.id), trip.id);
+  }
+  removeCategoryPlan(): void {
+    const trip = this.selectedTrip();
+    const existing = this.catExisting();
+    if (!trip || !existing || this.catSaving()) return;
+    this.runCategoryChange(this.api.removeBudgetCategory(existing.id), trip.id);
+  }
+  private runCategoryChange(step: Observable<unknown>, tripId: number): void {
+    this.catSaving.set(true);
+    this.catError.set('');
+    step.pipe(takeUntilDestroyed(this.destroy)).subscribe({
+      next: () => {
+        this.catSaving.set(false);
+        this.catEditor.set(null);
+        this.loadTripDetail(tripId, true);
+        this.refreshTrips();
+      },
+      error: () => {
+        this.catSaving.set(false);
+        this.catError.set('Die Planung konnte nicht gespeichert werden. Bitte versuche es erneut.');
+      },
+    });
+  }
+
   /** Speichert nur Änderungen: leer oder 0 entfernt eine geplante Kategorie. */
   savePlan(): void {
     const trip = this.selectedTrip();
     if (!trip || this.planSaving()) return;
-    const parse = (raw: string) => {
-      const text = raw.trim().replace(',', '.');
-      if (!text) return 0;
-      const value = Number(text);
-      return Number.isFinite(value) && value >= 0 ? value : null;
-    };
+    const parse = parseBudgetAmount;
     const total = parse(this.planTotal());
-    if (total === null) {
-      this.planError.set('Bitte gib ein gültiges Gesamtbudget ein, z. B. 700.');
+    this.planTotalError.set('');
+    if (total === null || total <= 0) {
+      this.planTotalError.set(total === null ? 'Bitte gib ein gültiges Gesamtbudget ein, z. B. 700 oder 1.500,50.' : 'Bitte gib ein Gesamtbudget größer als 0 ein.');
       return;
     }
     const steps: Observable<unknown>[] = [];

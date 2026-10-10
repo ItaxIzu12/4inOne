@@ -17,7 +17,7 @@ test.beforeEach(async ({ page }) => {
 
 test('a dialog locks the page behind it, closing unlocks it again', async ({ page }) => {
   await page.goto('/demo/reisen?trip=1&tab=budget');
-  await page.locator('app-trip-budget').getByRole('button', { name: 'Ausgabe erfassen' }).click();
+  await page.locator('app-trip-budget').getByRole('button', { name: 'Ausgabe hinzufügen' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   const before = await scrollY(page);
   await trySwipe(page);

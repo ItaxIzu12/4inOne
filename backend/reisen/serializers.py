@@ -4,8 +4,10 @@ from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import serializers
 
-from core.models import Contact
+from core.currencies import CURRENCY_CHOICES, DEFAULT_HOME_CURRENCY
+from core.models import Contact, home_currency_for
 
+from .expense_fx import resnapshot_trip_currency, snapshot_expense
 from .models import PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask
 
 
@@ -86,7 +88,7 @@ class TripSerializer(serializers.ModelSerializer):
         model = Trip
         fields = [
             'id', 'title', 'destination', 'departure', 'start_date', 'end_date', 'notes', 'status',
-            'travel_type', 'transport_type', 'baggage_type', 'climate', 'budget_amount', 'currency',
+            'travel_type', 'transport_type', 'baggage', 'climate', 'budget_amount', 'currency',
             'accommodation', 'accommodation_area', 'transport_note',
             'created_at', 'updated_at',
             'packing_total', 'packing_packed', 'tasks_open', 'tasks_total', 'events_count', 'budget_spent',
@@ -105,6 +107,21 @@ class TripSerializer(serializers.ModelSerializer):
         if (self.instance is None or 'destination' in attrs) and not (destination or '').strip():
             raise serializers.ValidationError({'destination': 'Bitte gib ein Reiseziel an.'})
         return attrs
+
+    def update(self, instance, validated_data):
+        old_currency = instance.currency
+        trip = super().update(instance, validated_data)
+        if trip.currency != old_currency:
+            resnapshot_trip_currency(trip)
+        return trip
+
+    baggage = serializers.ListField(
+        child=serializers.ChoiceField(choices=Trip.BaggageType.choices), required=False, allow_empty=True, max_length=3,
+    )
+
+    def validate_baggage(self, value):
+        order = [choice for choice, _ in Trip.BaggageType.choices]
+        return [choice for choice in order if choice in set(value)]
 
     def validate_budget_amount(self, value):
         if value is not None and value < 0:
@@ -132,7 +149,7 @@ class TripSerializer(serializers.ModelSerializer):
         return self._count(obj, 'n_events', lambda: obj.tripevents.count())
 
     def get_budget_spent(self, obj):
-        total = self._count(obj, 'sum_spent', lambda: obj.tripexpenses.aggregate(total=Sum('amount'))['total'])
+        total = self._count(obj, 'sum_spent', lambda: obj.tripexpenses.aggregate(total=Sum('amount_trip'))['total'])
         return str((total or Decimal('0')).quantize(Decimal('0.01')))
 
     def get_participants(self, obj):
@@ -231,16 +248,47 @@ class TripEventSerializer(TripScopedSerializer):
 
 
 class TripExpenseSerializer(TripScopedSerializer):
+    """Originalbetrag + Originalwährung kommen vom Nutzer (Standard: Reisewährung); die Umrechnungen rechnet nur das
+    Backend (expense_fx.py) — vom Client gesendete Werte dafür werden ignoriert (read-only)."""
+
+    currency = serializers.ChoiceField(choices=CURRENCY_CHOICES, required=False)
+
     class Meta:
         model = TripExpense
-        fields = ['id', 'trip', 'title', 'amount', 'date', 'category', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        fields = [
+            'id', 'trip', 'title', 'amount', 'currency', 'date', 'category', 'note',
+            'amount_trip', 'rate_to_trip', 'home_currency', 'amount_home', 'rate_to_home', 'rate_date',
+            'created_at',
+        ]
+        read_only_fields = [
+            'id', 'created_at', 'amount_trip', 'rate_to_trip', 'home_currency', 'amount_home', 'rate_to_home', 'rate_date',
+        ]
 
     def validate_amount(self, value):
-        # Eine Ausgabe von 0 € ist keine Ausgabe. Das Datum darf vor der Reise liegen (Flug Monate vorher gebucht).
+        # Eine Ausgabe von 0 ist keine Ausgabe. Das Datum darf vor der Reise liegen (Flug Monate vorher gebucht).
         if value <= 0:
             raise serializers.ValidationError('Der Betrag muss größer als 0 sein.')
         return value
+
+    def _home(self) -> str:
+        request = self.context.get('request')
+        return home_currency_for(request.user) if request else DEFAULT_HOME_CURRENCY
+
+    def create(self, validated_data):
+        validated_data.setdefault('currency', validated_data['trip'].currency)
+        expense = TripExpense(**validated_data)
+        snapshot_expense(expense, home_currency=self._home(), recompute=True)
+        expense.save()
+        return expense
+
+    def update(self, instance, validated_data):
+        validated_data.pop('trip', None)  # eine Ausgabe wandert nicht in eine andere Reise
+        changed = any(key in validated_data and validated_data[key] != getattr(instance, key) for key in ('amount', 'currency'))
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        snapshot_expense(instance, home_currency=self._home(), recompute=changed)
+        instance.save()
+        return instance
 
 
 class TripBudgetCategorySerializer(TripScopedSerializer):

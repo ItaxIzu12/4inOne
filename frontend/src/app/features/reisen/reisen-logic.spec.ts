@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { PackingItem, Trip, TripTask } from './reisen-api.service';
 import {
+  tripValue,
+  parseBudgetAmount,
   budgetRows,
   countdown,
   dueLabel,
@@ -14,7 +16,6 @@ import {
   planningTips,
   shortRange,
   tripDays,
-  tripIcon,
   tripPhase,
   whenText,
 } from './reisen-logic';
@@ -22,7 +23,7 @@ import {
 function trip(extra: Partial<Trip>): Trip {
   return {
     id: 1, title: 'Reise', destination: '', departure: '', start_date: '2026-03-14', end_date: '2026-03-16', notes: '', status: 'PLANNED',
-    travel_type: '', transport_type: '', baggage_type: '', climate: '', budget_amount: null, currency: 'EUR', accommodation: '',
+    travel_type: '', transport_type: '', baggage: [], climate: '', budget_amount: null, currency: 'EUR', accommodation: '',
     accommodation_area: '', transport_note: '', created_at: '', updated_at: '2026-01-01', packing_total: 0, packing_packed: 0,
     tasks_open: 0, tasks_total: 0, events_count: 0, budget_spent: '0.00', participants: [], my_role: 'OWNER', ...extra,
   };
@@ -45,11 +46,7 @@ describe('reisen-logic', () => {
     expect(countdown(t, '2026-03-15')).toBeNull();
   });
 
-  it('picks a meaningful icon and initials', () => {
-    expect(tripIcon(trip({ travel_type: 'BEACH' }))).toBe('umbrella');
-    expect(tripIcon(trip({ travel_type: 'ACTIVE' }))).toBe('mountain');
-    expect(tripIcon(trip({ transport_type: 'CAR' }))).toBe('car');
-    expect(tripIcon(trip({}))).toBe('travel');
+  it('builds initials', () => {
     expect(initials('Tom Schulz')).toBe('TS');
     expect(initials('Anna')).toBe('AN');
   });
@@ -67,9 +64,9 @@ describe('reisen-logic', () => {
     const rows = budgetRows(
       [{ id: 1, trip: 1, category: 'UNTERKUNFT', planned_amount: '300.00' }, { id: 2, trip: 1, category: 'ESSEN', planned_amount: '100.00' }],
       [
-        { id: 1, trip: 1, title: 'Hotel', amount: '240.00', date: '2026-03-01', category: 'UNTERKUNFT' },
-        { id: 2, trip: 1, title: 'Essen', amount: '120.00', date: '2026-03-01', category: 'ESSEN' },
-        { id: 3, trip: 1, title: 'Souvenir', amount: '10.00', date: '2026-03-01', category: 'SHOPPING' },
+        { id: 1, trip: 1, title: 'Hotel', amount: '240.00', date: '2026-03-01', category: 'UNTERKUNFT', currency: 'EUR' },
+        { id: 2, trip: 1, title: 'Essen', amount: '120.00', date: '2026-03-01', category: 'ESSEN', currency: 'EUR' },
+        { id: 3, trip: 1, title: 'Souvenir', amount: '10.00', date: '2026-03-01', category: 'SHOPPING', currency: 'EUR' },
       ],
     );
     expect(rows.map((r) => [r.label, r.pct, r.remaining, r.over])).toEqual([
@@ -82,8 +79,21 @@ describe('reisen-logic', () => {
   it('formats money compactly only for whole amounts', () => {
     expect(formatMoney(700, 'EUR', true)).toBe('700 €');
     expect(formatMoney('45.5', 'EUR', true)).toBe('45,50 €');
-    expect(formatMoney(2000, 'USD', true)).toBe('$ 2.000');
+    expect(formatMoney(2000, 'USD', true)).toBe('2.000 USD');
     expect(formatMoney(700, 'EUR')).toBe('700,00 €');
+    // Yen ohne Nachkommastellen, immer mit ISO-Code (¥ wäre zwischen JPY und CNY mehrdeutig).
+    expect(formatMoney(250000, 'JPY')).toBe('250.000 JPY');
+  });
+
+  it('sums expenses in the trip currency — never the raw amount of another currency', () => {
+    expect(tripValue({ amount: '100.00', currency: 'EUR', amount_trip: '17450.00' }, 'JPY')).toBe(17450);
+    expect(tripValue({ amount: '8500.00', currency: 'JPY', amount_trip: '8500.00' }, 'JPY')).toBe(8500);
+    expect(tripValue({ amount: '350.00', currency: 'EUR', amount_trip: null }, 'JPY')).toBe(0);
+    const rows = budgetRows([], [
+      { id: 1, trip: 1, title: 'Flug', amount: '100.00', currency: 'EUR', amount_trip: '17450.00', date: '2026-03-01', category: 'TRANSPORT' },
+      { id: 2, trip: 1, title: 'Bahn', amount: '3000.00', currency: 'JPY', amount_trip: '3000.00', date: '2026-03-01', category: 'TRANSPORT' },
+    ], 'JPY');
+    expect(rows[0].spent).toBe(20450);
   });
 
   it('derives the phase of a trip from its dates — "unterwegs" is not a stored status', () => {
@@ -145,5 +155,18 @@ describe('reisen-logic', () => {
     expect(dueLabel('2026-02-27', today)).toEqual({ text: 'Überfällig', urgent: true });
     expect(dueLabel('2026-03-12', today)).toEqual({ text: '12. März', urgent: false });
     expect(dueLabel(null, today)).toEqual({ text: 'Ohne Datum', urgent: false });
+  });
+
+  it('parses budget amounts the way people type them', () => {
+    expect(parseBudgetAmount('700')).toBe(700);
+    expect(parseBudgetAmount('700,50')).toBe(700.5);
+    expect(parseBudgetAmount('700.50')).toBe(700.5);
+    expect(parseBudgetAmount('1.500')).toBe(1500);
+    expect(parseBudgetAmount('1.500,50')).toBe(1500.5);
+    expect(parseBudgetAmount(' 2 000 € ')).toBe(2000);
+    expect(parseBudgetAmount('')).toBe(0);
+    expect(parseBudgetAmount('abc')).toBeNull();
+    expect(parseBudgetAmount('-5')).toBeNull();
+    expect(parseBudgetAmount('1,2,3')).toBeNull();
   });
 });

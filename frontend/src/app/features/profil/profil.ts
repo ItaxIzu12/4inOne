@@ -6,13 +6,15 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { AppShell } from '../../layout/app-shell';
 import { Modal } from '../../shared/modal/modal';
+import { AppSelect } from '../../shared/form/select';
+import { CURRENCY_OPTIONS } from '../../shared/currency/currencies';
 
-/** Einstellungen → Profil: der Name ist änderbar, die E-Mail-Adresse nur lesbar (sie ist zugleich der Login und
- * braucht später eine Bestätigung). */
+/** Einstellungen → Profil: Name und Heimatwährung sind änderbar, die E-Mail-Adresse nur lesbar (sie ist zugleich der
+ * Login und braucht später eine Bestätigung). Die Heimatwährung ist die eine zentrale Einstellung für Umrechnungen. */
 @Component({
   selector: 'app-profil',
   standalone: true,
-  imports: [ErrorNoticeDirective, AppShell, RouterLink, FormsModule, Modal],
+  imports: [ErrorNoticeDirective, AppShell, RouterLink, FormsModule, Modal, AppSelect],
   templateUrl: './profil.html',
   styleUrls: ['../einstellungen/einstellungen.css', './profil.css'],
 })
@@ -25,7 +27,11 @@ export class Profil {
   protected readonly saving = signal(false);
   protected readonly error = signal('');
   protected readonly saved = signal(false);
-  protected readonly changed = computed(() => this.name().trim() !== (this.auth.currentUser()?.name ?? ''));
+  protected readonly currencyOptions = CURRENCY_OPTIONS;
+  protected readonly homeCurrency = signal(this.auth.currentUser()?.home_currency ?? 'EUR');
+  private readonly nameChanged = computed(() => this.name().trim() !== (this.auth.currentUser()?.name ?? ''));
+  private readonly currencyChanged = computed(() => this.homeCurrency() !== (this.auth.currentUser()?.home_currency ?? 'EUR'));
+  protected readonly changed = computed(() => this.nameChanged() || this.currencyChanged());
 
   protected save(): void {
     if (this.saving()) return;
@@ -37,10 +43,14 @@ export class Profil {
     }
     this.error.set('');
     this.saving.set(true);
-    this.auth.updateProfile(name).subscribe({
+    const changes: { name?: string; home_currency?: string } = {};
+    if (this.nameChanged()) changes.name = name;
+    if (this.currencyChanged()) changes.home_currency = this.homeCurrency();
+    this.auth.updateProfile(changes).subscribe({
       next: (user) => {
         this.saving.set(false);
         this.name.set(user.name);
+        this.homeCurrency.set(user.home_currency ?? 'EUR');
         this.saved.set(true);
       },
       error: (e: unknown) => {

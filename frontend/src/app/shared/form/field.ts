@@ -75,7 +75,9 @@ export class Field {
     this.revision();
     if (this.error()) return this.error();
     const control = this.control()?.control;
-    if (!this.submitted() && !control?.touched) return '';
+    // Erst nach „Speichern“ (validate) — nicht schon beim Verlassen eines Feldes oder beim Klick auf „Abbrechen“.
+    // Danach aktualisiert sich der Hinweis live und verschwindet, sobald die Angabe stimmt.
+    if (!this.submitted()) return '';
     if (control?.invalid) {
       if (control.errors?.['required']) return 'Bitte ' + this.label() + ' angeben.';
       if (control.errors?.['maxlength']) return 'Bitte kürze deine Eingabe.';

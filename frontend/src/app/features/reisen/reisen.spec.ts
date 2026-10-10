@@ -339,11 +339,11 @@ describe('Reisen V1 (Demo)', () => {
 
   it('Budget: an expense must be above 0, may be dated before the trip, and updates the totals', async () => {
     const { fixture, root } = await open('/?trip=1&tab=budget');
-    button(root, 'Ausgabe erfassen', 'app-trip-budget button').click();
+    button(root, 'Ausgabe hinzufügen', 'app-trip-budget button').click();
     await settle(fixture);
     fixture.componentInstance.expenseForm.patchValue({ title: 'Ticket', amount: '0', date: isoDateOffset(-30) });
     await submitModal(fixture);
-    expect(fixture.componentInstance.expenseFormError()).toBe('Bitte gib einen Betrag größer als 0 ein, z. B. 45,50.');
+    expect(fixture.componentInstance.expenseAmountError()).toBe('Bitte gib einen Betrag größer als 0 ein, z. B. 45,50.');
     fixture.componentInstance.expenseForm.patchValue({ amount: '80,00' });
     await submitModal(fixture);
     const page = await settle(fixture);
@@ -354,13 +354,13 @@ describe('Reisen V1 (Demo)', () => {
 
   it('Budget: setting a budget and a currency for a trip without one', async () => {
     const { fixture, root } = await open('/?trip=3&tab=budget');
-    button(root, 'Budget festlegen', 'app-trip-budget button').click();
+    button(root, 'Gesamtbudget festlegen', 'app-trip-budget button').click();
     await settle(fixture);
     fixture.componentInstance.planTotal.set('1200');
     fixture.componentInstance.planCurrency.set('CHF');
     fixture.componentInstance.savePlan();
     const page = await settle(fixture);
-    expect(Array.from(page.querySelectorAll('app-trip-budget .kpis dd')).map(text)[0]).toBe('CHF 1.200');
+    expect(Array.from(page.querySelectorAll('app-trip-budget .kpis dd')).map(text)[0]).toBe('1.200 CHF');
   });
 
   // ---------- Rechte ----------

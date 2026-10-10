@@ -1,5 +1,6 @@
 import { IconName } from '../../shared/icons/app-icon';
 import { BudgetCategory, PackingCategory, PackingItem, Trip, TripBudgetCategory, TripExpense, TripTask, TripStatus } from './reisen-api.service';
+import { formatAmount } from '../../shared/currency/currencies';
 
 // ---------- Status ----------
 export const STATUS_ORDER: TripStatus[] = ['PLANNED', 'CONFIRMED', 'DONE', 'CANCELLED'];
@@ -118,14 +119,6 @@ export function peopleLabel(count: number): string {
   return count === 1 ? '1 Person' : `${count} Personen`;
 }
 
-// ---------- Reise-Symbol ----------
-export function tripIcon(trip: Pick<Trip, 'travel_type' | 'transport_type'>): IconName {
-  if (trip.travel_type === 'BEACH') return 'umbrella';
-  if (trip.travel_type === 'ACTIVE') return 'mountain';
-  if (trip.travel_type === 'WINTER') return 'snowflake';
-  if (trip.travel_type === 'ROAD_TRIP' || trip.transport_type === 'CAR') return 'car';
-  return 'travel';
-}
 export const TRANSPORT_LABELS: Record<Exclude<Trip['transport_type'], ''>, string> = {
   FLIGHT: 'Flugzeug',
   TRAIN: 'Zug',
@@ -197,10 +190,10 @@ export interface BudgetRow {
   over: boolean;
 }
 /** Nur Kategorien mit Plan oder Ausgabe, in fester Reihenfolge. */
-export function budgetRows(planned: TripBudgetCategory[], expenses: TripExpense[]): BudgetRow[] {
+export function budgetRows(planned: TripBudgetCategory[], expenses: TripExpense[], currency = 'EUR'): BudgetRow[] {
   return BUDGET_ORDER.map((category) => {
     const plan = Number(planned.find((p) => p.category === category)?.planned_amount ?? 0);
-    const spent = expenses.filter((e) => (e.category ?? 'SONSTIGES') === category).reduce((s, e) => s + Number(e.amount), 0);
+    const spent = expenses.filter((e) => (e.category ?? 'SONSTIGES') === category).reduce((s, e) => s + tripValue(e, currency), 0);
     return {
       category,
       ...BUDGET_META[category],
@@ -212,25 +205,31 @@ export function budgetRows(planned: TripBudgetCategory[], expenses: TripExpense[
     };
   }).filter((r) => r.planned > 0 || r.spent > 0);
 }
+/** Betrag aus dem Budget-Dialog: „700“, „700,50“, „1.500“, „1.500,50“, „1500.5“, auch mit „€“ oder Leerzeichen.
+ * Ein Punkt vor genau drei Ziffern ohne Komma gruppiert Tausender (Cent haben nie drei Stellen). Leer → 0, ungültig → null. */
+export function parseBudgetAmount(raw: string): number | null {
+  let text = raw.replace(/[\s€]|EUR|CHF|USD|GBP|[$£]/gi, '');
+  if (!text) return 0;
+  if (text.includes(',')) text = text.replace(/\./g, '').replace(',', '.');
+  else if (/^\d{1,3}(\.\d{3})+$/.test(text)) text = text.replace(/\./g, '');
+  if (!/^\d+(\.\d{1,2})?$/.test(text)) return null;
+  return Number(text);
+}
 export function totalBudget(trip: Trip | null, planned: TripBudgetCategory[]): number {
   const own = Number(trip?.budget_amount || 0);
   return own > 0 ? own : planned.reduce((s, p) => s + Number(p.planned_amount), 0);
 }
 
 // ---------- Geld ----------
-const CURRENCY_SYMBOLS: Record<Trip['currency'], { symbol: string; prefix: boolean }> = {
-  EUR: { symbol: '€', prefix: false },
-  USD: { symbol: '$', prefix: true },
-  GBP: { symbol: '£', prefix: true },
-  CHF: { symbol: 'CHF', prefix: true },
-};
-/** Immer deutsche Zahlengruppierung (1.500,00), nur Symbol/Position wechseln je Währung. `compact` lässt „,00“ weg. */
-export function formatMoney(value: string | number, currency: Trip['currency'], compact = false): string {
-  const number = typeof value === 'number' ? value : Number(value);
-  const whole = compact && Math.round(number * 100) % 100 === 0;
-  const amount = number.toLocaleString('de-DE', { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: 2 });
-  const { symbol, prefix } = CURRENCY_SYMBOLS[currency] ?? CURRENCY_SYMBOLS.EUR;
-  return prefix ? `${symbol} ${amount}` : `${amount} ${symbol}`;
+/** Geldbetrag auf Deutsch (siehe shared/currency): „700 €“, „250.000 JPY“. `compact` lässt „,00“ weg. */
+export function formatMoney(value: string | number, currency: string, compact = false): string {
+  return formatAmount(value, currency, compact);
+}
+/** Wert einer Ausgabe in der Reisewährung (fürs Budget) — ohne Umrechnung 0, nie der Originalbetrag einer anderen
+ * Währung (keine Beträge verschiedener Währungen direkt addieren). */
+export function tripValue(expense: Pick<TripExpense, 'amount' | 'amount_trip' | 'currency'>, tripCurrency: string): number {
+  if (expense.amount_trip != null) return Number(expense.amount_trip);
+  return expense.currency === tripCurrency || !expense.currency ? Number(expense.amount) : 0;
 }
 
 // ---------- Planung ----------

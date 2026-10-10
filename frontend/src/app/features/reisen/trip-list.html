@@ -53,7 +53,7 @@
 <ng-template #card let-t>
   <button type="button" class="trip" [class.trip--muted]="t.status === 'CANCELLED'" [attr.aria-label]="label(t)" (click)="open.emit(t.id)">
     <span class="trip__head">
-      <span class="tile" aria-hidden="true"><app-icon [name]="icon(t)" /></span>
+      <span class="tile" aria-hidden="true"><app-icon name="travel" /></span>
       <span class="trip__title">
         <b>{{ t.title }}</b>
         <small>{{ t.destination || range(t) }}</small>

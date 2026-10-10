@@ -17,6 +17,8 @@
   z-index: 91;
   margin: auto;
   width: min(520px, calc(100vw - 32px));
+  /* So hoch wie der Inhalt (ohne: inset 0 streckt das Panel immer auf die volle max-height) — bleibt zentriert. */
+  height: fit-content;
   max-height: min(680px, calc(100dvh - 64px));
   display: flex;
   flex-direction: column;

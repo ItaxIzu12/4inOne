@@ -28,7 +28,7 @@ const GROUPS: Group[] = [
   {
     id: 'konto',
     title: 'Konto',
-    rows: [{ icon: 'profile', label: 'Profil bearbeiten', hint: 'Deinen Namen ändern', route: '/einstellungen/profil' }],
+    rows: [{ icon: 'profile', label: 'Profil bearbeiten', hint: 'Name und Heimatwährung', route: '/einstellungen/profil' }],
   },
   {
     id: 'sicherheit',

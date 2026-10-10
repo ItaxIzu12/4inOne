@@ -21,6 +21,7 @@ from django.urls import include, path
 from connections.views import TodayOverviewView
 from finanzen.views import OnboardingStatusView
 from core.onboarding_views import OnboardingProfileView
+from core.fx_views import ExchangeRatesView
 
 urlpatterns = [
     path('api/v1/onboarding/profile/', OnboardingProfileView.as_view(), name='onboarding-profile'),
@@ -40,6 +41,7 @@ urlpatterns = [
     path('api/v1/reisen/', include('reisen.urls')),
     path('api/v1/connections/', include('connections.urls')),
     path('api/v1/today/', TodayOverviewView.as_view(), name='today-overview'),
+    path('api/v1/fx/rates/', ExchangeRatesView.as_view(), name='fx-rates'),
     path('api/v1/haushalt/', include('haushalt.urls')),
     # OnboardingStatusView liegt in finanzen/views.py (braucht Transaction/
     # Category von dort), ist aber kein finanzen-spezifischer Endpunkt —

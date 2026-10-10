@@ -6,7 +6,7 @@ function input(overrides: Partial<TripSetupInput> = {}): TripSetupInput {
     end_date: '2026-10-12',
     travel_type: '',
     transport_type: '',
-    baggage_type: '',
+    baggage: [],
     climate: '',
     ...overrides,
   };
@@ -67,19 +67,19 @@ describe('buildTripSuggestions', () => {
   });
 
   it('hand-luggage-only trims the bulky extras but keeps a compact-packing reminder task', () => {
-    const { packing, tasks } = buildTripSuggestions(input({ travel_type: 'BEACH', baggage_type: 'HAND_LUGGAGE' }));
+    const { packing, tasks } = buildTripSuggestions(input({ travel_type: 'BEACH', baggage: ['HAND_LUGGAGE'] }));
     expect(titles(packing)).not.toContain('Badebekleidung');
     expect(titles(packing)).not.toContain('Sonnencreme');
     expect(titles(tasks)).toContain('Handgepäck-Maße und Flüssigkeitsregel prüfen');
   });
 
   it('business packing stays even with hand luggage only (work gear is not "bulky")', () => {
-    const { packing } = buildTripSuggestions(input({ travel_type: 'BUSINESS', baggage_type: 'HAND_LUGGAGE' }));
+    const { packing } = buildTripSuggestions(input({ travel_type: 'BUSINESS', baggage: ['HAND_LUGGAGE'] }));
     expect(titles(packing)).toEqual(expect.arrayContaining(['Arbeitsgerät', 'Business-Unterlagen']));
   });
 
   it('checked baggage suggests a luggage tag', () => {
-    const { packing } = buildTripSuggestions(input({ baggage_type: 'CHECKED_BAGGAGE' }));
+    const { packing } = buildTripSuggestions(input({ baggage: ['CHECKED_BAGGAGE'] }));
     expect(titles(packing)).toContain('Kofferanhänger');
   });
 
@@ -88,7 +88,7 @@ describe('buildTripSuggestions', () => {
     expect(titles(withSnacks.packing)).toContain('Snacks für die Fahrt');
     expect(titles(withSnacks.tasks)).toContain('Route planen');
 
-    const compact = buildTripSuggestions(input({ travel_type: 'ROAD_TRIP', baggage_type: 'HAND_LUGGAGE' }));
+    const compact = buildTripSuggestions(input({ travel_type: 'ROAD_TRIP', baggage: ['HAND_LUGGAGE'] }));
     expect(titles(compact.packing)).not.toContain('Snacks für die Fahrt');
     expect(titles(compact.tasks)).toContain('Route planen');
   });
@@ -125,7 +125,7 @@ describe('buildTripSuggestions', () => {
   });
 
   it('winter sports: ski items and tasks, and snow rules even without a weather choice', () => {
-    const { packing, tasks } = buildTripSuggestions(input({ travel_type: 'WINTER', baggage_type: 'HAND_LUGGAGE' }));
+    const { packing, tasks } = buildTripSuggestions(input({ travel_type: 'WINTER', baggage: ['HAND_LUGGAGE'] }));
     expect(titles(packing)).toEqual(expect.arrayContaining(['Skibrille', 'Skisocken', 'Thermowäsche', 'Mütze']));
     expect(titles(tasks)).toEqual(expect.arrayContaining(['Skipass kaufen', 'Skiausrüstung leihen oder reservieren']));
     expect(titles(packing)).not.toContain('Wanderschuhe');
@@ -144,5 +144,13 @@ describe('buildTripSuggestions', () => {
     expect(guessClimate('2026-04-15')).toBe('MILD');
     expect(guessClimate('2026-10-03')).toBe('MILD');
     expect(guessClimate('')).toBe('');
+  });
+
+  it('baggage is combinable: hand luggage plus a suitcase is not "compact", but keeps both hints', () => {
+    const both = buildTripSuggestions(input({ travel_type: 'BEACH', baggage: ['HAND_LUGGAGE', 'CHECKED_BAGGAGE'] }));
+    expect(both.packing.map((i) => i.title)).toEqual(expect.arrayContaining(['Badebekleidung', 'Kofferanhänger']));
+    expect(both.tasks.map((t) => t.title)).toContain('Handgepäck-Maße und Flüssigkeitsregel prüfen');
+    const onlyHand = buildTripSuggestions(input({ travel_type: 'BEACH', baggage: ['HAND_LUGGAGE'] }));
+    expect(onlyHand.packing.map((i) => i.title)).not.toContain('Badebekleidung');
   });
 });

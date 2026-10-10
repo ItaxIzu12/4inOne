@@ -7,7 +7,7 @@
         <button type="button" class="back" (click)="backToList()"><app-icon name="arrow-left" aria-hidden="true" />Meine Reisen</button>
         <header class="page-heading domain-heading trip-heading">
           <div class="heading-copy">
-            <span class="heading-icon domain-icon" aria-hidden="true"><app-icon [name]="tripIcon(trip)" /></span>
+            <span class="heading-icon domain-icon" aria-hidden="true"><app-icon name="travel" /></span>
             <div class="trip-heading__text">
               <h1>{{ trip.title }}</h1>
               <p class="subtitle">
@@ -125,9 +125,11 @@
               [planned]="budgetCategories()"
               [expenses]="expenses()"
               [canEdit]="canEdit()"
+              [home]="homeCurrency()"
               (addExpense)="openExpenseEditor()"
               (editExpense)="openExpenseEditor($event)"
               (editPlan)="openPlanEditor()"
+              (editCategory)="openCategoryEditor($event)"
             />
           }
         }
@@ -221,9 +223,19 @@
             <app-select formControlName="climate" [options]="climateOptions" />
           </app-field>
         </div>
-        <app-field label="Gepäck" [optional]="true">
-          <app-select formControlName="baggage_type" [options]="baggageTypeOptions" />
-        </app-field>
+        <div class="baggage-field">
+          <span class="baggage-field__label" id="trip-baggage-label">Gepäck <span class="muted">(optional, mehrere möglich)</span></span>
+          <div class="baggage-chips" role="group" aria-labelledby="trip-baggage-label">
+            @for (b of baggageOptions; track b.value) {
+              <button type="button" class="baggage-chip" [attr.aria-pressed]="tripBaggage().includes(b.value)" (click)="toggleBaggage(b.value)">
+                @if (tripBaggage().includes(b.value)) {
+                  <app-icon name="check" aria-hidden="true" />
+                }
+                {{ b.label }}
+              </button>
+            }
+          </div>
+        </div>
         <app-field label="Notiz" [optional]="true">
           <textarea id="trip-notes" formControlName="notes" rows="3" maxlength="5000"></textarea>
         </app-field>
@@ -299,7 +311,8 @@
 <app-modal-form
   icon="coins"
   [formGroup]="expenseForm"
-  [title]="editExpenseId() ? 'Ausgabe bearbeiten' : 'Ausgabe erfassen'"
+  [title]="editExpenseId() ? 'Ausgabe bearbeiten' : 'Ausgabe hinzufügen'"
+  submitLabel="Ausgabe speichern"
   [open]="expenseEditor()"
   [saving]="expenseSaving()"
   [error]="expenseFormError()"
@@ -309,24 +322,33 @@
   (deleted)="removeExpenseFromEditor()"
 >
   <app-field label="Beschreibung">
-    <input id="expense-title" formControlName="title" maxlength="120" required placeholder="z. B. Hotelanzahlung" />
+    <input id="expense-title" formControlName="title" maxlength="120" required placeholder="z. B. Restaurant" data-autofocus />
   </app-field>
+  <div class="field-row field-row--amount">
+    <app-field label="Betrag" [error]="expenseAmountError()">
+      <input id="expense-amount" formControlName="amount" inputmode="decimal" placeholder="z. B. 8.500" />
+    </app-field>
+    <app-field label="Währung" hint="So, wie bezahlt wurde.">
+      <app-select formControlName="currency" [options]="currencyOptions" />
+    </app-field>
+  </div>
+  <app-fx-hint [amount]="expenseAmountValue()" [from]="expenseValue().currency" [to]="expenseFxTarget().to" [label]="expenseFxTarget().label" />
   <div class="field-row">
-    <app-field [label]="'Betrag in ' + (selectedTrip()?.currency ?? 'EUR')">
-      <input id="expense-amount" formControlName="amount" inputmode="decimal" required />
+    <app-field label="Kategorie">
+      <app-select formControlName="category" [options]="budgetCategoryOptions" />
     </app-field>
     <app-field label="Bezahlt am" hint="Darf vor der Reise liegen.">
       <app-date-picker mode="date" formControlName="date" />
     </app-field>
   </div>
-  <app-field label="Kategorie">
-    <app-select formControlName="category" [options]="budgetCategoryOptions" />
+  <app-field label="Notiz" [optional]="true">
+    <input id="expense-note" formControlName="note" maxlength="240" />
   </app-field>
 </app-modal-form>
 
 <app-modal-form
   icon="coins"
-  title="Reisebudget"
+  [title]="planTitle()"
   [open]="planEditor()"
   [saving]="planSaving()"
   [error]="planError()"
@@ -335,14 +357,15 @@
   (closed)="closePlanEditor()"
 >
   <div class="field-row">
-    <app-field label="Gesamtbudget" [optional]="true" hint="Leer lassen: die Summe der Kategorien gilt.">
-      <input id="plan-total" inputmode="decimal" placeholder="z. B. 700" [value]="planTotal()" (input)="planTotal.set($any($event.target).value)" />
+    <app-field label="Gesamtbudget" [error]="planTotalError()">
+      <input id="plan-total" inputmode="decimal" placeholder="z. B. 2.000" data-autofocus [value]="planTotal()" (input)="planTotal.set($any($event.target).value); planTotalError.set('')" />
     </app-field>
-    <app-field label="Währung">
-      <app-select [options]="currencyOptions" [value]="planCurrency()" (valueChange)="planCurrency.set($any($event))" />
+    <app-field label="Währung" [hint]="planSuggestion() ? 'Vorgeschlagen für ' + planSuggestion() : ''">
+      <app-select [options]="currencyOptions" [value]="planCurrency()" (valueChange)="planCurrency.set($any($event)); planSuggestion.set('')" />
     </app-field>
   </div>
-  <p class="setup-hint">Optional je Kategorie planen – leer heißt „nicht geplant“.</p>
+  <app-fx-hint [amount]="planTotalValue()" [from]="planCurrency()" [to]="homeCurrency()" />
+  <p class="setup-hint">Optional je Kategorie planen (in {{ planCurrency() }}) – leer heißt „nicht geplant“.</p>
   <ul class="budget-plan">
     @for (c of budgetCategoryOrder; track c) {
       <li>
@@ -354,6 +377,32 @@
   </ul>
   <p class="budget-plan__sum">Geplant je Kategorie: <b>{{ formatMoney(planSum(), planCurrency(), true) }}</b></p>
 </app-modal-form>
+
+@if (catEditor(); as cat) {
+  <app-modal-form
+    [icon]="budgetMeta[cat].icon"
+    [title]="budgetMeta[cat].label + ' planen'"
+    [open]="true"
+    [saving]="catSaving()"
+    [error]="catError()"
+    [deleteLabel]="catExisting() ? 'Planung entfernen' : ''"
+    closeLabel="Kategorie schließen"
+    (submitted)="saveCategoryPlan()"
+    (closed)="closeCategoryEditor()"
+    (deleted)="removeCategoryPlan()"
+  >
+    <app-field label="Geplanter Betrag" [hint]="catHint()" [error]="catAmountError()">
+      <input
+        id="cat-plan-amount"
+        inputmode="decimal"
+        placeholder="z. B. 300"
+        data-autofocus
+        [value]="catAmount()"
+        (input)="catAmount.set($any($event.target).value); catAmountError.set('')"
+      />
+    </app-field>
+  </app-modal-form>
+}
 
 <app-modal [open]="!!participantsEditorTrip()" labelledBy="participants-heading" closeLabel="Schließen" (closed)="closeParticipantsEditor()">
   <div class="form participants-editor">

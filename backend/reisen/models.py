@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from core.currencies import CURRENCY_CHOICES
+
 
 class Trip(models.Model):
     """Eine regulär angelegte, konkrete Reise.
@@ -47,10 +49,10 @@ class Trip(models.Model):
         OTHER = 'OTHER', 'Sonstiges'
 
     class BaggageType(models.TextChoices):
-        HAND_LUGGAGE = 'HAND_LUGGAGE', 'Nur Handgepäck'
+        # Kombinierbar (Trip.baggage ist eine Liste): Handgepäck UND Koffer ist der Normalfall. Keine Angabe = leer.
+        HAND_LUGGAGE = 'HAND_LUGGAGE', 'Handgepäck'
         CHECKED_BAGGAGE = 'CHECKED_BAGGAGE', 'Aufgabegepäck'
         CAR_LUGGAGE = 'CAR_LUGGAGE', 'Gepäck im Auto'
-        UNKNOWN = 'UNKNOWN', 'Noch unklar'
 
     class Climate(models.TextChoices):
         # Vom Nutzer gewählt (das Formular schlägt nur nach Reisemonat vor) — kein Wetterdienst: das Ziel ist Freitext,
@@ -60,11 +62,9 @@ class Trip(models.Model):
         COLD = 'COLD', 'Kalt'
         SNOW = 'SNOW', 'Schnee'
 
-    class Currency(models.TextChoices):
-        EUR = 'EUR', 'Euro'
-        USD = 'USD', 'US-Dollar'
-        GBP = 'GBP', 'Britisches Pfund'
-        CHF = 'CHF', 'Schweizer Franken'
+    # Reisewährung: alle Währungen mit EZB-Referenzkurs (core/currencies.py). Budget und Kategorie-Budgets gelten in
+    # ihr; Ausgaben tragen ihre eigene Originalwährung (TripExpense.currency).
+    Currency = models.TextChoices('Currency', [(code, (code, label)) for code, label in CURRENCY_CHOICES])
 
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='trips')
     title = models.CharField(max_length=120)
@@ -80,12 +80,13 @@ class Trip(models.Model):
     # ganz ohne sie, siehe Trip-Docstring/AGENTS.md "nicht alles erzwingen".
     travel_type = models.CharField(max_length=10, choices=TravelType.choices, blank=True, default='')
     transport_type = models.CharField(max_length=6, choices=TransportType.choices, blank=True, default='')
-    baggage_type = models.CharField(max_length=16, choices=BaggageType.choices, blank=True, default='')
+    # Liste von BaggageType-Werten, ohne Doppelungen, in fester Reihenfolge (siehe TripSerializer.validate_baggage).
+    baggage = models.JSONField(default=list, blank=True)
     climate = models.CharField(max_length=4, choices=Climate.choices, blank=True, default='')
     # Das geplante Reisebudget bleibt ein eigenständiger, einfacher Wert je Reise — bewusst kein zweites
     # vollständiges Finanzsystem und keine Verbindung zu core/finanzen (siehe TripExpense-Docstring). Currency
     # ist explizit (kein Float, kein impliziter Euro-Zwang), Decimal wie überall bei Geldbeträgen im Projekt.
-    budget_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    budget_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=3, choices=Currency.choices, default=Currency.EUR)
     # Optionale Eckdaten für die Reisedetails („Unterkunft: Hotel Central, 2 Nächte · Berlin Mitte“, „Transport: Zug,
     # Hin- und Rückfahrt gebucht“). Die Nächte ergeben sich aus dem Zeitraum und werden nicht gespeichert.
@@ -205,9 +206,31 @@ class TripExpense(TripScopedModel):
     Connections). Jede Ausgabe gehört zu einer Budget-Kategorie (Standard „Sonstiges“)."""
 
     title = models.CharField(max_length=120)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    # Originalbetrag in Originalwährung = die tatsächliche Zahlung. Wird nie umgerechnet überschrieben.
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES)
     date = models.DateField()
     category = models.CharField(max_length=12, choices=BudgetCategory.choices, default=BudgetCategory.SONSTIGES)
+    note = models.CharField(max_length=240, blank=True, default='')
+    # Umrechnungs-Schnappschuss beim Speichern (reisen/expense_fx.py) — vom Backend berechnet, nie vom Client:
+    # - in die Reisewährung (für „Ausgegeben“/„Verbleibend“; gleiche Währung = Kurs 1),
+    # - in die Heimatwährung dessen, der die Ausgabe erfasst hat (Vergleichswert).
+    # Leer (null), wenn zum Zeitpunkt kein Kurs verfügbar war — dann wird nichts geraten.
+    amount_trip = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    rate_to_trip = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
+    home_currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, blank=True, default='')
+    amount_home = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    rate_to_home = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
+    rate_date = models.DateField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        # Ohne Angabe gilt die Reisewährung; in gleicher Währung ist der Wert in Reisewährung der Betrag selbst
+        # (Kurs 1, keine Umrechnung). Alles mit echtem Kurs rechnet reisen/expense_fx.py.
+        if not self.currency:
+            self.currency = self.trip.currency
+        if self.amount_trip is None and self.currency == self.trip.currency:
+            self.amount_trip, self.rate_to_trip = self.amount, 1
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ['date', 'id']
@@ -222,7 +245,7 @@ class TripBudgetCategory(TripScopedModel):
     Category = BudgetCategory
 
     category = models.CharField(max_length=12, choices=Category.choices)
-    planned_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    planned_amount = models.DecimalField(max_digits=14, decimal_places=2)
 
     class Meta:
         ordering = ['id']

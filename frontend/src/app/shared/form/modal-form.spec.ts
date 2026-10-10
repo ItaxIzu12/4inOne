@@ -262,4 +262,31 @@ describe('ModalForm with reactive forms', () => {
     (el.querySelector('button[type="submit"]') as HTMLButtonElement).click();
     expect(fixture.componentInstance.saved).toBe('Neu');
   });
+
+  it('shows "missing" messages only after Save — not on blur or when leaving the field', async () => {
+    const fixture = TestBed.createComponent(ReactiveHost);
+    fixture.componentInstance.form.controls.title.setValue('');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    const input = el.querySelector('#rt') as HTMLInputElement;
+    const error = () => el.querySelector('.field__error')?.textContent ?? null;
+
+    input.focus();
+    input.dispatchEvent(new Event('blur'));
+    fixture.componentInstance.form.markAllAsTouched();
+    fixture.detectChanges();
+    expect(error()).toBeNull();
+    expect(input.getAttribute('aria-invalid')).toBeNull();
+
+    (el.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(error()).toBe('Bitte Titel angeben.');
+
+    // Danach live: verschwindet, sobald die Angabe stimmt.
+    input.value = 'Hotel';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(error()).toBeNull();
+  });
 });

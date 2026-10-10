@@ -103,9 +103,9 @@ def test_sessions_are_private_and_need_a_login(user):
 
 def test_profile_name_can_be_changed_but_not_the_email(user):
     client, token = sign_in(AGENT_A)
-    assert get(client, '/api/v1/auth/me/', token).json() == {'name': 'Mira', 'email': 'mira@example.com'}
+    assert get(client, '/api/v1/auth/me/', token).json() == {'name': 'Mira', 'email': 'mira@example.com', 'home_currency': 'EUR'}
     response = client.patch('/api/v1/auth/me/', {'name': ' Mira Neu ', 'email': 'evil@example.com'}, content_type='application/json', HTTP_AUTHORIZATION=f'Bearer {token}')
-    assert response.status_code == 200 and response.json() == {'name': 'Mira Neu', 'email': 'mira@example.com'}
+    assert response.status_code == 200 and response.json() == {'name': 'Mira Neu', 'email': 'mira@example.com', 'home_currency': 'EUR'}
     user.refresh_from_db()
     assert user.first_name == 'Mira Neu' and user.email == 'mira@example.com' and user.username == 'mira@example.com'
     short = client.patch('/api/v1/auth/me/', {'name': 'M'}, content_type='application/json', HTTP_AUTHORIZATION=f'Bearer {token}')

@@ -853,3 +853,56 @@ textarea:focus-visible {
   }
 
 }
+
+// Gepäck: kombinierbare Chips (wie die Kategorie-Chips in Finanzen), ausgewählt mit Häkchen — nicht nur über Farbe.
+.baggage-field {
+  display: grid;
+  gap: 8px;
+}
+.baggage-field__label {
+  color: var(--text, #16233a);
+  font-size: 14px;
+  font-weight: 700;
+}
+.baggage-field__label .muted {
+  font-weight: 400;
+}
+.baggage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.baggage-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #d7e1ef;
+  border-radius: 999px;
+  background: #fff;
+  color: #2c3a4e;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 150ms ease-out, background-color 150ms ease-out;
+}
+.baggage-chip:hover {
+  border-color: #b7c7de;
+}
+.baggage-chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #1c3f8f;
+  font-weight: 650;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.baggage-chip app-icon {
+  width: 16px;
+  height: 16px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .baggage-chip {
+    transition: none;
+  }
+}

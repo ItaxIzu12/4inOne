@@ -64,6 +64,41 @@ schlägt das Wetter nur vor (Juni–August warm, November–Februar kalt, sonst 
 „Geschätzt nach Reisemonat – bitte prüfen“; eine eigene Wahl bleibt stehen. Kein Wetterdienst: Das Ziel verlässt
 4inOne nicht. Ohne Angabe wird nichts Jahreszeitliches angenommen.
 
+**Gepäck** (`Trip.baggage`, Liste, Migration `0012_trip_baggage_list`): kombinierbare Chips Handgepäck · Aufgabegepäck ·
+Gepäck im Auto; nichts gewählt = keine Angabe („Noch unklar“ entfällt, alte Werte wurden übernommen). Kompakte Packliste
+nur bei ausschließlich Handgepäck; Handgepäck → „Handgepäck-Maße und Flüssigkeitsregel prüfen“, Aufgabegepäck →
+„Kofferanhänger“.
+
+## Budget, Währungen und Ausgaben
+
+- **Reisewährung** (`Trip.currency`): alle 30 Währungen mit EZB-Referenzkurs (`core/currencies.py`, Frontend
+  `shared/currency/currencies.ts`), Anzeige „JPY – Japanischer Yen“, Beträge „250.000 JPY“ bzw. „1.430,20 €“. Eine neue
+  Reise bekommt die Landeswährung, wenn das Ziel eindeutig ein Land nennt („Tokio, Japan“ → JPY), sonst die
+  Heimatwährung; im Budget-Dialog wird sie vorgeschlagen, solange noch nichts geplant oder ausgegeben ist. Keine
+  Aussagen darüber, welche Währungen sonst „akzeptiert“ werden.
+- **Heimatwährung**: eine zentrale Einstellung (`core.UserPreference`, Einstellungen → Profil, Standard EUR), über
+  `/auth/me/`. Nie pro Reise abgefragt.
+- **Kurse** (`core/fx.py`): tägliche EZB-Referenzkurse, vom Backend geladen (keine Nutzerdaten), höchstens alle 6 h
+  (Sperre im lokalen Cache `fx`, auch nach Fehlschlag), gespeichert in `core.ExchangeRate` je Kursdatum. Älter als 7 Tage
+  = nicht verfügbar. Kreuzkurse über EUR, alles Decimal. Nie ein geratener Kurs, nie „1“ als Ersatz.
+  Frontend: `FxService` lädt `/fx/rates/` einmal je Sitzung und rechnet Vorschauen lokal (kein Request je Tastendruck);
+  Demo mit festen, als „Beispielkurs (Demo)“ gekennzeichneten Kursen.
+- **Gesamtbudget**: optional, im Dialog „Gesamtbudget festlegen“ beim Speichern Pflicht (> 0). Gespeichert in
+  Reisewährung; „≈ … € in deiner Heimatwährung“ zum aktuellen Richtkurs mit Hinweis auf abweichende Bank-/Kartenkurse.
+  Kategorie-Budgets erben die Reisewährung.
+- **Ausgaben** (`TripExpense`): Originalbetrag + Originalwährung (Standard Reisewährung) = tatsächliche Zahlung, dazu
+  Notiz. Beim Speichern berechnet das **Backend** einen Schnappschuss (`reisen/expense_fx.py`): Wert in Reisewährung
+  (für „Ausgegeben“), Wert in der Heimatwährung des Erfassenden, Kurse und Kursdatum. Historisch: ändert sich nur bei
+  geändertem Betrag/geänderter Währung. Werte vom Client werden ignoriert. Ohne Kurs wird trotzdem gespeichert; die
+  Ausgabe zählt dann nicht in „Ausgegeben“ und das steht dabei. Wechselt die Reisewährung, werden nur die Werte in
+  Reisewährung neu berechnet.
+- **Summen**: nur über die Werte in Reisewährung — verschiedene Währungen werden nie direkt addiert. Ohne Gesamtbudget:
+  „Noch kein Gesamtbudget · Bisher ausgegeben“, kein „Verbleibend“/„0 €“/„100 %“.
+- **Migration** `0011_expense_currency_fx`: bestehende Ausgaben bekommen die Reisewährung als Originalwährung (war die
+  implizite Annahme), Wert in Reisewährung = Betrag; kein erfundener Heimatwährungs-Wert („Umrechnung unbekannt“).
+- **Validierung**: Fehler erst nach „Speichern“/„Ausgabe speichern“, direkt am Feld, danach live; „Abbrechen“ prüft
+  nichts.
+
 Hauptaktion: auf Meine Reisen „Reise erstellen“ (am Handy unten). In einer Reise „Bearbeiten“ im Kopf (am Handy als
 44-px-Symbolknopf); Hinzufügen passiert im jeweiligen Reiter — kein schwebender Knopf, keine doppelten Knöpfe.
 
@@ -125,7 +160,7 @@ getestet). Das Frontend lädt beim Öffnen einer Reise deren vier Listen paralle
 ## Bewusst nicht in V1
 
 Connection Engine, Cross-Domain-Vorschläge, Automationen, Karten/POIs, Wetter, Flugstatus, Airline-/Hotel-/Booking-
-APIs, Kalender-Sync, Dokumente, Fotos, Reisejournal, Reiseideen (kein vorhandener Code), AI, globale Suche (gibt es
+APIs (außer den EZB-Referenzkursen für Umrechnungen), Kalender-Sync, Dokumente, Fotos, Reisejournal, Reiseideen (kein vorhandener Code), AI, globale Suche (gibt es
 noch nicht).
 
 ## Freeze

@@ -23,6 +23,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from core.mfa_views import MfaVerifyRateThrottle, user_has_mfa_enabled, verify_mfa_code
 from core.models import Household, HouseholdMembership, PasswordResetToken, UserSession
 from core.throttling import LocalCacheThrottle
+from .currencies import CURRENCY_CHOICES
+from .models import UserPreference, home_currency_for
 
 REFRESH_COOKIE_NAME = 'refresh_token'
 PASSWORD_RESET_TOKEN_LIFETIME = timezone.timedelta(minutes=30)
@@ -81,8 +83,8 @@ def _session_id_from_cookie(request) -> str | None:
 
 def _user_payload(user) -> dict:
     """Für die Begrüßung/Initialen im Frontend (Header, Dashboard) — bewusst
-    nur Name/E-Mail, keine weiteren Felder (Datenminimierung)."""
-    return {'name': user.first_name, 'email': user.email}
+    nur Name/E-Mail und die Heimatwährung (Umrechnungen in Reisen), keine weiteren Felder (Datenminimierung)."""
+    return {'name': user.first_name, 'email': user.email, 'home_currency': home_currency_for(user)}
 
 
 class RegisterRateThrottle(LocalCacheThrottle):
@@ -510,7 +512,13 @@ class SessionDetailView(APIView):
 
 
 class ProfileSerializer(serializers.Serializer):
-    name = serializers.CharField(min_length=2, max_length=150)
+    name = serializers.CharField(min_length=2, max_length=150, required=False)
+    home_currency = serializers.ChoiceField(choices=CURRENCY_CHOICES, required=False)
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError('Nichts zu speichern.')
+        return attrs
 
 
 class ProfileView(APIView):
@@ -525,8 +533,12 @@ class ProfileView(APIView):
     def patch(self, request):
         serializer = ProfileSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        request.user.first_name = serializer.validated_data['name'].strip()
-        request.user.save(update_fields=['first_name'])
+        data = serializer.validated_data
+        if 'name' in data:
+            request.user.first_name = data['name'].strip()
+            request.user.save(update_fields=['first_name'])
+        if 'home_currency' in data:
+            UserPreference.objects.update_or_create(user=request.user, defaults={'home_currency': data['home_currency']})
         return Response(_user_payload(request.user))
 
     def delete(self, request):

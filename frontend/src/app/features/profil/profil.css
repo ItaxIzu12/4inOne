@@ -26,7 +26,8 @@
   display: grid;
   gap: 6px;
 }
-.profile-field label {
+.profile-field label,
+.profile-label {
   font-size: 14px;
   font-weight: 600;
 }

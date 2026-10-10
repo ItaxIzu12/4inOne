@@ -2,11 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../core/api.config';
+import { CurrencyCode } from '../../shared/currency/currencies';
 
 /** Reisen V1: in Planung → bestätigt (gebucht) → abgeschlossen, oder abgesagt. Kein Entwurf; „Unterwegs“ ergibt
  * sich aus dem Zeitraum (reisen-logic.ts tripPhase()). */
 export type TripStatus = 'PLANNED' | 'CONFIRMED' | 'DONE' | 'CANCELLED';
 export type TripClimate = 'WARM' | 'MILD' | 'COLD' | 'SNOW' | '';
+export type BaggageType = 'HAND_LUGGAGE' | 'CHECKED_BAGGAGE' | 'CAR_LUGGAGE';
 export interface Trip {
   id: number;
   title: string;
@@ -24,12 +26,13 @@ export interface Trip {
    * (siehe trip-suggestions.ts) sinnvoller zu wählen; Reisen funktioniert auch ganz ohne sie. */
   travel_type: 'CITY_TRIP' | 'BEACH' | 'BUSINESS' | 'ROAD_TRIP' | 'ACTIVE' | 'WINTER' | 'FAMILY' | 'GENERAL' | '';
   transport_type: 'FLIGHT' | 'TRAIN' | 'CAR' | 'BUS' | 'OTHER' | '';
-  baggage_type: 'HAND_LUGGAGE' | 'CHECKED_BAGGAGE' | 'CAR_LUGGAGE' | 'UNKNOWN' | '';
+  /** Kombinierbar (Handgepäck UND Koffer); leer = keine Angabe. */
+  baggage: BaggageType[];
   /** „Wetter am Ziel“ — vom Nutzer gewählt; das Formular schlägt nur nach Reisemonat vor (kein Wetterdienst). */
   climate: TripClimate;
   budget_amount: string | null;
   /** Explizit statt eines impliziten Euro-Zwangs — kein Float, immer als String (Decimal) übertragen. */
-  currency: 'EUR' | 'USD' | 'GBP' | 'CHF';
+  currency: CurrencyCode;
   /** Optionale Eckdaten für die Reisedetails; die Nächte ergeben sich aus dem Zeitraum. */
   accommodation: string;
   accommodation_area: string;
@@ -97,13 +100,24 @@ export interface TripEvent {
   ends_at: string | null;
   location: string;
 }
+/** Eine Reiseausgabe: Originalbetrag in Originalwährung = die tatsächliche Zahlung. Die Umrechnungen rechnet das
+ * Backend beim Speichern (Schnappschuss) — leer, wenn damals kein Kurs verfügbar war. */
 export interface TripExpense {
   id: number;
   trip: number;
   title: string;
   amount: string;
+  currency: CurrencyCode;
   date: string;
   category: BudgetCategory;
+  note?: string;
+  /** Wert in der Reisewährung (fließt in „Ausgegeben“); null = ohne Umrechnung. */
+  amount_trip?: string | null;
+  rate_to_trip?: string | null;
+  home_currency?: string;
+  amount_home?: string | null;
+  rate_to_home?: string | null;
+  rate_date?: string | null;
 }
 export type BudgetCategory = 'TRANSPORT' | 'UNTERKUNFT' | 'ESSEN' | 'AKTIVITAETEN' | 'SHOPPING' | 'SONSTIGES' | 'RESERVE';
 /** Geplanter Betrag je Kategorie; die Ausgaben tragen dieselbe Kategorie (geplant vs. ausgegeben). */

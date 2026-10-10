@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { ContactOption, PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask } from './reisen-api.service';
+import { DEMO_RATES } from '../../core/fx/fx.service';
 
 // Feste Demo-Kontakte, nur für diese Instanz: die Demo hat keinen eigenen Login und keine zweite Person, die
 // wirklich existiert, daher ist "meine Rolle" hier immer OWNER (siehe withSummary()) und der Kontaktpicker
@@ -40,7 +41,7 @@ const BLANK: Omit<TripBase, 'id' | 'title' | 'start_date' | 'end_date'> = {
   status: 'PLANNED',
   travel_type: '',
   transport_type: '',
-  baggage_type: '',
+  baggage: [],
   climate: '',
   budget_amount: null,
   currency: 'EUR',
@@ -76,7 +77,7 @@ export class DemoReisenApi {
       status: 'CONFIRMED',
       travel_type: 'CITY_TRIP',
       transport_type: 'TRAIN',
-      baggage_type: 'HAND_LUGGAGE',
+      baggage: ['HAND_LUGGAGE'],
       budget_amount: '700.00',
       accommodation: 'Hotel Central',
       accommodation_area: 'Berlin Mitte',
@@ -92,7 +93,7 @@ export class DemoReisenApi {
       status: 'PLANNED',
       travel_type: 'BEACH',
       transport_type: 'FLIGHT',
-      baggage_type: 'CHECKED_BAGGAGE',
+      baggage: ['HAND_LUGGAGE', 'CHECKED_BAGGAGE'],
       budget_amount: '2400.00',
       accommodation: 'Ferienwohnung Limone',
       accommodation_area: 'Limone sul Garda',
@@ -168,16 +169,16 @@ export class DemoReisenApi {
     { id: 1, trip: 1, title: 'Museumsbesuch', starts_at: at(BERLIN + 1, '11:00'), ends_at: at(BERLIN + 1, '13:00'), location: 'Museumsinsel' },
   ];
   private expenseList: TripExpense[] = [
-    { id: 1, trip: 1, title: 'Hotelanzahlung', amount: '200.00', date: dateOnly(-6), category: 'UNTERKUNFT' },
-    { id: 2, trip: 1, title: 'Bahntickets', amount: '80.00', date: dateOnly(-7), category: 'TRANSPORT' },
-    { id: 3, trip: 1, title: 'Restaurant „Lindenhof“ (Reservierung)', amount: '45.00', date: dateOnly(-4), category: 'ESSEN' },
-    { id: 4, trip: 1, title: 'Museum – Eintritt', amount: '25.00', date: dateOnly(-3), category: 'AKTIVITAETEN' },
-    { id: 5, trip: 1, title: 'Stadtführung', amount: '15.00', date: dateOnly(-3), category: 'AKTIVITAETEN' },
-    { id: 6, trip: 1, title: 'Frühstück vorab bezahlt', amount: '15.00', date: dateOnly(-2), category: 'ESSEN' },
-    { id: 7, trip: 1, title: 'Kurtaxe', amount: '40.00', date: dateOnly(-2), category: 'UNTERKUNFT' },
-    { id: 8, trip: 2, title: 'Flüge (Anzahlung)', amount: '600.00', date: dateOnly(-10), category: 'TRANSPORT' },
-    { id: 9, trip: 4, title: 'Flüge', amount: '340.00', date: dateOnly(-100), category: 'TRANSPORT' },
-    { id: 10, trip: 4, title: 'Hotel', amount: '420.00', date: dateOnly(-55), category: 'UNTERKUNFT' },
+    { id: 1, trip: 1, title: 'Hotelanzahlung', amount: '200.00', date: dateOnly(-6), category: 'UNTERKUNFT', currency: 'EUR', amount_trip: '200.00', home_currency: 'EUR', amount_home: '200.00' },
+    { id: 2, trip: 1, title: 'Bahntickets', amount: '80.00', date: dateOnly(-7), category: 'TRANSPORT', currency: 'EUR', amount_trip: '80.00', home_currency: 'EUR', amount_home: '80.00' },
+    { id: 3, trip: 1, title: 'Restaurant „Lindenhof“ (Reservierung)', amount: '45.00', date: dateOnly(-4), category: 'ESSEN', currency: 'EUR', amount_trip: '45.00', home_currency: 'EUR', amount_home: '45.00' },
+    { id: 4, trip: 1, title: 'Museum – Eintritt', amount: '25.00', date: dateOnly(-3), category: 'AKTIVITAETEN', currency: 'EUR', amount_trip: '25.00', home_currency: 'EUR', amount_home: '25.00' },
+    { id: 5, trip: 1, title: 'Stadtführung', amount: '15.00', date: dateOnly(-3), category: 'AKTIVITAETEN', currency: 'EUR', amount_trip: '15.00', home_currency: 'EUR', amount_home: '15.00' },
+    { id: 6, trip: 1, title: 'Frühstück vorab bezahlt', amount: '15.00', date: dateOnly(-2), category: 'ESSEN', currency: 'EUR', amount_trip: '15.00', home_currency: 'EUR', amount_home: '15.00' },
+    { id: 7, trip: 1, title: 'Kurtaxe', amount: '40.00', date: dateOnly(-2), category: 'UNTERKUNFT', currency: 'EUR', amount_trip: '40.00', home_currency: 'EUR', amount_home: '40.00' },
+    { id: 8, trip: 2, title: 'Flüge (Anzahlung)', amount: '600.00', date: dateOnly(-10), category: 'TRANSPORT', currency: 'EUR', amount_trip: '600.00', home_currency: 'EUR', amount_home: '600.00' },
+    { id: 9, trip: 4, title: 'Flüge', amount: '340.00', date: dateOnly(-100), category: 'TRANSPORT', currency: 'EUR', amount_trip: '340.00', home_currency: 'EUR', amount_home: '340.00' },
+    { id: 10, trip: 4, title: 'Hotel', amount: '420.00', date: dateOnly(-55), category: 'UNTERKUNFT', currency: 'EUR', amount_trip: '420.00', home_currency: 'EUR', amount_home: '420.00' },
   ];
   private budgetCategoryList: TripBudgetCategory[] = [
     { id: 1, trip: 1, category: 'UNTERKUNFT', planned_amount: '300.00' },
@@ -209,7 +210,7 @@ export class DemoReisenApi {
       tasks_open: tasks.filter((t) => t.status === 'OPEN').length,
       tasks_total: tasks.length,
       events_count: events.length,
-      budget_spent: expenses.reduce((sum, e) => sum + Number(e.amount), 0).toFixed(2),
+      budget_spent: expenses.reduce((sum, e) => sum + Number(e.amount_trip ?? 0), 0).toFixed(2),
       participants: this.participantList.filter((p) => p.trip === trip.id),
       // Die Demo hat keine zweite echte Person: der Betrachter ist immer der Ersteller jeder Demo-Reise.
       my_role: 'OWNER',
@@ -227,7 +228,10 @@ export class DemoReisenApi {
       if (index === -1) return throwError(() => ({ status: 404 }));
       const updated = { ...this.tripList[index], ...data, updated_at: new Date().toISOString() };
       if (!updated.start_date || !updated.end_date) return throwError(() => ({ status: 400 }));
+      const currencyChanged = updated.currency !== this.tripList[index].currency;
       this.tripList[index] = updated;
+      // Wie reisen/expense_fx.py: neue Reisewährung → Werte in Reisewährung neu, Originale/Heimatwerte bleiben.
+      if (currencyChanged) this.expenseList.filter((e) => e.trip === id).forEach((e) => Object.assign(e, this.toTrip(e)));
       return of(this.withSummary(this.tripList[index]));
     }
     // Wie das Backend (reisen/serializers.py): ohne beide Daten wird keine Reise gespeichert.
@@ -348,12 +352,34 @@ export class DemoReisenApi {
     if (id) {
       const index = this.expenseList.findIndex((e) => e.id === id);
       if (index === -1) return throwError(() => ({ status: 404 }));
-      this.expenseList[index] = { ...this.expenseList[index], ...data };
+      const before = this.expenseList[index];
+      const next = { ...before, ...data };
+      const changed = next.amount !== before.amount || next.currency !== before.currency;
+      this.expenseList[index] = changed ? { ...next, ...this.snapshot(next) } : next;
       return of(this.expenseList[index]);
     }
-    const created: TripExpense = { id: this.nextId++, trip: 0, title: '', amount: '0.00', date: dateOnly(0), category: 'SONSTIGES', ...data };
+    const trip = this.tripList.find((t) => t.id === data.trip);
+    const base: TripExpense = { id: this.nextId++, trip: 0, title: '', amount: '0.00', currency: trip?.currency ?? 'EUR', date: dateOnly(0), category: 'SONSTIGES', ...data };
+    const created = { ...base, ...this.snapshot(base) };
     this.expenseList.push(created);
     return of(created);
+  }
+  /** Wie das Backend beim Speichern: Wert in Reise- und Heimatwährung (Demo: EUR) zum Beispielkurs. */
+  private snapshot(e: TripExpense): Partial<TripExpense> {
+    const home = 'EUR';
+    const rate = DEMO_RATES[home] / DEMO_RATES[e.currency];
+    return {
+      ...this.toTrip(e),
+      home_currency: home,
+      rate_to_home: rate ? String(rate) : null,
+      amount_home: rate ? (Number(e.amount) * rate).toFixed(2) : null,
+      rate_date: e.currency === home ? null : dateOnly(0),
+    };
+  }
+  private toTrip(e: TripExpense): Partial<TripExpense> {
+    const tripCurrency = this.tripList.find((t) => t.id === e.trip)?.currency ?? e.currency;
+    const rate = DEMO_RATES[tripCurrency] / DEMO_RATES[e.currency];
+    return { rate_to_trip: rate ? String(rate) : null, amount_trip: rate ? (Number(e.amount) * rate).toFixed(2) : null };
   }
   removeExpense(id: number): Observable<void> {
     const index = this.expenseList.findIndex((e) => e.id === id);

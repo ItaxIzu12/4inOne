@@ -29,6 +29,17 @@
         </p>
       </div>
 
+      <div class="profile-field">
+        <span class="profile-label" id="profile-home-currency">Heimatwährung</span>
+        <app-select
+          ariaLabelledby="profile-home-currency"
+          [options]="currencyOptions"
+          [value]="homeCurrency()"
+          (valueChange)="homeCurrency.set($any($event)); saved.set(false)"
+        />
+        <p class="profile-hint">Reisebudgets und Ausgaben zeigen zusätzlich einen ungefähren Wert in dieser Währung.</p>
+      </div>
+
       @if (error()) {
         <p id="profile-error" class="profile-error"  [appErrorNotice]="error()" [persistentError]="true">{{ error() }}</p>
       }

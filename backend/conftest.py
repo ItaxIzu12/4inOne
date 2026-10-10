@@ -14,3 +14,12 @@ def _clear_throttle_cache():
     caches['throttle'].clear()
     yield
     caches['throttle'].clear()
+
+
+@pytest.fixture(autouse=True)
+def _no_exchange_rate_network(settings):
+    """Tests laden nie echte EZB-Kurse (core/fx.py) — Kurse legen die Tests selbst als ExchangeRate an."""
+    settings.FX_FETCH_ENABLED = False
+    caches['fx'].clear()
+    yield
+    caches['fx'].clear()

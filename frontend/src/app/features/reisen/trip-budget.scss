@@ -21,9 +21,24 @@
   font-weight: 700;
   letter-spacing: -0.3px;
 }
+.kpis .approx {
+  margin: 0;
+  color: #53627a;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.kpis--single {
+  grid-template-columns: minmax(0, 1fr);
+}
 .calc {
   margin-top: 8px;
   font-size: 13px;
+}
+.rate-note {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
 }
 .cats {
   display: grid;
@@ -31,16 +46,31 @@
   padding: 0;
   list-style: none;
 }
+.cats li + li {
+  border-top: 1px solid var(--line);
+}
+// Jede Zeile ist ein Knopf: öffnet „Kategorie planen“ (Betrag ändern oder Planung entfernen).
 .cat {
   display: grid;
   // Feste rechte Spalte, damit alle Balken gleich lang sind.
   grid-template-columns: minmax(0, 1fr) 10.5rem;
   gap: 6px 12px;
+  width: 100%;
   padding: 12px 0;
-  border-top: 1px solid var(--line);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
-.cat:first-child {
-  border-top: 0;
+.cat:disabled {
+  cursor: default;
+  opacity: 1;
+}
+.cat:hover:not(:disabled) b {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .cat__name {
   display: flex;
@@ -115,9 +145,17 @@
   overflow-wrap: anywhere;
 }
 .exp__amount {
+  display: grid;
+  justify-items: end;
   color: #16233a;
   font-size: 15px;
   font-weight: 600;
+  white-space: nowrap;
+}
+.exp__amount small {
+  color: #53627a;
+  font-size: 12.5px;
+  font-weight: 500;
 }
 .more {
   margin-top: 4px;

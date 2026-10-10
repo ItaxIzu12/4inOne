@@ -372,7 +372,15 @@ CACHES = {
     'throttle': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
+    # Nur die Sperre „EZB-Kurse höchstens alle 6 Stunden laden“ (core/fx.py) — lokal, damit Umrechnungen nicht von
+    # Redis abhängen. Die Kurse selbst liegen in der Datenbank.
+    'fx': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
 }
+
+# Wechselkurse von der EZB laden (core/fx.py). In Tests aus (conftest.py) — dort gibt es nie Netzwerkzugriffe.
+FX_FETCH_ENABLED = env.bool('FX_FETCH_ENABLED', default=True)
 
 # Admin-Panel NICHT unter dem Standardpfad /admin/ (ARCHITEKTUR.md §3.4:
 # Standardziel automatisierter Scanner). Pfad kommt aus der Umgebung,
