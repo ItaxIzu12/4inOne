@@ -31,6 +31,7 @@ import {
   splitQuantity,
 } from './einkauf-logic';
 import { RowMenu, RowMenuItem } from './row-menu';
+import { parseMoneyInput } from '../../shared/currency/money-input';
 
 const MODE_STORAGE_KEY = 'kompass.einkaufsmodus';
 
@@ -594,9 +595,9 @@ export class EinkaufTab {
   }
 
   protected setAmountFromInput(value: string): void {
-    // Deutsche Schreibweise: "1.234,50" → 1234.5
-    const amount = Number(value.trim().replace(/\./g, '').replace(',', '.'));
-    if (Number.isFinite(amount)) {
+    // Deutsche Schreibweise: "1.234,50" → 1234.5 (gemeinsamer Leser, siehe shared/currency/money-input.ts)
+    const amount = parseMoneyInput(value);
+    if (amount !== null) {
       this.completeAmount.set(amount);
       if (amount > this.completeSliderMax()) this.completeSliderMax.set(sliderMax(amount));
     }

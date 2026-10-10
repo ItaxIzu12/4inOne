@@ -68,6 +68,7 @@ describe('reisen-logic', () => {
         { id: 2, trip: 1, title: 'Essen', amount: '120.00', date: '2026-03-01', category: 'ESSEN', currency: 'EUR' },
         { id: 3, trip: 1, title: 'Souvenir', amount: '10.00', date: '2026-03-01', category: 'SHOPPING', currency: 'EUR' },
       ],
+      'EUR',
     );
     expect(rows.map((r) => [r.label, r.pct, r.remaining, r.over])).toEqual([
       ['Unterkunft', 80, 60, false],
@@ -77,12 +78,12 @@ describe('reisen-logic', () => {
   });
 
   it('formats money compactly only for whole amounts', () => {
-    expect(formatMoney(700, 'EUR', true)).toBe('700 €');
-    expect(formatMoney('45.5', 'EUR', true)).toBe('45,50 €');
-    expect(formatMoney(2000, 'USD', true)).toBe('2.000 USD');
-    expect(formatMoney(700, 'EUR')).toBe('700,00 €');
-    // Yen ohne Nachkommastellen, immer mit ISO-Code (¥ wäre zwischen JPY und CNY mehrdeutig).
-    expect(formatMoney(250000, 'JPY')).toBe('250.000 JPY');
+    expect(formatMoney(700, 'EUR', true)).toBe('700\u00a0€');
+    expect(formatMoney('45.5', 'EUR', true)).toBe('45,50\u00a0€');
+    expect(formatMoney(2000, 'USD', true)).toBe('2.000\u00a0$');
+    expect(formatMoney(700, 'EUR')).toBe('700,00\u00a0€');
+    // Yen ohne Nachkommastellen — Symbol und Stellen kommen aus Intl.
+    expect(formatMoney(250000, 'JPY')).toBe('250.000\u00a0¥');
   });
 
   it('sums expenses in the trip currency — never the raw amount of another currency', () => {

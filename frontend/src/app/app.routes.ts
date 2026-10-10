@@ -18,6 +18,7 @@ import { RealHaushaltDataProvider } from './features/haushalt/real-haushalt-data
 import { ReisenApi } from './features/reisen/reisen-api.service';
 import { DemoReisenApi } from './features/reisen/demo-reisen-api';
 import { DemoFxService, FxService } from './core/fx/fx.service';
+import { DemoHomeCurrency, HomeCurrency } from './core/fx/home-currency';
 import { ContactsApiService } from './core/contacts/contacts-api.service';
 import { DemoContactsApiService } from './core/contacts/demo-contacts-api.service';
 // Public landing and authenticated dashboard share /; session initialization runs before matching.
@@ -64,6 +65,7 @@ export const routes: Routes = [
       { provide: OrganisationApi, useClass: DemoOrganisationApi },
       { provide: ReisenApi, useClass: DemoReisenApi },
       { provide: FxService, useClass: DemoFxService },
+      { provide: HomeCurrency, useClass: DemoHomeCurrency },
       { provide: ContactsApiService, useClass: DemoContactsApiService },
       FinanzenStateService,
     ],

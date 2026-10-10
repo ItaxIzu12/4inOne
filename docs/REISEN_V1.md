@@ -72,25 +72,36 @@ nur bei ausschließlich Handgepäck; Handgepäck → „Handgepäck-Maße und Fl
 ## Budget, Währungen und Ausgaben
 
 - **Reisewährung** (`Trip.currency`): alle 30 Währungen mit EZB-Referenzkurs (`core/currencies.py`, Frontend
-  `shared/currency/currencies.ts`), Anzeige „JPY – Japanischer Yen“, Beträge „250.000 JPY“ bzw. „1.430,20 €“. Eine neue
-  Reise bekommt die Landeswährung, wenn das Ziel eindeutig ein Land nennt („Tokio, Japan“ → JPY), sonst die
-  Heimatwährung; im Budget-Dialog wird sie vorgeschlagen, solange noch nichts geplant oder ausgegeben ist. Keine
+  `shared/currency/currencies.ts`), Anzeige „JPY – Japanischer Yen“. Beträge formatiert zentral `formatAmount` (Intl.NumberFormat, Locale de-DE
+  getrennt von der Währung): „250.000 ¥“, „1.430,20 CHF“, „350,00 $“, „1.430,20 €“ — gespeichert wird immer Zahl +
+  ISO-Code. Eine neue Reise bekommt die Landeswährung, wenn das Ziel eindeutig ein Land nennt („Tokio, Japan“ → JPY),
+  sonst die Heimatwährung (auch serverseitig, wenn keine Währung mitkommt); im Budget-Dialog wird sie vorgeschlagen, solange noch nichts geplant oder ausgegeben ist. Keine
   Aussagen darüber, welche Währungen sonst „akzeptiert“ werden.
-- **Heimatwährung**: eine zentrale Einstellung (`core.UserPreference`, Einstellungen → Profil, Standard EUR), über
-  `/auth/me/`. Nie pro Reise abgefragt.
+- **Heimatwährung**: eine zentrale Einstellung (`core.UserPreference`, Einstellungen → Profil), über `/auth/me/`; im
+  Frontend nur über `HomeCurrency` gelesen (Demo: eigene Einstellung). Keine Währung ist bevorzugt: Ziel jeder
+  Umrechnung ist die eingestellte Heimatwährung (EUR, CHF, USD, JPY …). Die einzige Vorgabe ist die Voreinstellung für
+  neue Konten (`DEFAULT_HOME_CURRENCY` / `ACCOUNT_DEFAULT_HOME_CURRENCY`). Gleiche Währung wie die Heimatwährung →
+  keine „≈“-Zeile. EUR ist nur die technische Basis der EZB-Tabelle (Kreuzkurse).
 - **Kurse** (`core/fx.py`): tägliche EZB-Referenzkurse, vom Backend geladen (keine Nutzerdaten), höchstens alle 6 h
   (Sperre im lokalen Cache `fx`, auch nach Fehlschlag), gespeichert in `core.ExchangeRate` je Kursdatum. Älter als 7 Tage
   = nicht verfügbar. Kreuzkurse über EUR, alles Decimal. Nie ein geratener Kurs, nie „1“ als Ersatz.
   Frontend: `FxService` lädt `/fx/rates/` einmal je Sitzung und rechnet Vorschauen lokal (kein Request je Tastendruck);
   Demo mit festen, als „Beispielkurs (Demo)“ gekennzeichneten Kursen.
 - **Gesamtbudget**: optional, im Dialog „Gesamtbudget festlegen“ beim Speichern Pflicht (> 0). Gespeichert in
-  Reisewährung; „≈ … € in deiner Heimatwährung“ zum aktuellen Richtkurs mit Hinweis auf abweichende Bank-/Kartenkurse.
-  Kategorie-Budgets erben die Reisewährung.
+  Reisewährung; „≈ … in deiner Heimatwährung“ zum aktuellen Richtkurs (Planwerte auf ganze Einheiten gerundet), eine
+  Kursrichtung („1 JPY ≈ 0,005731 EUR“) und der einheitliche Hinweis „Umrechnung nach aktuellem Richtkurs. Der
+  tatsächliche Wechselkurs deiner Bank, Karte oder Wechselstube kann abweichen.“ Kategorie-Budgets erben die
+  Reisewährung und zeigen ebenfalls „≈ … geplant“.
 - **Ausgaben** (`TripExpense`): Originalbetrag + Originalwährung (Standard Reisewährung) = tatsächliche Zahlung, dazu
   Notiz. Beim Speichern berechnet das **Backend** einen Schnappschuss (`reisen/expense_fx.py`): Wert in Reisewährung
   (für „Ausgegeben“), Wert in der Heimatwährung des Erfassenden, Kurse und Kursdatum. Historisch: ändert sich nur bei
   geändertem Betrag/geänderter Währung. Werte vom Client werden ignoriert. Ohne Kurs wird trotzdem gespeichert; die
-  Ausgabe zählt dann nicht in „Ausgegeben“ und das steht dabei. Wechselt die Reisewährung, werden nur die Werte in
+  Ausgabe zählt bis dahin nicht in „Ausgegeben“ (steht dabei) und wird nachgerechnet, sobald wieder ein Kurs da ist
+  (`backfill_pending` beim Laden von Reisen/Ausgaben; Kursdatum = Datum des Nachrechnens). Migrierte Ausgaben sind
+  davon ausgenommen.
+- **Betragsfelder** (alle Bereiche, `AmountInput` + `shared/currency/money-input.ts`): „1.500,50“, „250.000“,
+  „1500.5“, „12,5“; beim Verlassen formatiert („250000“ → „250.000“), Eingefügtes wie „700 €“ wird bereinigt. Ein
+  Leser für Finanzen, Haushalt und Reisen; Mehrdeutiges („12,345“, „1.2.3“) ist ungültig statt geraten. Wechselt die Reisewährung, werden nur die Werte in
   Reisewährung neu berechnet.
 - **Summen**: nur über die Werte in Reisewährung — verschiedene Währungen werden nie direkt addiert. Ohne Gesamtbudget:
   „Noch kein Gesamtbudget · Bisher ausgegeben“, kein „Verbleibend“/„0 €“/„100 %“.

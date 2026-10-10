@@ -21,6 +21,7 @@ import {
 } from './geraete-logic';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
 import { RowMenu, RowMenuItem } from './row-menu';
+import { normalizeMoneyInput } from '../../shared/currency/money-input';
 import {
   BILLING_LABEL,
   CONTRACT_SORT_LABEL,
@@ -341,9 +342,8 @@ export class OrdnerTab {
 
   /** "39,99" oder "39.99" → "39.99"; leer → null; ungültig oder 0 → undefined. */
   private parseCost(value: string): string | null | undefined {
-    const trimmed = value.trim().replace(/\s|€/g, '');
-    if (!trimmed) return null;
-    const normalized = trimmed.includes(',') ? trimmed.replace(/\./g, '').replace(',', '.') : trimmed;
+    if (!value.trim()) return null;
+    const normalized = normalizeMoneyInput(value) ?? 'x';
     if (!/^\d{1,5}(\.\d{1,2})?$/.test(normalized) || Number(normalized) <= 0) return undefined;
     return Number(normalized).toFixed(2);
   }

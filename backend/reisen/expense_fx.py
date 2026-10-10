@@ -63,3 +63,31 @@ def resnapshot_trip_currency(trip) -> None:
         used: list[Rate] = []
         _to_trip(expense, rates, used)
         expense.save(update_fields=['amount_trip', 'rate_to_trip'])
+
+
+def backfill_pending(expenses) -> int:
+    """Ausgaben, die während eines Kursausfalls gespeichert wurden (kein Wert in Reisewährung), nachrechnen, sobald
+    wieder ein Kurs da ist — mit dem dann aktuellen Richtkurs; `rate_date` zeigt, von wann er ist. Die Heimatwährung
+    bleibt die, die beim Speichern galt. Alte, migrierte Ausgaben sind nicht betroffen (sie haben einen Wert in
+    Reisewährung, ihr Heimatwert bleibt unbekannt). Gibt die Zahl der nachgerechneten Ausgaben zurück."""
+    pending = list(expenses.filter(amount_trip__isnull=True).select_related('trip'))
+    if not pending:
+        return 0
+    rates = _Rates()
+    done = 0
+    for expense in pending:
+        used: list[Rate] = []
+        _to_trip(expense, rates, used)
+        if expense.amount_trip is None:
+            continue
+        if expense.amount_home is None and expense.home_currency:
+            rate = rates.rate(expense.currency, expense.home_currency)
+            if rate:
+                expense.rate_to_home, expense.amount_home = rate.rate, convert(expense.amount, rate)
+                if expense.currency != expense.home_currency:
+                    used.append(rate)
+        if used and expense.rate_date is None:
+            expense.rate_date = used[0].rate_date
+        expense.save(update_fields=['amount_trip', 'rate_to_trip', 'amount_home', 'rate_to_home', 'rate_date'])
+        done += 1
+    return done

@@ -1,6 +1,7 @@
 import { IconName } from '../../shared/icons/app-icon';
 import { BudgetCategory, PackingCategory, PackingItem, Trip, TripBudgetCategory, TripExpense, TripTask, TripStatus } from './reisen-api.service';
 import { formatAmount } from '../../shared/currency/currencies';
+import { parseMoneyInput } from '../../shared/currency/money-input';
 
 // ---------- Status ----------
 export const STATUS_ORDER: TripStatus[] = ['PLANNED', 'CONFIRMED', 'DONE', 'CANCELLED'];
@@ -190,7 +191,7 @@ export interface BudgetRow {
   over: boolean;
 }
 /** Nur Kategorien mit Plan oder Ausgabe, in fester Reihenfolge. */
-export function budgetRows(planned: TripBudgetCategory[], expenses: TripExpense[], currency = 'EUR'): BudgetRow[] {
+export function budgetRows(planned: TripBudgetCategory[], expenses: TripExpense[], currency: string): BudgetRow[] {
   return BUDGET_ORDER.map((category) => {
     const plan = Number(planned.find((p) => p.category === category)?.planned_amount ?? 0);
     const spent = expenses.filter((e) => (e.category ?? 'SONSTIGES') === category).reduce((s, e) => s + tripValue(e, currency), 0);
@@ -205,23 +206,15 @@ export function budgetRows(planned: TripBudgetCategory[], expenses: TripExpense[
     };
   }).filter((r) => r.planned > 0 || r.spent > 0);
 }
-/** Betrag aus dem Budget-Dialog: „700“, „700,50“, „1.500“, „1.500,50“, „1500.5“, auch mit „€“ oder Leerzeichen.
- * Ein Punkt vor genau drei Ziffern ohne Komma gruppiert Tausender (Cent haben nie drei Stellen). Leer → 0, ungültig → null. */
-export function parseBudgetAmount(raw: string): number | null {
-  let text = raw.replace(/[\s€]|EUR|CHF|USD|GBP|[$£]/gi, '');
-  if (!text) return 0;
-  if (text.includes(',')) text = text.replace(/\./g, '').replace(',', '.');
-  else if (/^\d{1,3}(\.\d{3})+$/.test(text)) text = text.replace(/\./g, '');
-  if (!/^\d+(\.\d{1,2})?$/.test(text)) return null;
-  return Number(text);
-}
+/** Betrag aus Budget-/Ausgaben-Dialog — der gemeinsame Leser (shared/currency/money-input.ts). Leer → 0, ungültig → null. */
+export const parseBudgetAmount = parseMoneyInput;
 export function totalBudget(trip: Trip | null, planned: TripBudgetCategory[]): number {
   const own = Number(trip?.budget_amount || 0);
   return own > 0 ? own : planned.reduce((s, p) => s + Number(p.planned_amount), 0);
 }
 
 // ---------- Geld ----------
-/** Geldbetrag auf Deutsch (siehe shared/currency): „700 €“, „250.000 JPY“. `compact` lässt „,00“ weg. */
+/** Geldbetrag (zentraler Formatter in shared/currency): „700 €“, „250.000 ¥“. `compact` lässt „,00“ weg. */
 export function formatMoney(value: string | number, currency: string, compact = false): string {
   return formatAmount(value, currency, compact);
 }

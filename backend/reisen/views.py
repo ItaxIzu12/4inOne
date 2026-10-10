@@ -10,6 +10,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .expense_fx import backfill_pending
 from .models import PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask
 from .permissions import WRITABLE_ROLES, TripAccessPermission, TripContentAccessPermission, TripParticipantManagePermission
 from .serializers import (
@@ -74,6 +75,8 @@ class TripViewSet(PrivateResponseMixin, viewsets.ModelViewSet):
     queryset = Trip.objects.all()
 
     def get_queryset(self):
+        # Vor dem Zählen: Ausgaben aus einem Kursausfall nachrechnen, damit „Ausgegeben“ sie wieder enthält.
+        backfill_pending(TripExpense.objects.filter(trip__in=trips_visible_to(self.request.user)))
         queryset = annotate_trip_counts(trips_visible_to(self.request.user))
         # Meine Reisen: ?scope=upcoming (läuft noch oder kommt), past (vorbei) oder cancelled (abgesagt).
         scope = self.request.query_params.get('scope')
@@ -183,6 +186,10 @@ class TripEventViewSet(TripScopedViewSet):
 class TripExpenseViewSet(TripScopedViewSet):
     queryset = TripExpense.objects.all()
     serializer_class = TripExpenseSerializer
+
+    def list(self, request, *args, **kwargs):
+        backfill_pending(self.get_queryset())
+        return super().list(request, *args, **kwargs)
 
 
 class TripBudgetCategoryViewSet(TripScopedViewSet):

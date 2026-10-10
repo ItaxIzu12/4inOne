@@ -50,7 +50,7 @@
       </dl>
     }
     @if (unconverted()) {
-      <p class="muted calc">{{ unconverted() === 1 ? '1 Ausgabe in anderer Währung ist' : unconverted() + ' Ausgaben in anderer Währung sind' }} ohne Umrechnung und nicht eingerechnet.</p>
+      <p class="muted calc">{{ unconverted() === 1 ? '1 Ausgabe in anderer Währung ist' : unconverted() + ' Ausgaben in anderer Währung sind' }} noch ohne Umrechnung – sie wird eingerechnet, sobald wieder ein Kurs verfügbar ist.</p>
     }
     @if (rateNote()) {
       <p class="muted rate-note">{{ rateNote() }}</p>
@@ -73,6 +73,7 @@
             <span class="cat__name"><app-icon [name]="r.icon" aria-hidden="true" /><b>{{ r.label }}</b></span>
             <span class="cat__nums num">
               {{ money(r.spent) }}@if (r.planned) { <span class="muted"> von {{ money(r.planned) }}</span> }
+              @if (r.planned && approx(r.planned); as a) { <small class="cat__home">{{ a }} geplant</small> }
             </span>
             @if (r.planned) {
               <span class="bar" [class.bar--over]="r.over" aria-hidden="true"><span [style.width.%]="barWidth(r.pct)"></span></span>

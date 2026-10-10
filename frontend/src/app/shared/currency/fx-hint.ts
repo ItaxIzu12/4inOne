@@ -1,9 +1,10 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { FxService } from '../../core/fx/fx.service';
-import { formatAmount } from './currencies';
+import { formatAmount, formatRate } from './currencies';
 
 /**
- * Umrechnung unter einem Betragsfeld: „≈ 48,70 € in deiner Heimatwährung“ plus dezenter Richtkurs-Hinweis.
+ * Umrechnung unter einem Betragsfeld in die Heimatwährung: „≈ 48,70 € in deiner Heimatwährung“, darunter eine
+ * Kursrichtung („1 JPY ≈ 0,005731 EUR“) und der einheitliche Richtkurs-Hinweis.
  * Rein zur Orientierung — gespeichert wird der eingegebene Betrag in seiner Währung. Gleiche Währung: nichts.
  * Ohne Kurs: „Umrechnung derzeit nicht verfügbar.“ — nie ein geratener Wert.
  */
@@ -26,8 +27,9 @@ import { formatAmount } from './currencies';
                 <b>≈ {{ money(p.value, to()) }}</b><span>{{ ' ' + label() }}</span>
               </p>
               <p class="fx__note">
-                {{ p.source }} vom {{ day(p.rateDate) }} · 1 {{ from() }} ≈ {{ rate(p.rate) }} {{ to() }}.
-                Der tatsächliche Kurs deiner Bank, Karte oder Wechselstube kann abweichen.
+                1 {{ from() }} ≈ {{ rate(p.rate) }} {{ to() }} · {{ p.source }}, Stand {{ day(p.rateDate) }}<br />
+                Umrechnung nach aktuellem Richtkurs. Der tatsächliche Wechselkurs deiner Bank, Karte oder Wechselstube kann
+                abweichen.
               </p>
             }
           }
@@ -91,7 +93,7 @@ export class FxHint {
     return formatAmount(value, currency);
   }
   rate(value: number): string {
-    return value.toLocaleString('de-DE', { maximumSignificantDigits: 4 });
+    return formatRate(value);
   }
   day(iso: string): string {
     return new Date(`${iso}T12:00`).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });

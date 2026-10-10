@@ -19,10 +19,13 @@ describe('currencies', () => {
     expect(currencyForDestination('Basel, Schweiz / Frankreich')).toBeNull();
   });
 
-  it('formats in German with € or the ISO code and the right number of decimals', () => {
-    expect(formatAmount(1430.2, 'EUR')).toBe('1.430,20 €');
-    expect(formatAmount(8500, 'JPY')).toBe('8.500 JPY');
-    expect(formatAmount(48.7, 'CHF')).toBe('48,70 CHF');
-    expect(formatAmount(1500, 'CHF', true)).toBe('1.500 CHF');
+  it('formats centrally with Intl: German locale, the symbol and decimals of each currency — none preferred', () => {
+    expect(formatAmount(1430.2, 'EUR')).toBe('1.430,20\u00a0€');
+    expect(formatAmount(8500, 'JPY')).toBe('8.500\u00a0¥');
+    expect(formatAmount(48.7, 'CHF')).toBe('48,70\u00a0CHF');
+    expect(formatAmount(1500, 'CHF', true)).toBe('1.500\u00a0CHF');
+    expect(formatAmount(350, 'USD')).toBe('350,00\u00a0$');
+    expect(formatAmount(1, 'CNY')).toBe('1,00\u00a0CN¥'); // Yuan ist nicht mit Yen zu verwechseln
+    expect(formatAmount(12, '')).toBe('12,00');
   });
 });

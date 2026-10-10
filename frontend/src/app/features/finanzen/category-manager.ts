@@ -10,6 +10,7 @@ import {
   MAX_CATEGORY_NAME,
   PrivateFinanceApi,
 } from './private-finance-api.service';
+import { normalizeMoneyInput } from '../../shared/currency/money-input';
 
 /** Eine Zeile im Entwurf: bestehende Kategorie (id) oder neu angelegte (id null). */
 export interface CategoryDraft {
@@ -22,10 +23,10 @@ export interface CategoryDraft {
   remove: boolean;
 }
 
-/** „400“, „400,5“ oder „400.50“ → „400.50“; leer → null; ungültig → undefined. */
+/** „400“, „400,5“, „400.50“ oder „1.200“ → „400.50“ bzw. „1200.00“; leer → null; ungültig → undefined. */
 export function parseLimit(raw: string): string | null | undefined {
-  const cleaned = raw.trim().replace(',', '.');
-  if (!cleaned) return null;
+  if (!raw.trim()) return null;
+  const cleaned = normalizeMoneyInput(raw) ?? 'x';
   if (!/^\d{1,8}(\.\d{1,2})?$/.test(cleaned)) return undefined;
   const [whole, fraction = ''] = cleaned.split('.');
   return `${BigInt(whole)}.${fraction.padEnd(2, '0')}`;

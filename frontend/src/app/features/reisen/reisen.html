@@ -125,7 +125,6 @@
               [planned]="budgetCategories()"
               [expenses]="expenses()"
               [canEdit]="canEdit()"
-              [home]="homeCurrency()"
               (addExpense)="openExpenseEditor()"
               (editExpense)="openExpenseEditor($event)"
               (editPlan)="openPlanEditor()"
@@ -332,7 +331,7 @@
       <app-select formControlName="currency" [options]="currencyOptions" />
     </app-field>
   </div>
-  <app-fx-hint [amount]="expenseAmountValue()" [from]="expenseValue().currency" [to]="expenseFxTarget().to" [label]="expenseFxTarget().label" />
+  <app-fx-hint [amount]="expenseAmountValue()" [from]="expenseValue().currency" [to]="homeCurrency()" />
   <div class="field-row">
     <app-field label="Kategorie">
       <app-select formControlName="category" [options]="budgetCategoryOptions" />

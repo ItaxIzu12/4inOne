@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { ContactOption, PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask } from './reisen-api.service';
 import { DEMO_RATES } from '../../core/fx/fx.service';
+import { HomeCurrency } from '../../core/fx/home-currency';
 
 // Feste Demo-Kontakte, nur für diese Instanz: die Demo hat keinen eigenen Login und keine zweite Person, die
 // wirklich existiert, daher ist "meine Rolle" hier immer OWNER (siehe withSummary()) und der Kontaktpicker
@@ -64,6 +65,7 @@ const BERLIN_PACKING: PackSeed[] = [
 
 @Injectable()
 export class DemoReisenApi {
+  private readonly home = inject(HomeCurrency).code;
   private nextId = 1000;
   private tripList: TripBase[] = [
     {
@@ -359,14 +361,14 @@ export class DemoReisenApi {
       return of(this.expenseList[index]);
     }
     const trip = this.tripList.find((t) => t.id === data.trip);
-    const base: TripExpense = { id: this.nextId++, trip: 0, title: '', amount: '0.00', currency: trip?.currency ?? 'EUR', date: dateOnly(0), category: 'SONSTIGES', ...data };
+    const base: TripExpense = { id: this.nextId++, trip: 0, title: '', amount: '0.00', currency: trip?.currency ?? (this.home() as TripExpense['currency']), date: dateOnly(0), category: 'SONSTIGES', ...data };
     const created = { ...base, ...this.snapshot(base) };
     this.expenseList.push(created);
     return of(created);
   }
   /** Wie das Backend beim Speichern: Wert in Reise- und Heimatwährung (Demo: EUR) zum Beispielkurs. */
   private snapshot(e: TripExpense): Partial<TripExpense> {
-    const home = 'EUR';
+    const home = this.home();
     const rate = DEMO_RATES[home] / DEMO_RATES[e.currency];
     return {
       ...this.toTrip(e),

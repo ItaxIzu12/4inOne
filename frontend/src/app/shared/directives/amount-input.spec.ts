@@ -42,13 +42,38 @@ describe('AmountInput', () => {
       expect(fixture.componentInstance.amount.value).toBe(value);
     }
   });
-  it('rejects pasted text rather than changing its numeric meaning', () => {
-    const { input } = setup();
-    for (const text of ['1e3', '100 EUR', '1.234,56']) {
+  it('allows German thousands separators while typing', () => {
+    const { fixture, input } = setup();
+    for (const value of ['1.', '1.5', '1.500', '1.500,', '1.500,50', '250.000']) {
+      input.value = value;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      expect(fixture.componentInstance.amount.value).toBe(value);
+    }
+  });
+  it('formats on leaving the field and tells the form', () => {
+    const { fixture, input } = setup();
+    for (const [typed, shown] of [['250000', '250.000'], ['1500.5', '1.500,50'], ['12,5', '12,50'], ['1.5', '1,50'], ['1.2.3', '1.2.3']]) {
+      input.value = typed;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('blur'));
+      expect(input.value).toBe(shown);
+      expect(fixture.componentInstance.amount.value).toBe(shown);
+    }
+  });
+  it('cleans pasted amounts like "100 EUR" instead of dropping them, and never guesses', () => {
+    const { fixture, input } = setup();
+    const paste = (text: string) => {
       const event = new Event('paste', { cancelable: true });
       Object.defineProperty(event, 'clipboardData', { value: { getData: () => text } });
       input.dispatchEvent(event);
-      expect(event.defaultPrevented).toBe(true);
-    }
+      return event;
+    };
+    expect(paste('1.234,56').defaultPrevented).toBe(false); // gültig getippt — der Browser fügt ein
+    expect(paste('100 EUR').defaultPrevented).toBe(true);
+    expect(fixture.componentInstance.amount.value).toBe('100');
+    expect(paste('2 000,50 €').defaultPrevented).toBe(true);
+    expect(fixture.componentInstance.amount.value).toBe('2.000,50');
+    expect(paste('1e3').defaultPrevented).toBe(true);
+    expect(fixture.componentInstance.amount.value).toBe('2.000,50');
   });
 });

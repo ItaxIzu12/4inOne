@@ -8,6 +8,7 @@ import { AppShell } from '../../layout/app-shell';
 import { Modal } from '../../shared/modal/modal';
 import { AppSelect } from '../../shared/form/select';
 import { CURRENCY_OPTIONS } from '../../shared/currency/currencies';
+import { ACCOUNT_DEFAULT_HOME_CURRENCY } from '../../core/fx/home-currency';
 
 /** Einstellungen → Profil: Name und Heimatwährung sind änderbar, die E-Mail-Adresse nur lesbar (sie ist zugleich der
  * Login und braucht später eine Bestätigung). Die Heimatwährung ist die eine zentrale Einstellung für Umrechnungen. */
@@ -28,9 +29,9 @@ export class Profil {
   protected readonly error = signal('');
   protected readonly saved = signal(false);
   protected readonly currencyOptions = CURRENCY_OPTIONS;
-  protected readonly homeCurrency = signal(this.auth.currentUser()?.home_currency ?? 'EUR');
+  protected readonly homeCurrency = signal(this.auth.currentUser()?.home_currency ?? ACCOUNT_DEFAULT_HOME_CURRENCY);
   private readonly nameChanged = computed(() => this.name().trim() !== (this.auth.currentUser()?.name ?? ''));
-  private readonly currencyChanged = computed(() => this.homeCurrency() !== (this.auth.currentUser()?.home_currency ?? 'EUR'));
+  private readonly currencyChanged = computed(() => this.homeCurrency() !== (this.auth.currentUser()?.home_currency ?? ACCOUNT_DEFAULT_HOME_CURRENCY));
   protected readonly changed = computed(() => this.nameChanged() || this.currencyChanged());
 
   protected save(): void {
@@ -50,7 +51,7 @@ export class Profil {
       next: (user) => {
         this.saving.set(false);
         this.name.set(user.name);
-        this.homeCurrency.set(user.home_currency ?? 'EUR');
+        this.homeCurrency.set(user.home_currency ?? ACCOUNT_DEFAULT_HOME_CURRENCY);
         this.saved.set(true);
       },
       error: (e: unknown) => {

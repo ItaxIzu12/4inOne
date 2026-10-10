@@ -44,14 +44,21 @@ export function currencyLabel(code: string): string {
   return code in CURRENCIES ? `${code} – ${CURRENCIES[code as CurrencyCode]}` : code;
 }
 
-/** Geldbetrag auf Deutsch: „1.430,20 €“, sonst mit ISO-Code „250.000 JPY“ (¥ wäre zwischen JPY und CNY mehrdeutig).
- * Nachkommastellen nach Währung (Yen ohne Cent). `compact` lässt „,00“ weg. */
+const LOCALE = 'de-DE';
+/** Zentraler Geld-Formatter: Locale (Deutsch) und Währung getrennt, Symbol und Nachkommastellen kommen aus
+ * Intl.NumberFormat — „1.430,20 €“, „1.430,20 CHF“, „250.000 ¥“, „350,00 $“, „8.500 CN¥“. Keine Währung ist
+ * bevorzugt, kein Symbol wird von Hand zusammengesetzt. `compact` lässt „,00“ bei glatten Beträgen weg. */
 export function formatAmount(value: number | string, currency: string, compact = false): string {
   const number = typeof value === 'number' ? value : Number(value);
-  const digits = new Intl.NumberFormat('de-DE', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2;
+  // Noch keine Währung gewählt (z. B. ein Dialog vor dem Öffnen): nur die Zahl, nie eine angenommene Währung.
+  if (!/^[A-Z]{3}$/.test(currency)) return number.toLocaleString(LOCALE, { minimumFractionDigits: compact ? 0 : 2, maximumFractionDigits: 2 });
+  const base = new Intl.NumberFormat(LOCALE, { style: 'currency', currency });
   const whole = compact && Math.round(number * 100) % 100 === 0;
-  const amount = number.toLocaleString('de-DE', { minimumFractionDigits: whole ? 0 : digits, maximumFractionDigits: digits });
-  return `${amount} ${currency === 'EUR' ? '€' : currency}`;
+  return whole ? new Intl.NumberFormat(LOCALE, { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(number) : base.format(number);
+}
+/** Kurs lesbar, mit 4 gültigen Stellen: „0,005731“. */
+export function formatRate(value: number): string {
+  return value.toLocaleString(LOCALE, { maximumSignificantDigits: 4 });
 }
 
 // ---------- Reisewährung aus dem Reiseziel ----------

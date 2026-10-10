@@ -15,7 +15,7 @@ import { AppTimePicker } from '../../shared/form/time-picker';
 import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { Modal } from '../../shared/modal/modal';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
-import { AuthService } from '../../core/auth/auth.service';
+import { HomeCurrency } from '../../core/fx/home-currency';
 import { CURRENCY_OPTIONS, currencyForDestination } from '../../shared/currency/currencies';
 import { FxHint } from '../../shared/currency/fx-hint';
 import {
@@ -98,9 +98,8 @@ const LEGACY_TABS: Record<string, TripTab> = { packlisten: 'packliste', erinneru
 })
 export class Reisen {
   private api = inject(ReisenApi);
-  private auth = inject(AuthService);
-  /** Heimatwährung (Einstellungen → Profil) — die eine zentrale Einstellung; in der Demo Euro. */
-  readonly homeCurrency = computed(() => this.auth.currentUser()?.home_currency ?? 'EUR');
+  /** Heimatwährung (Einstellungen → Profil) — Ziel jeder Umrechnung, nie fest vorgegeben. */
+  readonly homeCurrency = inject(HomeCurrency).code;
   private destroy = inject(DestroyRef);
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
@@ -282,7 +281,7 @@ export class Reisen {
   readonly expenseForm = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(120)]],
     amount: ['', Validators.required],
-    currency: ['EUR'],
+    currency: [''],
     date: [localDay(new Date()), Validators.required],
     category: ['SONSTIGES'],
     note: ['', Validators.maxLength(240)],
@@ -291,12 +290,7 @@ export class Reisen {
   readonly expenseAmountError = signal('');
   readonly expenseValue = signal(this.expenseForm.getRawValue());
   readonly expenseAmountValue = computed(() => parseBudgetAmount(this.expenseValue().amount) || null);
-  /** Umrechnungsziel unter dem Betrag: die Heimatwährung; ist schon in Heimatwährung bezahlt, die Reisewährung. */
-  readonly expenseFxTarget = computed(() => {
-    const currency = this.expenseValue().currency;
-    const trip = this.selectedTrip()?.currency ?? 'EUR';
-    return currency === this.homeCurrency() ? { to: trip, label: 'in der Reisewährung' } : { to: this.homeCurrency(), label: 'in deiner Heimatwährung' };
-  });
+
 
   // ---------- Budget festlegen ----------
   readonly planEditor = signal(false);
@@ -309,7 +303,7 @@ export class Reisen {
   readonly planTotalValue = computed(() => parseBudgetAmount(this.planTotal()) || null);
   readonly planTitle = computed(() => (Number(this.selectedTrip()?.budget_amount || 0) > 0 ? 'Reisebudget bearbeiten' : 'Gesamtbudget festlegen'));
   readonly planTotal = signal('');
-  readonly planCurrency = signal<Trip['currency']>('EUR');
+  readonly planCurrency = signal<string>('');
   readonly planDraft = signal<Record<string, string>>({});
   readonly planSum = computed(() =>
     Object.values(this.planDraft()).reduce((sum, raw) => sum + (parseBudgetAmount(raw) ?? 0), 0),
@@ -1063,7 +1057,7 @@ export class Reisen {
       title: item?.title ?? '',
       amount: item ? item.amount.replace('.', ',') : '',
       // Neue Ausgabe: in der Reisewährung vorausgewählt — änderbar, wenn anders bezahlt wurde.
-      currency: item?.currency ?? this.selectedTrip()?.currency ?? 'EUR',
+      currency: item?.currency ?? this.selectedTrip()?.currency ?? this.homeCurrency(),
       date: item?.date ?? localDay(new Date()),
       category: item?.category ?? 'SONSTIGES',
       note: item?.note ?? '',
@@ -1260,7 +1254,7 @@ export class Reisen {
     }
     const tripChanges: Partial<Trip> = {};
     if (total !== Number(trip.budget_amount || 0)) tripChanges.budget_amount = total > 0 ? total.toFixed(2) : null;
-    if (this.planCurrency() !== trip.currency) tripChanges.currency = this.planCurrency();
+    if (this.planCurrency() !== trip.currency) tripChanges.currency = this.planCurrency() as Trip['currency'];
     if (Object.keys(tripChanges).length) steps.push(this.api.saveTrip(tripChanges, trip.id));
     if (!steps.length) {
       this.planEditor.set(false);

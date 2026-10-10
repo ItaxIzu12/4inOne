@@ -108,6 +108,13 @@ class TripSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'destination': 'Bitte gib ein Reiseziel an.'})
         return attrs
 
+    def create(self, validated_data):
+        # Ohne Angabe: die Heimatwährung dessen, der die Reise anlegt — keine fest eingebaute Währung.
+        request = self.context.get('request')
+        if 'currency' not in validated_data and request is not None:
+            validated_data['currency'] = home_currency_for(request.user)
+        return super().create(validated_data)
+
     def update(self, instance, validated_data):
         old_currency = instance.currency
         trip = super().update(instance, validated_data)

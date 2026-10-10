@@ -3,6 +3,7 @@ import { AppIcon } from '../../shared/icons/app-icon';
 import { BudgetCategory, Trip, TripBudgetCategory, TripExpense } from './reisen-api.service';
 import { BUDGET_META, budgetRows, formatMoney, percent, totalBudget, tripValue } from './reisen-logic';
 import { FxService } from '../../core/fx/fx.service';
+import { HomeCurrency } from '../../core/fx/home-currency';
 
 const RECENT = 6;
 
@@ -21,7 +22,7 @@ export class TripBudget {
   readonly expenses = input.required<TripExpense[]>();
   readonly canEdit = input(true);
   /** Heimatwährung des Betrachters (Einstellungen → Profil). */
-  readonly home = input('EUR');
+  readonly home = inject(HomeCurrency).code;
   readonly addExpense = output<void>();
   readonly editExpense = output<TripExpense>();
   readonly editPlan = output<void>();
@@ -54,11 +55,12 @@ export class TripBudget {
   money(value: number | string, compact = true): string {
     return formatMoney(value, this.trip().currency, compact);
   }
-  /** „≈ 1.430 €“ zum aktuellen Richtkurs (Planungswerte); leer, wenn gleiche Währung oder kein Kurs. */
+  /** „≈ 1.430 €“ zum aktuellen Richtkurs, auf ganze Einheiten gerundet (Planungswerte); leer bei gleicher Währung,
+   * bei 0 oder ohne Kurs. */
   approx(value: number): string {
-    if (!this.showHome()) return '';
+    if (!this.showHome() || !value) return '';
     const preview = this.fx.preview(value, this.trip().currency, this.home());
-    return preview ? '≈ ' + formatMoney(preview.value, this.home(), true) : '';
+    return preview ? '≈ ' + formatMoney(Math.round(preview.value), this.home(), true) : '';
   }
   /** Ausgabe: Originalbetrag in Originalwährung. */
   original(e: TripExpense): string {
@@ -76,7 +78,7 @@ export class TripBudget {
     if (!this.showHome()) return '';
     if (state === 'loading') return 'Kurs wird geladen …';
     if (state === 'unavailable') return 'Umrechnung in die Heimatwährung derzeit nicht verfügbar.';
-    return `≈-Werte: ${state.source} vom ${this.shortDate(state.rateDate)}. Der Kurs deiner Bank oder Karte kann abweichen.`;
+    return `Umrechnung nach aktuellem Richtkurs (${state.source}, Stand ${this.shortDate(state.rateDate)}). Der tatsächliche Wechselkurs deiner Bank, Karte oder Wechselstube kann abweichen.`;
   });
   shortDate(iso: string): string {
     return new Date(`${iso}T12:00`).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });

@@ -269,11 +269,11 @@ test('Reisebudget: leer speichern erklärt, was fehlt; „1.500“ wird 1.500 un
   await expect(page.getByText('Bitte gib ein Gesamtbudget größer als 0 ein.')).toHaveCount(0);
   // Umrechnung live, als Richtkurs gekennzeichnet (Demo: Beispielkurs).
   await expect(dialog.locator('app-fx-hint')).toContainText('≈ 1.595,74 € in deiner Heimatwährung');
-  await expect(dialog.locator('app-fx-hint')).toContainText('Der tatsächliche Kurs deiner Bank, Karte oder Wechselstube kann abweichen.');
+  await expect(dialog.locator('app-fx-hint')).toContainText('Der tatsächliche Wechselkurs deiner Bank, Karte oder Wechselstube kann abweichen.');
   await submit(page);
   await expect(dialog).toHaveCount(0);
   await expect(page.locator('app-trip-budget .kpis')).toContainText('1.500 CHF');
-  await expect(page.locator('app-trip-budget .kpis')).toContainText('≈ 1.595,74 €');
+  await expect(page.locator('app-trip-budget .kpis')).toContainText('≈ 1.596 €');
 });
 
 test('Budget-Kategorie: Zeile antippen, Betrag ändern und Planung wieder entfernen', async ({ page }) => {
@@ -322,9 +322,9 @@ test('Japan: Reisewährung aus dem Ziel, Ausgaben in Yen und Euro, ohne Budget n
   const budget = page.locator('app-trip-budget');
   await expect(budget.getByRole('heading', { name: 'Noch kein Gesamtbudget' })).toBeVisible();
   await expect(budget.locator('.kpis')).toContainText('Bisher ausgegeben');
-  await expect(budget.locator('.kpis')).toContainText('8.500 JPY');
+  await expect(budget.locator('.kpis')).toContainText('8.500 ¥');
   await expect(budget).not.toContainText(/Verbleibend|Über Budget|verbraucht/);
-  await expect(budget.locator('.exp li', { hasText: 'Restaurant' })).toContainText('8.500 JPY');
+  await expect(budget.locator('.exp li', { hasText: 'Restaurant' })).toContainText('8.500 ¥');
   await expect(budget.locator('.exp li', { hasText: 'Restaurant' })).toContainText('≈ 48,71 €');
 
   // Flug vorab in Euro bezahlt: bleibt 100 €, zählt mit 17.450 JPY ins Budget — nie 8.500 + 100.
@@ -332,17 +332,102 @@ test('Japan: Reisewährung aus dem Ziel, Ausgaben in Yen und Euro, ohne Budget n
   await page.locator('#expense-title').fill('Flug');
   await page.locator('#expense-amount').pressSequentially('100');
   await choose(page, 'Währung', 'EUR – Euro');
-  await expect(dialog.locator('app-fx-hint')).toContainText('≈ 17.450 JPY in der Reisewährung');
+  // In der Heimatwährung bezahlt: keine redundante „≈ … €“-Zeile; der Yen-Wert fürs Budget entsteht intern.
+  await expect(dialog.locator('app-fx-hint .fx')).toHaveCount(0);
   await submit(page);
   await expect(budget.locator('.exp li', { hasText: 'Flug' })).toContainText('100,00 €');
   await expect(budget.locator('.exp li', { hasText: 'Flug' })).not.toContainText('≈');
 
   await budget.getByRole('button', { name: 'Budget festlegen' }).click();
   await expect(dialog.getByLabel('Währung', { exact: true })).toContainText('JPY – Japanischer Yen');
-  await page.locator('#plan-total').pressSequentially('250.000');
+  // Ohne Tausenderpunkt getippt — beim Verlassen formatiert.
+  await page.locator('#plan-total').pressSequentially('250000');
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#plan-total')).toHaveValue('250.000');
   await submit(page);
-  await expect(budget.locator('.kpis dd.num:not(.approx)')).toHaveText(['250.000 JPY', '25.950 JPY', '224.050 JPY']);
+  await expect(budget.locator('.kpis dd.num:not(.approx)')).toHaveText(['250.000 ¥', '25.950 ¥', '224.050 ¥']);
   await expect(budget.locator('.rate-note')).toContainText('Beispielkurs (Demo)');
+});
+
+// ---------- Echtes Konto mit anderer Heimatwährung (keine Währung ist bevorzugt) ----------
+
+async function liveTrip(page: Page, home: string, trip: { currency: string; budget_amount?: string | null; destination?: string }) {
+  const data = {
+    id: 7, title: 'Testreise', destination: trip.destination ?? 'Tokio, Japan', departure: '', start_date: iso(30), end_date: iso(35), notes: '',
+    status: 'PLANNED', travel_type: '', transport_type: '', baggage: [], climate: '', budget_amount: trip.budget_amount ?? null,
+    currency: trip.currency, accommodation: '', accommodation_area: '', transport_note: '', created_at: '2026-10-01T10:00:00Z',
+    updated_at: '2026-10-01T10:00:00Z', packing_total: 0, packing_packed: 0, tasks_open: 0, tasks_total: 0, events_count: 0,
+    budget_spent: '0.00', participants: [], my_role: 'OWNER',
+  };
+  await page.route('**/api/v1/**', (r) => r.fulfill({ json: [] }));
+  await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 't' } }));
+  await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 't', user: { name: 'Mira', email: 'mira@example.com', home_currency: home } } }));
+  await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true, domains: [] } }));
+  await page.route('**/api/v1/fx/rates/', (r) =>
+    r.fulfill({ json: { available: true, base: 'EUR', rate_date: iso(-1), source: 'EZB-Referenzkurs', rates: { EUR: '1', CHF: '0.94', JPY: '174.5', USD: '1.10' } } }),
+  );
+  await page.route('**/api/v1/reisen/trips/**', (r) => r.fulfill({ json: /trips\/7\/$/.test(r.request().url()) ? data : [data] }));
+  await page.goto('/reisen?trip=7&tab=budget');
+  await expect(page.locator('main h1')).toHaveText('Testreise');
+}
+
+test('Heimatwährung CHF: 120 € werden in Franken umgerechnet, das Budget ebenso — nichts nimmt Euro an', async ({ page }) => {
+  await liveTrip(page, 'CHF', { currency: 'JPY', budget_amount: '250000.00' });
+  const budget = page.locator('app-trip-budget');
+  await expect(budget.locator('.kpis')).toContainText('250.000 ¥');
+  await expect(budget.locator('.kpis')).toContainText('≈ 1.347 CHF');
+  await expect(budget.locator('.kpis')).not.toContainText('≈ 0');
+  await expect(budget.locator('.kpis')).not.toContainText('€');
+  await expect(budget.locator('.rate-note')).toContainText('Umrechnung nach aktuellem Richtkurs (EZB-Referenzkurs');
+
+  await budget.getByRole('button', { name: 'Ausgabe hinzufügen' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByLabel('Währung', { exact: true })).toContainText('JPY – Japanischer Yen');
+  await page.locator('#expense-amount').pressSequentially('120');
+  await choose(page, 'Währung', 'EUR – Euro');
+  const hint = dialog.locator('app-fx-hint');
+  await expect(hint).toContainText('≈ 112,80 CHF in deiner Heimatwährung');
+  await expect(hint).toContainText('1 EUR ≈ 0,94 CHF');
+  await expect(hint).toContainText('Der tatsächliche Wechselkurs deiner Bank, Karte oder Wechselstube kann abweichen.');
+  // In der Heimatwährung bezahlt: keine Umrechnungszeile.
+  await choose(page, 'Währung', 'CHF – Schweizer Franken');
+  await expect(hint.locator('.fx')).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Abbrechen' }).click();
+  await expect(dialog).toHaveCount(0);
+});
+
+for (const width of [360, 390, 430]) {
+  test(`Umrechnung am Handy (${width}px): kein Querscrollen, barrierearm`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await liveTrip(page, 'CHF', { currency: 'JPY', budget_amount: '250000.00' });
+    await noOverflow(page, 'Budget');
+    await page.locator('app-trip-budget').getByRole('button', { name: 'Ausgabe hinzufügen' }).first().click();
+    await page.locator('#expense-title').fill('Restaurant');
+    await page.locator('#expense-amount').pressSequentially('8.500');
+    await expect(page.getByRole('dialog').locator('app-fx-hint')).toContainText('≈ 45,79 CHF');
+    await noOverflow(page, 'Ausgabe-Dialog');
+    await axe(page);
+  });
+}
+
+test('Heimatwährung JPY: 100 € erscheinen als Yen-Wert', async ({ page }) => {
+  await liveTrip(page, 'JPY', { currency: 'EUR', destination: 'Lissabon, Portugal' });
+  await page.locator('app-trip-budget').getByRole('button', { name: 'Ausgabe hinzufügen' }).click();
+  const dialog = page.getByRole('dialog');
+  await page.locator('#expense-amount').pressSequentially('100');
+  await expect(dialog.locator('app-fx-hint')).toContainText('≈ 17.450 ¥ in deiner Heimatwährung');
+  await expect(dialog.locator('app-fx-hint')).toContainText('1 EUR ≈ 174,5 JPY');
+});
+
+test('Kurs nicht verfügbar: Betrag bleibt erfassbar, kein geratener Wert', async ({ page }) => {
+  await liveTrip(page, 'EUR', { currency: 'JPY' });
+  await page.route('**/api/v1/fx/rates/', (r) => r.fulfill({ json: { available: false, base: 'EUR', rate_date: null, rates: {} } }));
+  await page.reload();
+  await page.locator('app-trip-budget').getByRole('button', { name: 'Ausgabe hinzufügen' }).click();
+  const dialog = page.getByRole('dialog');
+  await page.locator('#expense-amount').pressSequentially('8.500');
+  await expect(dialog.locator('app-fx-hint')).toContainText('Umrechnung derzeit nicht verfügbar.');
+  await expect(dialog.locator('app-fx-hint')).not.toContainText('≈');
 });
 
 test('Ausgabe: Fehler erst nach „Ausgabe speichern“, live korrigiert; Abbrechen prüft nichts', async ({ page }) => {

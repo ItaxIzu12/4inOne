@@ -10,6 +10,7 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
+import { normalizeMoneyInput } from '../../shared/currency/money-input';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
 import { AppDatePicker } from '../../shared/form/date-picker';
 import { BudgetYearOverview } from './budget-timeline';
@@ -852,7 +853,7 @@ export class PrivateFinance {
       });
   }
   amount(value: string, allowZero = false) {
-    const cleaned = value.trim().replace(',', '.');
+    const cleaned = normalizeMoneyInput(value) ?? 'x';
     if (!/^\d{1,8}(\.\d{1,2})?$/.test(cleaned)) return null;
     const [whole, fraction = ''] = cleaned.split('.');
     const cents = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));

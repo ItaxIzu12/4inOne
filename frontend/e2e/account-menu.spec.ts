@@ -6,6 +6,12 @@ async function signedIn(page: import('@playwright/test').Page) {
   await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 't', user: { name: 'Mira Beispiel', email: 'mira@example.com' } } }));
   await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
   await page.route('**/api/v1/organisation/today/**', (r) => r.fulfill({ json: { items: [], event_count: 0 } }));
+  // Startseite (Dashboard V1) lädt für echte Konten /today/ und bevorstehende Reisen — ohne Attrappe erschiene ein
+  // Fehlerhinweis oben rechts über dem Kontomenü.
+  await page.route('**/api/v1/today/**', (r) =>
+    r.fulfill({ json: { date: '2026-10-10', timezone: 'Europe/Berlin', organisation: { items: [], event_count: 0, open_task_count: 0, overdue_count: 0 }, haushalt: null, reisen: { current: null, upcoming: null, events: [] }, finanzen: null, suggestions: [] } }),
+  );
+  await page.route('**/api/v1/reisen/trips/**', (r) => r.fulfill({ json: [] }));
   await page.route('**/api/v1/finanzen/private/**', (r) =>
     r.fulfill({ json: r.request().url().includes('/summary/') ? { month: '2026-09', currency: 'EUR', budget: null, total: null, saved: '0.00', saved_planned: '0.00', available: null, plan_alert: null, income: '0.00', expenses: '0.00', savings_target: '0.00', savings_current: '0.00', has_data: false, categories: [], recent: [] } : [] }),
   );

@@ -203,3 +203,60 @@ def test_changing_the_trip_currency_recomputes_only_the_trip_values(anna):
     stored = TripExpense.objects.get(pk=expense['id'])
     assert (stored.amount, stored.currency, stored.amount_trip, stored.amount_home) == (Decimal('8500.00'), 'JPY', Decimal('48.71'), Decimal('48.71'))
     assert trip_data(client, trip)['budget_spent'] == '48.71'
+
+
+def test_a_new_trip_without_currency_uses_the_creators_home_currency_not_a_fixed_one(anna):
+    UserPreference.objects.create(user=anna, home_currency='CHF')
+    data = api(anna).post(f'{BASE}trips/', {'title': 'Bern', 'destination': 'Bern', 'start_date': '2026-11-12', 'end_date': '2026-11-15'}, format='json').data
+    assert data['currency'] == 'CHF'
+
+
+def test_three_currencies_home_eur_budget_jpy_expense_usd(anna):
+    rates()
+    client = api(anna)
+    trip = japan(anna, budget_amount=Decimal('250000'))
+    data = client.post(f'{BASE}expenses/', {'trip': trip.pk, 'title': 'Hotel', 'amount': '350', 'currency': 'USD', 'date': '2027-05-02'}, format='json').data
+    assert (data['amount'], data['currency']) == ('350.00', 'USD')
+    assert (data['home_currency'], data['amount_home']) == ('EUR', '318.18')  # 350 / 1,10
+    assert data['amount_trip'] == '55522.73'  # 350 × 174,5 / 1,10
+    assert trip_data(client, trip)['budget_spent'] == '55522.73'
+
+
+def test_home_currency_jpy_converts_euro_expenses_to_yen(anna):
+    rates()
+    UserPreference.objects.create(user=anna, home_currency='JPY')
+    trip = Trip.objects.create(owner=anna, title='Lissabon', destination='Lissabon', start_date='2026-11-12', end_date='2026-11-15', currency='EUR')
+    data = api(anna).post(f'{BASE}expenses/', {'trip': trip.pk, 'title': 'Essen', 'amount': '100', 'date': '2026-11-12'}, format='json').data
+    assert (data['home_currency'], data['amount_home'], data['amount_trip']) == ('JPY', '17450.00', '100.00')
+
+
+def test_expenses_saved_during_an_outage_are_counted_once_a_rate_is_back(anna):
+    client = api(anna)
+    trip = japan(anna)
+    saved = client.post(f'{BASE}expenses/', {'trip': trip.pk, 'title': 'Flug', 'amount': '100', 'currency': 'EUR', 'date': '2026-11-15'}, format='json').data
+    assert saved['amount_trip'] is None and trip_data(client, trip)['budget_spent'] == '0.00'
+
+    rates()  # Kurs wieder verfügbar
+    assert trip_data(client, trip)['budget_spent'] == '17450.00'
+    again = client.get(f'{BASE}expenses/{saved["id"]}/').data
+    assert (again['amount'], again['currency'], again['amount_trip']) == ('100.00', 'EUR', '17450.00')
+    assert again['amount_home'] == '100.00' and again['rate_date'] == timezone.localdate().isoformat()
+
+
+def test_backfill_never_touches_migrated_expenses_or_invents_their_home_value(anna):
+    rates()
+    trip = japan(anna)
+    legacy = TripExpense.objects.create(trip=trip, title='Alt', amount=Decimal('5000'), date='2027-05-01')  # wie nach 0011
+    assert (legacy.amount_trip, legacy.amount_home) == (Decimal('5000'), None)
+    api(anna).get(f'{BASE}expenses/?trip={trip.pk}')
+    legacy.refresh_from_db()
+    assert (legacy.amount_trip, legacy.amount_home, legacy.rate_date) == (Decimal('5000.00'), None, None)
+
+
+def test_expense_list_also_backfills(anna):
+    client = api(anna)
+    trip = japan(anna)
+    client.post(f'{BASE}expenses/', {'trip': trip.pk, 'title': 'Taxi', 'amount': '10', 'currency': 'USD', 'date': '2027-05-02'}, format='json')
+    rates()
+    listed = client.get(f'{BASE}expenses/?trip={trip.pk}').data
+    assert listed[0]['amount_trip'] == '1586.36'  # 10 × 174,5 / 1,10
