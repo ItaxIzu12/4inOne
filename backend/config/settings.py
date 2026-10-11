@@ -304,6 +304,8 @@ HOUSEHOLD_INVITE_EXPIRY_DAYS = env.int('HOUSEHOLD_INVITE_EXPIRY_DAYS', default=7
 # Frontend hält ihn nur im Speicher, siehe core/auth_views.py). Refresh-Token-
 # Rotation mit serverseitiger Invalidierung über den Blacklist-Store.
 SIMPLE_JWT = {
+    # Passwortwechsel entwerten auch bereits ausgestellte Access-Tokens.
+    'CHECK_REVOKE_TOKEN': True,
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,

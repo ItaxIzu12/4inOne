@@ -7,6 +7,8 @@ später ausdrücklich pro Reise oder Haushalt (docs/PRODUCT_REQUIREMENTS.md §10
 import logging
 import secrets
 
+from allauth.account.models import EmailAddress
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import transaction
@@ -41,6 +43,9 @@ def _open_invites():
 
 
 def _received_for(user):
+    # Eine selbst eingetragene Adresse ist noch kein Nachweis über das Postfach.
+    if not EmailAddress.objects.filter(user=user, email__iexact=user.email, verified=True).exists():
+        return _open_invites().none()
     return _open_invites().filter(email__iexact=user.email).select_related('inviter')
 
 
@@ -180,7 +185,9 @@ class InviteCancelView(APIView):
 
 def _invite_for(request, token):
     """Nur das Konto mit der eingeladenen E-Mail-Adresse sieht und beantwortet die Einladung (sonst: 404, nichts verraten)."""
-    return _received_for(request.user).filter(token=token).first()
+    # Der explizite, zufällige Link aus der E-Mail ist der Postfachnachweis.
+    # Niemals an unbestätigte Konten über die Listen-API herausgeben.
+    return _open_invites().filter(email__iexact=request.user.email, token=token).select_related('inviter').first()
 
 
 class InviteDetailView(APIView):
@@ -203,10 +210,15 @@ class InviteAcceptView(APIView):
         if invite is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
         with transaction.atomic():
+            # Atomar verbrauchen: auch parallele Annahmen dürfen nur einmal gelten.
+            if not _open_invites().filter(pk=invite.pk).update(accepted_at=timezone.now()):
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            EmailAddress.objects.update_or_create(
+                user=request.user, email=request.user.email,
+                defaults={'verified': True, 'primary': True},
+            )
             Contact.objects.get_or_create(owner=invite.inviter, other=request.user, defaults={'relation': invite.relation})
             contact, _ = Contact.objects.get_or_create(owner=request.user, other=invite.inviter, defaults={'relation': invite.relation})
-            invite.accepted_at = timezone.now()
-            invite.save(update_fields=['accepted_at'])
         return Response(_contact_payload(contact), status=status.HTTP_201_CREATED)
 
 

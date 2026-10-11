@@ -124,7 +124,7 @@ def test_content_is_owner_only_and_served_safely(client, users):
     assert APIClient().get(f"{BASE}files/{pdf['id']}/inhalt/").status_code in (401, 403)
 
 
-def test_metadata_can_change_and_delete_removes_the_stored_file(client):
+def test_metadata_can_change_and_delete_removes_the_stored_file(client, django_capture_on_commit_callbacks):
     entry = upload(client, 'plan.pdf', PDF).data
     patched = client.patch(f"{BASE}files/{entry['id']}/", {'favorite': True, 'category': 'reise', 'name': 'Reise/Unterlagen.pdf'}, format='json')
     assert patched.status_code == 200
@@ -132,6 +132,7 @@ def test_metadata_can_change_and_delete_removes_the_stored_file(client):
     assert client.patch(f"{BASE}files/{entry['id']}/", {'category': 'geheim'}, format='json').status_code == 400
     stored = PersonalFile.objects.get(pk=entry['id']).file
     path = stored.path
-    assert client.delete(f"{BASE}files/{entry['id']}/").status_code == 204
+    with django_capture_on_commit_callbacks(execute=True):
+        assert client.delete(f"{BASE}files/{entry['id']}/").status_code == 204
     import os
     assert not os.path.exists(path)

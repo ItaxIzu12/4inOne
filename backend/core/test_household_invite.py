@@ -46,7 +46,7 @@ def test_invite_defaults_to_member_role_when_not_specified():
     User = get_user_model()
     user = User.objects.create_user(username='default-role@example.com', password='irrelevant-for-test')
     household = Household.objects.create(name='Testhaushalt')
-    HouseholdMembership.objects.create(user=user, household=household)
+    HouseholdMembership.objects.create(user=user, household=household, role=HouseholdMembership.Role.ADMIN)
 
     response = _client_for(user).post('/api/v1/household/invite/', {'email': 'ohne-rolle@example.com'}, format='json')
 

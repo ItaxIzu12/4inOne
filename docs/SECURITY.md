@@ -105,6 +105,11 @@ Never log:
 
 ## Before public launch
 
+Regression coverage for mailbox-based invitation verification, reset revocation, household invitation roles and
+private file cleanup lives in `backend/core/test_security_recovery.py`. An entered email alone never grants access
+to incoming invitation tokens. Password reset invalidates existing access and refresh credentials, not just the
+password used for future login. File deletion runs after commit so failed transactions do not erase retained files.
+
 Plan for:
 
 - PostgreSQL;

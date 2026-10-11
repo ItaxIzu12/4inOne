@@ -19,6 +19,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.settings import api_settings as jwt_settings
+from rest_framework_simplejwt.utils import get_md5_hash_password
 
 from core.mfa_views import MfaVerifyRateThrottle, user_has_mfa_enabled, verify_mfa_code
 from core.models import Household, HouseholdMembership, PasswordResetToken, UserSession
@@ -296,6 +298,10 @@ class RefreshView(APIView):
         # ungültig, sobald ein neues ausgestellt wurde.
         serializer = TokenRefreshSerializer(data={'refresh': raw_token})
         try:
+            old_refresh = RefreshToken(raw_token)
+            token_user = get_user_model().objects.filter(pk=old_refresh.get('user_id')).first()
+            if token_user is None or old_refresh.get(jwt_settings.REVOKE_TOKEN_CLAIM) != get_md5_hash_password(token_user.password):
+                raise InvalidToken('Die Sitzung ist abgelaufen. Bitte erneut anmelden.')
             serializer.is_valid(raise_exception=True)
         except TokenError as exc:
             raise InvalidToken('Die Sitzung ist abgelaufen. Bitte erneut anmelden.') from exc
@@ -425,10 +431,19 @@ class PasswordResetConfirmView(APIView):
             return Response({'password': exc.messages}, status=400)
 
         with transaction.atomic():
+            # Bedingtes UPDATE schützt auch unter SQLite vor Wiederverwendung.
+            reset_token.user = get_user_model().objects.select_for_update().get(pk=reset_token.user_id)
+            now = timezone.now()
+            if not PasswordResetToken.objects.filter(
+                pk=reset_token.pk, used_at__isnull=True, expires_at__gt=now,
+            ).update(used_at=now):
+                return Response({'detail': 'Der Reset-Link ist ungültig oder abgelaufen.'}, status=400)
             reset_token.user.set_password(password)
             reset_token.user.save(update_fields=['password'])
-            reset_token.used_at = timezone.now()
-            reset_token.save(update_fields=['used_at'])
+            PasswordResetToken.objects.filter(user=reset_token.user, used_at__isnull=True).update(used_at=now)
+            for outstanding in OutstandingToken.objects.filter(user=reset_token.user):
+                BlacklistedToken.objects.get_or_create(token=outstanding)
+            UserSession.objects.filter(user=reset_token.user).delete()
 
         return Response({'detail': 'Passwort erfolgreich geändert.'})
 

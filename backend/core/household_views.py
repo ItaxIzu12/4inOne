@@ -51,6 +51,11 @@ class HouseholdInviteView(APIView):
         if household is None:
             return Response({'detail': 'Dieses Konto ist noch keinem Haushalt zugeordnet.'}, status=400)
 
+        if not HouseholdMembership.objects.filter(
+            user=request.user, household=household, role=HouseholdMembership.Role.ADMIN,
+        ).exists():
+            return Response({'detail': 'Nur Admins dürfen Personen in diesen Haushalt einladen.'}, status=403)
+
         serializer = HouseholdInviteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']

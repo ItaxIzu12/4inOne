@@ -115,6 +115,8 @@ def test_expired_and_declined_invites_cannot_be_accepted(mira, tom):
 
 
 def test_received_and_sent_lists(mira, tom):
+    from allauth.account.models import EmailAddress
+    EmailAddress.objects.create(user=tom, email=tom.email, verified=True, primary=True)
     invite(mira, 'tom@example.com')
     sent = client_for(mira).get(URL).data['sent']
     received = client_for(tom).get(URL).data['received']

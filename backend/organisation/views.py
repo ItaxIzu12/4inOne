@@ -189,9 +189,7 @@ class FileViewSet(OwnedViewSet):
         return Response(self.get_serializer(entry).data, status=201)
 
     def perform_destroy(self, instance):
-        stored = instance.file
         instance.delete()
-        stored.delete(save=False)
 
     @action(detail=False, methods=['get'], url_path='speicher')
     def storage(self, request):
