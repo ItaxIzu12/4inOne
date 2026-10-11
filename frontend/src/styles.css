@@ -1,3 +1,15 @@
+/* Hausschrift: Instrument Sans als variable Schrift (Gewicht 400–700, Breite 75–100 %), eine Datei für alle
+   Schnitte. Selbst gehostet (Datenschutz, Tempo); swap zeigt sofort die Ersatzschrift, nichts bleibt unsichtbar. */
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/fonts/instrument-sans/InstrumentSans-Variable.woff2') format('woff2-variations'),
+    url('/fonts/instrument-sans/InstrumentSans-Variable.woff2') format('woff2');
+  font-weight: 400 700;
+  font-stretch: 75% 100%;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* 4inOne Design System — kanonisch beschrieben in docs/DESIGN_SYSTEM.md (bei Änderungen dort mitpflegen).
    Oben die semantischen Tokens (System V3); darunter die älteren Namen, die nur noch auf sie zeigen. */
 
@@ -141,8 +153,9 @@
   --color-dusk-sage: var(--text-muted);
   --color-amber: var(--color-amber-glow);
 
-  --font-display: Helvetica, Arial, sans-serif;
-  --font-body: Helvetica, Arial, sans-serif;
+  /* Instrument Sans (OFL, selbst gehostet unter public/fonts — kein externer Schrift-Server). */
+  --font-display: 'Instrument Sans', Helvetica, Arial, sans-serif;
+  --font-body: 'Instrument Sans', Helvetica, Arial, sans-serif;
 
   --text-caption: 12px;
   --leading-caption: 1.3;
@@ -251,7 +264,9 @@ p {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font-family: var(--font-body);
 }
 

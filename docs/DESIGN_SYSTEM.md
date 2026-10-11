@@ -90,6 +90,32 @@ Abstand — nie nur über Farbe.
 
 ### Referenz und Migrationsstand
 
+- **Hausschrift Instrument Sans (11.10.2026):** ersetzt Helvetica überall (App, Login, Landingpage; auch `select` und
+  `textarea`). Eine variable WOFF2-Datei (Gewicht 400–700, Breite 75–100 %, 89 KB) aus dem offiziellen Projekt
+  `github.com/Instrument/instrument-sans`, selbst gehostet unter `public/fonts/instrument-sans/` mit `OFL.txt` — kein
+  Google-Fonts-Server. `@font-face` in `styles.css`, `font-display: swap`, Preload in `index.html`; Ersatz Helvetica/
+  Arial. Alle Gewichte (400/500/600/700) bleiben exakt. Laufweite der Landing-Überschriften gelockert (H1 −0,025 em,
+  H2 −0,02 em), weil Instrument Sans enger läuft. Produkt-Screenshots der Landingpage neu aufgenommen (neue Schrift).
+
+- **Startseite, zweite Runde (11.10.2026):** Einstieg ohne Vier-Punkte-Liste, großer lesbarer Ausschnitt des Dashboards
+  (nur Inhaltsbereich, ohne rote Überfällig-Zeile — beim Aufnehmen ausgeblendet, sonst echte Oberfläche). Verbindungen
+  als Höhepunkt über die volle Breite und zum Ausprobieren: „Verknüpfen“ zwischen Sparziel und Gerät, danach zeigen beide
+  „Verknüpft mit“ (vorher „noch nichts“, gleiche Höhe), „Verbindung entfernen“ setzt zurück; Fokus bleibt am Ort,
+  Ansage per `aria-live`. Berlin-Beispiel über die volle Breite (Kopf zweispaltig, Rahmen mit „Verknüpft mit“ |
+  Vorschlag). Bereichs-Ausschnitte 1100 × 800, ohne abgeschnittene Beschriftungen. Zweispaltig bis 860 px (vorher
+  1024): bei 1024 px ≈ 6.200 statt 8.100 px Seitenhöhe.
+- **Öffentliche Startseite `/` (11.10.2026, Neugestaltung):** dieselbe Marke wie die App (Tokens, Helvetica, Buttons
+  Primär `--brand-primary` / Sekundär umrandet, 48 px), editorialer: H1 bis 74 px (−0,035 em), H2 bis 48 px, Lead
+  17–21 px in `--text-secondary`, Inhalt max. 1240 px, Lesetext ≤ 34 em. Rhythmus: helle Flächen wechseln
+  (Weiß / `--surface-app`), genau ein dunkler Moment (Privatsphäre, Navy `#16223a`). Keine Verläufe, kein Glas,
+  keine Eyebrows, keine Kartenwand, keine KI-Optik. Bilder ausschließlich echte Demo-Screenshots
+  (`public/images/landing`, WebP 1×/2×, gesamt ≈ 0,7 MB, nur das erste Bild mit `fetchpriority=high`, Rest lazy);
+  am Handy zeigt der Einstieg den Handy-Screenshot. Verbindungs-Beispiele sind Nachbauten echter Bausteine
+  (Objektzeile, „Verknüpft mit“, Vorschlagsblock) und als Darstellung beschriftet. Bewegung: Abschnitte blenden beim
+  Scrollen ein (350 ms, 12 px), die Verbindungslinie zeichnet sich und der Status wechselt einmal „Nicht verbunden“ →
+  „Verknüpft“; ohne JavaScript oder mit reduzierter Bewegung ist alles sofort sichtbar. Bereiche als echte Reiter
+  (Pfeiltasten, Pos1/Ende), das Bild folgt.
+
 - **Budgetjahr-Dialog (11.10.2026, Feinschliff):** statt zwölf umrandeter Kästen eine Liste in zwei Spalten (Jan–Jun |
   Jul–Dez; Handy eine Spalte) mit Haarlinien, Zeilen einheitlich 52 px; Betrag rechtsbündig, tabellarische Ziffern,
   „Nicht festgelegt“ leiser; Icons aus dem System (Pfeil, Haken) statt Textzeichen „›/✓“; gewählter Monat: Fläche in

@@ -127,7 +127,7 @@ test('deleting the account opens a clear warning first, then signs the user out 
   await page.getByRole('button', { name: 'Konto endgültig löschen' }).click();
   // Nicht mehr angemeldet: die Startseite zeigt wieder Anmelden/Registrieren statt der echten App.
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole('link', { name: 'Anmelden' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Anmelden' }).first()).toBeVisible(); // Kopf- und Fußzeile
   expect(deleteCalled).toBe(true);
 });
 

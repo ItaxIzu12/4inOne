@@ -52,7 +52,7 @@ for (const width of [360, 820, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      'Dein Alltag.An einem Ort organisiert.',
+      'Dein Alltag.Alles verbunden.',
     );
     await expect(page.locator('app-dashboard')).toHaveCount(0);
     await expect(page.locator('.demo-banner')).toHaveCount(0);
@@ -65,13 +65,13 @@ for (const width of [360, 820, 1440]) {
     ).toEqual([]);
     await expect(page.getByText('Starte mit dem Bereich, den du brauchst.')).toHaveCount(0);
     await expect(
-      page.getByRole('heading', { name: 'Ein Vorhaben. Mehrere Bereiche.' }),
+      page.getByRole('heading', { name: 'Was zusammengehört, bleibt zusammen.' }),
     ).toBeVisible();
     await page.evaluate(() => window.scrollTo(0, 700));
     expect(Math.abs((await page.locator('.site-head').boundingBox())!.y)).toBeLessThan(2);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: `test-results/landing-${width}.png`, fullPage: true });
-    await page.getByRole('link', { name: 'Demo entdecken', exact: true }).click();
+    await page.getByRole('link', { name: 'Demo testen', exact: true }).first().click();
     await expect(page).toHaveURL('/demo');
     await expect(page.locator('.demo-banner')).toBeVisible();
     await expect(page.getByRole('heading', { name: /^(Guten Morgen|Guten Tag|Guten Abend),? Sophie!$/ })).toBeVisible();
@@ -143,4 +143,48 @@ test('private links require login; legacy bookmarks retain query and fragment', 
   await page.goto('/app');
   await expect(page).toHaveURL('/');
   await expect(page.getByRole('heading', { name: /^(Guten Morgen|Guten Tag|Guten Abend),? Mira!$/ })).toBeVisible();
+});
+
+test('landing: honest product story, four areas as keyboard tabs, privacy principle, real auth links', async ({ page }) => {
+  await session(page);
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  // Kernaussagen in der vorgesehenen Reihenfolge: Verbindung früh, dann Bereiche, Unabhängigkeit, Privatsphäre
+  const headings = await page.getByRole('heading', { level: 2 }).allInnerTexts();
+  const order = ['Was zusammengehört', 'Vier Bereiche', 'Nutze nur', 'Passende Vorschläge', 'So fühlt sich', 'Verbinde den Zusammenhang', 'Weniger doppelt'];
+  expect(order.map((t) => headings.findIndex((h) => h.replace(/\s+/g, ' ').includes(t)))).toEqual([...order.keys()]);
+  // Keine erfundenen Behauptungen
+  await expect(page.locator('main')).not.toContainText(/KI|AI-|automatisch gebucht|Bank-level|Tausende|Bewertung|Testimonial/);
+  // Bereiche als Reiter, per Tastatur wechselbar; das Bild folgt
+  const tabs = page.getByRole('tab');
+  await expect(tabs).toHaveCount(4);
+  await tabs.first().focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('tab', { name: /Haushalt/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: /Haushalt/ })).toBeFocused();
+  await expect(page.getByRole('tabpanel').locator('img:visible')).toHaveAttribute('alt', /Haushalt in 4inOne/);
+  // Privatsphäre als Produktprinzip
+  await expect(page.locator('#privat')).toContainText('Eine Verbindung erweitert niemals automatisch Zugriffsrechte.');
+  // Echte Ziele
+  await expect(page.getByRole('link', { name: 'Konto erstellen' }).first()).toHaveAttribute('href', '/registrieren');
+  await expect(page.getByRole('link', { name: 'Anmelden' }).first()).toHaveAttribute('href', '/login');
+  for (const href of ['/impressum', '/datenschutz', '/barrierefreiheit'])
+    await expect(page.locator(`footer a[href="${href}"]`)).toHaveCount(1);
+  // Echte Produktbilder mit Alternativtext, nur das erste wird früh geladen
+  const imgs = page.locator('main img');
+  for (const alt of await imgs.evaluateAll((els) => els.filter((e) => !e.getAttribute('aria-hidden')).map((e) => e.getAttribute('alt') ?? ''))) expect(alt.length).toBeGreaterThan(20);
+});
+
+test('landing: the connection can be tried out — both entries show “Verknüpft mit”, focus stays close, undo works', async ({ page }) => {
+  await session(page);
+  await page.goto('/');
+  const stage = page.locator('.link-stage');
+  await expect(stage.getByText('noch nichts')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Verknüpfen', exact: true }).click();
+  await expect(stage.locator('.entry__link')).toHaveText([/Waschmaschine/, /Neue Waschmaschine/]);
+  await expect(page.getByRole('button', { name: 'Verbindung entfernen' })).toBeFocused();
+  await expect(page.locator('[aria-live="polite"]')).toContainText('Beide Einträge bleiben unverändert');
+  await page.keyboard.press('Enter');
+  await expect(stage.getByText('noch nichts')).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Verknüpfen', exact: true })).toBeFocused();
 });

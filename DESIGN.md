@@ -12,11 +12,13 @@ Systematisch im Grundgerüst, flexibel im Inhalt. Keine Gradients, Glas, Glow, D
 - Text: `--text-primary #1b2a44`, `--text-secondary #56657c`. Linien: `--border-subtle #e7ebf1`, `--border-default #dfe4ed`, `--border-strong #b9c0ce`.
 - Marke `--brand-primary #245fb0`. Bereiche (nur Akzente): Finanzen `#1e7a4d` · Haushalt `#b8432a` (Coral) · Organisation `#7541b5` · Reisen `#246db8`.
 - Status: Erfolg `#1e7a4d` · Warnung `#8a5a00` · Fehler `#b3261e` · Info `#245fb0` — nie nur über Farbe.
-- Typo (Systemschrift, Gewichte 400/500/600/700): Seite 30 (Handy 24) · Abschnitt 20 · Unterabschnitt 18 · Kennzahl 24 · Titel/Wert 16 · Text 16 · Sekundär/Label/Button 14 · Meta 13 · Caption 12. Zahlen `tabular-nums`.
+- Typo (Instrument Sans, variabel 400–700, selbst gehostet; Gewichte 400/500/600/700): Seite 30 (Handy 24) · Abschnitt 20 · Unterabschnitt 18 · Kennzahl 24 · Titel/Wert 16 · Text 16 · Sekundär/Label/Button 14 · Meta 13 · Caption 12. Zahlen `tabular-nums`.
 - Abstände 4 · 8 · 12 · 16 · 24 · 32 · 40 · 48 · 64. Radien 8 · 12 · 16 (+ Pille für Chips). Schatten nur für Overlays.
 - Layout: Inhalt max. 1280 px, Ränder 32/24/16; Steuerhöhe 44 px; Fokus 3 px `--brand-primary`, Offset 2 px.
 
 ## Regeln
+- Schrift überall Instrument Sans (App, Login, Landingpage, Formulare) über `--font-body`/`--font-display`; Datei `public/fonts/instrument-sans` (OFL), vorgeladen, `font-display: swap`. Große Überschriften höchstens −0,025 em Laufweite.
+- Öffentliche Startseite: dieselbe Marke, editorialer; nur echte Produkt-Screenshots, keine erfundenen Funktionen (Verbindungen und Vorschläge sind live, Automationen/KI/Banking nicht), keine Eyebrows, ein dunkler Abschnitt (Privatsphäre).
 - Marke überall `<app-brand>` (vier Farbfelder + „4inOne“), Favicon dieselben vier Felder. Das alte Kompass-Logo/-Name ist entfernt.
 - Genau ein aktiver Navigationspunkt; Bottom-Navigation am Handy: Start · Finanzen · Haushalt · Organisation · Reisen.
 - Seitenkopf: Titel · Untertitel · Hauptaktion rechts; eine Primary-Aktion je Ansicht.
