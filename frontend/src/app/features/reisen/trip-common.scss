@@ -11,7 +11,7 @@
 }
 .card {
   min-width: 0;
-  padding: 18px 20px;
+  padding: 20px 22px; // Karten-Innenabstand wie Finanzen/Organisation
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   background: var(--surface-card);
@@ -177,6 +177,7 @@ small {
   color: var(--text-primary);
   font: inherit;
   font-size: var(--fs-secondary);
+  font-weight: 600;
   cursor: pointer;
 }
 .soft:hover {
@@ -192,14 +193,14 @@ small {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 46px;
-  padding: 0 18px;
+  min-height: var(--control-height); // Hauptbutton wie überall: 44 px, 14 px/600
+  padding: 0 16px;
   border: 0;
   border-radius: var(--radius-md);
   background: var(--blue);
   color: #fff;
   font: inherit;
-  font-size: var(--fs-body);
+  font-size: var(--fs-button);
   font-weight: 600;
   cursor: pointer;
 }

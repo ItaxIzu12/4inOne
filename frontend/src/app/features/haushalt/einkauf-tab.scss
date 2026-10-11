@@ -7,7 +7,7 @@
   align-items: start;
 }
 .card {
-  padding: 20px;
+  padding: 20px 22px;
   border-radius: var(--radius-lg);
 }
 .card + .card {
@@ -165,7 +165,7 @@ small {
   gap: 6px;
 }
 .current__name h2 {
-  font-size: var(--fs-section);
+  font-size: var(--fs-subsection);
 }
 .pen {
   display: grid;
@@ -305,6 +305,7 @@ small {
   color: var(--text);
 }
 .add__submit {
+  position: relative;
   min-height: 40px;
   margin-left: 4px;
   padding: 0 16px;
@@ -316,6 +317,12 @@ small {
   font-size: var(--fs-secondary);
   font-weight: 600;
   cursor: pointer;
+}
+// Optisch 40 px in der 48-px-Eingabezeile, Klickfläche unsichtbar 44 px.
+.add__submit::before {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
 }
 .add__submit:disabled {
   opacity: 0.45;
@@ -497,12 +504,13 @@ small {
   font-size: var(--fs-secondary);
 }
 .item .check {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
 }
+// Kästchen wie überall 22 px (DESIGN.md), Klickfläche 44 px.
 .item .check__ring {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: var(--radius-sm);
 }
 .item .check.is-checked .check__ring {
@@ -593,7 +601,7 @@ small {
   min-width: 0;
 }
 .side-card {
-  padding: 18px 20px;
+  padding: 20px 22px;
 }
 // Hinweiskarte: neutrale Fläche wie alle Karten, Coral nur als schmaler Akzent (keine Pastellfläche).
 .side-card--soft {

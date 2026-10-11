@@ -3,7 +3,9 @@ import { lockScrollWhile } from '../../shared/scroll-lock/scroll-lock';
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AppIcon } from '../../shared/icons/app-icon';
+import { ConnectionsSection } from '../../shared/connections/connections-section';
 import { AppDatePicker } from '../../shared/form/date-picker';
 import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
@@ -82,12 +84,14 @@ const DEVICE_STATUS_FORM: SelectOption[] = [
 @Component({
   selector: 'app-ordner-tab',
   standalone: true,
-  imports: [ErrorNoticeDirective, DecimalPipe, AppIcon, AppSelect, Field, ModalForm, AppDatePicker, RowMenu],
+  imports: [ErrorNoticeDirective, DecimalPipe, AppIcon, AppSelect, Field, ModalForm, AppDatePicker, RowMenu, ConnectionsSection],
   templateUrl: './ordner-tab.html',
   styleUrls: ['./haushalt-common.scss', './haushalt-stats.scss', './ordner-tab.scss'],
 })
 export class OrdnerTab {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly saved = output<string>();
   /** Steigt bei jedem „Gerät/Vertrag hinzufügen“ im Seitenkopf; > 0 öffnet das Formular. */
   readonly newRequest = input(0);
@@ -209,12 +213,29 @@ export class OrdnerTab {
       next: (entries) => {
         this.entries.set(entries);
         this.loadError.set(false);
+        this.openEntryFromQuery(entries);
       },
       error: (error: unknown) => {
         if (error instanceof HttpErrorResponse && error.status === 403) this.forbidden.set(true);
         else this.loadError.set(true);
       },
     });
+  }
+
+  /** Deep-Link (?entry=<id>) aus „Verknüpft mit“: wählt Gerät bzw. Vertrag aus und zeigt das Detail. */
+  private openEntryFromQuery(entries: FolderEntryDto[]): void {
+    const id = Number(this.route.snapshot.queryParamMap.get('entry'));
+    if (!id) return;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { entry: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    const found = entries.find((e) => e.id === id);
+    if (!found) return;
+    this.selectSection(found.kind === 'vertrag' ? 'vertraege' : 'geraete');
+    this.select(found);
   }
 
   // ---------- Bereich und Liste ----------

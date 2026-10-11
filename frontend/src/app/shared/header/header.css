@@ -50,7 +50,7 @@
 .header-nav a {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--space-2);
   min-height: 44px;
   padding: 0 var(--space-16);
   border-radius: var(--radius-buttons);
@@ -161,7 +161,7 @@
   overflow-y: auto;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: var(--space-8) var(--space-16);
+  padding: var(--space-2) var(--space-16);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -186,7 +186,7 @@
 .mobile-menu__divider {
   height: 1px;
   background: var(--border);
-  margin: var(--space-8) 0;
+  margin: var(--space-2) 0;
 }
 
 .mobile-menu__login {
@@ -196,6 +196,6 @@
 }
 
 @media (max-width: 480px) {
-  .header-inner { padding: 0 var(--space-16); gap: var(--space-8); }
+  .header-inner { padding: 0 var(--space-16); gap: var(--space-2); }
   .login-button { padding: 0 var(--space-16); font-size: var(--text-caption); }
 }

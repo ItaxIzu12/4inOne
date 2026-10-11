@@ -118,6 +118,14 @@
         }
       </section>
 
+      @if (!forYou() && forYouLoading()) {
+        <section class="for-you" aria-labelledby="for-you-title" aria-busy="true">
+          <h2 id="for-you-title">Für dich</h2>
+          <div class="for-you__card for-you__card--skeleton" role="status" aria-label="Wird geladen">
+            <span></span><span></span><span></span>
+          </div>
+        </section>
+      }
       @if (forYou(); as f) {
         <section class="for-you" aria-labelledby="for-you-title">
           <h2 id="for-you-title">Für dich</h2>

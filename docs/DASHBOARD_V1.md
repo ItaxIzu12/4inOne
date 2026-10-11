@@ -110,6 +110,11 @@ Design System V3 (10.10.2026): Die Startseite ist der **Referenz-Screen** — al
 (`styles.css`, beschrieben in docs/DESIGN_SYSTEM.md und DESIGN.md); Titel 30 px wie die Bereichsköpfe, Start auf
 derselben Kante und Höhe wie die Bereiche.
 
+Feinschliff (10.10.2026): „Für dich“ zeigt beim Laden einen Platzhalter in Kartenform (solange Haushalt-Fristen oder
+Reisen laden) und verschwindet danach, wenn nichts Relevantes da ist. Das „Hinzufügen“-Menü blendet ruhig ein
+(150 ms, Deckkraft + 4 px), bei reduzierter Bewegung ohne Animation. Magic UI wird nicht verwendet (React-Bibliothek,
+4inOne ist Angular; die erlaubten Effekte sind mit CSS umgesetzt).
+
 ## Freeze
 
 Nur noch Bugfixes, Sicherheit, Barrierefreiheit, Performance und echte UX-Probleme aus Nutzertests. Keine Widgets,

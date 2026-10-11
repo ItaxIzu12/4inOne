@@ -69,7 +69,7 @@
 /* ---------- "Kategorie anlegen"-Mini-Formular (im app-modal) ---------- */
 .onboarding__modal-heading { font-size: var(--text-heading-sm); margin: 0 0 var(--space-16); }
 .onboarding__category-form { display: flex; flex-direction: column; gap: var(--space-16); }
-.field { display: flex; flex-direction: column; gap: var(--space-8); }
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
 .field label { font-size: 13px; font-weight: 700; color: var(--color-midnight-plum); }
 .field input {
   min-height: 44px;

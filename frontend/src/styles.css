@@ -172,8 +172,8 @@
   --leading-display-xl: 1.02;
   --tracking-display-xl: -0.015em;
 
-  --space-4: 4px;
-  --space-8: 8px;
+  /* Ältere Pixel-Namen. --space-4/--space-8 gibt es hier bewusst NICHT mehr: sie überschrieben die
+     V3-Stufen oben (16/48 px) mit 4/8 px. Für 4/8 px: --space-1/--space-2. */
   --space-10: 10px;
   --space-16: 16px;
   --space-20: 20px;

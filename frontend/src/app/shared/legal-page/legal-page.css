@@ -46,7 +46,7 @@
 .legal-page__content section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--space-2);
 }
 
 .legal-page__content h2 {

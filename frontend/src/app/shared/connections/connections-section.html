@@ -1,6 +1,6 @@
 @if (enabled()) {
   <section class="connections" [attr.aria-labelledby]="titleId" (keydown)="onKeydown($event)">
-    <h3 class="connections__title" [id]="titleId"><app-icon name="link" />Verknüpft</h3>
+    <h3 class="connections__title" [id]="titleId"><app-icon name="link" />Verknüpft mit</h3>
 
     @switch (status()) {
       @case ('loading') {
@@ -28,15 +28,17 @@
                   </span>
                   <app-icon class="connection__chevron" name="arrow" />
                 </a>
-                <button
-                  type="button"
-                  class="connection__remove"
-                  [attr.aria-label]="'Verknüpfung mit „' + row.other.title + '“ lösen'"
-                  [disabled]="removingId() === row.item.id"
-                  (click)="remove(row.item)"
-                >
-                  Lösen
-                </button>
+                @if (row.item.can_delete) {
+                  <button
+                    type="button"
+                    class="connection__remove"
+                    [attr.aria-label]="'Verbindung zu „' + row.other.title + '“ entfernen (der Eintrag selbst bleibt erhalten)'"
+                    [disabled]="removingId() === row.item.id"
+                    (click)="remove(row.item)"
+                  >
+                    Verbindung entfernen
+                  </button>
+                }
               </li>
             }
           </ul>
@@ -44,8 +46,54 @@
           <div class="connections__empty">
             <p class="connections__empty-title">Noch nichts verknüpft.</p>
             <p class="connections__note">
-              Verbinde passende Aufgaben, Termine, Sparziele oder andere Bereiche, damit 4inOne Zusammenhänge für dich
-              sichtbar machen kann.
+              Verknüpfe Einträge, die zusammengehören — etwa eine Aufgabe mit deiner Reise. Sie erscheinen dann
+              gegenseitig hier; beide bleiben dabei unverändert.
+            </p>
+          </div>
+        }
+
+        @if (suggestionRows().length && step() === null) {
+          <div class="suggestions" role="group" [attr.aria-labelledby]="suggestionsTitleId">
+            <p class="suggestions__title" [id]="suggestionsTitleId">Das könnte zusammengehören</p>
+            <ul class="suggestions__list">
+              @for (row of suggestionRows(); track row.suggestion.key) {
+                <li class="suggestion">
+                  <div class="suggestion__main">
+                    <span class="connection__icon" [class]="domainClass(row.other.domain)" aria-hidden="true">
+                      <app-icon [name]="typeOf(row.other).icon" />
+                    </span>
+                    <span class="connection__text">
+                      <span class="connection__kind">{{ typeOf(row.other).label }}</span>
+                      <span class="connection__title">{{ row.other.title }}</span>
+                      <span class="suggestion__reason">{{ row.suggestion.reason }}</span>
+                    </span>
+                  </div>
+                  <div class="suggestion__actions">
+                    <button
+                      type="button"
+                      class="c-btn c-btn--primary"
+                      [attr.aria-label]="'Mit „' + row.other.title + '“ verknüpfen'"
+                      [disabled]="suggestionBusy() !== null"
+                      (click)="acceptSuggestion(row.suggestion)"
+                    >
+                      {{ suggestionBusy() === row.suggestion.key ? 'Wird verknüpft …' : 'Verknüpfen' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="c-btn c-btn--soft"
+                      [attr.aria-label]="'Vorschlag „' + row.other.title + '“ ist nicht relevant'"
+                      [disabled]="suggestionBusy() !== null"
+                      (click)="dismissSuggestion(row.suggestion)"
+                    >
+                      Nicht relevant
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+            <p class="suggestions__privacy">
+              Nur ein Vorschlag: Verknüpft wird erst, wenn du zustimmst, und geändert wird dabei nichts. Vorschläge
+              entstehen nur aus Einträgen, auf die du Zugriff hast.
             </p>
           </div>
         }
@@ -93,7 +141,7 @@
               @if (candidates() === null) {
                 <p class="connections__note" role="status">Wird geladen …</p>
               } @else if (candidatesError()) {
-                <p class="connections__error"  [appErrorNotice]="'Die Liste konnte nicht geladen werden.'">Die Liste konnte nicht geladen werden.</p>
+                <p class="connections__error" [appErrorNotice]="candidatesError()">{{ candidatesError() }}</p>
                 <button type="button" class="c-link" (click)="loadCandidates()">Erneut versuchen</button>
               } @else {
                 <ul class="wizard__choices">
@@ -137,11 +185,7 @@
           }
           @default {
             <button #addButton type="button" class="connections__add" (click)="start()">
-              @if (!rows().length) {
-                Verbindung hinzufügen
-              } @else {
-                <span aria-hidden="true">+</span> Verbindung hinzufügen
-              }
+              <span aria-hidden="true">+</span> Verknüpfen
             </button>
           }
         }

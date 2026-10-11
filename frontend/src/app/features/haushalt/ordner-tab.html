@@ -506,4 +506,7 @@
   <app-field label="Notizen" [optional]="true">
     <textarea id="folder-notes" maxlength="1000" [value]="formNotes()" (input)="formNotes.set($any($event.target).value)"></textarea>
   </app-field>
+  @if (editingId() !== null) {
+    <app-connections [objectType]="formKind() === 'vertrag' ? 'CONTRACT' : 'DEVICE'" [objectId]="editingId()" />
+  }
 </app-modal-form>

@@ -34,6 +34,7 @@ import { Modal } from '../../shared/modal/modal';
 import { AuthService } from '../../core/auth/auth.service';
 import { OnboardingApiService } from '../../core/onboarding/onboarding-api.service';
 import { TodayApi, TodayOverview } from './today-api.service';
+import { linkFor } from '../../shared/connections/connections-section';
 
 /** Eine Zeile unter „Heute“ — aus welchem Bereich auch immer. */
 export interface TodayRow {
@@ -68,6 +69,7 @@ export interface ForYou {
   query: Record<string, string | number>;
 }
 const FOR_YOU_DAYS = 30;
+const FOR_YOU_TONE: Record<string, string> = { finanzen: 'finance', haushalt: 'household', organisation: 'organisation', reisen: 'travel' };
 const DEADLINE_LABEL: Record<string, string> = { kuendigung: 'Kündigungsfrist', wartung: 'Wartung', garantie: 'Garantie endet' };
 
 /** Heute fokussiert halten: höchstens fünf Zeilen, der Rest liegt in den Bereichen. */
@@ -159,6 +161,8 @@ export class Dashboard {
   readonly boardTasks = signal<PersonalTask[]>([]);
   /** „Für dich“: die eine nächste Sache aus echten Daten, die nicht schon unter „Heute“ steht — eine Frist im
    * Haushalt oder die nächste Reise mit offener Vorbereitung, jeweils innerhalb von 30 Tagen. Sonst keine Karte. */
+  /** „Für dich“ hängt an Haushalt-Fristen und Reisen — solange eins davon lädt, steht ein Platzhalter da. */
+  readonly forYouLoading = computed(() => (this.household() === null && !this.householdError()) || this.tripsLoading());
   readonly forYou = computed<ForYou | null>(() => {
     const candidates: (ForYou & { days: number; rank: number })[] = [];
     const deadline = (this.household()?.deadlines ?? []).find((d) => d.days > 0 && d.days <= FOR_YOU_DAYS);
@@ -198,7 +202,22 @@ export class Dashboard {
       });
     }
     candidates.sort((a, b) => a.days - b.days || a.rank - b.rank);
-    return candidates[0] ?? null;
+    if (candidates.length) return candidates[0];
+    // Nur wenn sonst nichts ansteht: höchstens EIN starker Verknüpfungs-Vorschlag (der Server wählt ihn aus).
+    // Die Karte öffnet das Objekt, an dem man ihn annehmen oder ablehnen kann — nie wird hier etwas verknüpft.
+    const link = this.overview()?.link_suggestion;
+    if (!link) return null;
+    const target = linkFor(link.target);
+    return {
+      tone: FOR_YOU_TONE[link.target.domain] ?? 'organisation',
+      icon: 'link',
+      area: 'Das könnte zusammengehören',
+      title: link.headline,
+      facts: [link.reason],
+      action: 'Vorschlag ansehen',
+      path: target.path[0],
+      query: target.query,
+    };
   });
   /** Schnellerfassung — nur Formulare, die es in den Bereichen schon gibt. */
   readonly quickAdd = computed((): QuickAddItem[] => [

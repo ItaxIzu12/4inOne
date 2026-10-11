@@ -14,6 +14,8 @@ class ObjectType(models.TextChoices):
     SAVINGS_GOAL = 'SAVINGS_GOAL', 'Sparziel'
     HOUSEHOLD_TASK = 'HOUSEHOLD_TASK', 'Haushaltsaufgabe'
     TRIP = 'TRIP', 'Reise'
+    DEVICE = 'DEVICE', 'Gerät'
+    CONTRACT = 'CONTRACT', 'Vertrag'
     # Vorgesehen, noch in keinem erlaubten Paar.
     BUDGET = 'BUDGET', 'Budget'
 

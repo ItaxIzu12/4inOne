@@ -19,7 +19,7 @@ from connections.models import ObjectType
 from connections.registry import ALLOWED_PAIRS, KINDS
 from core.models import Household, HouseholdMembership
 from finanzen.models import SavingsGoal
-from haushalt.models import Task as HouseholdTask
+from haushalt.models import FolderEntry, Task as HouseholdTask
 from organisation.models import PersonalEvent, PersonalTask
 from reisen.models import Trip, TripParticipant
 
@@ -32,6 +32,8 @@ DOMAIN_DETAIL_URL = {
     ObjectType.SAVINGS_GOAL: '/api/v1/finanzen/private/goals/{pk}/',
     ObjectType.HOUSEHOLD_TASK: '/api/v1/haushalt/aufgaben/{pk}/',
     ObjectType.TRIP: '/api/v1/reisen/trips/{pk}/',
+    ObjectType.DEVICE: '/api/v1/haushalt/ordner/{pk}/',
+    ObjectType.CONTRACT: '/api/v1/haushalt/ordner/{pk}/',
 }
 
 
@@ -61,7 +63,20 @@ def _make(kind, people):
         ),
         ObjectType.HOUSEHOLD_TASK: lambda: HouseholdTask.objects.create(household=people['home'], title='H'),
         ObjectType.TRIP: lambda: _trip_shared_with(owner, people['stranger']),
+        ObjectType.DEVICE: lambda: FolderEntry.objects.create(
+            household=people['home'], kind=FolderEntry.Kind.DEVICE, name='Waschmaschine'
+        ),
+        ObjectType.CONTRACT: lambda: FolderEntry.objects.create(
+            household=people['home'], kind=FolderEntry.Kind.CONTRACT, name='Internet', provider='Vodafone'
+        ),
     }[kind]()
+
+
+def test_device_and_contract_ids_do_not_cross_kinds(people):
+    """Gerät und Vertrag teilen ein Modell: eine Vertrags-ID ist nie als Gerät auflösbar."""
+    contract = _make(ObjectType.CONTRACT, people)
+    assert not KINDS[ObjectType.DEVICE].visible(people['owner']).filter(pk=contract.pk).exists()
+    assert KINDS[ObjectType.CONTRACT].visible(people['owner']).filter(pk=contract.pk).exists()
 
 
 def _trip_shared_with(owner, viewer):

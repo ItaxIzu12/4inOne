@@ -4,7 +4,7 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { ConnectedObject, ConnectionDto } from './connections-api.service';
+import { ConnectedObject, ConnectionDto, LinkSuggestionDto } from './connections-api.service';
 import { ConnectionsSection } from './connections-section';
 
 @Component({
@@ -21,7 +21,7 @@ const task = (over: Partial<ConnectedObject> = {}): ConnectedObject => ({
 });
 const goal: ConnectedObject = { type: 'SAVINGS_GOAL', id: 7, title: 'Neue Waschmaschine', subtitle: '480,00 € von 700,00 €', domain: 'finanzen' };
 const dto = (id: number, other: ConnectedObject): ConnectionDto => ({
-  id, relation_type: 'TASK_FOR', relation_label: 'Aufgabe für', origin: 'MANUAL', created_at: '2026-09-25T10:00:00Z',
+  id, can_delete: true, relation_type: 'TASK_FOR', relation_label: 'Aufgabe für', origin: 'MANUAL', created_at: '2026-09-25T10:00:00Z',
   source: goal, target: other, other,
 });
 
@@ -54,8 +54,9 @@ describe('ConnectionsSection', () => {
       target!.click();
       fixture.detectChanges();
     };
-    const flushList = (rows: ConnectionDto[]) => {
+    const flushList = (rows: ConnectionDto[], suggestions: LinkSuggestionDto[] = []) => {
       http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/connections/') && r.params.get('object_id') === '7').flush(rows);
+      http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/link-suggestions/') && r.params.get('object_id') === '7').flush(suggestions);
       fixture.detectChanges();
     };
     return { fixture, el, text, button, click, flushList };
@@ -71,9 +72,9 @@ describe('ConnectionsSection', () => {
 
     flushList([]);
     expect(text()).toContain('Noch nichts verknüpft.');
-    expect(text()).toContain('Verbinde passende Aufgaben, Termine, Sparziele oder andere Bereiche');
-    expect(text()).toContain('Verbindung hinzufügen');
-    expect(text()).not.toContain('+ Verbindung');
+    expect(text()).toContain('beide bleiben dabei unverändert');
+    expect(text()).toContain('+ Verknüpfen');
+    expect(text()).toContain('Verknüpft mit');
   });
 
   it('lists connected items with kind, title and detail — without technical terms', () => {
@@ -82,9 +83,9 @@ describe('ConnectionsSection', () => {
     expect(text()).toContain('Aufgabe');
     expect(text()).toContain('Modelle vergleichen');
     expect(text()).toContain('Fällig 12.10.2030');
-    expect(text()).toContain('+ Verbindung hinzufügen');
+    expect(text()).toContain('+ Verknüpfen');
     expect(text()).not.toMatch(/source|target|TASK_FOR|Connection/i);
-    expect(el.querySelector('button[aria-label="Verknüpfung mit „Modelle vergleichen“ lösen"]')).not.toBeNull();
+    expect(el.querySelector('button[aria-label^="Verbindung zu „Modelle vergleichen“ entfernen"]')?.textContent?.trim()).toBe('Verbindung entfernen');
   });
 
   it('links every connection to the page that opens the connected object', () => {
@@ -139,7 +140,7 @@ describe('ConnectionsSection', () => {
     const { text, click, flushList, fixture, el } = setup();
     flushList([]);
 
-    click('Verbindung hinzufügen');
+    click('+ Verknüpfen');
     http.expectOne((r) => r.url.endsWith('/connections/options/')).flush([
       { type: 'TASK', label: 'Aufgabe', domain: 'organisation', relation_type: 'TASK_FOR' },
     ]);
@@ -171,7 +172,7 @@ describe('ConnectionsSection', () => {
   it('explains a duplicate instead of failing silently', () => {
     const { text, click, flushList, fixture } = setup();
     flushList([]);
-    click('Verbindung hinzufügen');
+    click('+ Verknüpfen');
     http.expectOne((r) => r.url.endsWith('/options/')).flush([{ type: 'TASK', label: 'Aufgabe', domain: 'organisation', relation_type: 'TASK_FOR' }]);
     fixture.detectChanges();
     click('Aufgabe');
@@ -189,7 +190,7 @@ describe('ConnectionsSection', () => {
     try {
       const { el, click, flushList, fixture } = setup();
       flushList([]);
-      click('Verbindung hinzufügen');
+      click('+ Verknüpfen');
       http.expectOne((r) => r.url.endsWith('/options/')).flush([{ type: 'TASK', label: 'Aufgabe', domain: 'organisation', relation_type: 'TASK_FOR' }]);
       fixture.detectChanges();
       click('Aufgabe');
@@ -215,24 +216,24 @@ describe('ConnectionsSection', () => {
     const { el, text, flushList, fixture } = setup();
     flushList([dto(1, task()), dto(2, task({ id: 6, title: 'Angebot einholen' }))]);
 
-    (el.querySelector('button[aria-label="Verknüpfung mit „Modelle vergleichen“ lösen"]') as HTMLButtonElement).click();
+    (el.querySelector('button[aria-label^="Verbindung zu „Modelle vergleichen“ entfernen"]') as HTMLButtonElement).click();
     http.expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/connections/1/')).flush(null, { status: 204, statusText: 'No Content' });
     fixture.detectChanges();
 
     const titles = Array.from(el.querySelectorAll('.connection__title')).map((n) => n.textContent?.trim());
     expect(titles).toEqual(['Angebot einholen']);
-    expect(el.querySelector('.sr-only')?.textContent).toContain('Verknüpfung mit „Modelle vergleichen“ gelöst.');
+    expect(el.querySelector('.sr-only')?.textContent).toContain('Verbindung zu „Modelle vergleichen“ entfernt. Beide Einträge bleiben erhalten.');
     void text;
   });
 
   it('keeps the connection and shows an error when removing fails', () => {
     const { el, text, flushList, fixture } = setup();
     flushList([dto(1, task())]);
-    (el.querySelector('button[aria-label^="Verknüpfung mit"]') as HTMLButtonElement).click();
+    (el.querySelector('button[aria-label^="Verbindung zu"]') as HTMLButtonElement).click();
     http.expectOne((r) => r.method === 'DELETE').flush('x', { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
     expect(text()).toContain('Modelle vergleichen');
-    expect(text()).toContain('konnte nicht gelöst werden');
+    expect(text()).toContain('konnte nicht entfernt werden');
   });
 
   it('keyboard: focus moves into each step, Escape closes only the assistant and returns focus', async () => {
@@ -240,7 +241,7 @@ describe('ConnectionsSection', () => {
     try {
       const { el, click, flushList, fixture } = setup();
       flushList([]);
-      click('Verbindung hinzufügen');
+      click('+ Verknüpfen');
       http.expectOne((r) => r.url.endsWith('/options/')).flush([{ type: 'TASK', label: 'Aufgabe', domain: 'organisation', relation_type: 'TASK_FOR' }]);
       fixture.detectChanges();
       vi.advanceTimersByTime(10);
@@ -269,5 +270,115 @@ describe('ConnectionsSection', () => {
     expect(actions.length).toBeGreaterThan(0);
     for (const action of actions) expect(action.getAttribute('type')).toBe('button');
     expect(el.querySelector('section')?.getAttribute('aria-labelledby')).toBe(el.querySelector('h3')?.id);
+  });
+
+  it('shows remove only where the server allows it (read-only viewers)', () => {
+    const { el, text, flushList } = setup();
+    flushList([dto(1, task()), { ...dto(2, task({ id: 6, title: 'Angebot einholen' })), can_delete: false }]);
+    expect(text()).toContain('Angebot einholen');
+    expect(el.querySelectorAll('.connection__remove').length).toBe(1);
+    expect(el.querySelector('button[aria-label^="Verbindung zu „Angebot einholen“"]')).toBeNull();
+  });
+
+  it('asks the server whether this object may be linked and explains a 403 plainly', () => {
+    const { text, click, flushList, fixture } = setup();
+    flushList([]);
+    click('+ Verknüpfen');
+    const options = http.expectOne((r) => r.url.endsWith('/options/'));
+    expect(options.request.params.get('object_id')).toBe('7');
+    options.flush({ detail: 'Django says no' }, { status: 403, statusText: 'Forbidden' });
+    fixture.detectChanges();
+    expect(text()).toContain('Dafür fehlt dir die Berechtigung.');
+    expect(text()).not.toContain('Django');
+  });
+
+  it('explains a network error and a vanished object when linking or removing', () => {
+    const { el, text, click, flushList, fixture } = setup();
+    flushList([dto(1, task())]);
+    (el.querySelector('button[aria-label^="Verbindung zu"]') as HTMLButtonElement).click();
+    http.expectOne((r) => r.method === 'DELETE').flush(null, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+    expect(text()).toContain('Dieser Eintrag ist nicht mehr verfügbar.');
+    expect(el.querySelector('.connection__title')).toBeNull(); // nicht mehr verfügbar → aus der Liste genommen
+
+    click('+ Verknüpfen');
+    http.expectOne((r) => r.url.endsWith('/options/')).flush([{ type: 'TASK', label: 'Aufgabe', domain: 'organisation', relation_type: 'TASK_FOR' }]);
+    fixture.detectChanges();
+    click('Aufgabe');
+    http.expectOne((r) => r.url.endsWith('/candidates/')).flush([task()]);
+    fixture.detectChanges();
+    click('Modelle vergleichen');
+    click('Verknüpfen');
+    http.expectOne((r) => r.method === 'POST').error(new ProgressEvent('error'), { status: 0, statusText: '' });
+    fixture.detectChanges();
+    expect(text()).toContain('Keine Verbindung zum Server.');
+  });
+
+  const suggestion = (over: Partial<LinkSuggestionDto> = {}): LinkSuggestionDto => ({
+    key: 'link:DEVICE:3:SAVINGS_GOAL:7', reason_code: 'DEVICE_SAVINGS_GOAL_MATCH',
+    headline: 'Dein Sparziel „Neue Waschmaschine“ könnte mit dem Gerät „Waschmaschine“ zusammenhängen.',
+    reason: 'Das Sparziel erwähnt „Waschmaschine“.', relation_label: 'Finanziert durch',
+    source: goal, target: goal, other: { type: 'DEVICE', id: 3, title: 'Waschmaschine', subtitle: 'Siemens', domain: 'haushalt' },
+    ...over,
+  });
+
+  it('shows a suggestion with its reason, privacy note and two real buttons — no score', () => {
+    const { el, text, flushList } = setup();
+    flushList([], [suggestion()]);
+    expect(text()).toContain('Das könnte zusammengehören');
+    expect(text()).toContain('Waschmaschine');
+    expect(text()).toContain('Das Sparziel erwähnt „Waschmaschine“.');
+    expect(text()).toContain('Vorschläge entstehen nur aus Einträgen, auf die du Zugriff hast.');
+    expect(text()).toContain('Nur ein Vorschlag: Verknüpft wird erst, wenn du zustimmst, und geändert wird dabei nichts.');
+    expect(text()).not.toMatch(/%|score|confidence|KI|AI/);
+    const accept = el.querySelector('button[aria-label="Mit „Waschmaschine“ verknüpfen"]');
+    const dismiss = el.querySelector('button[aria-label="Vorschlag „Waschmaschine“ ist nicht relevant"]');
+    expect(accept?.getAttribute('type')).toBe('button');
+    expect(dismiss?.getAttribute('type')).toBe('button');
+  });
+
+  it('accepting sends only the key, removes the suggestion and shows the new connection', () => {
+    const { el, text, flushList, fixture } = setup();
+    flushList([], [suggestion()]);
+    (el.querySelector('button[aria-label="Mit „Waschmaschine“ verknüpfen"]') as HTMLButtonElement).click();
+    const post = http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/link-suggestions/accept/'));
+    expect(post.request.body).toEqual({ key: 'link:DEVICE:3:SAVINGS_GOAL:7' });
+    post.flush(dto(9, suggestion().other!), { status: 201, statusText: 'Created' });
+    fixture.detectChanges();
+    flushList([dto(9, suggestion().other!)], []);
+    expect(text()).not.toContain('Das könnte zusammengehören');
+    expect(Array.from(el.querySelectorAll('.connection__title')).map((n) => n.textContent?.trim())).toEqual(['Waschmaschine']);
+    expect(el.querySelector('.sr-only')?.textContent).toContain('Mit „Waschmaschine“ verknüpft.');
+  });
+
+  it('dismissing hides the suggestion without creating anything', () => {
+    const { el, text, flushList, fixture } = setup();
+    flushList([], [suggestion()]);
+    (el.querySelector('button[aria-label^="Vorschlag „Waschmaschine“"]') as HTMLButtonElement).click();
+    http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/link-suggestions/dismiss/')).flush(null, { status: 204, statusText: 'No Content' });
+    fixture.detectChanges();
+    expect(text()).not.toContain('Das könnte zusammengehören');
+    expect(el.querySelector('.connection__title')).toBeNull();
+    http.expectNone((r) => r.method === 'POST' && r.url.endsWith('/connections/'));
+  });
+
+  it('a suggestion that no longer applies disappears with a plain message', () => {
+    const { el, text, flushList, fixture } = setup();
+    flushList([], [suggestion()]);
+    (el.querySelector('button[aria-label="Mit „Waschmaschine“ verknüpfen"]') as HTMLButtonElement).click();
+    http.expectOne((r) => r.url.endsWith('/accept/')).flush({ detail: 'Django internals' }, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+    expect(text()).toContain('Dieser Vorschlag gilt nicht mehr.');
+    expect(text()).not.toContain('Django');
+    expect(text()).not.toContain('Das könnte zusammengehören');
+  });
+
+  it('a failing suggestion request leaves the section usable', () => {
+    const { text, fixture } = setup();
+    http.expectOne((r) => r.url.endsWith('/connections/')).flush([dto(1, task())]);
+    http.expectOne((r) => r.url.endsWith('/link-suggestions/')).flush('x', { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+    expect(text()).toContain('Modelle vergleichen');
+    expect(text()).not.toContain('konnten nicht geladen');
   });
 });

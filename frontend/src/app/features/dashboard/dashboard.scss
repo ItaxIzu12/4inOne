@@ -102,6 +102,17 @@
   box-shadow: 0 12px 28px -12px rgb(20 33 67 / 25%);
   list-style: none;
 }
+// Ruhiges Einblenden (Deckkraft + 4 px), nur beim Öffnen; bei reduzierter Bewegung aus.
+.quick__list {
+  animation: quick-in var(--motion-fast) ease-out;
+  transform-origin: top right;
+}
+@keyframes quick-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
 .quick__list a {
   display: flex;
   align-items: center;
@@ -381,6 +392,27 @@ h1 {
 .for-you__action app-icon {
   transition: transform 150ms ease-out;
 }
+// Platzhalter in der Form der Karte, damit beim Laden nichts springt.
+.for-you__card--skeleton {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+.for-you__card--skeleton span {
+  height: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+.for-you__card--skeleton span:nth-child(1) {
+  width: 18%;
+}
+.for-you__card--skeleton span:nth-child(2) {
+  width: 40%;
+  height: 16px;
+}
+.for-you__card--skeleton span:nth-child(3) {
+  width: 28%;
+}
 .for-you__copy {
   display: grid;
   gap: 2px;
@@ -496,6 +528,11 @@ button:focus-visible {
   }
 }
 @media (max-width: 760px) {
+  // Titel auf dem Handy auf derselben Höhe wie die Bereichsköpfe (dort steht er zentriert neben dem 44-px-Symbol)
+  // — gleicher Abstand zwischen Kopfzeile und Überschrift wie in Finanzen.
+  .dashboard {
+    padding-top: var(--space-6);
+  }
   .greeting {
     margin-bottom: var(--space-5);
   }
@@ -531,6 +568,9 @@ button:focus-visible {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .quick__list {
+    animation: none;
+  }
   .domain,
   .quick__toggle,
   .for-you__card,

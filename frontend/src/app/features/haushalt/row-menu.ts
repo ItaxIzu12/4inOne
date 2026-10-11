@@ -67,8 +67,8 @@ export interface RowMenuItem {
     .trigger {
       display: grid;
       place-items: center;
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       border: 0;
       border-radius: 10px;
       background: none;

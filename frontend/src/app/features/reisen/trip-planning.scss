@@ -25,7 +25,7 @@
   background: #fff;
   color: var(--text-secondary);
   font: inherit;
-  font-size: var(--fs-meta);
+  font-size: var(--fs-secondary); // wie die Filter-Chips in den Aufgaben
   cursor: pointer;
 }
 .chips button[aria-pressed='true'] {
@@ -70,6 +70,7 @@
   outline: none;
 }
 .quick__more {
+  position: relative;
   display: grid;
   place-items: center;
   width: 44px;
@@ -81,6 +82,11 @@
   color: var(--text-secondary);
   cursor: pointer;
 }
+.quick__more::before {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
+}
 .quick__more:hover {
   background: var(--blue-soft);
   color: var(--accent-hover);
@@ -90,6 +96,7 @@
   height: 18px;
 }
 .quick__submit {
+  position: relative;
   min-height: 40px;
   padding: 0 16px;
   border: 0;
@@ -100,6 +107,12 @@
   font-size: var(--fs-secondary);
   font-weight: 600;
   cursor: pointer;
+}
+// Optisch 40 px in der 48-px-Eingabezeile, Klickfläche unsichtbar 44 px.
+.quick__submit::before {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
 }
 .quick__submit:disabled {
   opacity: 0.45;

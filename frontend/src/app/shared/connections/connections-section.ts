@@ -10,6 +10,7 @@ import {
   ConnectionObjectType,
   ConnectionOption,
   ConnectionsApi,
+  LinkSuggestionDto,
 } from './connections-api.service';
 
 type Step = 'type' | 'object' | 'confirm';
@@ -21,11 +22,13 @@ const KIND: Record<ConnectionObjectType, { label: string; icon: IconName }> = {
   SAVINGS_GOAL: { label: 'Sparziel', icon: 'finance' },
   HOUSEHOLD_TASK: { label: 'Haushaltsaufgabe', icon: 'household' },
   TRIP: { label: 'Reise', icon: 'travel' },
+  DEVICE: { label: 'Gerät', icon: 'device' },
+  CONTRACT: { label: 'Vertrag', icon: 'file-text' },
   BUDGET: { label: 'Budget', icon: 'finance' },
 };
 
 /** Wohin eine Verbindung führt: die Seite des Objekts, das es dort öffnet (Deep-Link per Query-Parameter). */
-function linkFor(object: ConnectedObject): { path: string[]; query: Record<string, string | number> } {
+export function linkFor(object: ConnectedObject): { path: string[]; query: Record<string, string | number> } {
   switch (object.type) {
     case 'TASK':
       return { path: ['/organisation'], query: { kind: 'task', id: object.id } };
@@ -37,8 +40,30 @@ function linkFor(object: ConnectedObject): { path: string[]; query: Record<strin
       return { path: ['/finanzen'], query: { goal: object.id } };
     case 'TRIP':
       return { path: ['/reisen'], query: { trip: object.id } };
+    case 'DEVICE':
+    case 'CONTRACT':
+      return { path: ['/haushalt'], query: { tab: 'zuhause', entry: object.id } };
     default:
       return { path: ['/'], query: {} };
+  }
+}
+
+/** Verständliche Meldung je Fehlerart — nie die technische Antwort des Servers. */
+export function connectionErrorMessage(error: unknown, fallback: string): string {
+  const status = (error as { status?: number } | null)?.status;
+  switch (status) {
+    case 0:
+      return 'Keine Verbindung zum Server. Bitte prüfe deine Internetverbindung und versuche es noch einmal.';
+    case 403:
+      return 'Dafür fehlt dir die Berechtigung. Diesen Eintrag kannst du nur ansehen.';
+    case 404:
+      return 'Dieser Eintrag ist nicht mehr verfügbar.';
+    case 409:
+      return 'Diese Verknüpfung besteht bereits.';
+    case 429:
+      return 'Zu viele Änderungen in kurzer Zeit. Bitte warte einen Moment.';
+    default:
+      return fallback;
   }
 }
 
@@ -84,6 +109,12 @@ export class ConnectionsSection {
   protected readonly rows = computed(() =>
     this.items().flatMap((item) => (item.other ? [{ item, other: item.other, link: linkFor(item.other) }] : [])),
   );
+  /** Vorschläge „Das könnte zusammengehören“ — höchstens drei, vom Server ausgewählt und begründet. */
+  protected readonly suggestions = signal<LinkSuggestionDto[]>([]);
+  protected readonly suggestionBusy = signal<string | null>(null);
+  protected readonly suggestionRows = computed(() =>
+    this.suggestions().flatMap((s) => (s.other ? [{ suggestion: s, other: s.other }] : [])),
+  );
   protected readonly message = signal('');
   protected readonly actionError = signal('');
   protected readonly removingId = signal<number | null>(null);
@@ -93,7 +124,8 @@ export class ConnectionsSection {
   protected readonly options = signal<ConnectionOption[] | null>(null);
   protected readonly chosenType = signal<ConnectionOption | null>(null);
   protected readonly candidates = signal<ConnectedObject[] | null>(null);
-  protected readonly candidatesError = signal(false);
+  /** Leer = kein Fehler; sonst die verständliche Meldung. */
+  protected readonly candidatesError = signal('');
   protected readonly query = signal('');
   protected readonly chosen = signal<ConnectedObject | null>(null);
   protected readonly saving = signal(false);
@@ -104,6 +136,7 @@ export class ConnectionsSection {
   private loadToken = 0;
   private searchTimer?: ReturnType<typeof setTimeout>;
   protected readonly titleId = `connections-h-${nextHeadingId++}`;
+  protected readonly suggestionsTitleId = `${this.titleId}-s`;
 
   constructor() {
     effect(() => {
@@ -112,6 +145,7 @@ export class ConnectionsSection {
       const type = this.objectType();
       untracked(() => {
         this.cancel(false);
+        this.suggestions.set([]);
         if (enabled && id !== null) this.load(type, id);
       });
     });
@@ -134,12 +168,71 @@ export class ConnectionsSection {
         if (token !== this.loadToken) return;
         this.items.set(rows);
         this.status.set('ready');
+        this.loadSuggestions(type, id, token);
       },
       error: () => {
         if (token !== this.loadToken) return;
         this.status.set('error');
       },
     });
+  }
+
+  /** Vorschläge sind ein Zusatz: schlägt der Abruf fehl, bleibt der Abschnitt einfach ohne sie. */
+  private loadSuggestions(type: ConnectionObjectType, id: number, token: number): void {
+    this.api.suggestions(type, id).subscribe({
+      next: (rows) => {
+        if (token === this.loadToken) this.suggestions.set(rows);
+      },
+      error: () => {
+        if (token === this.loadToken) this.suggestions.set([]);
+      },
+    });
+  }
+
+  // ---------- Vorschläge: Verknüpfen oder Nicht relevant ----------
+
+  protected acceptSuggestion(suggestion: LinkSuggestionDto): void {
+    if (this.suggestionBusy() !== null) return;
+    this.suggestionBusy.set(suggestion.key);
+    this.actionError.set('');
+    this.api.acceptSuggestion(suggestion.key).subscribe({
+      next: () => {
+        this.suggestionBusy.set(null);
+        this.dropSuggestion(suggestion.key);
+        this.message.set(`Mit „${suggestion.other?.title ?? ''}“ verknüpft.`);
+        this.load(); // die neue Verbindung erscheint unter „Verknüpft mit“
+      },
+      error: (error) => this.suggestionFailed(suggestion, error, 'Die Verknüpfung konnte nicht angelegt werden.'),
+    });
+  }
+
+  protected dismissSuggestion(suggestion: LinkSuggestionDto): void {
+    if (this.suggestionBusy() !== null) return;
+    this.suggestionBusy.set(suggestion.key);
+    this.actionError.set('');
+    this.api.dismissSuggestion(suggestion.key).subscribe({
+      next: () => {
+        this.suggestionBusy.set(null);
+        this.dropSuggestion(suggestion.key);
+        this.message.set('Vorschlag ausgeblendet. Er wird nicht wieder angezeigt.');
+      },
+      error: (error) => this.suggestionFailed(suggestion, error, 'Der Vorschlag konnte nicht ausgeblendet werden.'),
+    });
+  }
+
+  private suggestionFailed(suggestion: LinkSuggestionDto, error: { status?: number } | null, fallback: string): void {
+    this.suggestionBusy.set(null);
+    if (error?.status === 404) {
+      // Gilt nicht mehr (inzwischen verknüpft, gelöscht oder keine Rechte mehr): leise entfernen.
+      this.dropSuggestion(suggestion.key);
+      this.actionError.set('Dieser Vorschlag gilt nicht mehr.');
+      return;
+    }
+    this.actionError.set(connectionErrorMessage(error, `${fallback} Bitte versuche es noch einmal.`));
+  }
+
+  private dropSuggestion(key: string): void {
+    this.suggestions.update((rows) => rows.filter((row) => row.key !== key));
   }
 
   // ---------- Verbindung lösen ----------
@@ -152,11 +245,15 @@ export class ConnectionsSection {
       next: () => {
         this.removingId.set(null);
         this.items.update((rows) => rows.filter((row) => row.id !== item.id));
-        this.message.set(`Verknüpfung mit „${item.other?.title ?? ''}“ gelöst.`);
+        this.message.set(`Verbindung zu „${item.other?.title ?? ''}“ entfernt. Beide Einträge bleiben erhalten.`);
       },
-      error: () => {
+      error: (error) => {
         this.removingId.set(null);
-        this.actionError.set('Die Verknüpfung konnte nicht gelöst werden. Bitte versuche es noch einmal.');
+        this.actionError.set(
+          connectionErrorMessage(error, 'Die Verbindung konnte nicht entfernt werden. Bitte versuche es noch einmal.'),
+        );
+        // Schon weg oder nicht mehr sichtbar: aus der Liste nehmen, die Meldung bleibt stehen.
+        if (error?.status === 404) this.items.update((rows) => rows.filter((row) => row.id !== item.id));
       },
     });
   }
@@ -168,11 +265,13 @@ export class ConnectionsSection {
     this.message.set('');
     this.options.set(null);
     this.step.set('type');
-    this.api.options(this.objectType()).subscribe({
+    this.api.options(this.objectType(), this.numericId() ?? undefined).subscribe({
       next: (options) => this.options.set(options),
-      error: () => {
+      error: (error) => {
         this.options.set([]);
-        this.actionError.set('Die Auswahl konnte nicht geladen werden. Bitte versuche es noch einmal.');
+        this.actionError.set(
+          connectionErrorMessage(error, 'Die Auswahl konnte nicht geladen werden. Bitte versuche es noch einmal.'),
+        );
       },
     });
     this.focusHeadingSoon();
@@ -191,13 +290,13 @@ export class ConnectionsSection {
     const id = this.numericId();
     const option = this.chosenType();
     if (id === null || !option) return;
-    this.candidatesError.set(false);
+    this.candidatesError.set('');
     this.candidates.set(null);
     this.api.candidates(this.objectType(), id, option.type, this.query()).subscribe({
       next: (rows) => this.candidates.set(rows),
-      error: () => {
+      error: (error) => {
         this.candidates.set([]);
-        this.candidatesError.set(true);
+        this.candidatesError.set(connectionErrorMessage(error, 'Die Liste konnte nicht geladen werden.'));
       },
     });
   }
@@ -239,9 +338,7 @@ export class ConnectionsSection {
       error: (error) => {
         this.saving.set(false);
         this.actionError.set(
-          error?.status === 409
-            ? 'Diese Verknüpfung besteht bereits.'
-            : 'Die Verknüpfung konnte nicht angelegt werden. Bitte versuche es noch einmal.',
+          connectionErrorMessage(error, 'Die Verknüpfung konnte nicht angelegt werden. Bitte versuche es noch einmal.'),
         );
       },
     });

@@ -114,9 +114,9 @@ Adapt to the existing API style instead of forcing these exact paths.
 
 Use user language such as:
 
-- “Verknüpft”
-- “Verbundene Elemente”
-- “Verbindung hinzufügen”
+- “Verknüpft mit”
+- “Verknüpfen”
+- “Verbindung entfernen”
 
 Avoid technical terms like source node/target node.
 
@@ -127,6 +127,37 @@ Do not build a huge graph visualization for V1. A compact connected-items list i
 > **A connection never grants access.**
 
 If the user cannot access the target object, the connection must not leak target details.
+
+## Implementierter Stand (V1, 10.10.2026)
+
+Code: `backend/connections/` (registry.py = einzige Stelle, die die Domains kennt; services.py = alle Regeln),
+Frontend `shared/connections/` (`<app-connections>`).
+
+- **Typen (Allowlist):** `TASK`, `CALENDAR_EVENT` (Organisation), `SAVINGS_GOAL` (Finanzen), `HOUSEHOLD_TASK`
+  (Haushalt), `TRIP` (Reisen). `BUDGET` ist vorgesehen, aber in keinem Paar. Erlaubte Paare und Relationen nur in
+  `registry.ALLOWED_PAIRS`; Standardrelation je Paar.
+- **Ungerichtet:** Jedes Paar hat eine feste gespeicherte Richtung (`canonical_pair`), A↔B und B↔A sind dieselbe
+  Zeile. Duplikate verhindert die Datenbank (`unique_connection_pair`), Selbstverbindungen ein Check-Constraint;
+  gleichzeitige Anfragen enden als 409, nie als 500.
+- **Sehen** = beide Seiten im Queryset `Kind.visible` (dieselbe Regel wie die Domain-API). Sonst taucht die
+  Verbindung nirgends auf — kein Zähler, kein maskierter Eintrag. Fremd und nicht vorhanden sind identisch (404).
+- **Verknüpfen** = beide Seiten im Queryset `Kind.editable` (Schreibrecht der Domain): Reise nur Ersteller:in und
+  Teilnehmende mit Rolle OWNER/EDITOR, VIEWER nicht. Sichtbar, aber nur lesbar → 403.
+- **Entfernen** = wer die Verbindung angelegt hat oder beide Seiten bearbeiten darf. Die Liste liefert dafür
+  `can_delete`; das Frontend zeigt „Entfernen“ nur dann. Entfernen löst nur den Zusammenhang, beide Objekte bleiben.
+- **Server bestimmt** `origin` (MANUAL; SUGGESTED nur über angenommene Vorschläge), `created_by` (request.user),
+  `created_at`. IDs 1 … 2⁶³−1, sonst 400 (Body) bzw. 404 (Pfad).
+- **Limit** 50 je Objekt zählt nur die eigenen Verbindungen (sonst verriete die Meldung versteckte fremde).
+- **Gelöschte Objekte:** `post_delete`-Signale entfernen die Verbindungen sofort; `prune_connections` räumt
+  Waisen auf, die an Signalen vorbei entstanden sind. Nicht auflösbare Seiten werden nie angezeigt.
+- **Ausgabe:** `id`, `can_delete`, `relation_type`/`relation_label`, `origin`, `created_at`, `source`/`target`/`other`
+  als `{type, id, title, subtitle, domain}` — nur für sichtbare Objekte, keine verschachtelten Domain-Objekte.
+- **Schreib-Drosselung:** `connections_write` (Standard 60/min pro Person). Antworten `Cache-Control: no-store`.
+- **UI:** „Verknüpft mit“ in den Bearbeiten-Dialogen von Sparziel, Reise, Haushaltsaufgabe, Aufgabe und Termin;
+  „+ Verknüpfen“ öffnet den Assistenten (Art → Objekt aus serverseitig gefilterten Kandidaten → bestätigen).
+  Fehler (403/404/409/429/Netzwerk) als verständlicher Text, nie die Serverantwort.
+- **Bereits vorhanden, nicht V1-Kern:** Reise-Vorschläge (`suggestions.py`) und „Heute“/Reise-Übersicht lesen nur
+  eigene bzw. sichtbare Daten; angenommene Vorschläge verknüpfen nur, wenn die Person beide Seiten bearbeiten darf.
 
 ## Tests
 
@@ -141,9 +172,48 @@ At minimum test:
 - invalid relation type rejected;
 - nonexistent target rejected.
 
-## Later: Suggestions
+## Suggestions V1 — Verknüpfungs-Vorschläge (11.10.2026)
 
-Suggestions may propose connections or consequences after V1 is stable.
+Code: `backend/connections/link_suggestions.py`, API `/api/v1/connections/link-suggestions/` (`GET ?object_type=&object_id=`,
+`POST accept/ {key}`, `POST dismiss/ {key}`), Frontend im Abschnitt „Verknüpft mit“ und eine Karte in „Für dich“.
+
+- **Ablauf:** erkennen → erklären → vorschlagen → die Person entscheidet. Nichts wird automatisch verknüpft;
+  „Verknüpfen“ ruft `services.create_connection(origin=SUGGESTED)` mit allen Prüfungen der Engine. Sonst ändert
+  Annehmen nichts (kein Datum, Status, Betrag).
+- **Nicht gespeichert:** Vorschläge werden bei jedem Aufruf aus den aktuellen Daten berechnet. Damit gibt es keine
+  doppelten oder veralteten Einträge; gelöschte Objekte, entzogene Rechte, inzwischen bestehende Verbindungen
+  und vorbei- oder abgesagte Reisen fallen automatisch weg. Gespeichert wird nur „Nicht relevant“
+  (`SuggestionDismissal`, Schlüssel `link:<Quelle>:<id>:<Ziel>:<id>` in kanonischer Richtung) — dauerhaft für
+  dieses Paar und diese Person. Status-Entsprechung: PENDING = berechnet, ACCEPTED = Verbindung existiert,
+  DISMISSED = Ablehnung gespeichert, EXPIRED = Regel greift nicht mehr.
+- **Nur Bearbeitbares:** Kandidaten kommen aus `Kind.editable` beider Seiten — was die Person nicht sehen oder nicht
+  verknüpfen darf, kommt in keiner Rechnung vor (kein Titel, keine ID, kein Zähler).
+- **Regeln** (Allowlist, je Paar eine Funktion, Schwelle 0,7):
+
+  | Paar | Signale | reason_code |
+  |---|---|---|
+  | Reise ↔ Aufgabe | nennt das Reiseziel als ganzes Wort **und** (fällig 30 Tage vor bis Reiseende **oder** Reisewort wie Hotel, Zug, Visum); nur Wortanfang („Berliner …“) braucht beides. Ohne Ortsnennung: Reisewort **und** fällig in den 14 Tagen vor Reisebeginn **und** genau eine Reise kommt in Frage | DATE_AND_CONTEXT_MATCH / MATCHING_DESTINATION / TRAVEL_PREPARATION |
+  | Reise ↔ Termin | im Reisezeitraum ±1 Tag **und** nennt das Ziel; nur ein Reisewort reicht nur am An-/Abreisetag | DATE_AND_CONTEXT_MATCH |
+  | Reise ↔ Sparziel | nennt das Reiseziel als ganzes Wort **und** (Reisebezug wie Urlaub, Reisekasse **oder** Zieldatum bis 180 Tage vor der Reise) | MATCHING_TITLE |
+  | Gerät ↔ Sparziel | Sparziel nennt den Gerätenamen | DEVICE_SAVINGS_GOAL_MATCH |
+  | Vertrag ↔ Aufgabe | Vertragswort (kündigen, Tarif, Rechnung, Hotline …) **und** Anbieter oder Vertragsname — oder Anbieter **und** Vertragsname. Anbieter oder Name allein reichen nicht | CONTRACT_TASK_MATCH |
+
+  Qualitätskatalog mit realistischen Fällen (hilfreich / möglich / falsch): `connections/tests/test_suggestion_quality.py`.
+  Jede Regeländerung muss ihn bestehen.
+
+  Textvergleich: Kleinschreibung, Umlaute gefaltet, Satzzeichen weg, Füllwörter und zu allgemeine Wörter
+  (Reise, Urlaub, neu, prüfen …) gestrichen, Wörter ab 4 Buchstaben (Reiseziele ab 3, z. B. „Rom“); gleich oder
+  gemeinsamer Wortanfang ab 5 Buchstaben (zählt schwächer). Gleiche Zeit allein reicht nie.
+- **Reihenfolge:** Punktzahl, dann was zuerst ansteht (Reisebeginn, Fälligkeit), dann Schlüssel. Höchstens drei je
+  Objekt; „Für dich“ zeigt höchstens einen mit Punktzahl ≥ 0,8 und nur, wenn sonst nichts ansteht.
+- **Erklärung:** jeder Vorschlag hat `reason` in Alltagssprache („Die Aufgabe erwähnt „Berlin“ und ist kurz vor
+  deiner Reise fällig.“). Keine Prozentzahlen; Regel und Punktzahl nur mit `DEBUG` im Feld `debug`.
+- **Annehmen/Ablehnen** nimmt nur den Schlüssel an und berechnet den Vorschlag für die anfragende Person neu —
+  gefälschte, fremde, abgelaufene oder schon abgelehnte Schlüssel → 404 ohne Details.
+- **Neue Typen dafür:** `DEVICE` und `CONTRACT` (Haushaltsordner; sichtbar wie in der Haushalt-API: Mitglieder,
+  keine Kind-Konten). Neue Paare: Reise↔Aufgabe, Reise↔Termin, Gerät↔Sparziel, Vertrag↔Aufgabe.
+- **Getrennt davon** bleiben die älteren Reise-Hinweise (`suggestions.py`: Sparziel anlegen, Aufgabe verschieben/
+  übergeben) — bewusst ausgelöste Aktionen, keine Verknüpfungs-Vorschläge.
 
 ## Later: Automations
 

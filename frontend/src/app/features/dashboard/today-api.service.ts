@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../core/api.config';
 import { SuggestionDto } from '../../shared/connections/suggestions-api.service';
+import { LinkSuggestionDto } from '../../shared/connections/connections-api.service';
 import { TodayData, organisationTimezone } from '../organisation/organisation-api.service';
 
 export interface TodayHouseholdTask {
@@ -58,6 +59,8 @@ export interface TodayOverview {
   reisen: { current: TodayTrip | null; upcoming: TodayTrip | null; events: TodayTripEvent[] };
   finanzen: { month: string; budget: string | null; expenses: string; available: string | null; spent_today: string };
   suggestions: SuggestionDto[];
+  /** Höchstens ein starker Verknüpfungs-Vorschlag — oder null. */
+  link_suggestion?: LinkSuggestionDto | null;
 }
 
 @Injectable({ providedIn: 'root' })

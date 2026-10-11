@@ -4,7 +4,12 @@ Domains kennt. Neue Typen kommen hier dazu, nicht in Views oder Serializern.
 Sichtbarkeit (`visible`) ist dieselbe Regel wie in den Domain-APIs
 (ADR-001): Organisation und Finanzen gehören einer Person (`owner`),
 Haushaltsaufgaben dem Haushalt (Mitgliedschaft), Reisen ihrer Eigentümer:in
-und den Teilnehmenden. Eine Verbindung erweitert diese Regeln nie."""
+und den Teilnehmenden. Eine Verbindung erweitert diese Regeln nie.
+
+Verknüpfen und Lösen ist Schreiben (`editable`): dieselbe Regel wie beim
+Bearbeiten des Objekts in seiner Domain. Bei Reisen heißt das Ersteller:in
+oder Teilnehmende mit Rolle OWNER/EDITOR (reisen.permissions) — eine reine
+VIEWER-Teilnahme darf die Reise sehen, aber nichts an sie hängen."""
 
 from dataclasses import dataclass
 from decimal import Decimal
@@ -15,7 +20,8 @@ from django.utils import timezone
 
 from connections.models import ObjectType, RelationType
 from finanzen.models import SavingsGoal
-from haushalt.models import Task as HouseholdTask
+from core.models import HouseholdMembership
+from haushalt.models import FolderEntry, Task as HouseholdTask
 from organisation.models import PersonalEvent, PersonalTask
 from reisen.models import Trip
 
@@ -26,6 +32,17 @@ def _visible_trips(user):
     from reisen.views import trips_visible_to
 
     return trips_visible_to(user)
+
+
+def _editable_trips(user):
+    # Wie reisen.permissions.TripContentAccessPermission für Schreibzugriffe.
+    from django.db.models import Q
+
+    from reisen.permissions import WRITABLE_ROLES
+
+    return Trip.objects.filter(
+        Q(owner=user) | Q(participants__user=user, participants__role__in=WRITABLE_ROLES)
+    ).distinct()
 
 
 def _date(value) -> str:
@@ -61,6 +78,29 @@ def _household_task_subtitle(task: HouseholdTask) -> str:
     return f'Fällig {_date(task.due_date)}' if task.due_date else 'Ohne Datum'
 
 
+def _folder_entries(kind: str):
+    """Haushaltsordner wie in der Haushalt-API: Mitglieder des Haushalts, aber keine Kind-Konten
+    (haushalt.views.NoChildAccount — der Ordner enthält Vertragskosten)."""
+
+    def visible(user):
+        adult_households = HouseholdMembership.objects.filter(user=user).exclude(
+            role=HouseholdMembership.Role.CHILD_ACCOUNT
+        ).values('household')
+        return FolderEntry.objects.filter(kind=kind, household__in=adult_households)
+
+    return visible
+
+
+def _device_subtitle(entry: FolderEntry) -> str:
+    # Keine Kosten in der Vorschau — nur, was das Gerät beschreibt.
+    parts = [part for part in (entry.provider, entry.model) if part]
+    return ' · '.join(parts) or entry.get_status_display()
+
+
+def _contract_subtitle(entry: FolderEntry) -> str:
+    return entry.provider or entry.category or entry.get_status_display()
+
+
 def _trip_subtitle(trip: Trip) -> str:
     when = f'{_date(trip.start_date)} – {_date(trip.end_date)}'
     return f'{trip.destination}, {when}' if trip.destination else when
@@ -74,12 +114,29 @@ class Kind:
     model: type[Model]
     visible: Callable[[object], QuerySet]
     subtitle: Callable[[Model], str]
+    # Was der Nutzer verknüpfen/lösen darf; ohne Angabe dasselbe wie `visible`
+    # (eigene Objekte bzw. Haushaltsaufgaben, die jedes Mitglied bearbeiten darf).
+    editable: Callable[[object], QuerySet] | None = None
+    # Feld mit dem Namen (für Anzeige und Suche) und fester Grundfilter, falls sich mehrere
+    # Arten ein Modell teilen (Gerät und Vertrag liegen beide in FolderEntry).
+    title_field: str = 'title'
+    base_filter: tuple[tuple[str, object], ...] = ()
+
+    def editable_for(self, user) -> QuerySet:
+        return (self.editable or self.visible)(user)
+
+    def base(self) -> QuerySet:
+        """Alle Objekte dieser Art, ohne Rechteprüfung — nur zum Aufräumen von Waisen."""
+        return self.model.objects.filter(**dict(self.base_filter))
+
+    def title_of(self, obj) -> str:
+        return getattr(obj, self.title_field)
 
     def summary(self, obj) -> dict:
         return {
             'type': self.key,
             'id': obj.pk,
-            'title': obj.title,
+            'title': self.title_of(obj),
             'subtitle': self.subtitle(obj),
             'domain': self.domain,
         }
@@ -103,7 +160,15 @@ KINDS: dict[str, Kind] = {
         lambda user: HouseholdTask.objects.filter(household__members=user), _household_task_subtitle,
     ),
     ObjectType.TRIP: Kind(
-        ObjectType.TRIP, 'Reise', 'reisen', Trip, _visible_trips, _trip_subtitle,
+        ObjectType.TRIP, 'Reise', 'reisen', Trip, _visible_trips, _trip_subtitle, _editable_trips,
+    ),
+    ObjectType.DEVICE: Kind(
+        ObjectType.DEVICE, 'Gerät', 'haushalt', FolderEntry, _folder_entries(FolderEntry.Kind.DEVICE),
+        _device_subtitle, title_field='name', base_filter=(('kind', FolderEntry.Kind.DEVICE),),
+    ),
+    ObjectType.CONTRACT: Kind(
+        ObjectType.CONTRACT, 'Vertrag', 'haushalt', FolderEntry, _folder_entries(FolderEntry.Kind.CONTRACT),
+        _contract_subtitle, title_field='name', base_filter=(('kind', FolderEntry.Kind.CONTRACT),),
     ),
 }
 
@@ -116,6 +181,11 @@ ALLOWED_PAIRS: dict[tuple[str, str], tuple[str, ...]] = {
     # „Reise planen“: Wovon wird sie bezahlt, und was im Haushalt betrifft sie?
     (ObjectType.TRIP, ObjectType.SAVINGS_GOAL): (RelationType.FUNDED_BY, RelationType.RELATED_TO),
     (ObjectType.TRIP, ObjectType.HOUSEHOLD_TASK): (RelationType.AFFECTS, RelationType.RELATED_TO),
+    # Suggestions V1: Reise ↔ eigene Aufgabe/Termin, Gerät ↔ Sparziel, Vertrag ↔ Aufgabe.
+    (ObjectType.TRIP, ObjectType.TASK): (RelationType.TASK_FOR, RelationType.RELATED_TO),
+    (ObjectType.TRIP, ObjectType.CALENDAR_EVENT): (RelationType.SCHEDULED_AS, RelationType.RELATED_TO),
+    (ObjectType.DEVICE, ObjectType.SAVINGS_GOAL): (RelationType.FUNDED_BY, RelationType.RELATED_TO),
+    (ObjectType.CONTRACT, ObjectType.TASK): (RelationType.TASK_FOR, RelationType.RELATED_TO),
 }
 
 

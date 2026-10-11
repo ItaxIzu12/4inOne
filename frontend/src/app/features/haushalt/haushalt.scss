@@ -242,11 +242,11 @@
   border-color: transparent;
   background: transparent;
   padding: 0;
-  margin-bottom: 12px;
+  margin-bottom: 16px; // wie Finanzen, Organisation und Reisen
 }
 @media (max-width: 760px) {
   .domain-sticky {
     padding: 10px 10px 0;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
 }

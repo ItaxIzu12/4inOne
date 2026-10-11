@@ -12,7 +12,7 @@
   flex: 0 0 auto;
   align-items: center;
   gap: 6px;
-  min-height: 40px;
+  min-height: var(--control-height); // Filter-Chips überall 44 px (wie Reisen)
   padding: 0 14px;
   border: 1px solid var(--border);
   border-radius: 999px;

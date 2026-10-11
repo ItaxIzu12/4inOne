@@ -127,7 +127,7 @@ def test_6_invalid_types_are_rejected(a):
     assert link(client, 'TASK', t.pk, 'CALENDAR_EVENT', event(a).pk, relation_type='SOMETHING').status_code == 400
     # gültige Typen, aber kein erlaubtes Paar in V1
     assert link(client, 'TASK', t.pk, 'TASK', task(a, 'Zweite').pk).status_code == 400
-    assert link(client, 'TRIP', 1, 'TASK', t.pk).status_code == 400
+    assert link(client, 'CALENDAR_EVENT', event(a).pk, 'SAVINGS_GOAL', goal(a).pk).status_code == 400
     # gültige Relation, aber nicht für dieses Paar
     assert link(client, 'TASK', t.pk, 'CALENDAR_EVENT', event(a).pk, relation_type='FUNDED_BY').status_code == 400
     assert not Connection.objects.exists()
@@ -297,13 +297,13 @@ def test_limit_per_object(a, monkeypatch):
 def test_options_list_only_supported_partners(a):
     client = _client(a)
     assert sorted(o['type'] for o in client.get(URL + 'options/', {'object_type': 'SAVINGS_GOAL'}).data) == [
-        'TASK', 'TRIP',
+        'DEVICE', 'TASK', 'TRIP',
     ]
     assert sorted(o['type'] for o in client.get(URL + 'options/', {'object_type': 'TRIP'}).data) == [
-        'HOUSEHOLD_TASK', 'SAVINGS_GOAL',
+        'CALENDAR_EVENT', 'HOUSEHOLD_TASK', 'SAVINGS_GOAL', 'TASK',
     ]
     assert sorted(o['type'] for o in client.get(URL + 'options/', {'object_type': 'TASK'}).data) == [
-        'CALENDAR_EVENT', 'SAVINGS_GOAL',
+        'CALENDAR_EVENT', 'CONTRACT', 'SAVINGS_GOAL', 'TRIP',
     ]
     assert client.get(URL + 'options/', {'object_type': 'BUDGET'}).data == []
     assert client.get(URL + 'options/', {'object_type': 'NOPE'}).status_code == 400

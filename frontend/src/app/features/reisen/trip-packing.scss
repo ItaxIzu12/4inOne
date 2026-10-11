@@ -33,7 +33,7 @@
   background: #fff;
   color: var(--text-secondary);
   font: inherit;
-  font-size: var(--fs-meta);
+  font-size: var(--fs-secondary); // wie die Filter-Chips in den Aufgaben
   cursor: pointer;
 }
 .chips button[aria-pressed='true'] {
@@ -91,6 +91,7 @@
   color: var(--text-primary);
 }
 .quick__submit {
+  position: relative;
   min-height: 40px;
   margin-left: 4px;
   padding: 0 16px;
@@ -102,6 +103,12 @@
   font-size: var(--fs-secondary);
   font-weight: 600;
   cursor: pointer;
+}
+// Optisch 40 px in der 48-px-Eingabezeile, Klickfläche unsichtbar 44 px.
+.quick__submit::before {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
 }
 .quick__submit:disabled {
   opacity: 0.45;

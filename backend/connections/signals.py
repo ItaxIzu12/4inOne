@@ -12,6 +12,9 @@ from connections.registry import KINDS
 
 def _remove_connections(kind_key: str):
     def handler(sender, instance, **kwargs):
+        # Gerät und Vertrag teilen sich ein Modell: nur die eigene Art aufräumen.
+        if any(getattr(instance, field) != value for field, value in KINDS[kind_key].base_filter):
+            return
         Connection.objects.filter(
             Q(source_type=kind_key, source_id=instance.pk) | Q(target_type=kind_key, target_id=instance.pk)
         ).delete()

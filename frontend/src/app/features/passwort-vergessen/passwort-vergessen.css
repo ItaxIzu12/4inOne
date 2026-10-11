@@ -22,7 +22,7 @@
 .reset-card__brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--space-2);
   align-self: flex-start;
   font-family: var(--font-display);
   font-weight: 700;
@@ -37,13 +37,13 @@
   overflow: hidden;
 }
 
-.auth-intro { display: flex; flex-direction: column; gap: var(--space-8); }
+.auth-intro { display: flex; flex-direction: column; gap: var(--space-2); }
 .auth-intro h1 { font-size: var(--text-heading-sm); }
 .auth-intro .lede { font-size: 17px; font-weight: 500; color: var(--color-slate-violet); }
 
 .auth-form { display: flex; flex-direction: column; gap: var(--space-20); }
 
-.field { display: flex; flex-direction: column; gap: var(--space-8); }
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
 .field label { font-size: 14px; font-weight: 700; color: var(--color-midnight-plum); }
 
 .field input {
@@ -72,7 +72,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-8);
+  gap: var(--space-2);
   min-height: 48px;
   border-radius: var(--radius-buttons);
   border: none;

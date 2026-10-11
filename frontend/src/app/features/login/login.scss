@@ -111,7 +111,7 @@
   text-decoration: none;
 }
 .auth-intro h1 {
-  font-size: 32px;
+  font-size: var(--fs-page); // Seitentitel wie in der App (Handy 24 px über das Token)
   letter-spacing: -1px;
   line-height: 1.2;
 }
@@ -138,8 +138,8 @@
 .field input {
   width: 100%;
   min-height: 52px;
-  border: 1px solid #b9c5d4;
-  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
   padding: 12px 14px;
   background: #fff;
   font-size: 16px;
@@ -198,7 +198,7 @@
   height: 19px;
   flex-shrink: 0;
   margin: 0;
-  accent-color: #2864b5;
+  accent-color: var(--brand-primary);
 }
 .inline-link,
 .legal,
@@ -219,8 +219,8 @@
   gap: 10px;
   min-height: 52px;
   border: 0;
-  border-radius: 11px;
-  background: #2864b5;
+  border-radius: var(--radius-md);
+  background: var(--brand-primary);
   color: #fff;
   font-size: 16px;
   font-weight: 600;
@@ -248,8 +248,10 @@
   margin-top: 24px;
 }
 .legal a {
-  display: inline-block;
-  padding: 10px 4px;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height);
+  padding: 0 4px;
 }
 .spinner {
   width: 17px;
@@ -265,7 +267,7 @@
   }
 }
 :is(a, button, input):focus-visible {
-  outline: 3px solid #2864b5;
+  outline: var(--focus-ring);
   outline-offset: 3px;
 }
 @media (max-width: 760px) {
@@ -292,9 +294,6 @@
   }
   .auth-panel__top-spacer {
     width: 44px;
-  }
-  .auth-intro h1 {
-    font-size: 29px;
   }
   .auth-form {
     gap: 17px;

@@ -98,7 +98,7 @@
       min-height: var(--control-height);
       padding: 0 8px;
       border-radius: var(--radius-md);
-      font-size: 14px;
+      font-size: var(--fs-meta); // Reiter mobil in allen Bereichen 13 px
       white-space: nowrap;
     }
   }

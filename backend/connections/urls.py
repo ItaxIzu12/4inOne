@@ -5,6 +5,9 @@ from connections.views import (
     ConnectionDetailView,
     ConnectionListCreateView,
     ConnectionOptionsView,
+    LinkSuggestionAcceptView,
+    LinkSuggestionDismissView,
+    LinkSuggestionListView,
     SuggestionAcceptView,
     SuggestionDismissView,
     SuggestionListView,
@@ -17,6 +20,10 @@ urlpatterns = [
     # Vor <pk>, sonst hielte der Pfad „options“ für eine ID.
     path('options/', ConnectionOptionsView.as_view(), name='connections-options'),
     path('candidates/', ConnectionCandidatesView.as_view(), name='connections-candidates'),
+    # Verknüpfungs-Vorschläge (Suggestions V1): schlagen nur Verbindungen vor, ändern nichts.
+    path('link-suggestions/', LinkSuggestionListView.as_view(), name='link-suggestions'),
+    path('link-suggestions/accept/', LinkSuggestionAcceptView.as_view(), name='link-suggestions-accept'),
+    path('link-suggestions/dismiss/', LinkSuggestionDismissView.as_view(), name='link-suggestions-dismiss'),
     path('suggestions/', SuggestionListView.as_view(), name='connection-suggestions'),
     path('suggestions/accept/', SuggestionAcceptView.as_view(), name='connection-suggestions-accept'),
     path('suggestions/dismiss/', SuggestionDismissView.as_view(), name='connection-suggestions-dismiss'),

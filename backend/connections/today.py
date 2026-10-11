@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 
 from django.db.models import Q, Sum
 
-from connections import suggestions
+from connections import link_suggestions, suggestions
 from connections.models import ObjectType
 from connections.registry import KINDS
 from finanzen.private_api import money, month_figures
@@ -154,4 +154,6 @@ def today_overview(user, tz_name: str) -> dict:
         'reisen': _reisen(user, today, tz),
         'finanzen': _finanzen(user, today),
         'suggestions': suggestions.for_user(user, limit=SUGGESTION_LIMIT),
+        # Höchstens EIN starker Verknüpfungs-Vorschlag — sonst keiner (nie nur, um „Für dich“ zu füllen).
+        'link_suggestion': next(iter(link_suggestions.top_for_user(user)), None),
     }

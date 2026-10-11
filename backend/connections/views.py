@@ -3,10 +3,12 @@ from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from connections import services, suggestions, trip_overview
+from connections import link_suggestions, services, suggestions, trip_overview
 from connections.today import today_overview
 from connections.serializers import (
+    MAX_ID,
     CandidateQuerySerializer,
+    LinkSuggestionKeySerializer,
     ConnectionCreateSerializer,
     ObjectQuerySerializer,
     OptionsQuerySerializer,
@@ -25,6 +27,13 @@ class ConnectionsView(APIView):
 
     def get_throttles(self):
         return [] if self.request.method in SAFE_METHODS else [ConnectionsWriteRateThrottle()]
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        # IDs aus dem Pfad: zu große Werte wie „nicht gefunden“ behandeln statt als Datenbankfehler.
+        for name in ('pk', 'trip_id'):
+            if name in kwargs and kwargs[name] > MAX_ID:
+                raise services.NotFound()
 
     def handle_exception(self, exc):
         if isinstance(exc, services.ConnectionRuleError):
@@ -70,7 +79,8 @@ class ConnectionOptionsView(ConnectionsView):
     def get(self, request):
         query = OptionsQuerySerializer(data=request.query_params)
         query.is_valid(raise_exception=True)
-        return Response(services.options_for(query.validated_data['object_type']))
+        data = query.validated_data
+        return Response(services.options_for(data['object_type'], request.user, data.get('object_id')))
 
 
 class ConnectionCandidatesView(ConnectionsView):
@@ -81,6 +91,36 @@ class ConnectionCandidatesView(ConnectionsView):
         return Response(
             services.candidates_for(request.user, data['object_type'], data['object_id'], data['target_type'], data['q'])
         )
+
+
+class LinkSuggestionListView(ConnectionsView):
+    """GET ?object_type=&object_id= — Verknüpfungs-Vorschläge zu einem Objekt (höchstens drei)."""
+
+    def get(self, request):
+        query = ObjectQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        data = query.validated_data
+        return Response(link_suggestions.for_object(request.user, data['object_type'], data['object_id']))
+
+
+class LinkSuggestionAcceptView(ConnectionsView):
+    """POST {key} — legt die Verbindung über die Connection Engine an (201) und gibt sie zurück."""
+
+    def post(self, request):
+        body = LinkSuggestionKeySerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        created = link_suggestions.accept(request.user, body.validated_data['key'])
+        return Response(created, status=status.HTTP_201_CREATED)
+
+
+class LinkSuggestionDismissView(ConnectionsView):
+    """POST {key} — „Nicht relevant“."""
+
+    def post(self, request):
+        body = LinkSuggestionKeySerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        link_suggestions.dismiss(request.user, body.validated_data['key'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SuggestionListView(ConnectionsView):

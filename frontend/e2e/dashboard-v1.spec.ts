@@ -108,7 +108,7 @@ for (const width of [320, 360, 390, 430, 820, 1280, 1920]) {
 
 const today = new Date();
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-async function live(page: Page, financeFails = 0) {
+async function live(page: Page, financeFails = 0, todayExtra: Record<string, unknown> = {}) {
   await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 't' } }));
   await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 't', user: { name: 'Mira', email: 'mira@example.com' } } }));
   await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true, domains: [] } }));
@@ -120,6 +120,7 @@ async function live(page: Page, financeFails = 0) {
         haushalt: null, reisen: { current: null, upcoming: null, events: [] },
         finanzen: { month: iso(today).slice(0, 7), budget: null, expenses: '0.00', available: null, spent_today: '0.00' },
         suggestions: [{ key: 'x', kind: 'TRIP_PACKING', title: 'Darf nicht erscheinen', reason: '', trip: { id: 1, title: 'X' }, actions: [], detail: {} }],
+        ...todayExtra,
       },
     }),
   );
@@ -160,4 +161,56 @@ test('if one area fails, the rest stays and it can be retried — without techni
   await page.getByRole('button', { name: 'Erneut versuchen' }).click();
   await expect(page.locator('.domain.finance')).toContainText('850,00 € übrig');
   await expect(page.locator('.partial-error')).toHaveCount(0);
+});
+
+test('"Für dich" shows a placeholder while its sources load, then the card or nothing — no jump from nowhere', async ({ page }) => {
+  await live(page);
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route('**/api/v1/haushalt/uebersicht/**', async (r) => {
+    await held;
+    await r.fulfill({ json: { summary: { due_today: 0 }, open_tasks: 0, overdue_tasks: 0, today: [], upcoming: [], deadlines: [], shopping: { open_items: 0, preview: [], list_id: null }, open_shopping_items: 0, devices: 0, device_list: [], contracts: 0, contracts_monthly: '0.00', contract_list: [] } });
+  });
+  await page.goto('/');
+  await expect(page.locator('.for-you__card--skeleton')).toBeVisible();
+  await expect(page.locator('.for-you[aria-busy="true"]')).toHaveCount(1);
+  release();
+  // Nichts Relevantes (keine Frist, keine Reise) → kein Bereich, kein leerer Rahmen.
+  await expect(page.locator('.for-you')).toHaveCount(0);
+});
+
+test('the add menu fades in quickly and is fully visible right after opening', async ({ page }) => {
+  await demo(page);
+  await page.getByRole('button', { name: 'Hinzufügen' }).first().click();
+  const list = page.getByRole('list', { name: 'Neu hinzufügen' });
+  await expect(list).toBeVisible();
+  const duration = await list.evaluate((el) => getComputedStyle(el).animationDuration);
+  expect(['0.15s', '150ms']).toContain(duration);
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'));
+  expect(await list.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
+});
+
+
+test('"Für dich" can show one connection suggestion when nothing else is due — it only links to the object', async ({ page }) => {
+  const taskSide = { type: 'TASK', id: 5, title: 'Hotel Berlin bestätigen', subtitle: 'Fällig 05.11.2026', domain: 'organisation' };
+  const tripSide = { type: 'TRIP', id: 1, title: 'Berlin', subtitle: 'Berlin, 12.11.2026 – 16.11.2026', domain: 'reisen' };
+  await live(page, 0, {
+    link_suggestion: {
+      key: 'link:TRIP:1:TASK:5', reason_code: 'DATE_AND_CONTEXT_MATCH',
+      headline: '„Hotel Berlin bestätigen“ könnte zu deiner Reise „Berlin“ gehören.',
+      reason: 'Die Aufgabe erwähnt „Berlin“ und ist kurz vor oder während deiner Reise fällig.',
+      relation_label: 'Aufgabe für', source: tripSide, target: taskSide,
+    },
+  });
+  const posts: string[] = [];
+  page.on('request', (req) => req.method() === 'POST' && posts.push(req.url()));
+  await page.goto('/');
+  const card = page.locator('.for-you__card');
+  await expect(card).toHaveCount(1);
+  await expect(card).toContainText('Das könnte zusammengehören');
+  await expect(card).toContainText('„Hotel Berlin bestätigen“ könnte zu deiner Reise „Berlin“ gehören.');
+  await expect(card).toContainText('erwähnt „Berlin“');
+  await expect(card).not.toContainText(/%|KI|AI/);
+  await expect(card).toHaveAttribute('href', '/organisation?kind=task&id=5');
+  expect(posts.filter((url) => url.includes('/connections/'))).toEqual([]); // nichts wird von hier aus verknüpft
 });

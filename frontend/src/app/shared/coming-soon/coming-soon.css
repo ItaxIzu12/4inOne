@@ -29,7 +29,7 @@
   color: var(--color-violet-ink);
   background: var(--color-lavender-mist);
   border-radius: var(--radius-tags);
-  padding: var(--space-8) var(--space-10);
+  padding: var(--space-2) var(--space-10);
   margin-bottom: var(--space-10);
 }
 

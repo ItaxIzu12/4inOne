@@ -136,6 +136,13 @@ def _connected_ids(trip: Trip, other_type: str) -> set[int]:
 def _link(user, trip: Trip, other_type: str, other_id: int) -> None:
     if other_id in _connected_ids(trip, other_type):
         return
+    # Verknüpfen ist Schreiben: wer die Reise nur ansehen darf (VIEWER), erledigt die Haushaltsaufgabe
+    # trotzdem (verschieben/übergeben), aber an die Reise wird nichts gehängt.
+    if not (
+        services.can_connect_object(user, ObjectType.TRIP, trip.pk)
+        and services.can_connect_object(user, other_type, other_id)
+    ):
+        return
     services.create_connection(user, ObjectType.TRIP, trip.pk, other_type, other_id, origin=Origin.SUGGESTED)
 
 

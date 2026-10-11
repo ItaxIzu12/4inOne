@@ -9,7 +9,7 @@ const summary = (x: object) => ({ month: '2026-09', currency: 'EUR', budget: nul
 const asEvent = { type: 'CALENDAR_EVENT', id: 9, title: 'Lieferung', subtitle: '12.10.2030, 11:00 Uhr', domain: 'organisation' };
 const asGoal = { type: 'SAVINGS_GOAL', id: 7, title: 'Neue Waschmaschine', subtitle: '480,00 € von 700,00 €', domain: 'finanzen' };
 
-async function mockApi(page: Page, connections: any[]) {
+async function mockApi(page: Page, connections: any[], suggestions: any[] = []) {
   await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 't' } }));
   await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 't', user: { name: 'Mira', email: 'mira@example.com' } } }));
   await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
@@ -30,6 +30,21 @@ async function mockApi(page: Page, connections: any[]) {
   await page.route('**/api/v1/connections/**', async (r) => {
     const url = new URL(r.request().url());
     const method = r.request().method();
+    if (url.pathname.endsWith('/link-suggestions/')) return r.fulfill({ json: suggestions });
+    if (url.pathname.endsWith('/link-suggestions/accept/')) {
+      const key = r.request().postDataJSON().key;
+      const index = suggestions.findIndex((s) => s.key === key);
+      if (index < 0) return r.fulfill({ status: 404, json: { detail: 'Dieser Vorschlag gilt nicht mehr.' } });
+      const [taken] = suggestions.splice(index, 1);
+      const created = { id: nextId++, other: taken.other };
+      connections.push(created);
+      return r.fulfill({ status: 201, json: created });
+    }
+    if (url.pathname.endsWith('/link-suggestions/dismiss/')) {
+      const key = r.request().postDataJSON().key;
+      suggestions.splice(suggestions.findIndex((s) => s.key === key), 1);
+      return r.fulfill({ status: 204 });
+    }
     if (url.pathname.endsWith('/options/'))
       return r.fulfill({ json: [{ type: 'CALENDAR_EVENT', label: 'Termin', domain: 'organisation', relation_type: 'SCHEDULED_AS' }, { type: 'SAVINGS_GOAL', label: 'Sparziel', domain: 'finanzen', relation_type: 'TASK_FOR' }] });
     if (url.pathname.endsWith('/candidates/')) {
@@ -48,7 +63,7 @@ async function mockApi(page: Page, connections: any[]) {
       connections.push(created);
       return r.fulfill({ status: 201, json: created });
     }
-    return r.fulfill({ json: connections.map((c) => ({ ...c, relation_type: 'RELATED_TO', relation_label: 'x', origin: 'MANUAL', created_at: 'now', source: c.other, target: c.other })) });
+    return r.fulfill({ json: connections.map((c) => ({ ...c, can_delete: true, relation_type: 'RELATED_TO', relation_label: 'x', origin: 'MANUAL', created_at: 'now', source: c.other, target: c.other })) });
   });
 }
 
@@ -64,7 +79,7 @@ for (const width of [390, 1280]) {
     await expect(dialog.getByText('Noch nichts verknüpft.')).toBeVisible();
 
     // Assistent: Was → Womit → Bestätigen
-    await dialog.getByRole('button', { name: 'Verbindung hinzufügen' }).click();
+    await dialog.getByRole('button', { name: 'Verknüpfen', exact: true }).click();
     await expect(dialog.getByRole('heading', { name: 'Was möchtest du verbinden?' })).toBeFocused();
     await dialog.getByRole('button', { name: 'Termin', exact: true }).click();
     await dialog.getByRole('button', { name: /Lieferung/ }).click();
@@ -75,8 +90,8 @@ for (const width of [390, 1280]) {
     await expect(row).toBeVisible();
     expect((await new AxeBuilder({ page }).include('[role=dialog]').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 
-    // Lösen: beide Objekte bleiben, die Liste aktualisiert sich
-    await row.getByRole('button', { name: /lösen/ }).click();
+    // Verbindung entfernen: beide Objekte bleiben, die Liste aktualisiert sich
+    await row.getByRole('button', { name: /Verbindung zu „Lieferung“ entfernen/ }).click();
     await expect(dialog.getByText('Noch nichts verknüpft.')).toBeVisible();
   });
 }
@@ -85,12 +100,12 @@ test('escape closes only the assistant, the surrounding dialog stays open', asyn
   await mockApi(page, []);
   await page.goto('/organisation?kind=task&id=5');
   const dialog = page.getByRole('dialog');
-  await dialog.getByRole('button', { name: 'Verbindung hinzufügen' }).click();
+  await dialog.getByRole('button', { name: 'Verknüpfen', exact: true }).click();
   await expect(dialog.getByRole('heading', { name: 'Was möchtest du verbinden?' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dialog.getByRole('heading', { name: 'Was möchtest du verbinden?' })).toHaveCount(0);
   await expect(dialog.getByRole('heading', { name: 'Aufgabe bearbeiten' })).toBeVisible();
-  await expect(dialog.getByRole('button', { name: 'Verbindung hinzufügen' })).toBeFocused();
+  await expect(dialog.getByRole('button', { name: 'Verknüpfen', exact: true })).toBeFocused();
 });
 
 test('a connected object opens directly: same page hop and other page', async ({ page }) => {
@@ -109,4 +124,59 @@ test('a connected object opens directly: same page hop and other page', async ({
   await page.goto('/finanzen?goal=7');
   await expect(page.getByRole('dialog').getByRole('heading', { name: 'Sparziel bearbeiten' })).toBeVisible();
   await expect(page).not.toHaveURL(/goal=/);
+});
+
+const asTrip = { type: 'TRIP', id: 1, title: 'Berlin', subtitle: 'Berlin, 12.11.2030 – 16.11.2030', domain: 'reisen' };
+const tripSuggestion = () => ({
+  key: 'link:TRIP:1:TASK:5', reason_code: 'DATE_AND_CONTEXT_MATCH',
+  headline: '„Modelle vergleichen“ könnte zu deiner Reise „Berlin“ gehören.',
+  reason: 'Die Aufgabe erwähnt „Berlin“ und ist kurz vor oder während deiner Reise fällig.',
+  relation_label: 'Aufgabe für', source: asTrip, target: asTrip, other: asTrip,
+});
+
+for (const width of [360, 390, 430, 768, 1024]) {
+  test(`a suggestion fits at ${width}px and accepting turns it into a connection`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const connections: any[] = [];
+    await mockApi(page, connections, [tripSuggestion()]);
+    await page.goto('/organisation?kind=task&id=5');
+    const dialog = page.getByRole('dialog');
+    const block = dialog.locator('.suggestions');
+    await expect(block).toContainText('Das könnte zusammengehören');
+    await expect(block).toContainText('Die Aufgabe erwähnt „Berlin“');
+    const accept = block.getByRole('button', { name: 'Mit „Berlin“ verknüpfen' });
+    const dismiss = block.getByRole('button', { name: 'Vorschlag „Berlin“ ist nicht relevant' });
+    await accept.scrollIntoViewIfNeeded();
+    for (const button of [accept, dismiss]) {
+      const box = (await button.boundingBox())!;
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(width);
+    }
+    expect((await new AxeBuilder({ page }).include('[role=dialog]').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+
+    await accept.focus();
+    await page.keyboard.press('Enter');
+    await expect(block).toHaveCount(0);
+    const row = dialog.locator('.connection', { hasText: 'Berlin' });
+    await expect(row).toBeVisible();
+    const remove = row.getByRole('button', { name: /Verbindung zu „Berlin“ entfernen/ });
+    await expect(remove).toHaveText('Verbindung entfernen');
+    const box = (await remove.boundingBox())!;
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    expect(box.x + box.width).toBeLessThanOrEqual(width);
+  });
+}
+
+test('"Nicht relevant" hides the suggestion and creates nothing', async ({ page }) => {
+  const connections: any[] = [];
+  await mockApi(page, connections, [tripSuggestion()]);
+  await page.goto('/organisation?kind=task&id=5');
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: 'Vorschlag „Berlin“ ist nicht relevant' }).click();
+  await expect(dialog.locator('.suggestions')).toHaveCount(0);
+  await expect(dialog.getByText('Noch nichts verknüpft.')).toBeVisible();
+  expect(connections).toEqual([]);
 });

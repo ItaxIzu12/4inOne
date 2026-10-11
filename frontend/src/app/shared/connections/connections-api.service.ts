@@ -10,6 +10,8 @@ export type ConnectionObjectType =
   | 'SAVINGS_GOAL'
   | 'HOUSEHOLD_TASK'
   | 'TRIP'
+  | 'DEVICE'
+  | 'CONTRACT'
   | 'BUDGET';
 
 export type ConnectionDomain = 'finanzen' | 'haushalt' | 'organisation' | 'reisen';
@@ -25,6 +27,8 @@ export interface ConnectedObject {
 
 export interface ConnectionDto {
   id: number;
+  /** Server-Entscheidung: angelegt von mir oder beide Seiten bearbeitbar. Lesende sehen die Verbindung nur. */
+  can_delete: boolean;
   relation_type: string;
   relation_label: string;
   origin: 'MANUAL' | 'SUGGESTED' | 'AUTOMATED';
@@ -32,6 +36,22 @@ export interface ConnectionDto {
   source: ConnectedObject;
   target: ConnectedObject;
   /** Nur in der Liste: die Seite, die NICHT das abgefragte Objekt ist. */
+  other?: ConnectedObject;
+}
+
+/** Ein Verknüpfungs-Vorschlag: nur Dinge, die der Nutzer ohnehin sehen und bearbeiten darf. */
+export interface LinkSuggestionDto {
+  /** Kennung für Annehmen/Ablehnen — der Server prüft beim Annehmen alles neu. */
+  key: string;
+  reason_code: string;
+  /** Satz mit beiden Namen (für Übersichten ohne Bezugsobjekt). */
+  headline: string;
+  /** Warum: verständliche Begründung, nie eine Prozentzahl. */
+  reason: string;
+  relation_label: string;
+  source: ConnectedObject;
+  target: ConnectedObject;
+  /** Nur bei Abruf zu einem Objekt: die jeweils andere Seite. */
   other?: ConnectedObject;
 }
 
@@ -51,8 +71,11 @@ export class ConnectionsApi {
     return this.http.get<ConnectionDto[]>(`${this.base}/`, { params: { object_type: type, object_id: id } });
   }
 
-  options(type: ConnectionObjectType): Observable<ConnectionOption[]> {
-    return this.http.get<ConnectionOption[]>(`${this.base}/options/`, { params: { object_type: type } });
+  /** Mit `id` prüft das Backend vorab, ob dieses Objekt verknüpft werden darf (403, wenn nur lesbar). */
+  options(type: ConnectionObjectType, id?: number): Observable<ConnectionOption[]> {
+    const params: Record<string, string | number> = { object_type: type };
+    if (id !== undefined) params['object_id'] = id;
+    return this.http.get<ConnectionOption[]>(`${this.base}/options/`, { params });
   }
 
   candidates(
@@ -83,5 +106,21 @@ export class ConnectionsApi {
 
   remove(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}/`);
+  }
+
+  suggestions(type: ConnectionObjectType, id: number): Observable<LinkSuggestionDto[]> {
+    return this.http.get<LinkSuggestionDto[]>(`${this.base}/link-suggestions/`, {
+      params: { object_type: type, object_id: id },
+    });
+  }
+
+  /** „Verknüpfen“: nur die Kennung — Typen und IDs leitet der Server ab. */
+  acceptSuggestion(key: string): Observable<ConnectionDto> {
+    return this.http.post<ConnectionDto>(`${this.base}/link-suggestions/accept/`, { key });
+  }
+
+  /** „Nicht relevant“: dieses Paar wird nicht mehr vorgeschlagen. */
+  dismissSuggestion(key: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/link-suggestions/dismiss/`, { key });
   }
 }

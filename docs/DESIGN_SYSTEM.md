@@ -83,10 +83,61 @@ Abstand — nie nur über Farbe.
   Form des Elements; Komponenten passen ihn an, entfernen ihn nie ersatzlos.
 - Hover: leichte Flächen-/Linienänderung; Press: 1 px bzw. `--surface-pressed`; Bewegung 120–200 ms
   (`--motion-fast`/`--motion-base`), nichts Federndes; `prefers-reduced-motion` schaltet Übergänge ab.
+- Menüs/Popover: ruhiges Einblenden `--motion-fast` (Deckkraft + 4 px), keine Feder-/Skalier-Effekte; Microinteractions
+  nur mit CSS und Tokens, keine zusätzliche Animations- oder UI-Bibliothek.
 - Laden: Skelette in Form des Inhalts, kein Seiten-Spinner; Fehler bereichsbezogen mit „Erneut versuchen“;
   Leerzustände ruhig mit einer Aktion.
 
 ### Referenz und Migrationsstand
+
+- **Verknüpfungen/Vorschläge — Pre-Launch-Audit (11.10.2026):** Zeilenaktion sichtbar „Verbindung entfernen“ (vorher
+  „Entfernen“, missverständlich als Löschen); rutscht auf schmalen Breiten unter den Eintrag. Leerzustand erklärt:
+  „Verknüpfe Einträge, die zusammengehören … beide bleiben dabei unverändert.“ Vorschlagsblock: „Nur ein Vorschlag:
+  Verknüpft wird erst, wenn du zustimmst, und geändert wird dabei nichts.“ „Verknüpfen“ zeigt beim Speichern
+  „Wird verknüpft …“. Geprüft bei 360/390/430/768/1024 px.
+- **Vorschläge (11.10.2026):** unter „Verknüpft mit“ ein ruhiger Block „Das könnte zusammengehören“ —
+  `--surface-card`, gestrichelter `--border-default`, Radius 12; je Vorschlag Symbol der Art, Titel, Begründung
+  (13 px `--text-secondary`), darunter „Verknüpfen“ (primär) und „Nicht relevant“ (sekundär), 44 px, am Handy
+  je halbe Breite. Hinweis: „Vorschläge entstehen nur aus Einträgen, auf die du Zugriff hast.“ Keine Prozentzahl,
+  kein Funkeln. „Für dich“ zeigt höchstens einen starken Vorschlag, nur wenn sonst nichts ansteht.
+- **Token-Korrektur (11.10.2026):** Ein älterer Satz Pixel-Tokens definierte `--space-4: 4px` und `--space-8: 8px`
+  nach den V3-Stufen und überschrieb sie still (16 bzw. 48 px). Entfernt; dessen Nutzer (Header, Rechtsseiten,
+  Passwort vergessen, Onboarding, Einladung, Modul-Karte, „Bald verfügbar“) nutzen jetzt `--space-2` (8 px) — keine
+  sichtbare Änderung. Folge: Der untere Seitenrand der vier Bereiche ist am Rechner jetzt wie vorgesehen 48 statt 8 px.
+- **Verknüpfungen (10.10.2026):** Abschnitt heißt „Verknüpft mit“, Aktion „+ Verknüpfen“, Zeilenaktion „Entfernen“
+  (Screenreader: „Verbindung zu „…“ entfernen (der Eintrag selbst bleibt erhalten)“) — nur sichtbar, wenn der
+  Server `can_delete` meldet. Fehlertexte je Art (Berechtigung, nicht mehr verfügbar, besteht bereits, zu viele
+  Änderungen, keine Verbindung). Details: docs/CONNECTION_ENGINE.md.
+
+- **Globaler Konsistenz-Audit (10.10.2026)** — Startseite, alle Reiter der vier Bereiche, Reise-Detail, Login und
+  Registrierung bei 360/390/430/768/1024/1280/1440/1600/1920 px gemessen (Überlauf, Shell, Kopf, Reiter, Buttons,
+  Karten, Überschriften, Klickflächen, axe WCAG A/AA). Ergebnis: eine Shell (Seitenleiste 280, Kopfzeile 72 / Handy
+  146), ein Seitenkopf (136 / Handy 120 px, Reise-Detail höher wegen Zurück-Link), ein Dialog-System (`modal-form`),
+  keine axe-Verstöße, kein Überlauf. Behoben:
+  - Haushalt › Zuhause am Handy: Raster blieb zweispaltig (Container-Query nur am Rechner) → Liste auf 12 px gequetscht;
+    jetzt einspaltig. Am Tablet (768 px, Liste ~450 px) liefen Tabellenspalten über die Karte → kompakte Zeilen per
+    Container-Query (`compact-rows`, ≤ 560 px Listenbreite) wie am Handy.
+  - Ungültige Farben `var(--text-primary)33/4d` (Detail-Blatt Schatten/Abdunklung fehlten) → `rgb(27 42 68 / …)`.
+  - Klickflächen 40 → 44 px: Filter-Chips (Haushalt/Organisation › Aufgaben), Umschalter Geräte/Verträge, Häkchen und
+    Zeilenmenü im Einkauf (Kästchen 20 → 22 px), Senden-Knöpfe der Eingabezeilen per `::before`.
+  - Reisen: Hauptbutton 46 px/16 px → 44 px/14 px; Sekundär-Buttons 400 → 600; Filter-Chips 13 → 14 px; Karten 18/20 → 20/22 px.
+  - Haushalt: Kartenüberschriften 20 → 18 px (h3 18 → 16), Detailtitel 24 → 20 px, Karten 24 bzw. 20 → 20/22 px,
+    Suche in Zuhause 42/14 px → 44/16 px, „Bearbeiten“ 600.
+  - Inaktive Reiter: Finanzen/Organisation/Reisen hatten eigene getönte Grautöne → `--text-secondary`.
+  - Finanzen: Rand der Transaktionssuche noch grünstichig → `--border-default`. Organisation › Notizen: Gruppenlabel 700 → 600.
+  - Login/Registrierung: Titel 32/29 → `--fs-page`, Radien 10/11 → `--radius-md`, Blau/Fokus auf Tokens, Rechtslinks 44 px.
+  Bewusst unverändert: Fachlogik, APIs, Datenmodelle, Informationsarchitektur, Navigation, Icons; Formularfelder
+  15/16 px; Handy-Aktionsknopf (50 px, eine gemeinsame Komponente); Auth-Eingaben 52 px; getönte Handy-Reiterleisten je
+  Bereich (subtiler Akzent, überall gleich aufgebaut).
+
+- **Konsistenzprüfung (10.10.2026)**, Startseite + vier Bereiche bei 1440 und 390 px gemessen: Seitenkopf (Titel 30/700,
+  Handy 24; Untertitel 16 px), Inhaltsbreite (max. 1280 px, Ränder 32/16), Hauptbutton (44 px, Radius 12, 14 px/600),
+  Kartenradius 16 und Reiter (46 px, 16 px/400, aktiv 600) stimmen überein. Angeglichen: Reiter am Handy überall 13 px
+  (`--fs-meta`, im gemeinsamen `domain-layout`; Reisen vorher 12, Haushalt 14) und Abstand Kopf→Inhalt im Haushalt
+  16 px (Handy 12) wie in den anderen Bereichen. Bewusst so: gemeinsame Formularfelder 15 px am Rechner / 16 px am
+  Handy (nicht Teil der Text-Skala, aber einheitlich); Startseite ohne Kopfkarte, daher Titel am Rechner 7 px tiefer.
+  Am Handy steht die Begrüßung der Startseite jetzt auf derselben Höhe wie die Bereichstitel (oberer Rand
+  `--space-6`, vorher lag sie direkt unter der Kopfzeile).
 
 - **Referenz-Screen:** Startseite (`features/dashboard`) — nutzt ausschließlich diese Tokens (docs/DASHBOARD_V1.md).
 - Global wirksam in allen Bereichen: Tokens, Inhaltsbreite, Seitenkopf-Rollen und Kopfkarte (`domain-layout`),
