@@ -1,0 +1,445 @@
+{
+  "pages": [
+    {
+      "path": "/",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": []
+    },
+    {
+      "path": "/finanzen",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": []
+    },
+    {
+      "path": "/haushalt",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": []
+    },
+    {
+      "path": "/organisation",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": []
+    },
+    {
+      "path": "/reisen",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": []
+    },
+    {
+      "path": "/einstellungen/profil",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": []
+    },
+    {
+      "path": "/einstellungen",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": []
+    }
+  ],
+  "errors": [],
+  "network": [
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/onboarding/profile/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/onboarding/profile/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/onboarding/profile/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/onboarding/profile/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/onboarding/profile/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/reisen/trips/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/haushalt/uebersicht/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/summary/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/today/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/onboarding/profile/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/onboarding/profile/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/reisen/trips/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/haushalt/uebersicht/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/summary/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/today/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/transactions/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/categories/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/budgets/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/goals/einzahlungen/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/goals/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/summary/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/haushalt/uebersicht/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/tasks/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/notes/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/events/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/fx/rates/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/reisen/trips/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    }
+  ]
+}

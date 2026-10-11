@@ -1,0 +1,175 @@
+[
+  {
+    "method": "POST",
+    "path": "finanzen/private/budgets/",
+    "status": 201
+  },
+  {
+    "method": "POST",
+    "path": "finanzen/private/goals/",
+    "status": 201
+  },
+  {
+    "method": "POST",
+    "path": "organisation/tasks/",
+    "status": 201
+  },
+  {
+    "method": "POST",
+    "path": "organisation/events/",
+    "status": 201
+  },
+  {
+    "method": "POST",
+    "path": "haushalt/aufgaben/",
+    "status": 201
+  },
+  {
+    "method": "POST",
+    "path": "reisen/trips/",
+    "status": 201
+  },
+  {
+    "method": "GET",
+    "path": "connections/link-suggestions/?object_type=TRIP&object_id=1",
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "path": "connections/",
+    "status": 201
+  },
+  {
+    "method": "GET",
+    "path": "connections/?object_type=TRIP&object_id=1",
+    "status": 200
+  },
+  {
+    "method": "DELETE",
+    "path": "connections/1/",
+    "status": 204
+  },
+  {
+    "method": "GET",
+    "path": "finanzen/private/budgets/1/",
+    "status": 200
+  },
+  {
+    "method": "PATCH",
+    "path": "finanzen/private/budgets/1/",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "finanzen/private/goals/1/",
+    "status": 200
+  },
+  {
+    "method": "PATCH",
+    "path": "finanzen/private/goals/1/",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "organisation/tasks/1/",
+    "status": 200
+  },
+  {
+    "method": "PATCH",
+    "path": "organisation/tasks/1/",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "organisation/events/1/",
+    "status": 200
+  },
+  {
+    "method": "PATCH",
+    "path": "organisation/events/1/",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "haushalt/aufgaben/1/",
+    "status": 200
+  },
+  {
+    "method": "PATCH",
+    "path": "haushalt/aufgaben/1/",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "reisen/trips/1/",
+    "status": 200
+  },
+  {
+    "method": "PATCH",
+    "path": "reisen/trips/1/",
+    "status": 200
+  },
+  {
+    "reloadFinanceVisible": false
+  },
+  {
+    "method": "DELETE",
+    "path": "finanzen/private/goals/1/",
+    "status": 204
+  },
+  {
+    "method": "GET",
+    "path": "finanzen/private/goals/1/",
+    "status": 404
+  },
+  {
+    "method": "DELETE",
+    "path": "finanzen/private/budgets/1/",
+    "status": 204
+  },
+  {
+    "method": "GET",
+    "path": "finanzen/private/budgets/1/",
+    "status": 404
+  },
+  {
+    "method": "DELETE",
+    "path": "organisation/tasks/1/",
+    "status": 204
+  },
+  {
+    "method": "GET",
+    "path": "organisation/tasks/1/",
+    "status": 404
+  },
+  {
+    "method": "DELETE",
+    "path": "organisation/events/1/",
+    "status": 204
+  },
+  {
+    "method": "GET",
+    "path": "organisation/events/1/",
+    "status": 404
+  },
+  {
+    "method": "DELETE",
+    "path": "haushalt/aufgaben/1/",
+    "status": 204
+  },
+  {
+    "method": "GET",
+    "path": "haushalt/aufgaben/1/",
+    "status": 404
+  },
+  {
+    "method": "DELETE",
+    "path": "reisen/trips/1/",
+    "status": 204
+  },
+  {
+    "method": "GET",
+    "path": "reisen/trips/1/",
+    "status": 404
+  }
+]
