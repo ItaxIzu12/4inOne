@@ -1,0 +1,704 @@
+[
+  {
+    "case": "login Sophie",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "login Alex",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "login Ben",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "login Eve",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "new account has no finance transactions",
+    "actual": 0,
+    "expected": 0,
+    "pass": true
+  },
+  {
+    "case": "POST finanzen/private/budgets/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST finanzen/private/budgets/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST finanzen/private/budgets/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST finanzen/private/categories/setup/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "PATCH finanzen/private/categories/21/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "PATCH finanzen/private/categories/23/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "PATCH finanzen/private/categories/22/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "POST finanzen/private/transactions/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "budget after Restaurant",
+    "actual": "1958.00",
+    "expected": "1958.00",
+    "pass": true
+  },
+  {
+    "case": "expenses after Restaurant",
+    "actual": "42.00",
+    "expected": "42.00",
+    "pass": true
+  },
+  {
+    "case": "POST finanzen/private/transactions/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "future amount is planned",
+    "actual": "29.99",
+    "expected": "29.99",
+    "pass": true
+  },
+  {
+    "case": "future amount not spent",
+    "actual": "0.00",
+    "expected": "0.00",
+    "pass": true
+  },
+  {
+    "case": "PATCH finanzen/private/transactions/5/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "move planned removes old month",
+    "actual": "0.00",
+    "expected": "0.00",
+    "pass": true
+  },
+  {
+    "case": "move planned adds new month",
+    "actual": "29.99",
+    "expected": "29.99",
+    "pass": true
+  },
+  {
+    "case": "PATCH finanzen/private/transactions/5/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "booked expense counted once",
+    "actual": "71.99",
+    "expected": "71.99",
+    "pass": true
+  },
+  {
+    "case": "booked expense not also planned",
+    "actual": "0.00",
+    "expected": "0.00",
+    "pass": true
+  },
+  {
+    "case": "DELETE finanzen/private/transactions/5/",
+    "actual": 204,
+    "expected": 204,
+    "pass": true
+  },
+  {
+    "case": "POST finanzen/private/transactions/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "income does not increase monthly budget",
+    "actual": "1958.00",
+    "expected": "1958.00",
+    "pass": true
+  },
+  {
+    "case": "POST finanzen/private/goals/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "saving deducted exactly once",
+    "actual": "1858.00",
+    "expected": "1858.00",
+    "pass": true
+  },
+  {
+    "case": "POST finanzen/private/transactions/",
+    "actual": 400,
+    "expected": 400,
+    "pass": true
+  },
+  {
+    "case": "POST finanzen/private/transactions/",
+    "actual": 400,
+    "expected": 400,
+    "pass": true
+  },
+  {
+    "case": "POST haushalt/aufgaben/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "PATCH haushalt/aufgaben/3/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "POST haushalt/aufgaben/3/erledigt/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "POST haushalt/aufgaben/3/wieder-oeffnen/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "POST haushalt/aufgaben/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST haushalt/aufgaben/4/erledigt/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "recurring task survives completion",
+    "actual": 4,
+    "expected": 4,
+    "pass": true
+  },
+  {
+    "case": "POST haushalt/einkauf/listen/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST haushalt/einkauf/eintraege/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "PATCH haushalt/einkauf/eintraege/4/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "PATCH haushalt/einkauf/eintraege/4/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "POST haushalt/einkauf/eintraege/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "PATCH haushalt/einkauf/eintraege/5/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "PATCH haushalt/einkauf/eintraege/5/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "POST haushalt/einkauf/eintraege/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "PATCH haushalt/einkauf/eintraege/6/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "PATCH haushalt/einkauf/eintraege/6/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "POST haushalt/ordner/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST haushalt/ordner/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST organisation/events/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "PATCH organisation/events/1/",
+    "actual": 400,
+    "expected": 400,
+    "pass": true
+  },
+  {
+    "case": "POST organisation/tasks/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST organisation/notes/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST reisen/trips/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST reisen/trips/",
+    "actual": 400,
+    "expected": 400,
+    "pass": true
+  },
+  {
+    "case": "POST reisen/packing-items/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "PATCH reisen/packing-items/1/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "PATCH reisen/packing-items/1/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "POST reisen/packing-items/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "PATCH reisen/packing-items/2/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "PATCH reisen/packing-items/2/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "POST reisen/packing-items/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "PATCH reisen/packing-items/3/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "PATCH reisen/packing-items/3/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "POST reisen/expenses/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "travel expense persisted",
+    "actual": "200.00",
+    "expected": "200.00",
+    "pass": true
+  },
+  {
+    "case": "POST contacts/invites/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "contact invitation actually sends Alex",
+    "actual": true,
+    "expected": true,
+    "pass": true
+  },
+  {
+    "case": "POST contacts/invites/8Ka3gtG4l4ipq7k6rza6XuoC79hkLw_DEYWiB5RFtX8/accept/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST contacts/invites/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "contact invitation actually sends Ben",
+    "actual": true,
+    "expected": true,
+    "pass": true
+  },
+  {
+    "case": "POST contacts/invites/_dny8Xnomm5Uww2K8ew4vYHRMXNDBRjF_ml_9H5aRvw/accept/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST reisen/participants/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST household/invite/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "household invitation delivers mail",
+    "actual": false,
+    "expected": true,
+    "pass": false
+  },
+  {
+    "case": "private denial Alex finanzen/private/transactions/4/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "private denial Alex finanzen/private/goals/2/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "private denial Alex organisation/tasks/1/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "private denial Alex organisation/notes/1/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "shared scope Alex reisen/trips/1/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "shared scope Alex haushalt/ordner/1/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "foreign connection Alex",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "private denial Ben finanzen/private/transactions/4/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "private denial Ben finanzen/private/goals/2/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "private denial Ben organisation/tasks/1/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "private denial Ben organisation/notes/1/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "shared scope Ben reisen/trips/1/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "shared scope Ben haushalt/ordner/1/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "foreign connection Ben",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "private denial Eve finanzen/private/transactions/4/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "private denial Eve finanzen/private/goals/2/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "private denial Eve organisation/tasks/1/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "private denial Eve organisation/notes/1/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "shared scope Eve reisen/trips/1/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "shared scope Eve haushalt/ordner/1/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "foreign connection Eve",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "POST connections/",
+    "actual": 400,
+    "expected": 400,
+    "pass": true
+  },
+  {
+    "case": "GET connections/link-suggestions/?object_type=TRIP&object_id=1",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "matching task suggestion present",
+    "actual": true,
+    "expected": true,
+    "pass": true
+  },
+  {
+    "case": "POST connections/link-suggestions/accept/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "POST connections/link-suggestions/dismiss/",
+    "actual": 204,
+    "expected": 204,
+    "pass": true
+  },
+  {
+    "case": "dismiss persists",
+    "actual": true,
+    "expected": true,
+    "pass": true
+  },
+  {
+    "case": "POST connections/link-suggestions/accept/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST connections/",
+    "actual": 409,
+    "expected": 409,
+    "pass": true
+  },
+  {
+    "case": "DELETE connections/1/",
+    "actual": 204,
+    "expected": 204,
+    "pass": true
+  },
+  {
+    "case": "GET reisen/trips/1/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "GET organisation/tasks/1/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "POST connections/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "no private goal via shared device Alex",
+    "actual": true,
+    "expected": true,
+    "pass": true
+  },
+  {
+    "case": "no private goal via shared device Ben",
+    "actual": true,
+    "expected": true,
+    "pass": true
+  },
+  {
+    "case": "no private goal via shared device Eve",
+    "actual": true,
+    "expected": true,
+    "pass": true
+  },
+  {
+    "case": "POST organisation/tasks/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST reisen/trips/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "POST haushalt/ordner/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "SQLite foreign key integrity",
+    "actual": 0,
+    "expected": 0,
+    "pass": true
+  },
+  {
+    "case": "orphan connections",
+    "actual": 0,
+    "expected": 0,
+    "pass": true
+  }
+]

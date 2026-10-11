@@ -1,0 +1,10 @@
+{
+  "financeOverflow": {
+    "width": 360,
+    "scrollWidth": 360,
+    "offenders": []
+  },
+  "connectionDialogText": "Aufgabe bearbeiten\nTitel\nNur für dich sichtbar – nicht für andere im Haushalt.\nFällig am (optional)\n05.11.2026\nUhrzeit (optional)\nUhrzeit wählen\nPriorität\nNormal\nWiederholung\nEinmalig\nStatus\nOffen\nProjekt (optional)\n\nZum Gruppieren, z. B. Familie, Beruf oder Hausbau.\n\nBeschreibung (optional)\nVerknüpft mit\n\nNoch nichts verknüpft.\n\nVerknüpfe Einträge, die zusammengehören — etwa eine Aufgabe mit deiner Reise. Sie erscheinen dann gegenseitig hier; beide bleiben dabei unverändert.\n\nDas könnte zusammengehören\n\nReise\nBerlin\nDie Aufgabe erwähnt „Berlin“ und ist kurz vor oder während deiner Reise fällig.\nVerknüpfen\nNicht relevant\nReise\n<script>alert(1)</script>\nDie Aufgabe erwähnt „Berlin“ und ist kurz vor oder während deiner Reise fällig.\nVerknüpfen\nNicht relevant\n\nNur ein Vorschlag: Verknüpft wird erst, wenn du zustimmst, und geändert wird dabei nichts. Vorschläge entstehen nur aus Einträgen, auf die du Zugriff hast.\n\n+\nVerknüpfen\n\nAufgabe löschen\nAbbrechen\nSpeichern",
+  "escapeClosed": false,
+  "financeDialogText": "Transaktion erstellen\nAusgabe\nEinnahme\nBetrag in EUR\nKategorie\nFreizeit\nLebensmittel\nGesundheit\nMobilität\nReisen\nSonstiges\nWohnen\nNeue Kategorie\nDatum\n11.10.2026\nNotiz (optional)\nKommt jeden Monat wieder\nz. B. Miete oder ein Abo – wird ab dem nächsten Monat jeden Monat als geplante Ausgabe im Budget berücksichtigt. Eine neue Transaktion wird dabei nicht angelegt.\nAbbrechen\nSpeichern"
+}

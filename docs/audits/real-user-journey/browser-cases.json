@@ -1,0 +1,592 @@
+{
+  "screens": [
+    {
+      "path": "/finanzen",
+      "body": "Zum Hauptinhalt springen\n4inOne\n\nDein Alltag. Alles verbunden.\n\nStartseite\nFinanzen\nHaushalt\nOrganisation\nReisen\nPersonen & Gruppen\n\nAlles Wichtige.\nEin guter Überblick.\n\n⌘ K\nSonntag\n11. Oktober 2026\nS\nSophie\nMein Konto\nFinanzen\n\nWas diesen Monat noch übrig ist – auf einen Blick.\n\nTransaktion\nÜbersicht\nTransaktionen\nBudgets\nSparziele\nTag\nWoche\nMonat\nBenutzerdefiniert\nMonat\nOktober 2026\nVom Monatsbudget übrig\n1.858 €\n93 % verbleibend\nEinnahmen\n2.500 €\nim Oktober\nAusgaben\n42 €\nim Oktober\nGespart\n100 €\n+ 100 € zu September\nMonatsübersicht\nEinnahmen\nAusgaben\nGespart\n4.000 €\n3.000 €\n2.000 €\n1.000 €\n0 €\nWoche 1\n1.–4. Okt.\nWoche 2\n5.–11. Okt.\nWoche 3\n12.–18. Okt.\nWoche 4\n19.–25. Okt.\nWoche 5\n26.–31. Okt.\nBudgetstatus\nAlle Budgets\nFreizeit\n42 € / 300 €\n258 € verfügbar\nLebensmittel\n0 € / 400 €\n400 € verfügbar\nMobilität\n0 € / 200 €\n200 € verfügbar\nTransaktionen Oktober 2026 · die neuesten\nAlle anzeigen\nRestaurant\nHeute • Freizeit\n−42,00 €\nGehalt\nHeute • Freizeit\n+2.500,00 €\nSparziele\nAlle Sparziele\nNeue Waschmaschine\n100 € / 600 €\n17 %\nIntelligente Hinweise\nMonatsbudget prüfen\nDu hast 93 % deines Budgets übrig. Weiter so!",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": true
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1600,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": [],
+      "file": "05-finanzen.png"
+    },
+    {
+      "path": "/haushalt",
+      "body": "Zum Hauptinhalt springen\n4inOne\n\nDein Alltag. Alles verbunden.\n\nStartseite\nFinanzen\nHaushalt\nOrganisation\nReisen\nPersonen & Gruppen\n\nAlles Wichtige.\nEin guter Überblick.\n\n⌘ K\nSonntag\n11. Oktober 2026\nS\nSophie\nMein Konto\nHaushalt\n\nAlles rund um dein Zuhause.\n\nHeute\nAufgaben\nEinkaufen\nZuhause\nHeute fällig\nAlle Aufgaben\n\nHeute ist nichts fällig. Als Nächstes: Küche gründlich reinigen morgen.\n\nAufgabe hinzufügen\nDemnächst\nnächste 30 Tage\n\nIn den nächsten 30 Tagen stehen keine Wartungen, Garantie- oder Kündigungsfristen an.\n\nEinkauf\n\n3 Artikel offen\n\nTomaten\nReis\nMilch\nEinkauf öffnen",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1600,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": [],
+      "file": "06-haushalt.png"
+    },
+    {
+      "path": "/organisation",
+      "body": "Zum Hauptinhalt springen\n4inOne\n\nDein Alltag. Alles verbunden.\n\nStartseite\nFinanzen\nHaushalt\nOrganisation\nReisen\nPersonen & Gruppen\n\nAlles Wichtige.\nEin guter Überblick.\n\n⌘ K\nSonntag\n11. Oktober 2026\nS\nSophie\nMein Konto\nOrganisation\n\nDein Tag, deine Aufgaben, deine Notizen – nur für dich.\n\nTermin hinzufügen\nKalender\nAufgaben\nNotizen\nTag\nWoche\nMonat\nOktober 2026\nMo\nDi\nMi\nDo\nFr\nSa\nSo\n28\n29\n30\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n1\n2\n3\n4\n5\n6\n7\n8\nTermine im Oktober 2026\nNoch keine Termine\n\nPlane deinen ersten Termin.\n\nTermin hinzufügen\n\nTermine aus Google, Apple oder Outlook übernehmen?\nKalender importieren",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1600,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": [],
+      "file": "07-organisation.png"
+    },
+    {
+      "path": "/reisen",
+      "body": "Zum Hauptinhalt springen\n4inOne\n\nDein Alltag. Alles verbunden.\n\nStartseite\nFinanzen\nHaushalt\nOrganisation\nReisen\nPersonen & Gruppen\n\nAlles Wichtige.\nEin guter Überblick.\n\n⌘ K\nSonntag\n11. Oktober 2026\nS\nSophie\nMein Konto\nReisen\n\nWohin, wann und was noch fehlt – jede Reise auf einen Blick.\n\nReise\nBevorstehend\n2\nBerlin\nBerlin\n12.–16. Nov. 2026\nIn 32 Tagen\nKeine Aufgaben\n0 / 3 gepackt\n200 € / 500 €\n<script>alert(1)</script>\nBerlin\n12.–16. Nov. 2026\nIn 32 Tagen\nKeine Aufgaben\nKeine Packliste\nKein Budget",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1600,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": [],
+      "file": "08-reisen.png"
+    },
+    {
+      "path": "/familie",
+      "body": "Zum Hauptinhalt springen\n4inOne\n\nDein Alltag. Alles verbunden.\n\nStartseite\nFinanzen\nHaushalt\nOrganisation\nReisen\nPersonen & Gruppen\n\nAlles Wichtige.\nEin guter Überblick.\n\n⌘ K\nSonntag\n11. Oktober 2026\nS\nSophie\nMein Konto\nPersonen & Gruppen\n\nDu entscheidest, was du mit wem teilst. Eine Verbindung teilt noch nichts: ihr seht euch nur mit Namen und E-Mail-Adresse.\n\nPerson einladen\nE-Mail-Adresse\nDie Person ist\nFamilie\nFreund:in\nEinladung senden\n\nWir senden der Person eine E-Mail mit einem Link. Erst wenn sie annimmt, seid ihr verbunden.\n\nFreunde\nA\nAlex\nalex@journey.example.invalid\nEntfernen\nB\nBen\nben@journey.example.invalid\nEntfernen",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1600,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": [],
+      "file": "09-familie.png"
+    },
+    {
+      "path": "/einstellungen/profil",
+      "body": "Zum Hauptinhalt springen\n4inOne\n\nDein Alltag. Alles verbunden.\n\nStartseite\nFinanzen\nHaushalt\nOrganisation\nReisen\nPersonen & Gruppen\n\nAlles Wichtige.\nEin guter Überblick.\n\n⌘ K\nSonntag\n11. Oktober 2026\nS\nSophie\nMein Konto\n‹ Einstellungen\nProfil\n\nSo erscheinst du in 4inOne.\n\nName\nE-Mail-Adresse\n\nMit dieser Adresse meldest du dich an. Sie lässt sich hier noch nicht ändern.\n\nHeimatwährung\nEUR – Euro\n\nReisebudgets und Ausgaben zeigen zusätzlich einen ungefähren Wert in dieser Währung.\n\nSpeichern\nKonto löschen\n\nDein Konto und alle zugehörigen Daten (Finanzen, Haushalt, Organisation, Reisen, Kontakte) werden endgültig gelöscht. Das lässt sich nicht rückgängig machen.\n\nKonto löschen",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1600,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": [],
+      "file": "10-einstellungen-profil.png"
+    },
+    {
+      "path": "/einstellungen",
+      "body": "Zum Hauptinhalt springen\n4inOne\n\nDein Alltag. Alles verbunden.\n\nStartseite\nFinanzen\nHaushalt\nOrganisation\nReisen\nPersonen & Gruppen\n\nAlles Wichtige.\nEin guter Überblick.\n\n⌘ K\nSonntag\n11. Oktober 2026\nS\nSophie\nMein Konto\nEinstellungen\n\nDein Konto, deine Sicherheit und deine Daten.\n\nS\nSophie\nsophie@journey.example.invalid\nKONTO\nProfil bearbeiten\nName und Heimatwährung\nSICHERHEIT\nZwei-Faktor-Authentifizierung\nDein Konto zusätzlich schützen\nAktive Sitzungen\nAngemeldete Geräte ansehen und abmelden\nDATENSCHUTZ UND RECHTLICHES\nDatenschutz\nWie wir mit deinen Daten umgehen\nNutzungsbedingungen\nRegeln für die Nutzung von 4inOne\nImpressum\nAnbieterkennzeichnung\nBarrierefreiheit\nUnser Stand und Kontakt\nAbmelden",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1600,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": [],
+      "file": "11-einstellungen.png"
+    },
+    {
+      "path": "/",
+      "body": "Zum Hauptinhalt springen\n4inOne\n\nDein Alltag. Alles verbunden.\n\nStartseite\nFinanzen\nHaushalt\nOrganisation\nReisen\nPersonen & Gruppen\n\nAlles Wichtige.\nEin guter Überblick.\n\n⌘ K\nSonntag\n11. Oktober 2026\nS\nSophie\nMein Konto\nGuten Tag, Sophie!\n\nDas steht heute an.\n\nHinzufügen\n\nHeute zeigt ausschließlich deine eigenen, privaten Daten.\n\nFinanzen\n· für dich ausgewählt\n\n1.858,00 € übrig\n\nvom Monatsbudget\nHaushalt\n· für dich ausgewählt\n\nKeine Aufgabe heute\n\nOrganisation\n· für dich ausgewählt\n\nKeine Termine heute\n\nReisen\n· für dich ausgewählt\n\nBerlin\n\nin 32 Tagen\nHeute\nHeute ist nichts Dringendes offen\n\nDu hast heute keine fälligen Aufgaben oder Termine.\n\nHinzufügen\nFür dich\nDas könnte zusammengehören\n„Hotel Berlin bestätigen“ könnte zu deiner Reise „Berlin“ gehören.\nDie Aufgabe erwähnt „Berlin“ und ist kurz vor oder während deiner Reise fällig.\nVorschlag ansehen",
+      "widths": [
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1280,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        },
+        {
+          "width": 1600,
+          "overflow": false
+        },
+        {
+          "width": 1920,
+          "overflow": false
+        }
+      ],
+      "axe": [],
+      "file": "12-dashboard-filled.png"
+    }
+  ],
+  "errors": [],
+  "dialogs": [],
+  "responses": [
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/budgets/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/categories/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/goals/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/transactions/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/goals/einzahlungen/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/summary/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/haushalt/uebersicht/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/tasks/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/notes/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/events/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/fx/rates/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/reisen/trips/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/contacts/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/onboarding/profile/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/onboarding/profile/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/reisen/trips/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/summary/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/haushalt/uebersicht/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/today/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/notes/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/tasks/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/events/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/tasks/",
+      "status": 201
+    },
+    {
+      "path": "/api/v1/organisation/tasks/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/tasks/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/notes/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/tasks/",
+      "status": 201
+    },
+    {
+      "path": "/api/v1/organisation/tasks/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/csrf/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/auth/refresh/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/onboarding/profile/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/onboarding/profile/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisation/tasks/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/reisen/trips/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/finanzen/private/summary/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/haushalt/uebersicht/",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/today/",
+      "status": 200
+    }
+  ],
+  "taskDialogText": "Aufgabe hinzufügen\nTitel\nNur für dich sichtbar – nicht für andere im Haushalt.\nFällig am (optional)\nDatum wählen\nUhrzeit (optional)\nUhrzeit wählen\nPriorität\nNormal\nWiederholung\nEinmalig\nProjekt (optional)\n\nZum Gruppieren, z. B. Familie, Beruf oder Hausbau.\n\nBeschreibung (optional)\nAbbrechen\nSpeichern",
+  "uiTaskPersisted": true,
+  "doubleSubmitUIOccurrences": 1,
+  "searchBody": "Zum Hauptinhalt springen\n4inOne\n\nDein Alltag. Alles verbunden.\n\nStartseite\nFinanzen\nHaushalt\nOrganisation\nReisen\nPersonen & Gruppen\n\nAlles Wichtige.\nEin guter Überblick.\n\n⌘ K\nSonntag\n11. Oktober 2026\nS\nSophie\nMein Konto\nGuten Tag, Sophie!\n\nDas steht heute an.\n\nHinzufügen\n\nHeute zeigt ausschließlich deine eigenen, privaten Daten.\n\nSuche in deinem Überblick\n\n2 Treffer für „Berlin“\n\nHotel Berlin bestätigen\nAufgabe\nBerlin\nReisen · Berlin\nFinanzen\n· für dich ausgewählt\n\n1.858,00 € übrig\n\nvom Monatsbudget\nHaushalt\n· für dich ausgewählt\n\nKeine Aufgabe heute\n\nOrganisation\n· für dich ausgewählt\n\nKeine Termine heute\n\nReisen\n· für dich ausgewählt\n\nBerlin\n\nin 32 Tagen\nHeute\nHeute ist nichts Dringendes offen\n\nDu hast heute keine fälligen Aufgaben oder Termine.\n\nHinzufügen\nFür dich\nDas könnte zusammengehören\n„Hotel Berlin bestätigen“ könnte zu deiner Reise „Berlin“ gehören.\nDie Aufgabe erwähnt „Berlin“ und ist kurz vor oder während deiner Reise fällig.\nVorschlag ansehen"
+}

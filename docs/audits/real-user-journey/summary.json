@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-11",
+  "commit": "51667ab",
+  "beta_ready": false,
+  "backend_tests_passed": 814,
+  "frontend_tests_passed": 382,
+  "existing_browser_tests_passed": 243,
+  "additional_api_cases": 170,
+  "additional_api_passed": 169,
+  "additional_api_failed": [
+    {
+      "case": "household invitation delivers mail",
+      "actual": false,
+      "expected": true,
+      "pass": false
+    }
+  ],
+  "confirmed_p0": 0,
+  "confirmed_p1": 4,
+  "product_modified": false,
+  "limits": "See COMPLETE_REAL_USER_JOURNEY_AUDIT.md; no exhaustive security or accessibility certification."
+}

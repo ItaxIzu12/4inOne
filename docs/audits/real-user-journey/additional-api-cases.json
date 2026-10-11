@@ -1,0 +1,320 @@
+[
+  {
+    "case": "Alex GET finanzen/private/budgets/6/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Alex GET finanzen/private/budgets/5/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Alex GET finanzen/private/budgets/4/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Alex PATCH finanzen/private/transactions/4/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Alex DELETE finanzen/private/goals/2/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Ben GET finanzen/private/budgets/6/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Ben GET finanzen/private/budgets/5/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Ben GET finanzen/private/budgets/4/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Ben PATCH finanzen/private/transactions/4/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Ben DELETE finanzen/private/goals/2/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Eve GET finanzen/private/budgets/6/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Eve GET finanzen/private/budgets/5/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Eve GET finanzen/private/budgets/4/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Eve PATCH finanzen/private/transactions/4/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Eve DELETE finanzen/private/goals/2/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "failed foreign edits leave amount unchanged",
+    "actual": "42.00",
+    "expected": "42.00",
+    "pass": true
+  },
+  {
+    "case": "Ben PATCH reisen/trips/1/",
+    "actual": 403,
+    "expected": 403,
+    "pass": true
+  },
+  {
+    "case": "Alex POST household/invite/",
+    "actual": 403,
+    "expected": 403,
+    "pass": true
+  },
+  {
+    "case": "Eve POST organisation/tasks/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "Eve POST connections/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "Sophie PATCH finanzen/private/transactions/4/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "mass assignment does not change finance owner",
+    "actual": 1,
+    "expected": 1,
+    "pass": true
+  },
+  {
+    "case": "Sophie POST finanzen/private/transactions/import/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "preview creates no records",
+    "actual": 2,
+    "expected": 2,
+    "pass": true
+  },
+  {
+    "case": "duplicate in preview",
+    "actual": 1,
+    "expected": 1,
+    "pass": true
+  },
+  {
+    "case": "Sophie POST finanzen/private/transactions/import/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "import creates exactly one",
+    "actual": 1,
+    "expected": 1,
+    "pass": true
+  },
+  {
+    "case": "Sophie POST finanzen/private/transactions/import/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "reimport creates none",
+    "actual": 0,
+    "expected": 0,
+    "pass": true
+  },
+  {
+    "case": "Sophie POST finanzen/private/transactions/import/",
+    "actual": 400,
+    "expected": 400,
+    "pass": true
+  },
+  {
+    "case": "Sophie POST finanzen/private/transactions/import/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "invalid import row reported",
+    "actual": 1,
+    "expected": 1,
+    "pass": true
+  },
+  {
+    "case": "Sophie POST finanzen/private/transactions/import/",
+    "actual": 400,
+    "expected": 400,
+    "pass": true
+  },
+  {
+    "case": "Sophie POST reisen/trips/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "Sophie POST reisen/expenses/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "original CHF amount persisted",
+    "actual": "50.00",
+    "expected": "50.00",
+    "pass": true
+  },
+  {
+    "case": "same currency trip value",
+    "actual": "50.00",
+    "expected": "50.00",
+    "pass": true
+  },
+  {
+    "case": "missing EUR rate not invented",
+    "actual": null,
+    "expected": null,
+    "pass": true
+  },
+  {
+    "case": "Sophie PATCH auth/me/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "Sophie GET reisen/expenses/2/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "changing home currency preserves original",
+    "actual": "50.00",
+    "expected": "50.00",
+    "pass": true
+  },
+  {
+    "case": "changing home currency preserves saved home snapshot",
+    "actual": null,
+    "expected": null,
+    "pass": true
+  },
+  {
+    "case": "Sophie PATCH auth/me/",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "Sophie POST organisation/tasks/",
+    "actual": 201,
+    "expected": 201,
+    "pass": true
+  },
+  {
+    "case": "Sophie GET connections/link-suggestions/?object_type=TRIP&object_id=1",
+    "actual": 200,
+    "expected": 200,
+    "pass": true
+  },
+  {
+    "case": "Sophie DELETE organisation/tasks/6/",
+    "actual": 204,
+    "expected": 204,
+    "pass": true
+  },
+  {
+    "case": "Sophie POST connections/link-suggestions/accept/",
+    "actual": 404,
+    "expected": 404,
+    "pass": true
+  },
+  {
+    "case": "stale accept creates no connection",
+    "actual": 1,
+    "expected": 1,
+    "pass": true
+  },
+  {
+    "case": "cookie login without CSRF",
+    "actual": 403,
+    "expected": 403,
+    "pass": true
+  },
+  {
+    "case": "foreign origin not granted CORS",
+    "actual": false,
+    "expected": false,
+    "pass": true
+  },
+  {
+    "case": "trip list query count stays bounded with +10 trips",
+    "actual": true,
+    "expected": true,
+    "pass": true
+  },
+  {
+    "case": "trip query counts",
+    "small": 4,
+    "plus10": 4,
+    "pass": true
+  },
+  {
+    "case": "foreign key integrity after negative cases",
+    "actual": 0,
+    "expected": 0,
+    "pass": true
+  }
+]
