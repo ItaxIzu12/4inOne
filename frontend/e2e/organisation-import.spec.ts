@@ -74,7 +74,13 @@ test('the imported events show in the calendar, and importing again finds them a
   await page.getByRole('button', { name: 'Kalender importieren' }).click();
   await page.locator('#import-ics').setInputFiles({ name: 'kalender.ics', mimeType: 'text/calendar', buffer: Buffer.from(ics()) });
   await page.getByRole('dialog').getByRole('button', { name: '4 importieren' }).click();
-  await page.getByRole('button', { name: 'Woche', exact: true }).click();
+  // Erst wenn der Dialog zu ist, die Ansicht wechseln — sonst geht der Klick unter Last ins Leere.
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByText('4 Termine importiert.')).toBeVisible();
+  // „Elternabend“ liegt immer auf morgen — an einem Sonntag ist das schon die nächste Woche. Deshalb die
+  // Tagesansicht für morgen statt „diese Woche“: gilt an jedem Wochentag und auch am Monatsende.
+  await page.getByRole('button', { name: 'Tag', exact: true }).click();
+  await page.getByRole('button', { name: 'Nächster Tag' }).click();
   await expect(page.locator('app-org-calendar')).toContainText('Elternabend');
 
   await page.getByRole('button', { name: 'Kalender importieren' }).click();

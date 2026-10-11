@@ -7,7 +7,7 @@ import { Component } from '@angular/core';
 @Component({
   selector: 'app-copyright',
   standalone: true,
-  template: `<p class="copyright">&copy; {{ year }} Kompass</p>`,
+  template: `<p class="copyright">&copy; {{ year }} 4inOne</p>`,
   styles: `
     .copyright {
       font-size: 13px;

@@ -5,17 +5,18 @@ for (const width of [360, 390, 430, 1440]) {
   test(`budgets: compact screen, year overview in a dialog at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/demo/finanzen?tab=budgets');
-    // Zwei Karten: Budget und Rest. Die Rechnung erklärt den Rest — ausgegeben und gespart getrennt benannt
+    // Zwei Karten: Budget und Rest. Die Aufschlüsselung erklärt den Rest — ausgegeben und Sparbeiträge getrennt benannt
     await expect(page.locator('.kpis--budget .kpi')).toHaveCount(2);
-    const calc = page.locator('.kpi--left .kpi__calc');
-    await expect(calc).toContainText('ausgegeben');
-    await expect(calc).toContainText('gespart');
+    const calc = page.locator('.kpi--left .breakdown');
+    await expect(calc).toContainText('Bereits ausgegeben');
+    await expect(calc).toContainText('Sparbeiträge');
+    await expect(calc).toContainText('Verfügbar');
     await expect(page.getByRole('progressbar', { name: 'Monatsbudget verbraucht' })).toBeVisible();
     await expect(page.getByText('Bereits verbraucht')).toHaveCount(0);
     // Kategorie-Budgets: Name und Beträge liegen nie übereinander
     const overlap = await page.locator('.budget-row').evaluateAll((rows) =>
       rows.some((row) => {
-        const n = row.querySelector('.budget-row__name')!.getBoundingClientRect();
+        const n = row.querySelector('.budget-row__head')!.getBoundingClientRect();
         const m = row.querySelector('.budget-row__nums')!.getBoundingClientRect();
         return n.width < 60 || !(n.bottom <= m.top + 1 || m.right <= n.left || n.right <= m.left);
       }),

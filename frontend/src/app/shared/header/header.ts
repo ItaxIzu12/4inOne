@@ -9,7 +9,7 @@ import { IconHaushalt } from '../icons/icon-haushalt';
 import { IconOrganisation } from '../icons/icon-organisation';
 import { IconMenu } from '../icons/icon-menu';
 import { IconClose } from '../icons/icon-close';
-import { LogoKompass } from '../icons/logo-kompass';
+import { Brand } from '../brand/brand';
 
 /**
  * Ein Header für die gesamte App — Marketing-Seiten UND Dashboard/
@@ -32,7 +32,7 @@ import { LogoKompass } from '../icons/logo-kompass';
     IconOrganisation,
     IconMenu,
     IconClose,
-    LogoKompass,
+    Brand,
   ],
   templateUrl: './header.html',
   styleUrl: './header.css',

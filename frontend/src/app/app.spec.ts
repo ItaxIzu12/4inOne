@@ -29,7 +29,15 @@ describe('App', () => {
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.brand-name')?.textContent).toContain('Kompass');
+    expect(compiled.querySelector('app-header app-brand')?.textContent).toContain('4inOne');
+    expect(compiled.textContent).not.toContain('Kompass');
+  });
+
+  it('shows no global header before the first navigation has finished (no flash of the old header on reload)', () => {
+    fixture.detectChanges(); // noch keine Navigation abgeschlossen
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('app-header')).toBeNull();
+    expect(compiled.querySelector('app-footer')).toBeNull();
   });
 
   it('hides the global header on /login and /registrieren (its own "Anmelden"-Button there would be redundant)', async () => {

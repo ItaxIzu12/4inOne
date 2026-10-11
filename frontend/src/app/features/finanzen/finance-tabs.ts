@@ -1,5 +1,5 @@
 import { IconName } from '../../shared/icons/app-icon';
-import { FinanceCategory, FinanceTransaction, SavingsContributionDto, SavingsGoal } from './private-finance-api.service';
+import { BudgetCategoryFigures, FinanceCategory, FinanceTransaction, PlannedItem, SavingsContributionDto, SavingsGoal } from './private-finance-api.service';
 
 /**
  * Reine Rechenhilfen für die Finanz-Reiter Übersicht, Ausgaben, Einnahmen,
@@ -201,6 +201,59 @@ export function recurringItems(rows: FinanceTransaction[], type: FinanceTransact
     .sort((a, b) => b.amount - a.amount);
 }
 
+/** Zuordnung eines wiederkehrenden Postens — identisch mit backend finanzen/private_api.py recurring_key. */
+export function fixedKey(note: string | null | undefined, category: number | string | null | undefined): string {
+  return `${(note ?? '').trim().toLocaleLowerCase('de')}|${category ?? ''}`;
+}
+
+/** Geplante Ausgaben eines Monats — Spiegel von backend planned_expenses (für die Demo; echte Konten rechnet der
+ * Server): Transaktionen mit Datum nach heute plus wiederkehrende Posten, die im Monat noch nicht gebucht sind
+ * (je Posten die jüngste Buchung VOR dem Monat; nur laufender und künftige Monate). */
+export function plannedItems(rows: FinanceTransaction[], month: string, today: string): PlannedItem[] {
+  const expenses = rows.filter((t) => t.type === 'EXPENSE' && (t.currency ?? 'EUR') === 'EUR');
+  const dated: PlannedItem[] = expenses
+    .filter((t) => t.date.startsWith(month) && t.date > today)
+    .map((t) => ({ kind: 'TRANSACTION', key: fixedKey(t.note, t.category), id: t.id, source_id: null, title: t.note.trim(),
+      category: t.category, amount: t.amount, date: t.date }));
+  const recurring: PlannedItem[] = [];
+  if (month >= today.slice(0, 7)) {
+    const latest = new Map<string, FinanceTransaction>();
+    for (const t of expenses) {
+      if (t.date.slice(0, 7) >= month) continue;
+      const key = fixedKey(t.note, t.category);
+      const seen = latest.get(key);
+      if (!seen || t.date > seen.date) latest.set(key, t);
+    }
+    const booked = new Set(expenses.filter((t) => t.date.startsWith(month)).map((t) => fixedKey(t.note, t.category)));
+    for (const [key, t] of latest) {
+      if (!t.recurring || booked.has(key)) continue;
+      recurring.push({ kind: 'RECURRING', key, id: null, source_id: t.id, title: t.note.trim() || 'Wiederkehrend',
+        category: t.category, amount: t.amount, date: sameDayIn(month, t.date) });
+    }
+  }
+  return [...dated, ...recurring].sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title, 'de'));
+}
+
+/** Derselbe Tag im Zielmonat, am Monatsende gekappt (31. → 30.). Reine Datums-Strings, keine Zeitzone. */
+export function sameDayIn(month: string, source: string): string {
+  const [y, m] = month.split('-').map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return `${month}-${String(Math.min(Number(source.slice(8, 10)), last)).padStart(2, '0')}`;
+}
+
+/** Kategorie-Budgets aus den Server-Zahlen — dieselbe Form wie bisher, plus „geplant“. Der Fortschritt zählt
+ * ausgegeben + geplant, denn beides bindet das Kategorie-Budget. */
+export function budgetsFromSummary(items: BudgetCategoryFigures[] | undefined, categories: FinanceCategory[]): CategoryBudget[] {
+  return (items ?? []).map((item) => {
+    const category = categories.find((c) => c.id === item.id) ?? { id: item.id, name: item.name, color: item.color, monthly_goal: item.limit };
+    const limit = num(item.limit);
+    const spent = num(item.spent);
+    const planned = num(item.planned);
+    const pct = limit > 0 ? Math.round(((spent + planned) / limit) * 100) : 0;
+    return { category, spent, planned, limit, left: num(item.available), pct, tone: pct >= 90 ? 'over' : pct >= 80 ? 'warn' : 'ok' } as CategoryBudget;
+  });
+}
+
 export interface ExpenseSplit {
   fixed: number;
   variable: number;
@@ -223,6 +276,8 @@ export function expenseSplit(rows: FinanceTransaction[], month: string): Expense
 export interface CategoryBudget {
   category: FinanceCategory;
   spent: number;
+  /** Geplant (Datum nach heute oder wiederkehrend, noch nicht gebucht); fehlt bei rein lokaler Berechnung. */
+  planned?: number;
   limit: number;
   left: number;
   pct: number;
@@ -243,9 +298,10 @@ export function categoryBudgets(rows: FinanceTransaction[], categories: FinanceC
 
 /** Status in Worten — nie nur über die Farbe: „Im Rahmen“, „Bald erreicht“ (ab 80 %), „Fast ausgeschöpft“ (ab 90 %),
  * „Ausgeschöpft“ (genau das Limit), „Überschritten“. */
-export function categoryBudgetStatus(b: Pick<CategoryBudget, 'spent' | 'limit' | 'pct'>): string {
-  if (b.spent > b.limit) return 'Überschritten';
-  if (b.spent === b.limit) return 'Ausgeschöpft';
+export function categoryBudgetStatus(b: Pick<CategoryBudget, 'spent' | 'limit' | 'pct' | 'planned'>): string {
+  const used = b.spent + (b.planned ?? 0);
+  if (used > b.limit) return 'Überschritten';
+  if (used === b.limit) return 'Ausgeschöpft';
   if (b.pct >= 90) return 'Fast ausgeschöpft';
   if (b.pct >= 80) return 'Bald erreicht';
   return 'Im Rahmen';

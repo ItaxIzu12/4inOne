@@ -57,7 +57,7 @@ class LegacyHouseholdFinanceFrozen(BasePermission):
 
     message = (
         'Die Haushaltsfinanzen sind eingefroren und nur noch lesbar. '
-        'Neue Buchungen gehören in deine privaten Finanzen.'
+        'Neue Transaktionen gehören in deine privaten Finanzen.'
     )
 
     def has_permission(self, request, view):

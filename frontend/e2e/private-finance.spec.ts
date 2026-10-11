@@ -172,7 +172,7 @@ for (const width of [390, 1440]) {
     const budgetKpis = page.locator('.kpis');
     await expect(budgetKpis).toContainText('3.000 €');
     await expect(budgetKpis).toContainText('2.950 €');
-    await expect(budgetKpis).toContainText('50 € ausgegeben');
+    await expect(budgetKpis.locator('.breakdown')).toContainText('Bereits ausgegeben− 50 €');
     await expect(budgetKpis).not.toContainText('Einnahmen');
     await expect(page.getByRole('status').filter({ hasText: 'Einnahme' })).toContainText(
       'Einnahme von 3.100,00 € gespeichert. Vom Monatsbudget übrig: 2.950,00 €.',
@@ -218,7 +218,7 @@ for (const width of [390, 1440]) {
     // Gespartes mindert das verfügbare Budget und steht in der Aufschlüsselung
     await expect(page.locator('.kpis')).toContainText('2.470 €');
     await page.getByRole('button', { name: 'Budgets', exact: true }).click();
-    await expect(page.locator('.kpis')).toContainText('480 € gespart');
+    await expect(page.locator('.kpis')).toContainText('Sparbeiträge− 480 €');
     await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -235,7 +235,7 @@ for (const width of [390, 1440]) {
     await page.getByRole('button', { name: 'Eintrag löschen', exact: true }).click();
     await page.getByRole('button', { name: 'Ja, löschen', exact: true }).click();
     await expect(page.locator('.kpis')).toContainText('2.520 €');
-    await expect(page.getByRole('status').filter({ hasText: 'gelöscht' })).toContainText('Buchung gelöscht. Vom Monatsbudget übrig: 2.520,00 €.');
+    await expect(page.getByRole('status').filter({ hasText: 'gelöscht' })).toContainText('Transaktion gelöscht. Vom Monatsbudget übrig: 2.520,00 €.');
   });
 }
 
@@ -794,7 +794,7 @@ test('the budget dialog says what stays without a budget, and the overview names
   await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
   await page.getByRole('button', { name: 'Budget ändern', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('Im September 2026 sind 1 Buchung und 1 Sparziel vorhanden. Beim Löschen dieses Budgets bleiben diese Einträge erhalten.');
+  await expect(page.getByRole('dialog')).toContainText('Im September 2026 sind 1 Transaktion und 1 Sparziel vorhanden. Beim Löschen dieses Budgets bleiben diese Einträge erhalten.');
 });
 
 test('without a budget the overview keeps bookings and says so', async ({ page }) => {
@@ -839,8 +839,8 @@ test('bookings: category filter, search by title, and 5-at-a-time with "weitere 
   // Die vollständige Liste unten im Reiter: nur Ausgaben, 5 auf einmal
   const rows = page.locator('#all-rows .transaction');
   await expect(rows).toHaveCount(5); // von 7 Ausgaben zunächst nur 5
-  await expect(page.getByRole('button', { name: '2 weitere Buchungen anzeigen' })).toBeVisible();
-  await page.getByRole('button', { name: '2 weitere Buchungen anzeigen' }).click();
+  await expect(page.getByRole('button', { name: '2 weitere Transaktionen anzeigen' })).toBeVisible();
+  await page.getByRole('button', { name: '2 weitere Transaktionen anzeigen' }).click();
   await expect(rows).toHaveCount(7);
 
   // Kategorie-Filter: nur „Wohnen“ (2 Ausgaben) — die Begrenzung greift danach wieder
@@ -851,12 +851,12 @@ test('bookings: category filter, search by title, and 5-at-a-time with "weitere 
   await expect(rows).toHaveCount(5); // Begrenzung wieder auf 5 zurückgesetzt, nicht die vorherigen 7
 
   // Suche nach Titel, auch über Kategorien hinweg
-  await page.getByPlaceholder('Buchung suchen …').fill('supermarkt');
+  await page.getByPlaceholder('Transaktion suchen …').fill('supermarkt');
   await expect(rows).toHaveCount(3);
   await expect(rows).toContainText(['Supermarkt Ecke', 'Supermarkt Markt', 'Supermarkt Spät']);
 
-  await page.getByPlaceholder('Buchung suchen …').fill('nichts passt');
-  await expect(page.getByText('Keine Buchung gefunden. Prüfe die Schreibweise, die Kategorie oder den Filter.')).toBeVisible();
+  await page.getByPlaceholder('Transaktion suchen …').fill('nichts passt');
+  await expect(page.getByText('Keine Transaktion gefunden. Prüfe die Schreibweise, die Kategorie oder den Filter.')).toBeVisible();
 
   // Einnahmen: eigene Ansicht unter „Transaktionen“
   await txView(page, 'Einnahmen');

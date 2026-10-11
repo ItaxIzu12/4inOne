@@ -69,6 +69,34 @@ export interface SavingsGoal {
   plan_end_month: string | null;
   plan_open_ended: boolean;
 }
+/** Eine geplante Ausgabe des Monats (backend finanzen/private_api.py planned_expenses). „Geplant“ ist nicht
+ * „vorgemerkt/pending“ — das bleibt für echte, noch nicht verbuchte Bankumsätze frei. */
+export interface PlannedItem {
+  /** TRANSACTION: echte Transaktion mit Datum nach heute (id gesetzt). RECURRING: aus einer wiederkehrenden
+   * Ausgabe berechnet, noch keine Transaktion (source_id = die zuletzt gebuchte). */
+  kind: 'TRANSACTION' | 'RECURRING';
+  /** Zuordnung wie im Backend: Notiz (klein, ohne Ränder) | Kategorie-ID. */
+  key: string;
+  id: number | null;
+  source_id: number | null;
+  title: string;
+  category: number | null;
+  amount: string;
+  /** Reines Datum (JJJJ-MM-TT), keine Uhrzeit. */
+  date: string;
+}
+
+/** Kategorie-Budget eines Monats, vom Server berechnet. available = limit − spent − planned. */
+export interface BudgetCategoryFigures {
+  id: number;
+  name: string;
+  color: string;
+  limit: string;
+  spent: string;
+  planned: string;
+  available: string;
+}
+
 export interface FinanceSummary {
   month: string;
   currency: string;
@@ -79,6 +107,12 @@ export interface FinanceSummary {
   saved: string;
   /** Davon nur geplant (Sparrate), noch nicht als gespart gebucht. */
   saved_planned: string;
+  /** Aufschlüsselung (Server): verfügbar = Monatsbudget − spent − planned − saved. Bis heute gebuchte Ausgaben. */
+  spent?: string;
+  /** Geplante Ausgaben gesamt = Summe von planned_items. */
+  planned?: string;
+  planned_items?: PlannedItem[];
+  budget_categories?: BudgetCategoryFigures[];
   /** Erster Monat (12 Monate voraus), in dem die Sparraten das Monatsbudget nach Ausgaben überschreiten — sonst null. */
   plan_alert: { month: string; over: string; planned: string } | null;
   available: string | null;

@@ -12,16 +12,16 @@ test('four main tabs; Ausgaben and Einnahmen live under Transaktionen', async ({
 
   await page.getByRole('button', { name: 'Transaktionen', exact: true }).click();
   const kinds = page.locator('.tx-switch button');
-  await expect(kinds).toHaveText(['Alle', 'Ausgaben', 'Einnahmen']);
+  await expect(kinds).toHaveText(['Alle', 'Ausgaben', 'Einnahmen', 'Geplant']);
   await expect(page.locator('.tx-switch [aria-pressed="true"]')).toHaveText('Alle');
   // Alle: Einnahmen und Ausgaben in einer Liste; Sparbeiträge sind keine Buchungen
   const rows = page.locator('#all-rows .transaction');
   await expect(page.locator('#all-rows-h')).toContainText('Alle Transaktionen');
   await expect(rows.filter({ hasText: '−' }).first()).toBeVisible();
   // die Einnahme „Gehalt“ steht in derselben Liste
-  await page.getByPlaceholder('Buchung suchen …').fill('Gehalt');
+  await page.getByPlaceholder('Transaktion suchen …').fill('Gehalt');
   await expect(rows.filter({ hasText: '+' }).first()).toContainText('Gehalt');
-  await page.getByPlaceholder('Buchung suchen …').fill('');
+  await page.getByPlaceholder('Transaktion suchen …').fill('');
   await expect(page.getByRole('button', { name: 'Transaktion erfassen', exact: true })).toBeVisible();
 
   await kinds.filter({ hasText: 'Einnahmen' }).click();

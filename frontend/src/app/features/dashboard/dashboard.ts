@@ -221,7 +221,7 @@ export class Dashboard {
   });
   /** Schnellerfassung — nur Formulare, die es in den Bereichen schon gibt. */
   readonly quickAdd = computed((): QuickAddItem[] => [
-    <QuickAddItem>{ label: 'Buchung', icon: 'finance', tone: 'finance', path: this.domainPath('finanzen'), query: { tab: 'transactions', neu: 'buchung' } },
+    <QuickAddItem>{ label: 'Transaktion', icon: 'finance', tone: 'finance', path: this.domainPath('finanzen'), query: { tab: 'transactions', neu: 'buchung' } },
     <QuickAddItem>{ label: 'Aufgabe', icon: 'check-circle', tone: 'organisation', path: this.domainPath('organisation'), query: { tab: 'tasks', neu: 'aufgabe' } },
     <QuickAddItem>{ label: 'Termin', icon: 'calendar', tone: 'organisation', path: this.domainPath('organisation'), query: { neu: 'termin' } },
     <QuickAddItem>{ label: 'Notiz', icon: 'file-text', tone: 'organisation', path: this.domainPath('organisation'), query: { tab: 'notes', neu: 'notiz' } },
@@ -266,7 +266,7 @@ export class Dashboard {
         params: { kind: 'task', id: t.id } as Record<string, string | number>,
       })),
       ...(this.boardSummary()?.recent ?? []).map((t) => ({
-        title: t.note || 'Buchung',
+        title: t.note || 'Transaktion',
         area: `Finanzen · ${euros(t.amount)}`,
         path: this.domainPath('finanzen'),
         params: {},

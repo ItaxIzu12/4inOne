@@ -90,6 +90,36 @@ Abstand — nie nur über Farbe.
 
 ### Referenz und Migrationsstand
 
+- **Budgetjahr-Dialog (11.10.2026, Feinschliff):** statt zwölf umrandeter Kästen eine Liste in zwei Spalten (Jan–Jun |
+  Jul–Dez; Handy eine Spalte) mit Haarlinien, Zeilen einheitlich 52 px; Betrag rechtsbündig, tabellarische Ziffern,
+  „Nicht festgelegt“ leiser; Icons aus dem System (Pfeil, Haken) statt Textzeichen „›/✓“; gewählter Monat: Fläche in
+  Bereichsfarbe + Haken + fett (kein farbiger Seitenstreifen); „Aktuell“ als kleine Zeile unter dem Monat. Kopf:
+  „9 von 12 Monaten mit Budget“ („geplant“ ist in Finanzen für geplante Ausgaben reserviert) + kurzer Hinweis, Jahr als
+  natives Select mit eigenem Chevron und Abstand zum Schließen-Knopf. Öffnen: Monate erscheinen leicht versetzt
+  (15 ms je Zeile, 220 ms, aus bei reduzierter Bewegung) — Magic-UI-Prinzip in CSS, Magic UI selbst ist React-only.
+
+- **Finanzen › Geplante Ausgaben (11.10.2026):** „Geplant“ statt „vorgemerkt“. Budgets: statt Rechenzeile eine
+  Aufschlüsselung als `dl.breakdown` (Monatsbudget, Bereits ausgegeben, Geplant + Anzahl als Text-Link, Sparbeiträge,
+  Verfügbar; 14 px, tabellarische Ziffern, Summe mit Linie und 600) — keine zusätzlichen Karten; unter 1100 px stehen
+  Budget- und Rest-Karte untereinander. Klick auf „Geplant“ → Transaktionen › Geplant im selben Monat (ein Klick).
+  Kategorie-Budget-Zeile kompakt (ersetzt die Tabellenspalten, die in der halben Kartenbreite überlappten): Name +
+  „X € verfügbar“, Balken mit geplantem Anteil in derselben Farbe bei 40 % Deckkraft, darunter „ausgegeben · geplant
+  · von Budget“ und die Prozentzahl (Statuswort nur bei Bald erreicht/Fast ausgeschöpft/Überschritten, Label immer); Klick → Transaktionen der Kategorie. Transaktionsliste: geplante Zeilen
+  mit Uhr-Symbol + „Geplant“, Betrag `--text-secondary`; geplante wiederkehrende Zeile öffnet das Formular vorbelegt
+  mit Hinweis (`.planned-note`). Formular: bei Ausgabe mit Datum nach heute „Diese Ausgabe gilt bis zu ihrem Datum als
+  geplant und zählt dann als ausgegeben.“
+
+- **Finanzen (11.10.2026, Begriff „vorgemerkt“ inzwischen durch „Geplant“ ersetzt — siehe oben):** Modal-Titel „Transaktion bearbeiten/erstellen“ statt „Buchung …“. „Kommt jeden Monat
+  wieder“ erklärt je Art: Ausgabe „wird ab dem nächsten Monat jeden Monat vom Budget abgezogen (vorgemerkt). Eine neue
+  Transaktion wird dabei nicht angelegt.“ / Einnahme „erscheint dann unter „Wiederkehrende Einnahmen“…“. Budget-Rechnung
+  ergänzt um „− X € feste Ausgaben vorgemerkt“; Liste „Wiederkehrende Ausgaben“ zeigt je Posten den Status.
+
+- **Alte Marke entfernt (11.10.2026):** Beim Neuladen blitzte kurz die Marketing-Kopfzeile mit dem alten Kompass-Logo
+  auf, weil `app.ts` sie zeigte, solange die erste Navigation (inkl. Anmeldeprüfung) noch lief. Kopfzeile, Footer
+  und Bottom-Nav erscheinen jetzt erst nach der ersten Navigation. Kompass-Logo und -Name sind in Kopfzeile,
+  „Passwort vergessen“, Copyright und Demo-Bericht durch `<app-brand>`/„4inOne“ ersetzt, `logo-kompass` ist
+  gelöscht; `favicon.ico` (bisher Angular-Standardlogo) zeigt jetzt die vier 4inOne-Felder wie `favicon.svg`.
+
 - **Verknüpfungen/Vorschläge — Pre-Launch-Audit (11.10.2026):** Zeilenaktion sichtbar „Verbindung entfernen“ (vorher
   „Entfernen“, missverständlich als Löschen); rutscht auf schmalen Breiten unter den Eintrag. Leerzustand erklärt:
   „Verknüpfe Einträge, die zusammengehören … beide bleiben dabei unverändert.“ Vorschlagsblock: „Nur ein Vorschlag:

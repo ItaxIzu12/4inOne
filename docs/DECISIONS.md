@@ -89,6 +89,20 @@ Der vom Nutzer bei einem Sparziel eingetragene Betrag „bereits gespart“ wird
 
 `summary.total` entspricht dem Monatsbudget; `summary.available` ist das Restbudget. Dashboard, Demo, Fortschritt und Warnungen berücksichtigen Sparreservierungen. Ohne Monatsbudget bleibt das Restbudget unbekannt; Sparziele können trotzdem gespeichert werden. Bestehende Beträge bleiben unverändert. Keine Datenmigration erforderlich.
 
+**Geplante Ausgaben (11.10.2026, ersetzt „vormerken“).** Begriff in der Oberfläche: **„Geplant“** — nie „vorgemerkt“,
+„reserviert“ oder „ausstehend“; „vorgemerkt/pending“ bleibt für spätere echte, noch nicht verbuchte Bankumsätze frei
+(PLANNED ≠ PENDING). Geplant sind (1) Transaktionen mit Datum nach heute — sie werden an ihrem Datum ohne Zutun zu
+„ausgegeben“ — und (2) wiederkehrende Ausgaben („Kommt jeden Monat wieder“; Regel ≠ Instanz), die im laufenden oder
+künftigen Monat noch nicht gebucht sind; sie werden nur berechnet, nie als Transaktion angelegt. **Verfügbar =
+Monatsbudget − ausgegeben − geplant − Sparbeiträge** (dieselbe Zahl wie zuvor, nur aufgeschlüsselt). Jede Ausgabe
+steht in genau einem Topf; ist ein wiederkehrender Posten im Monat schon eingetragen (auch mit Datum in der
+Zukunft), zählt nur dieser Eintrag. Zuordnung: Notiz (ohne Groß-/Kleinschreibung) + Kategorie; Betrag der jüngsten
+Buchung vor dem Monat; Datum = derselbe Tag im Monat (am Monatsende gekappt). Ohne Monatsbudget bleibt `available`
+null (kein falsches „über Budget“), geplant wird trotzdem gezeigt. Server ist Quelle der Wahrheit: `summary.spent`,
+`summary.planned`, `summary.planned_items` (Art, Datum, Kategorie, Betrag) und `summary.budget_categories` (Limit,
+ausgegeben, geplant, verfügbar je Kategorie). Code: `finanzen/private_api.py` (`planned_expenses`,
+`recurring_planned`, `budget_categories`); die Demo spiegelt das in `finance-tabs.ts` (`plannedItems`).
+
 
 ## D18 — Alte Finanzoberfläche entfernt
 

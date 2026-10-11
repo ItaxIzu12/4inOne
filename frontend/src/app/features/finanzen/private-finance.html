@@ -161,7 +161,7 @@
                   <li class="limit">
                     <span class="limit__icon" aria-hidden="true"><app-icon [name]="categoryIcon(b.category.name)" /></span>
                     <span class="limit__name">{{ b.category.name }}</span>
-                    <span class="limit__nums">{{ eur(b.spent) }} / {{ eur(b.limit) }}<small>{{ b.left >= 0 ? eur(b.left) + ' übrig' : eur(-b.left) + ' darüber' }}</small></span>
+                    <span class="limit__nums">{{ eur(b.spent) }}@if (b.planned) { + {{ eur(b.planned) }} geplant} / {{ eur(b.limit) }}<small>{{ b.left >= 0 ? eur(b.left) + ' verfügbar' : eur(-b.left) + ' darüber' }}</small></span>
                     <span class="track" [class]="'track track--' + b.tone" role="img" [attr.aria-label]="b.category.name + ': ' + b.pct + ' %'"><span [style.width.%]="Math.min(100, b.pct)"></span></span>
                   </li>
                 }
@@ -189,7 +189,7 @@
                   </button>
                 </li>
               } @empty {
-                <li class="muted">In diesem Monat gibt es noch keine Buchungen.</li>
+                <li class="muted">In diesem Monat gibt es noch keine Transaktionen.</li>
               }
             </ul>
           </section>
@@ -352,13 +352,13 @@
                 <li>
                   <button type="button" class="row-btn" (click)="open('transactions', item.last)">
                     <span class="tile" aria-hidden="true" [style.--cat]="categoryColor(item.category)"><app-icon [name]="categoryIcon(categoryName(item.category))" /></span>
-                    <span class="row-text"><b>{{ item.title }}</b><small>Monatlich • Nächste Abbuchung: {{ dayLabel(item.next) }}</small></span>
+                    <span class="row-text"><b>{{ item.title }}</b><small>Monatlich • @switch (fixedStatus(item)) { @case ('planned') { geplant, im Budget berücksichtigt } @case ('booked') { diesen Monat gebucht } @default { Nächste Abbuchung: {{ dayLabel(item.next) }} } }</small></span>
                     <strong>{{ money(item.amount.toFixed(2)) }}</strong>
                     <app-icon class="chev" name="arrow" aria-hidden="true" />
                   </button>
                 </li>
               } @empty {
-                <li class="muted">Markiere eine Buchung als „Kommt jeden Monat wieder“, dann erscheint sie hier.</li>
+                <li class="muted">Markiere eine Ausgabe als „Kommt jeden Monat wieder“, dann erscheint sie hier und wird jeden Monat als geplante Ausgabe im Budget berücksichtigt.</li>
               }
             </ul>
           </section>
@@ -537,7 +537,7 @@
       @if (tab() === 'transactions') {
         <section class="card all-rows" id="all-rows" aria-labelledby="all-rows-h" tabindex="-1">
           <div class="card-head">
-            <h2 id="all-rows-h">{{ section() === 'expenses' ? 'Alle Ausgaben' : section() === 'income' ? 'Alle Einnahmen' : 'Alle Transaktionen' }} im {{ monthLabel() }}</h2>
+            <h2 id="all-rows-h">{{ section() === 'planned' ? 'Geplante Ausgaben' : section() === 'expenses' ? 'Alle Ausgaben' : section() === 'income' ? 'Alle Einnahmen' : 'Alle Transaktionen' }} im {{ monthLabel() }}@if (section() === 'planned' && matchingPlannedTotal() > 0) {<span class="all-rows__total"> · {{ eur(matchingPlannedTotal()) }}</span>}</h2>
           </div>
           <div class="transaction-controls">
             <label class="filter"
@@ -545,9 +545,9 @@
               <app-select ariaLabelledby="finance-category-filter-label" [options]="categoryFilterOptions()" [(value)]="categoryFilter" />
             </label>
             <label class="transaction-search">
-              <span class="sr-only">Buchungen durchsuchen</span>
+              <span class="sr-only">Transaktionen durchsuchen</span>
               <app-icon name="search" />
-              <input type="search" placeholder="Buchung suchen …" [value]="transactionSearch()" (input)="transactionSearch.set($any($event.target).value)" />
+              <input type="search" placeholder="Transaktion suchen …" [value]="transactionSearch()" (input)="transactionSearch.set($any($event.target).value)" />
             </label>
             @if (categoryFilter() || transactionSearch()) {
               <button type="button" class="link" (click)="categoryFilter.set(''); transactionSearch.set('')"><app-icon name="repeat" />Filter zurücksetzen</button>
@@ -556,24 +556,28 @@
           <ul class="rows">
             @for (row of rows(); track row.id) {
               <li>
-                <button class="row-btn transaction" (click)="open('transactions', row)">
+                <button class="row-btn transaction" [class.is-planned]="row.planned" (click)="openRow(row)">
                   <span class="tile" aria-hidden="true" [style.--cat]="categoryColor(row.category)"><app-icon [name]="categoryIcon(categoryName(row.category))" /></span>
                   <span class="row-text transaction-copy"
-                    ><b>{{ rowTitle(row) }}</b><small>{{ row.date | date: 'dd.MM.yyyy' }} • {{ categoryName(row.category) }}{{ row.recurring ? ' • monatlich' : '' }}</small></span
-                  ><strong [class.negative]="row.type === 'EXPENSE'" [class.positive]="row.type === 'INCOME'">{{ row.type === 'EXPENSE' ? '−' : '+' }}{{ money(row.amount) }}</strong>
+                    ><b>{{ rowTitle(row) }}</b><small>{{ row.date | date: 'dd.MM.yyyy' }} • {{ categoryName(row.category) }}{{ row.recurring ? ' • monatlich' : '' }}@if (row.planned) { • <span class="planned-tag"><app-icon name="clock" aria-hidden="true" />Geplant</span>}</small></span
+                  ><strong [class.negative]="row.type === 'EXPENSE' && !row.planned" [class.planned-amount]="row.planned" [class.positive]="row.type === 'INCOME'">{{ row.type === 'EXPENSE' ? '−' : '+' }}{{ money(row.amount) }}</strong>
                 </button>
               </li>
             } @empty {
               @if (transactionSearch().trim() || categoryFilter()) {
-                <li class="empty">Keine Buchung gefunden. Prüfe die Schreibweise, die Kategorie oder den Filter.</li>
+                <li class="empty">Keine Transaktion gefunden. Prüfe die Schreibweise, die Kategorie oder den Filter.</li>
               } @else {
-                <li class="empty">Für diesen Monat gibt es noch keine {{ section() === 'expenses' ? 'Ausgaben' : section() === 'income' ? 'Einnahmen' : 'Transaktionen' }}.</li>
+                @if (section() === 'planned') {
+                  <li class="empty">Für {{ monthLabel() }} ist nichts geplant. Geplant sind Ausgaben mit einem Datum nach heute und wiederkehrende Ausgaben, die im Monat noch nicht gebucht sind.</li>
+                } @else {
+                  <li class="empty">Für diesen Monat gibt es noch keine {{ section() === 'expenses' ? 'Ausgaben' : section() === 'income' ? 'Einnahmen' : 'Transaktionen' }}.</li>
+                }
               }
             }
           </ul>
           @if (moreRowsCount(); as more) {
             <button type="button" class="show-more" (click)="showMoreRows()">
-              {{ more === 1 ? '1 weitere Buchung anzeigen' : more + ' weitere Buchungen anzeigen' }}
+              {{ more === 1 ? '1 weitere Transaktion anzeigen' : more + ' weitere Transaktionen anzeigen' }}
             </button>
           }
         </section>
@@ -611,9 +615,24 @@
                   ><span [style.width.%]="spentShare()"></span
                 ></span>
                 <span class="kpi__hint">{{ overBudget() ? 'Budget überschritten' : freeShare() + ' % verfügbar' }}</span>
-                <span class="kpi__calc">
-                  {{ eur(budget.amount) }} − {{ eur(expenseNow()) }} ausgegeben − {{ eur(bookedSaved()) }} gespart@if (plannedSaved() > 0) { − {{ eur(plannedSaved()) }} für Sparraten eingeplant}
-                </span>
+                <dl class="breakdown" aria-label="So setzt sich der verfügbare Betrag zusammen">
+                  <div><dt>Monatsbudget</dt><dd>{{ eur(budget.amount) }}</dd></div>
+                  <div><dt>Bereits ausgegeben</dt><dd>− {{ eur(spentNow()) }}</dd></div>
+                  @if (plannedTotal() > 0) {
+                    <div>
+                      <dt>
+                        <button type="button" class="breakdown__link" [attr.aria-label]="eur(plannedTotal()) + ' geplante Ausgaben im ' + monthLabel() + ' anzeigen'" (click)="showTransactions('planned')">
+                          Geplant<small>{{ plannedItems().length }} {{ plannedItems().length === 1 ? 'Ausgabe' : 'Ausgaben' }}</small>
+                        </button>
+                      </dt>
+                      <dd>− {{ eur(plannedTotal()) }}</dd>
+                    </div>
+                  }
+                  @if (bookedSaved() > 0 || plannedSaved() > 0) {
+                    <div><dt>Sparbeiträge@if (plannedSaved() > 0) {<small>davon {{ eur(plannedSaved()) }} eingeplant</small>}</dt><dd>− {{ eur(bookedSaved() + plannedSaved()) }}</dd></div>
+                  }
+                  <div class="breakdown__total"><dt>{{ overBudget() ? 'Über dem Budget' : 'Verfügbar' }}</dt><dd>{{ eur(overBudget() ?? s?.available) }}</dd></div>
+                </dl>
               </span>
             </div>
           </div>
@@ -623,10 +642,13 @@
             <div class="budget-empty__text">
               <h2 id="budget-empty-h">Noch kein Budget für {{ monthLabel() }}</h2>
               <p class="muted">Lege ein Budget fest, um deine Ausgaben für diesen Monat einzuordnen.</p>
-              @if (expenseNow() > 0 || savedNow() > 0) {
+              @if (spentNow() > 0 || savedNow() > 0 || plannedTotal() > 0) {
                 <p class="budget-empty__facts">
-                  Im {{ monthShort() }} ausgegeben: <b>{{ eur(expenseNow()) }}</b>
+                  Im {{ monthShort() }} ausgegeben: <b>{{ eur(spentNow()) }}</b>
                   @if (savedNow() > 0) { · gespart: <b>{{ eur(savedNow()) }}</b> }
+                  @if (plannedTotal() > 0) {
+                    · <button type="button" class="breakdown__link breakdown__link--inline" (click)="showTransactions('planned')">{{ eur(plannedTotal()) }} geplant</button>
+                  }
                 </p>
               }
             </div>
@@ -643,25 +665,31 @@
               }
             </div>
             @if (catBudgets().length) {
-              <div class="table-head table-head--budget" aria-hidden="true"><span>Kategorie</span><span>Ausgegeben / Limit</span><span>Übrig</span><span>Fortschritt</span></div>
-              <ul class="rows">
+                            <ul class="rows">
                 @for (b of catBudgets(); track b.category.id) {
                   <li>
                     <button
                       type="button"
                       class="row-btn budget-row"
-                      [attr.aria-label]="b.category.name + ': ' + eur(b.spent) + ' von ' + eur(b.limit) + ' ausgegeben, ' + (b.left >= 0 ? eur(b.left) + ' übrig' : eur(-b.left) + ' über dem Limit') + ', ' + b.pct + ' Prozent, ' + budgetStatus(b) + '. Kategorien verwalten'"
-                      (click)="openCategories()"
+                      [attr.aria-label]="b.category.name + ': Budget ' + eur(b.limit) + ', ' + eur(b.spent) + ' ausgegeben' + (b.planned ? ', ' + eur(b.planned) + ' geplante Ausgaben' : '') + ', ' + (b.left >= 0 ? eur(b.left) + ' verfügbar' : eur(-b.left) + ' über dem Budget') + ', ' + budgetStatus(b) + '. Transaktionen dieser Kategorie anzeigen'"
+                      (click)="showTransactions('expenses', b.category.id)"
                     >
                       <span class="tile" aria-hidden="true" [style.--cat]="b.category.color"><app-icon [name]="categoryIcon(b.category.name)" /></span>
-                      <span class="budget-row__name">
-                        <b>{{ b.category.name }}</b>
-                        <span class="track" [class]="'track track--' + b.tone" aria-hidden="true"><span [style.width.%]="Math.min(100, b.pct)"></span></span>
-                        <small class="budget-row__status" [class]="'budget-row__status tone--' + b.tone">{{ budgetStatus(b) }}</small>
+                      <span class="budget-row__body">
+                        <span class="budget-row__head">
+                          <b>{{ b.category.name }}</b>
+                          <span class="budget-row__left" [class.is-bad]="b.left < 0">{{ b.left >= 0 ? eur(b.left) + ' verfügbar' : eur(-b.left) + ' über dem Budget' }}</span>
+                        </span>
+                        <span class="track" [class]="'track track--' + b.tone" aria-hidden="true"
+                          ><span [style.width.%]="Math.min(100, share(b.spent, b.limit))"></span
+                          >@if (b.planned) {<span class="track__planned" [style.width.%]="Math.max(0, Math.min(100 - share(b.spent, b.limit), share(b.planned, b.limit)))"></span>}</span
+                        >
+                        <span class="budget-row__meta">
+                          <span class="budget-row__nums"><span>{{ eur(b.spent) }} ausgegeben</span>@if (b.planned) { · <span>{{ eur(b.planned) }} geplant</span>} · <span>von {{ eur(b.limit) }}</span></span>
+                          <!-- Statuswort nur, wenn es etwas zu sagen gibt; im Normalfall genügt die Prozentzahl (Label nennt den Status immer). -->
+                          <small class="budget-row__status" [class]="'budget-row__status tone--' + b.tone">@if (b.tone !== 'ok') { {{ budgetStatus(b) }} · }{{ b.pct }} %</small>
+                        </span>
                       </span>
-                      <span class="budget-row__nums">{{ eur(b.spent) }} / {{ eur(b.limit) }}</span>
-                      <span class="budget-row__left" [class.is-bad]="b.left < 0">{{ b.left >= 0 ? eur(b.left) + ' übrig' : eur(-b.left) + ' drüber' }}</span>
-                      <span class="budget-row__pct" [class]="'budget-row__pct tone--' + b.tone">{{ b.pct }} %</span>
                       <app-icon class="chev" name="arrow" aria-hidden="true" />
                     </button>
                   </li>
@@ -816,7 +844,7 @@
                   <span class="row-text"><b>{{ h.title }}</b><small>{{ h.text }}</small></span>
                 </li>
               } @empty {
-                <li class="muted">Sobald es Sparziele und Buchungen gibt, erscheinen hier Hinweise.</li>
+                <li class="muted">Sobald es Sparziele und Transaktionen gibt, erscheinen hier Hinweise.</li>
               }
             </ul>
           </section>
@@ -860,6 +888,12 @@
     }
   </div>
   @if (editor() === 'transactions') {
+    @if (plannedSource(); as source) {
+      <p class="planned-note" role="note">
+        <app-icon name="clock" aria-hidden="true" />Geplante wiederkehrende Ausgabe „{{ source.title }}“. Speichern erfasst sie als
+        Transaktion am {{ source.date | date: 'dd.MM.yyyy' }} — danach zählt sie als ausgegeben statt geplant.
+      </p>
+    }
     <!-- Schnellerfassung: Art per Umschalter, Betrag hat sofort den Fokus (Zahlentastatur am Handy), Kategorie als
          Chips — die häufigsten zuerst. Datum ist heute vorbelegt. -->
     <div class="kind-toggle" role="group" aria-label="Typ">
@@ -930,20 +964,25 @@
         </div>
       }
     } @else {
-      <p>Lege die sieben vorgeschlagenen Kategorien für deine privaten Buchungen an.</p>
+      <p>Lege die sieben vorgeschlagenen Kategorien für deine privaten Transaktionen an.</p>
       <button type="button" class="secondary" (click)="setup()" [disabled]="saving()">
         Standardkategorien anlegen
       </button>
     }
     <app-field label="Datum">
       <app-date-picker mode="date" formControlName="date" />
+      @if (form.value.type === 'EXPENSE' && (form.value.date ?? '') > todayDay) {
+        <p class="field-hint">Diese Ausgabe gilt bis zu ihrem Datum als geplant und zählt dann als ausgegeben.</p>
+      }
     </app-field>
     <app-field label="Notiz" [optional]="true">
       <input id="booking-note" formControlName="note" maxlength="255" />
     </app-field>
     <label class="checkbox-row">
       <input type="checkbox" formControlName="recurring" />
-      <span>Kommt jeden Monat wieder<small>z. B. Miete, Gehalt oder ein Abo – erscheint dann unter „Wiederkehrend“. Es wird nichts automatisch gebucht.</small></span>
+      <span>Kommt jeden Monat wieder<small>{{ form.value.type === 'INCOME'
+        ? 'z. B. dein Gehalt – erscheint dann unter „Wiederkehrende Einnahmen“. Es wird nichts automatisch gebucht.'
+        : 'z. B. Miete oder ein Abo – wird ab dem nächsten Monat jeden Monat als geplante Ausgabe im Budget berücksichtigt. Eine neue Transaktion wird dabei nicht angelegt.' }}</small></span>
     </label>
   } @else if (editor() === 'budgets') {
     <!-- Beim Ändern ist der Startmonat gesperrt (sonst verschiebt man das Budget aus seinem Monat); anderer Zeitraum = neues Budget. -->

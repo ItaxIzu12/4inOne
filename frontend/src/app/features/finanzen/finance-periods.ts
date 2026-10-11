@@ -84,7 +84,7 @@ export function customRangeError(range: PeriodRange): RangeProblem | null {
 }
 /** Was die Person tun kann — für den Hinweis an Stelle der Ergebnisse. */
 export function customRangeHelp(range: PeriodRange): string {
-  if (!range.from || !range.to) return 'Wähle oben Start- und Enddatum, dann erscheinen hier deine Buchungen.';
+  if (!range.from || !range.to) return 'Wähle oben Start- und Enddatum, dann erscheinen hier deine Transaktionen.';
   if (range.to < range.from) {
     return `Das Enddatum (${numericDate(range.to)}) liegt vor dem Startdatum (${numericDate(range.from)}). Wähle ein späteres Enddatum oder tausche die beiden Daten.`;
   }

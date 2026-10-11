@@ -37,8 +37,13 @@ export class App {
   // Bottom-Nav der Marketing-Seiten werden für App-Routen (aktuell:
   // Dashboard, Einstellungen, siehe app.routes.ts data: { shell: 'bare' })
   // ausgeblendet — die App hat dort ihre eigene Bottom-Nav/FAB.
+  /** Bis die erste Navigation (inkl. Anmeldeprüfung) fertig ist, sind die Routendaten leer. Ohne diese Sperre
+   * blitzte beim Neuladen kurz die Marketing-Kopfzeile auf, bevor die App-Shell sie ersetzte. */
+  private readonly routed = computed(() => this.navigationEnd() !== undefined);
+
   protected readonly showGlobalChrome = computed(
     () =>
+      this.routed() &&
       this.currentRouteData()['shell'] !== 'bare' &&
       !this.currentRouteData()['sidebarNav'] &&
       !this.currentRouteData()['hideHeader'],
@@ -49,6 +54,6 @@ export class App {
   // redundant, da diese Seiten schon ihre eigene Marke/ihren eigenen
   // Zurück-Link haben (siehe app.routes.ts data: { hideHeader: true }).
   protected readonly showHeader = computed(
-    () => this.currentRouteData()['hideHeader'] !== true && !this.currentRouteData()['sidebarNav'],
+    () => this.routed() && this.currentRouteData()['hideHeader'] !== true && !this.currentRouteData()['sidebarNav'],
   );
 }

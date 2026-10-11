@@ -91,7 +91,7 @@ export function parseCsv(text: string): ParsedCsv {
     });
   }
   if (rows.length > IMPORT_MAX_ROWS) {
-    throw new CsvFormatError(`Die Datei enthält ${rows.length} Buchungen. Bitte importiere höchstens ${IMPORT_MAX_ROWS} auf einmal, z. B. einen kürzeren Zeitraum.`);
+    throw new CsvFormatError(`Die Datei enthält ${rows.length} Transaktionen. Bitte importiere höchstens ${IMPORT_MAX_ROWS} auf einmal, z. B. einen kürzeren Zeitraum.`);
   }
   return { rows, skipped };
 }

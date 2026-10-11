@@ -23,7 +23,7 @@
   } @else {
     @if (future()) {
       <p class="note note--info" role="status">
-        Dieser Zeitraum reicht in die Zukunft. Angezeigt werden nur Buchungen, die bereits erfasst sind – nichts wird hochgerechnet.
+        Dieser Zeitraum reicht in die Zukunft. Angezeigt werden nur Transaktionen, die bereits erfasst sind – nichts wird hochgerechnet.
       </p>
     }
 
@@ -72,11 +72,11 @@
             </ul>
             @if (hiddenCount() > 0) {
               <button type="button" class="link" (click)="showAll.set(!showAll())">
-                {{ showAll() ? 'Weniger anzeigen' : (hiddenCount() === 1 ? '1 weitere Buchung anzeigen' : hiddenCount() + ' weitere Buchungen anzeigen') }}
+                {{ showAll() ? 'Weniger anzeigen' : (hiddenCount() === 1 ? '1 weitere Transaktion anzeigen' : hiddenCount() + ' weitere Transaktionen anzeigen') }}
               </button>
             }
           } @else {
-            <p class="muted">Keine Buchungen – nur Sparbeiträge.</p>
+            <p class="muted">Keine Transaktionen – nur Sparbeiträge.</p>
           }
         </section>
 

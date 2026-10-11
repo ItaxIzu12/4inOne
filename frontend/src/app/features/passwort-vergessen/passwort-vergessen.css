@@ -31,10 +31,8 @@
   text-decoration: none;
   min-height: 44px;
 }
-.reset-card__brand .kompass-icon {
-  font-size: 32px; /* steuert die Größe des 1em/1em-Logos */
-  border-radius: 9px;
-  overflow: hidden;
+.reset-card__brand app-brand {
+  font-size: 24px;
 }
 
 .auth-intro { display: flex; flex-direction: column; gap: var(--space-2); }

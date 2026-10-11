@@ -351,7 +351,7 @@ export class DemoFinanzenDataProvider implements FinanzenDataProvider {
     // abgesetzter Abschnitt für die aktiven festen Abzüge. Semikolon als
     // Trennzeichen aus demselben Grund wie im Backend (deutsches Excel).
     const rows: string[] = [];
-    rows.push(`Kompass — Finanzbericht (Demo);${DEMO_HOUSEHOLD_NAME};${label}`);
+    rows.push(`4inOne — Finanzbericht (Demo);${DEMO_HOUSEHOLD_NAME};${label}`);
     rows.push('');
     rows.push('Datum;Beschreibung;Kategorie;Betrag (€)');
     let gesamt = 0;

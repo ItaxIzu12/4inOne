@@ -18,7 +18,7 @@ import { budgetBand, categoryVisual, daysLeftInMonth, groupByDay, shiftMonth, sp
 import {
   axis,
   categoryBudgetStatus,
-  categoryBudgets,
+  budgetsFromSummary,
   categoryIcon,
   categorySlices,
   dayLabel,
@@ -35,6 +35,7 @@ import {
   monthName,
   monthTotal,
   monthlyBars,
+  fixedKey,
   recurringItems,
   savedInMonth,
   shiftYm,
@@ -53,6 +54,7 @@ import {
   PrivateFinanceApi,
   FinanceCategory,
   FinanceTransaction,
+  PlannedItem,
   FinanceBudget,
   SavingsGoal,
   FinanceSummary,
@@ -78,7 +80,7 @@ type Resource = 'transactions' | 'budgets' | 'goals';
  * dieselben Daten (ein Transaction-Modell mit type EXPENSE/INCOME), nur anders gruppiert. */
 export type FinanceTab = 'overview' | 'transactions' | 'budgets' | 'goals';
 /** Ansicht innerhalb von „Transaktionen“ */
-export type TransactionKind = 'all' | 'expenses' | 'income';
+export type TransactionKind = 'all' | 'expenses' | 'income' | 'planned';
 /** Frühere Reiter-Schlüssel (Links, Lesezeichen, interne Sprünge) → neue Navigation */
 type LegacyTab = 'expenses' | 'income';
 const FINANCE_TABS: { key: FinanceTab; label: string; icon: IconName }[] = [
@@ -91,7 +93,10 @@ const TRANSACTION_KINDS: { key: TransactionKind; label: string }[] = [
   { key: 'all', label: 'Alle' },
   { key: 'expenses', label: 'Ausgaben' },
   { key: 'income', label: 'Einnahmen' },
+  { key: 'planned', label: 'Geplant' },
 ];
+/** Eine Zeile der Transaktionsliste: echte Transaktion oder geplante wiederkehrende Ausgabe (noch keine Transaktion). */
+export type ListRow = FinanceTransaction & { planned?: boolean; plannedItem?: PlannedItem };
 /** Die erste verständliche Fehlermeldung aus der API-Antwort (z. B. „gespart darf das Ziel nicht überschreiten“). */
 function apiMessage(body: unknown): string | null {
   if (!body || typeof body !== 'object') return null;
@@ -230,13 +235,30 @@ export class PrivateFinance {
   readonly money = euros;
   readonly goalStatus = { ACTIVE: 'Aktiv', COMPLETED: 'Erreicht', PAUSED: 'Pausiert' };
   readonly editorTitle = computed(() => {
-    const noun = { transactions: 'Buchung', budgets: 'Budget', goals: 'Sparziel' }[this.editor() ?? 'goals'];
+    const noun = { transactions: 'Transaktion', budgets: 'Budget', goals: 'Sparziel' }[this.editor() ?? 'goals'];
     return `${noun} ${this.editId() ? 'bearbeiten' : 'erstellen'}`;
   });
   /** Gebundenes Budget: Ausgaben plus Gespartes — Sparen ist nicht „verbraucht“, bindet aber Budget (Balken der Rest-Karte). */
-  readonly used = computed(() => String(Number(this.summary()?.expenses ?? 0) + Number(this.summary()?.saved ?? 0)));
+  readonly used = computed(() =>
+    String(Number(this.summary()?.spent ?? this.summary()?.expenses ?? 0) + Number(this.summary()?.planned ?? 0) + Number(this.summary()?.saved ?? 0)),
+  );
   /** Davon nur eingeplante Sparraten (noch nicht verbucht) — getrennt ausgewiesen, nie als Ausgabe. */
   readonly plannedSaved = computed(() => Number(this.summary()?.saved_planned ?? 0));
+  /** Geplante Ausgaben des Monats (Server): Datum nach heute oder wiederkehrend, noch nicht gebucht. */
+  readonly plannedItems = computed(() => this.summary()?.planned_items ?? []);
+  readonly plannedTotal = computed(() => Number(this.summary()?.planned ?? 0));
+  /** Bis heute gebuchte Ausgaben (Server); fällt auf alle Ausgaben des Monats zurück, solange die Zahl fehlt. */
+  readonly spentNow = computed(() => Number(this.summary()?.spent ?? this.summary()?.expenses ?? 0));
+  private readonly plannedRecurringKeys = computed(
+    () => new Set(this.plannedItems().filter((i) => i.kind === 'RECURRING').map((i) => i.key)),
+  );
+  /** Status eines wiederkehrenden Postens im angezeigten Monat: geplant (im Budget berücksichtigt) oder gebucht. */
+  fixedStatus(item: { last: FinanceTransaction }): 'planned' | 'booked' | null {
+    if (this.plannedRecurringKeys().has(fixedKey(item.last.note, item.last.category))) return 'planned';
+    if (this.transactions().some((t) => t.type === item.last.type && t.date.startsWith(this.month())
+      && fixedKey(t.note, t.category) === fixedKey(item.last.note, item.last.category))) return 'booked';
+    return null;
+  }
   /** Tatsächlich gespart (verbuchte Sparbeiträge) im Monat. */
   readonly bookedSaved = computed(() => Math.max(0, Number(this.summary()?.saved ?? 0) - this.plannedSaved()));
   readonly budgetStatus = categoryBudgetStatus;
@@ -322,7 +344,8 @@ export class PrivateFinance {
       .reduce((sum, t) => sum + Number(t.amount), 0),
   );
   readonly prevIncome = computed(() => monthTotal(this.transactions(), this.prevMonth(), 'INCOME'));
-  readonly catBudgets = computed(() => categoryBudgets(this.transactions(), this.categories(), this.month()));
+  /** Kategorie-Budgets vom Server: Limit, ausgegeben, geplant, verfügbar (keine eigene Rechnung im Browser). */
+  readonly catBudgets = computed(() => budgetsFromSummary(this.summary()?.budget_categories, this.categories()));
   readonly spentShare = computed(() => this.percent(this.used(), this.summary()?.total));
   readonly monthExpenses = computed(() =>
     this.transactions().filter((t) => t.type === 'EXPENSE' && t.date.startsWith(this.month())).slice(0, 6),
@@ -368,6 +391,17 @@ export class PrivateFinance {
   barHeight(value: number, top: number): number {
     return top > 0 ? Math.max(value > 0 ? 2 : 0, (value / top) * 100) : 0;
   }
+  /** Hinweis im Formular, wenn eine geplante wiederkehrende Ausgabe als Transaktion erfasst wird. */
+  readonly plannedSource = signal<PlannedItem | null>(null);
+  /** Klick auf eine Zeile: echte Transaktion bearbeiten — eine geplante wiederkehrende öffnet das Formular vorbelegt,
+   * Speichern erfasst sie für ihr Datum (danach zählt sie als gebucht statt geplant, nie doppelt). */
+  openRow(row: ListRow) {
+    if (!row.plannedItem) return this.open('transactions', row);
+    const item = row.plannedItem;
+    this.open('transactions');
+    this.form.patchValue({ amount: item.amount, type: 'EXPENSE', category: String(item.category ?? ''), date: item.date, note: item.title, recurring: true });
+    this.plannedSource.set(item);
+  }
   rowTitle(row: FinanceTransaction): string {
     return row.note || this.categoryName(row.category);
   }
@@ -385,7 +419,14 @@ export class PrivateFinance {
   /** Ansicht unter „Transaktionen“: die Liste zeigt nur den passenden Typ. */
   selectKind(kind: TransactionKind) {
     this.txKind.set(kind);
-    this.resetListFilters(kind === 'expenses' ? 'EXPENSE' : kind === 'income' ? 'INCOME' : 'ALL');
+    this.resetListFilters(kind === 'expenses' || kind === 'planned' ? 'EXPENSE' : kind === 'income' ? 'INCOME' : 'ALL');
+  }
+  /** Drilldown: aus einer Budgetzahl direkt zur passenden, gefilterten Transaktionsliste desselben Monats — ein Klick. */
+  showTransactions(kind: TransactionKind, categoryId?: number) {
+    this.tab.set('transactions');
+    this.selectKind(kind);
+    if (categoryId !== undefined) this.categoryFilter.set(String(categoryId));
+    afterNextRender(() => document.getElementById('all-rows')?.focus({ preventScroll: false }), { injector: this.renderInjector });
   }
   private resetListFilters(type: string) {
     this.typeFilter.set(type);
@@ -475,23 +516,49 @@ export class PrivateFinance {
   /** Wie viele der gefilterten/gesuchten Buchungen aktuell sichtbar sind — „Weitere anzeigen“ erhöht ihn um 5,
    * ein Wechsel von Monat, Filter, Kategorie oder Suche setzt ihn zurück. */
   readonly rowLimit = signal(5);
+  /** Alle Zeilen des Monats: Transaktionen (mit Datum nach heute als „geplant“ markiert) plus geplante wiederkehrende
+   * Ausgaben, die noch keine Transaktion sind — so steht jede geplante Ausgabe auch in der Liste. */
+  readonly monthRows = computed<ListRow[]>(() => {
+    const today = todayIso();
+    const real: ListRow[] = this.transactions()
+      .filter((t) => t.date.startsWith(this.month()))
+      .map((t) => (t.type === 'EXPENSE' && t.date > today ? { ...t, planned: true } : t));
+    const virtual: ListRow[] = this.plannedItems()
+      .filter((i) => i.kind === 'RECURRING')
+      .map((i) => ({
+        id: -(i.source_id ?? 0), amount: i.amount, type: 'EXPENSE', category: i.category as number, date: i.date,
+        note: i.title, currency: 'EUR', recurring: true, planned: true, plannedItem: i,
+      }));
+    // Reihenfolge der echten Zeilen bleibt wie von der API (neueste zuerst); geplante wiederkehrende werden nach
+    // Datum dazwischen eingefügt.
+    const merged = [...real];
+    for (const row of virtual.sort((a, b) => b.date.localeCompare(a.date))) {
+      const at = merged.findIndex((r) => r.date < row.date);
+      merged.splice(at === -1 ? merged.length : at, 0, row);
+    }
+    return merged;
+  });
   readonly matchingRows = computed(() => {
     const query = this.transactionSearch().trim().toLocaleLowerCase('de');
     const category = this.categoryFilter();
-    return this.transactions().filter(
+    const plannedOnly = this.txKind() === 'planned' && this.tab() === 'transactions';
+    return this.monthRows().filter(
       (t) =>
-        t.date.startsWith(this.month()) &&
-        (this.typeFilter() === 'ALL' || t.type === this.typeFilter()) &&
+        (plannedOnly ? !!t.planned : this.typeFilter() === 'ALL' || t.type === this.typeFilter()) &&
         (!category || String(t.category) === category) &&
         (!query || (t.note || this.categoryName(t.category)).toLocaleLowerCase('de').includes(query)),
     );
   });
+  /** Summe der sichtbaren geplanten Zeilen (für die Überschrift unter „Geplant“). */
+  readonly matchingPlannedTotal = computed(() =>
+    this.matchingRows().filter((r) => r.planned).reduce((sum, r) => sum + Number(r.amount), 0),
+  );
   readonly rows = computed(() => this.matchingRows().slice(0, this.rowLimit()));
   readonly moreRowsCount = computed(() => Math.max(0, this.matchingRows().length - this.rowLimit()));
   /** Kategorien-Filter der Buchungen: nur Kategorien, die im Monat tatsächlich vorkommen — eine leere Auswahl
    * (Kategorie ohne Buchungen im Monat) wäre nur verwirrend. */
   readonly categoryFilterOptions = computed<SelectOption[]>(() => {
-    const used = new Set(this.transactions().filter((t) => t.date.startsWith(this.month())).map((t) => t.category));
+    const used = new Set(this.monthRows().map((t) => t.category));
     return [
       { value: '', label: 'Alle Kategorien' },
       ...this.categories()
@@ -511,7 +578,7 @@ export class PrivateFinance {
     { value: 'INCOME', label: 'Einnahme' },
   ];
   readonly filterOptions: SelectOption[] = [
-    { value: 'ALL', label: 'Alle Buchungen' },
+    { value: 'ALL', label: 'Alle Transaktionen' },
     { value: 'EXPENSE', label: 'Ausgaben' },
     { value: 'INCOME', label: 'Einnahmen' },
   ];
@@ -551,7 +618,7 @@ export class PrivateFinance {
     const impact = this.budgetImpact();
     if (!impact || (!impact.transactions && !impact.goals)) return null;
     const parts = [
-      impact.transactions ? `${impact.transactions} ${impact.transactions === 1 ? 'Buchung' : 'Buchungen'}` : '',
+      impact.transactions ? `${impact.transactions} ${impact.transactions === 1 ? 'Transaktion' : 'Transaktionen'}` : '',
       impact.goals ? `${impact.goals} ${impact.goals === 1 ? 'Sparziel' : 'Sparziele'}` : '',
     ].filter(Boolean);
     return `Im ${this.monthLabel()} sind ${parts.join(' und ')} vorhanden. Beim Löschen dieses Budgets bleiben diese Einträge erhalten.`;
@@ -615,7 +682,7 @@ export class PrivateFinance {
   }
   /** Nach dem Import: Daten neu laden und kurz bestätigen, wie viele Buchungen dazugekommen sind. */
   onImported(created: number) {
-    this.notice.set(created === 1 ? '1 Buchung importiert.' : `${created} Buchungen importiert.`);
+    this.notice.set(created === 1 ? '1 Transaktion importiert.' : `${created} Transaktionen importiert.`);
     this.load();
   }
   load() {
@@ -778,6 +845,7 @@ export class PrivateFinance {
       status: 'ACTIVE',
     });
     this.editor.set(resource);
+    this.plannedSource.set(null);
     this.cancelQuickCategory();
     this.overrun.set(null);
     this.goalWarning.set(null);
@@ -961,7 +1029,12 @@ export class PrivateFinance {
     summary$.pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (summary) => {
         this.saving.set(false);
-        const after = summary.available === null ? null : Number(summary.available) - extra;
+        // Ist die Ausgabe ein vorgemerkter fester Posten, ersetzt sie die Vormerkung — der Betrag ist schon abgezogen.
+        const v = this.form.getRawValue();
+        const reserved = summary.planned_items?.find((i) => i.kind === 'RECURRING' && i.key === fixedKey(v.note, v.category));
+        const effective = extra - (reserved && v.type === 'EXPENSE' ? Number(reserved.amount) : 0);
+        if (effective <= 0) return proceed();
+        const after = summary.available === null ? null : Number(summary.available) - effective;
         if (summary.available !== null && after !== null && after < 0) {
           this.overrun.set({ available: summary.available, over: (-after).toFixed(2) });
           return;
@@ -1039,7 +1112,7 @@ export class PrivateFinance {
         next: () => {
           this.saving.set(false);
           this.editor.set(null);
-          const noun = { transactions: 'Buchung', budgets: 'Monatsbudget', goals: 'Sparziel' }[resource];
+          const noun = { transactions: 'Transaktion', budgets: 'Monatsbudget', goals: 'Sparziel' }[resource];
           this.remember(`${noun} gelöscht.`, resource === 'goals' ? null : this.month());
           this.load();
         },

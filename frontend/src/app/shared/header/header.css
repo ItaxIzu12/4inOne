@@ -26,18 +26,8 @@
   flex-shrink: 0;
 }
 
-.brand-mark {
-  font-size: 32px; /* steuert die Größe des 1em/1em-Logos */
-  border-radius: 10px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.brand-name {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: var(--text-subheading);
-  color: var(--text);
+.brand app-brand {
+  font-size: 24px; /* 4inOne-Marke wie in der App-Shell, etwas kleiner */
 }
 
 .header-nav {

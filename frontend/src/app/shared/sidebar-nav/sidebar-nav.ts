@@ -5,7 +5,7 @@ import { FinanzenStateService } from '../../features/finanzen/finanzen-state.ser
 import { IconFinanzen } from '../icons/icon-finanzen';
 import { IconHaushalt } from '../icons/icon-haushalt';
 import { IconOrganisation } from '../icons/icon-organisation';
-import { LogoKompass } from '../icons/logo-kompass';
+import { Brand } from '../brand/brand';
 
 /**
  * Primäre Navigation für angemeldete App-Bereiche ab 960px Breite —
@@ -24,7 +24,7 @@ import { LogoKompass } from '../icons/logo-kompass';
 @Component({
   selector: 'app-sidebar-nav',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, IconFinanzen, IconHaushalt, IconOrganisation, LogoKompass],
+  imports: [RouterLink, RouterLinkActive, IconFinanzen, IconHaushalt, IconOrganisation, Brand],
   templateUrl: './sidebar-nav.html',
   styleUrl: './sidebar-nav.css',
 })

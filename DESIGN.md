@@ -17,6 +17,7 @@ Systematisch im Grundgerüst, flexibel im Inhalt. Keine Gradients, Glas, Glow, D
 - Layout: Inhalt max. 1280 px, Ränder 32/24/16; Steuerhöhe 44 px; Fokus 3 px `--brand-primary`, Offset 2 px.
 
 ## Regeln
+- Marke überall `<app-brand>` (vier Farbfelder + „4inOne“), Favicon dieselben vier Felder. Das alte Kompass-Logo/-Name ist entfernt.
 - Genau ein aktiver Navigationspunkt; Bottom-Navigation am Handy: Start · Finanzen · Haushalt · Organisation · Reisen.
 - Seitenkopf: Titel · Untertitel · Hauptaktion rechts; eine Primary-Aktion je Ansicht.
 - Reiter in allen Bereichen gleich: 46 px, 16 px/400, aktiv 600 mit Unterstrich in Bereichsfarbe; Handy 44 px, 13 px, nur Text. Kopf→Inhalt 16 px (Handy 12).
@@ -31,9 +32,11 @@ Systematisch im Grundgerüst, flexibel im Inhalt. Keine Gradients, Glas, Glow, D
 - Kleine Bedienelemente dürfen optisch klein sein, ihre Klickfläche reicht aber auf 44 px (unsichtbares `::before`).
 - Einzelperson zuerst: Teilen/„gemeinsam“ nur zeigen, wenn wirklich mehrere Personen beteiligt sind.
 - Formfehler erst nach dem ersten Speichern; Abbrechen prüft nichts.
+- Finanzen: Objekt heißt überall „Transaktion“ — nie „Buchung“ (Suche, Listen, Import, Plus-Menü der Startseite, Meldungen). Begriff „Geplant“ (nie „vorgemerkt“): Budget-Aufschlüsselung Monatsbudget → Bereits ausgegeben → Geplant (Link zur Liste) → Sparbeiträge → Verfügbar; Zeilen „… • ⏱ Geplant“ (Text + Symbol, Betrag ruhiger); Filter Alle/Ausgaben/Einnahmen/Geplant; Kategorie-Budget kompakt: Name + „X € verfügbar“, Balken (geplant heller), „ausgegeben · geplant · von Budget“ (am Rechner eine Zeile) und rechts die Prozentzahl; das Statuswort („Bald erreicht“, „Überschritten“ …) nur, wenn es kritisch wird — im Label immer.
 - Verknüpfungen: Abschnitt „Verknüpft mit“ nur in Bearbeiten-Dialogen, Knopf „+ Verknüpfen“, „Verbindung entfernen“ nur wenn erlaubt (löst nur den Zusammenhang, beide Einträge bleiben).
 - Vorschläge: kleiner Block „Das könnte zusammengehören“ (gestrichelter Rahmen, kein KI-Look), je Vorschlag Begründung + „Verknüpfen“/„Nicht relevant“ und der Hinweis „Nur ein Vorschlag … geändert wird dabei nichts“; „Für dich“ höchstens einer.
 - Abstände nur über `--space-1…9` (4…64 px). Die alten Pixel-Namen `--space-4/8` (4/8 px) gibt es nicht mehr.
+- Auswahllisten in Dialogen (z. B. Budgetjahr): Zeilen mit Haarlinien statt Kartenwand, Icons statt Textzeichen, Auswahl = Fläche + Haken + fett.
 - Menüs blenden ruhig ein (150 ms, Deckkraft + 4 px). Keine zusätzliche Animations-/UI-Bibliothek.
 - Laden: Skelette; Fehler bereichsbezogen mit „Erneut versuchen“; Leerzustände ruhig mit einer Aktion.
 - Referenz-Screen: Startseite (`docs/DASHBOARD_V1.md`). Migriert: alle Bereiche (Startseite, Finanzen, Haushalt, Organisation, Reisen).

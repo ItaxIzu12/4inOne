@@ -1,10 +1,12 @@
 import { Component, computed, input, output } from '@angular/core';
 import { MONTH_NAMES } from '../../shared/form/date-utils';
+import { AppIcon } from '../../shared/icons/app-icon';
 import { FinanceBudget, euros, winningBudget } from './private-finance-api.service';
 
 @Component({
   selector: 'app-budget-year',
   standalone: true,
+  imports: [AppIcon],
   templateUrl: './budget-timeline.html',
   styleUrl: './budget-timeline.scss',
 })

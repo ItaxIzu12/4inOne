@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
+import { plannedItems } from './finance-tabs';
 import {
   CategoryPayload,
   FALLBACK_CATEGORY,
@@ -312,7 +313,8 @@ export class DemoPrivateFinanceApi {
     return this.goalList;
   }
 
-  /** Rechnet wie das Backend: Restbudget = Monatsbudget − Ausgaben − für Sparziele Zurückgelegtes. Zurückgelegt ist,
+  /** Rechnet wie das Backend: Restbudget = Monatsbudget − Ausgaben − für Sparziele Zurückgelegtes − vorgemerkte feste
+   * Ausgaben. Zurückgelegt ist,
    * was in diesem Monat in nicht pausierte Ziele eingezahlt wurde (vereinfachte Sparraten-Simulation). */
   private buildSummary(month: string): FinanceSummary {
     const rows = this.txs.filter((t) => t.date.startsWith(month));
@@ -324,6 +326,19 @@ export class DemoPrivateFinanceApi {
       .filter((c) => c.date.startsWith(month) && active.has(c.goal))
       .reduce((sum, c) => sum + Number(c.amount), 0);
     const covering = this.goalList.filter((g) => g.status !== 'PAUSED' && goalCovers(g, month));
+    const today = new Date().toLocaleDateString('sv-SE');
+    const planned = plannedItems(this.txs, month, today);
+    const plannedTotal = planned.reduce((sum, p) => sum + Number(p.amount), 0);
+    // Ausgegeben = bis heute gebucht; zukünftig datierte Transaktionen stecken in „geplant“ (nie doppelt).
+    const spent = expense - planned.filter((p) => p.kind === 'TRANSACTION').reduce((sum, p) => sum + Number(p.amount), 0);
+    const budgetCategories = this.categoryList
+      .filter((c) => Number(c.monthly_goal ?? 0) > 0)
+      .map((c) => {
+        const s = rows.filter((t) => t.type === 'EXPENSE' && t.category === c.id && t.date <= today).reduce((sum, t) => sum + Number(t.amount), 0);
+        const p = planned.filter((i) => i.category === c.id).reduce((sum, i) => sum + Number(i.amount), 0);
+        return { id: c.id, name: c.name, color: c.color, limit: money(Number(c.monthly_goal)), spent: money(s), planned: money(p),
+          available: money(Number(c.monthly_goal) - s - p) };
+      });
     const byCategory = new Map<number, number>();
     for (const t of rows.filter((t) => t.type === 'EXPENSE')) byCategory.set(t.category, (byCategory.get(t.category) ?? 0) + Number(t.amount));
     const categories = [...byCategory.entries()]
@@ -339,8 +354,12 @@ export class DemoPrivateFinanceApi {
       total: budget ? money(Number(budget.amount)) : null,
       saved: money(saved),
       saved_planned: '0.00',
+      spent: money(spent),
+      planned: money(plannedTotal),
+      planned_items: planned.map((p) => ({ ...p, amount: money(Number(p.amount)) })),
+      budget_categories: budgetCategories,
       plan_alert: null,
-      available: budget ? money(Number(budget.amount) - expense - saved) : null,
+      available: budget ? money(Number(budget.amount) - spent - plannedTotal - saved) : null,
       income: money(income),
       expenses: money(expense),
       savings_target: money(covering.reduce((sum, g) => sum + Number(g.target_amount), 0)),

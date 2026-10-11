@@ -1,32 +1,37 @@
 <section class="budget-year" aria-labelledby="budget-year-title">
-  <div class="budget-year__head">
-    <div>
+  <header class="budget-year__head">
+    <div class="budget-year__title">
       <h2 id="budget-year-title">Budgetjahr {{ year() }}</h2>
-      <p>{{ planned() }} von 12 Monaten geplant</p>
+      <p class="budget-year__count"><b>{{ planned() }} von 12 Monaten</b> mit Budget</p>
+      <p class="budget-year__hint">Monat wählen, um sein Budget anzusehen oder zu ändern.</p>
     </div>
     <div class="budget-year__select">
       <label for="budget-year-select">Jahr</label>
       <select id="budget-year-select" (change)="changeYear($event)">
         @for (value of years(); track value) { <option [value]="value" [selected]="value === year()">{{ value }}</option> }
       </select>
+      <app-icon name="chevron-down" aria-hidden="true" />
     </div>
-  </div>
-  <p class="budget-year__help">Wähle einen Monat, um sein Budget anzusehen oder zu ändern.</p>
+  </header>
+
   <ul class="budget-year__months">
-    @for (row of months(); track row.month) {
-      <li>
-        <button type="button" class="budget-month"
+    @for (row of months(); track $index; let i = $index) {
+      <li [style.--i]="i">
+        <button
+          type="button"
+          class="budget-month"
           [class.is-selected]="row.month === month()"
+          [class.is-empty]="!row.budget"
           [attr.aria-pressed]="row.month === month()"
           [attr.aria-label]="row.name + ' ' + year() + ': ' + (row.budget ? money(row.budget.amount) : 'Noch nicht festgelegt') + (row.month === currentMonth ? ', aktueller Monat' : '')"
-          (click)="monthPick.emit(row.month)">
-          <span class="budget-month__name">{{ row.name }}
-            @if (row.month === currentMonth) { <small>Aktuell</small> }
+          (click)="monthPick.emit(row.month)"
+        >
+          <span class="budget-month__name">
+            {{ row.name }}
+            @if (row.month === currentMonth) { <small class="budget-month__now">Aktuell</small> }
           </span>
-          <span class="budget-month__value" [class.is-empty]="!row.budget">
-            {{ row.budget ? money(row.budget.amount) : 'Nicht festgelegt' }}
-          </span>
-          <span class="budget-month__mark" aria-hidden="true">{{ row.month === month() ? '✓' : '›' }}</span>
+          <span class="budget-month__value">{{ row.budget ? money(row.budget.amount) : 'Nicht festgelegt' }}</span>
+          <app-icon class="budget-month__mark" [name]="row.month === month() ? 'check' : 'arrow'" aria-hidden="true" />
         </button>
       </li>
     }

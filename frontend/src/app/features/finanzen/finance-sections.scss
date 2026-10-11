@@ -192,38 +192,68 @@
   color: var(--text-muted);
   font-size: var(--fs-meta);
 }
-.budget-row__name {
+// Kategorie-Budget kompakt (jede Breite): Name + verfügbar, Balken, darunter ausgegeben · geplant · Budget und der
+// Status in Worten. Keine Tabellenspalten mehr — die passten in die halbe Kartenbreite nicht mehr.
+.budget-row {
+  align-items: flex-start;
+}
+.budget-row > .tile {
+  margin-top: 2px;
+}
+.budget-row__body {
   display: grid;
   flex: 1;
   gap: 6px;
   min-width: 0;
 }
-// Status in Worten unter dem Balken — nie nur über die Farbe.
-.budget-row__status {
-  font-size: var(--fs-caption);
-  font-weight: 600;
+.budget-row__head,
+.budget-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px var(--space-3);
 }
-.budget-row__status.tone--ok {
-  color: var(--text-muted);
-  font-weight: 500;
-}
-.budget-row__nums {
-  flex: 0 0 130px;
-  font-size: var(--fs-secondary);
-  font-variant-numeric: tabular-nums;
+.budget-row__head b {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .budget-row__left {
-  flex: 0 0 104px;
   color: var(--accent);
   font-size: var(--fs-secondary);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.budget-row__pct {
-  flex: 0 0 64px;
-  font-weight: 600;
-  text-align: right;
+.budget-row__nums > span {
+  white-space: nowrap; /* „12,99 € geplant“ nie auseinanderreißen */
+}
+.budget-row__meta {
+  align-items: flex-end; /* Prozent auf Höhe der letzten Textzeile; reicht der Platz nicht, rechts darunter */
+}
+.budget-row__nums {
+  flex: 1 1 0; /* nimmt den Platz, bricht in sich um — Mindestbreite = längster Betrag, nie Überlauf */
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+// Status in Worten — nie nur über die Farbe.
+.budget-row__status {
+  margin-left: auto; /* bricht die Zeile am Handy um, bleibt die Prozentzahl rechts */
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+.budget-row__status.tone--ok {
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
+}
+.budget-row > .chev {
+  align-self: center;
+}
+.tone--ok {
+  color: var(--text-muted);
+  font-weight: 500;
 }
 .tone--ok {
   color: var(--accent);
@@ -286,6 +316,120 @@
   font-size: var(--fs-meta);
   line-height: 1.45;
   font-variant-numeric: tabular-nums;
+}
+// Aufschlüsselung des verfügbaren Betrags: Budget → ausgegeben → geplant → Sparbeiträge → verfügbar.
+// Kompakte Zahlenliste statt weiterer Karten; „Geplant“ öffnet die geplanten Transaktionen (ein Klick).
+.breakdown {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.breakdown > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 28px;
+}
+.breakdown dt {
+  display: flex;
+  flex-wrap: wrap; /* schmale Karte (Tablet, zwei Karten nebeneinander): „4 Ausgaben“ darf umbrechen */
+  align-items: baseline;
+  min-width: 0;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+}
+.breakdown dt small {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+.breakdown dd {
+  margin: 0;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.breakdown__total {
+  margin-top: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+.breakdown__total dt,
+.breakdown__total dd {
+  color: var(--text-primary);
+  font-weight: var(--fw-semibold);
+}
+.breakdown__link {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  text-align: left;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-hover);
+  font: inherit;
+  font-weight: var(--fw-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.breakdown__link small {
+  color: var(--text-secondary);
+  font-weight: var(--fw-regular);
+  text-decoration: none;
+}
+// Klickfläche 44 px, optisch eine Textzeile.
+.breakdown__link::before {
+  content: '';
+  position: absolute;
+  inset: -8px -6px;
+}
+.breakdown__link--inline {
+  font-weight: var(--fw-semibold);
+}
+// Geplante Zeilen in der Transaktionsliste: Status als Text + Symbol, Betrag ruhiger als gebuchte Ausgaben.
+.planned-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--text-secondary);
+  font-weight: var(--fw-semibold);
+}
+.planned-tag app-icon {
+  width: 13px;
+  height: 13px;
+}
+.planned-amount {
+  color: var(--text-secondary);
+  font-weight: var(--fw-semibold);
+}
+.all-rows__total {
+  color: var(--text-secondary);
+  font-weight: var(--fw-regular);
+}
+.planned-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  line-height: 1.45;
+}
+.planned-note app-icon {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: var(--text-secondary);
 }
 // Monat ohne Budget: keine künstlichen 0-€-Werte, nur der Einstieg.
 .budget-empty {

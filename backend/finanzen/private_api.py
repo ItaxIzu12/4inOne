@@ -1,8 +1,8 @@
 """Personal finance V1. Household finance endpoints remain a separate explicit scope."""
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from django.db import IntegrityError, transaction
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from rest_framework import serializers, viewsets
@@ -208,7 +208,7 @@ class ImportRowSerializer(serializers.Serializer):
 
 class TransactionImportSerializer(serializers.Serializer):
     rows = serializers.ListField(child=serializers.DictField(), allow_empty=False, max_length=IMPORT_MAX_ROWS,
-                                 error_messages={'max_length': f'Höchstens {IMPORT_MAX_ROWS} Buchungen auf einmal.'})
+                                 error_messages={'max_length': f'Höchstens {IMPORT_MAX_ROWS} Transaktionen auf einmal.'})
     dry_run = serializers.BooleanField(default=False)
 
 
@@ -411,19 +411,116 @@ class SetupCategoriesView(PrivateMixin, APIView):
                     Category.objects.create(owner=request.user, name=name, color=color_for_name(name))
         return Response(PrivateCategorySerializer(Category.objects.filter(owner=request.user).order_by('name'), many=True).data)
 
+def recurring_key(note: str, category_id) -> str:
+    """Dieselbe Zuordnung wie die Liste „Wiederkehrende Ausgaben“ im Frontend (finance-tabs.ts recurringItems):
+    gleiche Notiz (ohne Groß-/Kleinschreibung) und gleiche Kategorie."""
+    return f'{(note or "").strip().lower()}|{category_id or ""}'
+
+
+def recurring_planned(user, start, end, month_rows) -> list[dict]:
+    """Geplante wiederkehrende Ausgaben: was als „Kommt jeden Monat wieder“ markiert ist und in diesem Monat noch
+    NICHT gebucht wurde, wird als geplant vom Restbudget abgezogen — ohne eine Buchung anzulegen (Regel ≠ Instanz).
+
+    - Nur für den laufenden und künftige Monate; Vergangenes bleibt, wie es war.
+    - Es zählt die jüngste Buchung vor diesem Monat je Posten. Ist sie nicht (mehr) als wiederkehrend markiert,
+      endet die Vormerkung.
+    - Wird der Posten in diesem Monat gebucht (gleiche Notiz und Kategorie), ersetzt die Buchung die Vormerkung —
+      nie doppelt gezählt."""
+    if start < timezone.localdate().replace(day=1):
+        return []
+    earlier = Transaction.objects.filter(owner=user, type='EXPENSE', currency='EUR', datum__lt=start)
+    marked_rows = list(earlier.filter(recurring=True).values_list('description', 'category_id'))
+    marked = {recurring_key(note, cat) for note, cat in marked_rows}
+    if not marked:
+        return []
+    # Nur Buchungen derselben Kategorien laden (inkl. ohne Kategorie), dann je Posten die jüngste.
+    categories = {cat for _, cat in marked_rows if cat is not None}
+    candidates = earlier.filter(Q(category_id__in=categories) | Q(category__isnull=True)).only(
+        'description', 'category_id', 'datum', 'amount', 'recurring'
+    )
+    latest: dict[str, Transaction] = {}
+    for row in candidates:
+        key = recurring_key(row.description, row.category_id)
+        if key in marked and (key not in latest or (row.datum, row.pk) > (latest[key].datum, latest[key].pk)):
+            latest[key] = row
+    booked = {recurring_key(note, cat) for note, cat in month_rows.filter(type='EXPENSE').values_list('description', 'category_id')}
+    planned = []
+    for key, row in latest.items():
+        if row.recurring and key not in booked:
+            planned.append({'kind': 'RECURRING', 'key': key, 'id': None, 'source_id': row.pk,
+                            'title': row.description.strip() or 'Wiederkehrend', 'category': row.category_id,
+                            'amount': row.amount, 'date': _same_day_in(start, row.datum)})
+    planned.sort(key=lambda item: (-item['amount'], item['title']))
+    return planned
+
+
+def _same_day_in(month_start, source):
+    """Erwartetes Datum einer wiederkehrenden Ausgabe: derselbe Tag wie zuletzt, am Monatsende gekappt (31. → 30.).
+    Reines Datum — keine Uhrzeit, also keine Zeitzonenverschiebung."""
+    _, end = month_bounds(month_start)
+    last_day = (end - timedelta(days=1)).day
+    return month_start.replace(day=min(source.day, last_day))
+
+
 def month_figures(user, start, end) -> dict:
     """Die Kennzahlen eines Monats der PRIVATEN Finanzen — eine Stelle für
     die Finanzübersicht und „Heute“ (connections/today.py), damit beide nie
-    auseinanderlaufen. Restbudget = Monatsbudget − Ausgaben − Sparreservierungen; Einnahmen bleiben separat."""
+    auseinanderlaufen. Restbudget = Monatsbudget − ausgegeben − geplant − Sparreservierungen; Einnahmen bleiben
+    separat. Geplant: siehe planned_expenses."""
     rows = Transaction.objects.filter(owner=user, datum__gte=start, datum__lt=end, currency='EUR')
     income = rows.filter(type='INCOME').aggregate(total=Sum('amount'))['total'] or ZERO
     expense = rows.filter(type='EXPENSE').aggregate(total=Sum('amount'))['total'] or ZERO
     budget = MonthlyBudget.for_month(user, start)
     planner = SavingsPlanner(user)
     saved, saved_planned = planner.for_month(start)
-    available = budget.amount - expense - saved if budget else None
+    planned_items = planned_expenses(user, start, end, rows)
+    planned = sum((item['amount'] for item in planned_items), ZERO)
+    # Geplant = Transaktionen mit Datum nach heute + wiederkehrende, im Monat noch nicht gebuchte Posten.
+    # Ausgegeben = bis heute gebuchte Ausgaben. Jede Ausgabe steht in genau EINEM der beiden Töpfe.
+    spent = expense - sum((i['amount'] for i in planned_items if i['kind'] == 'TRANSACTION'), ZERO)
+    available = budget.amount - spent - planned - saved if budget else None
     return {'rows': rows, 'income': income, 'expense': expense, 'budget': budget, 'planner': planner,
-            'saved': saved, 'saved_planned': saved_planned, 'available': available}
+            'saved': saved, 'saved_planned': saved_planned, 'available': available,
+            'spent': spent, 'planned': planned, 'planned_items': planned_items}
+
+
+def planned_expenses(user, start, end, rows) -> list[dict]:
+    """Alle geplanten Ausgaben eines Monats, nach Datum: echte Transaktionen mit Datum nach heute (sie werden an
+    ihrem Datum ohne Zutun zu „ausgegeben“) und wiederkehrende Posten (recurring_planned, nur berechnet).
+
+    „Geplant“ ist bewusst NICHT „vorgemerkt/pending“: Das bleibt für echte, noch nicht verbuchte Bankumsätze frei."""
+    today = timezone.localdate()
+    dated = [
+        {'kind': 'TRANSACTION', 'key': recurring_key(t.description, t.category_id), 'id': t.pk, 'source_id': None,
+         'title': t.description.strip(), 'category': t.category_id, 'amount': t.amount, 'date': t.datum}
+        for t in rows.filter(type='EXPENSE', datum__gt=today).only('description', 'category_id', 'amount', 'datum')
+    ]
+    items = dated + recurring_planned(user, start, end, rows)
+    items.sort(key=lambda i: (i['date'], i['title'].lower(), i['id'] or 0))
+    return items
+
+
+def budget_categories(user, figures) -> list[dict]:
+    """Kategorie-Budgets eines Monats, serverseitig: Limit, ausgegeben, geplant, verfügbar — eine Abfrage für die
+    Ausgaben, die geplanten Posten kommen aus month_figures (kein N+1)."""
+    categories = list(Category.objects.filter(owner=user, monthly_goal__gt=0).order_by('name'))
+    if not categories:
+        return []
+    today = timezone.localdate()
+    spent = dict(
+        figures['rows'].filter(type='EXPENSE', datum__lte=today).values('category_id')
+        .annotate(total=Sum('amount')).values_list('category_id', 'total')
+    )
+    planned: dict[int, Decimal] = {}
+    for item in figures['planned_items']:
+        planned[item['category']] = planned.get(item['category'], ZERO) + item['amount']
+    result = []
+    for category in categories:
+        s, p = spent.get(category.pk) or ZERO, planned.get(category.pk, ZERO)
+        result.append({'id': category.pk, 'name': category.name, 'color': category.color,
+                       'limit': money(category.monthly_goal), 'spent': money(s), 'planned': money(p),
+                       'available': money(category.monthly_goal - s - p)})
+    return result
 
 
 class PrivateSummaryView(PrivateMixin, APIView):
@@ -447,6 +544,12 @@ class PrivateSummaryView(PrivateMixin, APIView):
                          # total bleibt als API-Feld erhalten und bezeichnet ausschließlich das Ausgabenlimit.
                          'total':money(budget.amount) if budget else None,
                          'saved':money(saved),'saved_planned':money(saved_planned),
+                         # Aufschlüsselung: verfügbar = Monatsbudget − ausgegeben − geplant − gespart (ohne Budget: null).
+                         'spent':money(figures['spent']),'planned':money(figures['planned']),
+                         'planned_items':[{'kind':i['kind'],'key':i['key'],'id':i['id'],'source_id':i['source_id'],
+                                           'title':i['title'],'category':i['category'],'amount':money(i['amount']),
+                                           'date':i['date'].isoformat()} for i in figures['planned_items']],
+                         'budget_categories':budget_categories(request.user,figures),
                          # Erster Monat (ab hier, 12 Monate voraus), in dem die Sparraten das Budget sprengen — sonst null.
                          'plan_alert':plan_alert(request.user,start,planner),
                          'available':money(figures['available']) if budget else None,

@@ -22,8 +22,8 @@
   font-weight: 700;
   text-decoration: none;
 }
-.sidebar-nav__brand logo-kompass {
-  font-size: 30px;
+.sidebar-nav__brand app-brand {
+  font-size: 24px;
 }
 .sidebar-nav__household-label {
   margin: 46px 10px 20px;

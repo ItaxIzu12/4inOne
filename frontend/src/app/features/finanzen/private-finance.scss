@@ -342,7 +342,7 @@ h3 {
   min-width: 0;
 }
 .track {
-  display: block;
+  display: flex; /* ausgegeben + geplant nebeneinander */
   height: 8px;
   border-radius: 999px;
   background: var(--border-subtle);
@@ -362,6 +362,14 @@ h3 {
 }
 .track--muted > span {
   background: #8fd0a8;
+}
+.track > span {
+  flex: none;
+}
+// Geplanter Anteil: dieselbe Farbe, heller — erkennbar, aber nie stärker als echte Ausgaben.
+.track > span.track__planned {
+  border-radius: 0 999px 999px 0;
+  opacity: 0.4;
 }
 .tile {
   --cat: var(--accent);
@@ -402,6 +410,12 @@ h3 {
 // Budgets: Budget und Rest; die Rest-Karte bekommt mehr Platz für Balken und Rechnung.
 .kpis--budget {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+}
+// Mit Aufschlüsselung braucht die Rest-Karte Platz: auf Tablets (Seitenleiste + schmaler Inhalt) untereinander.
+@media (max-width: 1100px) {
+  .kpis.kpis--budget {
+    grid-template-columns: minmax(0, 1fr); /* stärker als die allgemeinen .kpis-Regeln weiter unten */
+  }
 }
 .kpi {
   display: flex;
@@ -1008,27 +1022,6 @@ input:focus-visible {
   }
 }
 
-// Kategorie-Budgets zweizeilig, sobald die Karte schmal wird (Handy und Rechner mit Seitenleiste bis 1400 px):
-// Name und Balken oben über die volle Breite, darunter Beträge, Rest und Prozent — nie übereinander.
-@media (max-width: 1400px) {
-  .table-head--budget {
-    display: none;
-  }
-  .budget-row {
-    flex-wrap: wrap;
-  }
-  .budget-row__name {
-    flex-basis: calc(100% - 120px);
-  }
-  .budget-row__nums {
-    flex: 1 1 auto;
-    padding-left: 54px;
-    font-size: var(--fs-meta);
-  }
-  .budget-row__left {
-    flex: 0 0 auto;
-  }
-}
 
 // ---------- Buchungsformular: Schnellerfassung ----------
 // Ausgabe/Einnahme als Umschalter (ein Tipp), großer Betrag, Kategorien als Chips.

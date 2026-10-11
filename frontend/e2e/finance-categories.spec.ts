@@ -33,7 +33,7 @@ for (const width of [390, 1440]) {
     await dialog.getByLabel('Limit Neue Kategorie in EUR').fill('60');
     await dialog.getByLabel('Name Freizeit').fill('Freizeit & Hobby');
     await dialog.getByRole('button', { name: 'Gesundheit löschen' }).click();
-    await expect(dialog.locator('.is-removed')).toContainText(/Buchungen? wander(t|n) zu „Sonstiges“/);
+    await expect(dialog.locator('.is-removed')).toContainText(/Transaktion(en)? wander(t|n) zu „Sonstiges“/);
     expect((await new AxeBuilder({ page }).include('[role="dialog"]').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
     await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);

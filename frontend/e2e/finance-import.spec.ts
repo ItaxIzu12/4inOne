@@ -35,7 +35,7 @@ for (const width of [390, 1440]) {
     ].join('\r\n');
     await page.locator('#import-file').setInputFiles({ name: 'umsaetze.csv', mimeType: 'text/csv', buffer: windows1252(csv) });
 
-    await expect(dialog.locator('.imp-summary')).toContainText('2 Buchungen neu');
+    await expect(dialog.locator('.imp-summary')).toContainText('2 Transaktionen neu');
     await expect(dialog.locator('.imp-summary')).toContainText('1 schon vorhanden');
     await expect(dialog.locator('.imp-summary')).toContainText('1 nicht lesbar');
     await expect(dialog.locator('.imp-rows')).toContainText('Bäckerei Müller · Brötchen');
@@ -46,13 +46,13 @@ for (const width of [390, 1440]) {
 
     await dialog.getByRole('button', { name: '2 importieren' }).click();
     await expect(dialog).toHaveCount(0);
-    await expect(page.getByText('2 Buchungen importiert.')).toBeVisible();
+    await expect(page.getByText('2 Transaktionen importiert.')).toBeVisible();
     await expect(page.locator('main')).toContainText('Bäckerei Müller · Brötchen');
 
     // Dieselbe Datei noch einmal: alles schon vorhanden, nichts doppelt.
     await page.getByRole('button', { name: 'Kontoauszug importieren' }).click();
     await page.locator('#import-file').setInputFiles({ name: 'umsaetze.csv', mimeType: 'text/csv', buffer: windows1252(csv) });
-    await expect(dialog.locator('.imp-summary')).toContainText('0 Buchungen neu');
+    await expect(dialog.locator('.imp-summary')).toContainText('0 Transaktionen neu');
     await expect(dialog.locator('.imp-summary')).toContainText('3 schon vorhanden');
   });
 }

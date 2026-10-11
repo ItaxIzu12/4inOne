@@ -36,9 +36,11 @@ async function renderAt(url: string, auth: FakeAuthService) {
 }
 
 describe('Header', () => {
-  it('always renders the "Kompass" brand', async () => {
+  it('always renders the 4inOne brand (not the old compass)', async () => {
     const fixture = await renderAt('/login', new FakeAuthService());
-    expect((fixture.nativeElement as HTMLElement).querySelector('.brand-name')?.textContent).toContain('Kompass');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.brand app-brand')?.textContent).toContain('4inOne');
+    expect(el.textContent).not.toContain('Kompass');
   });
 
   it('shows the module tabs only on the dashboard route', async () => {

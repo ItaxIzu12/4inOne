@@ -156,7 +156,7 @@ test('custom period: Bis before Von is refused, the future shows only booked ite
   // genau der laufende Monat: echtes Restbudget dieses Monats, und Hinweis auf die Zukunft (bis Monatsende)
   await pickDate(page, page.locator('#finance-to'), iso(last));
   await expect(error).toHaveCount(0);
-  if (iso(last) > iso(now)) await expect(view.locator('.note--info')).toContainText('nur Buchungen, die bereits erfasst sind');
+  if (iso(last) > iso(now)) await expect(view.locator('.note--info')).toContainText('nur Transaktionen, die bereits erfasst sind');
   await expect(view.locator('.month')).toContainText('Vom Monatsbudget übrig');
 
   // ein Zeitraum, der kein ganzer Monat ist: kein Restbudget

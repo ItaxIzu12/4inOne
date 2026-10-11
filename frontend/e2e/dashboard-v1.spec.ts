@@ -48,7 +48,7 @@ test('quick add: keyboard friendly list of existing forms, Escape closes and ret
   await toggle.focus();
   await page.keyboard.press('Enter');
   const list = page.getByRole('list', { name: 'Neu hinzufügen' });
-  await expect(list.getByRole('link')).toHaveText(['Buchung', 'Aufgabe', 'Termin', 'Notiz', 'Einkauf', 'Reise']);
+  await expect(list.getByRole('link')).toHaveText(['Transaktion', 'Aufgabe', 'Termin', 'Notiz', 'Einkauf', 'Reise']);
   await expect(list.getByRole('link').first()).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(list).toHaveCount(0);
@@ -60,7 +60,7 @@ test('quick add: keyboard friendly list of existing forms, Escape closes and ret
 });
 
 const targets: [string, RegExp, (page: Page) => Promise<void>][] = [
-  ['Buchung', /\/demo\/finanzen/, async (page) => await expect(page.getByRole('dialog').getByRole('heading', { name: 'Buchung erstellen' })).toBeVisible()],
+  ['Transaktion', /\/demo\/finanzen/, async (page) => await expect(page.getByRole('dialog').getByRole('heading', { name: 'Transaktion erstellen' })).toBeVisible()],
   ['Aufgabe', /\/demo\/organisation\?tab=tasks/, async (page) => await expect(page.getByRole('dialog').getByRole('heading', { name: 'Aufgabe hinzufügen' })).toBeVisible()],
   ['Termin', /\/demo\/organisation/, async (page) => await expect(page.getByRole('dialog').getByRole('heading', { name: 'Termin hinzufügen' })).toBeVisible()],
   ['Notiz', /\/demo\/organisation\?tab=notes/, async (page) => await expect(page.getByRole('dialog').getByRole('heading', { name: 'Neue Notiz' })).toBeVisible()],

@@ -2,15 +2,15 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { FinanzenStateService } from '../../features/finanzen/finanzen-state.service';
-import { LogoKompass } from '../icons/logo-kompass';
+import { Brand } from '../brand/brand';
 @Component({
   selector: 'app-context-bar',
-  imports: [RouterLink, LogoKompass],
+  imports: [RouterLink, Brand],
   template: ` <div class="context">
     <span class="household">{{ household() }}</span
     ><span class="members">{{ members() }}</span>
     <a class="brand" routerLink="/"
-      ><logo-kompass />Kompass</a
+      ><app-brand /></a
     >
     <a
       class="profile"
@@ -53,7 +53,7 @@ import { LogoKompass } from '../icons/logo-kompass';
         color: #29374E;
         text-decoration: none;
       }
-      .brand logo-kompass {
+      .brand app-brand {
         font-size: 30px;
       }
       .profile {

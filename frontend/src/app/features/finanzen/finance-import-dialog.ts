@@ -18,7 +18,7 @@ const PREVIEW_ROWS = 8;
       title="Kontoauszug importieren"
       intro="Exportiere die Umsätze im Online-Banking als CSV (z. B. Sparkasse, ING, DKB, Volksbank) und wähle die Datei hier aus."
       chooseLabel="CSV-Datei wählen"
-      fileHint="höchstens 1.000 Buchungen, bis 2 MB"
+      fileHint="höchstens 1.000 Transaktionen, bis 2 MB"
       accept=".csv,text/csv"
       [open]="open()"
       [fileName]="fileName()"
@@ -57,7 +57,7 @@ export class FinanceImportDialog {
     const unreadable = p.result.invalid + p.skipped;
     return {
       summary: [
-        `${p.result.new} ${p.result.new === 1 ? 'Buchung' : 'Buchungen'} neu`,
+        `${p.result.new} ${p.result.new === 1 ? 'Transaktion' : 'Transaktionen'} neu`,
         ...(p.result.duplicates ? [`${p.result.duplicates} schon vorhanden (werden übersprungen)`] : []),
         ...(unreadable ? [`${unreadable} nicht lesbar`] : []),
       ],
@@ -104,7 +104,7 @@ export class FinanceImportDialog {
       .arrayBuffer()
       .then((bytes) => {
         const parsed = parseCsv(decodeCsv(bytes));
-        if (!parsed.rows.length) throw new CsvFormatError('In der Datei wurde keine Buchung gefunden.');
+        if (!parsed.rows.length) throw new CsvFormatError('In der Datei wurde keine Transaktion gefunden.');
         this.api
           .importTransactions(parsed.rows, true)
           .pipe(takeUntilDestroyed(this.destroy))

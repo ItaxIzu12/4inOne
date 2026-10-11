@@ -9,6 +9,10 @@ import {
   deltaLabel,
   donut,
   expenseSplit,
+  budgetsFromSummary,
+  fixedKey,
+  plannedItems,
+  sameDayIn,
   goalNearlyDone,
   goalOnTrack,
   incomeSources,
@@ -121,5 +125,47 @@ describe('Kategorie-Budget: Status in Worten', () => {
     expect(categoryBudgetStatus({ spent: 90, limit: 100, pct: 90 })).toBe('Fast ausgeschöpft');
     expect(categoryBudgetStatus({ spent: 100, limit: 100, pct: 100 })).toBe('Ausgeschöpft');
     expect(categoryBudgetStatus({ spent: 120, limit: 100, pct: 120 })).toBe('Überschritten');
+  });
+});
+
+describe('plannedItems (Spiegel von backend planned_expenses)', () => {
+  const rent = (date: string, over: Partial<FinanceTransaction> = {}) => tx(900, date, { note: 'Miete', recurring: true, ...over });
+  const today = '2026-10-11';
+
+  it('plans a recurring expense in the current and later months with its expected date, never in the past', () => {
+    const rows = [rent('2026-09-03')];
+    expect(plannedItems(rows, '2026-10', today).map((p) => [p.kind, p.title, p.amount, p.date])).toEqual([['RECURRING', 'Miete', '900.00', '2026-10-03']]);
+    expect(plannedItems(rows, '2026-12', today)).toHaveLength(1);
+    expect(plannedItems(rows, '2026-09', today)).toEqual([]);
+  });
+
+  it('treats a future-dated transaction as planned and never counts it twice with its recurring rule', () => {
+    const rows = [tx(14.99, '2026-09-03', { note: 'Netflix', recurring: true }), tx(14.99, '2026-11-03', { note: 'Netflix', recurring: true })];
+    const nov = plannedItems(rows, '2026-11', today);
+    expect(nov.map((p) => [p.kind, p.date])).toEqual([['TRANSACTION', '2026-11-03']]);
+  });
+
+  it('booked this month replaces the plan; latest amount counts; unmarked ends it', () => {
+    expect(plannedItems([rent('2026-09-03'), tx(900, '2026-10-02', { note: ' miete ' })], '2026-10', today)).toEqual([]);
+    expect(plannedItems([rent('2026-07-01'), rent('2026-09-01', { amount: '950.00' })], '2026-10', today)[0].amount).toBe('950.00');
+    expect(plannedItems([rent('2026-08-01'), rent('2026-09-01', { recurring: false })], '2026-10', today)).toEqual([]);
+  });
+
+  it('ignores income, past-dated expenses and keys match the backend', () => {
+    const rows = [tx(3000, '2026-09-01', { type: 'INCOME', note: 'Gehalt', recurring: true }), tx(50, '2026-10-05', { note: 'Kino' })];
+    expect(plannedItems(rows, '2026-10', today)).toEqual([]);
+    expect(fixedKey(' Miete ', 1)).toBe('miete|1');
+    expect(sameDayIn('2026-11', '2026-10-31')).toBe('2026-11-30');
+  });
+});
+
+describe('budgetsFromSummary', () => {
+  it('uses the server numbers and counts spent + planned for progress and status', () => {
+    const [b] = budgetsFromSummary(
+      [{ id: 3, name: 'Freizeit', color: '#7a4fb5', limit: '300.00', spent: '120.00', planned: '45.00', available: '135.00' }],
+      cats,
+    );
+    expect([b.spent, b.planned, b.limit, b.left, b.pct, b.tone]).toEqual([120, 45, 300, 135, 55, 'ok']);
+    expect(categoryBudgetStatus({ spent: 250, planned: 60, limit: 300, pct: 103 })).toBe('Überschritten');
   });
 });
