@@ -1,81 +1,66 @@
-import secrets
+"""Mitglieder des aktiven Haushalts ansehen, verlassen und (als Admin) entfernen.
 
-from django.conf import settings
-from django.utils import timezone
-from rest_framework import serializers, status
+Einladen läuft über core/invitations.py (In-App-Einladung an einen eigenen Kontakt). Eine entfernte Person verliert
+die Mitgliedschaft; eine alte angenommene Einladung reaktiviert nichts — für eine Rückkehr braucht es eine neue.
+"""
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.models import HouseholdInvite, HouseholdMembership
-from core.throttling import LocalCacheThrottle
+from core.households import active_membership, own_membership
+from core.invitations import display_name
+from core.models import HouseholdMembership
+
+ROLE_LABEL = {'ADMIN': 'Verwaltet', 'MEMBER': 'Mitglied', 'CHILD_ACCOUNT': 'Kind-Konto'}
 
 
-class HouseholdInviteRateThrottle(LocalCacheThrottle):
-    """Max. RATE_LIMIT_HOUSEHOLD_INVITE Einladungen pro Stunde — PRO
-    HAUSHALT, nicht pro Nutzer/IP (ARCHITEKTUR.md §3.9: "Rate-Limit auf das
-    Versenden von Einladungen pro Haushalt/Zeitfenster"). Mehrere
-    ADMIN-Mitglieder desselben Haushalts teilen sich dadurch ein Limit —
-    sonst ließe es sich durch mehrere Admin-Konten im selben Haushalt
-    umgehen."""
-
-    scope = 'household_invite'
-
-    def get_cache_key(self, request, view):
-        household = request.user.households.first() if request.user.is_authenticated else None
-        ident = str(household.id) if household else self.get_ident(request)
-        return self.cache_format % {'scope': self.scope, 'ident': ident}
-
-
-class HouseholdInviteSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    role = serializers.ChoiceField(choices=HouseholdMembership.Role.choices, default=HouseholdMembership.Role.MEMBER)
-
-
-class HouseholdInviteView(APIView):
-    """Lädt eine weitere Person in den eigenen Haushalt ein (ARCHITEKTUR.md
-    §3.9). Token kryptografisch zufällig (secrets.token_urlsafe(32)),
-    Ablaufzeit über HOUSEHOLD_INVITE_EXPIRY_DAYS, Einmal-Nutzung über
-    accepted_at (Annahme-Flow selbst ist noch nicht Teil dieses Schritts).
-
-    Verrät bewusst NICHT, ob die eingeladene E-Mail bereits ein Konto hat
-    (Account-Enumeration, §3.9) — es wird nie gegen das User-Model geprüft,
-    nur ob die E-Mail bereits Mitglied DIESES Haushalts ist.
-    """
-
+class HouseholdMembersView(APIView):
     permission_classes = [IsAuthenticated]
-    throttle_classes = [HouseholdInviteRateThrottle]
 
-    def post(self, request):
-        household = request.user.households.first()
-        if household is None:
-            return Response({'detail': 'Dieses Konto ist noch keinem Haushalt zugeordnet.'}, status=400)
-
-        if not HouseholdMembership.objects.filter(
-            user=request.user, household=household, role=HouseholdMembership.Role.ADMIN,
-        ).exists():
-            return Response({'detail': 'Nur Admins dürfen Personen in diesen Haushalt einladen.'}, status=403)
-
-        serializer = HouseholdInviteSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data['email']
-        role = serializer.validated_data['role']
-
-        if household.members.filter(email__iexact=email).exists():
-            return Response({'email': ['Diese Person ist bereits Mitglied dieses Haushalts.']}, status=400)
-
-        invite = HouseholdInvite.objects.create(
-            household=household,
-            email=email,
-            role=role,
-            token=secrets.token_urlsafe(32),
-            expires_at=timezone.now() + timezone.timedelta(days=settings.HOUSEHOLD_INVITE_EXPIRY_DAYS),
-        )
-        # TODO (Backend): tatsächlichen Mail-Versand mit Einladungslink
-        # ergänzen, sobald ein E-Mail-Backend konfiguriert ist (siehe
-        # PasswordResetRequestView, dasselbe TODO dort) — Token-Logik selbst
-        # (erzeugen/Ablaufzeit/Einmal-Nutzung) funktioniert bereits vollständig.
+    def get(self, request):
+        mine = active_membership(request.user)
+        if mine is None:
+            return Response({'household': None, 'members': [], 'can_invite': False, 'can_leave': False})
+        own = own_membership(request.user)
+        members = HouseholdMembership.objects.filter(household=mine.household).select_related('user').order_by('id')
+        is_admin = mine.role == HouseholdMembership.Role.ADMIN
         return Response(
-            {'detail': f'Einladung an {email} gesendet.', 'email': email, 'expires_at': invite.expires_at},
-            status=status.HTTP_201_CREATED,
+            {
+                'household': {'id': mine.household_id, 'name': mine.household.name},
+                'members': [
+                    {
+                        'id': m.pk,
+                        'name': display_name(m.user),
+                        'role': m.role,
+                        'role_label': ROLE_LABEL.get(m.role, m.role),
+                        'is_self': m.user_id == request.user.pk,
+                        'can_remove': is_admin and m.user_id != request.user.pk and m.role != HouseholdMembership.Role.ADMIN,
+                    }
+                    for m in members
+                ],
+                'can_invite': is_admin,
+                # Den eigenen (bei der Registrierung angelegten) Haushalt verlässt man nicht — nur einen beigetretenen.
+                'can_leave': own is not None and own.pk != mine.pk,
+            }
         )
+
+
+class HouseholdMemberDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        mine = active_membership(request.user)
+        target = (
+            HouseholdMembership.objects.filter(pk=pk, household=mine.household).first() if mine is not None else None
+        )
+        if target is None:
+            return Response({'detail': 'Nicht gefunden.'}, status=404)
+        if target.user_id == request.user.pk:
+            own = own_membership(request.user)
+            if own is None or own.pk == target.pk:
+                return Response({'detail': 'Deinen eigenen Haushalt kannst du nicht verlassen.'}, status=400)
+        elif mine.role != HouseholdMembership.Role.ADMIN or target.role == HouseholdMembership.Role.ADMIN:
+            return Response({'detail': 'Dafür fehlt dir die Berechtigung.'}, status=403)
+        target.delete()
+        return Response(status=204)

@@ -19,10 +19,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.models import Contact, ContactInvite
+from core.models import Contact, ContactInvite, HouseholdMembership, Invitation
 from core.throttling import LocalCacheThrottle
 
 logger = logging.getLogger(__name__)
+DECLINED_VISIBLE = timezone.timedelta(days=14)
 
 
 class ContactInviteRateThrottle(LocalCacheThrottle):
@@ -79,19 +80,106 @@ def _send_invite_mail(invite: ContactInvite) -> bool:
         return False
 
 
+def _shared_by_person(user, people: list) -> tuple[dict, dict, dict]:
+    """Was teile ich heute schon mit wem, wozu kann ich die Person einladen, und wozu ist sie schon eingeladen?
+
+    Nur Bereiche, die der anfragende Nutzer selbst sehen darf: gemeinsame Haushalte (beide Mitglied) und Reisen,
+    an denen beide beteiligt sind. Einladen nur in den eigenen aktiven Haushalt (als Admin) und in kommende
+    Reisen, die der Nutzer verwalten darf — dieselben Regeln wie core/invitations.py."""
+    from core.households import active_membership
+    from reisen.models import Trip, TripParticipant
+
+    ids = {p.pk for p in people}
+    shared: dict[int, list[dict]] = {pk: [] for pk in ids}
+    addable: dict[int, list[dict]] = {pk: [] for pk in ids}
+    pending: dict[int, list[dict]] = {pk: [] for pk in ids}
+    if not ids:
+        return shared, addable, pending
+
+    open_invites = {
+        (i.invitee_id, i.scope_type, i.scope_id): i.pk
+        for i in Invitation.objects.filter(inviter=user, invitee_id__in=ids, status=Invitation.Status.PENDING)
+    }
+
+    my_households = HouseholdMembership.objects.filter(user=user).values_list('household_id', flat=True)
+    household_members: dict[int, set[int]] = {}
+    for m in HouseholdMembership.objects.filter(household_id__in=my_households).select_related('household'):
+        household_members.setdefault(m.household_id, set()).add(m.user_id)
+        if m.user_id in ids:
+            shared[m.user_id].append({'kind': 'HOUSEHOLD', 'id': m.household_id, 'title': m.household.name})
+    mine = active_membership(user)
+    if mine is not None and mine.role == HouseholdMembership.Role.ADMIN:
+        entry = {'kind': 'HOUSEHOLD', 'id': mine.household_id, 'title': mine.household.name}
+        for pk in ids - household_members.get(mine.household_id, set()):
+            key = (pk, 'HOUSEHOLD', mine.household_id)
+            (pending if key in open_invites else addable)[pk].append(
+                {**entry, 'invitation_id': open_invites[key]} if key in open_invites else entry
+            )
+
+    trips = (
+        Trip.objects.filter(Q(owner=user) | Q(participants__user=user))
+        .distinct()
+        .prefetch_related('participants')
+        .order_by('start_date', 'id')
+    )
+    today = timezone.localdate()
+    for trip in trips:
+        involved = {trip.owner_id} | {p.user_id for p in trip.participants.all()}
+        manages = trip.owner_id == user.pk or any(
+            p.user_id == user.pk and p.role == TripParticipant.Role.OWNER for p in trip.participants.all()
+        )
+        entry = {'kind': 'TRIP', 'id': trip.pk, 'title': trip.title}
+        for pk in ids:
+            key = (pk, 'TRIP', trip.pk)
+            if pk in involved:
+                shared[pk].append(entry)
+            elif key in open_invites:
+                pending[pk].append({**entry, 'invitation_id': open_invites[key]})
+            elif manages and trip.end_date >= today:
+                addable[pk].append(entry)
+    return shared, addable, pending
+
+
 class ContactListView(APIView):
-    """Meine Kontakte, meine gesendeten und meine erhaltenen offenen Einladungen."""
+    """Meine Kontakte, meine gesendeten und meine erhaltenen offenen Einladungen.
+
+    Je Kontakt zusätzlich `shared` (was ihr heute gemeinsam habt), `can_add_to` (wozu ich die Person einladen darf)
+    und `invited_to` (offene Einladungen von mir an sie). Daraus entsteht keine Freigabe — nur Bestehendes wird
+    sichtbar; eingeladen wird über /invitations/."""
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        contacts = Contact.objects.filter(owner=request.user).select_related('other')
+        contacts = list(Contact.objects.filter(owner=request.user).select_related('other'))
+        shared, addable, pending = _shared_by_person(request.user, [c.other for c in contacts])
         sent = _open_invites().filter(inviter=request.user).order_by('-created_at')
         return Response(
             {
-                'contacts': [_contact_payload(c) for c in contacts],
+                'contacts': [
+                    {
+                        **_contact_payload(c),
+                        'shared': shared[c.other_id],
+                        'can_add_to': addable[c.other_id],
+                        'invited_to': pending[c.other_id],
+                    }
+                    for c in contacts
+                ],
                 'sent': [
-                    {'id': i.pk, 'email': i.email, 'relation': i.relation, 'expires_at': i.expires_at} for i in sent
+                    {
+                        'id': i.pk,
+                        'email': i.email,
+                        'relation': i.relation,
+                        'expires_at': i.expires_at,
+                        'created_at': i.created_at,
+                    }
+                    for i in sent
+                ],
+                # Abgelehnt wird nicht gemeldet; die einladende Person sieht nur still „Nicht angenommen“ (14 Tage).
+                'declined': [
+                    {'id': i.pk, 'email': i.email, 'relation': i.relation, 'declined_at': i.declined_at}
+                    for i in ContactInvite.objects.filter(
+                        inviter=request.user, declined_at__gte=timezone.now() - DECLINED_VISIBLE
+                    ).order_by('-declined_at')
                 ],
                 'received': [
                     {
@@ -99,8 +187,9 @@ class ContactListView(APIView):
                         'from_name': _display_name(i.inviter),
                         'relation': i.relation,
                         'expires_at': i.expires_at,
+                        'created_at': i.created_at,
                     }
-                    for i in _received_for(request.user)
+                    for i in _received_for(request.user).order_by('-created_at')
                 ],
             }
         )
@@ -219,6 +308,9 @@ class InviteAcceptView(APIView):
             )
             Contact.objects.get_or_create(owner=invite.inviter, other=request.user, defaults={'relation': invite.relation})
             contact, _ = Contact.objects.get_or_create(owner=request.user, other=invite.inviter, defaults={'relation': invite.relation})
+            from core import notifications
+
+            notifications.contact_invite_accepted(invite)
         return Response(_contact_payload(contact), status=status.HTTP_201_CREATED)
 
 
@@ -231,4 +323,7 @@ class InviteDeclineView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         invite.declined_at = timezone.now()
         invite.save(update_fields=['declined_at'])
+        from core import notifications
+
+        notifications.contact_invite_answered(invite)  # keine Meldung an die einladende Person
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -84,8 +84,8 @@ export class Onboarding {
     if (s.member_count < 2) {
       list.push({
         key: 'invite',
-        title: 'Haushalt einladen',
-        subtitle: 'Teile Kompass mit deinem Haushalt — läuft automatisch mit.',
+        title: 'Person einladen',
+        subtitle: 'Gemeinsam Aufgaben, Einkauf, Geräte und Verträge nutzen – deine Finanzen bleiben privat.',
         actionLabel: 'Einladen',
         action: () => this.inviteModal.open(),
       });

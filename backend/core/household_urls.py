@@ -1,7 +1,8 @@
 from django.urls import path
 
-from core.household_views import HouseholdInviteView
+from core.household_views import HouseholdMemberDetailView, HouseholdMembersView
 
 urlpatterns = [
-    path('invite/', HouseholdInviteView.as_view(), name='household-invite'),
+    path('members/', HouseholdMembersView.as_view(), name='household-members'),
+    path('members/<int:pk>/', HouseholdMemberDetailView.as_view(), name='household-member'),
 ]

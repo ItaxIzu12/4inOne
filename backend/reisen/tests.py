@@ -9,6 +9,31 @@ from reisen.models import PackingItem, Trip, TripBudgetCategory, TripEvent, Trip
 pytestmark = pytest.mark.django_db
 BASE = '/api/v1/reisen/'
 
+def share(client, trip_id, contact_id, role):
+    """Teilnehmer entstehen nur über eine angenommene Einladung (core/invitations.py): einladen, als eingeladene
+    Person annehmen, und — weil Einladungen nie die Rolle OWNER vergeben — OWNER danach per PATCH befördern."""
+    from types import SimpleNamespace
+
+    inviter = client.handler._force_user
+    contact = Contact.objects.filter(pk=contact_id, owner=inviter).select_related('other').first()
+    invite_role = 'EDITOR' if role == 'OWNER' else role
+    response = client.post('/api/v1/invitations/', {
+        'contact_id': contact_id, 'scope_type': 'TRIP', 'scope_id': trip_id, 'role': invite_role,
+    }, format='json')
+    if response.status_code not in (200, 201):
+        return response
+    invitee = APIClient()
+    invitee.force_authenticate(contact.other)
+    assert invitee.post(f'/api/v1/invitations/{response.data["id"]}/accept/').status_code == 200
+    participant = TripParticipant.objects.get(trip_id=trip_id, user=contact.other)
+    if role == 'OWNER':
+        assert client.patch(f'/api/v1/reisen/participants/{participant.pk}/', {'role': 'OWNER'}, format='json').status_code == 200
+        participant.refresh_from_db()
+    return SimpleNamespace(status_code=201, data={
+        'id': participant.pk, 'trip': trip_id, 'role': participant.role, 'display_name': contact.other.first_name or contact.other.username,
+    })
+
+
 
 @pytest.fixture
 def users():
@@ -281,7 +306,7 @@ def test_sharing_a_trip_grants_no_access_to_the_owners_finanzen_or_haushalt_data
     trip = make_trip(users[0], title='Gemeinsame Reise')
     Contact.objects.create(owner=users[0], other=users[1])
     contact = Contact.objects.get(owner=users[0], other=users[1])
-    added = client.post(BASE + 'participants/', {'trip': trip.pk, 'contact_id': contact.pk, 'role': 'EDITOR'}, format='json')
+    added = share(client, trip.pk, contact.pk, 'EDITOR')
     assert added.status_code == 201
 
     client.force_authenticate(users[1])
@@ -376,13 +401,13 @@ def test_sharing_a_trip_only_works_via_an_existing_contact(client, users):
     trip = make_trip(users[0], title='Paarreise')
     # Ohne bestehenden Kontakt lässt sich niemand hinzufügen — kein Endpunkt, der beliebige Nutzer:innen anhand
     # roher IDs/E-Mails findet (User-Enumeration).
-    blind = client.post(BASE + 'participants/', {'trip': trip.pk, 'user': users[1].pk, 'role': 'EDITOR'}, format='json')
+    blind = client.post('/api/v1/invitations/', {'scope_type': 'TRIP', 'scope_id': trip.pk, 'user': users[1].pk, 'role': 'EDITOR'}, format='json')
     assert blind.status_code in (400, 404)
     assert not TripParticipant.objects.filter(trip=trip, user=users[1]).exists()
 
     Contact.objects.create(owner=users[0], other=users[1], relation=Contact.Relation.FRIEND)
     contact = Contact.objects.get(owner=users[0], other=users[1])
-    shared = client.post(BASE + 'participants/', {'trip': trip.pk, 'contact_id': contact.pk, 'role': 'EDITOR'}, format='json')
+    shared = share(client, trip.pk, contact.pk, 'EDITOR')
     assert shared.status_code == 201
     assert shared.data['role'] == 'EDITOR'
     assert 'display_name' in shared.data and 'email' not in shared.data  # kein voller Profil-/Kontaktdatenleak
@@ -392,9 +417,9 @@ def test_adding_the_same_contact_twice_is_a_clean_400_not_a_server_error(client,
     trip = make_trip(users[0], title='Doppelt')
     Contact.objects.create(owner=users[0], other=users[1])
     contact = Contact.objects.get(owner=users[0], other=users[1])
-    first = client.post(BASE + 'participants/', {'trip': trip.pk, 'contact_id': contact.pk, 'role': 'VIEWER'}, format='json')
+    first = share(client, trip.pk, contact.pk, 'VIEWER')
     assert first.status_code == 201
-    second = client.post(BASE + 'participants/', {'trip': trip.pk, 'contact_id': contact.pk, 'role': 'EDITOR'}, format='json')
+    second = share(client, trip.pk, contact.pk, 'EDITOR')
     assert second.status_code == 400
 
 
@@ -414,7 +439,7 @@ def test_viewer_participant_can_read_a_shared_trip_but_not_write_to_it(client, u
     trip = make_trip(users[0], title='Familienreise')
     Contact.objects.create(owner=users[0], other=users[1])
     contact = Contact.objects.get(owner=users[0], other=users[1])
-    client.post(BASE + 'participants/', {'trip': trip.pk, 'contact_id': contact.pk, 'role': 'VIEWER'}, format='json')
+    share(client, trip.pk, contact.pk, 'VIEWER')
 
     client.force_authenticate(users[1])
     assert client.get(f'{BASE}trips/{trip.pk}/').status_code == 200
@@ -434,7 +459,7 @@ def test_editor_participant_can_edit_content_but_not_manage_the_trip_or_its_part
     trip = make_trip(users[0], title='Freundesreise')
     Contact.objects.create(owner=users[0], other=users[1])
     contact = Contact.objects.get(owner=users[0], other=users[1])
-    client.post(BASE + 'participants/', {'trip': trip.pk, 'contact_id': contact.pk, 'role': 'EDITOR'}, format='json')
+    share(client, trip.pk, contact.pk, 'EDITOR')
 
     client.force_authenticate(users[1])
     item = client.post(BASE + 'packing-items/', {'trip': trip.pk, 'title': 'Zahnbürste'}, format='json')
@@ -444,9 +469,9 @@ def test_editor_participant_can_edit_content_but_not_manage_the_trip_or_its_part
     # Die Reise selbst bearbeiten oder Teilnehmer verwalten darf ein EDITOR nicht.
     assert client.patch(f'{BASE}trips/{trip.pk}/', {'title': 'x'}, format='json').status_code == 403
     Contact.objects.create(owner=users[1], other=users[0])  # beliebiger weiterer Kontakt, nur um die ID zu haben
-    assert client.post(
-        BASE + 'participants/', {'trip': trip.pk, 'contact_id': Contact.objects.get(owner=users[1]).pk, 'role': 'VIEWER'}, format='json'
-    ).status_code in (400, 403)
+    assert client.post('/api/v1/invitations/', {
+        'contact_id': Contact.objects.get(owner=users[1]).pk, 'scope_type': 'TRIP', 'scope_id': trip.pk, 'role': 'VIEWER',
+    }, format='json').status_code in (400, 403, 404)
 
 
 def test_owner_role_participant_can_manage_the_trip_and_its_participants_like_the_creator(client, users):
@@ -454,14 +479,14 @@ def test_owner_role_participant_can_manage_the_trip_and_its_participants_like_th
     trip = make_trip(users[0], title='Gruppenreise')
     Contact.objects.create(owner=users[0], other=users[1])
     contact_bob = Contact.objects.get(owner=users[0], other=users[1])
-    client.post(BASE + 'participants/', {'trip': trip.pk, 'contact_id': contact_bob.pk, 'role': 'OWNER'}, format='json')
+    share(client, trip.pk, contact_bob.pk, 'OWNER')
 
     client.force_authenticate(users[1])
     assert client.patch(f'{BASE}trips/{trip.pk}/', {'title': 'Umbenannt'}, format='json').status_code == 200
 
     Contact.objects.create(owner=users[1], other=users_extra)
     contact_carla = Contact.objects.get(owner=users[1], other=users_extra)
-    added = client.post(BASE + 'participants/', {'trip': trip.pk, 'contact_id': contact_carla.pk, 'role': 'VIEWER'}, format='json')
+    added = share(client, trip.pk, contact_carla.pk, 'VIEWER')
     assert added.status_code == 201
 
 
@@ -469,7 +494,7 @@ def test_owner_role_participant_can_demote_themselves_and_then_loses_manage_righ
     trip = make_trip(users[0], title='Gemeinsam verwaltet')
     Contact.objects.create(owner=users[0], other=users[1])
     contact_bob = Contact.objects.get(owner=users[0], other=users[1])
-    bob_participant = client.post(BASE + 'participants/', {'trip': trip.pk, 'contact_id': contact_bob.pk, 'role': 'OWNER'}, format='json')
+    bob_participant = share(client, trip.pk, contact_bob.pk, 'OWNER')
 
     # Ein OWNER-Teilnehmer (nicht der Ersteller) darf sich selbst herabstufen …
     client.force_authenticate(users[1])
@@ -512,7 +537,7 @@ def test_removing_participants_self_leave_vs_owner_removes_someone_else(client, 
     trip = make_trip(users[0], title='Reise zu dritt')
     Contact.objects.create(owner=users[0], other=users[1])
     contact = Contact.objects.get(owner=users[0], other=users[1])
-    created = client.post(BASE + 'participants/', {'trip': trip.pk, 'contact_id': contact.pk, 'role': 'EDITOR'}, format='json')
+    created = share(client, trip.pk, contact.pk, 'EDITOR')
     participant_id = created.data['id']
 
     # Ein EDITOR darf sich selbst entfernen ("die Reise verlassen") …
@@ -523,11 +548,11 @@ def test_removing_participants_self_leave_vs_owner_removes_someone_else(client, 
     # … aber nicht jemand anderen (hier: sich selbst nochmal hinzufügen lassen, dann testen, dass ein zweiter
     # EDITOR niemand anderen entfernen darf).
     client.force_authenticate(users[0])
-    recreated = client.post(BASE + 'participants/', {'trip': trip.pk, 'contact_id': contact.pk, 'role': 'EDITOR'}, format='json')
+    recreated = share(client, trip.pk, contact.pk, 'EDITOR')
     other_user = get_user_model().objects.create_user(username='dana', password='test-secret-234')
     Contact.objects.create(owner=users[0], other=other_user)
     other_contact = Contact.objects.get(owner=users[0], other=other_user)
-    other_participant = client.post(BASE + 'participants/', {'trip': trip.pk, 'contact_id': other_contact.pk, 'role': 'VIEWER'}, format='json')
+    other_participant = share(client, trip.pk, other_contact.pk, 'VIEWER')
 
     client.force_authenticate(users[1])
     assert client.delete(f"{BASE}participants/{other_participant.data['id']}/").status_code == 403
@@ -541,7 +566,7 @@ def test_overlap_detection_considers_actual_participants_not_only_owner_or_house
     shared_trip = make_trip(users[0], title='Konferenz', start_date='2026-11-01', end_date='2026-11-10')
     Contact.objects.create(owner=users[0], other=users[1])
     contact = Contact.objects.get(owner=users[0], other=users[1])
-    client.post(BASE + 'participants/', {'trip': shared_trip.pk, 'contact_id': contact.pk, 'role': 'VIEWER'}, format='json')
+    share(client, shared_trip.pk, contact.pk, 'VIEWER')
 
     # users[1] ist nicht Besitzer dieser Reise, aber Teilnehmer — eine Überschneidungsprüfung für eine NEUE,
     # eigene Reise von users[1] muss die geteilte Reise trotzdem berücksichtigen.
@@ -555,7 +580,7 @@ def test_sharing_one_trip_does_not_leak_access_to_the_owners_other_trips(client,
     private_trip = make_trip(users[0], title='Private Reise')
     Contact.objects.create(owner=users[0], other=users[1])
     contact = Contact.objects.get(owner=users[0], other=users[1])
-    client.post(BASE + 'participants/', {'trip': shared_trip.pk, 'contact_id': contact.pk, 'role': 'EDITOR'}, format='json')
+    share(client, shared_trip.pk, contact.pk, 'EDITOR')
 
     client.force_authenticate(users[1])
     assert [t['id'] for t in client.get(BASE + 'trips/').data] == [shared_trip.pk]

@@ -129,8 +129,7 @@ Hauptaktion: auf Meine Reisen „Reise erstellen“ (am Handy unten). In einer R
 
 ## Validierung
 
-- Pflicht: Name, Ziel, erster und letzter Tag; `end_date >= start_date` (Serializer + DB-Constraint). Vergangene
-  Reisen sind erlaubt (der Kalender schränkt den Beginn nicht mehr auf heute ein).
+- Pflicht: Name, Ziel, erster und letzter Tag; `end_date >= start_date` (Serializer + DB-Constraint). Neue Reisen beginnen frühestens heute (Kalender und Backend); der letzte Tag liegt am oder nach dem ersten Tag. Bestehende vergangene Reisen bleiben bearbeitbar.
 - Ziel: beim Anlegen Pflicht; ältere Reisen ohne Ziel bleiben bearbeitbar, nur ausdrückliches Leeren wird abgelehnt.
 - Überschneidung: Hinweis „Diese Reise überschneidet sich mit „Japan“ vom 10.–15. Nov. 2026.“ mit „Daten prüfen“ /
   „Trotzdem speichern“. Abgesagte Reisen lösen keinen Hinweis aus.
@@ -184,3 +183,14 @@ Hauptaktion auf Meine Reisen: „+ Reise“. Planung → „Vorschläge für Auf
 
 Nach diesem Stand nur noch Bugfixes, Sicherheits-, Barrierefreiheits-, Performance- und UX-Korrekturen aus echten
 Tests. Keine neuen Hauptreiter, keine externen APIs, bevor alle vier Bereiche getestet sind. Danach: Connection Engine V1.
+
+### Datumsauswahl beim Anlegen (11.10.2026)
+Der vorhandene Kalender öffnet sich beim Aktivieren des Datumsfeldes. Beim Anlegen sind Tage vor heute gesperrt; beim letzten Tag sind Tage vor dem gewählten ersten Tag gesperrt (ohne Beginn frühestens heute). Eintägige Reisen sind erlaubt. Ein nachträglich ungültiger Zeitraum wird beim Speichern beanstandet, nicht still geändert. Das Backend prüft dieselben Regeln; bestehende vergangene Reisen bleiben bearbeitbar.
+
+## Teilnehmer per Einladung (Invitation System V1, 11.10.2026)
+
+Teilnehmer werden nicht mehr direkt hinzugefügt. Im Teilnehmer-Dialog heißt die Aktion „Person einladen“ (Person aus
+den eigenen Kontakten, Rolle Betrachter oder Bearbeiter — Besitzer:in nie per Einladung). Die Person wird erst
+Teilnehmer, wenn sie annimmt; offene Einladungen stehen im Dialog mit „Zurückziehen“. `POST /reisen/participants/`
+antwortet 405; Rollen ändern und Entfernen bleiben wie bisher.
+

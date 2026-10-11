@@ -1,8 +1,10 @@
+import logging
 import secrets
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.core.mail import send_mail
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -30,6 +32,7 @@ from .models import UserPreference, home_currency_for
 
 REFRESH_COOKIE_NAME = 'refresh_token'
 PASSWORD_RESET_TOKEN_LIFETIME = timezone.timedelta(minutes=30)
+logger = logging.getLogger(__name__)
 
 # ARCHITEKTUR.md §3.1: JWTs NICHT in localStorage/sessionStorage. Das
 # Refresh-Token wird ausschließlich als httpOnly/Secure/SameSite=Strict-
@@ -86,7 +89,15 @@ def _session_id_from_cookie(request) -> str | None:
 def _user_payload(user) -> dict:
     """Für die Begrüßung/Initialen im Frontend (Header, Dashboard) — bewusst
     nur Name/E-Mail und die Heimatwährung (Umrechnungen in Reisen), keine weiteren Felder (Datenminimierung)."""
-    return {'name': user.first_name, 'email': user.email, 'home_currency': home_currency_for(user)}
+    from core.email_verification import is_verified
+
+    return {
+        'name': user.first_name,
+        'email': user.email,
+        'home_currency': home_currency_for(user),
+        # Ob Kontakt-Einladungen schon in der App erscheinen dürfen (core/email_verification.py).
+        'email_verified': is_verified(user),
+    }
 
 
 class RegisterRateThrottle(LocalCacheThrottle):
@@ -186,8 +197,8 @@ class RegisterView(APIView):
             )
             # Jede Registrierung startet mit einem eigenen Haushalt, dessen
             # ADMIN der registrierende Nutzer ist — spätere Einladungen
-            # weiterer Mitglieder laufen über HouseholdInvite (siehe
-            # core/models.py), nicht über diesen Endpunkt.
+            # weiterer Mitglieder laufen über In-App-Einladungen (siehe
+            # core/invitations.py), nicht über diesen Endpunkt.
             #
             # household_name ist optional (Frontend-Feld "Wie soll dein
             # Haushalt heißen?", siehe features/login/login.html) — bei
@@ -200,6 +211,9 @@ class RegisterView(APIView):
                 user=user, household=household, role=HouseholdMembership.Role.ADMIN
             )
 
+        from core.email_verification import send_verification_mail
+
+        send_verification_mail(user)
         refresh = RefreshToken.for_user(user)
         _start_session(request, user, refresh)
         response = Response(
@@ -359,6 +373,24 @@ class LogoutView(APIView):
         return response
 
 
+def _send_password_reset_mail(user, token: str) -> None:
+    """Schickt den Reset-Link. Fehler beim Versand ändern die Antwort nicht (sonst Account-Enumeration)."""
+    link = f'{settings.FRONTEND_URL}/passwort-zuruecksetzen?token={token}'
+    minutes = int(PASSWORD_RESET_TOKEN_LIFETIME.total_seconds() // 60)
+    body = (
+        'Hallo,\n\n'
+        'für dein 4inOne-Konto wurde ein neues Passwort angefordert.\n\n'
+        f'Neues Passwort festlegen: {link}\n\n'
+        f'Der Link gilt {minutes} Minuten und funktioniert nur einmal. '
+        'Danach wirst du auf allen Geräten abgemeldet.\n\n'
+        'Warst du das nicht, ignoriere diese E-Mail einfach. Dein Passwort bleibt unverändert.\n'
+    )
+    try:
+        send_mail('Dein Link zum Zurücksetzen des Passworts', body, settings.DEFAULT_FROM_EMAIL, [user.email])
+    except Exception:  # E-Mail-Server nicht erreichbar o. Ä. — nicht nach außen sichtbar
+        logger.exception('Passwort-Reset-E-Mail konnte nicht gesendet werden')
+
+
 class PasswordResetRequestView(APIView):
     """Passwort-Reset anstoßen (ARCHITEKTUR.md §3.6 "Account-Recovery").
 
@@ -382,17 +414,12 @@ class PasswordResetRequestView(APIView):
 
         user = get_user_model().objects.filter(email__iexact=email).first()
         if user is not None:
-            PasswordResetToken.objects.create(
+            reset_token = PasswordResetToken.objects.create(
                 user=user,
                 token=secrets.token_urlsafe(32),
                 expires_at=timezone.now() + PASSWORD_RESET_TOKEN_LIFETIME,
             )
-            # TODO (Backend, siehe ARCHITEKTUR.md §3.6): tatsächlichen
-            # Mail-Versand mit dem Reset-Link anschließen, sobald ein
-            # E-Mail-Backend konfiguriert ist (aktuell settings.MAILERS
-            # zeigt auf die Konsole). Bis dahin nicht blockierend, da die
-            # Token-Logik selbst (erzeugen/prüfen/verbrauchen) bereits
-            # vollständig funktioniert.
+            _send_password_reset_mail(user, reset_token.token)
 
         return Response(
             {'detail': 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde eine Nachricht versendet.'}

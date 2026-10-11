@@ -8,7 +8,13 @@ Plan für 5–15 reale Testpersonen · 11. Oktober 2026
 
 Wir prüfen, ob Menschen 4inOne verstehen, einen persönlichen Nutzen finden, passende Dinge zusammenbringen und Vorschläge richtig einordnen. Entscheidend sind beobachtetes Verhalten und konkrete Schwierigkeiten, nicht Zustimmung zum Konzept.
 
-**Dieser Plan ist keine Beta-Freigabe.** Der [Readiness Audit](PRE_BETA_READINESS_AUDIT.md) steht auf NO. Vor externen echten Konten müssen Passwort-Recovery, die produktive API-Konfiguration und die Anbieter-/Datenschutzinformationen fertig sein. Die offenen Paket-, Deployment- und Accessibility-Prüfungen ebenfalls abschließen. Danach P0 = 0 und P1 = 0 erneut bestätigen.
+**Dieser Plan ist keine Beta-Freigabe.** Der [Readiness Audit](PRE_BETA_READINESS_AUDIT.md) steht weiter auf NO. Stand 11.10.2026 (Nachtrag im Audit): Passwort-Recovery (P1-01) und die konfigurierbare API-Adresse (P1-02) sind behoben. Offen vor der ersten Einladung:
+
+- [ ] Impressum und Datenschutzerklärung mit echten Angaben (P1-03).
+- [ ] Deployment-Topologie entschieden (ARCHITEKTUR.md §3.10) und auf dem echten Server über HTTPS geprüft: Registrierung, Login, Reload, Passwort zurücksetzen mit echtem Mailversand (`EMAIL_HOST`, `FRONTEND_URL`), Body-Limit am Proxy.
+- [ ] Betreute Kontaktadresse für Feedback und Sicherheitsmeldungen festgelegt (siehe Feedback-Weg).
+- [ ] Reisen-Testsuite grün: Die neue Regel „erster Reisetag nicht vor heute“ widerspricht noch `e2e/reisen.spec.ts:82` und `reisen/tests.py::test_trip_crud_and_owner_spoofing`.
+- [ ] Danach P0 = 0 und P1 = 0 erneut bestätigen.
 
 ### Teilnehmer und Ablauf
 
@@ -55,9 +61,9 @@ Diese Aufgaben können mit frei erfundenen Angaben bearbeitet werden. Es gibt ke
 9. **Wiederfinden:** Wechsle zu einem anderen Bereich und finde einen zuvor erstellten Eintrag wieder. Lade die Seite neu und prüfe, ob er noch da ist.
 10. **Konto und Kontrolle:** Finde Profil oder Einstellungen. Prüfe eine Angabe, ändere bei Bedarf einen erfundenen Anzeigenamen und melde dich anschließend ab und wieder an.
 
-**Nur für die Moderation:** Keine Einträge passend machen, bevor die Person frei gearbeitet hat. Falls für Aufgabe 7 kein unterstütztes Paar vorhanden ist, einen passenden Alltagskontext als Zusatzaufgabe anbieten und die Aufgabe als angeleitet markieren. Die aktuelle Kombination Gerät + Sparziel vor der Runde auf dem Beta-Stand überprüfen.
+**Nur für die Moderation:** Keine Einträge passend machen, bevor die Person frei gearbeitet hat. Falls für Aufgabe 7 kein unterstütztes Paar vorhanden ist, einen passenden Alltagskontext als Zusatzaufgabe anbieten und die Aufgabe als angeleitet markieren. Gerät + Sparziel ist ein unterstütztes Paar (geprüft 11.10.2026). Achtung: Nennt das Sparziel den Gerätenamen (z. B. „Neue Waschmaschine“), bietet 4inOne dieses Paar bereits als Vorschlag an. Dann protokollieren, ob die Person den Zusammenhang über den Vorschlag oder selbst hergestellt hat; beides ist gültig, aber getrennt zu zählen.
 
-Vorschläge sind bedingungsabhängig. Falls keiner erscheint, Aufgabe 8 als **nicht testbar** protokollieren, nicht als Verständnisfehler. Für eine gesonderte Vorschlagsprüfung kann die Person ausdrücklich eine zusätzliche erfundene Berlin-Reise etwa 30 Tage in der Zukunft und eine Organisationsaufgabe „Hotel Berlin bestätigen“ sieben Tage davor anlegen. Dieser Kontext entspricht einer vorhandenen getesteten Regel. Er ist als vorbereitete Zusatzaufgabe zu kennzeichnen; keine heimlich eingespeisten Daten. Für eine unabhängige Entscheidung zum Vorschlag ein noch nicht manuell verknüpftes Paar verwenden.
+Vorschläge sind bedingungsabhängig. Falls keiner erscheint, Aufgabe 8 als **nicht testbar** protokollieren, nicht als Verständnisfehler. Für eine gesonderte Vorschlagsprüfung kann die Person ausdrücklich eine zusätzliche erfundene Berlin-Reise etwa 30 Tage in der Zukunft und eine Organisationsaufgabe „Hotel Berlin bestätigen“ sieben Tage davor anlegen. Dieser Kontext entspricht einer vorhandenen getesteten Regel (Ortsname im Aufgabentitel, fällig bis 30 Tage vor Reisebeginn; geprüft 11.10.2026). Er ist als vorbereitete Zusatzaufgabe zu kennzeichnen; keine heimlich eingespeisten Daten. Für eine unabhängige Entscheidung zum Vorschlag ein noch nicht manuell verknüpftes Paar verwenden.
 
 ## Interview Questions
 

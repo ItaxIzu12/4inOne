@@ -35,7 +35,8 @@ describe('Profil', () => {
     expect(dialog).toBeTruthy();
     expect(dialog!.textContent).toContain('endgültig gelöscht');
     expect(dialog!.textContent).toContain('nicht rückgängig machen');
-    TestBed.inject(HttpTestingController).expectNone(() => true);
+    // Die Glocke der Kopfzeile lädt Einladungen; gemeint ist hier: kein Aufruf zum Löschen o. Ä.
+    TestBed.inject(HttpTestingController).expectNone((r) => !/\/(notifications|invitations)\//.test(r.url));
   });
 
   it('"Abbrechen" closes the modal without calling the backend', () => {
@@ -49,7 +50,8 @@ describe('Profil', () => {
     fixture.detectChanges();
     el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('[role="dialog"]')).toBeNull();
-    TestBed.inject(HttpTestingController).expectNone(() => true);
+    // Die Glocke der Kopfzeile lädt Einladungen; gemeint ist hier: kein Aufruf zum Löschen o. Ä.
+    TestBed.inject(HttpTestingController).expectNone((r) => !/\/(notifications|invitations)\//.test(r.url));
   });
 
   it('confirming deletes the account and leaves the authenticated area', () => {

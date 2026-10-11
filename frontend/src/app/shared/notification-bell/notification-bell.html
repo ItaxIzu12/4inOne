@@ -1,0 +1,111 @@
+<button
+  #trigger
+  type="button"
+  class="bell-trigger"
+  aria-haspopup="dialog"
+  [attr.aria-expanded]="open()"
+  [attr.aria-label]="label()"
+  (click)="toggle()"
+>
+  <app-icon name="bell" />
+  @if (unread()) {
+    <span class="bell-count" aria-hidden="true">{{ unread() }}</span>
+  }
+</button>
+
+@if (open()) {
+  <section class="bell-panel" role="dialog" aria-labelledby="bell-title">
+    <h2 id="bell-title" class="bell-panel__title" tabindex="-1">Benachrichtigungen</h2>
+
+    @if (store.message()) {
+      <p class="bell-message" role="status">{{ store.message() }}</p>
+    }
+
+    @if (needsVerification()) {
+      <div class="bell-verify">
+        <p>Bestätige zuerst deine E-Mail-Adresse. Erst dann zeigen wir dir hier, wer dich eingeladen hat.</p>
+        @switch (resendState()) {
+          @case ('sent') {
+            @if (devLink(); as link) {
+              <p class="bell-verify__done" role="status">Entwicklungsmodus: Es wird keine echte Mail verschickt.</p>
+              <a class="bell-accept bell-verify__link" [href]="link">Link öffnen und bestätigen</a>
+            } @else {
+              <p class="bell-verify__done" role="status">Mail ist unterwegs. Öffne den Link darin.</p>
+            }
+          }
+          @case ('error') {
+            <p class="bell-verify__done" role="status">Das hat nicht geklappt. Bitte versuche es später noch einmal.</p>
+          }
+          @default {
+            <button type="button" class="bell-decline" [disabled]="resendState() === 'sending'" (click)="resend()">Bestätigungs-Mail senden</button>
+          }
+        }
+      </div>
+    }
+
+    @if (items().length) {
+      <p class="bell-section">Einladungen</p>
+      <ul class="bell-list">
+        @for (note of items(); track note.id) {
+          <li class="bell-item">
+            @if (note.kind === 'INVITATION_CREATED') {
+              @let inv = note.invitation;
+              <span class="bell-item__icon" [attr.data-scope]="inv.scope.type" aria-hidden="true">
+                <app-icon [name]="inv.scope.type === 'HOUSEHOLD' ? 'household' : 'travel'" />
+              </span>
+              <div class="bell-item__body">
+                <p class="bell-item__text">
+                  <strong>{{ inv.inviter?.display_name }}</strong> hat dich zu „{{ inv.scope.display_name }}“ eingeladen.
+                </p>
+                <p class="bell-item__meta">
+                  {{ inv.scope.type === 'HOUSEHOLD' ? 'Haushalt' : 'Reise · ' + inv.scope.detail }} · {{ inv.role_label }} ·
+                  <time [attr.datetime]="note.created_at">{{ ago(note.created_at) }}</time>
+                </p>
+                <div class="bell-item__actions">
+                  <button type="button" class="bell-accept" [disabled]="store.busy() !== null" (click)="accept(inv)">Annehmen</button>
+                  <button type="button" class="bell-decline" [disabled]="store.busy() !== null" (click)="decline(inv)">Ablehnen</button>
+                </div>
+              </div>
+            } @else {
+              @let invite = note.contact_invite;
+              <span class="bell-item__icon" data-scope="CONTACT" aria-hidden="true"><app-icon name="user-plus" /></span>
+              <div class="bell-item__body">
+                <p class="bell-item__text">
+                  <strong>{{ invite.from_name }}</strong> möchte dich als {{ invite.relation_label }} hinzufügen.
+                </p>
+                <p class="bell-item__meta">Kontakt · <time [attr.datetime]="note.created_at">{{ ago(note.created_at) }}</time></p>
+                <div class="bell-item__actions">
+                  <button type="button" class="bell-accept" (click)="answerContact(invite, true)">Annehmen</button>
+                  <button type="button" class="bell-decline" (click)="answerContact(invite, false)">Ablehnen</button>
+                </div>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    @if (accepted().length) {
+      <p class="bell-section">Neu</p>
+      <ul class="bell-list">
+        @for (note of accepted(); track note.id) {
+          @let info = acceptedText(note);
+          <li class="bell-item" [class.bell-item--seen]="note.read">
+            <span class="bell-item__icon" data-scope="DONE" aria-hidden="true"><app-icon name="check-circle" /></span>
+            <div class="bell-item__body">
+              <p class="bell-item__text">{{ info.text }}</p>
+              <p class="bell-item__meta"><time [attr.datetime]="note.created_at">{{ ago(note.created_at) }}</time></p>
+              <a class="bell-next" [routerLink]="info.link" [queryParams]="info.query" (click)="close(false)">{{ info.action }}<app-icon name="arrow" /></a>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (items().length || accepted().length) {
+      <a class="bell-footer" routerLink="/familie" (click)="close(false)">Alle Einladungen in Personen &amp; Gruppen</a>
+    } @else {
+      <p class="bell-empty">Keine neuen Benachrichtigungen.</p>
+    }
+  </section>
+}

@@ -23,6 +23,7 @@ from haushalt.serializers import (
     TaskSerializer,
 )
 from haushalt.throttling import HaushaltWriteRateThrottle
+from core.households import active_household
 
 
 def _require_membership(request):
@@ -154,7 +155,7 @@ class ShoppingItemViewSet(_WriteThrottleMixin, ModelViewSet):
 
     def get_queryset(self):
         return ShoppingItem.objects.select_related('checked_by', 'added_by', 'shopping_list__household').filter(
-            shopping_list__household__members=self.request.user
+            shopping_list__household=active_household(self.request.user)
         )
 
     def perform_create(self, serializer):
@@ -253,7 +254,7 @@ class TaskViewSet(_WriteThrottleMixin, ModelViewSet):
                     to_attr='recent_completions',
                 ),
             )
-            .filter(household__members=self.request.user)
+            .filter(household=active_household(self.request.user))
         )
         if self.action != 'list':
             # Einzelzugriff (ändern, löschen, wieder öffnen) gilt auch für
@@ -499,7 +500,7 @@ class FolderEntryViewSet(_WriteThrottleMixin, ModelViewSet):
     def get_queryset(self):
         return (
             FolderEntry.objects.select_related('household')
-            .filter(household__members=self.request.user)
+            .filter(household=active_household(self.request.user))
             .order_by('kind', 'name')
         )
 

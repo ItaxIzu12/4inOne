@@ -64,11 +64,28 @@ def test_end_before_start_is_rejected_with_a_clear_message(users):
     assert 'Ende' in str(response.data['end_date'])
 
 
-def test_a_past_trip_is_allowed(users):
+def test_new_trip_cannot_start_before_today(users):
+    today = timezone.localdate()
     response = api(users[0]).post(
-        BASE + 'trips/', {'title': 'Lissabon', 'destination': 'Lissabon', 'start_date': '2026-09-01', 'end_date': '2026-09-05', 'status': 'DONE'}, format='json'
+        BASE + 'trips/', {'title': 'Lissabon', 'destination': 'Lissabon',
+                         'start_date': str(today - timedelta(days=1)), 'end_date': str(today)}, format='json'
+    )
+    assert response.status_code == 400
+    assert 'start_date' in response.data
+
+
+def test_same_day_trip_today_is_allowed(users):
+    today = str(timezone.localdate())
+    response = api(users[0]).post(
+        BASE + 'trips/', {'title': 'Ausflug', 'destination': 'Berlin', 'start_date': today, 'end_date': today}, format='json'
     )
     assert response.status_code == 201
+
+
+def test_existing_past_trip_remains_editable(users):
+    today = timezone.localdate()
+    trip = trip_for(users[0], start_date=today - timedelta(days=5), end_date=today - timedelta(days=2))
+    assert api(users[0]).patch(f'{BASE}trips/{trip.pk}/', {'title': 'Rückblick'}, format='json').status_code == 200
 
 
 def test_edit_cancel_and_delete(users):
@@ -324,8 +341,11 @@ def test_participant_sees_the_shared_trip_but_nothing_else_of_the_owner(users):
     trip_for(anna, title='Privat')
     task = PersonalTask.objects.create(owner=anna, title='Arzttermin')
     note = PersonalNote.objects.create(owner=anna, title='Geheim', body='privat')
-    added = api(anna).post(BASE + 'participants/', {'trip': shared.pk, 'contact_id': contact.pk, 'role': 'EDITOR'}, format='json')
+    added = api(anna).post('/api/v1/invitations/', {
+        'contact_id': contact.pk, 'scope_type': 'TRIP', 'scope_id': shared.pk, 'role': 'EDITOR',
+    }, format='json')
     assert added.status_code == 201, added.data
+    assert api(ben).post(f'/api/v1/invitations/{added.data["id"]}/accept/').status_code == 200
 
     client = api(ben)
     assert [t['title'] for t in client.get(BASE + 'trips/').data] == ['Berlin']

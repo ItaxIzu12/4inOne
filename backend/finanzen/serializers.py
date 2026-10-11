@@ -7,6 +7,7 @@ from rest_framework import serializers
 
 from core.models import Household, HouseholdMembership
 from finanzen.models import Category, RecurringDeduction, Transaction
+from core.households import own_household
 
 # ^#[0-9A-Fa-f]{6}$ — striktes Hex-Format. Verhindert, dass ein nicht
 # validierter Wert später (falls das Frontend color irgendwann direkt in ein
@@ -99,7 +100,7 @@ class CategorySerializer(serializers.ModelSerializer):
         # vom Client mitgeschickten Wert.
         request = self.context.get('request')
         if request is not None:
-            household = request.user.households.first()
+            household = own_household(request.user)
             if household is not None:
                 existing = Category.objects.filter(household=household, name=value)
                 if self.instance is not None:

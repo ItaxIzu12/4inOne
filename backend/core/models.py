@@ -71,31 +71,60 @@ class HouseholdMembership(models.Model):
         return f'{self.user} @ {self.household} ({self.role})'
 
 
-class HouseholdInvite(models.Model):
-    """Einladung einer weiteren Person in einen bestehenden Haushalt.
+class Invitation(models.Model):
+    """In-App-Einladung einer bestehenden Person (aus den eigenen Kontakten) in einen teilbaren Bereich.
 
-    Registrierung selbst legt IMMER einen neuen, eigenen Haushalt an (siehe
-    core/auth_views.py RegisterView) — dieses Model ist der spätere Weg,
-    wie ein ADMIN zusätzliche Mitglieder in genau diesen Haushalt holt,
-    statt dass jede Person isoliert bleibt.
-    """
+    Eine Einladung ist eine ANFRAGE, keine Berechtigung: solange sie offen ist, entsteht weder Mitgliedschaft
+    noch Sichtbarkeit. Erst `core.invitations.accept()` legt in derselben Transaktion die Mitgliedschaft des
+    jeweiligen Bereichs an (HouseholdMembership bzw. reisen.TripParticipant) — und nur für genau diesen Bereich.
 
-    household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='invites')
-    email = models.EmailField()
-    # Rolle, die die eingeladene Person nach Annahme bekommen soll — noch
-    # keine echte Annahme-Logik in diesem Schritt gebaut (siehe Chat-
-    # Verlauf), aber der Wert wird bereits vom Einladungsformular erfasst
-    # und darf nicht stillschweigend verworfen werden.
-    role = models.CharField(
-        max_length=20, choices=HouseholdMembership.Role.choices, default=HouseholdMembership.Role.MEMBER
+    Bereiche sind eine feste Allowlist (Scope), keine freie Kombination aus Model und ID. `scope_id` ist bewusst
+    kein ForeignKey, damit ein gelöschter Bereich die Einladung nicht mitreißt; die Annahme prüft dann, dass er
+    noch existiert. Zustandswechsel nur über core/invitations.py (bedingte UPDATEs, sicher bei Doppelklick und
+    gleichzeitigem Annehmen/Ablehnen)."""
+
+    class Scope(models.TextChoices):
+        HOUSEHOLD = 'HOUSEHOLD', 'Haushalt'
+        TRIP = 'TRIP', 'Reise'
+
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Offen'
+        ACCEPTED = 'ACCEPTED', 'Angenommen'
+        DECLINED = 'DECLINED', 'Abgelehnt'
+        REVOKED = 'REVOKED', 'Zurückgezogen'
+
+    # Wird das Konto der einladenden Person gelöscht, bleibt der Datensatz für die Nachvollziehbarkeit; eine
+    # noch offene Einladung lässt sich dann aber nicht mehr annehmen (siehe invitations.accept()).
+    inviter = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='sent_invitations'
     )
-    token = models.CharField(max_length=64, unique=True)
-    expires_at = models.DateTimeField()
-    accepted_at = models.DateTimeField(null=True, blank=True)
+    invitee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='invitations')
+    scope_type = models.CharField(max_length=12, choices=Scope.choices)
+    scope_id = models.PositiveBigIntegerField()
+    role = models.CharField(max_length=12)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        constraints = [
+            # Höchstens eine offene Einladung je Person und Bereich — fünfmal Einladen erzeugt keine fünf Anfragen.
+            models.UniqueConstraint(
+                fields=['invitee', 'scope_type', 'scope_id'],
+                condition=models.Q(status='PENDING'),
+                name='one_pending_invitation_per_scope',
+            ),
+            models.CheckConstraint(condition=~models.Q(inviter=models.F('invitee')), name='invitation_not_self'),
+        ]
+        indexes = [
+            models.Index(fields=['invitee', 'status'], name='core_invita_invitee_status_idx'),
+            models.Index(fields=['inviter', 'status'], name='core_invita_inviter_status_idx'),
+        ]
 
     def __str__(self) -> str:
-        return f'Einladung {self.email} → {self.household}'
+        return f'Einladung {self.scope_type}:{self.scope_id} → {self.invitee_id} ({self.status})'
 
 
 class PasswordResetToken(models.Model):
@@ -139,17 +168,41 @@ class MfaBackupCode(models.Model):
 
 
 class Notification(models.Model):
-    """Einfache In-App-Benachrichtigung für einen Nutzer innerhalb eines
-    Haushalts (z. B. "Miete fällig", "Aufgabe zugewiesen")."""
+    """In-App-Benachrichtigung — der Zustellkanal, nicht die Sache selbst.
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    household = models.ForeignKey(Household, on_delete=models.CASCADE)
-    message = models.CharField(max_length=255)
-    is_read = models.BooleanField(default=False)
+    Enthält keine eigenen Inhalte, nur einen Verweis (z. B. auf eine Einladung); angezeigt wird immer der aktuelle
+    Stand der Quelle, und nur, wenn sie für genau diese Person bestimmt ist. „Gelesen“ ändert nichts an der
+    Quelle (gelesen ≠ angenommen). Weitere Kanäle (E-Mail) hängen sich später an core/notifications.py an."""
+
+    class Kind(models.TextChoices):
+        INVITATION_CREATED = 'INVITATION_CREATED', 'Neue Einladung'
+        CONTACT_INVITE = 'CONTACT_INVITE', 'Kontaktanfrage'
+        # an die einladende Person, wenn angenommen wurde (Ablehnungen werden bewusst nicht gemeldet)
+        CONTACT_ACCEPTED = 'CONTACT_ACCEPTED', 'Kontaktanfrage angenommen'
+        INVITATION_ACCEPTED = 'INVITATION_ACCEPTED', 'Einladung angenommen'
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    kind = models.CharField(max_length=32, choices=Kind.choices)
+    invitation = models.ForeignKey(Invitation, on_delete=models.CASCADE, null=True, related_name='notifications')
+    # Kontakt-Einladung (per E-Mail-Adresse) — erscheint nur bei bestätigter Adresse, siehe core/notifications.py.
+    contact_invite = models.ForeignKey(
+        'ContactInvite', on_delete=models.CASCADE, null=True, blank=True, related_name='notifications'
+    )
+    read_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['-created_at', '-id']
+        indexes = [models.Index(fields=['user', 'read_at'], name='core_notif_user_read_idx')]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'contact_invite'], condition=models.Q(contact_invite__isnull=False),
+                name='one_notification_per_contact_invite',
+            )
+        ]
+
     def __str__(self) -> str:
-        return self.message
+        return f'{self.kind} → {self.user_id}'
 
 
 class OnboardingProfile(models.Model):

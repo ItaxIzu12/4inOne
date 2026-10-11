@@ -4,44 +4,49 @@
   closeLabel="Einladung schließen"
   (closed)="close()"
 >
-  <h2 id="household-invite-heading" class="invite-modal__heading">Haushalt einladen</h2>
+  <h2 id="household-invite-heading" class="invite-modal__heading">Person einladen</h2>
 
-  @if (sentTo(); as sent) {
-    <p class="invite-modal__success" role="status">
-      Einladung an {{ sent.email }} gesendet, gültig bis {{ sent.expiresAt | date: 'd. MMM y':'':'de' }}.
-    </p>
+  @if (!signedIn()) {
+    <p class="invite-modal__text">In der Demo kannst du niemanden einladen. Mit deinem eigenen Konto lädst du Personen aus deinen Kontakten in deinen Haushalt ein.</p>
     <button type="button" class="btn-primary" (click)="close()">Schließen</button>
+  } @else if (sentTo(); as name) {
+    <p class="invite-modal__success" role="status">
+      Einladung gesendet. {{ name }} wird Mitglied von „{{ householdName() }}“, sobald {{ name }} annimmt.
+    </p>
+    <button type="button" class="btn-primary" (click)="close()">Fertig</button>
+  } @else if (loading()) {
+    <p class="invite-modal__text" role="status">Wird geladen …</p>
+  } @else if (!canInvite()) {
+    <p class="invite-modal__text">Nur wer den Haushalt verwaltet, kann weitere Personen einladen.</p>
+    <button type="button" class="btn-primary" (click)="close()">Schließen</button>
+  } @else if (!candidates().length) {
+    <p class="invite-modal__text">
+      @if (!contactCount()) {
+        Eingeladen werden Personen aus deinen Kontakten. Verbinde dich zuerst unter Personen &amp; Gruppen mit der Person.
+      } @else if (invitedNames().length) {
+        Alle deine Kontakte sind bereits Mitglied oder eingeladen.
+      } @else {
+        Alle deine Kontakte sind bereits Mitglied dieses Haushalts.
+      }
+    </p>
+    <a class="btn-primary" routerLink="/familie" (click)="close()">Zu Personen &amp; Gruppen</a>
   } @else {
     <form class="invite-modal__form" (submit)="onSubmit($event)">
       <div class="field">
-        <label for="invite-email">E-Mail-Adresse des Haushaltsmitglieds</label>
-        <input
-          id="invite-email"
-          type="email"
-          autocomplete="off"
-          [value]="email()"
-          (input)="email.set($any($event.target).value)"
-        />
+        <span id="invite-person-label" class="invite-modal__label">Person</span>
+        <app-select ariaLabelledby="invite-person-label" placeholder="Person auswählen …" [options]="options()" [value]="selected()" (valueChange)="selected.set($event)" />
       </div>
-
-      <fieldset class="invite-modal__roles">
-        <legend>Rolle</legend>
-        <label>
-          <input type="radio" name="invite-role" value="ADMIN" [checked]="role() === 'ADMIN'" (change)="role.set('ADMIN')" />
-          Admin
-        </label>
-        <label>
-          <input type="radio" name="invite-role" value="MEMBER" [checked]="role() === 'MEMBER'" (change)="role.set('MEMBER')" />
-          Mitglied
-        </label>
-        <label>
-          <input type="radio" name="invite-role" value="CHILD_ACCOUNT" [checked]="role() === 'CHILD_ACCOUNT'" (change)="role.set('CHILD_ACCOUNT')" />
-          Kind-Konto
-        </label>
-      </fieldset>
+      <dl class="invite-modal__facts">
+        <div><dt>Zu</dt><dd>{{ householdName() }}</dd></div>
+        <div><dt>Rolle</dt><dd>Mitglied</dd></div>
+      </dl>
+      <p class="invite-modal__hint">
+        Die Person sieht danach Aufgaben, Einkauf, Geräte und Verträge dieses Haushalts – nie deine Finanzen, deine
+        Organisation oder deine Reisen.
+      </p>
 
       @if (error()) {
-        <p class="field-error"  [appErrorNotice]="error()">{{ error() }}</p>
+        <p class="field-error" [appErrorNotice]="error()">{{ error() }}</p>
       }
 
       <button type="submit" class="btn-primary" [disabled]="submitting()">

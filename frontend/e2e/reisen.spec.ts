@@ -472,15 +472,17 @@ test('alle Ansichten passen bei 360, 390, 430, Tablet und Desktop ohne Querscrol
   }
 });
 
-test('Teilnehmer: verwalten in der Planung, Hinweis zur Privatsphäre', async ({ page }) => {
+test('Teilnehmer: einladen und verwalten in der Planung, Hinweis zur Privatsphäre', async ({ page }) => {
   await openDemo(page, '/demo/reisen?trip=1&tab=planung');
   await expect(page.locator('app-trip-planning .privacy')).toContainText('nie deine Finanzen, deinen Haushalt oder deinen Kalender');
   await page.getByRole('button', { name: 'Verwalten' }).click();
   await choose(page, 'Person', 'Lena');
-  await page.locator('.participants-editor').getByRole('button', { name: 'Hinzufügen' }).click();
-  await expect(page.locator('.participants-editor')).toContainText('Lena');
-  await page.getByRole('button', { name: 'Lena entfernen' }).click();
+  await page.locator('.participants-editor').getByRole('button', { name: 'Einladen' }).click();
+  // Einladung statt sofortiger Teilnahme: Lena ist erst dabei, wenn sie annimmt.
+  await expect(page.locator('.participants-editor')).toContainText('Einladung gesendet. Lena ist dabei, sobald Lena annimmt.');
   await expect(page.locator('.participants-editor .row', { hasText: 'Lena' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Tom Schulz entfernen' }).click();
+  await expect(page.locator('.participants-editor .row', { hasText: 'Tom Schulz' })).toHaveCount(0);
 });
 
 // Echtes (angemeldetes) Konto ohne jede Reise: kein Fake-Trip, klarer Leerzustand.

@@ -1,0 +1,80 @@
+<main class="reset-page">
+  <div class="reset-card">
+    <a class="reset-card__brand" routerLink="/" aria-label="4inOne — zum Start">
+      <app-brand />
+    </a>
+
+    @switch (state()) {
+      @case ('form') {
+        <div class="auth-intro">
+          <h1>Neues Passwort festlegen</h1>
+          <p class="lede">Danach meldest du dich mit dem neuen Passwort an. Auf allen anderen Geräten wirst du abgemeldet.</p>
+        </div>
+
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="field">
+            <label for="new-password">Neues Passwort</label>
+            <input
+              id="new-password"
+              type="password"
+              formControlName="password"
+              autocomplete="new-password"
+              [attr.aria-invalid]="passwordError() ? true : null"
+              [attr.aria-describedby]="passwordError() ? 'new-password-error' : 'new-password-hint'"
+            />
+            @if (passwordError(); as message) {
+              <p class="field-error" id="new-password-error">{{ message }}</p>
+            } @else {
+              <p class="field-hint" id="new-password-hint">Mindestens 10 Zeichen, mit mindestens einem Buchstaben und einer Zahl.</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="new-password-confirm">Neues Passwort wiederholen</label>
+            <input
+              id="new-password-confirm"
+              type="password"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+              [attr.aria-invalid]="confirmError() ? true : null"
+              [attr.aria-describedby]="confirmError() ? 'new-password-confirm-error' : null"
+            />
+            @if (confirmError(); as message) {
+              <p class="field-error" id="new-password-confirm-error">{{ message }}</p>
+            }
+          </div>
+
+          @if (error(); as message) {
+            <p class="field-error" role="alert">{{ message }}</p>
+          }
+
+          <button type="submit" class="submit-button" [disabled]="submitting()">
+            @if (submitting()) {
+              <span class="spinner" aria-hidden="true"></span> Wird gespeichert &hellip;
+            } @else {
+              Passwort speichern
+            }
+          </button>
+        </form>
+      }
+      @case ('done') {
+        <div class="auth-intro" role="status">
+          <h1>Passwort geändert</h1>
+          <p class="lede">Du kannst dich jetzt mit deinem neuen Passwort anmelden.</p>
+        </div>
+        <a class="submit-button" routerLink="/login">Zur Anmeldung</a>
+      }
+      @case ('invalid-link') {
+        <div class="auth-intro">
+          <h1>Dieser Link funktioniert nicht mehr</h1>
+          <p class="lede">Links zum Zurücksetzen gelten 30 Minuten und nur einmal. Fordere einfach einen neuen an.</p>
+        </div>
+        <a class="submit-button" routerLink="/passwort-vergessen">Neuen Link anfordern</a>
+      }
+    }
+
+    @if (state() !== 'done') {
+      <a class="back-link" routerLink="/login">← Zurück zur Anmeldung</a>
+    }
+  </div>
+</main>

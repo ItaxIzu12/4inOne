@@ -1,148 +1,432 @@
 <app-shell>
-  <main id="main-content" class="settings-page" tabindex="-1">
-    <header class="settings-page__head">
-      <h1>Personen &amp; Gruppen</h1>
-      <p>Du entscheidest, was du mit wem teilst. Eine Verbindung teilt noch nichts: ihr seht euch nur mit Namen und E-Mail-Adresse.</p>
-    </header>
+  <main id="main-content" class="people-page" tabindex="-1">
+    <div class="people-top">
+      <header class="people-head">
+        <h1>Personen &amp; Gruppen</h1>
+        <p class="people-head__lede">Du entscheidest, was du mit wem teilst.</p>
+        <p class="people-head__text">
+          Verbindungen geben keinen automatischen Zugriff auf deine Daten. Du legst für jede Person separat fest, was ihr
+          gemeinsam nutzt.
+        </p>
+      </header>
+      <aside class="people-promise" aria-label="Datenschutz">
+        <span class="people-promise__icon" aria-hidden="true"><app-icon name="shield" /></span>
+        <div>
+          <p class="people-promise__title">Eine Verbindung teilt noch keine Daten.</p>
+          <p>Du entscheidest später, was du mit einer Person teilst – z. B. eine Reise oder einen Haushalt.</p>
+        </div>
+      </aside>
+    </div>
+
+    <div class="people-tabs" role="tablist" aria-label="Personen &amp; Gruppen" (keydown)="onTabKey($event)">
+      @for (t of tabs; track t.key) {
+        <button
+          type="button"
+          role="tab"
+          class="people-tab"
+          [id]="'people-tab-' + t.key"
+          [attr.aria-selected]="tab() === t.key"
+          [attr.aria-controls]="'people-panel-' + t.key"
+          [attr.tabindex]="tab() === t.key ? 0 : -1"
+          (click)="selectTab(t.key)"
+        >
+          <app-icon [name]="t.icon" />{{ t.label }}
+        </button>
+      }
+    </div>
 
     @if (demo) {
-      <p class="fam-notice" role="status">
-        Beispieldaten · Personen &amp; Gruppen ist die Grundlage, um später gezielt eine Reise oder einen
-        gemeinsamen Haushalt zu teilen — eine Verbindung allein gibt niemandem Zugriff auf deine Daten.
-      </p>
+      <p class="people-notice" role="status">Beispieldaten · Änderungen gelten nur bis zum Neuladen.</p>
     }
-
     @if (notice()) {
-      <p class="fam-notice" role="status">{{ notice() }}</p>
+      <p class="people-notice" role="status">{{ notice() }}</p>
     }
 
-    @if (loadError()) {
-      <div class="fam-card">
-        <p  [appErrorNotice]="'Deine Kontakte konnten nicht geladen werden.'">Deine Kontakte konnten nicht geladen werden.</p>
-        <button type="button" class="fam-button fam-button--ghost" (click)="load()">Erneut versuchen</button>
-      </div>
-    } @else if (data() === null) {
-      <p class="fam-muted" role="status">Wird geladen …</p>
-    } @else {
-      @if (data()!.received.length) {
-        <section class="fam-card fam-card--highlight" aria-labelledby="fam-received">
-          <h2 id="fam-received">Einladungen an dich</h2>
-          <ul class="fam-list">
-            @for (invite of data()!.received; track invite.token) {
-              <li class="fam-row">
-                <span class="fam-avatar" aria-hidden="true">{{ initial(invite.from_name) }}</span>
-                <span class="fam-text">
-                  <strong>{{ invite.from_name }}</strong>
-                  <span class="fam-muted">möchte dich als {{ label[invite.relation] }} hinzufügen</span>
-                </span>
-                <span class="fam-actions">
-                  <button type="button" class="fam-button" [disabled]="busy() !== null" (click)="answer(invite, true)">Annehmen</button>
-                  <button type="button" class="fam-button fam-button--ghost" [disabled]="busy() !== null" (click)="answer(invite, false)">Ablehnen</button>
-                </span>
-              </li>
+    <div class="people-layout">
+      <div class="people-main" role="tabpanel" [id]="'people-panel-' + tab()" [attr.aria-labelledby]="'people-tab-' + tab()">
+        @if (loadError()) {
+          <section class="people-card">
+            <p [appErrorNotice]="'Deine Kontakte konnten nicht geladen werden.'">Deine Kontakte konnten nicht geladen werden.</p>
+            <button type="button" class="people-button people-button--ghost" (click)="load()">Erneut versuchen</button>
+          </section>
+        } @else if (data() === null) {
+          <section class="people-card" aria-busy="true">
+            <p class="sr-only" role="status">Wird geladen …</p>
+            @for (row of [1, 2, 3]; track row) {
+              <div class="people-skeleton" aria-hidden="true"><span></span><span></span></div>
             }
-          </ul>
-        </section>
-      }
+          </section>
+        } @else {
+          @switch (tab()) {
+            @case ('overview') {
+              @if (inviteCount() || declinedRows().length) {
+                <section class="people-card" aria-labelledby="people-invites">
+                  <div class="people-card__head">
+                    <h2 id="people-invites">Offene Einladungen @if (inviteCount()) {<span class="people-count people-count--alert">{{ inviteCount() }}</span>}</h2>
+                    @if (hiddenInvites() > 0 || showAllInvites()) {
+                      <button type="button" class="people-link" (click)="showAllInvites.set(!showAllInvites())" [attr.aria-expanded]="showAllInvites()">
+                        {{ showAllInvites() ? 'Weniger anzeigen' : 'Alle anzeigen' }}<app-icon name="arrow" />
+                      </button>
+                    }
+                  </div>
+                  <ul class="people-invites">
+                    @for (row of visibleInvites(); track row.key) {
+                      <li class="people-invite">
+                        @switch (row.kind) {
+                          @case ('space-received') {
+                            @let inv = row.invite;
+                            <span class="people-area" [attr.data-kind]="inv.scope.type" aria-hidden="true"><app-icon [name]="area[inv.scope.type].icon" /></span>
+                            <span class="people-text">
+                              <strong>{{ inv.scope.display_name }}</strong>
+                              <span>Von {{ inv.inviter?.display_name }} · {{ area[inv.scope.type].label }} · {{ inv.role_label }}</span>
+                            </span>
+                            <span class="people-invite__side">
+                              <time class="people-meta" [attr.datetime]="inv.created_at">{{ ago(inv.created_at) }}</time>
+                              <span class="people-actions">
+                                <button type="button" class="people-button" [disabled]="invitations.busy() !== null" [attr.aria-label]="'Einladung zu ' + inv.scope.display_name + ' annehmen'" (click)="answerSpace(inv, true)">Annehmen</button>
+                                <button type="button" class="people-button people-button--ghost" [disabled]="invitations.busy() !== null" [attr.aria-label]="'Einladung zu ' + inv.scope.display_name + ' ablehnen'" (click)="answerSpace(inv, false)">Ablehnen</button>
+                              </span>
+                            </span>
+                          }
+                          @case ('space-sent') {
+                            @let inv = row.invite;
+                            <span class="people-area" [attr.data-kind]="inv.scope.type" aria-hidden="true"><app-icon [name]="area[inv.scope.type].icon" /></span>
+                            <span class="people-text">
+                              <strong>{{ inv.scope.display_name }}</strong>
+                              <span>An {{ inv.invitee?.display_name }} · {{ inv.role_label }} · Ausstehend</span>
+                            </span>
+                            <span class="people-invite__side">
+                              <time class="people-meta" [attr.datetime]="inv.created_at">Gesendet {{ ago(inv.created_at) }}</time>
+                              <button type="button" class="people-button people-button--ghost" [disabled]="invitations.busy() !== null" [attr.aria-label]="'Einladung an ' + inv.invitee?.display_name + ' zu ' + inv.scope.display_name + ' zurückziehen'" (click)="revokeSpace(inv)">Zurückziehen</button>
+                            </span>
+                          }
+                          @case ('contact-received') {
+                            @let invite = row.invite;
+                            <span class="people-avatar" [attr.data-tone]="tone(invite.from_name)" aria-hidden="true">{{ initial(invite.from_name) }}</span>
+                            <span class="people-text">
+                              <strong>{{ invite.from_name }}</strong>
+                              <span>möchte dich als {{ label[invite.relation] }} hinzufügen</span>
+                            </span>
+                            <span class="people-invite__side">
+                              <time class="people-meta" [attr.datetime]="invite.created_at">{{ ago(invite.created_at) }}</time>
+                              <span class="people-actions">
+                                <button type="button" class="people-button" [disabled]="busy() !== null" (click)="answer(invite, true)">Annehmen</button>
+                                <button type="button" class="people-button people-button--ghost" [disabled]="busy() !== null" (click)="answer(invite, false)">Ablehnen</button>
+                              </span>
+                            </span>
+                          }
+                          @case ('contact-sent') {
+                            @let sent = row.invite;
+                            <span class="people-avatar people-avatar--pending" aria-hidden="true"><app-icon name="mail" /></span>
+                            <span class="people-text">
+                              <strong>{{ sent.email }}</strong>
+                              <span>Du hast als {{ label[sent.relation] }} eingeladen · wartet auf Antwort</span>
+                            </span>
+                            <span class="people-invite__side">
+                              <time class="people-meta" [attr.datetime]="sent.created_at">{{ ago(sent.created_at) }}</time>
+                              <button type="button" class="people-button people-button--ghost" [disabled]="busy() !== null" [attr.aria-label]="'Einladung an ' + sent.email + ' zurückziehen'" (click)="cancel(sent.id)">
+                                Zurückziehen
+                              </button>
+                            </span>
+                          }
+                        }
+                      </li>
+                    }
+                  </ul>
+                  @if (declinedRows().length) {
+                    <p class="people-subhead">Nicht angenommen</p>
+                    <ul class="people-rows people-rows--muted">
+                      @for (row of declinedRows(); track row.key) {
+                        <li class="people-row people-row--simple">
+                          <span class="people-area people-area--pending" aria-hidden="true"><app-icon [name]="row.icon" /></span>
+                          <span class="people-text">
+                            <strong>{{ row.title }}</strong>
+                            <span>{{ row.text }} · Nicht angenommen</span>
+                          </span>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </section>
+              }
 
-      <section class="fam-card" aria-labelledby="fam-invite">
-        <h2 id="fam-invite">Person einladen</h2>
-        <form class="fam-form" (submit)="sendInvite($event)" novalidate>
-          <div class="profile-field">
-            <label for="fam-email">E-Mail-Adresse</label>
-            <input
-              id="fam-email"
-              name="email"
-              type="email"
-              autocomplete="off"
-              placeholder="name@beispiel.de"
-              [ngModel]="email()"
-              (ngModelChange)="email.set($event)"
-              [attr.aria-invalid]="error() ? 'true' : null"
-              [attr.aria-describedby]="error() ? 'fam-error' : null"
-            />
-          </div>
-          <fieldset class="fam-relation">
-            <legend>Die Person ist</legend>
-            <label class="fam-chip" [class.is-on]="relation() === 'FAMILY'">
-              <input type="radio" name="relation" value="FAMILY" [checked]="relation() === 'FAMILY'" (change)="relation.set('FAMILY')" />Familie
-            </label>
-            <label class="fam-chip" [class.is-on]="relation() === 'FRIEND'">
-              <input type="radio" name="relation" value="FRIEND" [checked]="relation() === 'FRIEND'" (change)="relation.set('FRIEND')" />Freund:in
-            </label>
-          </fieldset>
-          @if (error()) {
-            <p id="fam-error" class="profile-error"  [appErrorNotice]="error()" [persistentError]="true">{{ error() }}</p>
+              <section class="people-card" aria-labelledby="people-list">
+                <div class="people-card__head">
+                  <h2 id="people-list">Deine Personen <span class="people-count">{{ contacts().length }}</span></h2>
+                  @if (contacts().length > 1) {
+                    <label class="people-search">
+                      <span class="sr-only">Personen durchsuchen</span>
+                      <app-icon name="search" />
+                      <input type="search" placeholder="Personen durchsuchen …" [ngModel]="query()" (ngModelChange)="query.set($event)" />
+                    </label>
+                  }
+                </div>
+                @if (!contacts().length) {
+                  <p class="people-empty">
+                    Noch niemand hier. Lade Menschen ein, mit denen du später eine Reise planen oder einen Haushalt teilen möchtest.
+                  </p>
+                } @else if (!filtered().length) {
+                  <p class="people-empty">Niemand passt zu „{{ query() }}“.</p>
+                } @else {
+                  <ul class="people-rows">
+                    @for (contact of filtered(); track contact.id) {
+                      <li class="people-row">
+                        <span class="people-avatar" [attr.data-tone]="tone(contact.name)" aria-hidden="true">{{ initial(contact.name) }}</span>
+                        <span class="people-text">
+                          <strong>{{ contact.name }}</strong>
+                          <span>{{ label[contact.relation] }}</span>
+                        </span>
+                        <span class="people-shared">
+                          @if (contact.shared.length) {
+                            @let first = contact.shared[0];
+                            <span class="people-area" [attr.data-kind]="first.kind" aria-hidden="true"><app-icon [name]="area[first.kind].icon" /></span>
+                            <span class="people-shared__text">
+                              <span>{{ area[first.kind].label }}</span>
+                              <span>{{ first.title }}@if (contact.shared.length > 1) { <span class="people-more">+{{ contact.shared.length - 1 }}</span> }</span>
+                            </span>
+                          } @else if (contact.invited_to.length) {
+                            @let pending = contact.invited_to[0];
+                            <span class="people-area people-area--pending" aria-hidden="true"><app-icon name="clock" /></span>
+                            <span class="people-shared__text">
+                              <span>Eingeladen · ausstehend</span>
+                              <span>{{ pending.title }}</span>
+                            </span>
+                          } @else {
+                            <span class="people-chip">Noch nichts geteilt</span>
+                          }
+                        </span>
+                        @if (confirmRemove() === contact.id) {
+                          <span class="people-actions people-confirm" role="group" [attr.aria-label]="'Verbindung zu ' + contact.name + ' beenden?'">
+                            <button type="button" class="people-button people-button--danger" [disabled]="busy() !== null" (click)="remove(contact)">Ja, beenden</button>
+                            <button type="button" class="people-button people-button--ghost" (click)="confirmRemove.set(null)">Abbrechen</button>
+                          </span>
+                        } @else {
+                          <span class="people-actions">
+                            <span class="people-menu-wrap">
+                              <button
+                                type="button"
+                                class="people-button people-button--ghost"
+                                aria-haspopup="true"
+                                [attr.aria-expanded]="menu() === 'share-' + contact.id"
+                                [attr.data-menu-trigger]="'share-' + contact.id"
+                                [attr.aria-label]="'Mit ' + contact.name + ' teilen'"
+                                (click)="toggleMenu('share-' + contact.id, $event)"
+                              >
+                                Teilen …
+                              </button>
+                              @if (menu() === 'share-' + contact.id) {
+                                <div class="people-menu" (click)="$event.stopPropagation()">
+                                  @if (contact.can_add_to.length) {
+                                    <p class="people-menu__title">Einladen zu</p>
+                                    @for (target of contact.can_add_to; track target.kind + target.id) {
+                                      <button type="button" class="people-menu__item" [disabled]="busy() !== null" (click)="inviteTo(contact, target)">
+                                        <app-icon [name]="area[target.kind].icon" />{{ target.title }}
+                                      </button>
+                                    }
+                                    <p class="people-menu__hint">{{ contact.name }} bekommt eine Einladung und entscheidet selbst. Bei Reisen zunächst „ansehen“, mehr Rechte vergibst du in der Reise.</p>
+                                  } @else {
+                                    <p class="people-menu__hint">
+                                      Gerade gibt es nichts, wozu du {{ contact.name }} einladen kannst – etwa eine kommende eigene Reise.
+                                    </p>
+                                    <a class="people-menu__item" routerLink="/reisen"><app-icon name="travel" />Zu den Reisen</a>
+                                  }
+                                </div>
+                              }
+                            </span>
+                            <span class="people-menu-wrap">
+                              <button
+                                type="button"
+                                class="people-icon-button"
+                                aria-haspopup="true"
+                                [attr.aria-expanded]="menu() === 'more-' + contact.id"
+                                [attr.data-menu-trigger]="'more-' + contact.id"
+                                [attr.aria-label]="'Weitere Aktionen für ' + contact.name"
+                                (click)="toggleMenu('more-' + contact.id, $event)"
+                              >
+                                <app-icon name="more" />
+                              </button>
+                              @if (menu() === 'more-' + contact.id) {
+                                <div class="people-menu people-menu--right" (click)="$event.stopPropagation()">
+                                  <button type="button" class="people-menu__item" [disabled]="busy() !== null" (click)="switchRelation(contact)">
+                                    <app-icon [name]="contact.relation === 'FAMILY' ? 'heart' : 'people'" />
+                                    Als {{ contact.relation === 'FAMILY' ? 'Freund:in' : 'Familie' }} markieren
+                                  </button>
+                                  <button type="button" class="people-menu__item people-menu__item--danger" (click)="askRemove(contact)">
+                                    <app-icon name="close" />Verbindung beenden
+                                  </button>
+                                </div>
+                              }
+                            </span>
+                          </span>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
+            }
+
+            @case ('groups') {
+              @for (group of [{ title: 'Familie', icon: 'people', list: family() }, { title: 'Freund:innen', icon: 'heart', list: friends() }]; track group.title) {
+                <section class="people-card" [attr.aria-label]="group.title">
+                  <div class="people-card__head">
+                    <h2><app-icon [name]="$any(group.icon)" class="people-card__icon" />{{ group.title }} <span class="people-count">{{ group.list.length }}</span></h2>
+                  </div>
+                  @if (group.list.length) {
+                    <ul class="people-rows">
+                      @for (contact of group.list; track contact.id) {
+                        <li class="people-row people-row--simple">
+                          <span class="people-avatar" [attr.data-tone]="tone(contact.name)" aria-hidden="true">{{ initial(contact.name) }}</span>
+                          <span class="people-text">
+                            <strong>{{ contact.name }}</strong>
+                            <span>{{ contact.email }}</span>
+                          </span>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="people-empty">Noch niemand in dieser Gruppe. Die Gruppe wählst du beim Einladen oder später über „…“.</p>
+                  }
+                </section>
+              }
+            }
+
+            @case ('shared') {
+              <section class="people-card" aria-labelledby="people-spaces">
+                <div class="people-card__head">
+                  <h2 id="people-spaces">Geteilte Bereiche <span class="people-count">{{ spaces().length }}</span></h2>
+                </div>
+                @if (spaces().length) {
+                  <ul class="people-rows">
+                    @for (space of spaces(); track space.kind + space.id) {
+                      <li class="people-row people-row--simple">
+                        <span class="people-area" [attr.data-kind]="space.kind" aria-hidden="true"><app-icon [name]="area[space.kind].icon" /></span>
+                        <span class="people-text">
+                          <strong>{{ space.title }}</strong>
+                          <span>{{ area[space.kind].label }} · mit {{ space.people.join(', ') }}</span>
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="people-empty">
+                    Du teilst noch nichts. Über „Teilen …“ bei einer Person lädst du sie zu deinem Haushalt oder einer deiner Reisen ein.
+                  </p>
+                }
+              </section>
+
+              @if (household(); as home) {
+                @if (home.household) {
+                  <section class="people-card" aria-labelledby="people-household">
+                    <div class="people-card__head">
+                      <h2 id="people-household"><app-icon name="household" class="people-card__icon" />{{ home.household.name }} <span class="people-count">{{ home.members.length }}</span></h2>
+                    </div>
+                    <ul class="people-rows">
+                      @for (member of home.members; track member.id) {
+                        <li class="people-row people-row--member">
+                          <span class="people-avatar" [attr.data-tone]="tone(member.name)" aria-hidden="true">{{ initial(member.name) }}</span>
+                          <span class="people-text">
+                            <strong>{{ member.name }}{{ member.is_self ? ' (Du)' : '' }}</strong>
+                            <span>{{ member.role_label }}</span>
+                          </span>
+                          @if (confirmMember() === member.id) {
+                            <span class="people-actions" role="group" [attr.aria-label]="member.is_self ? 'Haushalt verlassen?' : member.name + ' entfernen?'">
+                              <button type="button" class="people-button people-button--danger" [disabled]="busy() !== null" (click)="removeMember(member)">
+                                {{ member.is_self ? 'Ja, verlassen' : 'Ja, entfernen' }}
+                              </button>
+                              <button type="button" class="people-button people-button--ghost" (click)="confirmMember.set(null)">Abbrechen</button>
+                            </span>
+                          } @else if (member.can_remove) {
+                            <button type="button" class="people-button people-button--ghost" [attr.aria-label]="member.name + ' aus dem Haushalt entfernen'" (click)="confirmMember.set(member.id)">Entfernen</button>
+                          } @else if (member.is_self && home.can_leave) {
+                            <button type="button" class="people-button people-button--ghost" (click)="confirmMember.set(member.id)">Haushalt verlassen</button>
+                          }
+                        </li>
+                      }
+                    </ul>
+                    <p class="people-hint">
+                      Mitglieder sehen Aufgaben, Einkauf, Geräte und Verträge dieses Haushalts – nie die Finanzen, Organisation
+                      oder Reisen der anderen.
+                    </p>
+                  </section>
+                }
+              }
+            }
           }
-          <button type="submit" class="fam-button" [disabled]="busy() !== null">
-            {{ busy() === 'invite' ? 'Wird gesendet …' : 'Einladung senden' }}
-          </button>
-          <p class="fam-muted">Wir senden der Person eine E-Mail mit einem Link. Erst wenn sie annimmt, seid ihr verbunden.</p>
-        </form>
-      </section>
+        }
+      </div>
 
-      @if (family().length) {
-        <section class="fam-card" aria-labelledby="fam-family">
-          <h2 id="fam-family">Familie</h2>
-          <ng-container *ngTemplateOutlet="people; context: { $implicit: family() }" />
-        </section>
-      }
-      @if (friends().length) {
-        <section class="fam-card" aria-labelledby="fam-friends">
-          <h2 id="fam-friends">Freunde</h2>
-          <ng-container *ngTemplateOutlet="people; context: { $implicit: friends() }" />
-        </section>
-      }
-
-      @if (data()!.sent.length) {
-        <section class="fam-card" aria-labelledby="fam-sent">
-          <h2 id="fam-sent">Offene Einladungen</h2>
-          <ul class="fam-list">
-            @for (sent of data()!.sent; track sent.id) {
-              <li class="fam-row">
-                <span class="fam-avatar fam-avatar--pending" aria-hidden="true">{{ initial(sent.email) }}</span>
-                <span class="fam-text">
-                  <strong>{{ sent.email }}</strong>
-                  <span class="fam-muted">{{ label[sent.relation] }} · wartet auf Antwort bis {{ sent.expires_at | date: 'dd.MM.yyyy' }}</span>
-                </span>
-                <button type="button" class="fam-button fam-button--ghost" [disabled]="busy() !== null" [attr.aria-label]="'Einladung an ' + sent.email + ' zurückziehen'" (click)="cancel(sent.id)">
-                  Zurückziehen
-                </button>
-              </li>
+      <div class="people-side">
+        <section class="people-card" aria-labelledby="people-invite">
+          <h2 id="people-invite" class="people-card__title">
+            <span class="people-card__badge" aria-hidden="true"><app-icon name="user-plus" /></span>Person einladen
+          </h2>
+          <form class="people-form" (submit)="sendInvite($event)" novalidate>
+            <label class="people-field">
+              <span>E-Mail-Adresse</span>
+              <span class="people-input">
+                <app-icon name="mail" />
+                <input
+                  id="fam-email"
+                  name="email"
+                  type="email"
+                  autocomplete="off"
+                  placeholder="name@beispiel.de"
+                  [ngModel]="email()"
+                  (ngModelChange)="email.set($event)"
+                  [attr.aria-invalid]="error() ? 'true' : null"
+                  [attr.aria-describedby]="error() ? 'fam-error' : null"
+                />
+              </span>
+            </label>
+            <fieldset class="people-relation">
+              <legend>Die Person ist</legend>
+              <label class="people-choice" [class.is-on]="relation() === 'FAMILY'">
+                <input type="radio" name="relation" value="FAMILY" [checked]="relation() === 'FAMILY'" (change)="relation.set('FAMILY')" />
+                <app-icon name="people" />Familie
+              </label>
+              <label class="people-choice" [class.is-on]="relation() === 'FRIEND'">
+                <input type="radio" name="relation" value="FRIEND" [checked]="relation() === 'FRIEND'" (change)="relation.set('FRIEND')" />
+                <app-icon name="heart" />Freund:in
+              </label>
+            </fieldset>
+            @if (error()) {
+              <p id="fam-error" class="people-error" [appErrorNotice]="error()" [persistentError]="true">{{ error() }}</p>
             }
-          </ul>
+            <button type="submit" class="people-button people-button--wide" [disabled]="busy() !== null">
+              <app-icon name="send" />{{ busy() === 'invite' ? 'Wird gesendet …' : 'Einladung senden' }}
+            </button>
+            <p class="people-hint">
+              Die Person erhält eine E-Mail mit einem Link. Erst wenn sie annimmt, seid ihr verbunden – geteilt wird dabei
+              noch nichts.
+            </p>
+          </form>
         </section>
-      }
 
-      @if (isEmpty()) {
-        <p class="fam-muted fam-empty">
-          Noch niemand hier. Lade Menschen ein, mit denen du später Reisen planen oder einen Haushalt teilen möchtest.
-        </p>
-      }
-    }
+        <section class="people-card" aria-labelledby="people-faq">
+          <h2 id="people-faq" class="people-card__title people-card__title--small"><app-icon name="help" />Häufige Fragen</h2>
+          <div class="people-faq">
+            <details>
+              <summary>Was sieht die andere Person nach dem Einladen?<app-icon name="chevron-down" /></summary>
+              <p>Nach der Annahme seht ihr euch gegenseitig nur mit Namen und E-Mail-Adresse. Einträge aus deinen Bereichen sieht sie nicht.</p>
+            </details>
+            <details>
+              <summary>Welche Daten werden geteilt?<app-icon name="chevron-down" /></summary>
+              <p>
+                Nur was du ausdrücklich teilst: eine Reise oder dein Haushalt, zu dem du die Person einlädst – und erst, wenn sie
+                annimmt. Was sie dort darf, legt ihre Rolle fest. Finanzen, Organisation und andere Reisen bleiben privat.
+              </p>
+            </details>
+            <details>
+              <summary>Kann ich eine Einladung später zurückziehen?<app-icon name="chevron-down" /></summary>
+              <p>
+                Ja, solange sie offen ist: unter „Offene Einladungen“ mit „Zurückziehen“. Wird eine Einladung abgelehnt, bekommst du keine Meldung – dort steht dann still „Nicht angenommen“. Eine bestehende Verbindung beendest
+                du über „…“ › „Verbindung beenden“ – für beide Seiten.
+              </p>
+            </details>
+          </div>
+        </section>
+      </div>
+    </div>
   </main>
 </app-shell>
-
-<ng-template #people let-list>
-  <ul class="fam-list">
-    @for (contact of list; track contact.id) {
-      <li class="fam-row">
-        <span class="fam-avatar" aria-hidden="true">{{ initial(contact.name) }}</span>
-        <span class="fam-text">
-          <strong>{{ contact.name }}</strong>
-          <span class="fam-muted">{{ contact.email }}</span>
-        </span>
-        @if (confirmRemove() === contact.id) {
-          <span class="fam-actions">
-            <button type="button" class="fam-button fam-button--danger" [disabled]="busy() !== null" (click)="remove(contact)">Ja, beenden</button>
-            <button type="button" class="fam-button fam-button--ghost" (click)="confirmRemove.set(null)">Abbrechen</button>
-          </span>
-        } @else {
-          <button type="button" class="fam-button fam-button--ghost" [attr.aria-label]="'Verbindung zu ' + contact.name + ' beenden'" (click)="confirmRemove.set(contact.id)">
-            Entfernen
-          </button>
-        }
-      </li>
-    }
-  </ul>
-</ng-template>

@@ -8,6 +8,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
 import { AppDatePicker } from '../../shared/form/date-picker';
+import { todayIso } from '../../shared/form/date-utils';
 import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
 import { ModalForm } from '../../shared/form/modal-form';
@@ -16,6 +17,8 @@ import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { Modal } from '../../shared/modal/modal';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
 import { HomeCurrency } from '../../core/fx/home-currency';
+import { DEMO_MODE } from '../../core/demo-context';
+import { Invitation, InvitationsService } from '../../core/invitations/invitations.service';
 import { CURRENCY_OPTIONS, currencyForDestination } from '../../shared/currency/currencies';
 import { FxHint } from '../../shared/currency/fx-hint';
 import {
@@ -178,6 +181,11 @@ export class Reisen {
     { value: 'EDITOR', label: 'Bearbeiter' },
     { value: 'OWNER', label: 'Besitzer' },
   ];
+  /** Einladen geht nur mit diesen beiden Rollen — Besitzer:in wird man nie per Einladung (core/invitations.py). */
+  readonly inviteRoleOptions: SelectOption[] = [
+    { value: 'VIEWER', label: 'Betrachter' },
+    { value: 'EDITOR', label: 'Bearbeiter' },
+  ];
   readonly participantRoleLabels: Record<TripParticipant['role'], string> = {
     OWNER: 'Besitzer',
     EDITOR: 'Bearbeiter',
@@ -219,7 +227,15 @@ export class Reisen {
   });
   readonly titleError = computed(() => (this.tripTouched() && !this.tripValue().title.trim() ? 'Bitte gib der Reise einen Namen.' : ''));
   readonly destinationError = computed(() => (this.tripTouched() && !this.tripValue().destination.trim() ? 'Bitte gib ein Reiseziel an.' : ''));
-  readonly startError = computed(() => (this.tripTouched() && !this.tripValue().start_date ? 'Bitte wähle den ersten Reisetag.' : ''));
+  readonly tripToday = signal(todayIso());
+  readonly tripStartMin = computed(() => this.editTripId() ? '' : this.tripToday());
+  readonly tripEndMin = computed(() => this.tripValue().start_date || this.tripStartMin());
+  readonly startError = computed(() => {
+    if (!this.tripTouched()) return '';
+    const start = this.tripValue().start_date;
+    if (!start) return 'Bitte wähle den ersten Reisetag.';
+    return !this.editTripId() && start < this.tripToday() ? 'Der erste Reisetag darf nicht vor heute liegen.' : '';
+  });
   readonly endError = computed(() => {
     const v = this.tripValue();
     if (!this.tripTouched()) return '';
@@ -455,6 +471,7 @@ export class Reisen {
     control.setValue(order.filter((v) => next.includes(v)));
   }
   openTripEditor(trip?: Trip): void {
+    this.tripToday.set(todayIso());
     this.settingTripForm = true;
     this.tripForm.reset({
       title: trip?.title ?? '',
@@ -605,16 +622,30 @@ export class Reisen {
   readonly contactOptions = computed<SelectOption[]>(() => this.contacts().map((c) => ({ value: String(c.id), label: c.name })));
   readonly newParticipantContactId = signal<number | null>(null);
   readonly newParticipantContactValue = computed(() => (this.newParticipantContactId() !== null ? String(this.newParticipantContactId()) : ''));
-  readonly newParticipantRole = signal<TripParticipant['role']>('VIEWER');
+  readonly newParticipantRole = signal<'VIEWER' | 'EDITOR'>('VIEWER');
+  readonly participantsNotice = signal('');
+  private readonly invitations = inject(InvitationsService);
+  private readonly demoMode = inject(DEMO_MODE);
+  /** Nach „Annehmen“ in der Glocke sofort die Reiseliste neu laden — ohne Seiten-Reload. */
+  private readonly reloadOnJoin = effect(() => {
+    if (this.invitations.membershipVersion()) untracked(() => this.refreshTrips());
+  });
+  /** Offene Einladungen zu dieser Reise (dieselbe Quelle wie Glocke und Personen & Gruppen). */
+  readonly pendingInvites = computed(() => {
+    const tripId = this.participantsEditorTripId();
+    return this.invitations.sent().filter((i) => i.scope.type === 'TRIP' && i.scope.id === tripId);
+  });
 
   openParticipantsEditor(): void {
     const trip = this.selectedTrip();
     if (!trip) return;
     this.participantsEditorTripId.set(trip.id);
     this.participantsError.set('');
+    this.participantsNotice.set('');
     this.newParticipantContactId.set(null);
     this.newParticipantRole.set('VIEWER');
     if (trip.my_role !== 'OWNER') return;
+    if (!this.demoMode) this.invitations.refresh();
     this.api
       .contacts()
       .pipe(takeUntilDestroyed(this.destroy))
@@ -631,23 +662,30 @@ export class Reisen {
     const tripId = this.participantsEditorTripId();
     const contactId = this.newParticipantContactId();
     if (!tripId || contactId === null || this.participantsSaving()) return;
+    const name = this.contacts().find((c) => c.id === contactId)?.name ?? 'Die Person';
     this.participantsSaving.set(true);
     this.participantsError.set('');
+    this.participantsNotice.set('');
     this.api
-      .addParticipant(tripId, contactId, this.newParticipantRole())
+      .inviteParticipant(tripId, contactId, this.newParticipantRole())
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: () => {
           this.participantsSaving.set(false);
           this.newParticipantContactId.set(null);
           this.newParticipantRole.set('VIEWER');
-          this.refreshTrips();
+          this.participantsNotice.set(`Einladung gesendet. ${name} ist dabei, sobald ${name} annimmt.`);
+          if (!this.demoMode) this.invitations.refresh();
         },
-        error: () => {
+        error: (err: unknown) => {
           this.participantsSaving.set(false);
-          this.participantsError.set('Die Person konnte nicht hinzugefügt werden. Reist sie vielleicht schon mit?');
+          this.participantsError.set(InvitationsService.errorText(err));
         },
       });
+  }
+  revokeInvite(invitation: Invitation): void {
+    this.participantsNotice.set('');
+    this.invitations.revoke(invitation).pipe(takeUntilDestroyed(this.destroy)).subscribe();
   }
   changeParticipantRole(participant: TripParticipant, role: TripParticipant['role']): void {
     this.participantsError.set('');

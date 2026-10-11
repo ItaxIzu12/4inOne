@@ -101,9 +101,10 @@ SECTION_KEYWORDS: dict[str, tuple[str, ...]] = {
 
 
 def membership_for(user) -> HouseholdMembership | None:
-    """Die Mitgliedschaft im (aktuell einzigen) Haushalt der Person —
-    dieselbe .first()-Konvention wie in finanzen/views.py."""
-    return HouseholdMembership.objects.select_related('household').filter(user=user).order_by('id').first()
+    """Die Mitgliedschaft im aktiven Haushalt der Person (zuletzt beigetreten, siehe core/households.py)."""
+    from core.households import active_membership
+
+    return active_membership(user)
 
 
 def is_child_account(membership: HouseholdMembership | None) -> bool:

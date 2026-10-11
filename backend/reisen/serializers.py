@@ -99,6 +99,8 @@ class TripSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         start = attrs.get('start_date', getattr(self.instance, 'start_date', None))
         end = attrs.get('end_date', getattr(self.instance, 'end_date', None))
+        if self.instance is None and start and start < timezone.localdate():
+            raise serializers.ValidationError({'start_date': 'Der erste Reisetag darf nicht vor heute liegen.'})
         if start and end and end < start:
             raise serializers.ValidationError({'end_date': 'Das Ende darf nicht vor dem Beginn liegen.'})
         # Reisen V1: eine Reise braucht ein Ziel. Ältere Reisen ohne Ziel bleiben bearbeitbar, solange das Ziel

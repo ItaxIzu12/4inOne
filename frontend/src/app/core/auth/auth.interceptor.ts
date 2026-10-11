@@ -17,6 +17,7 @@ const PUBLIC_AUTH_URLS = [
   `${API_BASE_URL}/auth/register/`,
   `${API_BASE_URL}/auth/password-reset/request/`,
   `${API_BASE_URL}/auth/password-reset/confirm/`,
+  `${API_BASE_URL}/auth/email/verify/`,
 ];
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {

@@ -140,6 +140,53 @@ Abstand — nie nur über Farbe.
   Transaktion wird dabei nicht angelegt.“ / Einnahme „erscheint dann unter „Wiederkehrende Einnahmen“…“. Budget-Rechnung
   ergänzt um „− X € feste Ausgaben vorgemerkt“; Liste „Wiederkehrende Ausgaben“ zeigt je Posten den Status.
 
+- **Rückmeldung an Einladende (11.10.2026):** Annahmen erscheinen in der Glocke unter „Neu“ (Symbol
+  `check-circle` auf `--success-soft`, z. B. „Lena hat deine Einladung angenommen. Ihr seid jetzt verbunden.“,
+  „Ben ist jetzt bei „Berlin“ dabei.“) mit nächstem Schritt als Textlink („Etwas teilen“, „Zum Haushalt“, „Zur
+  Reise“); gelesene Meldungen in `--text-secondary`. Startseite: ungelesene Annahme als `.invite-hint--done`.
+  Ablehnungen werden nie gemeldet — in Personen & Gruppen still unter „Nicht angenommen“ (gedämpfte Zeilen,
+  14 Tage), Zähler „Offene Einladungen“ nur bei offenen.
+
+- **Kontaktanfragen in der App + E-Mail-Bestätigung (11.10.2026):** Glocke zeigt auch „Richard möchte dich als
+  Familie hinzufügen.“ (Symbol `user-plus` auf `--info-soft`, Meta „Kontakt · vor 2 Minuten“, Annehmen/Ablehnen).
+  Unbestätigte Adresse: Hinweisfläche `.bell-verify` (`--info-soft`) mit „Bestätigungs-Mail senden“; auf der
+  Startseite dieselbe ruhige Zeile wie die Einladung (`.invite-hint--quiet`, Symbol `mail`, Knopf „Mail senden“).
+  Neue Seite `/email-bestaetigen` im Stil von „Neues Passwort“ (zentrierte Karte, ohne App-Leisten). Lokal ohne
+  Mailserver erscheint nach „Mail senden“ „Entwicklungsmodus: …“ mit Link „Jetzt bestätigen“ / „Link öffnen und bestätigen“.
+
+- **Invitation System V1 (11.10.2026):** Neue Komponente `shared/notification-bell` ersetzt den leeren
+  „Benachrichtigungen“-Dialog der Shell: gleiche 44-px-Glocke, Zähler als Zahl in `--brand-primary` mit weißem Rand,
+  `aria-label` „Benachrichtigungen, 1 ungelesen“; Popover (`role=dialog`, Fokus auf erstes „Annehmen“, Escape und
+  Klick außerhalb schließen, Fokus zurück zur Glocke), 150 ms Einblenden, ohne Bewegung bei reduzierter Bewegung; am
+  Handy (≤ 600 px) fest unter der Kopfzeile mit 12 px Rand. Leer: „Keine neuen Benachrichtigungen.“ Startseite:
+  `.invite-hint` (52 px Zeile, Symbol `user-plus` auf `--info-soft`, „Ansehen →“). Personen & Gruppen: Einladungs-
+  zeilen mit Bereichssymbol (Haushalt Coral, Reise Blau), „Von Sophie · Haushalt · Mitglied“ bzw. „An Ben · … ·
+  Ausstehend“; offene eigene Einladung je Person als „Eingeladen · ausstehend“ (Uhr-Symbol); Haushaltskarte mit
+  Mitgliedern, „Entfernen“/„Haushalt verlassen“ mit Rückfrage. Haushalts-Einladungsdialog neu: Person (Auswahl aus
+  Kontakten), „Zu“ und „Rolle“ als Faktenliste, Hinweis, was geteilt wird; Tokens V3 statt alter Violett-Werte.
+  Gemeinsame Hilfsfunktion `shared/time-ago.ts`.
+
+- **Personen & Gruppen neu (11.10.2026, nach Vorlage):** Seitenkopf mit Untertitel und grüner Hinweis-Karte „Eine
+  Verbindung teilt noch keine Daten.“ (`--success-soft`, Schild-Symbol). Reiter Übersicht / Gruppen / Geteilte Bereiche
+  als umrandete 44-px-Felder mit Symbol — bewusste Ausnahme vom Unterstrich-Reiter der Fachbereiche, da diese Seite
+  keine Bereichsfarbe hat. Übersicht: „Offene Einladungen“ (erhaltene + gesendete, Zähler, „Alle anzeigen“ ab 3, Zeit
+  „vor 2 Stunden“), „Deine Personen“ (Suche ab 2 Personen; je Zeile Avatar in ruhiger Bereichsfläche, Beziehung, was
+  ihr teilt bzw. „Noch nichts geteilt“, „Teilen …“-Menü, „…“-Menü mit Beziehung umstellen / Verbindung beenden).
+  Rechte Spalte: „Person einladen“ (Feld mit Brief-Symbol, Familie/Freund:in als 48-px-Felder, breiter Primärknopf)
+  und „Häufige Fragen“ (`details`). Gruppen = Familie / Freund:innen; Geteilte Bereiche = Reisen und Haushalte mit
+  Personen. Neue Symbole `mail`, `send` im bestehenden `app-icon`. Backend: `contacts/` liefert je Kontakt `shared`
+  und `can_add_to`, Einladungen `created_at`. Haushalts-Einladungen an dich und echte Gruppen gibt es noch nicht —
+  deshalb nicht gezeigt.
+  Seitenbreite wie die Fachbereiche: max. 1280 px, zentriert, Ränder `--content-padding-x` (32 px), bis 1100 px
+  20 px, am Handy 16 px.
+
+- **Passwort zurücksetzen (11.10.2026, Pre-Beta-Audit):** „Passwort vergessen“ ruft jetzt das Backend auf und
+  zeigt danach immer dieselbe neutrale Bestätigung (Hinweisbox `.notice`, ersetzt den Stub-Hinweis). Neue Seite
+  `/passwort-zuruecksetzen` (Ziel des Mail-Links) mit drei Zuständen: Formular, „Passwort geändert“ mit „Zur
+  Anmeldung“, „Dieser Link funktioniert nicht mehr“ mit „Neuen Link anfordern“. Beide Seiten nutzen dieselbe
+  Karte und laufen wie Login ohne Kopfzeile/Bottom-Nav (`shell: 'bare'`). Button und Fokus von Violett
+  (`--color-violet-ink`) auf `--brand-primary` umgestellt, Radius `--radius-md`, 600, wie Login.
+
 - **Alte Marke entfernt (11.10.2026):** Beim Neuladen blitzte kurz die Marketing-Kopfzeile mit dem alten Kompass-Logo
   auf, weil `app.ts` sie zeigte, solange die erste Navigation (inkl. Anmeldeprüfung) noch lief. Kopfzeile, Footer
   und Bottom-Nav erscheinen jetzt erst nach der ersten Navigation. Kompass-Logo und -Name sind in Kopfzeile,
@@ -435,3 +482,5 @@ Demo und angemeldete Nutzer verwenden dasselbe Layout (`features/dashboard`). Au
 ## Finanz-Übersicht und gemeinsamer Kopfbereich
 
 Die Finanz-Übersicht verwendet kompakte Kennzahlenkarten für Monatsrest, Ausgaben und Einnahmen, eine Kategorienliste und darunter Buchungen sowie Sparziele. Die Budgetrechnung und Warnungen bleiben sichtbar; die übrigen Finanz-Reiter behalten ihr Layout. Alle AppShell-Seiten verwenden den gemeinsamen Such-/Datums-/Profilkopf. Außerhalb des Dashboards führt eine abgesendete Suche zum passenden persönlichen oder Demo-Dashboard. Die tatsächliche Header-Höhe bestimmt den Sticky-Abstand der Bereichsüberschriften.
+
+Reise-Erstellung (11.10.2026): bestehende Kalenderkomponente mit gesperrten Tagen vor heute für den Beginn und vor dem Beginn für das Ende. Eintägige Reisen möglich; vergangene Bestandsreisen bleiben bearbeitbar. Keine neuen Layout-/Farb-Tokens.

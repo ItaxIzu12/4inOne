@@ -79,7 +79,9 @@ def test_accepting_creates_a_mutual_connection_and_nothing_is_shared(mira, tom):
     assert ContactInvite.objects.get().accepted_at is not None
     # beide sehen sich mit Name und E-Mail — sonst nichts
     mine = client_for(mira).get(URL).data
-    assert mine['contacts'][0]['name'] == 'Tom' and set(mine['contacts'][0]) == {'id', 'name', 'email', 'relation', 'since'}
+    assert mine['contacts'][0]['name'] == 'Tom'
+    assert set(mine['contacts'][0]) == {'id', 'name', 'email', 'relation', 'since', 'shared', 'can_add_to', 'invited_to'}
+    assert mine['contacts'][0]['shared'] == [] and mine['contacts'][0]['can_add_to'] == []
     assert client_for(tom).get(URL).data['contacts'][0]['name'] == 'Mira'
     assert mine['sent'] == [] and client_for(tom).get(URL).data['received'] == []
     # ein zweites Mal annehmen geht nicht
@@ -160,3 +162,39 @@ def test_a_failing_mail_server_does_not_lose_the_invite(mira, monkeypatch):
     response = invite(mira, 'tom@example.com')
     assert response.status_code == 201 and response.data['email_sent'] is False
     assert ContactInvite.objects.count() == 1
+
+
+def _connect(a, b):
+    Contact.objects.create(owner=a, other=b, relation='FRIEND')
+    Contact.objects.create(owner=b, other=a, relation='FRIEND')
+
+
+def test_overview_shows_only_what_is_really_shared_and_where_i_may_add_someone(mira, tom):
+    from datetime import timedelta
+
+    from reisen.models import Trip, TripParticipant
+
+    _connect(mira, tom)
+    stranger = make_user('fremd@example.com', 'Fremd')
+    today = timezone.localdate()
+    together = Trip.objects.create(owner=mira, title='Berlin', start_date=today + timedelta(days=5), end_date=today + timedelta(days=7))
+    TripParticipant.objects.create(trip=together, user=tom, role='VIEWER')
+    upcoming = Trip.objects.create(owner=mira, title='Rom', start_date=today + timedelta(days=30), end_date=today + timedelta(days=32))
+    Trip.objects.create(owner=mira, title='Alt', start_date=today - timedelta(days=30), end_date=today - timedelta(days=28))
+    # Reise eines Fremden mit Tom: Mira darf davon nichts erfahren
+    Trip.objects.create(owner=stranger, title='Geheim', start_date=today, end_date=today)
+    TripParticipant.objects.create(trip=Trip.objects.get(title='Geheim'), user=tom, role='VIEWER')
+
+    row = client_for(mira).get(URL).data['contacts'][0]
+    assert row['shared'] == [{'kind': 'TRIP', 'id': together.pk, 'title': 'Berlin'}]
+    assert row['can_add_to'] == [{'kind': 'TRIP', 'id': upcoming.pk, 'title': 'Rom'}]
+
+    # Tom ist nur Betrachter: er sieht die gemeinsame Reise, darf aber niemanden zu Miras Reisen hinzufügen
+    toms = client_for(tom).get(URL).data['contacts'][0]
+    assert toms['shared'] == [{'kind': 'TRIP', 'id': together.pk, 'title': 'Berlin'}]
+    assert toms['can_add_to'] == []
+
+
+def test_invites_carry_their_creation_time(mira, tom):
+    invite(mira, 'tom@example.com')
+    assert client_for(mira).get(URL).data['sent'][0]['created_at'] is not None

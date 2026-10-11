@@ -48,7 +48,7 @@ def test_register_accepts_valid_password_and_hashes_with_configured_hasher():
     assert response.status_code == 201
     body = response.json()
     assert 'refresh' not in body  # nie im Body, siehe test_login_* unten
-    assert body['user'] == {'name': 'Valide', 'email': 'valide@example.com', 'home_currency': 'EUR'}
+    assert body['user'] == {'name': 'Valide', 'email': 'valide@example.com', 'home_currency': 'EUR', 'email_verified': False}
 
     # Prüft gegen PASSWORD_HASHERS[0] statt fest gegen "argon2" — aktuell
     # (siehe settings.py-TODO) steht dort vorübergehend PBKDF2 statt Argon2,
@@ -76,7 +76,7 @@ def test_login_sets_httponly_refresh_cookie_never_in_body():
     assert response.status_code == 200
     body = response.json()
     assert set(body.keys()) == {'access', 'user'}  # kein 'refresh' im Body
-    assert body['user'] == {'name': 'Test', 'email': 'cookie@example.com', 'home_currency': 'EUR'}
+    assert body['user'] == {'name': 'Test', 'email': 'cookie@example.com', 'home_currency': 'EUR', 'email_verified': False}
 
     cookie = response.cookies['refresh_token']
     assert cookie['httponly'] is True
@@ -125,6 +125,44 @@ def test_password_reset_response_identical_regardless_of_account_existence():
         {'email': 'gibt-es-nicht@example.com'},
         content_type='application/json',
     )
+
+    assert known.status_code == unknown.status_code == 200
+    assert known.json() == unknown.json()
+
+
+@pytest.mark.django_db
+def test_password_reset_sends_one_time_link_and_link_sets_new_password(settings):
+    from django.core import mail
+
+    settings.FRONTEND_URL = 'https://app.example'
+    get_user_model().objects.create_user(username='reset@example.com', email='reset@example.com', password='Alt12345!x')
+
+    Client().post('/api/v1/auth/password-reset/request/', {'email': 'RESET@example.com'}, content_type='application/json')
+    Client().post('/api/v1/auth/password-reset/request/', {'email': 'niemand@example.com'}, content_type='application/json')
+
+    assert len(mail.outbox) == 1
+    assert mail.outbox[0].to == ['reset@example.com']
+    token = PasswordResetToken.objects.get(user__email='reset@example.com').token
+    assert f'https://app.example/passwort-zuruecksetzen?token={token}' in mail.outbox[0].body
+
+    confirm = lambda: Client().post(
+        '/api/v1/auth/password-reset/confirm/', {'token': token, 'password': 'Neu98765!y'}, content_type='application/json'
+    )
+    assert confirm().status_code == 200
+    assert get_user_model().objects.get(email='reset@example.com').check_password('Neu98765!y')
+    assert confirm().status_code == 400
+
+
+@pytest.mark.django_db
+def test_password_reset_mail_failure_keeps_neutral_response(monkeypatch):
+    get_user_model().objects.create_user(username='kaputt@example.com', email='kaputt@example.com', password='Alt12345!x')
+
+    def broken(*args, **kwargs):
+        raise OSError('SMTP nicht erreichbar')
+
+    monkeypatch.setattr('core.auth_views.send_mail', broken)
+    known = Client().post('/api/v1/auth/password-reset/request/', {'email': 'kaputt@example.com'}, content_type='application/json')
+    unknown = Client().post('/api/v1/auth/password-reset/request/', {'email': 'fremd@example.com'}, content_type='application/json')
 
     assert known.status_code == unknown.status_code == 200
     assert known.json() == unknown.json()

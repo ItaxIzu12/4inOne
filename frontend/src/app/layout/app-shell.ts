@@ -13,11 +13,11 @@ import { IconLogout } from '../shared/icons/icon-logout';
 import { IconProfile } from '../shared/icons/icon-profile';
 import { IconSettings } from '../shared/icons/icon-settings';
 import { IconTwoFactor } from '../shared/icons/icon-two-factor';
-import { Modal } from '../shared/modal/modal';
+import { NotificationBell } from '../shared/notification-bell/notification-bell';
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [ErrorNoticeDirective, RouterLink, RouterLinkActive, BackToTop, Brand, AppIcon, Modal, IconInfo, IconLegal, IconLogout, IconProfile, IconSettings, IconTwoFactor],
+  imports: [ErrorNoticeDirective, RouterLink, RouterLinkActive, BackToTop, Brand, AppIcon, NotificationBell, IconInfo, IconLegal, IconLogout, IconProfile, IconSettings, IconTwoFactor],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })
@@ -112,16 +112,12 @@ export class AppShell {
     if (this.dashboardHeader() || !value.trim()) return;
     void this.router.navigate([this.links()[0].path], { queryParams: { q: value.trim() } });
   }
-  readonly panel = signal('');
   readonly menuOpen = signal(false);
   private readonly trigger = viewChild<ElementRef<HTMLButtonElement>>('trigger');
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
   readonly logoutError = signal('');
   readonly busy = signal(false);
-  close() {
-    this.panel.set('');
-  }
   toggleMenu() {
     if (this.menuOpen()) return this.closeMenu(true);
     this.logoutError.set('');
@@ -167,7 +163,6 @@ export class AppShell {
       next: () => {
         this.busy.set(false);
         this.closeMenu();
-        this.close();
         this.router.navigateByUrl('/', { onSameUrlNavigation: 'reload', replaceUrl: true });
       },
       error: () => {

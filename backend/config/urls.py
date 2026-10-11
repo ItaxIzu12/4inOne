@@ -22,6 +22,7 @@ from connections.views import TodayOverviewView
 from finanzen.views import OnboardingStatusView
 from core.onboarding_views import OnboardingProfileView
 from core.fx_views import ExchangeRatesView
+from core.invitation_urls import invitation_urlpatterns, notification_urlpatterns
 
 urlpatterns = [
     path('api/v1/onboarding/profile/', OnboardingProfileView.as_view(), name='onboarding-profile'),
@@ -37,6 +38,8 @@ urlpatterns = [
     path('api/v1/finanzen/', include('finanzen.urls')),
     path('api/v1/household/', include('core.household_urls')),
     path('api/v1/contacts/', include('core.contact_urls')),
+    path('api/v1/invitations/', include(invitation_urlpatterns)),
+    path('api/v1/notifications/', include(notification_urlpatterns)),
     path('api/v1/organisation/', include('organisation.urls')),
     path('api/v1/reisen/', include('reisen.urls')),
     path('api/v1/connections/', include('connections.urls')),

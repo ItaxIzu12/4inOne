@@ -1,0 +1,36 @@
+<main class="reset-page">
+  <div class="reset-card">
+    <a class="reset-card__brand" routerLink="/" aria-label="4inOne — zum Start">
+      <app-brand />
+    </a>
+
+    @switch (state()) {
+      @case ('checking') {
+        <div class="auth-intro" role="status">
+          <h1>E-Mail-Adresse wird bestätigt …</h1>
+        </div>
+      }
+      @case ('done') {
+        <div class="auth-intro" role="status">
+          <h1>E-Mail-Adresse bestätigt</h1>
+          <p class="lede">Einladungen anderer Personen erscheinen ab jetzt in der Glocke und auf deiner Startseite.</p>
+        </div>
+        @if (auth.isAuthenticated()) {
+          <a class="submit-button" routerLink="/">Zur Startseite</a>
+        } @else {
+          <a class="submit-button" routerLink="/login">Zur Anmeldung</a>
+        }
+      }
+      @case ('invalid') {
+        <div class="auth-intro">
+          <h1>Dieser Link funktioniert nicht mehr</h1>
+          <p class="lede">
+            Bestätigungslinks gelten 3 Tage. Melde dich an und fordere über die Glocke oder die Startseite eine neue
+            Bestätigungs-Mail an.
+          </p>
+        </div>
+        <a class="submit-button" routerLink="/login">Zur Anmeldung</a>
+      }
+    }
+  </div>
+</main>

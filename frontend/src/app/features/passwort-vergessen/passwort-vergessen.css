@@ -59,11 +59,12 @@
 }
 .field input:focus-visible {
   outline: none;
-  border-color: var(--color-violet-ink);
-  box-shadow: var(--shadow-focus);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 22%, transparent);
 }
 .field input[aria-invalid='true'] { border-color: var(--color-danger-coral); }
 
+.field-hint { font-size: 14px; color: var(--color-slate-violet); margin: 0; }
 .field-error { font-size: 14px; color: var(--color-danger-coral); font-weight: 600; margin: 0; }
 
 .submit-button {
@@ -72,16 +73,17 @@
   justify-content: center;
   gap: var(--space-2);
   min-height: 48px;
-  border-radius: var(--radius-buttons);
+  border-radius: var(--radius-md);
   border: none;
-  background: var(--color-violet-ink);
+  background: var(--brand-primary);
   color: #fff;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
   transition: background-color 0.15s ease, opacity 0.15s ease;
 }
-.submit-button:hover:not(:disabled) { background: var(--accent-hover); }
+.submit-button:hover:not(:disabled) { filter: brightness(0.92); }
 .submit-button:disabled { opacity: 0.75; cursor: default; }
 
 .spinner {
@@ -95,18 +97,18 @@
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 1.4s; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.stub-notice {
+.notice {
   display: flex;
   align-items: flex-start;
   gap: var(--space-10);
-  background: var(--color-lavender-mist);
+  background: color-mix(in srgb, var(--brand-primary) 8%, white);
   color: var(--color-slate-violet);
   border-radius: var(--radius-inputs);
   padding: var(--space-16);
   font-size: 14px;
 }
-.stub-notice svg { color: var(--color-violet-ink); flex-shrink: 0; margin-top: 1px; }
-.stub-notice p { margin: 0; color: inherit; }
+.notice svg { color: var(--brand-primary); flex-shrink: 0; margin-top: 1px; }
+.notice p { margin: 0; color: inherit; }
 
 .back-link {
   align-self: center;
@@ -118,4 +120,4 @@
   display: inline-flex;
   align-items: center;
 }
-.back-link:hover { color: var(--color-violet-ink); }
+.back-link:hover { color: var(--brand-primary); }

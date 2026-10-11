@@ -1,0 +1,262 @@
+:host {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Gleiche Maße wie die bisherige Glocke (.icon-button in app-shell.scss) */
+.bell-trigger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #e1e7f0;
+  border-radius: 50%;
+  background: #fff;
+  color: #1f2a44;
+  cursor: pointer;
+}
+.bell-trigger:hover,
+.bell-trigger[aria-expanded='true'] {
+  border-color: #c9d5e8;
+  background: #fbfcfe;
+}
+.bell-trigger app-icon {
+  width: 21px;
+  height: 21px;
+}
+/* Dezenter Zähler: Zahl statt Punkt (ohne Farbe lesbar), Marke statt Alarmrot */
+.bell-count {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 2px solid #fff;
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+  animation: bell-count-in 180ms ease-out;
+}
+@keyframes bell-count-in {
+  from { opacity: 0; transform: scale(0.6); }
+}
+
+.bell-panel {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  display: grid;
+  gap: var(--space-3);
+  width: 380px;
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-elevated);
+  box-shadow: 0 16px 40px rgba(27, 42, 68, 0.16);
+  text-align: left;
+  animation: bell-panel-in 150ms ease-out;
+}
+@keyframes bell-panel-in {
+  from { opacity: 0; transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bell-panel,
+  .bell-count { animation: none; }
+}
+.bell-panel p {
+  margin: 0;
+}
+.bell-panel__title {
+  margin: 0;
+  font-size: var(--fs-card-heading);
+  font-weight: var(--fw-semibold);
+}
+.bell-panel__title:focus {
+  outline: none;
+}
+.bell-panel__title:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.bell-section {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: var(--fw-semibold);
+}
+.bell-message {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: var(--fs-secondary);
+}
+.bell-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.bell-item {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+.bell-item + .bell-item {
+  border-top: 1px solid var(--border-subtle);
+}
+.bell-item__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--household-soft);
+  color: #b8432a;
+}
+.bell-item__icon[data-scope='CONTACT'] {
+  background: var(--info-soft);
+  color: var(--brand-primary);
+}
+.bell-item__icon[data-scope='DONE'] {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.bell-item--seen .bell-item__text {
+  color: var(--text-secondary);
+}
+.bell-next {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  color: var(--brand-primary);
+  font-size: var(--fs-secondary);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}
+.bell-next app-icon {
+  width: 16px;
+  height: 16px;
+}
+.bell-next:hover {
+  text-decoration: underline;
+}
+.bell-item__icon[data-scope='TRIP'] {
+  background: var(--travel-soft);
+  color: #246db8;
+}
+.bell-item__icon app-icon {
+  width: 20px;
+  height: 20px;
+}
+.bell-item__body {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.bell-item__text {
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  line-height: 1.45;
+}
+.bell-item__text strong {
+  font-weight: var(--fw-semibold);
+}
+.bell-item__meta {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.bell-item__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.bell-accept,
+.bell-decline {
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--brand-primary);
+  border-radius: var(--radius-md);
+  background: var(--brand-primary);
+  color: #fff;
+  font-size: var(--fs-button);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+.bell-decline {
+  border-color: var(--border-default);
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+.bell-accept:hover:not(:disabled) {
+  filter: brightness(0.93);
+}
+.bell-decline:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.bell-accept:disabled,
+.bell-decline:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.bell-verify {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--info-soft);
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  line-height: 1.45;
+}
+.bell-verify__link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+.bell-verify__done {
+  color: var(--text-secondary);
+}
+.bell-empty {
+  padding: var(--space-2) 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+}
+.bell-footer {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--brand-primary);
+  font-size: var(--fs-secondary);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}
+.bell-footer:hover {
+  text-decoration: underline;
+}
+
+/* Handy: volle Breite unter der Kopfzeile, nie außerhalb des Bildschirms */
+@media (max-width: 600px) {
+  .bell-panel {
+    position: fixed;
+    top: calc(var(--shell-header-height, 64px) + var(--space-2));
+    right: var(--space-3);
+    left: var(--space-3);
+    width: auto;
+    max-height: calc(100dvh - var(--shell-header-height, 64px) - 96px);
+  }
+}

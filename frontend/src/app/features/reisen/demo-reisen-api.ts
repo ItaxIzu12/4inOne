@@ -430,24 +430,14 @@ export class DemoReisenApi {
   participants(tripId: number): Observable<TripParticipant[]> {
     return of(this.participantList.filter((p) => p.trip === tripId).map((p) => ({ ...p })));
   }
-  addParticipant(tripId: number, contactId: number, role: TripParticipant['role']): Observable<TripParticipant> {
+  /** Demo: eine Einladung wird nur bestätigt — angenommen wird sie hier nie (es gibt kein zweites Konto). */
+  inviteParticipant(tripId: number, contactId: number, _role: 'VIEWER' | 'EDITOR'): Observable<unknown> {
     const contact = DEMO_CONTACTS.find((c) => c.id === contactId);
     if (!contact) return throwError(() => ({ status: 400 }));
-    // Wie das Backend (UniqueConstraint trip+user): dieselbe Person kann nicht doppelt Teilnehmer werden.
     if (this.participantList.some((p) => p.trip === tripId && p.user === contact.id)) {
-      return throwError(() => ({ status: 400 }));
+      return throwError(() => ({ status: 400, error: { contact_id: [`${contact.name} ist bereits dabei.`] } }));
     }
-    const created: TripParticipant = {
-      id: this.nextId++,
-      trip: tripId,
-      user: contact.id,
-      display_name: contact.name,
-      is_self: false,
-      role,
-      added_at: new Date().toISOString(),
-    };
-    this.participantList.push(created);
-    return of(created);
+    return of(null);
   }
   updateParticipantRole(id: number, role: TripParticipant['role']): Observable<TripParticipant> {
     const index = this.participantList.findIndex((p) => p.id === id);

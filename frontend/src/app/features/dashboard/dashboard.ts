@@ -1,5 +1,7 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { DEMO_MODE } from '../../core/demo-context';
+import { InvitationsService, acceptedMessage } from '../../core/invitations/invitations.service';
+import { devLinkPath } from '../../shared/dev-link';
 import {
   PrivateFinanceApi,
   FinanceSummary,
@@ -148,6 +150,26 @@ export class Dashboard {
   private router = inject(Router);
   private destroy = inject(DestroyRef);
   readonly demo = inject(DEMO_MODE);
+  readonly invitations = inject(InvitationsService);
+  /** Jüngste ungelesene Meldung „… hat angenommen“ — als ruhige Zeile mit dem nächsten Schritt. */
+  readonly freshAcceptance = computed(() => {
+    const note = this.invitations.accepted().find((n) => !n.read);
+    return note ? acceptedMessage(note) : null;
+  });
+  readonly emailUnverified = computed(() => this.auth.currentUser()?.email_verified === false);
+  readonly verifyMail = signal<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  /** Nur lokal: Bestätigungslink direkt, weil keine echte Mail verschickt wird. */
+  readonly verifyDevLink = signal<string | null>(null);
+  resendVerification(): void {
+    this.verifyMail.set('sending');
+    this.auth.resendVerification().subscribe({
+      next: (res) => {
+        this.verifyDevLink.set(devLinkPath(res.dev_link));
+        this.verifyMail.set('sent');
+      },
+      error: () => this.verifyMail.set('error'),
+    });
+  }
   // Suchbegriff, den die globale Kopfzeile von einer anderen Seite mitbringt (?q=).
   readonly boardQuery = signal(inject(ActivatedRoute).snapshot.queryParamMap.get('q') ?? '');
   readonly live = computed(() => this.auth.isAuthenticated() && !this.demo);

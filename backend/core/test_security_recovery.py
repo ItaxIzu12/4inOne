@@ -9,7 +9,7 @@ from django.test import Client
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from core.models import Contact, ContactInvite, Household, HouseholdInvite, HouseholdMembership, PasswordResetToken, UserSession
+from core.models import Contact, ContactInvite, Household, HouseholdMembership, Invitation, PasswordResetToken, UserSession
 from organisation.models import PersonalFile
 
 pytestmark = pytest.mark.django_db
@@ -39,7 +39,7 @@ def test_claiming_an_email_does_not_reveal_pending_invitation_tokens():
     response = client_for(claimed).get('/api/v1/contacts/')
     assert response.status_code == 200
     assert response.data['received'] == []
-    assert client_for(sender).get('/api/v1/contacts/').data['sent'][0].keys() == {'id', 'email', 'relation', 'expires_at'}
+    assert client_for(sender).get('/api/v1/contacts/').data['sent'][0].keys() == {'id', 'email', 'relation', 'expires_at', 'created_at'}
     assert client_for(claimed).get('/api/v1/contacts/invites/guessed-link/').status_code == 404
 
 
@@ -127,11 +127,17 @@ def test_password_claim_rejects_even_a_token_not_yet_blacklisted():
 @pytest.mark.parametrize('invited_role', HouseholdMembership.Role.values)
 def test_non_admin_cannot_issue_any_household_invitation(role, invited_role):
     person = user('member@example.com')
+    friend = user('friend@example.com')
+    contact = Contact.objects.create(owner=person, other=friend)
     household = Household.objects.create(name='Home')
     HouseholdMembership.objects.create(user=person, household=household, role=role)
-    response = client_for(person).post('/api/v1/household/invite/', {'email': 'new@example.com', 'role': invited_role}, format='json')
-    assert response.status_code == 403
-    assert not HouseholdInvite.objects.exists()
+    response = client_for(person).post(
+        '/api/v1/invitations/',
+        {'contact_id': contact.pk, 'scope_type': 'HOUSEHOLD', 'scope_id': household.pk, 'role': invited_role},
+        format='json',
+    )
+    assert response.status_code in (400, 404)
+    assert not Invitation.objects.exists()
 
 
 def stored_file(person, tmp_path, monkeypatch):

@@ -59,14 +59,7 @@
         <span class="dashboard-date__text"><small>{{ todayWeekday }}</small><b>{{ todayDate }}</b></span>
       </time>
       <div class="profile">
-        <button
-          type="button"
-          class="icon-button"
-          aria-label="Benachrichtigungen öffnen"
-          (click)="panel.set('Benachrichtigungen')"
-        >
-          <app-icon name="bell" /></button
-        >
+        <app-notification-bell [demo]="isDemoRoute()" />
         <div class="account">
           <button
             #trigger
@@ -138,13 +131,3 @@
     >
   }
 </nav>
-<app-modal [open]="panel() !== ''" labelledBy="shell-dialog-title" (closed)="close()"
-  ><h2 id="shell-dialog-title">{{ panel() }}</h2>
-  <div class="dialog-body">
-    @switch (panel()) {
-      @case ('Benachrichtigungen') {
-        <p>Du hast noch keine Benachrichtigungen.</p>
-      }
-    }
-  </div></app-modal
->

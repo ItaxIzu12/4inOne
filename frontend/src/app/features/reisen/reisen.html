@@ -177,10 +177,10 @@
     </app-field>
     <div class="field-row">
       <app-field label="Erster Tag" [error]="startError()">
-        <app-date-picker mode="date" formControlName="start_date" />
+        <app-date-picker mode="date" formControlName="start_date" [min]="tripStartMin()" />
       </app-field>
       <app-field label="Letzter Tag" [error]="endError()">
-        <app-date-picker mode="date" formControlName="end_date" [min]="tripForm.controls.start_date.value" />
+        <app-date-picker mode="date" formControlName="end_date" [min]="tripEndMin()" />
       </app-field>
     </div>
     @if (editTripId()) {
@@ -437,17 +437,35 @@
     </ul>
 
     @if (canManageParticipants()) {
-      <h3>Teilnehmer hinzufügen</h3>
+      @if (pendingInvites().length) {
+        <h3>Offene Einladungen</h3>
+        <ul class="list">
+          @for (inv of pendingInvites(); track inv.id) {
+            <li class="row participant-row">
+              <span class="row__main">
+                <span class="row__title">{{ inv.invitee?.display_name }}</span>
+                <span class="row__meta">{{ inv.role_label }} · Ausstehend</span>
+              </span>
+              <button type="button" class="btn-link" [attr.aria-label]="'Einladung an ' + inv.invitee?.display_name + ' zurückziehen'" (click)="revokeInvite(inv)">Zurückziehen</button>
+            </li>
+          }
+        </ul>
+      }
+      <h3>Person einladen</h3>
+      @if (participantsNotice()) {
+        <p class="muted small" role="status">{{ participantsNotice() }}</p>
+      }
       @if (!contacts().length) {
-        <p class="muted small">Du hast noch keine Kontakte zum Hinzufügen. Lege zuerst eine Verbindung unter Personen &amp; Gruppen an.</p>
+        <p class="muted small">Du hast noch keine Kontakte zum Einladen. Lege zuerst eine Verbindung unter Personen &amp; Gruppen an.</p>
       } @else {
         <form class="add-form" (submit)="$event.preventDefault(); addParticipant()">
           <span id="participant-contact-label" class="sr-only">Person</span>
           <app-select ariaLabelledby="participant-contact-label" [options]="contactOptions()" [value]="newParticipantContactValue()" (valueChange)="newParticipantContactId.set(+$event)" />
           <span id="participant-role-label" class="sr-only">Rolle</span>
-          <app-select ariaLabelledby="participant-role-label" [options]="participantRoleOptions" [value]="newParticipantRole()" (valueChange)="newParticipantRole.set($any($event))" />
-          <button type="submit" class="btn-primary" [disabled]="newParticipantContactId() === null || participantsSaving()">Hinzufügen</button>
+          <app-select ariaLabelledby="participant-role-label" [options]="inviteRoleOptions" [value]="newParticipantRole()" (valueChange)="newParticipantRole.set($any($event))" />
+          <button type="submit" class="btn-primary" [disabled]="newParticipantContactId() === null || participantsSaving()">Einladen</button>
         </form>
+        <p class="muted small">Die Person wird erst Teilnehmer, wenn sie die Einladung annimmt.</p>
       }
     }
   </div>

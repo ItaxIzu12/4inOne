@@ -1,3 +1,4 @@
+from core.email_verification import EmailResendView, EmailVerifyView
 from django.urls import path
 
 from core.auth_views import (
@@ -22,6 +23,8 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='auth-logout'),
     path('password-reset/request/', PasswordResetRequestView.as_view(), name='auth-password-reset-request'),
     path('password-reset/confirm/', PasswordResetConfirmView.as_view(), name='auth-password-reset-confirm'),
+    path('email/verify/', EmailVerifyView.as_view(), name='auth-email-verify'),
+    path('email/resend/', EmailResendView.as_view(), name='auth-email-resend'),
     path('me/', ProfileView.as_view(), name='auth-me'),
     path('sessions/', SessionListView.as_view(), name='auth-sessions'),
     path('sessions/<str:sid>/', SessionDetailView.as_view(), name='auth-session-detail'),

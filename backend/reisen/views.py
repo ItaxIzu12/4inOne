@@ -206,7 +206,8 @@ class TripParticipantViewSet(PrivateResponseMixin, viewsets.ModelViewSet):
     serializer_class = TripParticipantSerializer
     permission_classes = [IsAuthenticated, TripParticipantManagePermission]
     pagination_class = None
-    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+    # Kein POST: Teilnehmer entsteht nur, wenn die Person eine Einladung annimmt (core/invitations.py).
+    http_method_names = ['get', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         queryset = TripParticipant.objects.filter(

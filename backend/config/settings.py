@@ -258,6 +258,8 @@ REST_FRAMEWORK = {
         'register': f"{env.int('RATE_LIMIT_REGISTER', default=3)}/hour",
         'login': f"{env.int('RATE_LIMIT_LOGIN', default=5)}/min",
         'password_reset': f"{env.int('RATE_LIMIT_PASSWORD_RESET', default=5)}/hour",
+        'email_verify': f"{env.int('RATE_LIMIT_EMAIL_VERIFY', default=20)}/hour",
+        'email_verify_resend': f"{env.int('RATE_LIMIT_EMAIL_VERIFY_RESEND', default=3)}/hour",
         # Die Zahl kommt aus RATE_LIMIT_MFA_VERIFY — der '/min'-Teil des
         # Strings dient nur der Anzeige/DRF-Zahlen-Extraktion; die
         # tatsächliche Regel ist "N Versuche pro 5 Minuten" mit einem
@@ -269,7 +271,7 @@ REST_FRAMEWORK = {
         # (core/household_views.py) — mehrere Mitglieder desselben Haushalts
         # teilen sich das Limit, sonst ließe es sich durch Rollenwechsel/
         # mehrere Admin-Konten umgehen.
-        'household_invite': f"{env.int('RATE_LIMIT_HOUSEHOLD_INVITE', default=10)}/hour",
+        'invitation': f"{env.int('RATE_LIMIT_INVITATION', default=30)}/hour",
         # Einladungen zu Familie & Freunde, pro Nutzer (core/contact_views.py).
         'contact_invite': f"{env.int('RATE_LIMIT_CONTACT_INVITE', default=10)}/hour",
         # Schutz vor einem Frontend-Bug (z. B. einer Endlosschleife), der
@@ -404,8 +406,6 @@ if not DEBUG:
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
-# TODO (Backend, siehe ARCHITEKTUR.md §3.6): echten Mail-Versand konfigurieren,
-# sobald der Passwort-Reset-Flow den Versand tatsächlich auslöst.
 # Ohne EMAIL_HOST (lokal) landen Mails in der Konsole des Servers; mit EMAIL_HOST (Produktion) geht es per SMTP.
 # Zugangsdaten kommen ausschließlich aus der Umgebung: EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD,
 # EMAIL_USE_TLS.

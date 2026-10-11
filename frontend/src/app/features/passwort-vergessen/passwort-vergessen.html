@@ -41,14 +41,16 @@
     </form>
 
     @if (submitted()) {
-      <div class="stub-notice" role="status">
+      <div class="notice" role="status">
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="11"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         <p>
-          Diese Funktion ist noch nicht mit dem Backend verbunden. Sobald sie es ist, bekommst du
-          unabhängig davon, ob zu dieser Adresse ein Konto existiert, dieselbe Antwort &mdash; aus
-          Sicherheitsgründen.
+          Falls ein Konto mit dieser E-Mail-Adresse existiert, haben wir dir einen Link geschickt. Er gilt
+          30 Minuten. Schau auch im Spam-Ordner nach.
         </p>
       </div>
+    }
+    @if (error(); as message) {
+      <p class="field-error" role="alert">{{ message }}</p>
     }
 
     <a class="back-link" routerLink="/login">← Zurück zur Anmeldung</a>

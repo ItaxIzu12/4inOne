@@ -8,6 +8,20 @@ Die lokale Anwendung hat eine belastbare funktionale Grundlage. Für externe Kon
 
 **P0: kein bestätigter Befund. P1: drei bestätigte Freigabeblocker.** Das bedeutet nicht, dass ein produktiver Server bereits sicher geprüft wurde. Es wurde kein öffentliches Beta-Deployment mit HTTPS, tatsächlichem Mailanbieter, Proxy und produktiver Datenbank untersucht.
 
+### Nachtrag 11.10.2026 — zweiter Durchgang (Claude Code) und Behebung
+
+- **P1-01 behoben:** `PasswordResetRequestView` verschickt den Link `${FRONTEND_URL}/passwort-zuruecksetzen?token=…`
+  (Mailfehler werden nur geloggt, Antwort bleibt neutral). „Passwort vergessen“ ruft die API auf; neue Seite
+  `/passwort-zuruecksetzen` setzt das neue Passwort. End-to-end gegen eine isolierte Audit-Datenbank geprüft:
+  Anfrage → Mail (Konsole) → neues Passwort → Anmeldung → zweite Nutzung des Links abgelehnt. Tests:
+  `core/test_auth.py` (Versand, Einmal-Nutzung, Mailfehler), Unit-Specs beider Seiten, Axe-Check der neuen Seite.
+- **P1-02 behoben (Mechanik):** `src/environments/` + `fileReplacements`. Entwicklung bleibt `http://localhost:8000`,
+  der Produktions-Build nutzt standardmäßig die Adresse der Seite (Reverse Proxy leitet `/api/` weiter); eine eigene
+  API-Adresse wird in `environment.production.ts` eingetragen. Der Build enthält kein `localhost:8000` mehr. Die
+  Deployment-Topologie selbst (ARCHITEKTUR.md §3.10) ist weiterhin zu entscheiden und mit HTTPS zu testen.
+- **P1-03 offen:** Impressum/Datenschutz brauchen die echten Angaben der verantwortlichen Person; nicht erfunden.
+- Beta Ready bleibt **NO**, bis P1-03 erledigt und ein echtes Deployment (HTTPS, Mailanbieter, Proxy) geprüft ist.
+
 ## Prüfverfahren und Nachweise
 
 - Django: **814 Tests bestanden**, 295,60 Sekunden.

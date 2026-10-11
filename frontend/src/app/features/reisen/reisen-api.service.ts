@@ -240,8 +240,9 @@ export class ReisenApi {
       params: new HttpParams().set('trip', tripId),
     });
   }
-  addParticipant(tripId: number, contactId: number, role: TripParticipant['role']) {
-    return this.http.post<TripParticipant>(`${this.base}/participants/`, { trip: tripId, contact_id: contactId, role });
+  /** Einladung statt direktem Hinzufügen: Teilnehmer wird die Person erst, wenn sie annimmt (core/invitations.py). */
+  inviteParticipant(tripId: number, contactId: number, role: 'VIEWER' | 'EDITOR') {
+    return this.http.post<unknown>(`${API_BASE_URL}/invitations/`, { contact_id: contactId, scope_type: 'TRIP', scope_id: tripId, role });
   }
   updateParticipantRole(id: number, role: TripParticipant['role']) {
     return this.http.patch<TripParticipant>(`${this.base}/participants/${id}/`, { role });

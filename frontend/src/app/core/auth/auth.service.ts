@@ -8,6 +8,8 @@ export interface AuthUser {
   email: string;
   /** Heimatwährung für Umrechnungen (Einstellungen → Profil); fehlt bei älteren Antworten → EUR. */
   home_currency?: string;
+  /** Erst mit bestätigter E-Mail-Adresse erscheinen Kontakt-Einladungen in der App (core/email_verification.py). */
+  email_verified?: boolean;
 }
 
 /** Ein angemeldetes Gerät (siehe Einstellungen → Aktive Sitzungen). */
@@ -128,6 +130,21 @@ export class AuthService {
       token,
       password,
     });
+  }
+
+  /** Aktuelle Kontodaten neu laden (z. B. nach der E-Mail-Bestätigung). */
+  reloadProfile(): Observable<AuthUser> {
+    return this.http.get<AuthUser>(`${API_BASE_URL}/auth/me/`).pipe(tap((user) => this._currentUser.set(user)));
+  }
+
+  /** E-Mail-Adresse bestätigen — der Link aus der Mail ist der Nachweis, eine Anmeldung ist nicht nötig. */
+  verifyEmail(token: string): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(`${API_BASE_URL}/auth/email/verify/`, { token });
+  }
+
+  /** `dev_link` kommt nur lokal (DEBUG + Mails im Server-Log), siehe core/email_verification.py. */
+  resendVerification(): Observable<{ detail: string; dev_link?: string }> {
+    return this.http.post<{ detail: string; dev_link?: string }>(`${API_BASE_URL}/auth/email/resend/`, {});
   }
 
   /** Eigenen Namen ändern; die Anzeige (Menü, Begrüßung) folgt sofort. */

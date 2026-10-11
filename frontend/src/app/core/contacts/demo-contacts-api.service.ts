@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { ContactDto, ContactsApiService, ContactsOverview, ReceivedInviteDto, Relation, SentInviteDto } from './contacts-api.service';
+import { ContactDto, ContactsApiService, ContactsOverview, ReceivedInviteDto, Relation, SentInviteDto, SharedArea } from './contacts-api.service';
 
 // Dieselben Namen wie demo-reisen-api.ts (Max/Lena) — eine Demo-Instanz erzählt eine durchgängige Geschichte,
 // keine je Bereich unterschiedlich erfundenen Personen.
@@ -9,6 +9,12 @@ function daysAgo(days: number): string {
   d.setDate(d.getDate() - days);
   return d.toISOString();
 }
+function hoursAgo(hours: number): string {
+  return new Date(Date.now() - hours * 3_600_000).toISOString();
+}
+// Dieselben Reisen wie demo-reisen-api.ts (IDs 1 und 2).
+const BERLIN: SharedArea = { kind: 'TRIP', id: 1, title: 'Berlin Wochenende' };
+const ITALIEN: SharedArea = { kind: 'TRIP', id: 2, title: 'Italien Sommerurlaub' };
 function daysFromNow(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
@@ -23,21 +29,21 @@ function daysFromNow(days: number): string {
 export class DemoContactsApiService {
   private nextId = 100;
   private contacts: ContactDto[] = [
-    { id: 1, name: 'Max', email: 'max@beispiel.de', relation: 'FAMILY', since: daysAgo(120) },
-    { id: 2, name: 'Lena', email: 'lena@beispiel.de', relation: 'FRIEND', since: daysAgo(30) },
+    { id: 1, name: 'Max', email: 'max@beispiel.de', relation: 'FAMILY', since: daysAgo(120), shared: [BERLIN], can_add_to: [ITALIEN], invited_to: [] },
+    { id: 2, name: 'Lena', email: 'lena@beispiel.de', relation: 'FRIEND', since: daysAgo(30), shared: [], can_add_to: [BERLIN, ITALIEN], invited_to: [] },
   ];
   private sent: SentInviteDto[] = [
-    { id: 1, email: 'theo@beispiel.de', relation: 'FRIEND', expires_at: daysFromNow(6) },
+    { id: 1, email: 'theo@beispiel.de', relation: 'FRIEND', expires_at: daysFromNow(6), created_at: daysAgo(1) },
   ];
   private received: ReceivedInviteDto[] = [
-    { token: 'demo-invite-jonas', from_name: 'Jonas', relation: 'FRIEND', expires_at: daysFromNow(6) },
+    { token: 'demo-invite-jonas', from_name: 'Jonas', relation: 'FRIEND', expires_at: daysFromNow(6), created_at: hoursAgo(2) },
   ];
 
   overview(): Observable<ContactsOverview> {
     return of({ contacts: [...this.contacts], sent: [...this.sent], received: [...this.received] });
   }
   invite(email: string, relation: Relation): Observable<{ id: number; email: string; email_sent: boolean }> {
-    const created = { id: this.nextId++, email, relation, expires_at: daysFromNow(7) };
+    const created = { id: this.nextId++, email, relation, expires_at: daysFromNow(7), created_at: new Date().toISOString() };
     this.sent.push(created);
     return of({ id: created.id, email, email_sent: true });
   }
@@ -60,6 +66,9 @@ export class DemoContactsApiService {
       email: `${invite.from_name.toLowerCase()}@beispiel.de`,
       relation: invite.relation,
       since: new Date().toISOString(),
+      shared: [],
+      can_add_to: [BERLIN, ITALIEN],
+      invited_to: [],
     };
     this.contacts.push(created);
     return of(created);
@@ -70,6 +79,19 @@ export class DemoContactsApiService {
   }
   remove(id: number): Observable<void> {
     this.contacts = this.contacts.filter((c) => c.id !== id);
+    return of(undefined);
+  }
+  setRelation(id: number, relation: Relation): Observable<ContactDto> {
+    this.contacts = this.contacts.map((c) => (c.id === id ? { ...c, relation } : c));
+    return of(this.contacts.find((c) => c.id === id)!);
+  }
+  /** Wie das Backend: eine offene Einladung, noch keine Teilnahme. */
+  inviteToArea(contactId: number, area: SharedArea): Observable<unknown> {
+    this.contacts = this.contacts.map((c) =>
+      c.id === contactId
+        ? { ...c, can_add_to: c.can_add_to.filter((a) => a.id !== area.id || a.kind !== area.kind), invited_to: [...c.invited_to, { ...area, invitation_id: this.nextId++ }] }
+        : c,
+    );
     return of(undefined);
   }
 }

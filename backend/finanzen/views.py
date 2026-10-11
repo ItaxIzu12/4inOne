@@ -26,6 +26,7 @@ from finanzen.serializers import (
     TransactionSerializer,
 )
 from finanzen.throttling import DataExportRateThrottle, TransactionWriteRateThrottle
+from core.households import own_household
 
 
 def _money(value: Decimal) -> str:
@@ -95,7 +96,7 @@ class TransactionViewSet(ModelViewSet):
     def get_queryset(self):
         queryset = (
             Transaction.objects.select_related('category', 'account')
-            .filter(account__household__members=self.request.user)
+            .filter(account__household=own_household(self.request.user))
             .order_by('-datum')
         )
 
@@ -110,7 +111,7 @@ class TransactionViewSet(ModelViewSet):
         # — stattdessen aus dem Haushalt der anfragenden Person abgeleitet,
         # dasselbe IDOR-Muster wie CategoryViewSet.perform_create() oben.
         # Fehlt noch ein Konto, legt services.household_account() eines an.
-        household = self.request.user.households.first()
+        household = own_household(self.request.user)
         if household is None:
             raise ValidationError('Dieses Konto ist noch keinem Haushalt zugeordnet.')
         serializer.save(account=services.household_account(household), created_by=self.request.user)
@@ -147,7 +148,7 @@ class CategoryViewSet(ModelViewSet):
     household_field = 'household'
 
     def get_queryset(self):
-        return Category.objects.filter(household__members=self.request.user).order_by('name')
+        return Category.objects.filter(household=own_household(self.request.user)).order_by('name')
 
     def perform_destroy(self, instance):
         # Standard-Kategorien dürfen weder umbenannt (siehe
@@ -166,7 +167,7 @@ class CategoryViewSet(ModelViewSet):
         # wie bei category_id auf Transaction, siehe serializers.py).
         # .first(): TODO sobald Mehrfach-Haushalte im Frontend wählbar sind
         # (aktuell hat jeder Nutzer laut RegisterView genau einen).
-        household = self.request.user.households.first()
+        household = own_household(self.request.user)
         if household is None:
             # Betrifft in der Praxis nur Konten, die VOR der automatischen
             # Haushalts-Anlage in RegisterView entstanden sind (siehe
@@ -207,7 +208,7 @@ class OverviewView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        household = request.user.households.first()
+        household = own_household(request.user)
         if household is None:
             return Response(
                 {
@@ -300,7 +301,7 @@ class BerichtCsvView(APIView):
     throttle_classes = [DataExportRateThrottle]
 
     def get(self, request):
-        household = request.user.households.first()
+        household = own_household(request.user)
         if household is None:
             raise ValidationError('Dieses Konto ist noch keinem Haushalt zugeordnet.')
         period = reports.parse_period(request.query_params)
@@ -318,7 +319,7 @@ class BerichtPdfView(APIView):
     throttle_classes = [DataExportRateThrottle]
 
     def get(self, request):
-        household = request.user.households.first()
+        household = own_household(request.user)
         if household is None:
             raise ValidationError('Dieses Konto ist noch keinem Haushalt zugeordnet.')
         period = reports.parse_period(request.query_params)
@@ -345,7 +346,7 @@ class OnboardingStatusView(APIView):
     def get(self, request):
         # ADR-001: „erste Buchung“ und „erste Kategorie“ zählen in den
         # PRIVATEN Finanzen der Person — die Haushaltsfinanzen sind eingefroren.
-        household = request.user.households.first()
+        household = own_household(request.user)
         return Response(
             {
                 'has_transaction': Transaction.objects.filter(owner=request.user).exists(),
@@ -377,7 +378,7 @@ class AnalysenView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        household = request.user.households.first()
+        household = own_household(request.user)
         if household is None:
             return Response(
                 {
@@ -429,7 +430,7 @@ class SetOwnIncomeView(APIView):
     permission_classes = [IsAuthenticated, LegacyHouseholdFinanceFrozen]
 
     def patch(self, request):
-        household = request.user.households.first()
+        household = own_household(request.user)
         if household is None:
             raise ValidationError('Dieses Konto ist noch keinem Haushalt zugeordnet.')
         membership = HouseholdMembership.objects.get(user=request.user, household=household)
@@ -447,7 +448,7 @@ class SetHouseholdBufferView(APIView):
     permission_classes = [IsAuthenticated, LegacyHouseholdFinanceFrozen]
 
     def patch(self, request):
-        household = request.user.households.first()
+        household = own_household(request.user)
         if household is None:
             raise ValidationError('Dieses Konto ist noch keinem Haushalt zugeordnet.')
         serializer = HouseholdBufferSerializer(household, data=request.data, partial=True)
@@ -469,13 +470,13 @@ class RecurringDeductionViewSet(ModelViewSet):
 
     def get_queryset(self):
         return (
-            RecurringDeduction.objects.filter(household__members=self.request.user)
+            RecurringDeduction.objects.filter(household=own_household(self.request.user))
             .select_related('category')
             .order_by('name')
         )
 
     def perform_create(self, serializer):
-        household = self.request.user.households.first()
+        household = own_household(self.request.user)
         if household is None:
             raise ValidationError('Dieses Konto ist noch keinem Haushalt zugeordnet.')
         serializer.save(household=household, created_by=self.request.user)

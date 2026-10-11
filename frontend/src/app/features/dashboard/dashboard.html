@@ -36,6 +36,50 @@
       {{ live() ? 'Heute zeigt ausschließlich deine eigenen, privaten Daten.' : 'Vorschau mit Beispieldaten.' }}
     </p>
 
+    @if (live() && invitations.pending().length) {
+      <!-- Offene Einladung: dezenter Hinweis, dieselbe Quelle wie die Glocke (InvitationsService). -->
+      @let open = invitations.pending();
+      <a class="invite-hint" routerLink="/familie">
+        <span class="invite-hint__icon" aria-hidden="true"><app-icon name="user-plus" /></span>
+        <span class="invite-hint__text">
+          @if (open.length > 1) {
+            {{ open.length }} offene Einladungen
+          } @else if (open[0].kind === 'INVITATION_CREATED') {
+            {{ open[0].invitation.inviter?.display_name }} hat dich zu „{{ open[0].invitation.scope.display_name }}“ eingeladen.
+          } @else {
+            {{ open[0].contact_invite.from_name }} möchte dich als {{ open[0].contact_invite.relation_label }} hinzufügen.
+          }
+        </span>
+        <span class="invite-hint__action">Ansehen<app-icon name="arrow" aria-hidden="true" /></span>
+      </a>
+    } @else if (live() && freshAcceptance(); as done) {
+      <!-- Jemand hat deine Einladung angenommen: Erfolgsmoment und direkt der nächste Schritt (verschwindet, sobald gelesen). -->
+      <a class="invite-hint invite-hint--done" [routerLink]="done.link" [queryParams]="done.query">
+        <span class="invite-hint__icon" aria-hidden="true"><app-icon name="check-circle" /></span>
+        <span class="invite-hint__text">{{ done.text }}</span>
+        <span class="invite-hint__action">{{ done.action }}<app-icon name="arrow" aria-hidden="true" /></span>
+      </a>
+    } @else if (live() && emailUnverified()) {
+      <div class="invite-hint invite-hint--quiet">
+        <span class="invite-hint__icon" aria-hidden="true"><app-icon name="mail" /></span>
+        <span class="invite-hint__text">
+          @switch (verifyMail()) {
+            @case ('sent') {
+              {{ verifyDevLink() ? 'Entwicklungsmodus: Es wird keine echte Mail verschickt.' : 'Mail ist unterwegs. Öffne den Link darin, um deine E-Mail-Adresse zu bestätigen.' }}
+            }
+            @case ('error') { Das hat nicht geklappt. Bitte versuche es später noch einmal. }
+            @default { Bestätige deine E-Mail-Adresse – erst dann siehst du hier, wer dich eingeladen hat. }
+          }
+        </span>
+        @if (verifyDevLink(); as link) {
+          <a class="invite-hint__action" [href]="link">Jetzt bestätigen<app-icon name="arrow" aria-hidden="true" /></a>
+        }
+        @if (verifyMail() === 'idle' || verifyMail() === 'sending') {
+          <button type="button" class="invite-hint__action invite-hint__button" [disabled]="verifyMail() === 'sending'" (click)="resendVerification()">Mail senden</button>
+        }
+      </div>
+    }
+
     <div class="board-overview">
       @if (boardQuery().trim()) {
         <section class="search-results" aria-labelledby="demo-results-title">

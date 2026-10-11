@@ -127,8 +127,23 @@ export const routes: Routes = [
   },
   {
     path: 'passwort-vergessen',
+    title: 'Passwort vergessen | 4inOne',
     loadComponent: () =>
       import('./features/passwort-vergessen/passwort-vergessen').then((m) => m.PasswortVergessen),
+    data: { shell: 'bare', hideHeader: true },
+  },
+  {
+    path: 'email-bestaetigen',
+    title: 'E-Mail bestätigen | 4inOne',
+    loadComponent: () => import('./features/email-bestaetigen/email-bestaetigen').then((m) => m.EmailBestaetigen),
+    data: { shell: 'bare', hideHeader: true },
+  },
+  {
+    path: 'passwort-zuruecksetzen',
+    title: 'Neues Passwort | 4inOne',
+    loadComponent: () =>
+      import('./features/passwort-zuruecksetzen/passwort-zuruecksetzen').then((m) => m.PasswortZuruecksetzen),
+    data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'einstellungen',

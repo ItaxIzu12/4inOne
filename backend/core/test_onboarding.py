@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework.test import APIClient
-from core.models import Household, HouseholdMembership, OnboardingProfile
+from core.models import Household, HouseholdMembership, Invitation, OnboardingProfile
 from haushalt.models import Task, ShoppingItem, ShoppingList
 from finanzen.models import Account, Transaction, Category
 from organisation.models import CalendarEvent
@@ -58,7 +58,7 @@ def test_completion_is_persistent_and_does_not_share(context):
     assert response.status_code == 200
     assert OnboardingProfile.objects.get(user=user).completed_at
     assert home.members.count() == 1
-    assert not home.invites.exists()
+    assert not Invitation.objects.exists()
     assert client.get(URL).data['needs_onboarding'] is False
     # Repeated finish requests do not create duplicates.
     assert client.put(URL, {'usage':'shared', 'domains':['finanzen']}, format='json').status_code == 200

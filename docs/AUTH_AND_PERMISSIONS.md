@@ -72,6 +72,53 @@ Where possible, show the user what is being shared and with whom.
 
 Avoid vague “share everything” defaults.
 
+### In-app invitations (Invitation System V1)
+
+Household and trip sharing works only through an accepted in-app invitation (`core/invitations.py`,
+`core.Invitation`). Rules:
+
+- **Request, not permission.** A `PENDING` invitation creates no membership and no visibility. `accept()` checks the
+  current state again (invitee is the caller, still pending, not expired, scope exists, inviter still allowed, role
+  still allowed) and then flips the status and creates the membership in one transaction.
+- **Allowlist.** Scopes: `HOUSEHOLD`, `TRIP`. Roles: household `MEMBER`; trip `VIEWER`/`EDITOR`. Never `OWNER`,
+  `ADMIN`, `CHILD_ACCOUNT`. Unknown scope → 400; foreign or missing scope ID → identical 404.
+- **Who may invite.** Household admins; trip creator or participants with role `OWNER`. The invitee is always one
+  of the inviter's own contacts — no user search, no account enumeration.
+- **Server-controlled fields.** Inviter = `request.user`; invitee from the contact; status only via `accept`,
+  `decline`, `revoke` (conditional `UPDATE … WHERE status='PENDING'`). Extra request fields are ignored.
+- **One open request.** Partial unique constraint `(invitee, scope_type, scope_id)` where `PENDING`; inviting again
+  returns the open invitation (no second notification). Already a member → 400.
+- **Races.** Double accept returns the same result with one membership; accept vs. decline ends in exactly one
+  final state; membership uniqueness is a DB constraint.
+- **Lifecycle.** Invitee deleted → invitation deleted. Inviter deleted → kept for audit, no longer acceptable.
+  Deleted scope or lost inviter rights → accept answers „nicht mehr gültig“ and marks it `REVOKED`. A removed member
+  needs a new invitation; an old `ACCEPTED` one never restores access.
+- **Boundaries.** Household membership opens household tasks, shopping, devices and contracts of the *active*
+  household (`core/households.py`: most recently joined). Private finance, savings goals, organisation and trips are
+  owner-scoped and stay private; the frozen legacy household finance only ever reads the person's *own* household
+  (oldest membership). A trip invitation opens only that trip. Connections and suggestions still require both
+  objects to be visible, so a shared device linked to a private savings goal never reveals the goal.
+- **Notifications.** `core.Notification` only references the invitation (no copied content); `/notifications/`
+  returns the caller's own items while the invitation is still open. „Read“ never changes the invitation.
+- **Feedback to the inviter.** Acceptance creates one notification for the inviter (`INVITATION_ACCEPTED` /
+  `CONTACT_ACCEPTED`, shown 7 days, only the invitee's display name and the scope the inviter shared). Declines are
+  never notified; the inviter only sees a quiet „Nicht angenommen“ status for 14 days (`declined` in
+  `/invitations/` and `/contacts/`).
+- **Trips.** `POST /reisen/participants/` is gone (405); participants come only from accepted invitations.
+- Tests: `backend/core/test_invitations.py` (personas Sophie, Alex, Ben, Eve).
+
+### E-mail confirmation (in-app contact requests)
+
+Registration sends a confirmation link `${FRONTEND_URL}/email-bestaetigen?token=…` (`core/email_verification.py`,
+signed with `django.core.signing`, 3 days, bound to account + current address; no extra table). `POST
+/auth/email/verify/` needs no login (the link is the mailbox proof), `POST /auth/email/resend/` needs login (3/hour).
+`/auth/me/` and login/refresh return `email_verified`. Only confirmed addresses get contact requests in the app:
+`/notifications/` then includes them as `CONTACT_INVITE` (inviter name and relation, no email), answered via the
+existing `/contacts/invites/<token>/accept|decline/`. Unconfirmed accounts see a quiet hint with „Mail senden“
+instead. Opening the invitation link from the e-mail still works and also confirms the address. Local only
+(`DEBUG` on **and** console mailer, i.e. no `EMAIL_HOST`): the resend response also contains `dev_link`, shown in
+the app as „Jetzt bestätigen“ because no real e-mail is delivered; never with SMTP or without `DEBUG`.
+
 ### Mailbox proof for contact invitations
 
 An email entered during registration is not proof of mailbox ownership. Unverified accounts receive no
@@ -89,6 +136,13 @@ Only an ADMIN of the selected household may issue household invitations, includi
 CHILD_ACCOUNT roles. The requested target role never supplies authority to the sender.
 
 ### Recovery and stored files
+
+Flow: `/passwort-vergessen` posts the address to `auth/password-reset/request/`; the answer is identical for known
+and unknown addresses, and a failing mail server is only logged. Known addresses get a 30-minute, single-use link
+`${FRONTEND_URL}/passwort-zuruecksetzen?token=…` (console mailer locally, SMTP once `EMAIL_HOST` is set). The page
+removes the token from the address bar immediately and posts it with the new password to
+`auth/password-reset/confirm/`; a rejected token shows "Dieser Link funktioniert nicht mehr" with a link to request
+a new one.
 
 Successful password reset consumes all outstanding reset links, blacklists all refresh tokens and deletes all
 device-session records. JWT password-revocation claims also reject previously issued access tokens. Refresh checks

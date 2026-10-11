@@ -100,6 +100,26 @@ describe('Reisen V1 (Demo)', () => {
     expect(root.querySelectorAll('app-trip-list .trip').length).toBe(4);
   });
 
+  it('restricts new trip dates and validates changed ranges without locking historical edits', async () => {
+    const { fixture } = await open();
+    const component = fixture.componentInstance;
+    component.openTripEditor();
+    expect(component.tripStartMin()).toBe(isoDateOffset(0));
+    expect(component.tripEndMin()).toBe(isoDateOffset(0));
+    component.tripForm.patchValue({ start_date: isoDateOffset(-1), end_date: isoDateOffset(0) });
+    component.tripTouched.set(true);
+    expect(component.startError()).toContain('nicht vor heute');
+    component.tripForm.patchValue({ start_date: isoDateOffset(3), end_date: isoDateOffset(2) });
+    expect(component.tripEndMin()).toBe(isoDateOffset(3));
+    expect(component.endError()).toContain('nicht vor dem Beginn');
+    component.tripForm.controls.end_date.setValue(isoDateOffset(3));
+    expect(component.endError()).toBe('');
+    component.editTripId.set(1);
+    component.tripForm.patchValue({ start_date: isoDateOffset(-3), end_date: isoDateOffset(-2) });
+    expect(component.tripStartMin()).toBe('');
+    expect(component.startError()).toBe('');
+  });
+
   // ---------- Reise öffnen ----------
 
   it('opening a trip shows exactly four tabs and the overview with concrete numbers', async () => {
@@ -180,10 +200,10 @@ describe('Reisen V1 (Demo)', () => {
     expect(fixture.componentInstance.trips().length).toBe(before);
   });
 
-  it('a past trip can be created, and a new trip opens with the optional suggestions', async () => {
+  it('a future trip can be created and opens with the optional suggestions', async () => {
     const { fixture, root } = await open();
     button(root, 'Reise erstellen', '.domain-heading button').click();
-    fillTrip(fixture, { title: 'Wien', destination: 'Wien', start_date: '2026-01-10', end_date: '2026-01-12' });
+    fillTrip(fixture, { title: 'Wien', destination: 'Wien', start_date: isoDateOffset(365), end_date: isoDateOffset(367) });
     await submitModal(fixture);
     const page = await settle(fixture);
     expect(text(page.querySelector('h1'))).toBe('Wien');
@@ -274,7 +294,7 @@ describe('Reisen V1 (Demo)', () => {
     expect(fixture.componentInstance.taskFormError()).toBe('Bitte wähle zur Uhrzeit auch ein Datum.');
   });
 
-  it('Planung: participants are listed with roles and a privacy note; the owner manages them in a dialog', async () => {
+  it('Planung: participants are listed with roles and a privacy note; the owner invites people in a dialog', async () => {
     const { fixture, root } = await open('/?trip=1&tab=planung');
     expect(Array.from(root.querySelectorAll('app-trip-planning .people__name')).map(text)).toEqual(['Anna (Du)', 'Tom Schulz']);
     expect(text(root.querySelector('app-trip-planning .privacy'))).toContain('nie deine Finanzen');
@@ -284,7 +304,10 @@ describe('Reisen V1 (Demo)', () => {
     fixture.componentInstance.newParticipantContactId.set(202);
     fixture.componentInstance.addParticipant();
     await settle(fixture);
-    expect(fixture.componentInstance.selectedTrip()!.participants.map((p) => p.display_name)).toContain('Lena');
+    // Einladen statt Hinzufügen: Lena ist erst dabei, wenn sie annimmt.
+    expect(fixture.componentInstance.selectedTrip()!.participants.map((p) => p.display_name)).not.toContain('Lena');
+    expect(fixture.componentInstance.participantsNotice()).toBe('Einladung gesendet. Lena ist dabei, sobald Lena annimmt.');
+    expect(fixture.componentInstance.inviteRoleOptions.map((o) => o.value)).toEqual(['VIEWER', 'EDITOR']);
   });
 
   // ---------- Packliste ----------
