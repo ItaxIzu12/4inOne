@@ -55,3 +55,11 @@ Erneute Prüfung: 275 Unit-Tests, sieben Browserprüfungen einschließlich 360/8
 Der Startseitenheader bleibt beim Scrollen oben sichtbar (Desktop, Tablet und Handy). Der Einstiegshinweis „Starte mit dem Bereich …“ entfällt. Stattdessen erklärt ein statisches Waschmaschinen-Beispiel die tatsächlich unterstützten Verbindungen Sparziel–Aufgabe und Aufgabe–Termin. Es beschreibt die bewusste Auswahl durch den Nutzer und weist darauf hin, dass Verknüpfungen keine Zugriffsrechte verändern.
 
 Dashboard- und Navigationsicons tragen ihre Bereichsfarben; inaktive Navigationstexte bleiben neutral. Aufgaben in Organisation verwenden Lila. Prüfung: 275 Unit-Tests, zehn Browserprüfungen inklusive Sticky-Verhalten und responsiven Domain-Ansichten sowie Produktionsbuild erfolgreich. Bestehende Finanz-CSS-Größenwarnung unverändert.
+
+## Neugestaltung 15.10.2026
+
+Komplett neu gestaltet (siehe `docs/DESIGN_SYSTEM.md` › Öffentliche Startseite 15.10.2026): Hero mit dem sich
+entfaltenden 4inOne-Zeichen, Verknüpfen in vier Schritten (`landing/link-steps.ts`), Bereiche als Reiter, Teilen-
+Schalter, dunkler Abschluss. Routing, Demo-Trennung und echte Ziele (`/registrieren`, `/login`, `/demo`, Rechtliches)
+unverändert. Tests: `e2e/landing.spec.ts` (Reihenfolge der Kernaussagen, keine erfundenen Behauptungen, Reiter,
+Schritte per Regler/Tastatur, Schalter, axe bei 360/820/1440 px).

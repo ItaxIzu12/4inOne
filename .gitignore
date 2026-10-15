@@ -33,3 +33,6 @@ frontend/.angular/
 .vscode/
 .idea/
 backend/private_media/
+
+# Arbeitsdateien des Design-Skills (Screenshots, Richtungsblatt)
+.taste-skill/

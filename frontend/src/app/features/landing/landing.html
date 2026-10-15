@@ -4,10 +4,9 @@
   <div class="site-head__inner">
     <a routerLink="/" class="site-head__brand" aria-label="4inOne – Startseite"><app-brand /></a>
     <nav class="site-head__nav" aria-label="Abschnitte">
-      <a href="#verbindungen">So funktioniert’s</a>
+      <a href="#verknuepfen">Verknüpfen</a>
       <a href="#bereiche">Bereiche</a>
-      <a href="#produkt">Produkt</a>
-      <a href="#privat">Datenschutz</a>
+      <a href="#teilen">Teilen</a>
     </nav>
     <div class="site-head__actions">
       <a routerLink="/login" class="text-link">Anmelden</a>
@@ -17,145 +16,128 @@
 </header>
 
 <main id="inhalt">
-  <!-- 1 · Hero: was 4inOne ist, sofort; das echte Produkt groß und lesbar direkt darunter -->
+  <!-- 1 · Der Satz ist die Bühne: das Zeichen von 4inOne steht für „Alles“ und entfaltet sich zu den vier Bereichen -->
   <section class="hero" aria-labelledby="hero-title">
-    <div class="wrap hero__copy">
-      <h1 id="hero-title">Dein Alltag.<br />Alles verbunden.</h1>
-      <p class="lead">
-        Finanzen, Haushalt, Organisation und Reisen an einem Ort. Jeder Bereich funktioniert für sich – und 4inOne
-        verbindet, was im echten Leben zusammengehört.
-      </p>
-      <div class="actions">
-        <a routerLink="/registrieren" class="btn btn--primary">Konto erstellen</a>
-        <a routerLink="/demo" class="btn btn--secondary">Demo testen</a>
+    <div class="wrap">
+      <h1 id="hero-title" class="hero__title">
+        <span class="hero__line">Dein Alltag.</span>
+        <span class="hero__line hero__line--two">
+          <span class="sr-only">Alles</span>
+          <span class="bloom" aria-hidden="true">
+            <span class="petal petal--green"><app-icon name="finance" /><span>Finanzen</span></span>
+            <span class="petal petal--pink"><app-icon name="household" /><span>Haushalt</span></span>
+            <span class="petal petal--yellow"><app-icon name="calendar" /><span>Organisation</span></span>
+            <span class="petal petal--blue"><app-icon name="travel" /><span>Reisen</span></span>
+          </span>
+          <span class="hero__word">verbunden.</span>
+        </span>
+      </h1>
+      <div class="hero__foot">
+        <p class="hero__lead">
+          Finanzen, Haushalt, Termine und Reisen an einem Ort, statt verteilt auf Apps, Zettel und Ordner. Was
+          zusammengehört, verknüpfst du: vom Sparziel direkt zur Waschmaschine.
+        </p>
+        <div class="hero__actions">
+          <a routerLink="/registrieren" class="btn btn--primary">Konto erstellen</a>
+          <a routerLink="/demo" class="btn btn--quiet">Demo testen</a>
+        </div>
+        <p class="hero__note">Die Demo läuft ohne Anmeldung, mit Beispieldaten.</p>
       </div>
-      <p class="hero__note">Die Demo läuft ohne Anmeldung, mit Beispieldaten.</p>
     </div>
-    <figure class="wrap shot shot--hero">
-      <picture>
-        <!-- Am Handy das Handy-Bild: ein Desktop-Ausschnitt wäre dort unlesbar klein. -->
-        <source media="(max-width: 640px)" srcset="images/landing/mobil@2x.webp" width="390" height="844" />
-        <img
-          src="images/landing/start.webp"
-          srcset="images/landing/start.webp 1100w, images/landing/start@2x.webp 2200w"
-          sizes="(min-width: 1304px) 1240px, calc(100vw - 32px)"
-          width="1100"
-          height="604"
-          fetchpriority="high"
-          alt="Die Startseite von 4inOne: je eine Zeile aus Finanzen, Haushalt, Organisation und Reisen, darunter was heute ansteht."
-        />
-      </picture>
-      <figcaption>Die Startseite in der Demo – mit Beispieldaten.</figcaption>
+    <figure class="wrap hero__shot">
+      <div class="shutter">
+        <picture>
+          <!-- Am Handy das Handy-Bild: ein Desktop-Ausschnitt wäre dort unlesbar klein. -->
+          <source media="(max-width: 640px)" srcset="images/landing/mobil@2x.webp" width="390" height="844" />
+          <img
+            src="images/landing/start.webp"
+            srcset="images/landing/start.webp 1100w, images/landing/start@2x.webp 2200w"
+            sizes="(min-width: 1344px) 1280px, calc(100vw - 32px)"
+            width="1100"
+            height="604"
+            fetchpriority="high"
+            alt="Die Startseite von 4inOne: je eine Zeile aus Finanzen, Haushalt, Organisation und Reisen, darunter was heute ansteht."
+          />
+        </picture>
+      </div>
+      <figcaption>Die Startseite in der Demo, mit Beispieldaten.</figcaption>
     </figure>
   </section>
 
-  <!-- 2 · Der Unterschied: Verbindungen — der Höhepunkt der Seite, zum Ausprobieren -->
-  <section id="verbindungen" class="section connect" aria-labelledby="connect-title" data-reveal>
-    <div class="wrap">
-      <div class="section-head section-head--center">
-        <h2 id="connect-title">Was zusammengehört,<br />bleibt zusammen.</h2>
-        <p class="lead lead--small">
-          Ein Ereignis betrifft oft mehr als nur einen Bereich. Mit 4inOne verbindest du zusammengehörende Einträge,
-          statt sie mehrfach zu organisieren.
-        </p>
+  <!-- 2 · Erst der Nutzen (was bringt eine Verknüpfung gegenüber zwei getrennten Einträgen?), dann das Wie -->
+  <section id="verknuepfen" class="section steps" aria-labelledby="steps-title" data-reveal>
+    <div class="wrap steps__intro">
+      <h2 id="steps-title">Was zusammengehört, bleibt zusammen.</h2>
+      <p class="statement">
+        Eine neue Waschmaschine betrifft zwei Bereiche: das Sparziel in Finanzen und das Gerät im Haushalt.
+      </p>
+    </div>
+    <div class="wrap compare">
+      <div class="compare__col">
+        <h3>Ohne Verknüpfung</h3>
+        <p>Das Sparziel weiß nichts von der Waschmaschine. Wofür du sparst und wann die Garantie endet, suchst du an zwei Stellen.</p>
       </div>
-
-      <div class="link-stage" [class.is-linked]="linked()">
-        <article class="entry tone-finanzen" aria-label="Sparziel in Finanzen">
-          <p class="entry__area"><app-icon name="finance" aria-hidden="true" />Finanzen</p>
-          <div class="entry__body">
-            <small>Sparziel</small>
-            <h3>Neue Waschmaschine</h3>
-            <p class="entry__meta">480 € von 700 € gespart</p>
-            <span class="entry__bar" aria-hidden="true"><span></span></span>
-          </div>
-          <div class="entry__links">
-            <p class="entry__links-title"><app-icon name="link" aria-hidden="true" />Verknüpft mit</p>
-            @if (linked()) {
-              <p class="entry__link"><app-icon name="washer" aria-hidden="true" />Waschmaschine <small>Gerät</small></p>
-            } @else {
-              <p class="entry__none">noch nichts</p>
-            }
-          </div>
-        </article>
-
-        <div class="link-stage__bridge">
-          <span class="link-stage__line" aria-hidden="true"></span>
-          @if (!linked()) {
-            <button type="button" class="btn btn--primary btn--small link-stage__action" (click)="link()">
-              <app-icon name="link" aria-hidden="true" />Verknüpfen
-            </button>
-          } @else {
-            <span class="link-stage__done"><app-icon name="check" aria-hidden="true" />Verknüpft</span>
-            <button type="button" class="link-stage__undo" (click)="unlink()">Verbindung entfernen</button>
-          }
-        </div>
-
-        <article class="entry tone-haushalt" aria-label="Gerät im Haushalt">
-          <p class="entry__area"><app-icon name="household" aria-hidden="true" />Haushalt › Zuhause</p>
-          <div class="entry__body">
-            <small>Gerät</small>
-            <h3>Waschmaschine</h3>
-            <p class="entry__meta">Garantie und nächste Wartung beim Gerät</p>
-          </div>
-          <div class="entry__links">
-            <p class="entry__links-title"><app-icon name="link" aria-hidden="true" />Verknüpft mit</p>
-            @if (linked()) {
-              <p class="entry__link"><app-icon name="finance" aria-hidden="true" />Neue Waschmaschine <small>Sparziel</small></p>
-            } @else {
-              <p class="entry__none">noch nichts</p>
-            }
-          </div>
-        </article>
+      <div class="compare__col compare__col--with">
+        <h3>Mit Verknüpfung</h3>
+        <p>Vom Sparziel kommst du direkt zur Waschmaschine, mit den Angaben, die du dort gespeichert hast. Und vom Gerät zurück zum Sparziel.</p>
       </div>
-      <p class="sr-only" aria-live="polite">{{ linked() ? 'Sparziel und Gerät sind verknüpft. Beide Einträge bleiben unverändert.' : '' }}</p>
+    </div>
 
-      <ul class="connect__facts">
-        <li><b>Beide bleiben, wie sie sind.</b> Das Sparziel bleibt in Finanzen, das Gerät im Haushalt.</li>
-        <li><b>Von beiden Seiten erreichbar.</b> Unter „Verknüpft mit“ springst du vom einen zum anderen.</li>
-        <li><b>Fristen im Blick.</b> Garantie und Wartung erscheinen rechtzeitig unter „Heute“.</li>
+    <h3 class="wrap how__title">So verknüpfst du zwei Einträge</h3>
+    <app-link-steps />
+
+    <div class="wrap notes">
+      <details class="pairs">
+        <summary>Was sich verknüpfen lässt</summary>
+        <ul class="pairs__list">
+          <li><b>Reise</b> mit Sparziel, Aufgabe, Termin oder Haushaltsaufgabe</li>
+          <li><b>Sparziel</b> mit Aufgabe, Reise oder Gerät</li>
+          <li><b>Aufgabe</b> mit Termin, <b>Haushaltsaufgabe</b> mit Termin</li>
+          <li><b>Vertrag</b> mit Aufgabe</li>
+        </ul>
+      </details>
+      <ul class="notes__list">
+        <li><b>Beide bleiben, wo sie sind.</b> Entfernst du die Verbindung, bleiben Sparziel und Gerät erhalten.</li>
+        <li><b>Niemand sieht dadurch mehr.</b> Wer deine Reise sieht, sieht nicht dein verknüpftes Sparziel.</li>
+        <li><b>Du entscheidest.</b> 4inOne schlägt Passendes vor und sagt dir, warum. Verknüpft wird erst, wenn du zustimmst.</li>
       </ul>
     </div>
   </section>
 
-  <!-- 3 · Die vier Bereiche: ruhige Liste, daneben der echte Bereich -->
-  <section id="bereiche" class="section domains" aria-labelledby="domains-title" data-reveal>
-    <div class="wrap">
-      <div class="section-head">
-        <h2 id="domains-title">Vier Bereiche.<br />Jeder für sich vollständig.</h2>
-        <p class="lead lead--small">Organisiere deinen Alltag allein oder gemeinsam – mit genau den Bereichen, die du brauchst.</p>
-      </div>
-      <div class="domains__grid">
-        <div class="domains__list" role="tablist" aria-label="Bereiche" aria-orientation="vertical" (keydown)="onTabKey($event)">
+  <!-- 3 · Die vier Bereiche: große Namen links, der echte Bereich rechts -->
+  <section id="bereiche" class="section areas" aria-labelledby="areas-title" data-reveal>
+    <div class="wrap areas__grid">
+      <div class="areas__side">
+        <h2 id="areas-title">Nutze nur, was du brauchst.</h2>
+        <p class="areas__lead">Jeder Bereich funktioniert für sich. Starte mit einem und nimm später dazu, was passt.</p>
+        <div class="areas__list" role="tablist" aria-label="Bereiche" aria-orientation="vertical" (keydown)="onTabKey($event)">
           @for (d of domains; track d.key) {
             <button
               type="button"
               role="tab"
               [id]="'bereich-tab-' + d.key"
-              [class]="'domain tone-' + d.key"
+              [class]="'area tone-' + d.key"
               [class.is-active]="active() === d.key"
               [attr.aria-selected]="active() === d.key"
-              [attr.aria-controls]="'bereich-panel'"
+              aria-controls="bereich-panel"
               [tabindex]="active() === d.key ? 0 : -1"
               (click)="select(d.key)"
             >
-              <span class="domain__icon" aria-hidden="true"><app-icon [name]="d.icon" /></span>
-              <span class="domain__text">
-                <span class="domain__name">{{ d.name }}</span>
-                <span class="domain__summary">{{ d.summary }}</span>
-                <span class="domain__parts">{{ d.parts }}</span>
-              </span>
+              <span class="area__name">{{ d.name }}</span>
+              <span class="area__summary">{{ d.summary }}</span>
             </button>
           }
         </div>
-        @let current = domain(active());
-        <figure id="bereich-panel" class="shot shot--domain" role="tabpanel" [attr.aria-labelledby]="'bereich-tab-' + current.key">
+      </div>
+      @let current = domain(active());
+      <figure id="bereich-panel" class="areas__sheet" role="tabpanel" [attr.aria-labelledby]="'bereich-tab-' + current.key">
+        <div class="areas__frame">
           @for (d of domains; track d.key) {
             <img
               [class.is-shown]="d.key === current.key"
               [src]="'images/landing/' + d.image + '.webp'"
               [attr.srcset]="'images/landing/' + d.image + '.webp 1100w, images/landing/' + d.image + '@2x.webp 2200w'"
-              sizes="(min-width: 1100px) 720px, calc(100vw - 32px)"
+              sizes="(min-width: 1100px) 760px, calc(100vw - 32px)"
               width="1100"
               height="800"
               loading="lazy"
@@ -163,173 +145,67 @@
               [attr.aria-hidden]="d.key === current.key ? null : 'true'"
             />
           }
-          <figcaption>{{ current.name }} in der Demo – mit Beispieldaten.</figcaption>
-        </figure>
-      </div>
-    </div>
-  </section>
-
-  <!-- 4 · Unabhängig nutzbar: senkt die Einstiegshürde -->
-  <section class="section own" aria-labelledby="own-title" data-reveal>
-    <div class="wrap own__grid">
-      <h2 id="own-title">Nutze nur,<br />was du brauchst.</h2>
-      <dl class="own__list">
-        <div>
-          <dt>Du musst nicht alles nutzen.</dt>
-          <dd>Finanzen, Haushalt, Organisation und Reisen funktionieren unabhängig voneinander. Starte mit einem Bereich.</dd>
         </div>
-        <div>
-          <dt>Verbinde, wo es passt.</dt>
-          <dd>Verbindungen entstehen nur dort, wo du sie anlegst – nicht im Hintergrund.</dd>
-        </div>
-        <div>
-          <dt>Allein oder gemeinsam.</dt>
-          <dd>Für dich, als Paar, in der WG oder als Familie: Geteilt wird nur, was du bewusst teilst.</dd>
-        </div>
-      </dl>
-    </div>
-  </section>
-
-  <!-- 5 · Zweites Beispiel: Reise, mit echten Vorschlägen (Suggestions V1 ist live) — volle Breite -->
-  <section class="section trip" aria-labelledby="trip-title" data-reveal>
-    <div class="wrap">
-      <div class="trip__head">
-        <h2 id="trip-title">Passende Vorschläge.<br />Du entscheidest.</h2>
-        <div class="trip__intro">
-          <p class="lead lead--small">
-            4inOne erkennt, was zusammengehören könnte – etwa ein Sparziel, das das Ziel deiner Reise nennt. Und sagt
-            dir, warum.
-          </p>
-          <p>
-            Erst „Verknüpfen“ macht daraus eine Verbindung; „Nicht relevant“ blendet den Vorschlag dauerhaft aus.
-            Geändert wird dabei nichts – kein Datum, kein Betrag, keine Aufgabe.
-          </p>
-        </div>
-      </div>
-
-      <figure class="trip-demo" aria-label="Beispiel: Reise „Berlin Wochenende“ mit zwei Verknüpfungen und einem Vorschlag">
-        <div class="trip-demo__head">
-          <span class="obj__icon tone-reisen" aria-hidden="true"><app-icon name="travel" /></span>
-          <span>
-            <b>Berlin Wochenende</b>
-            <small>23.–25. Oktober · Berlin</small>
-          </span>
-        </div>
-        <div class="trip-demo__cols">
-          <div>
-            <p class="trip-demo__label"><app-icon name="link" aria-hidden="true" />Verknüpft mit</p>
-            <ul class="trip-demo__rows">
-              <li>
-                <span class="obj__icon tone-organisation" aria-hidden="true"><app-icon name="check" /></span>
-                <span><small>Aufgabe · Organisation</small><b>Hotel bestätigen</b></span>
-              </li>
-              <li>
-                <span class="obj__icon tone-organisation" aria-hidden="true"><app-icon name="calendar" /></span>
-                <span><small>Termin · Organisation</small><b>ICE nach Berlin</b></span>
-              </li>
-            </ul>
-          </div>
-          <div class="suggestion">
-            <p class="suggestion__title">Das könnte zusammengehören</p>
-            <div class="suggestion__row">
-              <span class="obj__icon tone-finanzen" aria-hidden="true"><app-icon name="finance" /></span>
-              <span>
-                <small>Sparziel · Finanzen</small><b>Reisekasse Berlin</b>
-                <span class="suggestion__reason">Das Sparziel erwähnt „Berlin“, das Ziel deiner Reise.</span>
-              </span>
-            </div>
-            <div class="suggestion__actions" aria-hidden="true">
-              <span class="mock-btn mock-btn--primary">Verknüpfen</span>
-              <span class="mock-btn">Nicht relevant</span>
-            </div>
-          </div>
-        </div>
-        <figcaption>Darstellung aus der Reise-Ansicht. Das Reisebudget gehört zur Reise selbst.</figcaption>
+        <figcaption><b>{{ current.name }}:</b> {{ current.parts }}. In der Demo, mit Beispieldaten.</figcaption>
       </figure>
     </div>
   </section>
 
-  <!-- 6 · Das echte Produkt, am Handy -->
-  <section id="produkt" class="section product" aria-labelledby="product-title" data-reveal>
-    <div class="wrap product__grid">
-      <figure class="shot shot--phone">
-        <img
-          src="images/landing/mobil@2x.webp"
-          width="390"
-          height="844"
-          loading="lazy"
-          alt="4inOne auf dem Handy: Begrüßung, die vier Bereiche mit je einer Zeile und was heute ansteht."
-        />
-      </figure>
-      <div class="product__text">
-        <h2 id="product-title">So fühlt sich<br />4inOne an.</h2>
-        <p class="lead lead--small">
-          Ruhig, klar und schnell: eine Startseite für heute, vier Bereiche mit derselben Bedienung – am Rechner wie
-          am Handy.
-        </p>
-        <p>
-          Probier es ohne Anmeldung aus. Die Demo zeigt alle vier Bereiche mit Beispieldaten; Verknüpfungen und
-          Vorschläge nutzt du mit deinem eigenen Konto.
-        </p>
-        <div class="actions">
-          <a routerLink="/demo" class="btn btn--secondary">Demo testen</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 7 · Privatsphäre als Produktprinzip, nicht als Kleingedrucktes -->
-  <section id="privat" class="section private" aria-labelledby="private-title" data-reveal>
-    <div class="wrap private__grid">
-      <div class="private__head">
-        <h2 id="private-title">Verbinde den Zusammenhang.<br />Nicht dein ganzes Leben.</h2>
-        <p class="lead lead--small">
-          Eine Verbindung erweitert niemals automatisch Zugriffsrechte. Private Informationen bleiben privat, bis du
-          sie bewusst teilst.
-        </p>
-      </div>
-      <ul class="private__list">
-        <li><b>Privat als Standard.</b> Deine Finanzen, Termine und Notizen siehst nur du.</li>
-        <li><b>Teilen ist eine Entscheidung.</b> Einen Haushalt oder eine Reise teilst du bewusst – mit genau diesen Personen.</li>
-        <li><b>Verbindungen öffnen nichts.</b> Wer die Reise sieht, sieht nicht dein verknüpftes Sparziel.</li>
-        <li><b>Vorschläge bleiben bei dir.</b> Sie entstehen nur aus Einträgen, auf die du ohnehin Zugriff hast.</li>
-      </ul>
-      <blockquote class="private__quote">
-        <p>„Teilnehmer sehen nur diese Reise – nie deine Finanzen, deinen Haushalt oder deinen Kalender.“</p>
-        <footer>Hinweis in der Reiseplanung von 4inOne</footer>
-      </blockquote>
-      <p class="private__a11y">
-        Für möglichst viele Menschen gut nutzbar: bedienbar per Tastatur, mit Screenreader und großen Klickflächen.
-        <a routerLink="/barrierefreiheit" class="text-link">Mehr zur Barrierefreiheit</a>
+  <!-- 4 · Teilen ist eine eigene Entscheidung: Schalter zeigen, was andere sehen -->
+  <section id="teilen" class="section share" aria-labelledby="share-title" data-reveal>
+    <div class="wrap share__intro">
+      <h2 id="share-title">Verknüpfen ist nicht Teilen.</h2>
+      <p class="statement">
+        Eine Verbindung erweitert niemals automatisch Zugriffsrechte. Probier aus, was andere sehen, wenn du etwas
+        teilst.
       </p>
     </div>
-  </section>
-
-  <!-- 8 · Ruhiger Abschluss -->
-  <section class="section final" aria-labelledby="final-title" data-reveal>
-    <div class="wrap final__inner">
-      <h2 id="final-title">Dein Alltag.<br />Weniger doppelt organisiert.</h2>
-      <p class="lead lead--small">Starte mit einem Bereich – und verbinde später, was für dich zusammengehört.</p>
-      <div class="actions">
-        <a routerLink="/registrieren" class="btn btn--primary">Konto erstellen</a>
-        <a routerLink="/demo" class="btn btn--secondary">Demo testen</a>
-      </div>
-    </div>
+    <ul class="bands">
+      @for (s of shares; track s.key) {
+        <li class="band" [class]="'band--' + s.tone" [class.is-on]="isOn(s)" [class.is-locked]="s.locked">
+          <div class="wrap band__inner">
+            <div class="band__text">
+              <p class="band__sentence" [id]="'share-' + s.key">{{ s.sentence }}</p>
+              <p class="band__result" aria-live="polite">{{ isOn(s) ? s.on : s.off }}</p>
+            </div>
+            <button
+              type="button"
+              class="switch"
+              role="switch"
+              [attr.aria-checked]="isOn(s)"
+              [attr.aria-labelledby]="'share-' + s.key"
+              [attr.aria-disabled]="s.locked ? 'true' : null"
+              (click)="toggle(s)"
+            >
+              <span class="switch__knob" aria-hidden="true"></span>
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+    <p class="wrap share__a11y">
+      Für möglichst viele Menschen gut nutzbar: bedienbar per Tastatur, mit Screenreader und großen Klickflächen.
+      <a routerLink="/barrierefreiheit" class="text-link">Mehr zur Barrierefreiheit</a>
+    </p>
   </section>
 </main>
 
-<footer class="site-foot">
-  <div class="wrap site-foot__inner">
-    <div class="site-foot__brand">
-      <app-brand />
-      <span>Dein Alltag. Alles verbunden.</span>
+<!-- 5 · Abschluss und Fußzeile in einem: Einladung, Links, der Name groß und angeschnitten -->
+<footer class="site-foot" aria-labelledby="foot-title">
+  <div class="wrap site-foot__top">
+    <div class="site-foot__invite">
+      <h2 id="foot-title">Fang mit einem<br />Bereich an.</h2>
+      <p>Und verknüpfe später, was für dich zusammengehört.</p>
+      <a routerLink="/registrieren" class="btn btn--light">Konto erstellen</a>
     </div>
-    <nav aria-label="Weitere Seiten">
+    <nav class="site-foot__links" aria-label="Weitere Seiten">
       <a routerLink="/login">Anmelden</a>
-      <a routerLink="/demo">Demo</a>
+      <a routerLink="/demo">Demo testen</a>
       <a routerLink="/impressum">Impressum</a>
       <a routerLink="/datenschutz">Datenschutz</a>
       <a routerLink="/barrierefreiheit">Barrierefreiheit</a>
     </nav>
   </div>
+  <p class="wrap site-foot__legal"><span>4inOne · Dein Alltag. Alles verbunden.</span></p>
+  <p class="site-foot__name" aria-hidden="true">4inOne</p>
 </footer>

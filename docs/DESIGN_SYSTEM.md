@@ -116,6 +116,46 @@ Abstand — nie nur über Farbe.
   „Verknüpft“; ohne JavaScript oder mit reduzierter Bewegung ist alles sofort sichtbar. Bereiche als echte Reiter
   (Pfeiltasten, Pos1/Ende), das Bild folgt.
 
+- **Öffentliche Startseite `/` (15.10.2026, komplette Neugestaltung):** Ziel: hochwertiger Auftritt auf Agentur-Niveau,
+  Wow-Moment beim ersten Besuch, Verknüpfungen glasklar erklärt. Richtung „Der Satz ist die Bühne“ (Skill
+  design-taste-frontend, seed 1029055409; Texte nach Skill copywriting). Idee: Das 4inOne-Zeichen (vier Felder mit je
+  einer engeren Ecke) steht im H1 für „Alles“: „Dein Alltag. [Zeichen] verbunden.“ Beim Laden sitzt es kurz als 2×2,
+  entfaltet sich zu Finanzen · Haushalt · Organisation · Reisen, „verbunden.“ gleitet nach, dann öffnet sich der
+  echte Startseiten-Screenshot von unten (clip-path, ≈ 2 s gesamt). Screenreader lesen „Dein Alltag. Alles
+  verbunden.“; mit reduzierter Bewegung oder ohne JS steht sofort der Endzustand.
+  - Schrift Instrument Sans: H1 so groß wie die Breite erlaubt (bis 168 px, −0,045 em, Zeilenhöhe 0,94; unter
+    1280 px steht das Zeichen selbst als Wort: „Dein Alltag. [Logo 2 × 2 mit Bereichs-Symbolen] verbunden.“, Farben
+    wie im Logo; zusätzlich höchstens 22 % der Bildschirmhöhe, damit Handy quer passt), H2 32–72 px (≤ 400 px: 28, ≤ 340 px: 24) (−0,035 em), Zwischenüberschrift 28–44 px,
+    Lead 22, Text 18, Klein 15.
+  - Farben: Grund `#f4f6fa` / Weiß, Tinte `#101d40` (Wortmarke), Aktion `--brand-primary`; große Flächen aus den
+    Zeichenfarben (`#76cda4`, `#efa1c2`, `#ffd175`, `#99c5ff`) und ihren hellen Stufen. Abschluss dunkel `#101d40`.
+  - Formen: Radius 28 px mit einer engeren 8-px-Ecke (wie im Zeichen) für Bilderrahmen, Flächen und Bänder;
+    Knöpfe voll gerundet (52 px, klein 44 px). Keine Verläufe, Schatten, Linien oder Eyebrows.
+  - Überarbeitung nach Marketing-Feedback (15.10.2026): Nutzen vor Bedienung — Hero-Lead nennt das Problem („statt
+    verteilt auf Apps, Zettel und Ordner“) und den Vorteil („vom Sparziel direkt zur Waschmaschine“); Abschnitt 2
+    beginnt mit „Ohne Verknüpfung“ (helle Fläche) / „Mit Verknüpfung“ (dunkle Fläche `#101d40`), dann „So verknüpfst du
+    zwei Einträge“ (22 px) und die vier Felder; danach drei kurze Punkte (Beide bleiben · Niemand sieht mehr · Du
+    entscheidest) und die Kombinationsliste eingeklappt (`details`, Pillen-Knopf „Was sich verknüpfen lässt +“).
+    Ruhiger: H2 32–56 px statt bis 72, keine wiederholten Zweiteiler („Nutze nur, was du brauchst.“), Teilen-Bänder
+    eingeschaltet nur hell getönt (`#d9f1e5`, `#dcebff`, `#fbe3ed`), gesperrt grau. Preise/Beta-Status bewusst nicht
+    genannt, solange nicht entschieden.
+  - Abschnitte: (1) Hero; (2) „Was zusammengehört, bleibt zusammen.“ — Komponente `app-link-steps`, Bauform „Eine
+    Karte, vier Felder“ (Neubau 15.10.2026, ersetzt den Regler): vier Farbfelder in den Zeichenfarben, jedes mit einer
+    engeren Ecke zur Mitte; darin dieselbe App-Karte jeweils einen Schritt weiter (Sparziel mit „Noch nichts verknüpft“ →
+    „Was möchtest du verbinden?“ → „Gerät auswählen“ / „Verknüpfung bestätigen“ → „Verknüpft mit Waschmaschine“, die
+    Gegenseite liegt versetzt dahinter); unten je ein Satz („Zuerst öffnest du das Sparziel.“ …). Rechner 4 nebeneinander,
+    Tablet 2 × 2, Handy untereinander; die Felder werden von Schritt zu Schritt breiter (0,9 → 1,12 fr). Felder öffnen sich beim Hineinscrollen nacheinander (clip-path, 90 ms versetzt),
+    Karten heben sich beim Zeigen um 6 px;
+    darunter „Das passiert“ / „Das bleibt, wie es ist“, die erlaubten Paare und Vorschläge mit echtem Begründungstext;
+    (3) „Vier Bereiche. Jeder für sich.“ — Reiter (Pfeiltasten, Pos1/Ende) mit Screenshots; (4) „Verknüpfen ist nicht
+    Teilen.“ — vier Schalter (`role=switch`) zeigen, was andere sehen; „Finanzen teilen“ ist gesperrt; (5) dunkler
+    Abschluss + Fußzeile mit angeschnittenem Namen „4inOne“. Kopfzeile ≤ 400 px: nur Marke + „Anmelden“
+    („Konto erstellen“ steht direkt darunter im ersten Bildschirm).
+  - Bewegung: Abschnittsteile gestaffelt (60–240 ms, 16 px, 600 ms; Auslösung sobald der Abschnittsanfang
+    sichtbar ist — auch bei sehr hohen Abschnitten am Handy), Knöpfe heben sich beim Zeigen, Regler/Schalter mit
+    Rückmeldung. Prüfung: tasteskill inspect (1440/768/390) ohne Fehler; Hinweise: kein Video (es gibt kein ehrliches) und
+    zehn Schriftgrößen (davon mehrere in den App-Ausschnitten), axe ohne Verstöße.
+
 - **Budgetjahr-Dialog (11.10.2026, Feinschliff):** statt zwölf umrandeter Kästen eine Liste in zwei Spalten (Jan–Jun |
   Jul–Dez; Handy eine Spalte) mit Haarlinien, Zeilen einheitlich 52 px; Betrag rechtsbündig, tabellarische Ziffern,
   „Nicht festgelegt“ leiser; Icons aus dem System (Pfeil, Haken) statt Textzeichen „›/✓“; gewählter Monat: Fläche in
