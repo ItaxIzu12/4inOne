@@ -46,6 +46,7 @@ Systematisch im Grundgerüst, flexibel im Inhalt. Keine Gradients, Glas, Glow, D
 - Auswahllisten in Dialogen (z. B. Budgetjahr): Zeilen mit Haarlinien statt Kartenwand, Icons statt Textzeichen, Auswahl = Fläche + Haken + fett.
 - Menüs blenden ruhig ein (150 ms, Deckkraft + 4 px). Keine zusätzliche Animations-/UI-Bibliothek.
 - Laden: Skelette; Fehler bereichsbezogen mit „Erneut versuchen“; Leerzustände ruhig mit einer Aktion.
+- App-Startseite (Neubau 15.10.2026, Aufbau „Als Nächstes + Reihe“, Welt der Landingpage): Begrüßung 30–40 px (Handy 24) mit Tagesstand („5 Punkte heute, 1 überfällig“), „Hinzufügen“ als Pillen-Hauptaktion; „Heute“ links: erste Zeile groß in der hellen Bereichsfläche (Radius 24 mit 8-px-Ecke, Uhrzeit 30–40 px, „in 40 Min.“, „Öffnen“), darunter ruhige Zeilen mit kleinem Zeichen-Feld in Bereichsfarbe; „Für dich“ rechts als weiche Karte; darunter die vier Bereiche als Reihe (Handy 2 × 2) mit Zeichen-Feld (`#76cda4` · `#efa1c2` · `#ffd175` · `#99c5ff`) und Stand. Einblendung nur per Bewegung (12 px), nie per Transparenz.
 - Referenz-Screen: Startseite (`docs/DASHBOARD_V1.md`). Migriert: alle Bereiche (Startseite, Finanzen, Haushalt, Organisation, Reisen).
 
 Reise-Erstellung (11.10.2026): bestehende Kalenderkomponente mit gesperrten Tagen vor heute für den Beginn und vor dem Beginn für das Ende. Eintägige Reisen möglich; vergangene Bestandsreisen bleiben bearbeitbar. Keine neuen Layout-/Farb-Tokens.

@@ -1,11 +1,12 @@
 <app-shell [dashboardHeader]="true" [searchValue]="boardQuery()" (dashboardQuery)="boardQuery.set($event)">
-  <!-- Startseite, bewusst knapp: Begrüßung, die vier Bereiche mit je einem Stand, und was heute ansteht.
-       Alles Weitere (Aufgaben, Buchungen, Reisen) steht in den Bereichen selbst. -->
+  <!-- Startseite (Neubau 15.10.2026, Aufbau „Als Nächstes + Reihe“): Für den kurzen Blick am Morgen beantwortet sie
+       zuerst „Was muss ich heute tun?“ — die dringendste Sache groß, der Rest des Tages darunter, „Für dich“ daneben,
+       die vier Bereiche mit je einem Stand als Reihe. Alles Weitere steht in den Bereichen selbst. -->
   <main id="main-content" class="dashboard" tabindex="-1">
     <header class="greeting">
       <div>
         <h1>{{ greeting }}, {{ name() }}!</h1>
-        <p>Das steht heute an.</p>
+        <p class="greeting__day">{{ daySummary }}</p>
       </div>
       <!-- Schnellerfassung: führt zum bestehenden Formular des Bereichs. Liste von Links (kein ARIA-Menü). -->
       <div class="quick" (keydown.escape)="closeQuick(true)">
@@ -93,95 +94,145 @@
         </section>
       }
 
-      <nav class="domains" aria-label="Deine vier Bereiche">
-        @for (domain of domains(); track domain.name) {
-          <a [routerLink]="domain.path" [class]="'domain ' + domain.tone" [class.domain--highlighted]="domain.highlighted" [attr.aria-busy]="domain.loading">
-            <span class="domain-copy">
-              <h2>
-                <app-icon class="domain-icon" [name]="domain.icon" aria-hidden="true" />{{ domain.name }}
-                @if (domain.highlighted) {
-                  <span class="domain-pick"> · für dich ausgewählt</span>
-                }
-              </h2>
-              @if (domain.loading) {
-                <span class="line-skeleton" aria-hidden="true"></span><span class="sr-only">Wird geladen</span>
-              } @else if (domain.failed) {
-                <p class="domain-failed">Gerade nicht verfügbar</p>
-              } @else {
-                <p>{{ domain.summary }}</p>
-                @if (domain.detail) {
-                  <small>{{ domain.detail }}</small>
-                }
+      <div class="board-grid">
+        <section class="today" aria-labelledby="today-title">
+          <!-- Die Tagesbühne: dunkel in der Tinte des Zeichens; oben die dringendste Sache, unten der Tag als Zeitleiste -->
+          <div class="stage">
+            <header class="today-head">
+              <h2 id="today-title">Heute</h2>
+              @if (hiddenToday > 0 || todayExpanded()) {
+                <button type="button" class="head-link" aria-controls="today-list" [attr.aria-expanded]="todayExpanded()" (click)="todayExpanded.set(!todayExpanded())">
+                  {{ todayExpanded() ? 'Weniger anzeigen' : 'Alle anzeigen (' + allItems.length + ')' }}
+                  <app-icon [name]="todayExpanded() ? 'chevron-up' : 'arrow'" />
+                </button>
               }
-            </span>
-          </a>
-        }
-      </nav>
+            </header>
+            @if (todayLoading()) {
+              <div class="skeleton" role="status" aria-label="Dein Tag wird geladen"><span></span><span></span></div>
+            } @else if (todayError()) {
+              <div class="state">
+                <p [appErrorNotice]="todayError()">{{ todayError() }}</p>
+                <button class="head-link" (click)="loadToday()">Erneut versuchen</button>
+              </div>
+            } @else if (!items.length) {
+              <div class="state state--calm">
+                <span class="state__mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                <h3>Heute ist nichts Dringendes offen</h3>
+                <p>Du hast heute keine fälligen Aufgaben oder Termine.</p>
+                <button type="button" class="head-link" (click)="toggleQuick($event)"><app-icon name="plus" />Hinzufügen</button>
+              </div>
+            } @else if (lead; as first) {
+              <ul class="today-list today-list--lead">
+                <li class="today-lead">
+                  <button [class]="'today-row today-row--lead ' + first.tone" [class.is-late]="first.late" (click)="openItem(first)">
+                    <span class="sr-only">Als Nächstes: </span>
+                    <span class="lead__when">
+                      <span class="lead__petal" aria-hidden="true"></span>
+                      <span class="time">{{ first.time }}</span>
+                      @if (until(first); as soon) {
+                        <span class="lead__until">{{ soon }}</span>
+                      }
+                    </span>
+                    <span class="item-copy"><strong>{{ first.title }}</strong>@if (first.note) {<small>{{ first.note }}</small>}</span>
+                    <span class="lead__open">Öffnen<app-icon name="arrow" aria-hidden="true" /></span>
+                  </button>
+                </li>
+              </ul>
+            }
+            @if (!todayLoading() && !todayError()) {
+              @let day = dayline;
+              <!-- Zeitleiste 6–23 Uhr: rein zur Orientierung (aria-hidden), alle Einträge stehen auch als Zeilen -->
+              <div class="dayline" aria-hidden="true">
+                <div class="dayline__track">
+                  <span class="dayline__past" [style.width.%]="day.now"></span>
+                  @for (m of day.marks; track $index) {
+                    <span [class]="'dayline__mark ' + m.tone" [class.is-lead]="m.lead" [style.left.%]="m.left" [attr.title]="m.time + ' ' + m.title"></span>
+                  }
+                  <span class="dayline__now" [style.left.%]="day.now"><b>jetzt</b></span>
+                </div>
+                <div class="dayline__axis"><span>06</span><span>10</span><span>14</span><span>18</span><span>22</span></div>
+                @if (day.late || day.allDay) {
+                  <p class="dayline__extra">
+                    @if (day.late) {<span class="is-late">{{ day.late }} überfällig</span>}
+                    @if (day.allDay) {<span>{{ day.allDay }} ohne Uhrzeit</span>}
+                  </p>
+                }
+              </div>
+            }
+          </div>
+
+          @if (!todayLoading() && !todayError() && rest.length) {
+            <ul class="today-list" id="today-list">
+              @for (item of rest; track $index) {
+                <li>
+                  <button [class]="'today-row ' + item.tone" [class.is-late]="item.late" (click)="openItem(item)">
+                    <span class="time">{{ item.time }}</span>
+                    <span class="row__mark" aria-hidden="true"></span>
+                    <span class="item-copy"><strong>{{ item.title }}</strong>@if (item.note) {<small>{{ item.note }}</small>}</span>
+                    <app-icon class="chevron" name="arrow" aria-hidden="true" />
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        <div class="side">
+          @if (!forYou() && forYouLoading()) {
+            <section class="for-you" aria-labelledby="for-you-title" aria-busy="true">
+              <h2 id="for-you-title">Für dich</h2>
+              <div class="for-you__card for-you__card--skeleton" role="status" aria-label="Wird geladen">
+                <span></span><span></span><span></span>
+              </div>
+            </section>
+          }
+          @if (forYou(); as f) {
+            <section class="for-you" aria-labelledby="for-you-title">
+              <h2 id="for-you-title">Für dich</h2>
+              <a class="for-you__card" [class]="'for-you__card ' + f.tone" [routerLink]="f.path" [queryParams]="f.query">
+                <span class="for-you__copy">
+                  <small><app-icon class="domain-icon" [name]="f.icon" aria-hidden="true" />{{ f.area }}</small>
+                  <strong>{{ f.title }}</strong>
+                  <span>{{ f.facts.join(' · ') }}</span>
+                </span>
+                <span class="for-you__action">{{ f.action }} <app-icon name="arrow" aria-hidden="true" /></span>
+              </a>
+            </section>
+          }
+          <!-- Die vier Bereiche als 2 × 2 in der Form des Zeichens: je ein Stand, ein Weg hinein -->
+          <nav class="domains" aria-label="Deine vier Bereiche">
+            @for (domain of domains(); track domain.name) {
+              <a [routerLink]="domain.path" [class]="'domain ' + domain.tone" [class.domain--highlighted]="domain.highlighted" [attr.aria-busy]="domain.loading">
+                <span class="domain__petal" aria-hidden="true"><app-icon [name]="domain.icon" /></span>
+                <span class="domain-copy">
+                  <h2>
+                    {{ domain.name }}
+                    @if (domain.highlighted) {
+                      <span class="domain-pick"> · für dich ausgewählt</span>
+                    }
+                  </h2>
+                  @if (domain.loading) {
+                    <span class="line-skeleton" aria-hidden="true"></span><span class="sr-only">Wird geladen</span>
+                  } @else if (domain.failed) {
+                    <p class="domain-failed">Gerade nicht verfügbar</p>
+                  } @else {
+                    <p>{{ domain.summary }}</p>
+                    @if (domain.detail) {
+                      <small>{{ domain.detail }}</small>
+                    }
+                  }
+                </span>
+              </a>
+            }
+          </nav>
+        </div>
+      </div>
+
       @if (someFailed()) {
         <p class="partial-error" role="status">
           Einige Bereiche konnten gerade nicht geladen werden.
           <button type="button" class="head-link" (click)="retryFailed()">Erneut versuchen</button>
         </p>
-      }
-
-      <section class="today" aria-labelledby="today-title">
-        <header class="today-head">
-          <h2 id="today-title">Heute</h2>
-          @if (hiddenToday > 0 || todayExpanded()) {
-            <button type="button" class="head-link" aria-controls="today-list" [attr.aria-expanded]="todayExpanded()" (click)="todayExpanded.set(!todayExpanded())">
-              {{ todayExpanded() ? 'Weniger anzeigen' : 'Alle anzeigen (' + allItems.length + ')' }}
-              <app-icon [name]="todayExpanded() ? 'chevron-up' : 'arrow'" />
-            </button>
-          }
-        </header>
-        @if (todayLoading()) {
-          <div class="skeleton" role="status" aria-label="Dein Tag wird geladen"><span></span><span></span><span></span></div>
-        } @else if (todayError()) {
-          <div class="state">
-            <p [appErrorNotice]="todayError()">{{ todayError() }}</p>
-            <button class="head-link" (click)="loadToday()">Erneut versuchen</button>
-          </div>
-        } @else if (!items.length) {
-          <div class="state">
-            <h3>Heute ist nichts Dringendes offen</h3>
-            <p>Du hast heute keine fälligen Aufgaben oder Termine.</p>
-            <button type="button" class="head-link" (click)="toggleQuick($event)"><app-icon name="plus" />Hinzufügen</button>
-          </div>
-        } @else {
-          <ul class="today-list" id="today-list">
-            @for (item of items; track $index) {
-              <li>
-                <button class="today-row" [class.is-late]="item.late" (click)="openItem(item)">
-                  <span class="time">{{ item.time }}</span>
-                  <span class="item-copy"><strong>{{ item.title }}</strong>@if (item.note) {<small>{{ item.note }}</small>}</span>
-                  <app-icon class="chevron" name="arrow" aria-hidden="true" />
-                </button>
-              </li>
-            }
-          </ul>
-        }
-      </section>
-
-      @if (!forYou() && forYouLoading()) {
-        <section class="for-you" aria-labelledby="for-you-title" aria-busy="true">
-          <h2 id="for-you-title">Für dich</h2>
-          <div class="for-you__card for-you__card--skeleton" role="status" aria-label="Wird geladen">
-            <span></span><span></span><span></span>
-          </div>
-        </section>
-      }
-      @if (forYou(); as f) {
-        <section class="for-you" aria-labelledby="for-you-title">
-          <h2 id="for-you-title">Für dich</h2>
-          <a class="for-you__card" [class]="'for-you__card ' + f.tone" [routerLink]="f.path" [queryParams]="f.query">
-            <span class="for-you__copy">
-              <small><app-icon class="domain-icon" [name]="f.icon" aria-hidden="true" />{{ f.area }}</small>
-              <strong>{{ f.title }}</strong>
-              <span>{{ f.facts.join(' · ') }}</span>
-            </span>
-            <span class="for-you__action">{{ f.action }} <app-icon name="arrow" aria-hidden="true" /></span>
-          </a>
-        </section>
       }
     </div>
   </main>

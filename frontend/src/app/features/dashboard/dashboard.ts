@@ -76,6 +76,9 @@ const DEADLINE_LABEL: Record<string, string> = { kuendigung: 'Kündigungsfrist',
 
 /** Heute fokussiert halten: höchstens fünf Zeilen, der Rest liegt in den Bereichen. */
 const TODAY_ROWS = 5;
+/** Achse der Tageszeitleiste in Stunden. */
+const DAY_START = 6;
+const DAY_END = 23;
 
 function hhmm(iso: string): string {
   return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
@@ -113,7 +116,8 @@ function ddmm(isoDate: string): string {
     RouterLink,
   ],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
+  // Grundgerüst · Tagesbühne · übernommene Bausteine (Menü, Hinweise, Suche) — getrennt, damit jede Datei schlank bleibt
+  styleUrls: ['./dashboard.scss', './dashboard-stage.scss', './dashboard-parts.scss'],
 })
 export class Dashboard {
   private auth = inject(AuthService);
@@ -451,6 +455,59 @@ export class Dashboard {
   get hiddenToday(): number {
     return Math.max(0, this.allItems.length - TODAY_ROWS);
   }
+  /** „Als Nächstes“: die erste Zeile der sortierten Liste (Überfälliges zuerst, dann nach Uhrzeit) — groß darüber. */
+  get lead(): TodayRow | null {
+    return this.items[0] ?? null;
+  }
+  /** Die übrigen Zeilen unter „Als Nächstes“. */
+  get rest(): TodayRow[] {
+    return this.items.slice(1);
+  }
+  /** Kurzer Stand unter der Begrüßung — nur aus echten Zahlen, ohne Wertung. */
+  get daySummary(): string {
+    if (this.todayLoading() || this.todayError()) return this.date;
+    const count = this.allItems.length;
+    const late = this.allItems.filter((i) => i.late).length;
+    if (!count) return `${this.date} · heute nichts Dringendes`;
+    const head = `${count} ${count === 1 ? 'Punkt' : 'Punkte'} heute`;
+    return `${this.date} · ${head}${late ? `, ${late} überfällig` : ''}`;
+  }
+  /** Die Tageszeitleiste der Bühne (6–23 Uhr): nur Einträge mit Uhrzeit von heute, Position in Prozent. Überfälliges
+   * und Ganztägiges hat keine Uhrzeit auf dieser Achse und wird daneben gezählt — nie erfundene Zeiten. */
+  get dayline(): { marks: { left: number; tone: string; title: string; time: string; lead: boolean }[]; now: number; late: number; allDay: number } {
+    const all = this.allItems;
+    const first = this.lead;
+    const pct = (h: number, m: number) => Math.min(100, Math.max(0, ((h * 60 + m - DAY_START * 60) / ((DAY_END - DAY_START) * 60)) * 100));
+    const marks = all
+      .map((row) => ({ row, match: /^(\d{2}):(\d{2})$/.exec(row.time) }))
+      .filter(({ row, match }) => match && !row.late)
+      .map(({ row, match }) => ({
+        left: pct(Number(match![1]), Number(match![2])),
+        tone: row.tone,
+        title: row.title,
+        time: row.time,
+        lead: row === first,
+      }));
+    const now = new Date();
+    return {
+      marks,
+      now: pct(now.getHours(), now.getMinutes()),
+      late: all.filter((r) => r.late).length,
+      allDay: all.filter((r) => !r.late && !/^\d{2}:\d{2}$/.test(r.time)).length,
+    };
+  }
+  /** „in 40 Min.“ / „in 2 Std.“ für eine Uhrzeit von heute, die noch kommt — sonst nichts (nie geraten). */
+  until(row: TodayRow): string {
+    const match = /^(\d{2}):(\d{2})$/.exec(row.time);
+    if (!match || row.late) return '';
+    const at = new Date();
+    at.setHours(Number(match[1]), Number(match[2]), 0, 0);
+    const minutes = Math.round((at.getTime() - Date.now()) / 60_000);
+    if (minutes <= 0) return '';
+    if (minutes < 60) return `in ${minutes} Min.`;
+    const hours = Math.round(minutes / 60);
+    return `in ${hours} Std.`;
+  }
   /** Alle Bereiche in einer Liste: Überfälliges zuerst, dann nach Uhrzeit, Ganztägiges und Fristen danach. */
   private readonly liveRows = computed<TodayRow[]>(() => {
     const data = this.overview();
@@ -551,7 +608,6 @@ export class Dashboard {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
   }).format(new Date());
   readonly detail = signal('');
   readonly boardItems: TodayRow[] = [

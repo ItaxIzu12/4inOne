@@ -119,3 +119,11 @@ Reisen laden) und verschwindet danach, wenn nichts Relevantes da ist. Das „Hin
 
 Nur noch Bugfixes, Sicherheit, Barrierefreiheit, Performance und echte UX-Probleme aus Nutzertests. Keine Widgets,
 nur weil Platz ist.
+
+## Neubau 15.10.2026 — „Als Nächstes + Reihe“
+
+Die Startseite beantwortet zuerst „Was muss ich heute tun?“: Die erste Zeile von „Heute“ (dieselbe Sortierung:
+überfällig → mit Uhrzeit → ganztägig → Fristen) steht groß als „Als Nächstes“, der Rest darunter; „Für dich“ steht
+daneben, die vier Bereiche als Reihe darunter (vorher darüber). Unter der Begrüßung ein Tagesstand aus echten Zahlen.
+Daten, Aufrufe, Sortierung, Hinweise, Suche, Schnellerfassung und Leer-/Lade-/Fehlerzustände sind unverändert;
+Gestaltung siehe docs/DESIGN_SYSTEM.md › App-Startseite (15.10.2026).

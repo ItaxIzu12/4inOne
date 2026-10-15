@@ -67,12 +67,12 @@ describe('Dashboard', () => {
     expect(household).toContain('1 überfällig');
     expect(household).not.toContain('10');
   });
-  it('shows four compact destinations before Today without a static travel image or connection blocks', () => {
+  it('answers „Was muss ich heute tun?“ first: Today before the four compact areas, no static image or connection blocks', () => {
     const f = TestBed.createComponent(Dashboard);
     f.detectChanges();
     const el = f.nativeElement as HTMLElement;
     expect(el.querySelectorAll('.domain').length).toBe(4);
-    expect(el.querySelector('.domains')!.compareDocumentPosition(el.querySelector('.today')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(el.querySelector('.today')!.compareDocumentPosition(el.querySelector('.domains')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(el.querySelector('img, .connected, .suggestion')).toBeNull();
   });
   it('uses the actual upcoming trip and skips completed or cancelled trips', () => {

@@ -116,6 +116,24 @@ Abstand — nie nur über Farbe.
   „Verknüpft“; ohne JavaScript oder mit reduzierter Bewegung ist alles sofort sichtbar. Bereiche als echte Reiter
   (Pfeiltasten, Pos1/Ende), das Bild folgt.
 
+- **App-Startseite (15.10.2026, kompletter Neubau):** Grundlage PRODUCT.md (neu): kurzer Blick am Morgen, oft am
+  Handy; erste Frage „Was muss ich heute tun?“; Gemeinsames nur, wenn wirklich geteilt. Aufbau per impeccable
+  (Operate, Konzept-Wurf, gewählt „Als Nächstes + Reihe“) in der Welt der Landingpage (Instrument Sans, Tinte
+  `#101d40`, weiche Formen mit einer engeren Ecke, Zeichenfarben als Bereichskennung). Linke Navigation, Kopfzeile
+  und Icons unverändert.
+  - Begrüßung: H1 30–40 px (Handy 24), darunter Datum + Tagesstand aus echten Zahlen; „Hinzufügen“ voll gerundet in
+    `--brand-primary` (Handy runder 46-px-Knopf), Liste der bestehenden Formulare unverändert.
+  - Raster: „Heute“ (1,75 fr) | „Für dich“ (≥ 280 px), darunter die vier Bereiche; unter 1100 px untereinander.
+  - Heute: erste Zeile der sortierten Liste (Überfälliges zuerst) als große Zeile in `--soft` des Bereichs, Radius
+    24/8, Uhrzeit 30–40 px, „in 40 Min.“ in Bereichsfarbe (nur für kommende Uhrzeiten von heute), „Öffnen“-Pille;
+    Screenreader hören „Als Nächstes: …“. Übrige Zeilen weiß, 60 px, Uhrzeit · kleines Zeichen-Feld (10 px) ·
+    Titel/Notiz · Pfeil; Gruppe mit weicher Ecke unten. Leerer Tag: das Zeichen klein + „Heute ist nichts Dringendes
+    offen“ + Hinzufügen.
+  - Für dich: weiße Karte Radius 24/8, Bereich in Akzentfarbe, Titel 20 px, Aktion als Pille in `--soft`.
+  - Bereiche: Reihe aus vier weißen Feldern (äußere Ecken weich), je Zeichen-Feld 44 px mit Bereichs-Icon, Name
+    14 px, Stand 19 px fett (bricht ausgewogen um), Detail 14 px; Handy 2 × 2.
+  - Bewegung: Zeilen, Karte und Bereiche setzen sich beim Laden (12 px, gestaffelt bis 180 ms) — nur Bewegung, keine
+    Transparenz, damit Kontrast und Lesbarkeit immer voll da sind; reduzierte Bewegung: keine.
 - **Öffentliche Startseite `/` (15.10.2026, komplette Neugestaltung):** Ziel: hochwertiger Auftritt auf Agentur-Niveau,
   Wow-Moment beim ersten Besuch, Verknüpfungen glasklar erklärt. Richtung „Der Satz ist die Bühne“ (Skill
   design-taste-frontend, seed 1029055409; Texte nach Skill copywriting). Idee: Das 4inOne-Zeichen (vier Felder mit je

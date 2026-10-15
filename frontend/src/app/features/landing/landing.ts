@@ -42,7 +42,8 @@ interface Share {
   standalone: true,
   imports: [RouterLink, Brand, AppIcon, LinkSteps],
   templateUrl: './landing.html',
-  styleUrl: './landing.scss',
+  // Grundgerüst (Kopf, Hero, Abschluss, Bewegung, Breiten) · Abschnitte 2–4 — getrennt, damit jede Datei schlank bleibt
+  styleUrls: ['./landing.scss', './landing-sections.scss'],
 })
 export class Landing {
   readonly domains: Domain[] = [

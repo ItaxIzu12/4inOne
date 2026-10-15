@@ -82,6 +82,8 @@ test('Heute mixes every area, overdue first, at most five rows', async ({ page }
   await expect(page.locator('.today-suggestion')).toHaveCount(0);
   await page.screenshot({ path: 'test-results/dashboard-today.png', fullPage: true });
 
+  // Axe prüft den Endzustand, nicht die kurze Einblendung der Zeilen
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'));
   const axe = await new AxeBuilder({ page }).analyze();
   expect(axe.violations).toEqual([]);
 
