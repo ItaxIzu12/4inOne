@@ -511,3 +511,318 @@ def test_contact_rows_belong_to_their_owner(world):
         assert client.delete(f'/api/v1/contacts/invites/{invite.pk}/').status_code == 404
     assert Contact.objects.filter(pk=row.pk, relation='FRIEND').exists() and ContactInvite.objects.filter(pk=invite.pk).exists()
 
+
+
+# --------------------------------------------------------------------------- Nachprüfung (15.10.2026)
+
+
+def test_existing_trip_rows_never_move_to_another_trip(world):
+    """Ein PATCH mit fremder/anderer `trip`-ID verschiebt nichts — weder Inhalte (sonst wäre Sophies Zuständigkeit
+    in Bens eigener Reise sichtbar) noch Teilnehmer (sonst säße jemand ohne Einladung in einer anderen Reise)."""
+    o, today = world['objs'], timezone.localdate()
+    TripParticipant.objects.filter(user=world['ben']).update(role=TripParticipant.Role.EDITOR)
+    bens_trip = Trip.objects.create(owner=world['ben'], title='Bens Reise', destination='X',
+                                    start_date=today + timedelta(days=3), end_date=today + timedelta(days=4))
+    task = o['trip_task']
+    task.assignee = world['sophie']
+    task.save()
+    ben = api(world['ben'])
+    for name in ('packing', 'trip_task', 'trip_event', 'expense', 'budget_category'):
+        url = DETAIL[name][0].format(o[name].pk)
+        assert ben.patch(url, {'trip': bens_trip.pk}, format='json').status_code in (200, 400), name
+        assert type(o[name]).objects.get(pk=o[name].pk).trip_id == o['trip'].pk, name
+    sophies_other = o['secret_trip']
+    api(world['sophie']).patch(f"/api/v1/reisen/participants/{o['participant'].pk}/", {'trip': sophies_other.pk}, format='json')
+    assert TripParticipant.objects.get(pk=o['participant'].pk).trip_id == o['trip'].pk
+    assert not TripParticipant.objects.filter(trip=sophies_other).exists()
+
+
+def test_only_trip_owners_and_household_admins_can_invite_and_roles_are_allowlisted(world):
+    from core.models import Contact
+
+    o = world['objs']
+    TripParticipant.objects.filter(user=world['ben']).update(role=TripParticipant.Role.EDITOR)
+    for who, scope_type, scope_id in (('ben', 'TRIP', o['trip'].pk), ('alex', 'HOUSEHOLD', world['home'].pk)):
+        contact = Contact.objects.create(owner=world[who], other=world['eve'])
+        response = api(world[who]).post('/api/v1/invitations/', {'contact_id': contact.pk, 'scope_type': scope_type,
+                                                                 'scope_id': scope_id}, format='json')
+        assert response.status_code == 404, who
+    contact = Contact.objects.get(owner=world['sophie'], other=world['alex'])
+    for role in ('OWNER', 'ADMIN', 'SUPERUSER'):
+        response = api(world['sophie']).post('/api/v1/invitations/', {'contact_id': contact.pk, 'scope_type': 'TRIP',
+                                                                     'scope_id': o['secret_trip'].pk, 'role': role}, format='json')
+        assert response.status_code == 400, role
+
+
+def test_trip_scoped_suggestions_and_overviews_reveal_nothing_about_an_invisible_trip(world):
+    secret = world['objs']['secret_trip'].pk
+    ben = api(world['ben'])
+    for method, url, body in (
+        ('get', f'/api/v1/connections/suggestions/?trip={secret}', None),
+        ('post', '/api/v1/connections/suggestions/accept/', {'key': f'TRIP_SAVINGS_GOAL:{secret}', 'action': 'create'}),
+        ('post', '/api/v1/connections/suggestions/dismiss/', {'key': f'TRIP_SAVINGS_GOAL:{secret}'}),
+        ('get', f'/api/v1/connections/link-suggestions/?object_type=TRIP&object_id={secret}', None),
+        ('get', f'/api/v1/connections/reisen/{secret}/erinnerungen/', None),
+        ('get', f'/api/v1/connections/reisen/{secret}/sparziel/', None),
+        ('get', f'/api/v1/reisen/trips/{secret}/summary/', None),
+    ):
+        response = getattr(ben, method)(url, body, format='json') if body else getattr(ben, method)(url)
+        assert response.status_code in (400, 404), (url, response.status_code)
+        assert PRIVATE not in dump(response), url
+
+
+def test_finance_reports_contain_only_the_requesting_persons_data(world):
+    month = timezone.localdate().strftime('%Y-%m')
+    for who in ('alex', 'ben', 'eve'):
+        client = api(world[who])
+        for url in (f'/api/v1/finanzen/berichte/pdf/?monat={month}', f'/api/v1/finanzen/berichte/csv/?monat={month}'):
+            response = client.get(url)
+            assert response.status_code < 500 and PRIVATE not in dump(response), (who, url)
+
+
+# --------------------------------------------------------------------------- Restrisiken (15.10.2026)
+
+
+def test_idempotent_replay_never_returns_data_after_access_was_removed(world):
+    """Wiederholt jemand eine alte Anlage-Anfrage (gleicher Idempotency-Key), nachdem er aus der Reise entfernt
+    wurde, gibt es keine gespeicherte Antwort mit Reisedaten mehr — sondern 404 wie bei GET."""
+    o = world['objs']
+    TripParticipant.objects.filter(user=world['ben']).update(role=TripParticipant.Role.EDITOR)
+    ben = api(world['ben'])
+    body = {'trip': o['trip'].pk, 'title': 'Taxi', 'amount': '20.00', 'date': timezone.localdate().isoformat()}
+    headers = {'HTTP_IDEMPOTENCY_KEY': 'ben-taxi-0001'}
+    first = ben.post('/api/v1/reisen/expenses/', body, format='json', **headers)
+    assert first.status_code == 201
+    again = ben.post('/api/v1/reisen/expenses/', body, format='json', **headers)
+    assert again.status_code == 201 and again['Idempotent-Replay'] == 'true'  # Kontrolle: Wiederholung greift
+
+    TripParticipant.objects.filter(user=world['ben']).delete()
+    stale = ben.post('/api/v1/reisen/expenses/', body, format='json', **headers)
+    assert stale.status_code == 404 and 'Taxi' not in dump(stale) and TRIP not in dump(stale)
+    assert TripExpense.objects.filter(title='Taxi').count() == 1
+
+
+def _invite(world, inviter, contact_owner_other, scope_type, scope):
+    from core import invitations
+    from core.models import Contact
+
+    contact = Contact.objects.get_or_create(owner=world[inviter], other=world[contact_owner_other])[0]
+    invitation, _ = invitations.create(world[inviter], contact_id=contact.pk, scope_type=scope_type, scope_id=scope.pk)
+    return invitation
+
+
+def test_invitations_and_notifications_hide_the_scope_once_rights_are_gone(world):
+    """Alte Einladungen/Benachrichtigungen verraten keinen Reise- oder Haushaltsnamen mehr, sobald die Berechtigung
+    dahinter weg ist: weder der eingeladenen Person (Einladende darf nicht mehr einladen) noch der einladenden
+    Person (selbst entfernt) noch einer entfernten Person (frühere Annahme)."""
+    from core import invitations
+
+    o = world['objs']
+    TripParticipant.objects.filter(user=world['ben']).update(role=TripParticipant.Role.OWNER)
+    pending = _invite(world, 'ben', 'eve', 'TRIP', o['trip'])  # Ben (Mit-Besitzer) lädt Eve ein
+    accepted = _invite(world, 'sophie', 'alex', 'TRIP', o['trip'])
+    invitations.accept(world['alex'], accepted.pk)
+
+    eve, ben, alex = api(world['eve']), api(world['ben']), api(world['alex'])
+    assert TRIP in dump(eve.get('/api/v1/notifications/')) and TRIP in dump(ben.get('/api/v1/invitations/'))
+    assert TRIP in dump(alex.get('/api/v1/reisen/trips/'))
+
+    TripParticipant.objects.filter(user=world['ben']).delete()  # Ben verliert die Reise
+    TripParticipant.objects.filter(user=world['alex']).delete()  # Alex auch
+    for client, who in ((eve, 'eve'), (ben, 'ben'), (alex, 'alex')):
+        for url in ('/api/v1/notifications/', '/api/v1/invitations/'):
+            assert TRIP not in dump(client.get(url)), (who, url)
+    assert eve.post(f'/api/v1/invitations/{pending.pk}/accept/').status_code in (400, 404)
+    assert not TripParticipant.objects.filter(user=world['eve']).exists()
+    # Kontrolle: Sophie (weiterhin Besitzerin) sieht ihre Annahme-Meldung weiterhin
+    assert TRIP in dump(api(world['sophie']).get('/api/v1/notifications/'))
+
+
+def test_finance_pdf_report_is_built_only_from_the_callers_own_data(world, monkeypatch):
+    """Das PDF ist komprimiert — geprüft werden darum die Daten, aus denen es gebaut wird."""
+    from core.households import own_household
+    from finanzen import reports
+
+    built = []
+    original = reports.build_pdf
+
+    def spy(household, period):
+        built.append(json.dumps(reports._report_data(household, period), default=str, ensure_ascii=False))
+        return original(household, period)
+
+    monkeypatch.setattr(reports, 'build_pdf', spy)
+    month = timezone.localdate().strftime('%Y-%m')
+    for who in ('sophie', 'alex', 'ben', 'eve'):
+        response = api(world[who]).get(f'/api/v1/finanzen/berichte/pdf/?monat={month}')
+        assert response.status_code == 200 and response.content.startswith(b'%PDF'), who
+        assert (PRIVATE in built[-1]) == (who == 'sophie'), who  # Kontrolle: Sophies eigener Bericht enthält sie
+    assert own_household(world['alex']) != world['home']
+
+
+# --------------------------------------------------------------------------- Sharing: Beziehung ≠ Berechtigung
+
+
+def test_relationship_and_pending_invitation_grant_no_access(world):
+    """Familie/Freund:in ist nur eine soziale Beziehung, eine offene Einladung nur ein Angebot: Eve — Familie von
+    Sophie und zu Haushalt und Geheimreise eingeladen — sieht keine Daten daraus, bis sie annimmt; danach genau
+    diesen einen Bereich (Haushalt ohne Finanzen/Organisation, Reise ohne andere Reisen)."""
+    from core import invitations
+    from core.models import Contact
+
+    o = world['objs']
+    Contact.objects.create(owner=world['sophie'], other=world['eve'], relation='FAMILY')
+    Contact.objects.create(owner=world['eve'], other=world['sophie'], relation='FAMILY')
+    trip_inv = _invite(world, 'sophie', 'eve', 'TRIP', o['secret_trip'])
+    home_inv = _invite(world, 'sophie', 'eve', 'HOUSEHOLD', world['home'])
+    eve = api(world['eve'])
+
+    def seen():
+        return {m for m in (PRIVATE, HOUSEHOLD, TRIP) for url in LIST_ENDPOINTS
+                if url not in ('/api/v1/invitations/', '/api/v1/notifications/') and m in dump(eve.get(url))}
+
+    assert seen() == set()
+    assert eve.get(DETAIL['secret_trip'][0].format(o['secret_trip'].pk)).status_code == 404
+
+    invitations.accept(world['eve'], trip_inv.pk)
+    assert eve.get(DETAIL['secret_trip'][0].format(o['secret_trip'].pk)).status_code == 200
+    assert eve.get(DETAIL['trip'][0].format(o['trip'].pk)).status_code == 404  # andere Reise bleibt zu
+    for name in ('transaction', 'goal', 'note', 'event', 'household_task'):
+        assert eve.get(DETAIL[name][0].format(o[name].pk)).status_code == 404, name
+
+    invitations.accept(world['eve'], home_inv.pk)
+    assert eve.get(DETAIL['household_task'][0].format(o['household_task'].pk)).status_code == 200
+    for name in ('transaction', 'goal', 'budget', 'note', 'event', 'file', 'legacy_transaction', 'connection'):
+        assert eve.get(DETAIL[name][0].format(o[name].pk)).status_code == 404, name
+    assert TripParticipant.objects.filter(user=world['eve']).count() == 1
+    assert HouseholdMembership.objects.filter(user=world['eve'], household=world['home']).count() == 1
+
+
+# --------------------------------------------------------------------------- Connection Engine (Beta-Gate)
+
+
+def test_shared_trip_never_reveals_a_participants_private_organisation_task(world):
+    """Ben (Bearbeiter von „Berlin“) verknüpft die Reise mit SEINER privaten Aufgabe. Sophie besitzt die Reise, sieht
+    die Aufgabe aber nirgends — weder als Verbindung noch in Erinnerungen, Startseite, Suche oder Vorschlägen; und
+    umgekehrt sieht Ben Sophies private Aufgabe an derselben Reise nicht."""
+    o = world['objs']
+    TripParticipant.objects.filter(user=world['ben']).update(role=TripParticipant.Role.EDITOR)
+    bens = PersonalTask.objects.create(owner=world['ben'], title='BENPRIVAT-Visum', due_date=o['trip'].start_date)
+    ben, sophie = api(world['ben']), api(world['sophie'])
+    created = ben.post('/api/v1/connections/', {'source_type': 'TASK', 'source_id': bens.pk, 'target_type': 'TRIP',
+                                                'target_id': o['trip'].pk}, format='json')
+    assert created.status_code == 201
+    mine = sophie.post('/api/v1/connections/', {'source_type': 'TRIP', 'source_id': o['trip'].pk, 'target_type': 'TASK',
+                                                'target_id': o['org_task'].pk}, format='json')
+    assert mine.status_code == 201
+
+    trip_q = f'?object_type=TRIP&object_id={o["trip"].pk}'
+    assert 'BENPRIVAT' in dump(ben.get('/api/v1/connections/' + trip_q))  # Kontrolle
+    for url in ['/api/v1/connections/' + trip_q, f'/api/v1/connections/reisen/{o["trip"].pk}/erinnerungen/',
+                '/api/v1/today/', f'/api/v1/connections/suggestions/?trip={o["trip"].pk}',
+                '/api/v1/connections/link-suggestions/' + trip_q] + [u + '?q=BENPRIVAT' for u in LIST_ENDPOINTS]:
+        assert 'BENPRIVAT' not in dump(sophie.get(url)), url
+    listed = sophie.get('/api/v1/connections/' + trip_q).data
+    ids = [c['id'] for c in listed]
+    assert mine.data['id'] in ids and created.data['id'] not in ids  # auch keine ID/Typ-Spur der fremden Verbindung
+    assert all(side.get('type') != 'TASK' or side.get('id') != bens.pk for c in listed for side in c.values() if isinstance(side, dict))
+    assert sophie.get(f'/api/v1/connections/{created.data["id"]}/').status_code == 404
+    assert sophie.delete(f'/api/v1/connections/{created.data["id"]}/').status_code == 404
+    assert PRIVATE not in dump(ben.get('/api/v1/connections/' + trip_q))
+    assert ben.get(f'/api/v1/connections/{mine.data["id"]}/').status_code == 404
+
+
+def test_revoked_trip_access_hides_the_connection_immediately(world):
+    o = world['objs']
+    TripParticipant.objects.filter(user=world['ben']).update(role=TripParticipant.Role.EDITOR)
+    bens = PersonalTask.objects.create(owner=world['ben'], title='Bens Aufgabe')
+    ben = api(world['ben'])
+    connection = ben.post('/api/v1/connections/', {'source_type': 'TASK', 'source_id': bens.pk, 'target_type': 'TRIP',
+                                                   'target_id': o['trip'].pk}, format='json').data
+    task_q = f'/api/v1/connections/?object_type=TASK&object_id={bens.pk}'
+    assert TRIP in dump(ben.get(task_q))
+
+    TripParticipant.objects.filter(user=world['ben']).delete()
+    assert dump(ben.get(task_q)) == '[]'  # weder Reise-Titel noch „1 verborgene Verbindung“
+    assert ben.get(f'/api/v1/connections/{connection["id"]}/').status_code == 404
+    assert ben.delete(f'/api/v1/connections/{connection["id"]}/').status_code == 404
+    # Die Aufgabe selbst bleibt unverändert; die Reise auch.
+    assert PersonalTask.objects.filter(pk=bens.pk).exists() and Trip.objects.filter(pk=o['trip'].pk).exists()
+
+
+def test_reverse_concurrent_create_ends_in_one_connection_without_500(world, monkeypatch):
+    """A→B und gleichzeitig B→A: beide werden auf dieselbe gespeicherte Richtung abgebildet; die zweite scheitert
+    sauber (409) am Unique-Constraint statt als 500."""
+    o = world['objs']
+    sophie = api(world['sophie'])
+    real_create = Connection.objects.create
+
+    def racing_create(**kwargs):
+        real_create(**kwargs)  # die gleichzeitige Gegenrichtungs-Anfrage war schneller
+        return real_create(**kwargs)
+
+    monkeypatch.setattr(Connection.objects, 'create', racing_create)
+    response = sophie.post('/api/v1/connections/', {'source_type': 'TASK', 'source_id': o['org_task'].pk,
+                                                    'target_type': 'TRIP', 'target_id': o['secret_trip'].pk}, format='json')
+    assert response.status_code == 409
+    monkeypatch.undo()
+    first = sophie.post('/api/v1/connections/', {'source_type': 'TRIP', 'source_id': o['secret_trip'].pk,
+                                                 'target_type': 'TASK', 'target_id': o['org_task'].pk}, format='json')
+    second = sophie.post('/api/v1/connections/', {'source_type': 'TASK', 'source_id': o['org_task'].pk,
+                                                  'target_type': 'TRIP', 'target_id': o['secret_trip'].pk}, format='json')
+    assert (first.status_code, second.status_code) == (201, 409)
+    assert Connection.objects.filter(created_by=world['sophie'], source_type='TRIP', source_id=o['secret_trip'].pk).count() == 1
+
+
+def test_connections_are_only_ever_created_through_the_engine():
+    """Kein zweiter, ungeprüfter Weg: außerhalb von connections/services.py legt kein Produktcode eine Connection an
+    (Vorschläge rufen services.create_connection auf und erben damit alle Prüfungen)."""
+    import pathlib
+    import re
+
+    root = pathlib.Path(__file__).resolve().parents[1]
+    pattern = re.compile(r'Connection\.objects\.(create|bulk_create|get_or_create|update_or_create)\(|(?<!class )\bConnection\(')
+    offenders = []
+    for path in root.rglob('*.py'):
+        rel = path.relative_to(root).as_posix()
+        if rel.startswith(('.venv/', 'venv/')) or '/migrations/' in rel or '/tests/' in rel or path.name.startswith('test_'):
+            continue
+        if rel == 'connections/services.py':
+            continue
+        if pattern.search(path.read_text(encoding='utf-8')):
+            offenders.append(rel)
+    assert offenders == []
+
+
+def test_connection_listing_needs_one_query_per_object_type_regardless_of_count(world):
+    """1 Abfrage für die Verbindungen + 1 je beteiligtem Typ (Sichtbarkeit, Ausgangsobjekt und Löschrecht in
+    derselben Abfrage). Mehr Verbindungen ändern daran nichts — und Rechte gelten weiter beidseitig."""
+    from django.db import connection as db
+    from django.test.utils import CaptureQueriesContext
+
+    o, sophie = world['objs'], world['sophie']
+    trip = o['trip']
+    url = f'/api/v1/connections/?object_type=TRIP&object_id={trip.pk}'
+    client = api(sophie)
+
+    def add(n):
+        for i in range(n):
+            task = PersonalTask.objects.create(owner=sophie, title=f'Aufgabe {i}')
+            event = PersonalEvent.objects.create(owner=sophie, title=f'Termin {i}', starts_at=timezone.now())
+            Connection.objects.create(source_type='TRIP', source_id=trip.pk, target_type='TASK', target_id=task.pk,
+                                      created_by=world['ben'])
+            Connection.objects.create(source_type='TRIP', source_id=trip.pk, target_type='CALENDAR_EVENT',
+                                      target_id=event.pk, created_by=world['ben'])
+
+    counts = []
+    for n in (1, 10):
+        add(n)
+        with CaptureQueriesContext(db) as ctx:
+            response = client.get(url)
+        assert response.status_code == 200
+        counts.append(len(ctx.captured_queries))
+    assert counts[0] == counts[1] == 5  # Verbindungen, Reise, Aufgabe, Termin, Sparziel
+    items = client.get(url).data
+    assert len(items) == 23 and all(item['can_delete'] for item in items)  # Sophie besitzt beide Seiten
+    # Ben (Betrachter) sieht keine davon (private Gegenseiten) und darf sie nicht löschen
+    TripParticipant.objects.filter(user=world['ben']).update(role=TripParticipant.Role.VIEWER)
+    assert api(world['ben']).get(url).data == []

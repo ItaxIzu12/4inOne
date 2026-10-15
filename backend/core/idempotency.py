@@ -9,7 +9,8 @@ Der Client schickt einen Header `Idempotency-Key` (pro Formular-Absendung stabil
 3. speichert bei Erfolg Statuscode und Antwort; bei Fehlern wird der Platzhalter verworfen, damit ein erneuter
    Versuch nach Korrektur möglich ist.
 
-Eine Wiederholung mit demselben Schlüssel bekommt die gespeicherte Antwort. Derselbe Schlüssel mit anderem Inhalt
+Eine Wiederholung mit demselben Schlüssel bekommt die gespeicherte Antwort — aber nur, solange das Objekt für die
+Person noch sichtbar ist (sonst 404, Rechteentzug wirkt sofort). Derselbe Schlüssel mit anderem Inhalt
 wird mit 422 abgelehnt. Ohne Header verhält sich alles wie bisher.
 """
 
@@ -40,6 +41,17 @@ def _fingerprint(request) -> str:
     return hashlib.sha256(f'{request.method} {request.path} {payload}'.encode()).hexdigest()
 
 
+def _still_visible(view, body) -> bool:
+    """Eine gespeicherte Antwort mit Objekt-ID wird nur wiederholt, wenn das Objekt für die Person JETZT noch
+    sichtbar ist — dieselbe Regel wie für GET (get_queryset des Views). Antworten ohne Objekt (z. B. Import-
+    Zusammenfassung über eigene Daten) bleiben wiederholbar."""
+    object_id = body.get('id') if isinstance(body, dict) else None
+    get_queryset = getattr(view, 'get_queryset', None)
+    if object_id is None or get_queryset is None:
+        return True
+    return get_queryset().filter(pk=object_id).exists()
+
+
 def idempotent(scope: str):
     """Dekorator für die `create`-Methode bzw. eine POST-Action eines DRF-Views."""
 
@@ -65,6 +77,10 @@ def idempotent(scope: str):
                     )
                 if existing.status_code == 0:
                     return Response({'detail': 'Wird bereits gespeichert.'}, status=status.HTTP_409_CONFLICT)
+                if not _still_visible(self, existing.body):
+                    # Zugriff inzwischen entzogen (z. B. aus der Reise entfernt): keine alte Antwort mit Daten
+                    # ausliefern, auf die die Person heute keinen Zugriff mehr hat.
+                    return Response({'detail': 'Nicht gefunden.'}, status=status.HTTP_404_NOT_FOUND)
                 replay = Response(existing.body, status=existing.status_code)
                 replay['Idempotent-Replay'] = 'true'
                 return replay

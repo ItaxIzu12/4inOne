@@ -62,7 +62,12 @@ class TripParticipantSerializer(serializers.ModelSerializer):
     def validate_trip(self, trip):
         """Nur der Ersteller oder ein Teilnehmer mit Rolle OWNER darf neue Teilnehmer hinzufügen — für
         Rollenänderung/Entfernen bestehender Zeilen prüft TripParticipantManagePermission zusätzlich pro Objekt,
-        weil ein PATCH ohne erneutes `trip`-Feld hier sonst gar nicht validiert würde."""
+        weil ein PATCH ohne erneutes `trip`-Feld hier sonst gar nicht validiert würde.
+
+        Beim Ändern bleibt die Reise immer die gespeicherte: Teilnehmer kommen nur per angenommener Einladung in
+        eine Reise, nie durch Umhängen einer bestehenden Zeile."""
+        if self.instance is not None:
+            return self.instance.trip
         request = self.context.get('request')
         if request is None:
             return trip
@@ -181,6 +186,11 @@ class TripScopedSerializer(serializers.ModelSerializer):
     VIEWER-Mitgliedschaft darf lesen (siehe get_queryset() in views.py), aber nichts anhängen."""
 
     def validate_trip(self, trip):
+        # Ein bestehender Eintrag wandert nie in eine andere Reise: Er bliebe sonst mit Zuständigen/Inhalten einer
+        # Reise in einer anderen sichtbar oder verschwände aus der Reise der Besitzerin. Ein mitgesendetes `trip`
+        # beim Ändern zählt nicht — es gilt immer die gespeicherte Reise (Schreibrecht darauf prüft die View).
+        if self.instance is not None:
+            return self.instance.trip
         request = self.context.get('request')
         if request is None:
             return trip

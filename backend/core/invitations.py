@@ -139,7 +139,7 @@ def present(invitation: Invitation, viewer) -> dict | None:
     None, wenn der Bereich nicht mehr existiert (die Einladung ist dann ohnehin nicht mehr annehmbar)."""
     scope = scope_for(invitation.scope_type)
     target = scope.load(invitation.scope_id)
-    if target is None:
+    if target is None or not _may_see_scope(invitation, scope, target, viewer):
         return None
     data = {
         'id': invitation.pk,
@@ -160,6 +160,21 @@ def present(invitation: Invitation, viewer) -> dict | None:
     else:
         data['invitee'] = {'display_name': display_name(invitation.invitee)}
     return data
+
+
+def _may_see_scope(invitation: Invitation, scope: Scope, target, viewer) -> bool:
+    """Name und Zeitraum eines Bereichs sieht nur, wer gerade wirklich dazu berechtigt ist — nicht, wer es beim
+    Einladen einmal war (Rechte gelten sofort, auch für alte Einladungen und Benachrichtigungen):
+
+    - eingeladene Person, offene Einladung: nur solange die einladende Person noch einladen darf (sonst wäre die
+      Einladung ohnehin nicht mehr annehmbar);
+    - eingeladene Person, sonst: nur als Mitglied;
+    - einladende Person: nur solange sie selbst noch Mitglied ist."""
+    if invitation.invitee_id == viewer.pk:
+        if invitation.status == Invitation.Status.PENDING:
+            return invitation.inviter is not None and scope.can_invite(invitation.inviter, target)
+        return scope.is_member(viewer, target)
+    return invitation.inviter_id == viewer.pk and scope.is_member(viewer, target)
 
 
 def received_open(user):

@@ -5,6 +5,7 @@ import { catchError, firstValueFrom, of } from 'rxjs';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
+import { accessLostInterceptor } from './core/access/access-lost.interceptor';
 import { AuthService } from './core/auth/auth.service';
 
 export const appConfig: ApplicationConfig = {
@@ -15,7 +16,7 @@ export const appConfig: ApplicationConfig = {
     // der zuletzt gescrollten Position. anchorScrolling erlaubt weiterhin
     // #anchor-Links innerhalb einer Seite.
     provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' })),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor, accessLostInterceptor])),
     // Ohne diesen Initializer geht das Access-Token (nur im Speicher,
     // ARCHITEKTUR.md §3.1) bei JEDEM Seiten-Reload verloren, obwohl das
     // httpOnly-Refresh-Cookie noch gültig ist — ein eigentlich angemeldeter

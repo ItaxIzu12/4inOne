@@ -543,3 +543,44 @@ test('viele Reisen bleiben übersichtlich: Karten nur für jetzt und als Nächst
   await page.setViewportSize({ width: 360, height: 800 });
   await noOverflow(page, 'viele Reisen 360px');
 });
+
+// Sharing: Wer aus einer Reise entfernt wird, während die Seite offen ist, sieht beim nächsten Klick (bzw. beim
+// Zurückkehren in den Tab) sofort „kein Zugriff“ — keine veraltete Reise mit scheinbar funktionierenden Knöpfen.
+for (const trigger of ['Aktion', 'Tab-Wechsel'] as const) {
+  test(`aus der Reise entfernt (${trigger}): die offene Seite zeigt sofort „kein Zugriff“`, async ({ page }) => {
+    let removed = false;
+    const trip = {
+      id: 7, title: 'Berlin', destination: 'Berlin', departure: '', start_date: iso(10), end_date: iso(12), notes: '', status: 'PLANNED',
+      travel_type: '', transport_type: '', baggage: [], climate: '', budget_amount: null, currency: 'EUR', accommodation: '',
+      accommodation_area: '', transport_note: '', created_at: '', updated_at: '', packing_total: 1, packing_packed: 0, tasks_open: 0,
+      tasks_total: 0, events_count: 0, budget_spent: '0.00', participants: [], my_role: 'EDITOR',
+    };
+    await page.route('**/api/v1/**', (r) => r.fulfill({ json: [] }));
+    await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 't' } }));
+    await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 't', user: { name: 'Ben', email: 'ben@example.com', email_verified: true } } }));
+    await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
+    await page.route('**/api/v1/notifications/**', (r) => r.fulfill({ json: { unread: 0, items: [] } }));
+    await page.route('**/api/v1/invitations/**', (r) => r.fulfill({ json: { received: [], sent: [], declined: [] } }));
+    await page.route('**/api/v1/reisen/trips/**', (r) =>
+      removed ? r.fulfill({ status: 404, json: { detail: 'Nicht gefunden.' } }) : r.fulfill({ json: /trips\/7\//.test(r.request().url()) ? trip : [trip] }),
+    );
+    await page.route('**/api/v1/reisen/packing-items/**', (r) => {
+      if (removed) return r.fulfill(r.request().method() === 'GET' ? { json: [] } : { status: 404, json: { detail: 'Nicht gefunden.' } });
+      return r.fulfill({ json: [{ id: 1, trip: 7, title: 'Reisepass', is_packed: false, quantity: 1, category: '', note: '', packed_at: null, created_at: '' }] });
+    });
+    await page.goto('/reisen?trip=7&tab=packliste');
+    await expect(page.locator('main h1')).toHaveText('Berlin');
+
+    removed = true; // Sophie entfernt Ben — auf dem Server, nicht in diesem Browser
+    await page.unroute('**/api/v1/reisen/trips/**');
+    await page.route('**/api/v1/reisen/trips/**', (r) => r.fulfill(/trips\/7\//.test(r.request().url()) ? { status: 404, json: {} } : { json: [] }));
+    if (trigger === 'Aktion') {
+      await page.locator('#packing-quick').fill('Ladekabel');
+      await page.keyboard.press('Enter');
+    } else {
+      await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    }
+    await expect(page.getByRole('heading', { name: 'Reise nicht gefunden' })).toBeVisible();
+    await expect(page.getByText('Berlin', { exact: true })).toHaveCount(0);
+  });
+}

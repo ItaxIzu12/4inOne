@@ -221,3 +221,47 @@ endpoint with an object id appears that is not assigned to a permission check �
 built later. The matrix also covers legacy household finance, shopping lists, organisation files (detail and
 content download) and trip participants.
 
+
+Re-audit (15.10.2026): one finding fixed — an existing trip row (packing item, task, event, budget category,
+participant) could be re-pointed to another trip via PATCH `trip`. That let a trip owner move a participant into a
+different trip without an invitation, and an editor move items (with the owner as assignee) into their own trip.
+`trip` is now fixed to the stored trip on every update (`TripScopedSerializer.validate_trip`,
+`TripParticipantSerializer.validate_trip`); expenses already ignored it. Verified without findings: only trip
+owners and household admins can invite, invitation roles are allowlisted, forged `owner`/`created_by`/`household`
+are ignored, foreign categories are rejected (also when completing shopping), trip-scoped suggestions, link
+suggestions, reminders, savings and summary return 404 without content for invisible trips, and finance reports only
+contain the caller's data. Tests: `test_existing_trip_rows_never_move_to_another_trip`,
+`test_only_trip_owners_and_household_admins_can_invite_and_roles_are_allowlisted`,
+`test_trip_scoped_suggestions_and_overviews_reveal_nothing_about_an_invisible_trip`,
+`test_finance_reports_contain_only_the_requesting_persons_data`.
+
+Remaining risks closed (15.10.2026):
+- Idempotent replay (`core/idempotency.py`): a stored response with an object id is only replayed while the object is
+  still in the view's `get_queryset()` for the caller; otherwise 404. Removing someone from a trip therefore also
+  ends replays of their earlier create requests.
+- Invitations and notifications (`core/invitations.py › _may_see_scope`): the scope name/period is only shown while
+  the right behind it still exists — to the invitee of a pending invitation only while the inviter may still invite,
+  to an invitee of an answered invitation only as a member, to the inviter only while still a member. Applies to
+  the bell, the dashboard hint and Personen & Gruppen.
+- Finance PDF: the test checks the data the PDF is built from (the PDF stream is compressed), per persona with a
+  positive control.
+Tests: `test_idempotent_replay_never_returns_data_after_access_was_removed`,
+`test_invitations_and_notifications_hide_the_scope_once_rights_are_gone`,
+`test_finance_pdf_report_is_built_only_from_the_callers_own_data`.
+
+Sharing audit (15.10.2026) — people, invitations, memberships:
+- Four separate concepts: `Contact` (social relation FAMILY/FRIEND, grants nothing) → `Invitation` (PENDING grants
+  nothing) → `HouseholdMembership` / `TripParticipant` (created only by `invitations.accept`, atomically with the
+  status change; unique per scope by DB constraint) → permission (checked per request from the membership).
+  Only HOUSEHOLD and TRIP are shareable (scope allowlist in `core/invitations.py`); roles are allowlisted per scope
+  (household: MEMBER; trip: VIEWER/EDITOR) — ADMIN/OWNER can never be requested.
+- Delivery is separate from logic: `core/invitations.py` decides, `core/notifications.py` delivers (in-app). A later
+  e-mail channel hooks into the same functions in `core/notifications.py` without touching invitation rules.
+  Contact invites by e-mail answer identically whether an account exists (no enumeration).
+- Stale UI after losing access: `frontend/src/app/core/access/access-lost.interceptor.ts` turns a 403/404 on a write
+  in a shared area (reisen, haushalt, household) into a `MembershipChanges` bump; Reisen reloads its list (the open
+  trip then shows „Reise nicht gefunden … kein Zugriff“), Haushalt rebuilds its tab, Personen & Gruppen reloads.
+  Reisen also reloads when the browser tab becomes visible again. The frontend only mirrors server rights.
+- Test: `test_relationship_and_pending_invitation_grant_no_access` (FAMILY + two pending invitations = no data;
+  after accept exactly that trip / that household, never finance, organisation, other trips or private connection
+  targets); e2e `aus der Reise entfernt (Aktion|Tab-Wechsel)`; unit `access-lost.interceptor.spec.ts`.

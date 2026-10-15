@@ -18,7 +18,7 @@ Sicherheitsregeln (docs/CONNECTION_ENGINE.md, AUTH_AND_PERMISSIONS.md):
 """
 
 from django.db import IntegrityError, transaction
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 
 from connections.models import Connection, ObjectType, Origin, RelationType
 from connections.registry import ALLOWED_PAIRS, KINDS, canonical_pair, partner_types
@@ -96,8 +96,31 @@ def _resolve(user, refs: set[tuple[str, int]], editable: bool = False) -> dict[t
     return found
 
 
-def can_delete_connection(user, connection: Connection, editable: dict | None = None) -> bool:
-    """Wer sie angelegt hat, oder wer beide Seiten bearbeiten darf. Sichtbarkeit prüft der Aufrufer."""
+def _resolve_with_rights(user, refs: set[tuple[str, int]]) -> tuple[dict[tuple[str, int], object], set[tuple[str, int]]]:
+    """Wie _resolve (sichtbar), liefert aber in DERSELBEN Abfrage je Typ mit, welche Objekte bearbeitbar sind:
+    Arten ohne eigene Schreibregel sind bearbeitbar, sobald sichtbar; für die anderen (Reise: nur Besitzer/
+    Bearbeiter) rechnet ein EXISTS-Unterausdruck das Recht mit derselben Regel wie Kind.editable_for aus."""
+    by_type: dict[str, set[int]] = {}
+    for object_type, object_id in refs:
+        by_type.setdefault(object_type, set()).add(object_id)
+    found, editable = {}, set()
+    for object_type, ids in by_type.items():
+        kind = KINDS.get(object_type)
+        if kind is None:
+            continue
+        queryset = kind.visible(user).filter(pk__in=ids)
+        if kind.editable is not None:
+            queryset = queryset.annotate(_can_edit=Exists(kind.editable_for(user).filter(pk=OuterRef('pk'))))
+        for obj in queryset:
+            found[(object_type, obj.pk)] = obj
+            if kind.editable is None or obj._can_edit:
+                editable.add((object_type, obj.pk))
+    return found, editable
+
+
+def can_delete_connection(user, connection: Connection, editable=None) -> bool:
+    """Wer sie angelegt hat, oder wer beide Seiten bearbeiten darf. Sichtbarkeit prüft der Aufrufer.
+    `editable`: bereits ermittelte bearbeitbare (Typ, ID)-Paare — sonst wird hier nachgeschlagen."""
     if connection.created_by_id == user.pk:
         return True
     sides = {(connection.source_type, connection.source_id), (connection.target_type, connection.target_id)}
@@ -142,20 +165,25 @@ def _visible_connections(user, connections) -> list[tuple[Connection, dict]]:
 
 
 def get_connections_for_object(user, object_type: str, object_id: int) -> list[dict]:
-    if get_visible_object(user, object_type, object_id) is None:
-        raise NotFound(OBJECT_NOT_FOUND)
-    queryset = Connection.objects.filter(_touching(object_type, object_id))
-    visible = _visible_connections(user, queryset)
-    refs = set()
-    for connection, _ in visible:
+    """Eine Abfrage für die Verbindungen, danach genau eine je beteiligtem Objekttyp — Sichtbarkeit des Objekts selbst,
+    beider Seiten und das Löschrecht kommen aus denselben Abfragen (kein N+1, keine zweite Runde)."""
+    focus = (object_type, object_id)
+    connections = list(Connection.objects.filter(_touching(object_type, object_id)))
+    refs = {focus}
+    for connection in connections:
         refs.add((connection.source_type, connection.source_id))
         refs.add((connection.target_type, connection.target_id))
-    editable = _resolve(user, refs, editable=True) if visible else {}  # eine Abfrage je Typ, kein N+1
+    objects, editable = _resolve_with_rights(user, refs)
+    if focus not in objects:
+        raise NotFound(OBJECT_NOT_FOUND)
     result = []
-    for connection, objects in visible:
+    for connection in connections:
+        source = (connection.source_type, connection.source_id)
+        target = (connection.target_type, connection.target_id)
+        if source not in objects or target not in objects:
+            continue  # nur Verbindungen, deren beide Seiten der Nutzer sehen darf
         item = present(connection, objects, can_delete_connection(user, connection, editable))
-        is_source = (connection.source_type, connection.source_id) == (object_type, object_id)
-        item['other'] = item['target'] if is_source else item['source']
+        item['other'] = item['target'] if source == focus else item['source']
         result.append(item)
     return result
 

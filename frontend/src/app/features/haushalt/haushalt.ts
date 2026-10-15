@@ -2,6 +2,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppShell } from '../../layout/app-shell';
+import { MembershipChanges } from '../../core/access/membership-changes';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
 import { SaveFeedback } from '../../shared/save-feedback/save-feedback';
 import { AufgabenTab, AufgabenView, AUFGABEN_VIEWS } from './aufgaben-tab';
@@ -47,6 +48,7 @@ export class Haushalt {
   private readonly router = inject(Router);
 
   protected readonly tabs = TABS;
+  protected readonly membershipVersion = inject(MembershipChanges).version;
   protected readonly activeTab = signal<HaushaltTab>('heute');
   protected readonly zuhauseSection = signal<ZuhauseSection>('geraete');
   protected readonly aufgabenView = signal<AufgabenView>('alle');

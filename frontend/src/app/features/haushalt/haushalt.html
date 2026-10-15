@@ -35,6 +35,8 @@
     </div>
 
     <div id="hh-panel" role="tabpanel" [attr.aria-labelledby]="'hh-tab-' + activeTab()">
+      <!-- Mitgliedschaft geändert (Einladung angenommen, entfernt worden): Reiter neu aufbauen = neu laden. -->
+      @for (version of [membershipVersion()]; track version) {
       @switch (activeTab()) {
         @case ('heute') {
           <app-uebersicht-tab
@@ -53,6 +55,7 @@
         @case ('zuhause') {
           <app-ordner-tab [newRequest]="newTaskRequest()" [section]="zuhauseSection()" (sectionChange)="setSection($event)" (saved)="showSaved($event)" />
         }
+      }
       }
     </div>
     @if (headAction()) {

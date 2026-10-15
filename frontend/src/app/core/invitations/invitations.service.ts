@@ -3,6 +3,7 @@ import { Injectable, computed, effect, inject, signal, untracked } from '@angula
 import { AuthService } from '../auth/auth.service';
 import { Observable, catchError, finalize, of, tap } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
+import { MembershipChanges } from '../access/membership-changes';
 
 export type InvitationScope = 'HOUSEHOLD' | 'TRIP';
 
@@ -97,8 +98,9 @@ export class InvitationsService {
     this.notifications().filter((n): n is AcceptedNotification => n.kind === 'CONTACT_ACCEPTED' || n.kind === 'INVITATION_ACCEPTED'),
   );
 
-  /** Erhöht sich nach jeder angenommenen Einladung — Bereiche laden ihre Daten dann neu, ohne Seiten-Reload. */
-  readonly membershipVersion = signal(0);
+  /** Erhöht sich nach jeder angenommenen Einladung und wenn der Zugriff auf einen geteilten Bereich wegfällt
+   * (core/access) — Bereiche laden ihre Daten dann neu, ohne Seiten-Reload. */
+  readonly membershipVersion = inject(MembershipChanges).version;
 
   refresh(): void {
     this.http.get<{ unread: number; items: InvitationNotification[] }>(`${API_BASE_URL}/notifications/`).subscribe({

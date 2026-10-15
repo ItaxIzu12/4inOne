@@ -218,3 +218,20 @@ Code: `backend/connections/link_suggestions.py`, API `/api/v1/connections/link-s
 ## Later: Automations
 
 Automations may act on connected objects only when the behavior is transparent, permission-safe and user-controlled.
+
+## Beta gate — final hardening (15.10.2026)
+
+Re-validated without code changes to the engine; four tests added to `backend/core/test_permission_matrix.py`:
+`test_shared_trip_never_reveals_a_participants_private_organisation_task` (trip ↔ participant's private task and
+trip ↔ owner's private task stay invisible to the other side in connections, reminders, today, suggestions, link
+suggestions and every list endpoint with `?q=`), `test_revoked_trip_access_hides_the_connection_immediately`
+(own connection disappears with the trip access — no title, no "hidden" counter; both objects stay),
+`test_reverse_concurrent_create_ends_in_one_connection_without_500` (A→B racing B→A → one row, 409), and
+`test_connections_are_only_ever_created_through_the_engine` (static check: outside `connections/services.py` no
+product code creates a `Connection`, so suggestions cannot bypass the checks).
+
+Listing performance (15.10.2026): `GET /connections/?object_type=&object_id=` runs exactly 1 query for the
+connections plus 1 per involved object type (`services._resolve_with_rights`). The focus object's visibility, both
+sides' visibility and the delete right (edit right via an `EXISTS` subquery for kinds with their own write rule,
+e.g. trips) come from the same query — before: separate focus lookup and a second editable round (10 → 5 queries in
+the test case). Regression: `test_connection_listing_needs_one_query_per_object_type_regardless_of_count`.

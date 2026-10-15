@@ -350,6 +350,13 @@ export class Reisen {
       this.actionError.set('');
     });
     this.load();
+    // Geteilte Reisen ändern sich auch durch andere (Teilnehmer entfernt, Reise gelöscht): kommt man in den Tab
+    // zurück, die Liste leise neu laden — eine nicht mehr zugängliche Reise zeigt dann „kein Zugriff“.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') this.refreshTrips();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    this.destroy.onDestroy(() => document.removeEventListener('visibilitychange', onVisible));
     effect(() => {
       const trip = this.selectedTrip();
       const id = trip?.id ?? null;
