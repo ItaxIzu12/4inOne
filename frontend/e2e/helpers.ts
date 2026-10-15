@@ -27,8 +27,8 @@ export async function pickMonth(page: Page, trigger: Locator, ym: string) {
   await panel.getByRole('button', { name: `${MONTHS[month - 1]} ${year}`, exact: true }).click();
 }
 
-/** Wählt ein Datum („JJJJ-MM-TT“) im Kalender. */
-export async function pickDate(page: Page, trigger: Locator, iso: string) {
+/** Öffnet den Kalender und blättert zum Monat des Datums („JJJJ-MM-TT“); gibt die Tageszelle zurück. */
+export async function dateCell(page: Page, trigger: Locator, iso: string): Promise<Locator> {
   await trigger.click();
   const [year, month] = iso.split('-').map(Number);
   const panel = page.locator('.dp__panel:has(.dp__title)');
@@ -42,7 +42,12 @@ export async function pickDate(page: Page, trigger: Locator, iso: string) {
     await panel.getByRole('button', { name: shown < target ? 'Nächster Monat' : 'Vorheriger Monat' }).click();
     await expect(title).not.toHaveText(before);
   }
-  await panel.locator(`.dp__cell[data-iso="${iso}"]`).click();
+  return panel.locator(`.dp__cell[data-iso="${iso}"]`);
+}
+
+/** Wählt ein Datum („JJJJ-MM-TT“) im Kalender. */
+export async function pickDate(page: Page, trigger: Locator, iso: string) {
+  await (await dateCell(page, trigger, iso)).click();
 }
 
 /** Wählt eine Uhrzeit („HH:MM“, Minute in 5er-Schritten). */

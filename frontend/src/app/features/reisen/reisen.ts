@@ -1,3 +1,4 @@
+import { SubmissionKey } from '../../shared/idempotency';
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
 import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
@@ -1108,6 +1109,9 @@ export class Reisen {
   closeExpenseEditor(): void {
     if (!this.expenseSaving()) this.expenseEditor.set(false);
   }
+  /** Dieselbe Absendung (z. B. nach Verbindungsfehler erneut) legt serverseitig keine zweite Ausgabe an. */
+  private readonly expenseSubmission = new SubmissionKey();
+
   saveExpenseForm(): void {
     if (this.expenseSaving()) return;
     this.expenseForm.markAllAsTouched();
@@ -1122,23 +1126,22 @@ export class Reisen {
     this.expenseSaving.set(true);
     this.expenseFormError.set('');
     const id = this.editExpenseId();
+    const data = {
+      trip: tripId,
+      title: v.title.trim(),
+      amount: amount.toFixed(2),
+      currency: v.currency as TripExpense['currency'],
+      date: v.date,
+      category: v.category as BudgetCategory,
+      note: v.note.trim(),
+    };
     this.api
-      .saveExpense(
-        {
-          trip: tripId,
-          title: v.title.trim(),
-          amount: amount.toFixed(2),
-          currency: v.currency as TripExpense['currency'],
-          date: v.date,
-          category: v.category as BudgetCategory,
-          note: v.note.trim(),
-        },
-        id,
-      )
+      .saveExpense(data, id, id ? undefined : this.expenseSubmission.for(data))
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (saved) => {
           this.expenseSaving.set(false);
+          if (!id) this.expenseSubmission.reset();
           this.expenseEditor.set(false);
           this.expenses.update((items) => (id ? items.map((i) => (i.id === id ? saved : i)) : [...items, saved]));
           this.refreshTrips();

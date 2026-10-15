@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.db import transaction
 from django.db.models import Count, DecimalField, IntegerField, OuterRef, Prefetch, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -13,6 +14,7 @@ from rest_framework.response import Response
 from .expense_fx import backfill_pending
 from .models import PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask
 from .permissions import WRITABLE_ROLES, TripAccessPermission, TripContentAccessPermission, TripParticipantManagePermission
+from core.idempotency import idempotent
 from .serializers import (
     PackingItemSerializer,
     TripBudgetCategorySerializer,
@@ -187,6 +189,10 @@ class TripExpenseViewSet(TripScopedViewSet):
     queryset = TripExpense.objects.all()
     serializer_class = TripExpenseSerializer
 
+    @idempotent('reisen.expense.create')
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
     def list(self, request, *args, **kwargs):
         backfill_pending(self.get_queryset())
         return super().list(request, *args, **kwargs)
@@ -208,6 +214,13 @@ class TripParticipantViewSet(PrivateResponseMixin, viewsets.ModelViewSet):
     pagination_class = None
     # Kein POST: Teilnehmer entsteht nur, wenn die Person eine Einladung annimmt (core/invitations.py).
     http_method_names = ['get', 'patch', 'delete', 'head', 'options']
+
+    def perform_destroy(self, instance):
+        # Verlässt jemand die Reise, behalten seine Reiseaufgaben keinen Verweis auf ihn (sonst stünde dort eine
+        # Person, die die Reise gar nicht mehr sehen kann). Atomar mit dem Entfernen.
+        with transaction.atomic():
+            TripTask.objects.filter(trip=instance.trip, assignee=instance.user).update(assignee=None)
+            instance.delete()
 
     def get_queryset(self):
         queryset = TripParticipant.objects.filter(

@@ -17,9 +17,10 @@ MAX_COST = Decimal('99999.99')
 
 
 def _display_name(user) -> str | None:
+    # Nie die volle E-Mail-Adresse: Mitglieder sind nicht automatisch miteinander verbunden (Datenminimierung).
     if user is None:
         return None
-    return user.first_name or user.email
+    return user.first_name or user.email.split('@')[0]
 
 
 def _household(serializer):
@@ -396,12 +397,27 @@ class FolderEntrySerializer(serializers.ModelSerializer):
             'id', 'effective_status', 'cancellation_deadline', 'monthly_equivalent', 'deadlines', 'created_at', 'updated_at'
         ]
 
+    def _viewer(self):
+        request = self.context.get('request')
+        return request.user if request is not None else None
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         view = self.context.get('view')
         if instance.kind != FolderEntry.Kind.CONTRACT or getattr(view, 'action', None) not in self.DETAIL_ACTIONS:
             data.pop('contract_number', None)
+        # Beträge sind privat (services.can_see_cost): Mitglieder sehen den Vertrag, aber nicht, was er kostet.
+        data['cost_visible'] = services.can_see_cost(instance, self._viewer())
+        if not data['cost_visible']:
+            data['cost'] = None
+            data['monthly_equivalent'] = None
         return data
+
+    def update(self, instance, validated_data):
+        # Wer den Betrag nicht sehen darf, kann ihn auch nicht überschreiben (er bleibt unverändert).
+        if not services.can_see_cost(instance, self._viewer()):
+            validated_data.pop('cost', None)
+        return super().update(instance, validated_data)
 
     def get_effective_status(self, obj) -> str:
         if obj.kind == FolderEntry.Kind.CONTRACT:

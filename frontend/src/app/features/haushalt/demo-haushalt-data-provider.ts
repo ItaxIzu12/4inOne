@@ -705,11 +705,11 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
       ...input,
       name: input.name.trim(),
       effective_status: effective,
-      monthly_equivalent: isContract ? (monthlyEquivalent(input.cost, input.billing_cycle)?.toFixed(2) ?? null) : null,
+      monthly_equivalent: isContract ? (monthlyEquivalent(input.cost ?? null, input.billing_cycle)?.toFixed(2) ?? null) : null,
       cancellation_deadline: deadline,
       model: isContract ? '' : input.model,
       room: isContract ? '' : input.room,
-      cost: isContract ? input.cost : null,
+      cost: isContract ? (input.cost ?? null) : null,
       maintenance_due_date: isContract ? null : maintenance,
       deadlines,
     };

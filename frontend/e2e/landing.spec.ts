@@ -50,6 +50,9 @@ for (const width of [360, 820, 1440]) {
   test(`public landing explains the product before demo at ${width}px`, async ({ page }) => {
     const calls = await session(page);
     await page.setViewportSize({ width, height: 1000 });
+    // Axe prüft den Endzustand: ohne Einblend-Animation, sonst misst es den Kontrast halbtransparenter Abschnitte
+    // mitten im Übergang (zufällig, je nach Timing).
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       'Dein Alltag.Alles verbunden.',

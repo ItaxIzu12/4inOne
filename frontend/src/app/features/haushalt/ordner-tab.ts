@@ -158,6 +158,8 @@ export class OrdnerTab {
   protected readonly formOpen = signal(false);
   protected readonly formKind = signal<FolderKind>('geraet');
   protected readonly editingId = signal<Id | null>(null);
+  /** Betrag eines fremden Vertrags: im Formular nicht zeigen und nicht mitsenden (das Backend ignoriert ihn ohnehin). */
+  protected readonly formCostHidden = signal(false);
   protected readonly formName = signal('');
   protected readonly formProvider = signal('');
   protected readonly formCategory = signal('');
@@ -318,11 +320,13 @@ export class OrdnerTab {
 
   protected openNew(): void {
     this.editingId.set(null);
+    this.formCostHidden.set(false);
     this.fillForm({ kind: this.kind(), name: '', ...EMPTY_ENTRY });
   }
 
   protected openEdit(entry: FolderEntryDto): void {
     this.editingId.set(entry.id);
+    this.formCostHidden.set(entry.cost_visible === false);
     const number = this.contractNumber()?.id === entry.id ? this.contractNumber()!.value : '';
     this.fillForm({ ...entry, contract_number: number });
     if (entry.kind === 'vertrag' && this.contractNumber()?.id !== entry.id) {
@@ -385,7 +389,7 @@ export class OrdnerTab {
       this.formError.set('Bitte einen Namen eingeben.');
       return;
     }
-    const cost = isContract ? this.parseCost(this.formCost()) : null;
+    const cost = isContract && !this.formCostHidden() ? this.parseCost(this.formCost()) : null;
     if (cost === undefined) {
       this.formError.set('Bitte die Kosten als Betrag größer als 0 eingeben, z. B. 39,99.');
       return;
@@ -426,6 +430,7 @@ export class OrdnerTab {
       model: isContract ? '' : this.formModel().trim(),
       room: '',
     };
+    if (this.formCostHidden()) delete input.cost;
     const id = this.editingId();
     if (id !== null) {
       // Beim Bearbeiten Raum und letzte Wartung nicht überschreiben.

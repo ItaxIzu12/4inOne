@@ -31,3 +31,7 @@ reportlab==5.0.1
 redis==8.1.0
 sqlparse==0.6.0
 tzdata==2026.3
+
+# Produktions-Server (WSGI) — `runserver` ist nur für die Entwicklung. Start z. B.:
+# gunicorn config.wsgi:application --workers 3 --timeout 30 --bind 127.0.0.1:8000
+gunicorn==23.0.0

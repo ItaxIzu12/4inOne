@@ -80,7 +80,7 @@ describe('Reisen V1 (Demo)', () => {
     const { root } = await open();
     expect(text(root.querySelector('app-trip-list h2'))).toBe('Noch keine Reisen');
     expect(text(root.querySelector('app-trip-list'))).toContain('Plane deine erste Reise');
-    expect(root.querySelectorAll('app-trip-list .trip').length).toBe(0);
+    expect(root.querySelectorAll('app-trip-list .trip, app-trip-list .row').length).toBe(0);
     // Nur ein „Reise erstellen“ — kein zweiter Knopf im Kopf.
     expect(Array.from(root.querySelectorAll('button')).filter((b) => text(b) === 'Reise erstellen').length).toBe(1);
   });
@@ -97,7 +97,7 @@ describe('Reisen V1 (Demo)', () => {
     spy.mockRestore();
     button(root, 'Erneut versuchen').click();
     root = await settle(fixture);
-    expect(root.querySelectorAll('app-trip-list .trip').length).toBe(4);
+    expect(root.querySelectorAll('app-trip-list .trip, app-trip-list .row').length).toBe(4);
   });
 
   it('restricts new trip dates and validates changed ranges without locking historical edits', async () => {

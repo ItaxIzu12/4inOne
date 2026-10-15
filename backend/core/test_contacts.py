@@ -44,7 +44,7 @@ def test_invite_sends_an_email_with_a_link_and_creates_a_pending_invite(mira, se
     assert len(mail.outbox) == 1
     message = mail.outbox[0]
     assert message.to == ['tom@example.com']
-    assert f'{settings.FRONTEND_URL}/einladung/{stored.token}' in message.body
+    assert f'{settings.FRONTEND_URL}/einladung#{stored.token}' in message.body
     assert 'Mira' in message.subject
     assert 'teilt ihr noch nichts' in message.body
 
@@ -72,7 +72,7 @@ def test_cannot_invite_yourself_or_an_existing_contact(mira, tom):
 def test_accepting_creates_a_mutual_connection_and_nothing_is_shared(mira, tom):
     invite(mira, 'tom@example.com', 'FAMILY')
     token = ContactInvite.objects.get().token
-    response = client_for(tom).post(f'{URL}invites/{token}/accept/')
+    response = client_for(tom).post('/api/v1/contacts/invites/accept/', {'token': token}, format='json')
     assert response.status_code == 201
     assert Contact.objects.filter(owner=mira, other=tom, relation='FAMILY').exists()
     assert Contact.objects.filter(owner=tom, other=mira, relation='FAMILY').exists()
@@ -85,20 +85,20 @@ def test_accepting_creates_a_mutual_connection_and_nothing_is_shared(mira, tom):
     assert client_for(tom).get(URL).data['contacts'][0]['name'] == 'Mira'
     assert mine['sent'] == [] and client_for(tom).get(URL).data['received'] == []
     # ein zweites Mal annehmen geht nicht
-    assert client_for(tom).post(f'{URL}invites/{token}/accept/').status_code == 404
+    assert client_for(tom).post('/api/v1/contacts/invites/accept/', {'token': token}, format='json').status_code == 404
 
 
 def test_only_the_invited_email_can_see_or_answer_the_invite(mira, tom):
     other = make_user('fremd@example.com', 'Fremd')
     invite(mira, 'tom@example.com')
     token = ContactInvite.objects.get().token
-    assert client_for(other).get(f'{URL}invites/{token}/').status_code == 404
-    assert client_for(other).post(f'{URL}invites/{token}/accept/').status_code == 404
-    assert client_for(mira).post(f'{URL}invites/{token}/accept/').status_code == 404      # auch die einladende Person nicht
+    assert client_for(other).post('/api/v1/contacts/invites/lookup/', {'token': token}, format='json').status_code == 404
+    assert client_for(other).post('/api/v1/contacts/invites/accept/', {'token': token}, format='json').status_code == 404
+    assert client_for(mira).post('/api/v1/contacts/invites/accept/', {'token': token}, format='json').status_code == 404      # auch die einladende Person nicht
     assert not Contact.objects.exists()
-    detail = client_for(tom).get(f'{URL}invites/{token}/')
+    detail = client_for(tom).post('/api/v1/contacts/invites/lookup/', {'token': token}, format='json')
     assert detail.status_code == 200 and detail.data['from_name'] == 'Mira'
-    assert APIClient().get(f'{URL}invites/{token}/').status_code == 401
+    assert APIClient().post('/api/v1/contacts/invites/lookup/', {'token': token}, format='json').status_code == 401
 
 
 def test_expired_and_declined_invites_cannot_be_accepted(mira, tom):
@@ -106,13 +106,13 @@ def test_expired_and_declined_invites_cannot_be_accepted(mira, tom):
     stored = ContactInvite.objects.get()
     stored.expires_at = timezone.now() - timezone.timedelta(minutes=1)
     stored.save()
-    assert client_for(tom).post(f'{URL}invites/{stored.token}/accept/').status_code == 404
+    assert client_for(tom).post('/api/v1/contacts/invites/accept/', {'token': stored.token}, format='json').status_code == 404
     assert client_for(mira).get(URL).data['sent'] == []
 
     stored.expires_at = timezone.now() + timezone.timedelta(days=1)
     stored.save()
-    assert client_for(tom).post(f'{URL}invites/{stored.token}/decline/').status_code == 204
-    assert client_for(tom).post(f'{URL}invites/{stored.token}/accept/').status_code == 404
+    assert client_for(tom).post('/api/v1/contacts/invites/decline/', {'token': stored.token}, format='json').status_code == 204
+    assert client_for(tom).post('/api/v1/contacts/invites/accept/', {'token': stored.token}, format='json').status_code == 404
     assert not Contact.objects.exists()
 
 
@@ -138,7 +138,7 @@ def test_cancelling_a_sent_invite(mira, tom):
 
 def test_relation_is_per_side_and_removing_ends_it_for_both(mira, tom):
     invite(mira, 'tom@example.com', 'FRIEND')
-    client_for(tom).post(f'{URL}invites/{ContactInvite.objects.get().token}/accept/')
+    client_for(tom).post('/api/v1/contacts/invites/accept/', {'token': ContactInvite.objects.get().token}, format='json')
     mine = Contact.objects.get(owner=mira)
     assert client_for(mira).patch(f'{URL}{mine.pk}/', {'relation': 'FAMILY'}, format='json').data['relation'] == 'FAMILY'
     assert Contact.objects.get(owner=tom).relation == 'FRIEND'                    # Toms Sicht bleibt

@@ -1,5 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { AuthService } from '../auth/auth.service';
 import { Observable, catchError, finalize, of, tap } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
 
@@ -58,6 +59,22 @@ export type AcceptedNotification = Extract<InvitationNotification, { kind: 'CONT
 @Injectable({ providedIn: 'root' })
 export class InvitationsService {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private lastAccount: string | null | undefined = undefined;
+  /** Nach Abmelden oder Kontowechsel nichts vom vorherigen Konto anzeigen (gemeinsam genutztes Gerät). */
+  private readonly clearOnAccountChange = effect(() => {
+    const account = this.auth.currentUser()?.email ?? null;
+    untracked(() => {
+      if (this.lastAccount !== undefined && account !== this.lastAccount) {
+        this.received.set([]);
+        this.sent.set([]);
+        this.declined.set([]);
+        this.notifications.set([]);
+        this.message.set('');
+      }
+      this.lastAccount = account;
+    });
+  });
   private readonly base = `${API_BASE_URL}/invitations`;
 
   readonly received = signal<Invitation[]>([]);
@@ -130,8 +147,9 @@ export class InvitationsService {
   answerContact(invite: ContactInviteInfo, accept: boolean): Observable<unknown> {
     this.message.set('');
     this.notifications.update((list) => list.filter((n) => n.kind !== 'CONTACT_INVITE' || n.contact_invite.token !== invite.token));
-    const url = `${API_BASE_URL}/contacts/invites/${encodeURIComponent(invite.token)}/${accept ? 'accept' : 'decline'}/`;
-    return this.http.post(url, {}).pipe(
+    // Token im Body, nie in der URL (URLs landen in Zugriffsprotokollen)
+    const url = `${API_BASE_URL}/contacts/invites/${accept ? 'accept' : 'decline'}/`;
+    return this.http.post(url, { token: invite.token }).pipe(
       tap(() => {
         this.message.set(accept ? `Du bist jetzt mit ${invite.from_name} verbunden.` : 'Einladung abgelehnt.');
         if (accept) this.membershipVersion.update((v) => v + 1);

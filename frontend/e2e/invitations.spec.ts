@@ -55,10 +55,11 @@ async function mockApi(page: Page, state: State) {
   );
   await page.route('**/api/v1/auth/email/resend/', (r) => {
     state.calls.push('resend');
-    return r.fulfill({ json: { detail: 'ok', dev_link: 'http://localhost:4200/email-bestaetigen?token=lokal' } });
+    return r.fulfill({ json: { detail: 'ok', dev_link: 'http://localhost:4200/email-bestaetigen#token=lokal' } });
   });
   await page.route('**/api/v1/contacts/invites/**', (r) => {
-    state.calls.push(`${r.request().method()} ${new URL(r.request().url()).pathname.replace('/api/v1/contacts', '')}`);
+    const body = r.request().postDataJSON() as { token?: string } | null;
+    state.calls.push(`${r.request().method()} ${new URL(r.request().url()).pathname.replace('/api/v1/contacts', '')} token=${body?.token ?? ''}`);
     state.contact = false;
     return r.fulfill({ status: 201, json: {} });
   });
@@ -212,7 +213,7 @@ test('Kontaktanfrage erscheint mit Name in Glocke und Startseite und lässt sich
   await expect(panel).toContainText('Richard möchte dich als Familie hinzufügen.');
   await panel.getByRole('button', { name: 'Annehmen' }).click();
   await expect(panel).toContainText('Du bist jetzt mit Richard verbunden.');
-  expect(state.calls).toContain('POST /invites/tok-richard/accept/');
+  expect(state.calls).toContain('POST /invites/accept/ token=tok-richard');
   await expect(page.getByRole('link', { name: /Richard möchte dich/ })).toHaveCount(0);
 });
 
@@ -224,7 +225,7 @@ test('ohne bestätigte E-Mail: ruhiger Hinweis mit „Mail senden“ statt Einla
   await page.getByRole('button', { name: 'Mail senden' }).click();
   // Lokal (keine echte Mail): der Link erscheint direkt — nur als Pfad innerhalb der App
   await expect(page.getByText('Entwicklungsmodus: Es wird keine echte Mail verschickt.')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Jetzt bestätigen' })).toHaveAttribute('href', '/email-bestaetigen?token=lokal');
+  await expect(page.getByRole('link', { name: 'Jetzt bestätigen' })).toHaveAttribute('href', '/email-bestaetigen#token=lokal');
   expect(state.calls).toContain('resend');
 });
 
@@ -235,7 +236,7 @@ test('E-Mail-Bestätigungsseite: Token verschwindet aus der Adresszeile, Erfolg 
       ? r.fulfill({ json: { detail: 'E-Mail-Adresse bestätigt.' } })
       : r.fulfill({ status: 400, json: { detail: 'ungültig' } }),
   );
-  await page.goto('/email-bestaetigen?token=gut');
+  await page.goto('/email-bestaetigen#token=gut');
   await expect(page.getByRole('heading', { name: 'E-Mail-Adresse bestätigt' })).toBeVisible();
   expect(page.url()).not.toContain('token');
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);

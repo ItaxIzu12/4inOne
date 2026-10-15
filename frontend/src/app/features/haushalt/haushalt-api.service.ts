@@ -278,6 +278,8 @@ export type BillingCycle = 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'ONE_TIME';
 
 export interface FolderEntryDto {
   id: Id;
+  /** Beträge sind privat: false = von jemand anderem erfasst, `cost`/`monthly_equivalent` kommen dann als null. */
+  cost_visible?: boolean;
   kind: FolderKind;
   name: string;
   /** Vertrag: Anbieter; Gerät: Hersteller. */
@@ -317,7 +319,8 @@ export interface FolderEntryInput {
   category: string;
   status: FolderEntryDto['status'];
   notes: string;
-  cost: string | null;
+  /** Weglassen = unverändert (z. B. Betrag eines fremden Vertrags, den man nicht sehen darf). */
+  cost?: string | null;
   billing_cycle: BillingCycle;
   start_date: string | null;
   end_date: string | null;
@@ -433,8 +436,10 @@ export class HaushaltApiService {
     return this.http.delete<void>(`${this.base}/aufgaben/${id}/`);
   }
 
-  completeTask(id: Id): Observable<TaskDto> {
-    return this.http.post<TaskDto>(`${this.base}/aufgaben/${id}/erledigt/`, {});
+  /** `dueDate`: der Termin, der gerade abgehakt wird — eine doppelt ankommende Anfrage (Doppelklick, Wiederholung)
+   * zählt dann nicht ein zweites Mal und lässt die Serie keinen Termin überspringen. */
+  completeTask(id: Id, dueDate?: string | null): Observable<TaskDto> {
+    return this.http.post<TaskDto>(`${this.base}/aufgaben/${id}/erledigt/`, dueDate ? { due_date: dueDate } : {});
   }
 
   getFolder(): Observable<FolderEntryDto[]> {

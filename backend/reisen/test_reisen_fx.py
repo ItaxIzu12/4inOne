@@ -14,6 +14,11 @@ from core.models import ExchangeRate, UserPreference
 from reisen.models import Trip, TripExpense
 
 pytestmark = pytest.mark.django_db
+
+
+def day(offset: int) -> str:
+    """Datum relativ zu heute — neue Reisen dürfen nicht vor heute beginnen."""
+    return (timezone.localdate() + timedelta(days=offset)).isoformat()
 BASE = '/api/v1/reisen/'
 
 
@@ -207,7 +212,7 @@ def test_changing_the_trip_currency_recomputes_only_the_trip_values(anna):
 
 def test_a_new_trip_without_currency_uses_the_creators_home_currency_not_a_fixed_one(anna):
     UserPreference.objects.create(user=anna, home_currency='CHF')
-    data = api(anna).post(f'{BASE}trips/', {'title': 'Bern', 'destination': 'Bern', 'start_date': '2026-11-12', 'end_date': '2026-11-15'}, format='json').data
+    data = api(anna).post(f'{BASE}trips/', {'title': 'Bern', 'destination': 'Bern', 'start_date': day(42), 'end_date': day(45)}, format='json').data
     assert data['currency'] == 'CHF'
 
 

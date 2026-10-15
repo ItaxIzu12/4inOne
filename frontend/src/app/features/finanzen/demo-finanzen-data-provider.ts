@@ -1,3 +1,4 @@
+import { toDate } from '../../shared/form/date-utils';
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import {
@@ -65,7 +66,8 @@ function daysAgo(days: number): string {
   date.setDate(date.getDate() - days);
   // "YYYY-MM-DD" — Transaction.datum ist ein reines Datum, kein Zeitstempel
   // (siehe finanzen-api.service.ts TransactionDto.datum).
-  return date.toISOString().slice(0, 10);
+  // lokales Datum (nicht UTC): toISOString() würde kurz nach Mitternacht den Vortag liefern
+  return toDate(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 /** Feste Beispieldaten für die öffentliche Demo-Route (/, siehe

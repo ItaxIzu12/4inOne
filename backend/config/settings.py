@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 from datetime import timedelta
+
+from corsheaders.defaults import default_headers
 from pathlib import Path
 
 import environ
@@ -78,6 +80,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'core.middleware.ApiNoStoreMiddleware',  # persönliche API-Daten nie zwischenspeichern
     'csp.middleware.CSPMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -176,19 +179,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# TODO (nur lokal, vorübergehend): PBKDF2PasswordHasher steht hier bewusst
-# ABWEICHEND von ARCHITEKTUR.md §3.1 an erster Stelle, weil auf diesem
-# Windows-Rechner eine Anwendungssteuerungsrichtlinie (vermutlich Smart App
-# Control) die native _ffi-DLL von argon2-cffi blockiert ("Couldn't load
-# 'Argon2PasswordHasher' algorithm library") — dadurch schlugen Login/
-# Registrierung mit 500 fehl. PBKDF2 ist reines Python (nutzt hashlib, keine
-# native DLL) und funktioniert deshalb ohne die Richtlinien-Blockade.
-# ZURÜCKSTELLEN auf Argon2 zuerst, sobald die Windows-Richtlinie geprüft/
-# behoben ist — siehe Chat: Einstellungen → Datenschutz & Sicherheit →
-# Windows-Sicherheit → App- und Browsersteuerung → Smart App Control.
+# ARCHITEKTUR.md §3.1: Argon2 als Standard (die frühere Windows-Ausnahme mit PBKDF2 zuerst ist aufgehoben).
 PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    # Argon2 zuerst (empfohlen, speicherhart). Bestehende PBKDF2-Hashes bleiben gültig und werden beim nächsten
+    # erfolgreichen Login automatisch auf Argon2 umgestellt.
     'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
 ]
@@ -232,7 +228,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # wie JWTAuthentication, aber ein beendetes Gerät (Abmelden) entwertet auch sein Access-Token sofort
+        'core.authentication.SessionBoundJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -334,6 +331,8 @@ CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localho
 if env('CAPACITOR_APP_ORIGIN', default=None):
     CORS_ALLOWED_ORIGINS.append(env('CAPACITOR_APP_ORIGIN'))
 CORS_ALLOW_CREDENTIALS = True
+# Idempotency-Key: Anlage-Anfragen ohne Duplikate wiederholbar (core/idempotency.py)
+CORS_ALLOW_HEADERS = (*default_headers, 'idempotency-key')
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=CORS_ALLOWED_ORIGINS)
 
 # Content-Security-Policy (django-csp 4.x-Format)
@@ -356,6 +355,9 @@ OTP_TOTP_ISSUER = 'Kompass'
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = timedelta(hours=1)
 AXES_LOCKOUT_PARAMETERS = ['username', 'ip_address']
+# Keine E-Mail-Adressen/Zugangsdaten in den Logs: axes zählt Fehlversuche weiter in der Datenbank (für die Sperre),
+# schreibt aber keine ausführlichen Zeilen mit Anmeldename ins Log.
+AXES_VERBOSE = False
 
 # Redis: Caching, siehe ARCHITEKTUR.md §1/§4. Sessions/Token-Blacklist
 # laufen bewusst weiterhin über die Datenbank (Standard-Django/simplejwt-
@@ -373,9 +375,14 @@ CACHES = {
     # nicht ausfallen, nur weil Redis (noch) nicht erreichbar ist. LocMemCache
     # reicht für einen einzelnen Prozess/Worker; bei mehreren Worker-Prozessen
     # in Produktion (geteilter Zustand nötig) auf einen Redis-Alias wechseln.
-    'throttle': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-    },
+    # Produktion mit mehreren Server-Prozessen: RATE_LIMIT_CACHE=database (einmalig `manage.py createcachetable`),
+    # sonst zählt jeder Prozess für sich und die Limits vervielfachen sich. Datenbank statt Redis, damit
+    # Login/Registrierung nicht ausfallen, wenn Redis nicht erreichbar ist.
+    'throttle': (
+        {'BACKEND': 'django.core.cache.backends.db.DatabaseCache', 'LOCATION': 'rate_limit_cache'}
+        if env('RATE_LIMIT_CACHE', default='local') == 'database'
+        else {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
+    ),
     # Nur die Sperre „EZB-Kurse höchstens alle 6 Stunden laden“ (core/fx.py) — lokal, damit Umrechnungen nicht von
     # Redis abhängen. Die Kurse selbst liegen in der Datenbank.
     'fx': {
@@ -394,6 +401,15 @@ ADMIN_URL_PATH = env('ADMIN_URL_PATH', default='django-admin/')
 # Security-Hardening für Produktion — nur aktiv wenn DEBUG=False
 # (ARCHITEKTUR.md §3.4). In lokaler Entwicklung mit DEBUG=True bewusst aus,
 # da z. B. SECURE_SSL_REDIRECT den lokalen HTTP-Dev-Server sonst blockiert.
+# Hinter einem Reverse Proxy, der HTTPS beendet (nginx, Caddy, Plattform-Router): nur dann einschalten, wenn genau
+# ein vertrauenswürdiger Proxy davor steht — sonst ließen sich die Header fälschen. Ohne das liefe der SSL-Redirect
+# endlos, und alle Nutzer hätten für Rate-Limits/Login-Sperren dieselbe IP (die des Proxys).
+BEHIND_PROXY = env.bool('BEHIND_PROXY', default=False)
+if BEHIND_PROXY:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    REST_FRAMEWORK['NUM_PROXIES'] = 1  # DRF-Rate-Limits zählen die echte Client-IP
+    AXES_IPWARE_PROXY_COUNT = 1  # Login-Sperre ebenso
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -419,6 +435,9 @@ if env('EMAIL_HOST', default=''):
                 'username': env('EMAIL_HOST_USER', default=''),
                 'password': env('EMAIL_HOST_PASSWORD', default=''),
                 'use_tls': env.bool('EMAIL_USE_TLS', default=True),
+                # Ohne Timeout hinge eine Anfrage (Registrierung, Passwort-Reset, Einladung) bei einem
+                # gestörten Mailserver unbegrenzt — und mit ihr ein Server-Prozess.
+                'timeout': env.int('EMAIL_TIMEOUT', default=10),
             },
         },
     }

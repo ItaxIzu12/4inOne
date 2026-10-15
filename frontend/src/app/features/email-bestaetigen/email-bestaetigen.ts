@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { InvitationsService } from '../../core/invitations/invitations.service';
 import { Brand } from '../../shared/brand/brand';
+import { tokenFromLink } from '../../shared/link-token';
 
 type State = 'checking' | 'done' | 'invalid';
 
@@ -23,12 +24,12 @@ export class EmailBestaetigen {
   protected readonly state = signal<State>('checking');
 
   constructor() {
-    const token = inject(ActivatedRoute).snapshot.queryParamMap.get('token') ?? '';
+    const token = tokenFromLink(inject(ActivatedRoute).snapshot);
     if (!token) {
       this.state.set('invalid');
       return;
     }
-    inject(Router).navigate([], { queryParams: {}, replaceUrl: true });
+    inject(Router).navigate([], { queryParams: {}, fragment: undefined, replaceUrl: true });
     this.auth.verifyEmail(token).subscribe({
       next: () => {
         this.state.set('done');

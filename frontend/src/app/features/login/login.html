@@ -50,15 +50,15 @@
               formControlName="email"
               autocomplete="email"
               [attr.aria-invalid]="
-                loginForm.controls.email.invalid && loginForm.controls.email.touched
+                loginForm.controls.email.invalid && loginTried()
               "
               [attr.aria-describedby]="
-                loginForm.controls.email.invalid && loginForm.controls.email.touched
+                loginForm.controls.email.invalid && loginTried()
                   ? 'login-email-error'
                   : null
               "
             />
-            @if (loginForm.controls.email.invalid && loginForm.controls.email.touched) {
+            @if (loginForm.controls.email.invalid && loginTried()) {
               <p class="field-error" id="login-email-error" [appErrorNotice]="loginForm.controls.email.errors?.['required'] ? 'Bitte gib deine E-Mail-Adresse ein.' : 'Das sieht nicht wie eine gültige E-Mail-Adresse aus.'" [persistentError]="true">
                 @if (loginForm.controls.email.errors?.['required']) {
                   Bitte gib deine E-Mail-Adresse ein.
@@ -78,7 +78,7 @@
                 formControlName="password"
                 autocomplete="current-password"
                 [attr.aria-invalid]="
-                  loginForm.controls.password.invalid && loginForm.controls.password.touched
+                  loginForm.controls.password.invalid && loginTried()
                 "
                 aria-describedby="login-password-hint"
               />
@@ -123,7 +123,7 @@
                 }
               </button>
             </div>
-            @if (loginForm.controls.password.invalid && loginForm.controls.password.touched) {
+            @if (loginForm.controls.password.invalid && loginTried()) {
               <p class="field-error" id="login-password-hint" [appErrorNotice]="'Bitte gib dein Passwort ein.'">Bitte gib dein Passwort ein.</p>
             }
             @if (submitError()) {
@@ -189,15 +189,15 @@
               formControlName="name"
               autocomplete="given-name"
               [attr.aria-invalid]="
-                registerForm.controls.name.invalid && registerForm.controls.name.touched
+                registerForm.controls.name.invalid && registerTried()
               "
               [attr.aria-describedby]="
-                registerForm.controls.name.invalid && registerForm.controls.name.touched
+                registerForm.controls.name.invalid && registerTried()
                   ? 'register-name-error'
                   : null
               "
             />
-            @if (registerForm.controls.name.invalid && registerForm.controls.name.touched) {
+            @if (registerForm.controls.name.invalid && registerTried()) {
               <p class="field-error" id="register-name-error" [appErrorNotice]="'Bitte gib deinen Namen ein.'" [persistentError]="true">Bitte gib deinen Namen ein.</p>
             }
           </div>
@@ -210,15 +210,15 @@
               formControlName="email"
               autocomplete="email"
               [attr.aria-invalid]="
-                registerForm.controls.email.invalid && registerForm.controls.email.touched
+                registerForm.controls.email.invalid && registerTried()
               "
               [attr.aria-describedby]="
-                registerForm.controls.email.invalid && registerForm.controls.email.touched
+                registerForm.controls.email.invalid && registerTried()
                   ? 'register-email-error'
                   : null
               "
             />
-            @if (registerForm.controls.email.invalid && registerForm.controls.email.touched) {
+            @if (registerForm.controls.email.invalid && registerTried()) {
               <p class="field-error" id="register-email-error" [appErrorNotice]="registerForm.controls.email.errors?.['required'] ? 'Bitte gib deine E-Mail-Adresse ein.' : registerForm.controls.email.errors?.['backend'] || 'Das sieht nicht wie eine gültige E-Mail-Adresse aus.'" [persistentError]="true">
                 @if (registerForm.controls.email.errors?.['required']) {
                   Bitte gib deine E-Mail-Adresse ein.
@@ -241,7 +241,7 @@
                 autocomplete="new-password"
                 minlength="10"
                 [attr.aria-invalid]="
-                  registerForm.controls.password.invalid && registerForm.controls.password.touched
+                  registerForm.controls.password.invalid && registerTried()
                 "
                 aria-describedby="register-password-hint"
               />
@@ -293,12 +293,12 @@
             </p>
 
             @if (
-              registerForm.controls.password.touched &&
+              registerTried() &&
               registerForm.controls.password.errors?.['required']
             ) {
               <p class="field-error" [appErrorNotice]="'Bitte gib ein Passwort ein.'">Bitte gib ein Passwort ein.</p>
             } @else if (
-              registerForm.controls.password.touched &&
+              registerTried() &&
               registerForm.controls.password.errors?.['backend']
             ) {
               <p class="field-error" [appErrorNotice]="registerForm.controls.password.errors?.['backend']">{{ registerForm.controls.password.errors?.['backend'] }}</p>
@@ -314,9 +314,9 @@
                 formControlName="confirmPassword"
                 autocomplete="new-password"
                 [attr.aria-invalid]="
-                  (registerForm.controls.confirmPassword.touched &&
+                  (registerTried() &&
                     registerForm.controls.confirmPassword.invalid) ||
-                  (registerForm.controls.confirmPassword.touched &&
+                  (registerTried() &&
                     registerForm.errors?.['mismatch'])
                 "
                 [attr.aria-describedby]="'register-confirm-error'"
@@ -365,12 +365,12 @@
               </button>
             </div>
             @if (
-              registerForm.controls.confirmPassword.touched &&
+              registerTried() &&
               registerForm.controls.confirmPassword.errors?.['required']
             ) {
               <p class="field-error" id="register-confirm-error" [appErrorNotice]="'Bitte bestätige dein Passwort.'" [persistentError]="true">Bitte bestätige dein Passwort.</p>
             } @else if (
-              registerForm.controls.confirmPassword.touched && registerForm.errors?.['mismatch']
+              registerTried() && registerForm.errors?.['mismatch']
             ) {
               <p class="field-error" id="register-confirm-error" [appErrorNotice]="'Die Passwörter stimmen nicht überein.'" [persistentError]="true">
                 Die Passwörter stimmen nicht überein.
@@ -386,7 +386,7 @@
           </label>
           @if (
             registerForm.controls.acceptPrivacy.invalid &&
-            registerForm.controls.acceptPrivacy.touched
+            registerTried()
           ) {
             <p class="field-error" [appErrorNotice]="'Bitte stimme den Nutzungsbedingungen und der Datenschutzerklärung zu.'">
               Bitte stimme den Nutzungsbedingungen und der Datenschutzerklärung zu.

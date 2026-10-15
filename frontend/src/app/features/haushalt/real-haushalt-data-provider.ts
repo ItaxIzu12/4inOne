@@ -82,8 +82,8 @@ export class RealHaushaltDataProvider implements HaushaltDataProvider {
   deleteTask(id: Id): Observable<void> {
     return this.api.deleteTask(id);
   }
-  completeTask(id: Id): Observable<TaskDto> {
-    return this.api.completeTask(id);
+  completeTask(id: Id, dueDate?: string | null): Observable<TaskDto> {
+    return this.api.completeTask(id, dueDate);
   }
   reopenTask(id: Id): Observable<TaskDto> {
     return this.api.reopenTask(id);

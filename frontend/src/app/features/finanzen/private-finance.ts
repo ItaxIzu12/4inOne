@@ -1,3 +1,4 @@
+import { SubmissionKey } from '../../shared/idempotency';
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { isInCalendarWeek } from '../../shared/dates/calendar-week';
 import { MobileAction } from '../../shared/mobile-action/mobile-action';
@@ -1048,15 +1049,20 @@ export class PrivateFinance {
       },
     });
   }
+  /** Dieselbe Absendung (z. B. nach Verbindungsfehler erneut) legt serverseitig nichts doppelt an. */
+  private readonly submission = new SubmissionKey();
+
   private persist(resource: Resource, payload: object, v: ReturnType<typeof this.form.getRawValue>, amount: string | null) {
     this.saving.set(true);
     this.formError.set('');
+    const creating = !this.editId();
     this.api
-      .save(resource, payload, this.editId())
+      .save(resource, payload, this.editId(), creating ? this.submission.for({ resource, payload }) : undefined)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: () => {
           this.saving.set(false);
+          if (creating) this.submission.reset();
           this.editor.set(null);
           if (resource === 'transactions') {
             const what = v.type === 'INCOME' ? 'Einnahme' : 'Ausgabe';

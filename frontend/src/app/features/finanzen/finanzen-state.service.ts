@@ -1,4 +1,5 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, effect, inject, signal, untracked } from '@angular/core';
+import { AuthService } from '../../core/auth/auth.service';
 import { FINANZEN_DATA_PROVIDER } from './finanzen-data-provider';
 import { AnalysenDto, OverviewDto } from './finanzen-api.service';
 
@@ -50,6 +51,23 @@ export class FinanzenStateService {
   readonly error = this.errorSignal.asReadonly();
   private readonly analysenErrorSignal = signal(false);
   readonly analysenError = this.analysenErrorSignal.asReadonly();
+
+  // Dieser Dienst lebt so lange wie die App. Nach Abmelden oder Kontowechsel darf nichts vom vorherigen Konto
+  // stehen bleiben (gemeinsam genutztes Gerät) — deshalb beim Wechsel der angemeldeten Person alles leeren.
+  private readonly auth = inject(AuthService);
+  private lastAccount: string | null | undefined = undefined;
+  private readonly clearOnAccountChange = effect(() => {
+    const account = this.auth.currentUser()?.email ?? null;
+    untracked(() => {
+      if (this.lastAccount !== undefined && account !== this.lastAccount) {
+        this.uebersichtSignal.set(null);
+        this.analysenSignal.set(null);
+        this.errorSignal.set(false);
+        this.analysenErrorSignal.set(false);
+      }
+      this.lastAccount = account;
+    });
+  });
 
   /** Lädt NUR die Übersicht (Dashboard braucht nichts anderes). */
   laden(): void {

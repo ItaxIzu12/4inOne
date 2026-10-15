@@ -21,7 +21,8 @@ async function mockContacts(page: Page, state: Overview) {
     const req = r.request();
     const path = new URL(req.url()).pathname.replace('/api/v1/contacts', '');
     if (req.method() === 'GET' && (path === '/' || path === '')) return r.fulfill({ json: state });
-    calls.push(`${req.method()} ${path}`);
+    const body = req.postDataJSON() as { token?: string } | null;
+    calls.push(`${req.method()} ${path}${body?.token ? ` token=${body.token}` : ''}`);
     if (req.method() === 'POST' && path === '/invites/') {
       const body = req.postDataJSON() as { email: string; relation: string };
       state.sent = [...state.sent, { id: 9, email: body.email, relation: body.relation, expires_at: '2026-10-10T00:00:00Z', created_at: new Date().toISOString() }];
@@ -113,7 +114,7 @@ test('a received invite can be accepted; contacts are grouped and removal asks f
   await page.getByRole('button', { name: 'Verbindung beenden' }).click();
   await page.getByRole('button', { name: 'Ja, beenden' }).click();
   await expect(page.getByRole('status').first()).toContainText('Die Verbindung zu Tom wurde beendet.');
-  expect(calls).toEqual(['POST /invites/abc/accept/', 'PATCH /1/', 'DELETE /1/']);
+  expect(calls).toEqual(['POST /invites/accept/ token=abc', 'PATCH /1/', 'DELETE /1/']);
 });
 
 test('from the public demo, "Personen & Gruppen" works without signing in and shows example data plus a short explanation', async ({ page }) => {
@@ -151,7 +152,7 @@ test('the invite link: guests are told to sign in, the invited account can accep
   // ohne Anmeldung
   await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 't' } }));
   await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ status: 401, json: {} }));
-  await page.goto('/einladung/abc');
+  await page.goto('/einladung#abc');
   await expect(page.getByRole('heading', { name: 'Du wurdest zu 4inOne eingeladen' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Anmelden' })).toBeVisible();
 });
@@ -160,19 +161,25 @@ test('the invite link for the invited account shows the sender and accepts', asy
   await signedIn(page, 'tom@example.com');
   const state: Overview = { contacts: [], sent: [], received: [] };
   const calls = await mockContacts(page, state);
-  await page.route('**/api/v1/contacts/invites/abc/', (r) => r.fulfill({ json: { from_name: 'Mira', relation: 'FAMILY', expires_at: '2026-10-10T00:00:00Z' } }));
-  await page.goto('/einladung/abc');
+  await page.route('**/api/v1/contacts/invites/lookup/', (r) =>
+    (r.request().postDataJSON() as { token: string }).token === 'abc'
+      ? r.fulfill({ json: { from_name: 'Mira', relation: 'FAMILY', expires_at: '2026-10-10T00:00:00Z' } })
+      : r.fulfill({ status: 404, json: {} }),
+  );
+  // neues Format: Token im Fragment — es geht nie an einen Server und verschwindet sofort aus der Adresszeile
+  await page.goto('/einladung#abc');
   await expect(page.getByRole('heading', { name: 'Mira lädt dich ein' })).toBeVisible();
+  expect(page.url()).not.toContain('abc');
   await expect(page.getByText('als Familie hinzufügen')).toBeVisible();
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: 'Annehmen' }).click();
   await expect(page).toHaveURL(/\/familie$/);
-  expect(calls).toContain('POST /invites/abc/accept/');
+  expect(calls).toContain('POST /invites/accept/ token=abc');
 });
 
 test('an invite for another account looks like an invalid one', async ({ page }) => {
   await signedIn(page, 'fremd@example.com');
-  await page.route('**/api/v1/contacts/invites/zzz/', (r) => r.fulfill({ status: 404, json: {} }));
-  await page.goto('/einladung/zzz');
+  await page.route('**/api/v1/contacts/invites/lookup/', (r) => r.fulfill({ status: 404, json: {} }));
+  await page.goto('/einladung/zzz'); // ältere Links funktionieren weiter
   await expect(page.getByRole('heading', { name: 'Diese Einladung gilt nicht' })).toBeVisible();
 });

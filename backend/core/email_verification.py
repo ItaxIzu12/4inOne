@@ -36,7 +36,8 @@ def make_token(user) -> str:
 
 
 def link_for(user) -> str:
-    return f'{settings.FRONTEND_URL}/email-bestaetigen?token={make_token(user)}'
+    # Token im Fragment: wird nie an einen Server geschickt (keine Zugriffsprotokolle, kein Referer).
+    return f'{settings.FRONTEND_URL}/email-bestaetigen#token={make_token(user)}'
 
 
 def dev_link_allowed() -> bool:

@@ -1,5 +1,5 @@
-// Reiter „Heute“: Heute fällig (breit), daneben Demnächst und Einkauf;
-// ohne jede Angabe ein einladender leerer Zustand.
+// Reiter „Heute“: Heute fällig über die volle Breite (wichtigster Bereich), darunter Demnächst und Einkauf
+// nebeneinander; am Handy alles untereinander. Ohne jede Angabe ein einladender leerer Zustand.
 :host {
   display: block;
 }
@@ -7,11 +7,11 @@
 // ---------- Raster ----------
 .today {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-areas:
-    'tasks soon'
-    'tasks shop';
-  gap: 20px;
+    'tasks tasks'
+    'soon shop';
+  gap: var(--space-5);
   align-items: start;
 }
 .today__tasks {
@@ -357,6 +357,35 @@ ul {
 .welcome__actions app-icon {
   width: 18px;
   height: 18px;
+}
+
+// ---------- Rechner: Aufgabenzeilen in festen Spalten ----------
+// Kästchen · Titel mit Wiederholung · Fälligkeit · Priorität — über alle Zeilen bündig, damit sich die volle
+// Breite gut lesen lässt. „Heute“ ist ruhiger Text statt Pille; Überfällig bleibt dezent hervorgehoben (Text +
+// leichte Tönung), Priorität „Hoch“ als kleine Marke. Am Handy unverändert.
+@media (min-width: 961px) {
+  .task {
+    grid-template-columns: 22px minmax(0, 1fr) 12rem 4.5rem;
+    column-gap: var(--space-4);
+    min-height: 60px;
+    padding: var(--space-2) 0;
+  }
+  .task .tag {
+    justify-self: end;
+  }
+  .task .tag:not(.tag--warn):not(.tag--prio) {
+    padding: 0;
+    background: none;
+    color: var(--text-secondary);
+    font-size: var(--fs-secondary);
+    font-weight: var(--fw-medium);
+  }
+  .task .tag--prio {
+    grid-column: 4;
+  }
+  .soon {
+    min-height: 60px;
+  }
 }
 
 // ---------- Responsiv ----------

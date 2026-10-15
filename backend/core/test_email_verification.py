@@ -26,7 +26,7 @@ def client_for(user):
 
 
 def link_token(body: str) -> str:
-    return re.search(r'email-bestaetigen\?token=(\S+)', body).group(1)
+    return re.search(r'email-bestaetigen#token=(\S+)', body).group(1)
 
 
 def test_registration_sends_a_verification_link_and_reports_the_state():
@@ -100,7 +100,7 @@ def test_contact_invite_shows_in_the_bell_only_after_verification():
 
     # direkt aus der Glocke annehmen (ohne Mail-Link)
     token = item['contact_invite']['token']
-    assert client_for(alex).post(f'/api/v1/contacts/invites/{token}/accept/').status_code == 201
+    assert client_for(alex).post('/api/v1/contacts/invites/accept/', {'token': token}, format='json').status_code == 201
     assert Contact.objects.filter(owner=alex, other=richard, relation='FAMILY').exists()
     assert client_for(alex).get('/api/v1/notifications/').data['items'] == []
 
@@ -110,7 +110,7 @@ def test_dev_link_only_locally_with_log_mailer(settings):
     settings.DEBUG = True
     settings.MAILERS = {'default': {'BACKEND': 'django.core.mail.backends.console.EmailBackend'}}
     local = client_for(alex).post('/api/v1/auth/email/resend/').data
-    assert '/email-bestaetigen?token=' in local['dev_link']
+    assert '/email-bestaetigen#token=' in local['dev_link']
     settings.DEBUG = False
     assert 'dev_link' not in client_for(alex).post('/api/v1/auth/email/resend/').data
     settings.DEBUG = True
@@ -128,8 +128,8 @@ def test_contact_inviter_gets_a_success_message_but_no_decline_message():
         client_for(richard).post('/api/v1/contacts/invites/', {'email': email, 'relation': 'FRIEND'}, format='json')
     alex_token = client_for(alex).get('/api/v1/notifications/').data['items'][0]['contact_invite']['token']
     lena_token = client_for(lena).get('/api/v1/notifications/').data['items'][0]['contact_invite']['token']
-    client_for(alex).post(f'/api/v1/contacts/invites/{alex_token}/accept/')
-    client_for(lena).post(f'/api/v1/contacts/invites/{lena_token}/decline/')
+    client_for(alex).post('/api/v1/contacts/invites/accept/', {'token': alex_token}, format='json')
+    client_for(lena).post('/api/v1/contacts/invites/decline/', {'token': lena_token}, format='json')
 
     items = client_for(richard).get('/api/v1/notifications/').data['items']
     assert [(i['kind'], i['accepted']['name']) for i in items] == [('CONTACT_ACCEPTED', 'Alex')]

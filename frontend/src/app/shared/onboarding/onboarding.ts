@@ -126,6 +126,7 @@ export class Onboarding {
 
   protected onCategorySubmit(event: Event): void {
     event.preventDefault();
+    if (this.categorySubmitting()) return; // Doppelklick/Enter: nicht zweimal anlegen
     if (!this.categoryName().trim()) {
       this.categoryError.set('Bitte einen Namen für die Kategorie eingeben.');
       return;

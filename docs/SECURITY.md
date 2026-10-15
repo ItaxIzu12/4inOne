@@ -106,6 +106,21 @@ Never log:
 
 ## Before public launch
 
+- Set `DEBUG=False`, `SECRET_KEY`, `ALLOWED_HOSTS`, `EMAIL_HOST` (+ credentials) and, behind a reverse proxy,
+  `BEHIND_PROXY=True`; then `python manage.py check --deploy` must report no issues.
+- Production storage and processes (enforced by `check --deploy`, see `core/checks.py`):
+  - `DATABASE_URL` → PostgreSQL (SQLite is an error); run `migrate` and the test suite once against PostgreSQL.
+  - `RATE_LIMIT_CACHE=database` and once `python manage.py createcachetable` — otherwise every worker counts
+    rate limits separately.
+  - `PRIVATE_MEDIA_ROOT` on a persistent, backed-up volume outside the code directory (uploaded files).
+- Run the app with `gunicorn config.wsgi:application` (in `requirements.txt`), never `runserver`.
+- Daily job: `python manage.py cleanup_expired` (expired refresh tokens, stale device sessions, reset links,
+  idempotency keys, old read notifications, expired contact invites — never user content).
+- Backups: daily `pg_dump` of the database plus the `PRIVATE_MEDIA_ROOT` volume; test a restore before launch.
+- `EMAIL_TIMEOUT` (default 10 s) keeps a slow mail server from blocking requests.
+- `docker-compose.yml` binds Postgres/Redis to 127.0.0.1 only.
+- Limit log retention; logs contain no passwords, tokens or e-mail addresses from failed logins by design.
+
 In-app invitations (household/trip) are covered by `backend/core/test_invitations.py`: IDOR/BOLA, mass assignment,
 foreign scope IDs, role escalation, stale permissions, deleted scope/accounts, double accept and accept/decline
 races, and cross-domain leak checks. Regression coverage for mailbox-based invitation verification, reset revocation, household invitation roles and

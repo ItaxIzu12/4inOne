@@ -186,7 +186,7 @@ export class RoutinenTab {
     if (this.busy() !== null) return;
     this.busy.set(task.id);
     this.actionError.set(null);
-    this.provider.completeTask(task.id).subscribe({
+    this.provider.completeTask(task.id, task.due_date).subscribe({
       next: (updated) => {
         this.busy.set(null);
         this.replace(updated);

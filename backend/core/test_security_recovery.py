@@ -9,6 +9,7 @@ from django.test import Client
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from core.auth_views import hash_reset_token
 from core.models import Contact, ContactInvite, Household, HouseholdMembership, Invitation, PasswordResetToken, UserSession
 from organisation.models import PersonalFile
 
@@ -40,18 +41,18 @@ def test_claiming_an_email_does_not_reveal_pending_invitation_tokens():
     assert response.status_code == 200
     assert response.data['received'] == []
     assert client_for(sender).get('/api/v1/contacts/').data['sent'][0].keys() == {'id', 'email', 'relation', 'expires_at', 'created_at'}
-    assert client_for(claimed).get('/api/v1/contacts/invites/guessed-link/').status_code == 404
+    assert client_for(claimed).post('/api/v1/contacts/invites/lookup/', {'token': 'guessed-link'}, format='json').status_code == 404
 
 
 def test_mail_link_acceptance_proves_address_and_does_not_share_other_data():
     sender, recipient, stranger = user('sender@example.com'), user('recipient@example.com'), user('stranger@example.com')
     first = invitation(sender, recipient)
     c = client_for(recipient)
-    assert client_for(stranger).post(f'/api/v1/contacts/invites/{first.token}/accept/').status_code == 404
-    assert c.post(f'/api/v1/contacts/invites/{first.token}/accept/').status_code == 201
+    assert client_for(stranger).post('/api/v1/contacts/invites/accept/', {'token': first.token}, format='json').status_code == 404
+    assert c.post('/api/v1/contacts/invites/accept/', {'token': first.token}, format='json').status_code == 201
     assert EmailAddress.objects.get(user=recipient, email=recipient.email).verified
     assert Contact.objects.count() == 2
-    assert c.post(f'/api/v1/contacts/invites/{first.token}/accept/').status_code == 404
+    assert c.post('/api/v1/contacts/invites/accept/', {'token': first.token}, format='json').status_code == 404
     next_invite = invitation(stranger, recipient, 'another-mail-link')
     assert c.get('/api/v1/contacts/').data['received'][0]['token'] == next_invite.token
 
@@ -61,7 +62,7 @@ def test_expired_mail_link_cannot_verify_an_address():
     expired = invitation(sender, recipient)
     expired.expires_at = timezone.now() - timezone.timedelta(seconds=1)
     expired.save()
-    assert client_for(recipient).post(f'/api/v1/contacts/invites/{expired.token}/accept/').status_code == 404
+    assert client_for(recipient).post('/api/v1/contacts/invites/accept/', {'token': expired.token}, format='json').status_code == 404
     assert not EmailAddress.objects.filter(user=recipient, verified=True).exists()
 
 
@@ -82,8 +83,8 @@ def test_migration_invalidates_pre_fix_links_but_keeps_contacts_and_consumed_inv
     assert pending.token != old
     assert consumed.token == 'already-used'
     c = client_for(recipient)
-    assert c.post(f'/api/v1/contacts/invites/{old}/accept/').status_code == 404
-    assert c.post(f'/api/v1/contacts/invites/{pending.token}/accept/').status_code == 201
+    assert c.post('/api/v1/contacts/invites/accept/', {'token': old}, format='json').status_code == 404
+    assert c.post('/api/v1/contacts/invites/accept/', {'token': pending.token}, format='json').status_code == 201
 
 
 def test_reset_revokes_access_refresh_all_devices_and_all_other_reset_links():
@@ -96,7 +97,7 @@ def test_reset_revokes_access_refresh_all_devices_and_all_other_reset_links():
         accesses.append(r.json()['access'])
     assert UserSession.objects.filter(user=person).count() == 2
     for token in ['reset-one', 'reset-two']:
-        PasswordResetToken.objects.create(user=person, token=token, expires_at=timezone.now() + timezone.timedelta(minutes=5))
+        PasswordResetToken.objects.create(user=person, token=hash_reset_token(token), expires_at=timezone.now() + timezone.timedelta(minutes=5))
     data = {'token': 'reset-one', 'password': 'ChangedSecure456!'}
     assert Client().post('/api/v1/auth/password-reset/confirm/', data, content_type='application/json').status_code == 200
     for device, access in zip(devices, accesses):

@@ -4,6 +4,8 @@ den DEBUG=False-Fall."""
 
 from datetime import timedelta
 
+import re
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import get_hasher
@@ -13,7 +15,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 
-from core.auth_views import LoginRateThrottle
+from core.auth_views import LoginRateThrottle, hash_reset_token
 from core.models import HouseholdMembership, PasswordResetToken
 
 pytestmark = pytest.mark.django_db
@@ -142,8 +144,11 @@ def test_password_reset_sends_one_time_link_and_link_sets_new_password(settings)
 
     assert len(mail.outbox) == 1
     assert mail.outbox[0].to == ['reset@example.com']
-    token = PasswordResetToken.objects.get(user__email='reset@example.com').token
-    assert f'https://app.example/passwort-zuruecksetzen?token={token}' in mail.outbox[0].body
+    token = re.search(r'passwort-zuruecksetzen#token=(\S+)', mail.outbox[0].body).group(1)
+    assert mail.outbox[0].body.count('https://app.example/passwort-zuruecksetzen#token=') == 1
+    # In der Datenbank liegt nur der Hash, nie der Link
+    stored = PasswordResetToken.objects.get(user__email='reset@example.com').token
+    assert stored != token and stored == hash_reset_token(token)
 
     confirm = lambda: Client().post(
         '/api/v1/auth/password-reset/confirm/', {'token': token, 'password': 'Neu98765!y'}, content_type='application/json'
@@ -324,13 +329,13 @@ def test_password_reset_confirm_changes_password_and_token_is_single_use():
     user = get_user_model().objects.get(email='reset-me@example.com')
     token = PasswordResetToken.objects.create(
         user=user,
-        token='test-token-12345',
+        token=hash_reset_token('test-token-12345'),
         expires_at=timezone.now() + timedelta(minutes=30),
     )
 
     response = Client().post(
         '/api/v1/auth/password-reset/confirm/',
-        {'token': token.token, 'password': 'NeuesPasswort9'},
+        {'token': 'test-token-12345', 'password': 'NeuesPasswort9'},
         content_type='application/json',
     )
     assert response.status_code == 200
@@ -344,7 +349,7 @@ def test_password_reset_confirm_changes_password_and_token_is_single_use():
 
     reused = Client().post(
         '/api/v1/auth/password-reset/confirm/',
-        {'token': token.token, 'password': 'NochEinPasswort9'},
+        {'token': 'test-token-12345', 'password': 'NochEinPasswort9'},
         content_type='application/json',
     )
     assert reused.status_code == 400
@@ -359,13 +364,13 @@ def test_password_reset_confirm_rejects_expired_token():
     user = get_user_model().objects.get(email='expired@example.com')
     token = PasswordResetToken.objects.create(
         user=user,
-        token='expired-token-12345',
+        token=hash_reset_token('expired-token-12345'),
         expires_at=timezone.now() - timedelta(minutes=1),
     )
 
     response = Client().post(
         '/api/v1/auth/password-reset/confirm/',
-        {'token': token.token, 'password': 'NeuesPasswort9'},
+        {'token': 'expired-token-12345', 'password': 'NeuesPasswort9'},
         content_type='application/json',
     )
     assert response.status_code == 400

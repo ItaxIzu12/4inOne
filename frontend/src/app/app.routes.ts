@@ -109,6 +109,11 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'einladung',
+    loadComponent: () => import('./features/einladung/einladung').then((m) => m.Einladung),
+    data: { shell: 'bare', hideHeader: true },
+  },
+  {
     path: 'einladung/:token',
     loadComponent: () => import('./features/einladung/einladung').then((m) => m.Einladung),
     data: { shell: 'bare', hideHeader: true },

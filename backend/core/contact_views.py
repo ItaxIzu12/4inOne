@@ -61,7 +61,8 @@ def _contact_payload(contact: Contact) -> dict:
 
 
 def _send_invite_mail(invite: ContactInvite) -> bool:
-    link = f'{settings.FRONTEND_URL}/einladung/{invite.token}'
+    # Token im Fragment (#…): wird vom Browser nie an einen Server geschickt, landet also in keinem Zugriffsprotokoll.
+    link = f'{settings.FRONTEND_URL}/einladung#{invite.token}'
     name = _display_name(invite.inviter)
     relation = 'Familie' if invite.relation == Contact.Relation.FAMILY else 'Freund:in'
     body = (
@@ -272,18 +273,25 @@ class InviteCancelView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def _invite_for(request, token):
-    """Nur das Konto mit der eingeladenen E-Mail-Adresse sieht und beantwortet die Einladung (sonst: 404, nichts verraten)."""
+def _invite_for(request):
+    """Nur das Konto mit der eingeladenen E-Mail-Adresse sieht und beantwortet die Einladung (sonst: 404, nichts verraten).
+
+    Das Token kommt im Request-Body, nie in der URL — URLs landen in Zugriffsprotokollen von Server und Proxy."""
+    token = request.data.get('token') if hasattr(request, 'data') else None
+    if not isinstance(token, str) or not token or len(token) > 128:
+        return None
     # Der explizite, zufällige Link aus der E-Mail ist der Postfachnachweis.
     # Niemals an unbestätigte Konten über die Listen-API herausgeben.
     return _open_invites().filter(email__iexact=request.user.email, token=token).select_related('inviter').first()
 
 
 class InviteDetailView(APIView):
+    """Vorschau für die Einladungsseite (POST, damit das Token nicht in der URL steht)."""
+
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, token):
-        invite = _invite_for(request, token)
+    def post(self, request):
+        invite = _invite_for(request)
         if invite is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
         return Response(
@@ -294,8 +302,8 @@ class InviteDetailView(APIView):
 class InviteAcceptView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, token):
-        invite = _invite_for(request, token)
+    def post(self, request):
+        invite = _invite_for(request)
         if invite is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
         with transaction.atomic():
@@ -317,8 +325,8 @@ class InviteAcceptView(APIView):
 class InviteDeclineView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, token):
-        invite = _invite_for(request, token)
+    def post(self, request):
+        invite = _invite_for(request)
         if invite is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
         invite.declined_at = timezone.now()

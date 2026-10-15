@@ -4,6 +4,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { Brand } from '../../shared/brand/brand';
+import { tokenFromLink } from '../../shared/link-token';
 
 // Gleiche Richtlinie wie bei der Registrierung (login.ts); das Backend prüft zusätzlich.
 const PASSWORD_MIN_LENGTH = 10;
@@ -31,7 +32,7 @@ type State = 'form' | 'done' | 'invalid-link';
 export class PasswortZuruecksetzen {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
-  private readonly token = inject(ActivatedRoute).snapshot.queryParamMap.get('token') ?? '';
+  private readonly token = tokenFromLink(inject(ActivatedRoute).snapshot);
 
   protected readonly state = signal<State>(this.token ? 'form' : 'invalid-link');
   protected readonly submitting = signal(false);
@@ -48,7 +49,7 @@ export class PasswortZuruecksetzen {
 
   constructor() {
     if (this.token) {
-      inject(Router).navigate([], { queryParams: {}, replaceUrl: true });
+      inject(Router).navigate([], { queryParams: {}, fragment: undefined, replaceUrl: true });
     }
   }
 

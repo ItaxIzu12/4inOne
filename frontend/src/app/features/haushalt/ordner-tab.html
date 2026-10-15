@@ -30,8 +30,8 @@
         <span class="stat__icon" aria-hidden="true"><app-icon name="bars" /></span>
         <span class="stat__body">
           <span class="stat__value">{{ euro(s.monthly) }}</span>
-          <span class="stat__label">pro Monat</span>
-          <span class="stat__hint">{{ euro(s.yearly) }} im Jahr</span>
+          <span class="stat__label">{{ s.hiddenCosts ? 'pro Monat (deine Verträge)' : 'pro Monat' }}</span>
+          <span class="stat__hint">{{ euro(s.yearly) }} im Jahr{{ s.hiddenCosts ? ' · ' + s.hiddenCosts + ' ohne sichtbaren Betrag' : '' }}</span>
         </span>
       </div>
       <button type="button" class="stat stat--amber" (click)="showStatus('EXPIRING')">
@@ -220,8 +220,13 @@
           <div class="detail__media">
             <span class="photo" aria-hidden="true"><app-icon name="finance" /></span>
             <div class="price">
-              <b>{{ c.cost ? euro(+c.cost) : '—' }}</b>
-              <small>{{ c.cost ? billingLabel[c.billing_cycle] + (c.monthly_equivalent && c.billing_cycle !== 'MONTHLY' ? ' · ' + euro(monthly(c)) + ' im Monat' : '') : 'keine Kosten hinterlegt' }}</small>
+              @if (c.cost_visible === false) {
+                <b>Betrag privat</b>
+                <small>Sichtbar nur für die Person, die den Vertrag angelegt hat</small>
+              } @else {
+                <b>{{ c.cost ? euro(+c.cost) : '—' }}</b>
+                <small>{{ c.cost ? billingLabel[c.billing_cycle] + (c.monthly_equivalent && c.billing_cycle !== 'MONTHLY' ? ' · ' + euro(monthly(c)) + ' im Monat' : '') : 'keine Kosten hinterlegt' }}</small>
+              }
             </div>
             <button type="button" class="sheet-close" aria-label="Details schließen" (click)="sheetOpen.set(false)">
               <app-icon name="close" />
@@ -448,9 +453,13 @@
   @if (formKind() === 'vertrag') {
     <fieldset class="form-section"><legend>Kosten und Laufzeit</legend>
       <div class="field-row">
-        <app-field label="Kosten" [optional]="true" hint="Gehört dem Haushalt – wird nicht in Finanzen gebucht.">
-          <input id="folder-cost" type="text" inputmode="decimal" maxlength="10" placeholder="z. B. 39,99" [value]="formCost()" (input)="formCost.set($any($event.target).value)" />
-        </app-field>
+        @if (formCostHidden()) {
+          <p class="cost-private">Den Betrag sieht und ändert nur, wer den Vertrag angelegt hat.</p>
+        } @else {
+          <app-field label="Kosten" [optional]="true" hint="Nur für dich sichtbar – wird nicht in Finanzen gebucht.">
+            <input id="folder-cost" type="text" inputmode="decimal" maxlength="10" placeholder="z. B. 39,99" [value]="formCost()" (input)="formCost.set($any($event.target).value)" />
+          </app-field>
+        }
         <app-field label="Abrechnung">
           <app-select [options]="billingOptions" [value]="formBilling()" (valueChange)="formBilling.set($any($event))" />
         </app-field>

@@ -67,13 +67,14 @@ export class ContactsApiService {
     return this.http.delete<void>(`${this.base}/invites/${id}/`);
   }
   invitePreview(token: string): Observable<{ from_name: string; relation: Relation; expires_at: string }> {
-    return this.http.get<{ from_name: string; relation: Relation; expires_at: string }>(`${this.base}/invites/${token}/`);
+    // Token immer im Body, nie in der URL (URLs landen in Zugriffsprotokollen)
+    return this.http.post<{ from_name: string; relation: Relation; expires_at: string }>(`${this.base}/invites/lookup/`, { token });
   }
   accept(token: string): Observable<ContactDto> {
-    return this.http.post<ContactDto>(`${this.base}/invites/${token}/accept/`, {});
+    return this.http.post<ContactDto>(`${this.base}/invites/accept/`, { token });
   }
   decline(token: string): Observable<void> {
-    return this.http.post<void>(`${this.base}/invites/${token}/decline/`, {});
+    return this.http.post<void>(`${this.base}/invites/decline/`, { token });
   }
   remove(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}/`);

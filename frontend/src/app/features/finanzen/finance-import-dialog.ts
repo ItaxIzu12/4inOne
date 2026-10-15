@@ -1,3 +1,4 @@
+import { SubmissionKey } from '../../shared/idempotency';
 import { Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ImportDialog, ImportPreview } from '../../shared/import-dialog/import-dialog';
@@ -124,15 +125,19 @@ export class FinanceImportDialog {
         this.error.set(err instanceof CsvFormatError ? err.message : 'Die Datei konnte nicht gelesen werden. Ist es eine CSV-Datei?');
       });
   }
+  /** Erneut „Importieren“ nach Verbindungsfehler übernimmt dieselben Zeilen nicht doppelt. */
+  private readonly submission = new SubmissionKey();
+
   private commit(rows: ImportRow[]): void {
     if (!this.preview()!.result.new) return this.close();
     this.busy.set(true);
     this.api
-      .importTransactions(rows, false)
+      .importTransactions(rows, false, this.submission.for(rows))
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: (result) => {
           this.busy.set(false);
+          this.submission.reset();
           this.imported.emit(result.created);
           this.close();
         },

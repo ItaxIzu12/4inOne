@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from core.models import Contact, Household, HouseholdMembership
@@ -7,6 +10,12 @@ from finanzen.models import Account, Category, Transaction
 from reisen.models import PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask
 
 pytestmark = pytest.mark.django_db
+
+
+def day(offset: int) -> str:
+    """Datum relativ zu heute. Neue Reisen dürfen nicht vor heute beginnen (TripSerializer) — feste Kalenderdaten
+    würden diese Tests mit der Zeit von selbst rot werden lassen."""
+    return (timezone.localdate() + timedelta(days=offset)).isoformat()
 BASE = '/api/v1/reisen/'
 
 def share(client, trip_id, contact_id, role):
@@ -56,7 +65,7 @@ def make_trip(owner, **kwargs):
 def test_trip_crud_and_owner_spoofing(client, users):
     response = client.post(
         BASE + 'trips/',
-        {'destination': 'Berlin', 'title': 'Berlin Wochenende', 'start_date': '2026-10-10', 'end_date': '2026-10-12', 'owner': users[1].pk},
+        {'destination': 'Berlin', 'title': 'Berlin Wochenende', 'start_date': day(30), 'end_date': day(32), 'owner': users[1].pk},
         format='json',
     )
     assert response.status_code == 201
@@ -77,12 +86,12 @@ def test_trip_crud_and_owner_spoofing(client, users):
 
 
 def test_trip_validation(client):
-    dates = {'start_date': '2026-09-24', 'end_date': '2026-09-26'}
+    dates = {'start_date': day(30), 'end_date': day(32)}
     assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': ' ', **dates}, format='json').status_code == 400
     assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'status': 'INVALID', **dates}, format='json').status_code == 400
     assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'budget_amount': '-1', **dates}, format='json').status_code == 400
     r = client.post(
-        BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': '2026-09-24', 'end_date': '2026-09-20'}, format='json'
+        BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': day(30), 'end_date': day(26)}, format='json'
     )
     assert r.status_code == 400
 
@@ -90,23 +99,23 @@ def test_trip_validation(client):
 def test_trip_requires_start_and_end_date(client):
     # Eine Reise ohne konkreten Zeitraum wird in V1 nicht als Trip gespeichert (siehe Trip-Docstring)
     # — "Reiseideen" ohne Termin sind ein eigenes, hier noch nicht gebautes Konzept.
-    assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'end_date': '2026-09-26'}, format='json').status_code == 400
-    assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': '2026-09-24'}, format='json').status_code == 400
-    r = client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': '2026-09-24', 'end_date': '2026-09-26'}, format='json')
+    assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'end_date': day(32)}, format='json').status_code == 400
+    assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': day(30)}, format='json').status_code == 400
+    r = client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': day(30), 'end_date': day(32)}, format='json')
     assert r.status_code == 201
     # Auch beim Bearbeiten lässt sich das Datum nicht wieder entfernen.
     assert client.patch(f"{BASE}trips/{r.data['id']}/", {'start_date': None}, format='json').status_code == 400
 
     # Ein leerer String ist ebenfalls kein gültiges Datum — weder beim Anlegen noch beim Bearbeiten.
-    assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': '', 'end_date': '2026-09-26'}, format='json').status_code == 400
-    assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': '2026-09-24', 'end_date': ''}, format='json').status_code == 400
+    assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': '', 'end_date': day(32)}, format='json').status_code == 400
+    assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': day(30), 'end_date': ''}, format='json').status_code == 400
     assert client.patch(f"{BASE}trips/{r.data['id']}/", {'start_date': ''}, format='json').status_code == 400
     assert client.patch(f"{BASE}trips/{r.data['id']}/", {'end_date': ''}, format='json').status_code == 400
 
 
 def test_trip_setup_fields_are_optional_but_usable(client):
     # Ohne Angabe: Reisen funktioniert nur mit Ziel/Start/Ende (siehe AGENTS.md "nicht alles erzwingen").
-    minimal = client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': '2026-09-24', 'end_date': '2026-09-26'}, format='json')
+    minimal = client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': day(30), 'end_date': day(32)}, format='json')
     assert minimal.status_code == 201
     assert minimal.data['travel_type'] == ''
     assert minimal.data['transport_type'] == ''
@@ -116,7 +125,7 @@ def test_trip_setup_fields_are_optional_but_usable(client):
     full = client.post(
         BASE + 'trips/',
         {
-            'title': 'Flug nach Rom', 'destination': 'Rom', 'start_date': '2026-09-24', 'end_date': '2026-09-26',
+            'title': 'Flug nach Rom', 'destination': 'Rom', 'start_date': day(30), 'end_date': day(32),
             'travel_type': 'BUSINESS', 'transport_type': 'FLIGHT', 'baggage': ['CHECKED_BAGGAGE', 'HAND_LUGGAGE', 'HAND_LUGGAGE'], 'climate': 'MILD',
         },
         format='json',
@@ -135,7 +144,7 @@ def test_trip_setup_fields_are_optional_but_usable(client):
     assert client.patch(BASE + f"trips/{full.data['id']}/", {'baggage': ['UNKNOWN']}, format='json').status_code == 400
     assert client.patch(BASE + f"trips/{full.data['id']}/", {'baggage': []}, format='json').data['baggage'] == []
 
-    assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': '2026-09-24', 'end_date': '2026-09-26', 'travel_type': 'NOPE'}, format='json').status_code == 400
+    assert client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': day(30), 'end_date': day(32), 'travel_type': 'NOPE'}, format='json').status_code == 400
 
 
 @pytest.mark.parametrize(
@@ -224,14 +233,14 @@ def test_deleting_a_trip_removes_its_tasks_and_packing_items_too(client, users):
 
 def test_trip_without_a_budget_has_no_amount_and_defaults_to_euro(client):
     # "kein Budget": eine Reise funktioniert vollständig ohne jede Budgetangabe.
-    r = client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': '2026-09-24', 'end_date': '2026-09-26'}, format='json')
+    r = client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'x', 'start_date': day(30), 'end_date': day(32)}, format='json')
     assert r.status_code == 201
     assert r.data['budget_amount'] is None
     assert r.data['currency'] == 'EUR'
 
 
 def test_trip_budget_amount_and_currency_can_be_set_and_edited(client):
-    dates = {'start_date': '2026-09-24', 'end_date': '2026-09-26'}
+    dates = {'start_date': day(30), 'end_date': day(32)}
     r = client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'USA-Reise', 'budget_amount': '1500.50', 'currency': 'USD', **dates}, format='json')
     assert r.status_code == 201
     # Decimal, kein Float: der Betrag kommt als exakter String zurück, nicht als gerundete/ungenaue Fließkommazahl.
@@ -389,7 +398,7 @@ def test_overlap_detection_needs_both_valid_dates(client, params):
 
 def test_solo_trip_gets_its_creator_as_sole_participant_automatically(client, users):
     # Keine Pflicht, vorher eine Gruppe oder einen Haushalt anzulegen — eine Solo-Reise ist sofort vollständig.
-    r = client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'Solo-Trip', 'start_date': '2026-10-10', 'end_date': '2026-10-12'}, format='json')
+    r = client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'Solo-Trip', 'start_date': day(30), 'end_date': day(32)}, format='json')
     assert r.status_code == 201
     assert r.data['my_role'] == 'OWNER'
     assert len(r.data['participants']) == 1
@@ -516,7 +525,7 @@ def test_owner_role_participant_can_demote_themselves_and_then_loses_manage_righ
 def test_creator_demoting_their_own_participant_row_keeps_full_owner_rights(client, users):
     # Über die API erzeugt (nicht make_trip(), das am ORM vorbei anlegt) — nur so entsteht die automatische
     # Teilnehmer-Zeile des Erstellers (siehe TripViewSet.perform_create).
-    created = client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'Immer noch meine Reise', 'start_date': '2026-10-10', 'end_date': '2026-10-12'}, format='json')
+    created = client.post(BASE + 'trips/', {'destination': 'Berlin', 'title': 'Immer noch meine Reise', 'start_date': day(30), 'end_date': day(32)}, format='json')
     trip_id = created.data['id']
     own_row = TripParticipant.objects.get(trip_id=trip_id, user=users[0])
 

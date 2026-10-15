@@ -5,9 +5,10 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from core.currencies import CURRENCY_CHOICES, DEFAULT_HOME_CURRENCY
+from core.fx import convert
 from core.models import Contact, home_currency_for
 
-from .expense_fx import resnapshot_trip_currency, snapshot_expense
+from .expense_fx import _Rates, resnapshot_trip_currency, snapshot_expense
 from .models import PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask
 
 
@@ -282,6 +283,22 @@ class TripExpenseSerializer(TripScopedSerializer):
     def _home(self) -> str:
         request = self.context.get('request')
         return home_currency_for(request.user) if request else DEFAULT_HOME_CURRENCY
+
+    def to_representation(self, instance):
+        """Der Heimatwährungs-Wert ist persönlich: gespeichert ist er in der Währung dessen, der die Ausgabe erfasst
+        hat. Mitreisende mit anderer Heimatwährung bekommen stattdessen ihren eigenen Vergleichswert (aktueller Kurs)
+        — so verrät die Antwort nie die Heimatwährung einer anderen Person."""
+        data = super().to_representation(instance)
+        viewer_home = self._home()
+        if data.get('home_currency') in (None, '', viewer_home):
+            return data
+        rates = self.context.setdefault('_fx_rates', _Rates())
+        rate = rates.rate(instance.currency, viewer_home)
+        data['home_currency'] = viewer_home
+        data['rate_to_home'] = str(rate.rate) if rate else None
+        data['amount_home'] = str(convert(instance.amount, rate)) if rate else None
+        data['rate_date'] = rate.rate_date.isoformat() if rate and rate.rate_date else None
+        return data
 
     def create(self, validated_data):
         validated_data.setdefault('currency', validated_data['trip'].currency)

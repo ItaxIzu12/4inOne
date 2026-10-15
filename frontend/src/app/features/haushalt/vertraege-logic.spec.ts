@@ -124,3 +124,15 @@ describe('Verträge: Datumsangaben', () => {
     expect(fromNow('2026-10-07', today)).toBe('in 3 Tagen');
   });
 });
+
+describe('Vertragskosten privat', () => {
+  it('sums only visible amounts and counts contracts whose amount someone else entered', () => {
+    const list = [
+      c(1, { monthly_equivalent: '20.00', cost: '20.00', cost_visible: true }),
+      c(2, { monthly_equivalent: null, cost: null, cost_visible: false }),
+    ];
+    const stats = contractStats(list);
+    expect(stats.monthly).toBe(20);
+    expect(stats.hiddenCosts).toBe(1);
+  });
+});

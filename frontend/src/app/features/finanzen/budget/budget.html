@@ -1,0 +1,141 @@
+
+      <!-- ============================== Einnahmen ============================== -->
+      @if (section() === 'income') {
+        @let top = sources()[0];
+        <div class="kpis">
+          <div class="kpi">
+            <span class="kpi__icon" aria-hidden="true"><app-icon name="bars" /></span>
+            <span class="kpi__body">
+              <span class="kpi__label">Gesamteinnahmen</span>
+              <b class="kpi__value">{{ eur(incomeNow()) }}</b>
+              <span class="kpi__hint" [class.is-good]="incomeDelta()?.up">{{ incomeDelta()?.text ?? 'im ' + monthShort() }}</span>
+            </span>
+          </div>
+          <div class="kpi">
+            <span class="kpi__icon" aria-hidden="true"><app-icon name="repeat" /></span>
+            <span class="kpi__body">
+              <span class="kpi__label">Feste Einnahmen</span>
+              <b class="kpi__value">{{ eur(fixedIncome()) }}</b>
+              <span class="kpi__hint">{{ share(fixedIncome(), incomeNow()) }} % der Einnahmen</span>
+            </span>
+          </div>
+          <div class="kpi">
+            <span class="kpi__icon" aria-hidden="true"><app-icon name="plus" /></span>
+            <span class="kpi__body">
+              <span class="kpi__label">Nebeneinnahmen</span>
+              <b class="kpi__value">{{ eur(incomeNow() - fixedIncome()) }}</b>
+              <span class="kpi__hint">{{ share(incomeNow() - fixedIncome(), incomeNow()) }} % der Einnahmen</span>
+            </span>
+          </div>
+          <div class="kpi">
+            <span class="kpi__icon" aria-hidden="true"><app-icon name="more" /></span>
+            <span class="kpi__body">
+              <span class="kpi__label">Größte Quelle</span>
+              <b class="kpi__value">{{ top ? top.label : '—' }}</b>
+              <span class="kpi__hint">{{ top ? Math.round(top.share) + ' % der Einnahmen' : 'noch keine Einnahmen' }}</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid--chart">
+          <section class="card" aria-labelledby="inc-chart-h">
+            <div class="card-head">
+              <h2 id="inc-chart-h">Einnahmen im Monatsverlauf</h2>
+            </div>
+            @let ia = incomeAxis();
+            <div class="chart" role="img" [attr.aria-label]="'Einnahmen je Woche im ' + monthLabel()">
+              <div class="chart__ticks" aria-hidden="true">
+                @for (t of ia.ticks; track $index) {
+                  <span>{{ eur(t) }}</span>
+                }
+              </div>
+              <div class="chart__plot">
+                @for (w of weeks(); track w.label) {
+                  <div class="chart__group">
+                    <div class="chart__bars"><span class="bar bar--income bar--wide" [style.height.%]="barHeight(w.income, ia.top)"></span></div>
+                    <span class="chart__label">{{ w.label }}<small>{{ w.range }}</small></span>
+                  </div>
+                }
+              </div>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="sources-h">
+            <div class="card-head">
+              <h2 id="sources-h">Einnahmequellen</h2>
+            </div>
+            <ul class="sources">
+              @for (src of sources(); track src.key) {
+                <li>
+                  <span class="tile tile--green" aria-hidden="true"><app-icon [name]="sourceIcon(src.label)" /></span>
+                  <span class="sources__main"><b>{{ src.label }}</b><span class="track"><span [style.width.%]="src.share"></span></span></span>
+                  <span class="sources__nums"><b>{{ eur(src.amount) }}</b><small>{{ Math.round(src.share) }} %</small></span>
+                </li>
+              } @empty {
+                <li class="muted">Noch keine Einnahmen in diesem Monat.</li>
+              }
+            </ul>
+          </section>
+        </div>
+
+        <div class="grid grid--half">
+          <section class="card" aria-labelledby="last-inc-h">
+            <div class="card-head">
+              <h2 id="last-inc-h">Letzte Einnahmen</h2>
+              <button type="button" class="link" (click)="showAll('income')">Alle anzeigen <app-icon name="arrow" /></button>
+            </div>
+            <ul class="rows">
+              @for (row of monthIncome(); track row.id) {
+                <li>
+                  <button type="button" class="row-btn" (click)="open('transactions', row)">
+                    <span class="tile tile--green" aria-hidden="true"><app-icon [name]="sourceIcon(rowTitle(row))" /></span>
+                    <span class="row-text"><b>{{ rowTitle(row) }}</b><small>{{ dayLabel(row.date) }} • {{ categoryName(row.category) }}</small></span>
+                    <strong class="positive">+{{ money(row.amount) }}</strong>
+                  </button>
+                </li>
+              } @empty {
+                <li class="muted">Noch keine Einnahmen in diesem Monat.</li>
+              }
+            </ul>
+          </section>
+
+          <div class="stack">
+            <section class="card" aria-labelledby="rec-inc-h">
+              <div class="card-head">
+                <h2 id="rec-inc-h">Wiederkehrende Einnahmen</h2>
+              </div>
+              <ul class="rows">
+                @for (item of recurringIncome(); track item.key) {
+                  <li>
+                    <button type="button" class="row-btn" (click)="open('transactions', item.last)">
+                      <span class="tile tile--green" aria-hidden="true"><app-icon name="repeat" /></span>
+                      <span class="row-text"><b>{{ item.title }}</b><small>Monatlich • Nächste Zahlung: {{ dayLabel(item.next) }}</small></span>
+                      <strong>{{ money(item.amount.toFixed(2)) }}</strong>
+                    </button>
+                  </li>
+                } @empty {
+                  <li class="muted">Markiere z. B. dein Gehalt als „Kommt jeden Monat wieder“.</li>
+                }
+              </ul>
+            </section>
+            <section class="card" aria-labelledby="cmp-inc-h">
+              <div class="card-head">
+                <h2 id="cmp-inc-h">Einnahmen im Vergleich</h2>
+              </div>
+              @let diff = incomeNow() - prevIncome();
+              <div class="vs">
+                <p class="vs__delta" [class.is-good]="diff >= 0" [class.is-bad]="diff < 0">
+                  <b>{{ diff >= 0 ? '+' : '−' }} {{ eur(Math.abs(diff)) }}</b>
+                  @if (incomeDelta(); as d) {
+                    <small>{{ d.text }}</small>
+                  }
+                </p>
+                <ul class="vs__bars">
+                  <li><span>{{ monthLabel() }}</span><b>{{ eur(incomeNow()) }}</b><span class="track"><span [style.width.%]="share(incomeNow(), Math.max(incomeNow(), prevIncome()))"></span></span></li>
+                  <li><span>{{ monthName(prevMonth()) }} {{ prevMonth().slice(0, 4) }}</span><b>{{ eur(prevIncome()) }}</b><span class="track track--muted"><span [style.width.%]="share(prevIncome(), Math.max(incomeNow(), prevIncome()))"></span></span></li>
+                </ul>
+              </div>
+            </section>
+          </div>
+        </div>
+      }

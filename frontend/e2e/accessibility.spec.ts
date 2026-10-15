@@ -17,7 +17,7 @@ const PAGES = [
   { path: '/login', name: 'Login' },
   { path: '/registrieren', name: 'Registrieren' },
   { path: '/passwort-vergessen', name: 'Passwort vergessen' },
-  { path: '/passwort-zuruecksetzen?token=e2e', name: 'Neues Passwort' },
+  { path: '/passwort-zuruecksetzen#token=e2e', name: 'Neues Passwort' },
   { path: '/einstellungen', name: 'Einstellungen' },
   { path: '/impressum', name: 'Impressum' },
   { path: '/datenschutz', name: 'Datenschutz' },

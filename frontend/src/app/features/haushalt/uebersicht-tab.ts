@@ -103,7 +103,7 @@ export class UebersichtTab {
     if (this.completing() !== null) return;
     this.completing.set(task.id);
     this.actionError.set(null);
-    this.provider.completeTask(task.id).subscribe({
+    this.provider.completeTask(task.id, task.due_date).subscribe({
       next: (updated) => {
         this.completing.set(null);
         this.load();

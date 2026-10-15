@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.db.models import Count, F, Prefetch, Q
@@ -280,7 +280,12 @@ class TaskViewSet(_WriteThrottleMixin, ModelViewSet):
             raise ValidationError('Diese Aufgabe ist bereits erledigt.')
         if task.is_paused:
             raise ValidationError('Diese Routine ist pausiert. Bitte erst fortsetzen.')
-        return Response(self.get_serializer(services.complete_task(task, request.user)).data)
+        expected = request.data.get('due_date') if hasattr(request.data, 'get') else None
+        try:
+            expected_due = date.fromisoformat(expected) if expected else None
+        except (TypeError, ValueError):
+            raise ValidationError({'due_date': 'Ungültiges Datum.'})
+        return Response(self.get_serializer(services.complete_task(task, request.user, expected_due)).data)
 
     @action(detail=True, methods=['post'], url_path='wieder-oeffnen')
     def reopen(self, request, pk=None):
@@ -372,7 +377,11 @@ class HaushaltOverviewView(APIView):
                 e for e in contract_rows
                 if services.contract_status(e, today) not in (FolderEntry.Status.CANCELLED, FolderEntry.Status.ENDED)
             ]
-            contracts_monthly = sum((services.monthly_equivalent(e) or Decimal('0') for e in running), Decimal('0'))
+            # Nur eigene Beträge zählen (services.can_see_cost) — fremde Vertragskosten bleiben privat.
+            contracts_monthly = sum(
+                (services.monthly_equivalent(e) or Decimal('0') for e in running if services.can_see_cost(e, request.user)),
+                Decimal('0'),
+            )
             # Verträge mit der nächsten Kündigungsfrist zuerst, ohne Frist zuletzt.
             running.sort(
                 key=lambda e: (
@@ -386,7 +395,7 @@ class HaushaltOverviewView(APIView):
                     'id': entry.id,
                     'name': entry.name,
                     'provider': entry.provider,
-                    'cost': str(entry.cost) if entry.cost is not None else None,
+                    'cost': str(entry.cost) if entry.cost is not None and services.can_see_cost(entry, request.user) else None,
                     'billing_cycle': entry.billing_cycle,
                     'cancellation_deadline': services.cancellation_deadline(entry),
                     'effective_status': services.contract_status(entry, today),

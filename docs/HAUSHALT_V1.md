@@ -56,7 +56,8 @@ Stand: 06.10.2026. Grundlage: „4inOne – HAUSHALT V1 – FINALER MASTER PROMP
   „Heute“.
 - **Gerätehersteller** steht im bestehenden Feld `provider` (UI: „Hersteller“), kein zweites Feld.
 - **Gerätestatus** `ACTIVE` / `REPAIR` / `RETIRED`; außer Betrieb gesetzte Geräte erzeugen keine Fristen.
-- **Kosten** von Verträgen werden **nicht** in Finanzen übertragen.
+- **Kosten** von Verträgen werden **nicht** in Finanzen übertragen und sind **privat**: sichtbar und änderbar nur für die
+  Person, die sie erfasst hat (ältere Einträge ohne Erfasser: Haushalts-Admin). Mitglieder sehen den Vertrag ohne Betrag.
 - **Archivierte Einkaufslisten** sind ausgeblendet (`?archiviert=1` zeigt sie) und nie Standardliste.
 
 ## APIs (`/api/v1/haushalt/`)

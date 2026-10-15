@@ -159,8 +159,13 @@ export class Login {
     this.showConfirmPassword.update((v) => !v);
   }
 
+  /** Feldfehler erst nach dem ersten Absenden zeigen (globale 4inOne-Regel), danach live. */
+  protected readonly loginTried = signal(false);
+  protected readonly registerTried = signal(false);
+
   protected submitLogin(): void {
     if (this.submitting()) return;
+    this.loginTried.set(true);
     this.clearSubmitError();
     if (this.mfaRequired() && !this.mfaCode().trim()) {
       this.submitError.set('Bitte gib deinen Bestätigungscode ein.');
@@ -188,7 +193,9 @@ export class Login {
         this.submitError.set(
           err.status === 0
             ? 'Server nicht erreichbar. Bitte versuche es später erneut.'
-            : // 401 deckt sowohl falsche Zugangsdaten als auch eine Axes-
+            : err.status === 429
+              ? 'Zu viele Anmeldeversuche. Bitte warte einen Moment und versuche es dann erneut.'
+              : // 401 deckt sowohl falsche Zugangsdaten als auch eine Axes-
               // Sperre nach zu vielen Fehlversuchen ab (ARCHITEKTUR.md §3.1)
               // — bewusst dieselbe Meldung für beides, damit niemand von
               // außen erkennen kann, welcher der beiden Fälle vorliegt.
@@ -201,6 +208,7 @@ export class Login {
 
   protected submitRegister(): void {
     if (this.submitting()) return;
+    this.registerTried.set(true);
     this.clearSubmitError();
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();

@@ -140,6 +140,22 @@ Abstand — nie nur über Farbe.
   Transaktion wird dabei nicht angelegt.“ / Einnahme „erscheint dann unter „Wiederkehrende Einnahmen“…“. Budget-Rechnung
   ergänzt um „− X € feste Ausgaben vorgemerkt“; Liste „Wiederkehrende Ausgaben“ zeigt je Posten den Status.
 
+- **Haushalt › Zuhause, Vertragskosten privat (13.10.2026):** Beträge sieht nur, wer sie erfasst hat. Fremde
+  Verträge zeigen im Detail „Betrag privat“ mit Erklärung; im Bearbeiten-Dialog steht statt des Kostenfelds ein
+  ruhiger Hinweis (`.cost-private`, `--surface-sunken`). Die Kennzahl heißt dann „pro Monat (deine Verträge)“ mit
+  „… ohne sichtbaren Betrag“ im Hinweis. Kostenfeld-Hinweis: „Nur für dich sichtbar – wird nicht in Finanzen gebucht.“
+
+- **Login/Registrierung (12.10.2026, Auth-Audit):** Feldfehler erst nach dem ersten Absenden (vorher schon beim
+  Verlassen eines Feldes), danach live — wie alle Formulare. Optik unverändert. Gesperrter Login nach zu vielen
+  Versuchen: „Zu viele Anmeldeversuche. Bitte warte einen Moment …“ statt „E-Mail oder Passwort falsch“.
+
+- **Haushalt › Heute, Rechner (11.10.2026):** Raster neu gewichtet statt neuer Inhalte: „Heute fällig“ über die
+  volle Inhaltsbreite, darunter „Demnächst“ | „Einkauf“ 50/50 (Abstand `--space-5`); unter 961 px wie bisher
+  untereinander (Heute fällig → Demnächst → Einkauf). Aufgabenzeilen ab 961 px in festen Spalten
+  (Kästchen · Titel + Wiederholung · Fälligkeit 12rem rechtsbündig · Priorität 4.5rem), „Heute“ als ruhiger Text in
+  `--text-secondary` statt Pille, Überfällig weiter als dezente Marke mit Text, „Hoch“ als kleine Marke; Zeilen
+  60 px. Bewusst ohne Kennzahlenzeile und ohne Zuhause-Kachel (kein Mehrwert gegenüber den sichtbaren Karten).
+
 - **Rückmeldung an Einladende (11.10.2026):** Annahmen erscheinen in der Glocke unter „Neu“ (Symbol
   `check-circle` auf `--success-soft`, z. B. „Lena hat deine Einladung angenommen. Ihr seid jetzt verbunden.“,
   „Ben ist jetzt bei „Berlin“ dabei.“) mit nächstem Schritt als Textlink („Etwas teilen“, „Zum Haushalt“, „Zur
@@ -484,3 +500,5 @@ Demo und angemeldete Nutzer verwenden dasselbe Layout (`features/dashboard`). Au
 Die Finanz-Übersicht verwendet kompakte Kennzahlenkarten für Monatsrest, Ausgaben und Einnahmen, eine Kategorienliste und darunter Buchungen sowie Sparziele. Die Budgetrechnung und Warnungen bleiben sichtbar; die übrigen Finanz-Reiter behalten ihr Layout. Alle AppShell-Seiten verwenden den gemeinsamen Such-/Datums-/Profilkopf. Außerhalb des Dashboards führt eine abgesendete Suche zum passenden persönlichen oder Demo-Dashboard. Die tatsächliche Header-Höhe bestimmt den Sticky-Abstand der Bereichsüberschriften.
 
 Reise-Erstellung (11.10.2026): bestehende Kalenderkomponente mit gesperrten Tagen vor heute für den Beginn und vor dem Beginn für das Ende. Eintägige Reisen möglich; vergangene Bestandsreisen bleiben bearbeitbar. Keine neuen Layout-/Farb-Tokens.
+
+Meine Reisen bei vielen Reisen (15.10.2026): Große Karten (`.trip`) nur noch für „Jetzt unterwegs“ und „Als Nächstes“ (eine Karte, 300–420 px). Alle weiteren bevorstehenden Reisen stehen daneben unter „Danach“ als kompakte Zeilen (`ul.rows` / `button.row`: Titel + Ziel · Zeitraum · Status, min. 60 px, Haarlinien in einer Karte); unter 1100 px untereinander, am Handy (≤ 760 px) zweizeilig. „Vergangen“ zeigt die letzten 3 als Zeilen, der Rest hinter „Alle N vergangenen Reisen anzeigen“ (`aria-expanded`). Vergangene Reisen ohne offene Aufgaben/Packstand, „Vorbei“ in `--text-secondary`; Abgesagt bleibt eingeklappt und nutzt ebenfalls Zeilen. Keine neuen Tokens, Bereichsfarbe und Symbole unverändert.

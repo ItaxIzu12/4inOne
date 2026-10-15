@@ -300,3 +300,25 @@ class UserPreference(models.Model):
 def home_currency_for(user) -> str:
     preference = UserPreference.objects.filter(user=user).only('home_currency').first()
     return preference.home_currency if preference else DEFAULT_HOME_CURRENCY
+
+
+class IdempotencyRecord(models.Model):
+    """Ergebnis einer Anlage-Anfrage mit `Idempotency-Key` (core/idempotency.py).
+
+    Kommt dieselbe Anfrage erneut — Netzwerk-Wiederholung, erneutes Absenden nach einem Verbindungsfehler —, liefert
+    der Server die gespeicherte Antwort, statt ein zweites Objekt anzulegen. Schlüssel gelten je Person und Endpunkt
+    24 Stunden; ältere Einträge werden beim nächsten Schreiben der Person entfernt."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    scope = models.CharField(max_length=80)
+    key = models.CharField(max_length=100)
+    # Fingerabdruck des Request-Bodys: derselbe Schlüssel mit anderem Inhalt ist ein Fehler, keine Wiederholung.
+    fingerprint = models.CharField(max_length=64)
+    status_code = models.PositiveSmallIntegerField(default=0)  # 0 = wird gerade verarbeitet
+    body = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user', 'scope', 'key'], name='unique_idempotency_key')]
+        indexes = [models.Index(fields=['user', 'created_at'], name='core_idem_user_created_idx')]
+

@@ -215,10 +215,11 @@ def test_overview_lists_contracts_by_next_cancel_date_and_hides_them_from_childr
 
     from haushalt.models import FolderEntry
 
-    FolderEntry.objects.create(household=household, kind='vertrag', name='Internet', cost=Decimal('39.99'))
+    # Beträge sieht nur, wer sie erfasst hat (services.can_see_cost) — hier Anna.
+    FolderEntry.objects.create(household=household, kind='vertrag', name='Internet', cost=Decimal('39.99'), created_by=anna)
     FolderEntry.objects.create(
         household=household, kind='vertrag', name='Strom', provider='Stadtwerke', cost=Decimal('80.00'),
-        end_date=date(2030, 6, 30), notice_period_days=92,
+        end_date=date(2030, 6, 30), notice_period_days=92, created_by=anna,
     )
     FolderEntry.objects.create(household=household, kind='geraet', name='Waschmaschine')
     mine = client_for(anna).get(OVERVIEW).data

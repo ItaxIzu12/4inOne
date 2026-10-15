@@ -7,15 +7,37 @@
     <button type="button" class="primary" (click)="create.emit()"><app-icon name="plus" />Reise erstellen</button>
   </section>
 } @else {
-  <section class="group" aria-labelledby="tl-upcoming">
-    <h2 id="tl-upcoming" class="group__title">Bevorstehend <span class="group__count">{{ g.upcoming.length }}</span></h2>
-    @if (g.upcoming.length) {
+  @if (ongoing().length) {
+    <section class="group" aria-labelledby="tl-now">
+      <h2 id="tl-now" class="group__title">Jetzt unterwegs</h2>
       <ul class="trips">
-        @for (t of g.upcoming; track t.id) {
+        @for (t of ongoing(); track t.id) {
           <li><ng-container *ngTemplateOutlet="card; context: { $implicit: t }" /></li>
         }
       </ul>
-    } @else {
+    </section>
+  }
+
+  <section class="group" aria-labelledby="tl-upcoming">
+    <h2 id="tl-upcoming" class="group__title">Bevorstehend <span class="group__count">{{ g.upcoming.length - ongoing().length }}</span></h2>
+    @if (next(); as first) {
+      <div class="ahead">
+        <div class="ahead__next">
+          <p class="ahead__label">Als Nächstes</p>
+          <ng-container *ngTemplateOutlet="card; context: { $implicit: first }" />
+        </div>
+        @if (later().length) {
+          <div class="ahead__later">
+            <p class="ahead__label">Danach</p>
+            <ul class="rows">
+              @for (t of later(); track t.id) {
+                <li><ng-container *ngTemplateOutlet="row; context: { $implicit: t }" /></li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    } @else if (!ongoing().length) {
       <p class="muted none">Keine bevorstehende Reise. <button type="button" class="link" (click)="create.emit()">Reise erstellen</button></p>
     }
   </section>
@@ -23,11 +45,17 @@
   @if (g.past.length) {
     <section class="group" aria-labelledby="tl-past">
       <h2 id="tl-past" class="group__title">Vergangen <span class="group__count">{{ g.past.length }}</span></h2>
-      <ul class="trips">
-        @for (t of g.past; track t.id) {
-          <li><ng-container *ngTemplateOutlet="card; context: { $implicit: t }" /></li>
+      <ul class="rows" id="tl-past-list">
+        @for (t of pastShown(); track t.id) {
+          <li><ng-container *ngTemplateOutlet="row; context: { $implicit: t }" /></li>
         }
       </ul>
+      @if (g.past.length > 3) {
+        <button type="button" class="more" aria-controls="tl-past-list" [attr.aria-expanded]="pastOpen()" (click)="pastOpen.set(!pastOpen())">
+          {{ pastOpen() ? 'Weniger anzeigen' : 'Alle ' + g.past.length + ' vergangenen Reisen anzeigen' }}
+          <app-icon [name]="pastOpen() ? 'chevron-up' : 'chevron-down'" aria-hidden="true" />
+        </button>
+      }
     </section>
   }
 
@@ -40,9 +68,9 @@
         </button>
       </h2>
       @if (cancelledOpen()) {
-        <ul class="trips" id="tl-cancelled-list">
+        <ul class="rows" id="tl-cancelled-list">
           @for (t of g.cancelled; track t.id) {
-            <li><ng-container *ngTemplateOutlet="card; context: { $implicit: t }" /></li>
+            <li><ng-container *ngTemplateOutlet="row; context: { $implicit: t }" /></li>
           }
         </ul>
       }
@@ -81,3 +109,26 @@
     </span>
   </button>
 </ng-template>
+
+<!-- Kompakte Zeile: für weitere kommende, vergangene und abgesagte Reisen. Ein Knopf, öffnet die Reise. -->
+<ng-template #row let-t>
+  <button type="button" class="row" [class.row--muted]="t.status === 'CANCELLED'" [attr.aria-label]="label(t)" (click)="open.emit(t.id)">
+    <span class="row__main">
+      <b>{{ t.title }}</b>
+      <small>{{ t.destination }}</small>
+    </span>
+    <span class="row__dates">{{ range(t) }}</span>
+    <span class="row__state">
+      @if (t.status === 'CANCELLED') {
+        <span [class]="statusClass(t)">{{ statusLabel(t) }}</span>
+      } @else {
+        <span class="when" [class.when--live]="isOngoing(t)" [class.when--past]="isPast(t)">{{ when(t) }}</span>
+        @if (openText(t); as todo) {
+          <span class="row__todo">{{ todo }}</span>
+        }
+      }
+    </span>
+    <app-icon class="chev" name="arrow" aria-hidden="true" />
+  </button>
+</ng-template>
+

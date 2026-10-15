@@ -15,6 +15,7 @@ from .category_colors import UNCATEGORISED_COLOR, color_for_name
 from .models import Category, Transaction, MonthlyBudget, SavingsGoal, SavingsContribution
 from .savings import SavingsPlanner, _next_month, contribution_date, goal_change_warning, plan_alert
 from .services import month_bounds
+from core.idempotency import idempotent
 
 ZERO = Decimal('0.00')
 # Grenzen gegen Tippfehler (eine Null zu viel, falsches Jahr) — wie im alten
@@ -216,7 +217,13 @@ class PrivateTransactionViewSet(PrivateViewSet):
     queryset = Transaction.objects.order_by('-datum', '-id')
     serializer_class = PrivateTransactionSerializer
 
+    # Doppelt gesendet (Retry, erneutes Absenden nach Verbindungsfehler) = eine Transaktion, nicht zwei.
+    @idempotent('finanzen.transaction.create')
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
     @action(detail=False, methods=['post'], url_path='import')
+    @idempotent('finanzen.transaction.import')
     def import_rows(self, request):
         """Kontoauszug übernehmen. Jede Zeile wird wie eine Buchung von Hand geprüft. Dubletten (gleiches Datum,
         gleicher Betrag, gleiche Art und gleicher Text — schon vorhanden oder doppelt in der Datei) werden
@@ -335,6 +342,10 @@ class MonthlyBudgetViewSet(PrivateViewSet):
 class SavingsGoalViewSet(PrivateViewSet):
     queryset = SavingsGoal.objects.all()
     serializer_class = SavingsGoalSerializer
+
+    @idempotent('finanzen.goal.create')
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = super().get_queryset()

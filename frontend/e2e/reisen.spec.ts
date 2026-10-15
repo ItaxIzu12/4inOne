@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { choose, pickDate } from './helpers';
+import { choose, dateCell, pickDate } from './helpers';
 import AxeBuilder from '@axe-core/playwright';
 
 // Reisen V1 (docs/REISEN_V1.md): Meine Reisen → eine Reise mit Übersicht, Planung, Packliste, Budget.
@@ -65,11 +65,11 @@ for (const width of [390, 1440]) {
 
     await page.getByRole('button', { name: 'Meine Reisen' }).click();
     await page.getByRole('button', { name: /Abgesagt/ }).click();
-    await expect(page.locator('app-trip-list .trip', { hasText: 'Städtetrip Wien lang' })).toBeVisible();
+    await expect(page.locator('app-trip-list :is(.trip, .row)', { hasText: 'Städtetrip Wien lang' })).toBeVisible();
     await noOverflow(page, `Meine Reisen @ ${width}`);
     await axe(page);
 
-    await page.locator('app-trip-list .trip', { hasText: 'Städtetrip Wien lang' }).click();
+    await page.locator('app-trip-list :is(.trip, .row)', { hasText: 'Städtetrip Wien lang' }).click();
     await page.getByRole('button', { name: 'Reise bearbeiten' }).click();
     await page.getByRole('button', { name: 'Reise löschen' }).click();
     await expect(page.getByText('Wirklich löschen?')).toBeVisible();
@@ -79,18 +79,21 @@ for (const width of [390, 1440]) {
   });
 }
 
-test('Datum: Ende vor Beginn wird am Feld erklärt; eine vergangene Reise ist erlaubt', async ({ page }) => {
+test('Datum: Ende vor Beginn wird am Feld erklärt; eine neue Reise beginnt frühestens heute', async ({ page }) => {
   await openDemo(page);
   // Der Kalender bietet für das Ende nur Tage ab dem Beginn an — der Fehler entsteht, wenn der Beginn später verschoben wird.
   await createTrip(page, 'Falsch', 'Hamburg', iso(20), iso(27));
   await pickDate(page, page.getByLabel('Erster Tag', { exact: true }), iso(30));
   await submit(page);
   await expect(page.getByText('Das Ende darf nicht vor dem Beginn liegen.')).toBeVisible();
-  await pickDate(page, page.getByLabel('Erster Tag', { exact: true }), iso(-30));
-  await pickDate(page, page.getByLabel('Letzter Tag', { exact: true }), iso(-27));
+  // Tage vor heute sind für den Beginn gesperrt (vergangene Bestandsreisen bleiben bearbeitbar, siehe DESIGN.md).
+  await expect(await dateCell(page, page.getByLabel('Erster Tag', { exact: true }), iso(-30))).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await pickDate(page, page.getByLabel('Erster Tag', { exact: true }), iso(0));
+  await pickDate(page, page.getByLabel('Letzter Tag', { exact: true }), iso(2));
   await submit(page);
   await page.getByRole('button', { name: 'Ohne Vorschläge starten' }).click();
-  await expect(page.locator('app-trip-overview .countdown')).toContainText('Vorbei');
+  await expect(page.locator('app-trip-overview .countdown')).toBeVisible();
 });
 
 test('Überschneidung wird erklärt; „Daten prüfen“ führt zurück, „Trotzdem speichern“ speichert', async ({ page }) => {
@@ -508,4 +511,35 @@ test('eine fremde oder gelöschte Reise verrät nichts', async ({ page }) => {
   await page.goto('/reisen?trip=42');
   await expect(page.getByRole('heading', { name: 'Reise nicht gefunden' })).toBeVisible();
   await expect(page.getByText('oder du hast keinen Zugriff darauf')).toBeVisible();
+});
+
+// Viele Reisen: Jetzt unterwegs + Als Nächstes als Karte, alles Weitere als kompakte Zeilen, Vergangen eingekürzt.
+test('viele Reisen bleiben übersichtlich: Karten nur für jetzt und als Nächstes, Rest als Zeilen', async ({ page }) => {
+  let id = 1;
+  const trip = (start: number, len: number, extra: Record<string, unknown> = {}) => ({
+    id, title: `Reise ${id++}`, destination: 'Ziel', departure: '', start_date: iso(start), end_date: iso(start + len), notes: '',
+    status: 'PLANNED', travel_type: '', transport_type: '', baggage: [], climate: '', budget_amount: null, currency: 'EUR',
+    accommodation: '', accommodation_area: '', transport_note: '', created_at: '', updated_at: '', packing_total: 10, packing_packed: 4,
+    tasks_open: 2, tasks_total: 3, events_count: 0, budget_spent: '0.00', participants: [], my_role: 'OWNER', ...extra,
+  });
+  const trips = [trip(-1, 3), ...[10, 30, 60, 90].map((s) => trip(s, 2)), ...[-20, -50, -80, -110, -140].map((s) => trip(s, 2, { status: 'DONE' })), trip(40, 2, { status: 'CANCELLED' })];
+  await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 'test' } }));
+  await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ json: { access: 'test', user: { name: 'Mira', email: 'mira@example.com', email_verified: true } } }));
+  await page.route('**/api/v1/onboarding/profile/', (r) => r.fulfill({ json: { needs_onboarding: false, completed: true } }));
+  await page.route('**/api/v1/notifications/**', (r) => r.fulfill({ json: { unread: 0, items: [] } }));
+  await page.route('**/api/v1/invitations/**', (r) => r.fulfill({ json: { received: [], sent: [], declined: [] } }));
+  await page.route('**/api/v1/reisen/trips/**', (r) => r.fulfill({ json: trips }));
+  await page.goto('/reisen');
+
+  const list = page.locator('app-trip-list');
+  await expect(list.getByRole('heading', { name: 'Jetzt unterwegs' })).toBeVisible();
+  await expect(list.locator('.trip')).toHaveCount(2); // unterwegs + als Nächstes
+  await expect(list.locator('.ahead__later .row')).toHaveCount(3);
+  await expect(list.locator('#tl-past-list .row')).toHaveCount(3);
+  await expect(list.locator('#tl-past-list')).not.toContainText('gepackt'); // vorbei: keine offenen Punkte mehr
+  await list.getByRole('button', { name: 'Alle 5 vergangenen Reisen anzeigen' }).click();
+  await expect(list.locator('#tl-past-list .row')).toHaveCount(5);
+  await axe(page);
+  await page.setViewportSize({ width: 360, height: 800 });
+  await noOverflow(page, 'viele Reisen 360px');
 });

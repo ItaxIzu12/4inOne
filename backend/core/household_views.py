@@ -4,6 +4,7 @@ Einladen läuft über core/invitations.py (In-App-Einladung an einen eigenen Kon
 die Mitgliedschaft; eine alte angenommene Einladung reaktiviert nichts — für eine Rückkehr braucht es eine neue.
 """
 
+from django.db import transaction
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -62,5 +63,9 @@ class HouseholdMemberDetailView(APIView):
                 return Response({'detail': 'Deinen eigenen Haushalt kannst du nicht verlassen.'}, status=400)
         elif mine.role != HouseholdMembership.Role.ADMIN or target.role == HouseholdMembership.Role.ADMIN:
             return Response({'detail': 'Dafür fehlt dir die Berechtigung.'}, status=403)
-        target.delete()
+        from haushalt.services import remove_member_assignments
+
+        with transaction.atomic():
+            remove_member_assignments(target.household, target.user)
+            target.delete()
         return Response(status=204)

@@ -20,6 +20,30 @@ Use the security mechanisms already established in the Django/Angular project, p
 
 Prefer secure cookie/session or short-lived token patterns appropriate to the architecture. Do not store long-lived sensitive authentication secrets in insecure browser storage.
 
+
+### Beta audit (12.10.2026)
+
+- Access tokens carry the device session id (`sid`); `core.authentication.SessionBoundJWTAuthentication` rejects
+  them as soon as the session is gone (logout, „Gerät abmelden“, „Alle anderen abmelden“, password reset) instead
+  of after up to 15 minutes. Login now derives the access token after the session exists.
+- Logout identifies the device by the httpOnly refresh cookie (CSRF-protected) and works without a valid access
+  token. The frontend clears cached account data (finance state, invitations/notifications) whenever the signed-in
+  account changes, so nothing of a previous account remains on a shared device.
+- Password reset tokens are stored only as SHA-256 hashes.
+- Registration: e-mail max. 254 characters (server-side); field errors in login/registration appear only after the
+  first submit, then update live. A throttled login says so („Zu viele Anmeldeversuche …“) without revealing
+  whether the account exists.
+- No secrets in URLs or logs: mail links carry tokens only in the fragment (`/einladung#…`,
+  `/passwort-zuruecksetzen#token=…`, `/email-bestaetigen#token=…`) — never sent to any server, so not in access
+  logs or referrers; pages remove them from the address bar immediately (older `?token=`/path links still work).
+  Contact-invite endpoints take the token in the POST body only (`/contacts/invites/lookup|accept|decline/`).
+  `AXES_VERBOSE = False`: failed logins are counted for the lockout but no e-mail address is written to the log.
+- Passwords are hashed with Argon2 (PBKDF2 hashes keep working and are upgraded on the next login).
+- Behind a TLS-terminating reverse proxy set `BEHIND_PROXY=True` (trusted `X-Forwarded-Proto`, real client IP for
+  rate limits and lockouts). Production also needs `EMAIL_HOST`; `manage.py check --deploy` is clean with both.
+- Known, accepted: registration reports an already used e-mail address (usability; throttled to 3/hour per IP).
+- Tests: `backend/core/test_auth_audit.py`, `frontend/e2e/auth-audit.spec.ts`.
+
 ## Ownership model
 
 Every persistent user object must have an unambiguous access scope.
@@ -109,12 +133,12 @@ Household and trip sharing works only through an accepted in-app invitation (`co
 
 ### E-mail confirmation (in-app contact requests)
 
-Registration sends a confirmation link `${FRONTEND_URL}/email-bestaetigen?token=…` (`core/email_verification.py`,
+Registration sends a confirmation link `${FRONTEND_URL}/email-bestaetigen#token=…` (`core/email_verification.py`,
 signed with `django.core.signing`, 3 days, bound to account + current address; no extra table). `POST
 /auth/email/verify/` needs no login (the link is the mailbox proof), `POST /auth/email/resend/` needs login (3/hour).
 `/auth/me/` and login/refresh return `email_verified`. Only confirmed addresses get contact requests in the app:
 `/notifications/` then includes them as `CONTACT_INVITE` (inviter name and relation, no email), answered via the
-existing `/contacts/invites/<token>/accept|decline/`. Unconfirmed accounts see a quiet hint with „Mail senden“
+existing `/contacts/invites/accept|decline/` (token in the body). Unconfirmed accounts see a quiet hint with „Mail senden“
 instead. Opening the invitation link from the e-mail still works and also confirms the address. Local only
 (`DEBUG` on **and** console mailer, i.e. no `EMAIL_HOST`): the resend response also contains `dev_link`, shown in
 the app as „Jetzt bestätigen“ because no real e-mail is delivered; never with SMTP or without `DEBUG`.
@@ -139,7 +163,7 @@ CHILD_ACCOUNT roles. The requested target role never supplies authority to the s
 
 Flow: `/passwort-vergessen` posts the address to `auth/password-reset/request/`; the answer is identical for known
 and unknown addresses, and a failing mail server is only logged. Known addresses get a 30-minute, single-use link
-`${FRONTEND_URL}/passwort-zuruecksetzen?token=…` (console mailer locally, SMTP once `EMAIL_HOST` is set). The page
+`${FRONTEND_URL}/passwort-zuruecksetzen#token=…` (console mailer locally, SMTP once `EMAIL_HOST` is set). The page
 removes the token from the address bar immediately and posts it with the new password to
 `auth/password-reset/confirm/`; a rejected token shows "Dieser Link funktioniert nicht mehr" with a link to request
 a new one.
@@ -162,3 +186,38 @@ Do not make a demo dataset globally writable in a way that lets visitors affect 
 ## Logout
 
 Logout must invalidate/clear the relevant authentication state and return the user to an appropriate public/login view.
+
+## Authorization audit — permission matrix (beta security gate, 13.10.2026)
+
+Personas: Sophie (owner), Alex (member of Sophie's household), Ben (VIEWER of trip „Berlin“), Eve (unrelated).
+
+| Data | Sophie | Alex | Ben | Eve |
+|---|---|---|---|---|
+| Private finance (transactions, categories, budgets, goals, contributions, legacy household finance) | ✔ | ✘ | ✘ | ✘ |
+| Shared household (tasks, shopping, devices, contracts) | ✔ | ✔ read/write | ✘ | ✘ |
+| Contract/device amounts in the household folder | only own entries | only own entries | ✘ | ✘ |
+| Private organisation (events, tasks, notes, files) | ✔ | ✘ | ✘ | ✘ |
+| Shared trip „Berlin“ + packing/tasks/events/expenses/budget | ✔ | ✘ | ✔ read only | ✘ |
+| Other trips | ✔ | ✘ | ✘ | ✘ |
+| Connection shared object ↔ private goal | ✔ | ✘ (not even its existence) | ✘ | ✘ |
+| Suggestions / dashboard / search | own data only | own + shared household | own + shared trip | own only |
+
+Enforced by: every viewset filters its queryset by owner, active household or trip involvement; object
+permissions for trip writes (OWNER/EDITOR) and participant management (OWNER); connections and suggestions resolve
+both ends against the caller's visibility; aggregations (today, overview, trip overview) query only the caller's
+scope. Foreign IDs → 404 (403 only where the object is already visible but read-only).
+
+Fixes from this audit: amounts in the household folder (contract costs) are private to the person who entered
+them (`haushalt.services.can_see_cost`; legacy entries without creator → household admin); others see the
+contract without amount, cannot overwrite it, and the monthly total only adds visible amounts. Household member names never fall back to the full e-mail address (only the part before
+`@`); trip expenses show each viewer the amount in their own home currency instead of revealing the creator's.
+
+Regression: `backend/core/test_permission_matrix.py` — sweep over every list endpoint read from the URL router
+(with search/filter/trip/object query params) for each persona with a positive control, direct GET/PATCH/PUT/
+DELETE on every object type, creation inside foreign trips, forged owner/household/category, role escalation,
+private connection targets, immediate loss of access after removal, and a fail-closed check that only the auth
+allowlist is reachable without login. `test_every_detail_endpoint_is_covered_by_the_matrix` fails as soon as a new
+endpoint with an object id appears that is not assigned to a permission check — e.g. when organisation sharing is
+built later. The matrix also covers legacy household finance, shopping lists, organisation files (detail and
+content download) and trip participants.
+

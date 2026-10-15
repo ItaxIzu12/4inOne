@@ -102,6 +102,7 @@ export function isRunning(entry: { effective_status: string }): boolean {
 export interface ContractStats {
   total: number;
   monthly: number;
+  hiddenCosts: number;
   yearly: number;
   expiring: number;
   withoutDeadline: number;
@@ -114,6 +115,8 @@ export function contractStats(contracts: FolderEntryDto[]): ContractStats {
   return {
     total: running.length,
     monthly: sum,
+    /** Laufende Verträge, deren Betrag jemand anderes erfasst hat (in der Summe nicht enthalten). */
+    hiddenCosts: running.filter((c) => c.cost_visible === false).length,
     yearly: sum * 12,
     expiring: running.filter((c) => c.effective_status === 'EXPIRING').length,
     withoutDeadline: running.filter((c) => !c.cancellation_deadline).length,

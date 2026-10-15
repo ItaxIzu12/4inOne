@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import secrets
 
@@ -141,10 +142,10 @@ class PasswordResetRateThrottle(LocalCacheThrottle):
 
 
 class RegisterSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    email = serializers.EmailField(max_length=254)  # wie User.email; SQLite prüft die Länge sonst nicht
     password = serializers.CharField(write_only=True, trim_whitespace=False, max_length=1024)
     name = serializers.CharField(max_length=150, min_length=2)
-    confirm_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    confirm_password = serializers.CharField(write_only=True, trim_whitespace=False, max_length=1024)
     accept_privacy = serializers.BooleanField()
 
     def validate(self, attrs):
@@ -286,7 +287,9 @@ class LoginView(APIView):
         remember = login_data['remember']
         refresh = RefreshToken(serializer.validated_data['refresh'])
         _start_session(request, user, refresh)
-        response = Response({'access': serializer.validated_data['access'], 'user': _user_payload(user)})
+        # Access-Token erst NACH _start_session ableiten, damit es die Sitzungs-ID trägt (core/authentication.py):
+        # Abmelden entwertet es dann sofort, nicht erst nach Ablauf.
+        response = Response({'access': str(refresh.access_token), 'user': _user_payload(user)})
         _set_refresh_cookie(response, refresh, remember=remember)
         return response
 
@@ -358,6 +361,12 @@ class RefreshView(APIView):
 
 @method_decorator(csrf_protect, name='dispatch')
 class LogoutView(APIView):
+    """Beendet die Sitzung dieses Geräts. Identifiziert über das httpOnly-Refresh-Cookie (CSRF-geschützt), damit
+    Abmelden auch mit abgelaufenem Access-Token zuverlässig funktioniert."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
     def post(self, request):
         raw_token = request.COOKIES.get(REFRESH_COOKIE_NAME)
         if raw_token:
@@ -373,9 +382,15 @@ class LogoutView(APIView):
         return response
 
 
+def hash_reset_token(raw: str) -> str:
+    """Reset-Links werden nur als SHA-256 gespeichert: ein Datenbank-Auszug enthält keine nutzbaren Links."""
+    return hashlib.sha256(str(raw).encode()).hexdigest()
+
+
 def _send_password_reset_mail(user, token: str) -> None:
     """Schickt den Reset-Link. Fehler beim Versand ändern die Antwort nicht (sonst Account-Enumeration)."""
-    link = f'{settings.FRONTEND_URL}/passwort-zuruecksetzen?token={token}'
+    # Token im Fragment: wird nie an einen Server geschickt (keine Zugriffsprotokolle, kein Referer).
+    link = f'{settings.FRONTEND_URL}/passwort-zuruecksetzen#token={token}'
     minutes = int(PASSWORD_RESET_TOKEN_LIFETIME.total_seconds() // 60)
     body = (
         'Hallo,\n\n'
@@ -414,12 +429,13 @@ class PasswordResetRequestView(APIView):
 
         user = get_user_model().objects.filter(email__iexact=email).first()
         if user is not None:
-            reset_token = PasswordResetToken.objects.create(
+            raw_token = secrets.token_urlsafe(32)
+            PasswordResetToken.objects.create(
                 user=user,
-                token=secrets.token_urlsafe(32),
+                token=hash_reset_token(raw_token),  # nur der Hash liegt in der Datenbank
                 expires_at=timezone.now() + PASSWORD_RESET_TOKEN_LIFETIME,
             )
-            _send_password_reset_mail(user, reset_token.token)
+            _send_password_reset_mail(user, raw_token)
 
         return Response(
             {'detail': 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde eine Nachricht versendet.'}
@@ -445,7 +461,7 @@ class PasswordResetConfirmView(APIView):
         password = request.data.get('password', '')
 
         reset_token = (
-            PasswordResetToken.objects.filter(token=token, used_at__isnull=True)
+            PasswordResetToken.objects.filter(token=hash_reset_token(token), used_at__isnull=True)
             .select_related('user')
             .first()
         )

@@ -155,7 +155,7 @@ def list_members(household: Household, shopping_list: ShoppingList) -> list[dict
     return [
         {
             'user_id': m.user_id,
-            'name': ' '.join(part for part in (m.user.first_name, m.user.last_name) if part) or m.user.email,
+            'name': ' '.join(part for part in (m.user.first_name, m.user.last_name) if part) or m.user.email.split('@')[0],
             'is_owner': m.user_id == owner_id,
         }
         for m in memberships
@@ -344,10 +344,20 @@ def next_due_date(task: Task, today: date | None = None) -> date:
 
 
 @db_transaction.atomic
-def complete_task(task: Task, user) -> Task:
+@db_transaction.atomic
+def complete_task(task: Task, user, expected_due: date | None = None) -> Task:
     """Aufgabe abhaken. Wiederkehrende Aufgaben rücken auf ihren nächsten
     Termin (next_due_date) und wechseln ggf. die zuständige Person; einmalige
-    werden erledigt."""
+    werden erledigt.
+
+    Idempotent gegen Doppelklick und Netzwerk-Wiederholung: die Zeile wird gesperrt, und schickt der Client den
+    Termin mit, den er gerade abhakt (`expected_due`), zählt eine zweite Anfrage für denselben Termin nicht noch
+    einmal — sonst würde eine Serie einen Termin überspringen und das Protokoll doppelt zählen."""
+    task = Task.objects.select_for_update().get(pk=task.pk)
+    if task.is_done:
+        return task
+    if expected_due is not None and task.due_date != expected_due:
+        return task  # dieser Termin ist bereits erledigt (die Serie steht schon auf dem nächsten)
     now = timezone.now()
     TaskCompletion.objects.create(
         task=task, household=task.household, title=task.title, done_by=user, done_at=now, effort=task.effort
@@ -362,6 +372,15 @@ def complete_task(task: Task, user) -> Task:
         task.is_done = True
     task.save()
     return task
+
+
+def remove_member_assignments(household, user) -> None:
+    """Person verlässt den Haushalt (oder wird entfernt): ihre Zuständigkeiten und Rotationsplätze in diesem
+    Haushalt freigeben, damit keine Aufgabe an jemanden geht, der nicht mehr Mitglied ist. Erledigungen bleiben im
+    Protokoll (das ist Vergangenheit, kein Verweis auf eine aktive Rolle)."""
+    tasks = Task.objects.filter(household=household)
+    tasks.filter(assigned_to=user).update(assigned_to=None)
+    Task.rotation_members.through.objects.filter(task__household=household, user=user).delete()
 
 
 @db_transaction.atomic
@@ -499,7 +518,7 @@ def month_load(household: Household) -> list[dict]:
         result.append(
             {
                 'user_id': membership.user_id,
-                'name': membership.user.first_name or membership.user.email,
+                'name': membership.user.first_name or membership.user.email.split('@')[0],
                 'points': row.get('points', 0) or 0,
                 'count': row.get('count', 0) or 0,
             }
@@ -527,6 +546,19 @@ _MONTHS_PER_CYCLE = {
     FolderEntry.BillingCycle.QUARTERLY: 3,
     FolderEntry.BillingCycle.YEARLY: 12,
 }
+
+
+def can_see_cost(entry: FolderEntry, user) -> bool:
+    """Beträge im Haushaltsordner sind privat: sichtbar nur für die Person, die sie erfasst hat. Ältere Einträge
+    ohne erfassende Person sieht die verwaltende Person (Admin) des Haushalts. Alle übrigen Angaben (Anbieter,
+    Fristen, Kündigung) bleiben für Mitglieder sichtbar."""
+    if user is None or not user.is_authenticated:
+        return False
+    if entry.created_by_id is not None:
+        return entry.created_by_id == user.pk
+    return HouseholdMembership.objects.filter(
+        household_id=entry.household_id, user=user, role=HouseholdMembership.Role.ADMIN
+    ).exists()
 
 
 def monthly_equivalent(entry: FolderEntry) -> Decimal | None:

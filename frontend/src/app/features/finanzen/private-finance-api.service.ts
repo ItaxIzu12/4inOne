@@ -1,3 +1,4 @@
+import { IDEMPOTENCY_HEADER } from '../../shared/idempotency';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { API_BASE_URL } from '../../core/api.config';
@@ -238,8 +239,9 @@ export class PrivateFinanceApi {
     return this.http.get<FinanceTransaction[]>(`${this.base}/transactions/`);
   }
   /** Kontoauszug übernehmen (Zeilen aus finance-import.ts); dryRun = nur prüfen für die Vorschau. */
-  importTransactions(rows: ImportRow[], dryRun: boolean) {
-    return this.http.post<ImportResult>(`${this.base}/transactions/import/`, { rows, dry_run: dryRun });
+  importTransactions(rows: ImportRow[], dryRun: boolean, idempotencyKey?: string) {
+    const options = idempotencyKey && !dryRun ? { headers: { [IDEMPOTENCY_HEADER]: idempotencyKey } } : {};
+    return this.http.post<ImportResult>(`${this.base}/transactions/import/`, { rows, dry_run: dryRun }, options);
   }
   budgets() {
     return this.http.get<FinanceBudget[]>(`${this.base}/budgets/`);
@@ -248,10 +250,11 @@ export class PrivateFinanceApi {
   goals(month: string) {
     return this.http.get<SavingsGoal[]>(`${this.base}/goals/`, { params: { month } });
   }
-  save(resource: 'transactions' | 'budgets' | 'goals', payload: object, id?: number) {
+  /** `idempotencyKey` beim Anlegen: dieselbe Absendung zweimal ergibt nur einen Eintrag (shared/idempotency.ts). */
+  save(resource: 'transactions' | 'budgets' | 'goals', payload: object, id?: number, idempotencyKey?: string) {
     return id
       ? this.http.patch(`${this.base}/${resource}/${id}/`, payload)
-      : this.http.post(`${this.base}/${resource}/`, payload);
+      : this.http.post(`${this.base}/${resource}/`, payload, idempotencyKey ? { headers: { [IDEMPOTENCY_HEADER]: idempotencyKey } } : {});
   }
   /** Die letzten Einzahlungen in die eigenen Sparziele, neueste zuerst. */
   /** Ohne Zeitraum die letzten Einzahlungen; mit Von/Bis („JJJJ-MM-TT“, beide eingeschlossen) alle im Zeitraum. */

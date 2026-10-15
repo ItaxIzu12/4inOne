@@ -4,8 +4,12 @@ import { AppIcon } from '../../shared/icons/app-icon';
 import { Trip } from './reisen-api.service';
 import { STATUS_LABELS, STATUS_TONE, formatMoney, groupTrips, localDay, shortRange, tripPhase, whenText } from './reisen-logic';
 
-/** Meine Reisen: Bevorstehend, Vergangen und (eingeklappt) Abgesagt. Eine Karte zeigt nur das Nötigste —
- * Zeitraum, Countdown, Aufgaben, Packliste, Budget — und öffnet die Reise. Ohne Coverbild. */
+/** Meine Reisen, auch mit vielen Reisen übersichtlich: „Jetzt unterwegs“ und „Als Nächstes“ als volle Karte
+ * (Zeitraum, Countdown, Aufgaben, Packliste, Budget), alle weiteren kommenden und die vergangenen Reisen als kompakte
+ * Zeilen; Vergangen zunächst nur die letzten {@link PAST_PREVIEW}, Abgesagt eingeklappt. Ohne Coverbild. */
+/** So viele vergangene Reisen sind zunächst sichtbar; der Rest kommt über „Alle anzeigen“. */
+const PAST_PREVIEW = 3;
+
 @Component({
   selector: 'app-trip-list',
   imports: [AppIcon, NgTemplateOutlet],
@@ -23,6 +27,16 @@ export class TripList {
   readonly today = localDay(new Date());
   readonly groups = computed(() => groupTrips(this.trips(), this.today));
   readonly cancelledOpen = signal(false);
+  readonly pastOpen = signal(false);
+
+  /** Laufende Reisen (meist eine) — ganz oben, hervorgehoben. */
+  readonly ongoing = computed(() => this.groups().upcoming.filter((t) => this.isOngoing(t)));
+  /** Kommende Reisen ohne die laufenden: die nächste als Karte, der Rest als Zeilen. */
+  private readonly ahead = computed(() => this.groups().upcoming.filter((t) => !this.isOngoing(t)));
+  readonly next = computed(() => this.ahead()[0] ?? null);
+  readonly later = computed(() => this.ahead().slice(1));
+  readonly pastShown = computed(() => (this.pastOpen() ? this.groups().past : this.groups().past.slice(0, PAST_PREVIEW)));
+  readonly pastHidden = computed(() => this.groups().past.length - this.pastShown().length);
 
   statusClass(trip: Trip): string {
     return `status status--${this.tone[trip.status]}`;
@@ -32,6 +46,9 @@ export class TripList {
   }
   when(trip: Trip): string {
     return whenText(trip, this.today);
+  }
+  isPast(trip: Trip): boolean {
+    return tripPhase(trip, this.today) === 'past';
   }
   isOngoing(trip: Trip): boolean {
     return tripPhase(trip, this.today) === 'ongoing';
@@ -44,6 +61,14 @@ export class TripList {
   }
   tasksText(trip: Trip): string {
     return trip.tasks_open === 0 ? (trip.tasks_total ? 'Alles erledigt' : 'Keine Aufgaben') : trip.tasks_open === 1 ? '1 Aufgabe offen' : `${trip.tasks_open} Aufgaben offen`;
+  }
+  /** Kurzform für die kompakte Zeile: nur, was noch zu tun ist. */
+  openText(trip: Trip): string {
+    if (this.isPast(trip)) return ''; // vorbei: offene Punkte sind nur noch Rauschen
+    const parts: string[] = [];
+    if (trip.tasks_open) parts.push(trip.tasks_open === 1 ? '1 Aufgabe offen' : `${trip.tasks_open} Aufgaben offen`);
+    if (trip.packing_total && trip.packing_packed < trip.packing_total) parts.push(`${trip.packing_packed}/${trip.packing_total} gepackt`);
+    return parts.join(' · ');
   }
   /** Für Screenreader eine vollständige Zeile statt vieler Einzelteile. */
   label(trip: Trip): string {

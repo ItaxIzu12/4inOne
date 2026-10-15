@@ -48,7 +48,7 @@ export interface HaushaltDataProvider {
   createTask(input: TaskInput): Observable<TaskDto>;
   updateTask(id: Id, input: TaskInput): Observable<TaskDto>;
   deleteTask(id: Id): Observable<void>;
-  completeTask(id: Id): Observable<TaskDto>;
+  completeTask(id: Id, dueDate?: string | null): Observable<TaskDto>;
   reopenTask(id: Id): Observable<TaskDto>;
 
   getFolder(): Observable<FolderEntryDto[]>;

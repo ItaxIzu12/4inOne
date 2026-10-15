@@ -1,3 +1,4 @@
+import { IDEMPOTENCY_HEADER } from '../../shared/idempotency';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map } from 'rxjs';
@@ -199,10 +200,11 @@ export class ReisenApi {
       params: new HttpParams().set('trip', tripId),
     });
   }
-  saveExpense(data: Partial<Omit<TripExpense, 'id'>>, id?: number) {
+  /** `idempotencyKey` beim Anlegen: dieselbe Absendung zweimal ergibt nur eine Ausgabe (shared/idempotency.ts). */
+  saveExpense(data: Partial<Omit<TripExpense, 'id'>>, id?: number, idempotencyKey?: string) {
     return id
       ? this.http.patch<TripExpense>(`${this.base}/expenses/${id}/`, data)
-      : this.http.post<TripExpense>(`${this.base}/expenses/`, data);
+      : this.http.post<TripExpense>(`${this.base}/expenses/`, data, idempotencyKey ? { headers: { [IDEMPOTENCY_HEADER]: idempotencyKey } } : {});
   }
   removeExpense(id: number) {
     return this.http.delete<void>(`${this.base}/expenses/${id}/`);

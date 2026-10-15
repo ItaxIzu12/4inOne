@@ -15,7 +15,8 @@ urlpatterns = [
     path('<int:pk>/', ContactDetailView.as_view(), name='contact-detail'),
     path('invites/', InviteCreateView.as_view(), name='contact-invite-create'),
     path('invites/<int:pk>/', InviteCancelView.as_view(), name='contact-invite-cancel'),
-    path('invites/<str:token>/', InviteDetailView.as_view(), name='contact-invite-detail'),
-    path('invites/<str:token>/accept/', InviteAcceptView.as_view(), name='contact-invite-accept'),
-    path('invites/<str:token>/decline/', InviteDeclineView.as_view(), name='contact-invite-decline'),
+    # Token immer im Body (nie in der URL, siehe contact_views._invite_for)
+    path('invites/lookup/', InviteDetailView.as_view(), name='contact-invite-detail'),
+    path('invites/accept/', InviteAcceptView.as_view(), name='contact-invite-accept'),
+    path('invites/decline/', InviteDeclineView.as_view(), name='contact-invite-decline'),
 ]

@@ -14,6 +14,12 @@ from core.models import Contact
 from reisen.models import PackingItem, Trip, TripExpense, TripParticipant, TripTask
 
 pytestmark = pytest.mark.django_db
+
+
+def day(offset: int) -> str:
+    """Datum relativ zu heute. Neue Reisen dürfen nicht vor heute beginnen (TripSerializer) — feste Kalenderdaten
+    würden diese Tests mit der Zeit von selbst rot werden lassen."""
+    return (timezone.localdate() + timedelta(days=offset)).isoformat()
 BASE = '/api/v1/reisen/'
 
 
@@ -44,7 +50,7 @@ def share(trip, user, role='EDITOR'):
 
 def test_create_trip_with_departure_and_required_fields(users):
     client = api(users[0])
-    payload = {'title': 'Berlin Wochenende', 'destination': 'Berlin', 'start_date': '2026-11-12', 'end_date': '2026-11-15', 'departure': 'DUS'}
+    payload = {'title': 'Berlin Wochenende', 'destination': 'Berlin', 'start_date': day(42), 'end_date': day(45), 'departure': 'DUS'}
     response = client.post(BASE + 'trips/', payload, format='json')
     assert response.status_code == 201, response.data
     assert response.data['departure'] == 'DUS'
@@ -58,7 +64,7 @@ def test_create_trip_with_departure_and_required_fields(users):
 
 def test_end_before_start_is_rejected_with_a_clear_message(users):
     response = api(users[0]).post(
-        BASE + 'trips/', {'title': 'x', 'destination': 'y', 'start_date': '2026-11-15', 'end_date': '2026-11-12'}, format='json'
+        BASE + 'trips/', {'title': 'x', 'destination': 'y', 'start_date': day(45), 'end_date': day(42)}, format='json'
     )
     assert response.status_code == 400
     assert 'Ende' in str(response.data['end_date'])
@@ -109,13 +115,13 @@ def test_v1_has_no_draft_or_stored_active_status(users, status):
 
 def test_overlap_is_detected_but_does_not_block_saving(users):
     client = api(users[0])
-    japan = trip_for(users[0], title='Japan', start_date='2026-11-10', end_date='2026-11-15')
-    overlaps = client.get(BASE + 'trips/overlaps/', {'start_date': '2026-11-13', 'end_date': '2026-11-18'}).data
+    japan = trip_for(users[0], title='Japan', start_date=day(40), end_date=day(45))
+    overlaps = client.get(BASE + 'trips/overlaps/', {'start_date': day(43), 'end_date': day(48)}).data
     assert [t['title'] for t in overlaps] == ['Japan']
     # Trotzdem speichern ist erlaubt (Gruppenreise, Weiterreise …).
-    response = client.post(BASE + 'trips/', {'title': 'Kyoto', 'destination': 'Kyoto', 'start_date': '2026-11-13', 'end_date': '2026-11-18'}, format='json')
+    response = client.post(BASE + 'trips/', {'title': 'Kyoto', 'destination': 'Kyoto', 'start_date': day(43), 'end_date': day(48)}, format='json')
     assert response.status_code == 201
-    assert client.get(BASE + 'trips/overlaps/', {'start_date': '2026-11-10', 'end_date': '2026-11-15', 'exclude': japan.pk}).data[0]['title'] == 'Kyoto'
+    assert client.get(BASE + 'trips/overlaps/', {'start_date': day(40), 'end_date': day(45), 'exclude': japan.pk}).data[0]['title'] == 'Kyoto'
 
 
 def test_scope_filters_upcoming_past_and_cancelled(users):
