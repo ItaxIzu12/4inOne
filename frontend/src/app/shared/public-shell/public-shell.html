@@ -1,0 +1,25 @@
+<a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+<header class="head">
+  <div class="head__inner">
+    <a routerLink="/" class="head__brand" aria-label="4inOne – Startseite"><app-brand /></a>
+    <div class="head__actions">
+      <a routerLink="/login" class="head__link">Anmelden</a>
+      <a routerLink="/registrieren" class="head__cta">Konto erstellen</a>
+    </div>
+  </div>
+</header>
+
+<main id="inhalt" class="body" tabindex="-1">
+  <ng-content />
+</main>
+
+<footer class="foot">
+  <nav class="foot__links" aria-label="Rechtliches und Kontakt">
+    <a routerLink="/kontakt">Kontakt</a>
+    <a routerLink="/impressum">Impressum</a>
+    <a routerLink="/datenschutz">Datenschutz</a>
+    <a routerLink="/nutzungsbedingungen">Nutzungsbedingungen</a>
+    <a routerLink="/barrierefreiheit">Barrierefreiheit</a>
+  </nav>
+  <p class="foot__legal">© {{ year }} 4inOne · Dein Alltag. Alles verbunden.</p>
+</footer>

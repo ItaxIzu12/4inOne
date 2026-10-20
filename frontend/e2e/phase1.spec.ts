@@ -10,8 +10,9 @@ for (const width of [360, 390, 768, 1440]) {
     await expect(page.getByRole('heading', { name: /^(Guten Morgen|Guten Tag|Guten Abend),? Sophie!$/ })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (width < 761) await expect(page.locator('.mobile-nav')).toBeVisible();
+    // Die vier Bereiche erreicht man über die Navigation (am Handy unten) — die Startseite ist kein zweites Menü.
     for (const area of ['Finanzen', 'Haushalt', 'Organisation', 'Reisen']) {
-      await expect(page.locator('main').getByRole('link', { name: new RegExp(area) }).first()).toBeVisible();
+      await expect(page.getByRole('navigation').getByRole('link', { name: new RegExp(area) }).filter({ visible: true }).first()).toBeVisible();
     }
     await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'));
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();

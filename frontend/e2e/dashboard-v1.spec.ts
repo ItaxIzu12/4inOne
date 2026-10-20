@@ -4,39 +4,46 @@ import AxeBuilder from '@axe-core/playwright';
 // Dashboard V1 (docs/DASHBOARD_V1.md): „Was ist heute wichtig?“ — Bereiche, Heute, höchstens ein „Für dich“,
 // Schnellerfassung über die bestehenden Formulare.
 
+// Feste Uhrzeit (08:30): „Als Nächstes“, „vorbei“ und „jetzt“ hängen an der Uhr — so prüft der Test immer dasselbe.
+const morning = () => new Date(new Date().setHours(8, 30, 0, 0));
 async function demo(page: Page, width = 1440) {
+  await page.clock.setFixedTime(morning());
   await page.setViewportSize({ width, height: 900 });
   await page.route('http://localhost:8000/api/**', (route) => route.abort());
   await page.goto('/demo');
   await expect(page.locator('h1')).toContainText('Sophie');
 }
 
-test('four compact areas with day-relevant figures, Heute sorted, one "Für dich"', async ({ page }) => {
+test('no second menu: overdue first, the next appointment on the stage, Demnächst, one "Für dich", one budget figure', async ({ page }) => {
   await demo(page);
-  const tiles = page.locator('.domain');
-  await expect(tiles).toHaveCount(4);
-  await expect(page.locator('.domain.finance')).toContainText('übrig');
-  // Haushalt: heute + überfällig, nicht die Gesamtzahl offener Aufgaben
-  await expect(page.locator('.domain.household')).toContainText(/Aufgaben? heute|Keine Aufgabe heute|überfällig/);
-  await expect(page.locator('.domain.household')).not.toContainText('offene Aufgaben');
-  await expect(page.locator('.domain.travel')).toContainText('Berlin');
-  await expect(page.locator('.domain.travel')).toContainText('in 12 Tagen');
-  // Kacheln führen in die Bereiche
-  await expect(page.locator('.domain.household')).toHaveAttribute('href', '/demo/haushalt');
-  await expect(page.locator('.domain.travel')).toHaveAttribute('href', '/demo/reisen');
+  // Keine Bereichskacheln: die Bereiche erreicht man über die Navigation (am Handy unten)
+  await expect(page.locator('.domain')).toHaveCount(0);
 
-  // Heute: überfällig zuerst (mit Text, nicht nur Farbe), dann mit Uhrzeit chronologisch, dann ganztägig
-  const times = await page.locator('.today-row .time').allInnerTexts();
-  expect(times[0]).toMatch(/^\d\d\.\d\d\.$/);
-  await expect(page.locator('.today-row').first()).toContainText('Überfällig');
+  // Heute: Überfälliges zuerst und für sich (mit Text, nicht nur Farbe)
+  const late = page.locator('.today-list--late .today-row');
+  await expect(page.locator('.plan__group--late')).toHaveText('Überfällig');
+  await expect(late.first()).toContainText('überfällig');
+  await expect(late.first().locator('.time')).toHaveText(/^\d\d\.\d\d\.$/);
+  // Als Nächstes: der nächste Termin, der heute noch kommt — mit „in … Std.“
+  const lead = page.locator('.today-row--lead');
+  await expect(lead.locator('.time')).toHaveText(/^\d\d:\d\d$/);
+  await expect(lead).toContainText(/in \d+ (Std|Min)\./);
+  // Rest: mit Uhrzeit chronologisch, ohne Uhrzeit danach; nichts doppelt
+  const times = await page.locator('#today-list .time').allInnerTexts();
   const clock = times.filter((t) => /^\d\d:\d\d$/.test(t));
   expect(clock).toEqual([...clock].sort());
-  expect(times.lastIndexOf('Heute')).toBeGreaterThan(times.indexOf(clock[clock.length - 1]));
+  const titles = await page.locator('.today-row strong').allInnerTexts();
+  expect(new Set(titles).size).toBe(titles.length);
   expect(await page.locator('.today-row').count()).toBeLessThanOrEqual(5);
-  await expect(page.getByRole('link', { name: 'Kalender' })).toHaveCount(0);
 
-  // Höchstens eine „Für dich“-Karte
-  await expect(page.locator('.for-you__card')).toHaveCount(1);
+  // Demnächst: nächste Reise und nächste Frist, je mit Weg dorthin
+  const trip = page.locator('.soon__row.travel');
+  await expect(trip).toContainText('Berlin');
+  await expect(trip).toContainText('in 12 Tagen');
+  await expect(trip).toHaveAttribute('href', /\/demo\/reisen\?trip=/);
+  // Höchstens ein „Für dich“, eine Budget-Zahl
+  await expect(page.locator('.for-you')).toHaveCount(1);
+  await expect(page.locator('.budget')).toContainText('übrig');
   // Keine Fotos, keine Diagramme, keine Wetterkarte
   await expect(page.locator('main img, main canvas, main svg.chart')).toHaveCount(0);
   await expect(page.locator('main')).not.toContainText(/Wetter|AI|Automatisch verbunden/);
@@ -91,9 +98,10 @@ for (const width of [320, 360, 390, 430, 820, 1280, 1920]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (width < 761) {
       await expect(page.locator('.mobile-nav a, .mobile-nav button')).toHaveCount(5);
-      // Bereiche im 2×2-Raster
-      const tops = await page.locator('.domain').evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
-      expect(new Set(tops).size).toBe(2);
+      // Handy: eine Spalte in der Reihenfolge Heute → Demnächst → Für dich → Budget (kein zweites Menü)
+      const tops = await page.locator('.today, .soon, .for-you, .budget').evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+      expect(tops).toEqual([...tops].sort((a, b) => a - b));
+      await expect(page.locator('.domain')).toHaveCount(0);
       const add = page.getByRole('button', { name: 'Hinzufügen' }).first();
       const box = await add.boundingBox();
       expect(box!.width).toBeGreaterThanOrEqual(44);
@@ -143,8 +151,7 @@ test('a real account without data gets calm empty states, no demo data, no sugge
   await page.goto('/');
   await expect(page.locator('h1')).toContainText('Mira');
   await expect(page.locator('.today')).toContainText('Heute ist nichts Dringendes offen');
-  await expect(page.locator('.domain.household')).toContainText('Keine Aufgabe heute');
-  await expect(page.locator('.domain.travel')).toContainText('Keine Reise geplant');
+  await expect(page.locator('.soon')).toContainText('keine Reise und keine Frist');
   await expect(page.locator('.for-you')).toHaveCount(0);
   await expect(page.locator('main')).not.toContainText(/Berlin|Sophie|Darf nicht erscheinen|0 Termine/);
   await expect(page.locator('main a[href^="/demo"]')).toHaveCount(0);
@@ -155,15 +162,15 @@ test('a real account without data gets calm empty states, no demo data, no sugge
 test('if one area fails, the rest stays and it can be retried — without technical messages', async ({ page }) => {
   await live(page, 1);
   await page.goto('/');
-  await expect(page.locator('.domain.finance')).toContainText('Gerade nicht verfügbar');
-  await expect(page.locator('.domain.household')).toContainText('Keine Aufgabe heute');
+  await expect(page.locator('.budget')).toContainText('Gerade nicht verfügbar');
+  await expect(page.locator('.soon')).toContainText('keine Reise und keine Frist');
   await expect(page.locator('main')).not.toContainText(/500|undefined|Error/);
   await page.getByRole('button', { name: 'Erneut versuchen' }).click();
-  await expect(page.locator('.domain.finance')).toContainText('850,00 € übrig');
+  await expect(page.locator('.budget')).toContainText('850,00 € übrig');
   await expect(page.locator('.partial-error')).toHaveCount(0);
 });
 
-test('"Für dich" shows a placeholder while its sources load, then the card or nothing — no jump from nowhere', async ({ page }) => {
+test('"Demnächst" shows a placeholder while its sources load, then rows or a calm sentence — no jump from nowhere', async ({ page }) => {
   await live(page);
   let release!: () => void;
   const held = new Promise<void>((resolve) => (release = resolve));
@@ -172,10 +179,11 @@ test('"Für dich" shows a placeholder while its sources load, then the card or n
     await r.fulfill({ json: { summary: { due_today: 0 }, open_tasks: 0, overdue_tasks: 0, today: [], upcoming: [], deadlines: [], shopping: { open_items: 0, preview: [], list_id: null }, open_shopping_items: 0, devices: 0, device_list: [], contracts: 0, contracts_monthly: '0.00', contract_list: [] } });
   });
   await page.goto('/');
-  await expect(page.locator('.for-you__card--skeleton')).toBeVisible();
-  await expect(page.locator('.for-you[aria-busy="true"]')).toHaveCount(1);
+  await expect(page.locator('.soon__card--skeleton')).toBeVisible();
+  await expect(page.locator('.soon[aria-busy="true"]')).toHaveCount(1);
   release();
-  // Nichts Relevantes (keine Frist, keine Reise) → kein Bereich, kein leerer Rahmen.
+  // Nichts Relevantes (keine Frist, keine Reise) → ein ruhiger Satz, kein leerer Rahmen; kein „Für dich“.
+  await expect(page.locator('.soon')).toContainText('keine Reise und keine Frist');
   await expect(page.locator('.for-you')).toHaveCount(0);
 });
 

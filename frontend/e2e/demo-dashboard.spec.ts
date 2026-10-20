@@ -10,9 +10,11 @@ for (const width of [390, 820, 1536]) {
       return route.abort();
     });
     await page.goto('/demo');
-    // Minimal: Begrüßung, die vier Bereiche und Heute — sonst nichts.
+    // Minimal: Begrüßung, Heute, Demnächst, Für dich, Budget — keine Bereichskacheln (die Navigation führt hin).
     await expect(page.getByRole('heading', { name: 'Heute', exact: true })).toBeVisible();
-    await expect(page.locator('.domain')).toHaveCount(4);
+    await expect(page.getByRole('heading', { name: 'Demnächst', exact: true })).toBeVisible();
+    await expect(page.locator('.budget')).toBeVisible();
+    await expect(page.locator('.domain')).toHaveCount(0);
     await expect(page.locator('.tasks, .month, .transactions, .next-trip, main img')).toHaveCount(0);
     // am Handy kurz „Demo“ (neben dem Datum), sonst ausgeschrieben
     if (width < 761) await expect(page.locator('.demo-badge__short')).toBeVisible();

@@ -53,26 +53,23 @@ describe('Dashboard', () => {
     expect(el.querySelector('.skip-link')).toBeTruthy();
     expect(el.querySelector('.preview-note').textContent).toContain('Beispieldaten');
   });
-  it('fetches finance data for the preview too, so the tile matches the actual demo/live numbers', () => {
+  it('fetches finance data for the preview too, so the budget shows the actual demo/live number', () => {
     const f = TestBed.createComponent(Dashboard);
     f.detectChanges();
     const request = TestBed.inject(HttpTestingController).expectOne((req) => req.url.includes('/finanzen/private/summary/'));
-    request.flush({ available: '250.00', budget: '3000.00', has_data: true });
+    request.flush({ available: '250.00', total: '3000.00', budget: '3000.00', expenses: '2750.00', has_data: true });
     f.detectChanges();
-    expect(f.nativeElement.textContent).toContain('250,00 € übrig');
-    // Haushalt kommt über HAUSHALT_DATA_PROVIDER (der Stub oben) — tagesbezogen: heute fällig + überfällig,
-    // nicht die Gesamtzahl offener Aufgaben (10).
-    const household = f.nativeElement.querySelector('.domain.household').textContent;
-    expect(household).toContain('3 Aufgaben heute');
-    expect(household).toContain('1 überfällig');
-    expect(household).not.toContain('10');
+    const budget = f.nativeElement.querySelector('.budget').textContent;
+    expect(budget).toContain('250,00 € übrig');
+    expect(budget).toContain('von 3.000,00 €');
   });
-  it('answers „Was muss ich heute tun?“ first: Today before the four compact areas, no static image or connection blocks', () => {
+  it('is not a second menu: today first, then Demnächst/Für dich/Budget — no area tiles, no static image', () => {
     const f = TestBed.createComponent(Dashboard);
     f.detectChanges();
     const el = f.nativeElement as HTMLElement;
-    expect(el.querySelectorAll('.domain').length).toBe(4);
-    expect(el.querySelector('.today')!.compareDocumentPosition(el.querySelector('.domains')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(el.querySelectorAll('.domain, .domains').length).toBe(0);
+    expect(el.querySelector('.today')!.compareDocumentPosition(el.querySelector('.soon')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(el.querySelector('.soon')!.compareDocumentPosition(el.querySelector('.budget')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(el.querySelector('img, .connected, .suggestion')).toBeNull();
   });
   it('uses the actual upcoming trip and skips completed or cancelled trips', () => {
@@ -85,10 +82,12 @@ describe('Dashboard', () => {
     ]);
     f.detectChanges();
     expect(f.componentInstance.nextTrip()?.title).toBe('Wien entdecken');
-    // Die Startseite zeigt nur den Stand im Band; Details stehen in Reisen.
-    const travel = f.nativeElement.querySelector('.domain.travel').textContent;
+    // „Demnächst“ zeigt die nächste Reise mit Stand der Vorbereitung; Details stehen in Reisen.
+    const travel = f.nativeElement.querySelector('.soon .travel').textContent;
     expect(travel).toContain('Wien');
     expect(travel).toMatch(/in \d+ Tagen/);
+    expect(travel).toContain('1 Aufgabe offen');
+    expect(travel).toContain('2 / 4 gepackt');
   });
   it('offers the shared dashboard search', () => {
     const f = TestBed.createComponent(Dashboard);
@@ -135,12 +134,14 @@ describe('Dashboard', () => {
       expect(f.nativeElement.querySelector('.quick__list')).toBeTruthy();
       http.expectOne(req => req.url.includes('/reisen/trips/')).flush([]);
       f.detectChanges();
-      expect(f.nativeElement.querySelector('.domain.travel').textContent).toContain('Keine Reise geplant');
+      expect(f.nativeElement.querySelector('.soon').textContent).toContain('keine Reise und keine Frist');
       expect(f.nativeElement.querySelector('.for-you')).toBeNull();
       expect(f.nativeElement.textContent).not.toContain('Berlin Wochenende');
     });
 
-    it('fills „Heute“ from every area in one list — overdue first, then by time', () => {
+    it('evening: overdue stays on top, the stage shows the remaining untimed task, past appointments move to the end as „vorbei“', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 9, 2, 18, 0));
       const f = TestBed.createComponent(Dashboard);
       f.detectChanges();
       const http = TestBed.inject(HttpTestingController);
@@ -168,62 +169,96 @@ describe('Dashboard', () => {
 
       const rows = Array.from(f.nativeElement.querySelectorAll('.today-row strong') as NodeListOf<HTMLElement>).map((r) => r.textContent);
       expect(rows).toEqual([
-        'Müll rausbringen', 'Zug nach Wien', 'Zahnarzt', 'Blumen gießen',
+        'Müll rausbringen', 'Blumen gießen', 'Zug nach Wien', 'Zahnarzt',
       ]);
-      expect(f.nativeElement.textContent).toContain('Haushalt · überfällig');
+      expect(f.nativeElement.querySelector('.today-list--late').textContent).toContain('Müll rausbringen');
+      expect(f.nativeElement.querySelector('.today-row--lead').textContent).toContain('Blumen gießen');
+      expect(f.nativeElement.querySelector('#today-list').textContent).toContain('vorbei');
+      // Überfällig sagt die Gruppe (und der Screenreader-Text der Zeile); der Hinweis nennt den Bereich, ohne Doppelung.
+      expect(f.nativeElement.querySelector('.plan__group--late').textContent).toContain('Überfällig');
+      expect(f.nativeElement.querySelector('.today-list--late').textContent).toContain('überfällig · Haushalt');
+      expect(f.nativeElement.querySelector('.today-list--late').textContent).not.toContain('Haushalt · Haushalt');
       // Spätere Fristen gehören nicht in „Heute“.
       expect(f.nativeElement.querySelector('.today').textContent).not.toContain('Kündigen bis: Strom');
+      vi.useRealTimers();
     });
 
-    it('keeps the start page minimal: greeting, the four areas and today — nothing else', () => {
+    it('highlights the next future appointment ahead of overdue tasks, without duplicating or hiding them', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 9, 2, 10, 0));
+      try {
+        const f = TestBed.createComponent(Dashboard);
+        f.componentInstance.organisationToday.set({ date: '2026-10-02', timezone: 'Europe/Berlin', event_count: 2, open_task_count: 1, overdue_count: 1,
+          items: [
+            { kind: 'task', id: 1, title: 'Überfällig', at: '2026-10-01T08:00:00', overdue: true },
+            { kind: 'event', id: 2, title: 'Vorbei', at: '2026-10-02T09:00:00', overdue: false },
+            { kind: 'event', id: 3, title: 'Arzt', at: '2026-10-02T11:00:00', overdue: false },
+          ] });
+        expect(f.componentInstance.lead?.title).toBe('Arzt');
+        expect(f.componentInstance.overdue.map(r => r.title)).toEqual(['Überfällig']);
+        expect(f.componentInstance.rest.map(r => r.title)).toEqual(['Vorbei']);
+      } finally { vi.useRealTimers(); }
+    });
+
+    it('when everything with a time is behind you, the stage says so honestly instead of showing a past appointment', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 9, 2, 21, 0));
+      try {
+        const f = TestBed.createComponent(Dashboard);
+        f.componentInstance.organisationToday.set({ date: '2026-10-02', timezone: 'Europe/Berlin', event_count: 1, open_task_count: 0, overdue_count: 0,
+          items: [{ kind: 'event', id: 2, title: 'Badminton', at: '2026-10-02T19:00:00', overdue: false }] });
+        f.componentInstance.todayLoading.set(false);
+        f.detectChanges();
+        expect(f.componentInstance.lead).toBeNull();
+        expect(f.nativeElement.querySelector('.today').textContent).toContain('Für heute ist nichts mehr geplant');
+        expect(f.nativeElement.querySelector('#today-list').textContent).toContain('vorbei');
+      } finally { vi.useRealTimers(); }
+    });
+
+    it('the line under the greeting counts what is still open today and what is overdue', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 9, 2, 10, 0));
+      try {
+        const f = TestBed.createComponent(Dashboard);
+        const c = f.componentInstance;
+        c.todayLoading.set(false);
+        c.organisationToday.set({ date: '2026-10-02', timezone: 'Europe/Berlin', event_count: 2, open_task_count: 2, overdue_count: 1, items: [
+          { kind: 'task', id: 1, title: 'Steuer', at: '2026-09-30T08:00:00', overdue: true },
+          { kind: 'event', id: 2, title: 'Vorbei', at: '2026-10-02T09:00:00', overdue: false },
+          { kind: 'event', id: 3, title: 'Arzt', at: '2026-10-02T11:00:00', overdue: false },
+        ] });
+        expect(c.dayLine).toContain('1 Punkt heute, 1 überfällig');
+        expect(c.later).toEqual([]);
+        expect(c.past.map((r) => r.title)).toEqual(['Vorbei']);
+      } finally { vi.useRealTimers(); }
+    });
+
+    it('a new account sees three first steps instead of empty boxes; each ticks off with real data, all done → gone', () => {
+      const f = TestBed.createComponent(Dashboard);
+      f.detectChanges();
+      const http = TestBed.inject(HttpTestingController);
+      http.expectOne((req) => req.url.includes('/finanzen/private/summary/')).flush({ available: null, total: null, budget: null, expenses: '0.00', has_data: false });
+      http.expectOne((req) => req.url.endsWith('/api/v1/today/')).flush(overview());
+      http.expectOne((req) => req.url.includes('/reisen/trips/')).flush([]);
+      f.detectChanges();
+      const steps = f.nativeElement.querySelector('.steps');
+      expect(steps.textContent).toContain('0 von 3 erledigt');
+      expect(steps.querySelectorAll('li').length).toBe(3);
+      f.componentInstance.finance.set({ available: '100.00', total: '500.00', budget: '500.00', expenses: '400.00', has_data: true } as never);
+      f.componentInstance.trips.set([{ id: 1 } as never]);
+      f.componentInstance.organisationToday.set({ date: '2026-10-02', timezone: 'Europe/Berlin', event_count: 1, open_task_count: 0, overdue_count: 0, items: [] });
+      f.detectChanges();
+      expect(f.nativeElement.querySelector('.steps')).toBeNull();
+    });
+    it('keeps the start page minimal: greeting, today, Demnächst, Für dich and Budget — no tiles, no extra lists', () => {
       const f = TestBed.createComponent(Dashboard);
       f.detectChanges();
       const el = f.nativeElement as HTMLElement;
-      expect(el.querySelectorAll('.domain').length).toBe(4);
+      expect(el.querySelectorAll('.domain').length).toBe(0);
       expect(el.querySelector('.today')).toBeTruthy();
+      expect(el.querySelector('.soon')).toBeTruthy();
+      expect(el.querySelector('.budget')).toBeTruthy();
       expect(el.querySelector('.tasks, .month, .transactions, .next-trip, .suggestions, img')).toBeNull();
-    });
-
-    it('with two or more areas chosen during onboarding, those tiles move first and are visibly marked — not just reordered', () => {
-      const f = TestBed.createComponent(Dashboard);
-      f.detectChanges();
-      const http = TestBed.inject(HttpTestingController);
-      http.expectOne((req) => req.url.includes('/onboarding/profile/')).flush({
-        needs_onboarding: false,
-        completed: true,
-        usage: 'personal',
-        domains: ['reisen', 'finanzen'],
-      });
-      f.detectChanges();
-
-      // Reihenfolge folgt der Auswahlreihenfolge im Onboarding (['reisen', 'finanzen']), nicht der
-      // Standardreihenfolge der Kacheln (Finanzen/Haushalt/Organisation/Reisen).
-      const tiles = Array.from(f.nativeElement.querySelectorAll('.domain h2')) as HTMLElement[];
-      expect(tiles.slice(0, 2).map((t) => t.textContent)).toEqual([
-        expect.stringContaining('Reisen'),
-        expect.stringContaining('Finanzen'),
-      ]);
-      expect(tiles[0].textContent).toContain('für dich ausgewählt');
-      expect(tiles[1].textContent).toContain('für dich ausgewählt');
-      expect(tiles[2].textContent).not.toContain('für dich ausgewählt');
-      expect(f.nativeElement.querySelectorAll('.domain--highlighted').length).toBe(2);
-    });
-
-    it('with only one area ever chosen, the dashboard keeps the default order — onboarding already redirected there directly', () => {
-      const f = TestBed.createComponent(Dashboard);
-      f.detectChanges();
-      const http = TestBed.inject(HttpTestingController);
-      http.expectOne((req) => req.url.includes('/onboarding/profile/')).flush({
-        needs_onboarding: false,
-        completed: true,
-        usage: 'personal',
-        domains: ['reisen'],
-      });
-      f.detectChanges();
-
-      expect(f.nativeElement.querySelectorAll('.domain--highlighted').length).toBe(0);
-      const tiles = Array.from(f.nativeElement.querySelectorAll('.domain h2')) as HTMLElement[];
-      expect(tiles[0].textContent).toContain('Finanzen');
     });
   });
 });

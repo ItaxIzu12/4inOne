@@ -32,7 +32,7 @@ _MONATSNAMEN = [
     'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
 ]
 
-# Kompass-Markenfarbe (DESIGN_SYSTEM.md Version 3, --color-pine) — das PDF
+# Alte Markenfarbe (DESIGN_SYSTEM.md Version 3, --color-pine) — das PDF
 # muss laut Auftrag nicht pixelgenau dem App-Design entsprechen, ein
 # wiedererkennbarer Farbakzent in Überschriften/Tabellenköpfen kostet aber
 # nichts zusätzlich und ordnet das Dokument optisch der App zu.
@@ -122,7 +122,7 @@ def build_csv(household: Household, period: Period) -> str:
     buffer = io.StringIO()
     writer = csv.writer(buffer, delimiter=';')
 
-    writer.writerow(['Kompass — Finanzbericht', household.name, period.label])
+    writer.writerow(['4inOne — Finanzbericht', household.name, period.label])
     writer.writerow([])
     writer.writerow(['Datum', 'Beschreibung', 'Kategorie', 'Betrag (€)'])
     gesamt = Decimal('0')
@@ -182,7 +182,7 @@ def build_pdf(household: Household, period: Period) -> bytes:
     doc = SimpleDocTemplate(
         buffer, pagesize=A4,
         leftMargin=20 * mm, rightMargin=20 * mm, topMargin=18 * mm, bottomMargin=18 * mm,
-        title=f'Kompass-Finanzbericht {period.label}',
+        title=f'4inOne-Finanzbericht {period.label}',
     )
 
     def table(rows, col_widths, header=True):
@@ -204,7 +204,7 @@ def build_pdf(household: Household, period: Period) -> bytes:
         return t
 
     elements = [
-        Paragraph('Kompass — Finanzbericht', title_style),
+        Paragraph('4inOne — Finanzbericht', title_style),
         Paragraph(f'{household.name} · {period.label}', meta_style),
         Paragraph(
             f'Erstellt am {timezone.localdate().strftime("%d.%m.%Y")}. Einkommen, feste Abzüge und Puffer basieren '

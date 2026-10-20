@@ -1,13 +1,19 @@
 .legal-page {
   max-width: 720px;
   margin: 0 auto;
-  padding: var(--space-56) var(--space-24) var(--space-80);
+  /* Seitenränder und Abstand nach unten setzt der Rahmen (shared/public-shell) */
+  padding: var(--space-24) 0 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-24);
 }
 
 .legal-page h1 {
+  margin: 0;
+  color: #101d40;
+  /* „Barrierefreiheitserklärung“ ist breiter als ein Handy: lange Wörter deutsch trennen statt seitlich scrollen */
+  hyphens: auto;
+  overflow-wrap: break-word;
   font-size: var(--text-heading);
   line-height: var(--leading-heading);
   letter-spacing: var(--tracking-heading);
@@ -81,6 +87,7 @@
 }
 .legal-page .back-link:hover { color: var(--color-violet-ink); }
 
-@media (max-width: 860px) {
-  .legal-page { padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px) + var(--space-24)); }
+
+@media (max-width: 480px) {
+  .legal-page h1 { font-size: 28px; }
 }

@@ -68,11 +68,12 @@
             aria-haspopup="menu"
             aria-controls="account-menu"
             [attr.aria-expanded]="menuOpen()"
-            aria-label="Kontomenü"
             (click)="toggleMenu()"
           >
             <span class="avatar" aria-hidden="true">{{ initials() }}</span>
-            <span class="profile-text"><b class="profile-name">{{ name() }}</b><small>{{ accountHint() }}</small></span>
+            <span class="profile-text"><b class="profile-name">{{ name() }}</b>&ngsp;<small>{{ accountHint() }}</small></span>
+            <!-- Kein aria-label: der Name kommt aus dem sichtbaren Text (WCAG 2.5.3), „Kontomenü“ auch dann, wenn der Name am Handy ausgeblendet ist -->
+            <span class="sr-only">Kontomenü</span>
             <app-icon class="chevron" name="chevron-down" aria-hidden="true" />
           </button>
           @if (menuOpen()) {

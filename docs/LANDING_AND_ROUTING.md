@@ -63,3 +63,7 @@ entfaltenden 4inOne-Zeichen, Verknüpfen in vier Schritten (`landing/link-steps.
 Schalter, dunkler Abschluss. Routing, Demo-Trennung und echte Ziele (`/registrieren`, `/login`, `/demo`, Rechtliches)
 unverändert. Tests: `e2e/landing.spec.ts` (Reihenfolge der Kernaussagen, keine erfundenen Behauptungen, Reiter,
 Schritte per Regler/Tastatur, Schalter, axe bei 360/820/1440 px).
+
+15.10.2026: Die Teilen-Simulation heißt ausdrücklich „Interaktives Beispiel – verändert keine Daten“. Der Text zur
+Sparziel-Verknüpfung berücksichtigt, ob die Reise mit Ben geteilt ist. „Finanzen privat“ beschreibt konkret die
+Zugriffsrechte anderer Nutzer statt ein absolutes Datenschutzversprechen abzugeben.

@@ -218,5 +218,5 @@ test('landing: sharing switches show what others see — finance cannot be share
   const finance = share.getByRole('switch', { name: 'Finanzen teilen' });
   await expect(finance).toHaveAttribute('aria-disabled', 'true');
   await expect(finance).toHaveAttribute('aria-checked', 'false');
-  await expect(share).toContainText('Deine Finanzen bleiben immer privat.');
+  await expect(share).toContainText('Andere Nutzer erhalten keinen Zugriff auf deinen persönlichen Finanzbereich.');
 });

@@ -1,28 +1,10 @@
 import { inject } from '@angular/core';
 import { AuthService } from './core/auth/auth.service';
-import { DEMO_MODE } from './core/demo-context';
 import { Router, Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
-import { onboardingGuard } from './core/onboarding/onboarding.guard';
-import { FINANZEN_DATA_PROVIDER } from './features/finanzen/finanzen-data-provider';
-import { DemoFinanzenDataProvider } from './features/finanzen/demo-finanzen-data-provider';
-import { RealFinanzenDataProvider } from './features/finanzen/real-finanzen-data-provider';
-import { FinanzenStateService } from './features/finanzen/finanzen-state.service';
-import { PrivateFinanceApi } from './features/finanzen/private-finance-api.service';
-import { DemoPrivateFinanceApi } from './features/finanzen/demo-private-finance-api';
-import { OrganisationApi } from './features/organisation/organisation-api.service';
-import { DemoOrganisationApi } from './features/organisation/demo-organisation-api';
-import { HAUSHALT_DATA_PROVIDER } from './features/haushalt/haushalt-data-provider';
-import { DemoHaushaltDataProvider } from './features/haushalt/demo-haushalt-data-provider';
-import { RealHaushaltDataProvider } from './features/haushalt/real-haushalt-data-provider';
-import { ReisenApi } from './features/reisen/reisen-api.service';
-import { DemoReisenApi } from './features/reisen/demo-reisen-api';
-import { DemoFxService, FxService } from './core/fx/fx.service';
-import { DemoHomeCurrency, HomeCurrency } from './core/fx/home-currency';
-import { ContactsApiService } from './core/contacts/contacts-api.service';
-import { DemoContactsApiService } from './core/contacts/demo-contacts-api.service';
 // Public landing and authenticated dashboard share /; session initialization runs before matching.
-// Demo providers are scoped exclusively to /demo, independently of the current session.
+// Demo (demo.routes.ts) und angemeldete App (app-area.routes.ts) werden erst beim Öffnen geladen — nicht im
+// Startpaket. Demo-Provider gelten nur unter /demo, unabhängig von der Anmeldung.
 export const routes: Routes = [
   {
     path: '',
@@ -30,7 +12,12 @@ export const routes: Routes = [
     canMatch: [() => !inject(AuthService).isAuthenticated()],
     loadComponent: () => import('./features/landing/landing').then((m) => m.Landing),
     title: '4inOne – Dein Alltag. Alles verbunden.',
-    data: { shell: 'bare', hideHeader: true },
+    data: {
+      shell: 'bare',
+      hideHeader: true,
+      description:
+        'Finanzen, Haushalt, Termine und Reisen an einem Ort. Was zusammengehört, verknüpfst du – und entscheidest selbst, was du teilst.',
+    },
   },
   {
     // Compatibility redirects preserve query parameters and fragments from bookmarks.
@@ -57,56 +44,7 @@ export const routes: Routes = [
   {
     path: 'demo',
     title: '4inOne – Demo',
-    providers: [
-      { provide: DEMO_MODE, useValue: true },
-      { provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider },
-      { provide: HAUSHALT_DATA_PROVIDER, useClass: DemoHaushaltDataProvider },
-      { provide: PrivateFinanceApi, useClass: DemoPrivateFinanceApi },
-      { provide: OrganisationApi, useClass: DemoOrganisationApi },
-      { provide: ReisenApi, useClass: DemoReisenApi },
-      { provide: FxService, useClass: DemoFxService },
-      { provide: HomeCurrency, useClass: DemoHomeCurrency },
-      { provide: ContactsApiService, useClass: DemoContactsApiService },
-      FinanzenStateService,
-    ],
-    children: [
-      {
-        path: '',
-        pathMatch: 'full',
-        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
-        data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
-      },
-      {
-        path: 'finanzen',
-        loadComponent: () =>
-          import('./features/finanzen/private-finance').then((m) => m.PrivateFinance),
-        data: { dashboardNav: true, sidebarNav: true },
-      },
-      {
-        path: 'haushalt',
-        loadComponent: () => import('./features/haushalt/haushalt').then((m) => m.Haushalt),
-        data: { dashboardNav: true, sidebarNav: true },
-      },
-      {
-        path: 'organisation',
-        loadComponent: () =>
-          import('./features/organisation/organisation').then((m) => m.Organisation),
-        data: { dashboardNav: true, sidebarNav: true },
-      },
-      {
-        path: 'reisen',
-        loadComponent: () => import('./features/reisen/reisen').then((m) => m.Reisen),
-        data: { dashboardNav: true, sidebarNav: true },
-      },
-      {
-        // Dieselbe Komponente wie die echte Seite, nur mit DemoContactsApiService (siehe oben) statt echtem
-        // Backend-Aufruf — zuvor fehlte diese Route komplett, wodurch "Familie & Freunde" aus der Demo heraus
-        // zur Anmeldung zwang, obwohl der Rest der Demo ohne Login auskommt.
-        path: 'familie',
-        loadComponent: () => import('./features/familie/familie').then((m) => m.Familie),
-        data: { shell: 'bare', sidebarNav: true },
-      },
-    ],
+    loadChildren: () => import('./demo.routes').then((m) => m.DEMO_ROUTES),
   },
   {
     path: 'einladung',
@@ -140,14 +78,17 @@ export const routes: Routes = [
   {
     path: 'email-bestaetigen',
     title: 'E-Mail bestätigen | 4inOne',
-    loadComponent: () => import('./features/email-bestaetigen/email-bestaetigen').then((m) => m.EmailBestaetigen),
+    loadComponent: () =>
+      import('./features/email-bestaetigen/email-bestaetigen').then((m) => m.EmailBestaetigen),
     data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'passwort-zuruecksetzen',
     title: 'Neues Passwort | 4inOne',
     loadComponent: () =>
-      import('./features/passwort-zuruecksetzen/passwort-zuruecksetzen').then((m) => m.PasswortZuruecksetzen),
+      import('./features/passwort-zuruecksetzen/passwort-zuruecksetzen').then(
+        (m) => m.PasswortZuruecksetzen,
+      ),
     data: { shell: 'bare', hideHeader: true },
   },
   {
@@ -176,15 +117,46 @@ export const routes: Routes = [
     data: { shell: 'bare', hideHeader: true },
   },
   {
+    path: 'kontakt',
+    title: 'Kontakt | 4inOne',
+    loadComponent: () => import('./features/kontakt/kontakt').then((m) => m.Kontakt),
+    data: {
+      shell: 'bare',
+      hideHeader: true,
+      description: 'Frage, Fehler oder Idee? Schreib dem Team von 4inOne über das Kontaktformular.',
+    },
+  },
+  {
+    path: 'kontakt/danke',
+    title: 'Danke für deine Nachricht | 4inOne',
+    loadComponent: () => import('./features/kontakt/danke').then((m) => m.KontaktDanke),
+    data: { shell: 'bare', hideHeader: true },
+  },
+  {
     path: 'impressum',
+    title: 'Impressum | 4inOne',
+    data: {
+      shell: 'bare',
+      hideHeader: true,
+      description: 'Impressum von 4inOne: Anbieter, Kontakt und Verantwortliche.',
+    },
     loadComponent: () => import('./features/impressum/impressum').then((m) => m.Impressum),
   },
   {
     path: 'datenschutz',
+    title: 'Datenschutzerklärung | 4inOne',
+    data: {
+      shell: 'bare',
+      hideHeader: true,
+      description:
+        'Wie 4inOne mit deinen Daten umgeht: welche Daten, wofür und welche Rechte du hast.',
+    },
     loadComponent: () => import('./features/datenschutz/datenschutz').then((m) => m.Datenschutz),
   },
   {
     path: 'nutzungsbedingungen',
+    title: 'Nutzungsbedingungen | 4inOne',
+    data: { shell: 'bare', hideHeader: true, description: 'Die Nutzungsbedingungen von 4inOne.' },
     loadComponent: () =>
       import('./features/nutzungsbedingungen/nutzungsbedingungen').then(
         (m) => m.Nutzungsbedingungen,
@@ -192,6 +164,12 @@ export const routes: Routes = [
   },
   {
     path: 'barrierefreiheit',
+    title: 'Barrierefreiheit | 4inOne',
+    data: {
+      shell: 'bare',
+      hideHeader: true,
+      description: 'Erklärung zur Barrierefreiheit von 4inOne und wie du Barrieren melden kannst.',
+    },
     loadComponent: () =>
       import('./features/barrierefreiheit/barrierefreiheit').then((m) => m.Barrierefreiheit),
   },
@@ -200,61 +178,13 @@ export const routes: Routes = [
     title: '4inOne – Dein Überblick',
     canActivate: [authGuard],
     canActivateChild: [authGuard],
-    providers: [
-      { provide: FINANZEN_DATA_PROVIDER, useClass: RealFinanzenDataProvider },
-      { provide: HAUSHALT_DATA_PROVIDER, useClass: RealHaushaltDataProvider },
-      FinanzenStateService,
-    ],
-    children: [
-      {
-        path: '',
-        pathMatch: 'full',
-        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
-        canActivate: [onboardingGuard],
-        data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
-      },
-      {
-        path: 'finanzen',
-        loadComponent: () =>
-          import('./features/finanzen/private-finance').then((m) => m.PrivateFinance),
-        data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
-      },
-      {
-        path: 'haushaltsfinanzen',
-        redirectTo: 'finanzen',
-        pathMatch: 'full',
-      },
-      {
-        path: 'haushalt',
-        loadComponent: () => import('./features/haushalt/haushalt').then((m) => m.Haushalt),
-        data: { dashboardNav: true, sidebarNav: true },
-      },
-      {
-        path: 'onboarding',
-        loadComponent: () =>
-          import('./features/onboarding/onboarding-page').then((m) => m.OnboardingPage),
-        data: { shell: 'bare', hideHeader: true },
-      },
-      {
-        path: 'reisen',
-        loadComponent: () => import('./features/reisen/reisen').then((m) => m.Reisen),
-        data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
-      },
-      {
-        path: 'familie',
-        loadComponent: () => import('./features/familie/familie').then((m) => m.Familie),
-        data: { shell: 'bare', sidebarNav: true },
-      },
-      {
-        path: 'organisation',
-        loadComponent: () =>
-          import('./features/organisation/organisation').then((m) => m.Organisation),
-        data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
-      },
-    ],
+    loadChildren: () => import('./app-area.routes').then((m) => m.APP_AREA_ROUTES),
   },
   {
+    // Unbekannte Adressen: eigene 404-Seite statt stiller Weiterleitung auf die Startseite (Soft-404)
     path: '**',
-    redirectTo: '',
+    title: 'Seite nicht gefunden | 4inOne',
+    loadComponent: () => import('./features/not-found/not-found').then((m) => m.NotFound),
+    data: { shell: 'bare', hideHeader: true, notFound: true },
   },
 ];

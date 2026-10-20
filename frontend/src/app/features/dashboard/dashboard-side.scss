@@ -1,0 +1,263 @@
+// Startseite › rechte Spalte (am Handy darunter): Demnächst, Budget, Für dich — dieselbe ruhige Zeilen-Form wie
+// der Tagesplan — und die ersten Schritte für neue Konten.
+.side__card {
+  margin: 0;
+  padding: var(--space-2);
+  border-radius: var(--card-r);
+  background: #fff;
+  color: var(--text);
+  text-decoration: none;
+}
+// Demnächst
+.soon__card {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+}
+.soon__row {
+  display: grid;
+  grid-template-columns: 50px 30px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: 8px var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  text-decoration: none;
+  transition: background-color 140ms ease-out;
+}
+.soon__empty {
+  padding: var(--space-4);
+  color: var(--muted);
+  font-size: 15px;
+}
+.soon__card--skeleton,
+.for-you__card--skeleton {
+  display: grid;
+  gap: var(--space-2);
+}
+.soon__card--skeleton span,
+.for-you__card--skeleton span {
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--surface-app);
+}
+// Budget: eine Zahl, ein Balken
+.budget__card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  transition: background-color 140ms ease-out;
+}
+.budget__value {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+}
+.budget__value.is-over {
+  color: var(--late);
+}
+.budget__value--quiet {
+  font-size: 17px;
+  font-weight: var(--fw-semibold);
+}
+.budget__bar {
+  display: block;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--finance-soft);
+  overflow: hidden;
+}
+.budget__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--finance-accent);
+}
+.budget__card small {
+  color: var(--muted);
+  font-size: 14px;
+}
+// Für dich: die zwei Einträge als Zeilen, die Aktion als ruhiger Link
+.connection-preview,
+.for-you__card {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+}
+.connection-preview__lead {
+  margin: 0 0 var(--space-2);
+  padding: 0 var(--space-1);
+  color: var(--text);
+  font-size: 15px;
+}
+.connection-object {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: 6px var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-app);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color 140ms ease-out;
+}
+.connection-object > span:nth-child(2) {
+  display: grid;
+}
+.connection-object small {
+  color: var(--muted);
+  font-size: 13px;
+}
+.connection-object strong {
+  font-size: 15px;
+  font-weight: var(--fw-semibold);
+}
+.connection-preview__action {
+  justify-self: start;
+  margin-top: var(--space-1);
+}
+.for-you__copy {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-1);
+}
+.for-you__copy small {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+}
+.for-you__copy strong {
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: var(--fw-semibold);
+}
+.for-you__copy span {
+  color: var(--muted);
+  font-size: 14px;
+}
+.for-you__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 var(--space-1);
+  color: var(--link);
+  font-size: 15px;
+  font-weight: var(--fw-semibold);
+}
+.for-you__action app-icon {
+  width: 16px;
+  height: 16px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .soon__row:hover,
+  .budget__card:hover,
+  .connection-object:hover {
+    background: var(--hover);
+  }
+}
+
+// Erste Schritte (neue Konten): dieselbe Zeilen-Form, abhakbar
+.steps {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  padding: var(--space-2);
+  border-radius: var(--card-r);
+  background: #fff;
+}
+.steps__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3) 0;
+}
+.steps__head h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: var(--fw-semibold);
+}
+.steps__intro {
+  margin: var(--space-1) 0 var(--space-2);
+  padding: 0 var(--space-3);
+  color: var(--muted);
+  font-size: 15px;
+}
+.steps__head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.steps__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.steps__item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: 8px var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  text-decoration: none;
+}
+.steps__check {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px 8px 3px 8px;
+  box-shadow: inset 0 0 0 2px #8592a6;
+}
+.is-done .steps__check {
+  background: var(--finance-accent);
+  box-shadow: none;
+  color: #fff;
+}
+.steps__check app-icon,
+.steps__go app-icon {
+  width: 15px;
+  height: 15px;
+}
+.steps__copy {
+  display: grid;
+}
+.steps__copy strong {
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: var(--fw-semibold);
+}
+.is-done .steps__copy strong {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.steps__copy small {
+  color: var(--muted);
+  font-size: 14px;
+}
+.steps__go {
+  color: var(--muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .steps__item:hover {
+    background: var(--hover);
+  }
+}
+// Demnächst-Hinweise vollständig zeigen (z. B. „in 12 Tagen · 4 Aufgaben offen · 12 / 24 gepackt“)
+.soon__row .item-copy small {
+  white-space: normal;
+}

@@ -65,6 +65,7 @@ export class DemoOrganisationApi {
     this.task(3, 'Geschenk kaufen', 5, 'MEDIUM', 'Familie'),
     this.task(4, 'Arzttermin vereinbaren', 2, 'LOW', ''),
     { ...this.task(5, 'Wochenplanung', 0, 'MEDIUM', ''), recurrence_days: 7, repeat: 'weekly' },
+    this.task(8, 'Badmintonschuhe vergleichen', 3, 'MEDIUM', 'Freizeit'),
     this.task(6, 'Bewerbung abschicken', null, 'HIGH', 'Beruf'),
     { ...this.task(7, 'Handwerker anrufen', -1, 'MEDIUM', ''), status: 'DONE' },
   ];

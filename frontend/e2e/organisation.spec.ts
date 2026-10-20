@@ -159,6 +159,9 @@ test.describe('demo preview', () => {
   });
 
   test('calendar: Heute, Woche and Monat on the same events', async ({ page }) => {
+    // Feste Zeit Mitte des Monats: das Demo-Teammeeting beginnt am Montag dieser Woche — gegen Monatsende lägen
+    // sonst nur noch drei Termine im Monatsraster.
+    await page.clock.setFixedTime(new Date('2026-10-07T08:30:00'));
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/demo/organisation?tab=calendar');
     await page.getByRole('button', { name: 'Tag', exact: true }).click();

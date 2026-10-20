@@ -51,7 +51,7 @@ test('"4inOne entdecken" with exactly one chosen area opens that area\'s demo pa
 
 // Mit mehreren gewählten Bereichen gibt es keine eindeutige Priorität, also geht es zum (echten) Dashboard —
 // das die Auswahl aber nicht verwirft, sondern die gewählten Kacheln vorne/hervorgehoben zeigt (dashboard.ts).
-test('"Mit meinen Daten starten" with two chosen areas lands on the dashboard, which highlights exactly those two', async ({ page }) => {
+test('"Mit meinen Daten starten" with two chosen areas saves them and lands on the start page', async ({ page }) => {
  let completed = false;
  let savedDomains: string[] = [];
  await page.route('**/api/v1/auth/csrf/', r => r.fulfill({ json: { csrfToken: 'test-csrf' } }));
@@ -74,10 +74,9 @@ test('"Mit meinen Daten starten" with two chosen areas lands on the dashboard, w
  await expect(page).toHaveURL('/');
  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
- const highlighted = page.locator('.domain--highlighted h2');
- await expect(highlighted).toHaveCount(2);
- await expect(highlighted.nth(0)).toContainText('Reisen');
- await expect(highlighted.nth(1)).toContainText('Finanzen');
+ // Die Auswahl wird gespeichert; die Startseite selbst ist für alle gleich aufgebaut (Heute zuerst, keine Kacheln).
+ expect(savedDomains).toEqual(['reisen', 'finanzen']);
+ await expect(page.getByRole('heading', { name: 'Heute', exact: true })).toBeVisible();
 });
 test('existing data bypasses onboarding',async({page})=>{
  await page.route('**/api/v1/auth/csrf/',r=>r.fulfill({json:{csrfToken:'test'}}));

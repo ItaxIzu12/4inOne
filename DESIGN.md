@@ -46,9 +46,20 @@ Systematisch im Grundgerüst, flexibel im Inhalt. Keine Gradients, Glas, Glow, D
 - Auswahllisten in Dialogen (z. B. Budgetjahr): Zeilen mit Haarlinien statt Kartenwand, Icons statt Textzeichen, Auswahl = Fläche + Haken + fett.
 - Menüs blenden ruhig ein (150 ms, Deckkraft + 4 px). Keine zusätzliche Animations-/UI-Bibliothek.
 - Laden: Skelette; Fehler bereichsbezogen mit „Erneut versuchen“; Leerzustände ruhig mit einer Aktion.
-- App-Startseite (Neubau 15.10.2026, Aufbau „Als Nächstes + Reihe“, Welt der Landingpage): Begrüßung 30–40 px (Handy 24) mit Tagesstand („5 Punkte heute, 1 überfällig“), „Hinzufügen“ als Pillen-Hauptaktion; „Heute“ links: erste Zeile groß in der hellen Bereichsfläche (Radius 24 mit 8-px-Ecke, Uhrzeit 30–40 px, „in 40 Min.“, „Öffnen“), darunter ruhige Zeilen mit kleinem Zeichen-Feld in Bereichsfarbe; „Für dich“ rechts als weiche Karte; darunter die vier Bereiche als Reihe (Handy 2 × 2) mit Zeichen-Feld (`#76cda4` · `#efa1c2` · `#ffd175` · `#99c5ff`) und Stand. Einblendung nur per Bewegung (12 px), nie per Transparenz.
+- Öffentliche Unterseiten (Rechtliches, Kontakt, Danke, 404): gemeinsamer Rahmen `shared/public-shell` wie die Startseite — Marke + „Anmelden“/„Konto erstellen“ oben, Pflicht-Links unten (15 px, Tippziel ≥ 44 px), keine App-Navigation. Formularfelder 48 px / 17 px, Absenden als Pill 52 px. Sichtbarer Text bleibt Teil des zugänglichen Namens (kein ersetzendes `aria-label`).
+- App-Startseite (17.10.2026, „Tagesplan“ — ruhig, erklärbar, handyzuerst): keine Bereichskacheln, keine dunkle Bühne, kein bunter Satz, kein Zeichen vor der Begrüßung und keine Tagesbewegung. Begrüßung (26–34 px, Handy 24) und Tageszeile („4 Punkte heute, 1 überfällig“), „Hinzufügen“ rechts. **Heute** als weiße Karte (Radius 20 mit 8-px-Ecke) in Gruppen Überfällig (rote Schrift + rotes Symbol auf `#fcebea`) · Als Nächstes (dezent `#eef4fd`, Uhrzeit und „in 8 Std.“ in `--brand-primary`) · Später · Ohne Uhrzeit (Zeitspalte leer) · Vorbei. **Eine Zeilen-Form für alles**: Zeit · Bereichs-Symbol 30 px (dasselbe Icon und dieselbe Farbe wie in der Navigation, `--*-accent` auf `--*-soft`, Kontrast ≥ 5,3:1) · Titel/Hinweis (Bereich als erstes Wort, auch am Handy: „Organisation · Praxis Dr. Weber“; keine Doppelungen) · Pfeil. Rechts bzw. darunter im selben Stil: Demnächst (Datum · Reise/Frist), Budget (eine Zahl + 6-px-Balken), Für dich (erklärender Satz + zwei Eintrag-Zeilen mit Bereich · Art + Textlink). Neue Konten: „Erste Schritte“ mit einem Satz, was 4inOne ist, und 3 abhakbaren Zeilen.
 - Referenz-Screen: Startseite (`docs/DASHBOARD_V1.md`). Migriert: alle Bereiche (Startseite, Finanzen, Haushalt, Organisation, Reisen).
 
 Reise-Erstellung (11.10.2026): bestehende Kalenderkomponente mit gesperrten Tagen vor heute für den Beginn und vor dem Beginn für das Ende. Eintägige Reisen möglich; vergangene Bestandsreisen bleiben bearbeitbar. Keine neuen Layout-/Farb-Tokens.
 
 Meine Reisen (15.10.2026): Karten nur für „Jetzt unterwegs“ und „Als Nächstes“; weitere bevorstehende Reisen als kompakte Zeilen „Danach“, „Vergangen“ zeigt 3 Zeilen + „Alle N anzeigen“, vergangene ohne To-dos, „Vorbei“ grau. Keine neuen Tokens.
+
+15.10.2026: Mobile Tagesbühne kompakter (Uhrzeit 30 px, überfälliges Datum 22 px, Titel 21 px); nächste anstehende
+Uhrzeit vor überfälligem Eintrag. Eine Demo-Verknüpfung im vorhandenen „Für dich“, ausdrücklich lokale Vorschau.
+Teilen-Beispiel auf Landingpage kennt Sichtbarkeitszustand; keine neuen Farben/Icons/Navigation.
+
+Handyansicht: Die zusätzliche dekorative Tagesachse entfällt; Uhrzeiten bleiben in den bedienbaren Zeilen. Demo-Dialogaktionen und Objektlinks besitzen mindestens 44 px Höhe und sichtbaren Tastaturfokus.
+
+### Helle Dashboard-Übersicht (15.10.2026)
+Ersetzt die dunkle Tagesbühne vollständig: weiße, dezent umrandete Tagesliste mit gleich großen Zeilen und ruhiger Markierung „Im Fokus“. Keine große Datumszahl oder Tagesachse. Priorisierung bleibt erhalten. Demo-Zusammenhang zeigt Sparziel und Aufgabe als zwei beschriftete, direkt erreichbare Objekte mit verbindender Erklärung und separater Aktion. Bestehende Navigation, Icons und Bereichsfarben bleiben bestehen. Diese Entscheidung ersetzt die vorherige Tagesbühnen-Gestaltung.
+Bereichsübersicht: kompaktes Viererband vor Heute (mobil 2 × 2), Kontextkarte daneben.

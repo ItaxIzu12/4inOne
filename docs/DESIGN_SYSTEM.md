@@ -116,6 +116,56 @@ Abstand — nie nur über Farbe.
   „Verknüpft“; ohne JavaScript oder mit reduzierter Bewegung ist alles sofort sichtbar. Bereiche als echte Reiter
   (Pfeiltasten, Pos1/Ende), das Bild folgt.
 
+- **Öffentliche Unterseiten (20.10.2026):** Impressum, Datenschutz, Nutzungsbedingungen, Barrierefreiheit, Kontakt,
+  Danke und 404 stehen im gemeinsamen Rahmen `shared/public-shell` im Stil der Startseite: Kopfzeile 72 px mit Marke
+  (22 px, Handy 20) und „Anmelden“ / „Konto erstellen“ (Pill, `--brand-primary`), Inhalt max. 1120 px, Fußzeile mit
+  Kontakt · Impressum · Datenschutz · Nutzungsbedingungen · Barrierefreiheit (15 px, je ≥ 44 px Tippziel) und
+  Copyright. Keine App-Navigation mehr auf diesen Seiten (führte Besucher nur zur Anmeldung). Lange Überschriften
+  trennen (`hyphens: auto`), am Handy 28 px — „Barrierefreiheitserklärung“ erzeugte sonst seitliches Scrollen.
+  Formular (Kontakt): Felder 48 px, Schrift 17 px (kein iOS-Zoom), Rand 1,5 px, Fokus mit 3-px-Ring in
+  `--brand-primary`, Fehler als Text unter dem Feld, Zeichenzähler, Absenden als Pill 52 px (Handy volle Breite).
+  Teilen-Bild `public/og-image.png` (1200 × 630, Marke, Satz, vier Bereichs-Pills in den Logo-Feldfarben) und
+  `apple-touch-icon.png` (180 px) / `icon-512.png` aus dem Logo-Zeichen — gerendert, kein Screenshot.
+- **Zugängliche Namen (20.10.2026):** Knöpfe und Links mit sichtbarem Text bekommen kein `aria-label` mehr, das den
+  Text ersetzt (WCAG 2.5.3, axe 4.14 `label-content-name-mismatch`): Zusätze wie „Kontomenü“ oder „– erledigt“ stehen
+  als `sr-only`-Text im Element.
+- **Tagesplan: Erkennbarkeit für neue Nutzer (17.10.2026):** Die 10-px-Farbpunkte (Logo-Farben,
+  nur 1,7–2,0:1 Kontrast, Organisation gelb statt violett wie in der Navigation) sind ersetzt durch Bereichs-Symbole
+  30 px: dasselbe Icon und dieselbe Farbe wie in der Navigation (`--finance/household/organization/travel-accent` auf
+  `-soft`, 5,3–6,6:1); Überfälliges rot (`--late` auf `#fcebea`). Der Bereich steht als erstes Wort im Hinweis (auch
+  am Handy; die eigene Bereichsspalte entfällt), Doppelungen sind weg („Heute“ in der Zeitspalte, „Überfällig“ im
+  Hinweis — für Screenreader bleibt „überfällig“ als `sr-only`). „Für dich“ erklärt in einem Satz, was eine
+  Verknüpfung bringt; „Erste Schritte“ sagt in einem Satz, was 4inOne ist. Zeichen vor der Begrüßung und das tägliche
+  Entfalten (localStorage `4inone.dashboard.seen`) sind entfernt — die Startseite hat keine eigene Bewegung mehr außer
+  Drücken `scale(0.995)` und Hover bei Maus. Der folgende Eintrag gilt sonst weiter.
+- **App-Startseite „Tagesplan“ (17.10.2026, Grundlage):** Nach Nutzerwunsch „ruhig und modern, klar was wann
+  steht, ohne zu überfordern“ ersetzt der Tagesplan Tagesbühne, Tagessatz mit Feldern, Doppelrahmen und
+  Tageszeitleiste (alle entfernt). Aufbau und Werte siehe DESIGN.md › App-Startseite. Prinzipien: eine Zeilen-Form
+  für alles (lernt man einmal); Gruppenüberschriften 13 px/600 in `--text-secondary` statt Farbflächen; Farbe nur als
+  10-px-Zeichenfeld und für zwei Zustände (Überfällig rot als Schrift, Als Nächstes hellblau); Bereich auch als Wort;
+  nichts doppelt; Bewegung nur: Zeichen entfaltet sich einmal pro Tag (localStorage `4inone.dashboard.seen`, nie bei
+  reduzierter Bewegung), Drücken `scale(0.995)`, Hover nur bei Maus. Styles: dashboard.scss (Begrüßung, Tagesplan),
+  dashboard-side.scss (Demnächst, Budget, Für dich, Erste Schritte), dashboard-parts.scss — je unter 12 kB.
+  Die folgenden Einträge vom 17.10. (Bühne, Satz) sind damit überholt.
+- **App-Startseite (17.10.2026, „kein zweites Menü“, ersetzt Kacheln und Zeitleiste):** Nach Nutzer-Bewertung
+  (6/10, „Standard-Dashboard“) und auf Wunsch handyzuerst neu geordnet. Skills: design-taste-frontend/copywriting
+  (wie Landingpage), impeccable, emil-design-eng (Bewegung: Drücken `scale(0.97–0.99)`, Hover nur bei Maus,
+  keine Animation über Transparenz), Prüfung mit playwright-cli (feste Uhr 08:30 und 21:10).
+  - Entfernt: die vier Bereichskacheln (doppelt zur Navigation, am Handy zur unteren Leiste; zwei davon doppelt zur
+    Liste) samt Hervorhebung der Onboarding-Auswahl; die Tageszeitleiste (vom Nutzer als überflüssig bewertet).
+  - Heute: Überfälliges (`.today-list--late`, Fläche `#fdeeed`, Uhrzeit/Text `#b3261e`) → Tagesbühne mit „Als
+    Nächstes“ (nächster kommender Termin; sonst erste Aufgabe ohne Uhrzeit „Heute noch“; sonst Abend-Zustand mit dem
+    Zeichen) → Rest (`#today-list`, kommende Termine, ohne Uhrzeit, Vergangenes mit „vorbei“ und ruhiger Schrift).
+    Nichts doppelt (Vergleich über Bereich/Uhrzeit/Titel). Die Uhr läuft jede Minute mit.
+  - Demnächst (`.soon`): nächste Reise („in 12 Tagen · 4 Aufgaben offen · 12 / 24 gepackt“) und nächste Frist im
+    Haushalt (≤ 30 Tage), je Zeile mit Zeichen-Feld und Link; leer: ein ruhiger Satz; lädt: Skelett.
+  - Für dich: nur Verknüpfungs-Vorschläge (live vom Server, Demo: Sparziel „Badmintonschuhe“ ↔ Aufgabe); Aktion als
+    Pille in der hellen Bereichsfläche, damit „Hinzufügen“ die einzige kräftige Aktion bleibt.
+  - Budget (`.budget`): „702,29 € übrig“ (28 px), Balken (ausgegeben/geplant vom Monatsbudget), „von 3.000,00 € im
+    Oktober“; ohne Budget „Starte mit deinem Monatsbudget“; Fehler „Gerade nicht verfügbar“ + gemeinsames
+    „Erneut versuchen“. Ganze Karte führt zu Finanzen.
+  - Abschnittsköpfe einheitlich 18 px/700, 44 px hoch. Styles: dashboard.scss (Gerüst, Listen, Demnächst, Budget),
+    dashboard-stage.scss (Bühne, Für dich), dashboard-parts.scss (Menü, Hinweise, Suche) — je unter 12 kB.
 - **App-Startseite (15.10.2026, kompletter Neubau):** Grundlage PRODUCT.md (neu): kurzer Blick am Morgen, oft am
   Handy; erste Frage „Was muss ich heute tun?“; Gemeinsames nur, wenn wirklich geteilt. Aufbau per impeccable
   (Operate, Konzept-Wurf, gewählt „Als Nächstes + Reihe“) in der Welt der Landingpage (Instrument Sans, Tinte
@@ -560,3 +610,17 @@ Die Finanz-Übersicht verwendet kompakte Kennzahlenkarten für Monatsrest, Ausga
 Reise-Erstellung (11.10.2026): bestehende Kalenderkomponente mit gesperrten Tagen vor heute für den Beginn und vor dem Beginn für das Ende. Eintägige Reisen möglich; vergangene Bestandsreisen bleiben bearbeitbar. Keine neuen Layout-/Farb-Tokens.
 
 Meine Reisen bei vielen Reisen (15.10.2026): Große Karten (`.trip`) nur noch für „Jetzt unterwegs“ und „Als Nächstes“ (eine Karte, 300–420 px). Alle weiteren bevorstehenden Reisen stehen daneben unter „Danach“ als kompakte Zeilen (`ul.rows` / `button.row`: Titel + Ziel · Zeitraum · Status, min. 60 px, Haarlinien in einer Karte); unter 1100 px untereinander, am Handy (≤ 760 px) zweizeilig. „Vergangen“ zeigt die letzten 3 als Zeilen, der Rest hinter „Alle N vergangenen Reisen anzeigen“ (`aria-expanded`). Vergangene Reisen ohne offene Aufgaben/Packstand, „Vorbei“ in `--text-secondary`; Abgesagt bleibt eingeklappt und nutzt ebenfalls Zeilen. Keine neuen Tokens, Bereichsfarbe und Symbole unverändert.
+
+### Dashboard-Feinschliff und Teilen-Beispiel (15.10.2026)
+Bestehende Tagesbühne und Farbwelt beibehalten; mobile Innenabstände 16 px, führende Uhrzeit 30 px, vergangenes Datum
+22 px, Titel 21 px. Nächster noch anstehender Termin vor überfälligen Aufgaben hervorgehoben, ohne diese auszublenden.
+Die einzelne „Für dich“-Karte demonstriert in der öffentlichen Demo einen begründeten Zusammenhang; der Dialog
+kennzeichnet seinen lokalen, beim Reload zurückgesetzten Zustand. Live-Daten unverändert. Landing-Teilen-Erklärung
+mit explizitem Simulationshinweis und voneinander abhängigen Texten. Keine neuen Tokens oder Navigationsbereiche.
+
+Handyansicht: Die zusätzliche dekorative Tagesachse entfällt; Uhrzeiten bleiben in den bedienbaren Zeilen. Demo-Dialogaktionen und Objektlinks besitzen mindestens 44 px Höhe und sichtbaren Tastaturfokus.
+
+### Helle Dashboard-Übersicht (15.10.2026)
+Ersetzt die dunkle Tagesbühne vollständig: weiße, dezent umrandete Tagesliste mit gleich großen Zeilen und ruhiger Markierung „Im Fokus“. Keine große Datumszahl oder Tagesachse. Priorisierung bleibt erhalten. Demo-Zusammenhang zeigt Sparziel und Aufgabe als zwei beschriftete, direkt erreichbare Objekte mit verbindender Erklärung und separater Aktion. Bestehende Navigation, Icons und Bereichsfarben bleiben bestehen. Diese Entscheidung ersetzt die vorherige Tagesbühnen-Gestaltung.
+Die vier unveränderten Bereichskarten bilden nun ein kompaktes Band unter der Begrüßung (Desktop vier Spalten,
+Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben die Bereiche direkt erreichbar.

@@ -229,8 +229,8 @@ for (const width of [390, 1440]) {
     ).toEqual([]);
     await page.screenshot({ path: `test-results/finance-${width}.png`, fullPage: true });
     await page.goto('/');
-    await expect(page.locator('.domain.finance')).toContainText('2.470,00 € übrig');
-    await page.locator('.domain.finance').click();
+    await expect(page.locator('.budget')).toContainText('2.470,00 € übrig');
+    await page.locator('.budget__card').click();
     await page.getByRole('button', { name: /Supermarkt/ }).click();
     await page.getByRole('button', { name: 'Eintrag löschen', exact: true }).click();
     await page.getByRole('button', { name: 'Ja, löschen', exact: true }).click();

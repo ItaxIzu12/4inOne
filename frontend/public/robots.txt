@@ -1,0 +1,9 @@
+# 4inOne — öffentliche Seiten dürfen in Suchmaschinen, persönliche Bereiche und Links mit Token nicht.
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /einladung
+Disallow: /passwort-zuruecksetzen
+Disallow: /email-bestaetigen
+Disallow: /einstellungen
+Disallow: /kontakt/danke

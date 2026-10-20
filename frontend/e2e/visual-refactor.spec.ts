@@ -8,7 +8,7 @@ for (const width of [390, 820, 1440]) {
     for (const path of ['/demo', '/demo/finanzen', '/demo/haushalt', '/demo/organisation', '/demo/reisen']) {
       await page.goto(path);
       await expect(page.locator('h1').first()).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Kontomenü', exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: /Kontomenü$/ })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       );
@@ -17,7 +17,7 @@ for (const width of [390, 820, 1440]) {
       expect(
         (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations,
       ).toEqual([]);
-      await page.getByRole('button', { name: 'Kontomenü', exact: true }).click();
+      await page.getByRole('button', { name: /Kontomenü$/ }).click();
       await expect(page.getByRole('menu', { name: 'Konto', exact: true })).toBeVisible();
       await page.keyboard.press('Escape');
       await expect(page.getByRole('menu', { name: 'Konto', exact: true })).not.toBeVisible();

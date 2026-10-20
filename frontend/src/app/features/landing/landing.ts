@@ -42,8 +42,9 @@ interface Share {
   standalone: true,
   imports: [RouterLink, Brand, AppIcon, LinkSteps],
   templateUrl: './landing.html',
-  // Grundgerüst (Kopf, Hero, Abschluss, Bewegung, Breiten) · Abschnitte 2–4 — getrennt, damit jede Datei schlank bleibt
-  styleUrls: ['./landing.scss', './landing-sections.scss'],
+  // Abschnitte 2–4 · Grundgerüst (Kopf, Hero, Abschluss, Bewegung, Breiten) — getrennt, damit jede Datei schlank bleibt.
+  // Reihenfolge wichtig: landing.scss zuletzt, sonst überschreiben die Grundregeln der Abschnitte die Handy-Regeln.
+  styleUrls: ['./landing-sections.scss', './landing.scss'],
 })
 export class Landing {
   readonly domains: Domain[] = [
@@ -111,7 +112,7 @@ export class Landing {
       key: 'finanzen',
       sentence: 'Finanzen teilen',
       on: '',
-      off: 'Geht nicht. Deine Finanzen bleiben immer privat.',
+      off: 'Andere Nutzer erhalten keinen Zugriff auf deinen persönlichen Finanzbereich.',
       locked: true,
       tone: 'pink',
     },
@@ -185,6 +186,13 @@ export class Landing {
 
   isOn(share: Share): boolean {
     return !share.locked && this.shared()[share.key];
+  }
+
+  shareResult(share: Share): string {
+    if (share.key === 'verknuepfung' && this.isOn(share) && !this.shared()['reise']) {
+      return 'Reise und Sparziel gehören zusammen. Ben sieht keines von beiden, solange du die Reise nicht mit ihm teilst.';
+    }
+    return this.isOn(share) ? share.on : share.off;
   }
 
   toggle(share: Share): void {

@@ -127,3 +127,46 @@ Die Startseite beantwortet zuerst „Was muss ich heute tun?“: Die erste Zeile
 daneben, die vier Bereiche als Reihe darunter (vorher darüber). Unter der Begrüßung ein Tagesstand aus echten Zahlen.
 Daten, Aufrufe, Sortierung, Hinweise, Suche, Schnellerfassung und Leer-/Lade-/Fehlerzustände sind unverändert;
 Gestaltung siehe docs/DESIGN_SYSTEM.md › App-Startseite (15.10.2026).
+
+## Feinschliff 15.10.2026 — Priorisierung und Demo-Zusammenhang
+
+Die hervorgehobene Zeile zeigt den nächsten noch anstehenden Eintrag mit Uhrzeit (lokale Uhr), danach eine heutige
+Aufgabe ohne Uhrzeit; nur ohne solche Einträge fällt sie auf die bestehende Sortierung zurück. Überfällige und
+bereits verstrichene Termine bleiben in den weiteren Zeilen sichtbar; keine automatische Erledigung oder Änderung.
+Auf dem Handy kleinere Uhrzeit (30 px, überfälliges Datum 22 px), Titel 21 px und kompaktere Innenabstände.
+Sidebar, Navigation, Farben und Icons bleiben bestehen.
+
+Die öffentliche Demo zeigt in der vorhandenen einzelnen „Für dich“-Karte einen Zusammenhang zwischen dem vorhandenen
+Sparziel „Badmintonschuhe“ und der zusätzlichen Demo-Aufgabe „Badmintonschuhe vergleichen“. Beide werden aus den
+Demo-Datenquellen geladen, kein echtes Konto wird befüllt. Der Dialog erklärt den Grund und erlaubt Verknüpfen,
+Entfernen und Ablehnen ausschließlich als ausdrücklich gekennzeichnetes lokales Beispiel. Diese Vorschau ist kein
+Backend-Connection-Datensatz und wird beim Neuladen zurückgesetzt; die Domain-Links öffnen die bestehenden Einträge.
+Live-Konten behalten ihre tatsächlichen serverseitigen Vorschläge und Fristen. Keine neue Connection Engine.
+
+Handyansicht: Die zusätzliche dekorative Tagesachse entfällt; Uhrzeiten bleiben in den bedienbaren Zeilen. Demo-Dialogaktionen und Objektlinks besitzen mindestens 44 px Höhe und sichtbaren Tastaturfokus.
+
+### Helle Dashboard-Übersicht (15.10.2026)
+Ersetzt die dunkle Tagesbühne vollständig: weiße, dezent umrandete Tagesliste mit gleich großen Zeilen und ruhiger Markierung „Im Fokus“. Keine große Datumszahl oder Tagesachse. Priorisierung bleibt erhalten. Demo-Zusammenhang zeigt Sparziel und Aufgabe als zwei beschriftete, direkt erreichbare Objekte mit verbindender Erklärung und separater Aktion. Bestehende Navigation, Icons und Bereichsfarben bleiben bestehen. Diese Entscheidung ersetzt die vorherige Tagesbühnen-Gestaltung.
+Vier Bereichskarten im kompakten Band vor der Tagesliste: vier Spalten auf Desktop, zwei am Handy. Die Kontextkarte
+bleibt daneben statt die Bereichskarten aus dem ersten sichtbaren Bildschirmbereich zu verdrängen.
+
+## Neuordnung 17.10.2026 — „kein zweites Menü“
+
+Die Startseite beantwortet drei Fragen, für das Handy zuerst: Was muss ich jetzt tun? (Überfälliges als eigene
+Zeile, „Als Nächstes“ = nächster Termin, der heute noch kommt, auf der Tagesbühne; abends ehrlich „Für heute ist
+nichts mehr geplant“) · Was steht heute sonst an? (Rest, Vergangenes mit „vorbei“ am Ende) · Was kommt bald?
+(Demnächst: nächste Reise und Frist; Für dich: nur Verknüpfungen; Budget: eine Zahl). Die vier Bereichskacheln und
+die Hervorhebung der Onboarding-Auswahl sind entfernt — die Bereiche erreicht man über die Navigation. Die
+Tageszeitleiste ist entfernt. Tests mit fester Uhr (page.clock / vi.setSystemTime), weil die Reihenfolge von der
+Uhrzeit abhängt.
+
+## Tagesplan 17.10.2026 (aktuell)
+
+Ruhig und erklärbar: Begrüßung mit Tageszeile, der Tag als Plan in Gruppen (Überfällig · Als Nächstes · Später · Ohne
+Uhrzeit · Vorbei) in einer einzigen Zeilen-Form, daneben bzw. darunter Demnächst (mit Datum), Budget und Für dich im
+selben Stil; für neue Konten „Erste Schritte“ (Budget, erste Aufgabe/Termin, Reise — haken sich mit echten Daten ab).
+Bühne, Tagessatz und Zeitleiste sind entfernt.
+
+Erkennbarkeit (17.10.2026): Bereichs-Symbole wie in der Navigation statt Farbpunkten, Bereich als Wort im Hinweis
+(auch am Handy), keine Doppelungen (Zeitspalte bei „Ohne Uhrzeit“ leer, „überfällig“ nur in der Gruppe und für
+Screenreader), erklärender Satz bei „Für dich“ und bei „Erste Schritte“, kein Logo-Zeichen und keine Tagesbewegung.

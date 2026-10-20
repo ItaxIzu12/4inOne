@@ -1,7 +1,8 @@
-// Startseite (Neubau 15.10.2026, „Als Nächstes + Reihe“ in der Welt der Landingpage). Aufbau: Begrüßung mit Tagesstand,
-// links die Tagesbühne (dashboard-stage.scss) und der Rest des Tages, rechts „Für dich“ und die vier Bereiche als
-// 2 × 2 in der Form des Zeichens. Übernommene Bausteine stehen in dashboard-parts.scss.
-// Weiche Formen mit einer engeren Ecke, Instrument Sans, Tinte #101d40; keine Verläufe, kein Glas, keine Schatten.
+// Startseite „Tagesplan“ (17.10.2026): ruhig, modern, erklärbar. Eine Zeilen-Form für alles — Zeit · Bereichs-Symbol ·
+// Titel/Hinweis (Bereich als Wort vorn) · Pfeil. Der Tag in Gruppen (Überfällig, Als Nächstes, Später, Ohne Uhrzeit,
+// Vorbei); „Als Nächstes“ nur hellblau hinterlegt, Überfälliges über rote Schrift und rotes Symbol. Symbole und Farben
+// wie in der Navigation (Kontrast ≥ 5,3:1). Weiße Flächen auf hellem Grund, weiche Ecken mit einer engeren Ecke.
+// Rechte Spalte: dashboard-side.scss · Menü, Hinweise, Suche: dashboard-parts.scss.
 :host {
   display: block;
   --ink: #101d40;
@@ -9,40 +10,28 @@
   --muted: var(--text-secondary);
   --hover: var(--surface-hover);
   --link: var(--brand-primary);
-  --r-md: var(--radius-md);
-  --r-soft: 24px;
-  --r-tight: 8px;
+  --late: #b3261e;
+  --next: #eef4fd;
+  --card-r: 20px 20px 8px 20px;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   color: var(--text);
 }
-::selection {
-  background: #dcebff;
-  color: var(--ink);
-}
 .finance {
   --tone: var(--finance-accent);
-  --soft: var(--finance-soft);
-  --petal: #76cda4;
+  --tone-soft: var(--finance-soft);
 }
 .household {
   --tone: var(--household-accent);
-  --soft: var(--household-soft);
-  --petal: #efa1c2;
+  --tone-soft: var(--household-soft);
 }
-.organisation {
+.organisation,
+.family {
   --tone: var(--organization-accent);
-  --soft: var(--organization-soft);
-  --petal: #ffd175;
+  --tone-soft: var(--organization-soft);
 }
 .travel {
   --tone: var(--travel-accent);
-  --soft: var(--travel-soft);
-  --petal: #99c5ff;
-}
-.family {
-  --tone: #a45a13;
-  --soft: #fff0de;
-  --petal: #ffd175;
+  --tone-soft: var(--travel-soft);
 }
 .sr-only {
   position: absolute;
@@ -52,7 +41,6 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
-
 .dashboard {
   max-width: var(--content-max-width);
   margin: 0 auto;
@@ -65,15 +53,15 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-7);
 }
 h1 {
   margin: 0;
   color: var(--ink);
-  font-size: clamp(30px, 1.3rem + 1.4vw, 44px);
+  font-size: clamp(26px, 1.2rem + 0.9vw, 34px);
   font-weight: var(--fw-bold);
-  line-height: 1.05;
-  letter-spacing: -0.035em;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
 }
 .greeting__day {
   margin: var(--space-2) 0 0;
@@ -89,13 +77,33 @@ h1 {
 }
 .board-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
-  gap: var(--space-5);
+  grid-template-columns: minmax(0, 1.65fr) minmax(300px, 1fr);
+  gap: var(--space-6);
   align-items: start;
 }
-.today {
+.plan,
+.side,
+.side > section {
   display: grid;
-  gap: var(--space-2);
+  align-content: start;
+  gap: var(--space-3);
+}
+.side {
+  gap: var(--space-6);
+}
+.plan__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+}
+.plan h2,
+.side h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.01em;
 }
 .head-link {
   display: inline-flex;
@@ -117,7 +125,31 @@ h1 {
   height: 16px;
 }
 
-// ---------- Der Rest des Tages ----------
+// ---------- Tagesplan ----------
+.plan__card {
+  padding: var(--space-2);
+  border-radius: var(--card-r);
+  background: #fff;
+}
+.plan__group {
+  margin: 0;
+  padding: var(--space-4) var(--space-3) var(--space-2);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+}
+.plan__card > .plan__group:first-child {
+  padding-top: var(--space-2);
+}
+.plan__group--late {
+  color: var(--late);
+}
+.plan__done {
+  margin: 0;
+  padding: var(--space-3);
+  color: var(--muted);
+  font-size: 15px;
+}
 .today-list {
   display: grid;
   gap: 2px;
@@ -127,34 +159,25 @@ h1 {
 }
 .today-row {
   display: grid;
-  grid-template-columns: 60px 10px minmax(0, 1fr) 18px;
+  grid-template-columns: 56px 30px minmax(0, 1fr) 16px;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
   width: 100%;
-  min-height: 60px;
-  padding: 10px var(--space-4);
+  min-height: 56px;
+  padding: 8px var(--space-3);
   border: 0;
-  border-radius: var(--radius-sm);
-  background: #fff;
+  border-radius: var(--radius-md);
+  background: transparent;
   color: var(--text);
   font: inherit;
   text-align: left;
   cursor: pointer;
   transition:
-    background-color 160ms ease-out,
+    background-color 140ms ease-out,
     transform 120ms ease-out;
 }
 .today-row:active {
-  transform: scale(0.99);
-}
-.today-list li:first-child .today-row {
-  border-radius: var(--r-md) var(--r-md) var(--radius-sm) var(--radius-sm);
-}
-.today-list li:last-child .today-row {
-  border-radius: var(--radius-sm) var(--radius-sm) var(--r-soft) var(--r-tight);
-}
-.today-list li:only-child .today-row {
-  border-radius: var(--r-md) var(--r-md) var(--r-soft) var(--r-tight);
+  transform: scale(0.995);
 }
 .time {
   color: var(--ink);
@@ -162,15 +185,22 @@ h1 {
   font-weight: var(--fw-semibold);
   font-variant-numeric: tabular-nums;
 }
-.row__mark {
-  width: 10px;
-  height: 10px;
-  border-radius: 4px 4px 1px 4px;
-  background: var(--petal, var(--border-strong));
+.row__icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px 10px 4px 10px;
+  background: var(--tone-soft, var(--surface-app));
+  color: var(--tone, var(--muted));
+}
+.row__icon app-icon {
+  width: 16px;
+  height: 16px;
 }
 .item-copy {
   display: grid;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
 }
 .item-copy strong {
@@ -188,214 +218,76 @@ h1 {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+// Als Nächstes: dezent hinterlegt, Uhrzeit und „in 8 Std.“ in der Markenfarbe
+.today-row--lead {
+  background: var(--next);
+}
+.today-row--lead .time,
+.today-row--lead small b {
+  color: var(--link);
+}
+.today-row--lead small b {
+  font-weight: var(--fw-semibold);
+}
+// Überfällig: nur über Schrift (und Wort), keine Alarmfläche
 .today-row.is-late .time,
 .today-row.is-late small {
-  color: var(--error, #b3261e);
+  color: var(--late);
 }
-.chevron {
-  width: 18px;
-  height: 18px;
+.today-row.is-late .row__icon {
+  background: #fcebea;
+  color: var(--late);
+}
+// Vorbei: ruhiger
+.today-row.is-past .time,
+.today-row.is-past strong {
   color: var(--muted);
-  transition: transform 160ms var(--ease-out);
+  font-weight: var(--fw-medium);
 }
 @media (hover: hover) and (pointer: fine) {
   .today-row:hover {
     background: var(--hover);
   }
-  .today-row:hover .chevron {
-    transform: translateX(3px);
+  .today-row--lead:hover {
+    background: #e4eefc;
   }
 }
 
-// ---------- Für dich + Bereiche ----------
-.side {
+// Leer, Laden, Fehler
+.state {
   display: grid;
-  gap: var(--space-5);
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3);
 }
-.for-you h2 {
-  margin: 0 0 var(--space-2);
+.state h3 {
+  margin: 0;
   color: var(--ink);
-  font-size: 16px;
-  font-weight: var(--fw-semibold);
-  line-height: 44px;
+  font-size: 17px;
 }
-.for-you__card {
-  display: grid;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  border-radius: var(--r-soft) var(--r-soft) var(--r-soft) var(--r-tight);
-  background: #fff;
-  color: var(--text);
-  text-decoration: none;
-  transition: transform 160ms ease-out;
+.state p {
+  margin: 0;
+  color: var(--muted);
 }
-.for-you__card:active {
-  transform: scale(0.99);
-}
-.for-you__copy {
+.skeleton {
   display: grid;
   gap: var(--space-2);
+  padding: var(--space-2);
 }
-.for-you__copy small {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--tone);
-  font-size: 14px;
-  font-weight: var(--fw-semibold);
-}
-.for-you__copy small app-icon {
-  width: 16px;
-  height: 16px;
-}
-.for-you__copy strong {
-  color: var(--ink);
-  font-size: 20px;
-  font-weight: var(--fw-bold);
-  line-height: 1.2;
-  letter-spacing: -0.015em;
-}
-.for-you__copy span {
-  color: var(--muted);
-  font-size: 15px;
-}
-.for-you__action {
-  display: inline-flex;
-  align-items: center;
-  justify-self: start;
-  gap: 6px;
-  min-height: 40px;
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-pill);
-  background: var(--soft);
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: var(--fw-semibold);
-}
-.for-you__action app-icon {
-  width: 16px;
-  height: 16px;
-  transition: transform 160ms var(--ease-out);
-}
-@media (hover: hover) and (pointer: fine) {
-  .for-you__card:hover .for-you__action app-icon {
-    transform: translateX(3px);
-  }
-}
-.for-you__card--skeleton {
-  min-height: 168px;
-}
-.for-you__card--skeleton span {
-  display: block;
-  height: 14px;
-  border-radius: var(--radius-pill);
+.skeleton span {
+  height: 48px;
+  border-radius: var(--radius-md);
   background: var(--surface-app);
-}
-.for-you__card--skeleton span:nth-child(1) {
-  width: 40%;
-}
-.for-you__card--skeleton span:nth-child(2) {
-  width: 80%;
-  height: 20px;
-}
-.for-you__card--skeleton span:nth-child(3) {
-  width: 60%;
-}
-
-// Die vier Bereiche als 2 × 2 — wie das Zeichen: jede Ecke zur Mitte enger
-.domains {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-}
-.domain {
-  display: grid;
-  align-content: start;
-  gap: var(--space-3);
-  min-height: 150px;
-  padding: var(--space-5);
-  background: #fff;
-  color: var(--text);
-  text-decoration: none;
-  transition:
-    background-color 160ms ease-out,
-    transform 120ms ease-out;
-}
-.domain:nth-child(1) {
-  border-radius: var(--r-soft) var(--r-soft) var(--r-tight) var(--r-soft);
-}
-.domain:nth-child(2) {
-  border-radius: var(--r-soft) var(--r-soft) var(--r-soft) var(--r-tight);
-}
-.domain:nth-child(3) {
-  border-radius: var(--r-soft) var(--r-tight) var(--r-soft) var(--r-soft);
-}
-.domain:nth-child(4) {
-  border-radius: var(--r-tight) var(--r-soft) var(--r-soft) var(--r-soft);
-}
-.domain:active {
-  transform: scale(0.98);
-}
-@media (hover: hover) and (pointer: fine) {
-  .domain:hover {
-    background: var(--hover);
-  }
-}
-.domain--highlighted {
-  box-shadow: inset 0 0 0 2px var(--petal);
-}
-.domain__petal {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 15px 15px 5px 15px;
-  background: var(--petal);
-  color: var(--ink);
-}
-.domain__petal app-icon {
-  width: 19px;
-  height: 19px;
-}
-.domain-copy {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-.domain h2 {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: var(--fw-semibold);
-}
-.domain p {
-  margin: 0;
-  color: var(--ink);
-  font-size: 18px;
-  font-weight: var(--fw-bold);
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
-  font-variant-numeric: tabular-nums;
-}
-.domain small {
-  color: var(--muted);
-  font-size: 14px;
-}
-.domain .domain-failed {
-  color: var(--muted);
-  font-size: 16px;
-  font-weight: var(--fw-medium);
-}
-.domain-pick {
-  color: var(--tone);
-  font-weight: var(--fw-semibold);
 }
 .line-skeleton {
   display: block;
   width: 70%;
-  height: 18px;
-  margin-top: 6px;
+  height: 20px;
   border-radius: var(--radius-pill);
   background: var(--surface-app);
 }
@@ -409,44 +301,8 @@ h1 {
   font-size: 15px;
 }
 
-// Beim Öffnen setzen sich Zeilen, Karte und Bereiche (nur Bewegung, keine Transparenz; einmal am Tag gesehen)
-@media (prefers-reduced-motion: no-preference) {
-  .stage,
-  .today-list li,
-  .for-you__card,
-  .domain {
-    animation: rise 460ms var(--ease-out) both;
-  }
-  .today-list li:nth-child(1) {
-    animation-delay: 60ms;
-  }
-  .today-list li:nth-child(2) {
-    animation-delay: 100ms;
-  }
-  .today-list li:nth-child(n + 3) {
-    animation-delay: 140ms;
-  }
-  .for-you__card {
-    animation-delay: 80ms;
-  }
-  .domain {
-    animation-delay: 140ms;
-  }
-  .domain:nth-child(n + 3) {
-    animation-delay: 180ms;
-  }
-}
-@keyframes rise {
-  from {
-    transform: translateY(10px);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .domain,
-  .for-you__card,
-  .today-row,
-  .chevron,
-  .for-you__action app-icon {
+  .today-row {
     transition: none;
   }
 }
@@ -472,20 +328,8 @@ h1 {
     font-size: 15px;
   }
   .today-row {
-    grid-template-columns: 52px 8px minmax(0, 1fr) 16px;
-    gap: var(--space-3);
-    padding: 10px var(--space-3);
-  }
-  .domain {
-    min-height: 0;
-    padding: var(--space-4);
-  }
-  .domain__petal {
-    width: 36px;
-    height: 36px;
-    border-radius: 13px 13px 4px 13px;
-  }
-  .domain p {
-    font-size: 17px;
+    grid-template-columns: 46px 30px minmax(0, 1fr) 16px;
+    gap: var(--space-2);
+    padding: 8px var(--space-2);
   }
 }

@@ -22,14 +22,18 @@ describe('App', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('renders the global header on marketing routes (e.g. /impressum)', async () => {
+  it('renders legal pages in the public frame, without the app navigation (e.g. /impressum)', async () => {
     fixture.detectChanges();
     await router.navigateByUrl('/impressum');
     fixture.detectChanges();
     await fixture.whenStable();
+    fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('app-header app-brand')?.textContent).toContain('4inOne');
+    expect(compiled.querySelector('app-public-shell app-brand')?.textContent).toContain('4inOne');
+    // Besucher ohne Konto sollen nicht über die App-Navigation auf der Anmeldung landen.
+    expect(compiled.querySelector('app-header')).toBeNull();
+    expect(compiled.querySelector('app-bottom-nav')).toBeNull();
     expect(compiled.textContent).not.toContain('Kompass');
   });
 

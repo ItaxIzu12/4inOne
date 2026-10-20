@@ -1,5 +1,6 @@
 import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { PublicShell } from '../public-shell/public-shell';
 
 /**
  * Gemeinsames Grundgerüst für alle vier Rechtsseiten (Impressum,
@@ -13,7 +14,7 @@ import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-legal-page',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PublicShell],
   templateUrl: './legal-page.html',
   styleUrl: './legal-page.css',
 })

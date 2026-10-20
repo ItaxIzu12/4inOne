@@ -274,3 +274,27 @@ button:focus-visible {
     transform: none;
   }
 }
+
+// Verknüpfungsbeispiel: dieselben großzügigen Klickflächen für Links und Aktionen.
+.detail-body .text-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  margin-block: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-app);
+  color: var(--brand-primary);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.detail-body .text-button app-icon { width: 20px; height: 20px; flex: none; }
+.detail-body .text-button:hover { background: var(--surface-hover); }
+.detail-body .text-button:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 3px; }

@@ -66,6 +66,8 @@ async function mockApi(page: Page) {
 }
 
 test('Heute mixes every area, overdue first, at most five rows', async ({ page }) => {
+  // 08:00: Zug (09:00) ist „Als Nächstes“, nichts ist schon vorbei — feste Uhr, damit der Test zu jeder Tageszeit gleich prüft
+  await page.clock.setFixedTime(new Date(new Date(today).setHours(8, 0, 0, 0)));
   await mockApi(page);
   await page.goto('/');
 
@@ -77,7 +79,8 @@ test('Heute mixes every area, overdue first, at most five rows', async ({ page }
   await expect(card.locator('.today-row strong')).toHaveText([
     'Müll rausbringen', 'Zug nach Wien', 'Zahnarzt', 'Blumen gießen', 'Kündigen bis: Stromvertrag',
   ]);
-  await expect(card).toContainText('Haushalt · überfällig');
+  await expect(card.locator('.plan__group--late')).toHaveText('Überfällig');
+  await expect(card.locator('.today-list--late')).toContainText('überfällig · Haushalt');
   // Vorschläge stehen in der jeweiligen Reise, nicht auf der knappen Startseite.
   await expect(page.locator('.today-suggestion')).toHaveCount(0);
   await page.screenshot({ path: 'test-results/dashboard-today.png', fullPage: true });
@@ -120,7 +123,7 @@ test('an empty personal account has empty states instead of example content', as
   await page.route('**/api/v1/finanzen/private/summary/**', r => r.fulfill({json: {month: overview.finanzen.month, budget: null, total: null, available: null, income: '0.00', expenses: '0.00', saved: '0.00', recent: [], has_data: false}}));
   await page.goto('/');
   await expect(page.locator('.today')).toContainText('Heute ist nichts Dringendes offen');
-  await expect(page.locator('.domain.finance')).toContainText('Starte mit deinem Monatsbudget');
+  await expect(page.locator('.budget')).toContainText('Starte mit deinem Monatsbudget');
   await expect(page.locator('main')).not.toContainText('Berlin Wochenende');
   await expect(page.locator('main')).not.toContainText('Sophie');
   expect((await new AxeBuilder({page}).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);

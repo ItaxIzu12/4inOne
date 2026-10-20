@@ -1,12 +1,14 @@
 import { ApplicationConfig, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { provideRouter, TitleStrategy, withInMemoryScrolling } from '@angular/router';
 import { catchError, firstValueFrom, of } from 'rxjs';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { accessLostInterceptor } from './core/access/access-lost.interceptor';
 import { AuthService } from './core/auth/auth.service';
+import { PageViews } from './core/analytics/page-views';
+import { SeoTitleStrategy } from './core/seo/seo-title-strategy';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -16,6 +18,10 @@ export const appConfig: ApplicationConfig = {
     // der zuletzt gescrollten Position. anchorScrolling erlaubt weiterhin
     // #anchor-Links innerhalb einer Seite.
     provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' })),
+    // Seitentitel und Meta-Beschreibung je Route (data.description)
+    { provide: TitleStrategy, useClass: SeoTitleStrategy },
+    // Cookielose Besucherzählung der öffentlichen Seiten (core/analytics/page-views.ts)
+    provideAppInitializer(() => inject(PageViews).start()),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor, accessLostInterceptor])),
     // Ohne diesen Initializer geht das Access-Token (nur im Speicher,
     // ARCHITEKTUR.md §3.1) bei JEDEM Seiten-Reload verloren, obwohl das

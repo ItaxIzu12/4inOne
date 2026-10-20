@@ -160,13 +160,14 @@
         teilst.
       </p>
     </div>
+    <p class="wrap">Interaktives Beispiel – verändert keine Daten.</p>
     <ul class="bands">
       @for (s of shares; track s.key) {
         <li class="band" [class]="'band--' + s.tone" [class.is-on]="isOn(s)" [class.is-locked]="s.locked">
           <div class="wrap band__inner">
             <div class="band__text">
               <p class="band__sentence" [id]="'share-' + s.key">{{ s.sentence }}</p>
-              <p class="band__result" aria-live="polite">{{ isOn(s) ? s.on : s.off }}</p>
+              <p class="band__result" aria-live="polite">{{ shareResult(s) }}</p>
             </div>
             <button
               type="button"

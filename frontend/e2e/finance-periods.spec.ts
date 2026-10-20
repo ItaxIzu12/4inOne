@@ -98,9 +98,12 @@ test('another day never says "Heute": labels carry the date, and the month in vi
   d.setDate(d.getDate() - 1);
   const label = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
   const content = view.locator('.kpis, .empty');
+  // erst auf den neuen Tag warten, dann verzweigen (sonst zählt der Test noch die Kennzahlen von heute)
+  await expect(page.locator('#finance-day')).toContainText(label);
   await expect(content.first()).toBeVisible();
-  await expect(view.locator('.kpi__hint').first()).not.toHaveText('heute');
   if (await view.locator('.kpi').count()) {
+    // Hat der Vortag keine Bewegungen (je nach Datum in den Demodaten), gibt es keine Kennzahlen — dann gilt der Leerzustand unten.
+    await expect(view.locator('.kpi__hint').first()).not.toHaveText('heute');
     await expect(view.locator('.kpi').nth(1)).toContainText(`Ausgaben`);
     await expect(view.locator('.kpi').nth(1)).toContainText(`am ${label}`);
     await expect(view.locator('.list-title')).toHaveText(`Transaktionen am ${label}`);
