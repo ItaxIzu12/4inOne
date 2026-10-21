@@ -751,7 +751,7 @@
   border: 1px solid var(--line-strong, var(--border-default));
   border-radius: var(--radius-md);
   background: #fff;
-  color: var(--accent-hover, #186340);
+  color: var(--accent-hover, var(--finance-accent));
   font: inherit;
   font-size: var(--fs-secondary);
   font-weight: 600;

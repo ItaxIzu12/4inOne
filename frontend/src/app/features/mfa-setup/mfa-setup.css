@@ -38,7 +38,7 @@
   color: #fff;
 }
 .mfa-steps .is-done .mfa-steps__dot {
-  background: #1e7a4d;
+  background: var(--success);
   color: #fff;
 }
 

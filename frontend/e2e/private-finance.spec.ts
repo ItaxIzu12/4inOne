@@ -621,15 +621,15 @@ test('month picker: the selected month stays readable on hover, presses that sli
   const panel = page.locator('.dp__panel:has(.dp__title)');
   await expect(panel).toBeVisible();
 
-  // Hover auf dem gewählten Monat: Hintergrund bleibt das kräftige Grün, Schrift weiß
+  // Hover auf dem gewählten Monat: Hintergrund bleibt das kräftige Finanzgrün (--finance-accent), Schrift weiß
   const selected = panel.locator('.dp__cell.is-selected');
   await selected.hover();
-  await expect(selected).toHaveCSS('background-color', 'rgb(30, 122, 77)');
+  await expect(selected).toHaveCSS('background-color', 'rgb(11, 110, 75)');
   await expect(selected).toHaveCSS('color', 'rgb(255, 255, 255)');
   // andere Monate bekommen beim Hover den hellen Ton
   const other = panel.locator('.dp__cell:not(.is-selected):not(:disabled)').first();
   await other.hover();
-  await expect(other).toHaveCSS('background-color', 'rgb(227, 246, 236)');
+  await expect(other).toHaveCSS('background-color', 'rgb(228, 244, 236)');
 
   // gedrückt im Kalender, losgelassen daneben: bleibt offen und wählt nichts
   const box = (await selected.boundingBox())!;

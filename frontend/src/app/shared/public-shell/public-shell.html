@@ -13,13 +13,5 @@
   <ng-content />
 </main>
 
-<footer class="foot">
-  <nav class="foot__links" aria-label="Rechtliches und Kontakt">
-    <a routerLink="/kontakt">Kontakt</a>
-    <a routerLink="/impressum">Impressum</a>
-    <a routerLink="/datenschutz">Datenschutz</a>
-    <a routerLink="/nutzungsbedingungen">Nutzungsbedingungen</a>
-    <a routerLink="/barrierefreiheit">Barrierefreiheit</a>
-  </nav>
-  <p class="foot__legal">© {{ year }} 4inOne · Dein Alltag. Alles verbunden.</p>
-</footer>
+<!-- Globale Kachel-Fußzeile, kompakt: Name und Pflicht-Links (shared/tile-footer) -->
+<app-tile-footer />

@@ -73,20 +73,20 @@
   height: 20px;
 }
 .dom-finanzen {
-  background: #e3f8ee;
-  color: #1e6b41;
+  background: var(--finance-soft);
+  color: var(--finance-accent);
 }
 .dom-haushalt {
-  background: #fdeee9;
-  color: #9c3722;
+  background: var(--household-soft);
+  color: var(--household-accent);
 }
 .dom-organisation {
-  background: #ece2fc;
-  color: #6b34c2;
+  background: var(--organization-soft);
+  color: var(--organization-accent);
 }
 .dom-reisen {
-  background: #dcefff;
-  color: #1e5fa8;
+  background: var(--travel-soft);
+  color: var(--travel-accent);
 }
 .connection__link {
   display: flex;

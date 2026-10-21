@@ -1,47 +1,63 @@
-// Öffentliche Unterseiten: dieselbe ruhige Sprache wie die Startseite (heller Grund, Tinte #101d40, Pill-Knöpfe),
-// aber ohne deren große Bühne. Alle Links ≥ 44 px hoch (Tippziel), Schrift ≥ 15 px.
+@use '../styles/editorial' as editorial;
+
+// Rahmen der öffentlichen Unterseiten (Rechtliches, Kontakt, Danke, 404) im Stil der Startseite „Editorial hell“:
+// dieselben Tokens (shared/styles/_editorial.scss), dieselbe Kopfzeile, der globale Kachel-Fuß in kompakter Form.
+// Alle Links ≥ 44 px hoch (Tippziel), Schrift ≥ 15 px.
 :host {
-  --ink: #101d40;
-  --ground: #f4f6fa;
-  --mat: #e8ecf3;
+  @include editorial.tokens;
   display: flex;
   min-height: 100dvh;
   flex-direction: column;
-  background: var(--ground);
-  color: var(--text-primary);
+  font-size: 17px;
+  line-height: 1.6;
+}
+:host ::selection {
+  background: var(--travel-tint);
+  color: var(--ink);
+}
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 .skip-link {
   position: absolute;
   top: -100px;
-  left: var(--space-3);
+  left: 16px;
   z-index: 40;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  background: #fff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--card);
   color: var(--ink);
+  font-weight: 600;
 }
 .skip-link:focus {
-  top: var(--space-3);
+  top: 16px;
+}
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgb(250 248 244 / 0.94);
 }
 .head__inner,
-.body,
-.foot {
+.body {
   width: 100%;
-  max-width: 1120px;
+  max-width: 1240px;
   margin-inline: auto;
-  padding-inline: var(--content-padding-x);
+  padding-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right));
 }
 .head__inner {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  min-height: 72px;
+  gap: 16px;
+  min-height: 76px;
 }
 .head__brand {
   display: inline-flex;
-  text-decoration: none;
   min-height: 44px;
   align-items: center;
+  text-decoration: none;
 }
 .head__brand app-brand {
   font-size: 22px;
@@ -49,66 +65,51 @@
 .head__actions {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 8px;
   margin-left: auto;
 }
 .head__link,
-.head__cta,
-.foot__links a {
+.head__cta {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-pill);
+  padding: 0 16px;
+  border-radius: 999px;
   font-size: 15px;
-  font-weight: var(--fw-medium);
+  font-weight: 500;
   text-decoration: none;
-  transition: background-color 160ms ease-out;
+  transition: background-color 180ms ease-out;
 }
-.head__link,
-.foot__links a {
+.head__link {
   color: var(--ink);
 }
 .head__cta {
-  padding: 0 var(--space-4);
-  background: var(--brand-primary);
+  padding: 0 18px;
+  background: var(--ink);
   color: #fff;
-  font-weight: var(--fw-semibold);
+  font-weight: 600;
 }
 .body {
   flex: 1;
-  padding-block: var(--space-6) var(--space-9);
+  padding-block: clamp(32px, 5vw, 72px) clamp(64px, 8vw, 120px);
   outline: none;
 }
-.foot {
-  padding-block: var(--space-6) var(--space-7);
-  border-top: 1px solid var(--mat);
-}
-.foot__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px var(--space-1);
-  margin-left: calc(-1 * var(--space-3));
-}
-.foot__legal {
-  margin: var(--space-3) 0 0;
-  color: var(--text-secondary);
-  font-size: 15px;
-}
 @media (hover: hover) and (pointer: fine) {
-  .head__link:hover,
-  .foot__links a:hover {
-    background: var(--mat);
+  .head__link:hover {
+    background: var(--ground-2);
   }
   .head__cta:hover {
-    background: #1c4f96;
+    background: #252e44;
   }
 }
-@media (max-width: 480px) {
+@media (max-width: 420px) {
   .head__brand app-brand {
     font-size: 20px;
   }
   .head__link {
-    padding-inline: var(--space-2);
+    padding-inline: 10px;
+  }
+  .head__cta {
+    display: none; // Platz für „Anmelden“; „Konto erstellen“ steht auf der Startseite
   }
 }

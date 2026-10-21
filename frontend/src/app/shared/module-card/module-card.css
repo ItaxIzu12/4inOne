@@ -12,15 +12,10 @@
   overflow: hidden;
 }
 
-/* --module-accent-text ist meist gleich --module-accent, nur für
-   Haushalt/Organisation dunkler: --m-household/--m-organize erreichen bei
-   12–14px/bold auf ihrer eigenen -soft-Fläche keine 4,5:1 (axe-core
-   color-contrast, siehe .module-card__action unten) — --module-accent
-   bleibt für Icons unverändert, nur der Text auf der -soft-Fläche wird
-   dunkler. */
+/* --module-accent-text = dunkle Textvariante des Bereichs (≥ 4,5:1 auch auf der -soft-Fläche). */
 .module-card--finance   { --module-accent: var(--m-finance);   --module-accent-soft: var(--m-finance-soft);   --module-accent-text: var(--m-finance); }
-.module-card--household { --module-accent: var(--m-household); --module-accent-soft: var(--m-household-soft); --module-accent-text: #8f5511; }
-.module-card--organize  { --module-accent: var(--m-organize);  --module-accent-soft: var(--m-organize-soft);  --module-accent-text: #1a7a41; }
+.module-card--household { --module-accent: var(--m-household); --module-accent-soft: var(--m-household-soft); --module-accent-text: var(--m-household); }
+.module-card--organize  { --module-accent: var(--m-organize);  --module-accent-soft: var(--m-organize-soft);  --module-accent-text: var(--m-organize); }
 
 .module-card__head {
   display: flex;

@@ -15,6 +15,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ScrollService } from '../../core/scroll/scroll.service';
 import { IconArrowLeft } from '../../shared/icons/icon-arrow-left';
+import { LinkChain } from '../../shared/link-chain/link-chain';
 
 type Mode = 'login' | 'register';
 
@@ -41,7 +42,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ErrorNoticeDirective, AppIcon, Brand, ReactiveFormsModule, RouterLink, IconArrowLeft],
+  imports: [ErrorNoticeDirective, AppIcon, Brand, ReactiveFormsModule, RouterLink, IconArrowLeft, LinkChain],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

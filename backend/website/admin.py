@@ -1,16 +1,6 @@
 from django.contrib import admin
 
-from .models import ContactMessage, PageView
-
-
-@admin.register(ContactMessage)
-class ContactMessageAdmin(admin.ModelAdmin):
-    list_display = ['created_at', 'name', 'email', 'forwarded']
-    search_fields = ['name', 'email', 'message']
-    readonly_fields = ['name', 'email', 'message', 'created_at', 'forwarded']
-
-    def has_add_permission(self, request):
-        return False
+from .models import PageView
 
 
 @admin.register(PageView)

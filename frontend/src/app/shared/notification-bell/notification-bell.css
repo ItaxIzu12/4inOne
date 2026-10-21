@@ -123,7 +123,7 @@
   flex-shrink: 0;
   border-radius: 50%;
   background: var(--household-soft);
-  color: #b8432a;
+  color: var(--household-accent);
 }
 .bell-item__icon[data-scope='CONTACT'] {
   background: var(--info-soft);
@@ -155,7 +155,7 @@
 }
 .bell-item__icon[data-scope='TRIP'] {
   background: var(--travel-soft);
-  color: #246db8;
+  color: var(--travel-accent);
 }
 .bell-item__icon app-icon {
   width: 20px;

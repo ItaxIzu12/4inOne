@@ -1,0 +1,22 @@
+<figure class="chain">
+  <div class="chain__panel" #stage>
+    <p class="chain__head">{{ heading() }}</p>
+    <ol class="chain__list">
+      @for (link of links(); track link.title) {
+        <li [class]="'chain__row tone-' + link.tone">
+          <span class="chain__icon" #icon aria-hidden="true"><app-icon [name]="link.icon" /></span>
+          <span class="chain__text"><small>{{ link.kind }}</small><b>{{ link.title }}</b></span>
+          <span class="chain__value">{{ link.value }}</span>
+          @if (link.meter !== undefined) {
+            <span class="chain__meter" aria-hidden="true"><i [style.transform]="'scaleX(' + link.meter + ')'"></i></span>
+          }
+        </li>
+      }
+    </ol>
+    <!-- Lichtlinien zwischen benachbarten Gliedern (liegen hinter den Zeilen) -->
+    @for (beam of beams(); track $index) {
+      <app-animated-beam [container]="stage" [from]="beam.from" [to]="beam.to" [color]="beam.color" [delay]="$index * 0.8" [duration]="2.4" />
+    }
+  </div>
+  <figcaption>{{ caption() }}</figcaption>
+</figure>

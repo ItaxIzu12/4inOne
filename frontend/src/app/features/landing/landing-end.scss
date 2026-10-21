@@ -1,0 +1,180 @@
+// Öffentliche Startseite — Fragen und alle Breiten (zuletzt geladen). Fuß: shared/tile-footer.
+
+// ---------- Fragen ----------
+.faq {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: clamp(40px, 6vw, 96px);
+}
+.faq__head {
+  position: sticky;
+  top: 112px;
+}
+.faq__head p {
+  max-width: 34ch;
+  margin-top: 20px;
+  color: var(--ink-soft);
+  font-size: 18px;
+}
+.faq__demo {
+  margin-top: 24px;
+}
+.question {
+  border-bottom: 1px solid var(--line);
+}
+.question:first-child {
+  border-top: 1px solid var(--line);
+}
+.question summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 72px;
+  padding: 18px 4px;
+  color: var(--ink);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.35;
+  list-style: none;
+  cursor: pointer;
+}
+.question summary::-webkit-details-marker {
+  display: none;
+}
+.question__mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ground-2);
+  transition:
+    transform 320ms var(--ease),
+    background-color 200ms ease-out;
+}
+.question__mark app-icon {
+  width: 16px;
+  height: 16px;
+}
+.question[open] .question__mark {
+  transform: rotate(45deg);
+  background: var(--ink);
+  color: #fff;
+}
+.question p {
+  max-width: 62ch;
+  padding: 0 4px 24px;
+  color: var(--ink-soft);
+}
+@supports (interpolate-size: allow-keywords) {
+  .question {
+    interpolate-size: allow-keywords;
+  }
+  .question::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size 360ms var(--ease),
+      content-visibility 360ms allow-discrete;
+  }
+  .question[open]::details-content {
+    block-size: auto;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .question summary:hover .question__mark {
+    background: var(--line);
+  }
+  .question[open] summary:hover .question__mark {
+    background: #252e44;
+  }
+}
+
+// ---------- Breiten ----------
+@media (max-width: 1080px) {
+  .hero__inner,
+  .steps,
+  .privacy,
+  .faq {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .faq__head {
+    position: static;
+  }
+  .bento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .card--finanzen,
+  .card--reisen {
+    grid-column: 1 / -1;
+  }
+  .card--haushalt,
+  .card--organisation {
+    grid-column: span 1;
+  }
+}
+@media (max-width: 900px) {
+  .head__nav {
+    display: none;
+  }
+  .head__actions {
+    margin-left: auto;
+  }
+  .section__head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .head__inner {
+    gap: 8px;
+  }
+  .head__brand app-brand {
+    font-size: 20px;
+  }
+  .hero__actions .btn,
+  .steps__actions .btn,
+  .faq__demo {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .bento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .card--finanzen,
+  .card--reisen,
+  .card--haushalt,
+  .card--organisation {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  // Desktop-Ausschnitte wären am Handy unlesbar klein: dort nur Text und der Wert aus der Demo
+  .card__shot {
+    display: none;
+  }
+  .card__body {
+    padding: 22px;
+  }
+  h1 {
+    font-size: 2.6rem;
+  }
+  .pair {
+    flex-direction: column;
+    gap: 40px;
+  }
+  .pair__item:last-of-type {
+    align-self: flex-end;
+  }
+  .question summary {
+    font-size: 17px;
+  }
+}
+// Sehr schmale Handys: im Kopf nur „Anmelden“ — „Konto erstellen“ steht direkt darunter im Hero
+@media (max-width: 420px) {
+  .head__actions .btn--small {
+    display: none;
+  }
+}

@@ -1,93 +1,119 @@
+/* Rechtsseiten (Impressum, Datenschutz, Nutzungsbedingungen, Barrierefreiheit) im Stil der Startseite:
+   Überschriften kräftig in der Hausschrift, Text in Tinte, Lesespalte max. 720 px. Tokens kommen aus dem Rahmen
+   (shared/public-shell → shared/styles/_editorial.scss). Der Inhalt kommt per <ng-content> aus der jeweiligen Seite —
+   deshalb ::ng-deep, begrenzt auf .legal-page__content. */
 .legal-page {
-  max-width: 720px;
-  margin: 0 auto;
-  /* Seitenränder und Abstand nach unten setzt der Rahmen (shared/public-shell) */
-  padding: var(--space-24) 0 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-24);
+  gap: 32px;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .legal-page h1 {
   margin: 0;
-  color: #101d40;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: clamp(2.4rem, 1.7rem + 2.6vw, 4rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
   /* „Barrierefreiheitserklärung“ ist breiter als ein Handy: lange Wörter deutsch trennen statt seitlich scrollen */
   hyphens: auto;
   overflow-wrap: break-word;
-  font-size: var(--text-heading);
-  line-height: var(--leading-heading);
-  letter-spacing: var(--tracking-heading);
 }
 
-/* Kräftig getönte Amber-Fläche + dunkler Text statt einer blassen Dekor-Box
-   — DESIGN_SYSTEM.md Version 3: --color-amber-glow selbst ist NUR für rein
-   dekorative Flächen freigegeben (2,78:1, siehe dortige Kontrast-Notiz),
-   für substanziellen Fließtext hier stattdessen eine 30%-Mischung auf Weiß/
-   Canvas — geprüft: --color-midnight-plum darauf liegt bei ~8,2–9,2:1,
-   weit über den geforderten 4,5:1 (WCAG 1.4.3). */
+/* Hinweis auf Platzhaltertext: Tönung Amber, Text in dunklem Amber (5,3:1) */
 .legal-warning {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-12);
-  background: color-mix(in srgb, var(--color-amber-glow) 30%, var(--color-card-white));
-  border-radius: var(--radius-cards);
-  padding: var(--space-16) var(--space-20);
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  background: var(--organisation-tint);
 }
-.legal-warning svg { flex-shrink: 0; margin-top: 2px; color: var(--color-midnight-plum); }
+.legal-warning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--organisation-deep);
+}
 .legal-warning p {
   margin: 0;
+  color: var(--ink);
   font-size: 15px;
-  font-weight: 500;
   line-height: 1.5;
-  color: var(--color-midnight-plum);
 }
-.legal-warning strong { font-weight: 800; }
+.legal-warning strong {
+  font-weight: 700;
+}
 
 .legal-page__content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-32);
+  gap: 40px;
 }
-
-.legal-page__content section {
+.legal-page__content ::ng-deep section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 10px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
 }
-
-.legal-page__content h2 {
-  font-size: var(--text-subheading);
-  line-height: var(--leading-subheading);
-}
-
-.legal-page__content p,
-.legal-page__content li {
-  font-size: var(--text-body-sm);
-  color: var(--color-slate-violet);
-  line-height: var(--leading-body-sm);
+.legal-page__content ::ng-deep h2 {
   margin: 0;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.8rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
 }
-
-.legal-page__content a { color: var(--color-violet-ink); }
-
-.legal-page__content .placeholder {
-  color: var(--color-dusk-helper);
-  font-style: italic;
+.legal-page__content ::ng-deep h3 {
+  margin: 8px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+.legal-page__content ::ng-deep p,
+.legal-page__content ::ng-deep li {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1.65;
+}
+.legal-page__content ::ng-deep ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.legal-page__content ::ng-deep a {
+  color: var(--ink);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+.legal-page__content ::ng-deep .placeholder {
+  color: var(--ink-soft);
 }
 
 .legal-page .back-link {
-  font-size: var(--text-body-sm);
-  font-weight: 500;
-  color: var(--color-midnight-plum);
-  text-decoration: none;
-  width: fit-content;
-  min-height: 44px;
   display: inline-flex;
   align-items: center;
+  width: fit-content;
+  min-height: 44px;
+  margin-left: -12px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 180ms ease-out;
 }
-.legal-page .back-link:hover { color: var(--color-violet-ink); }
-
-
+@media (hover: hover) and (pointer: fine) {
+  .legal-page .back-link:hover {
+    background: var(--ground-2);
+  }
+}
 @media (max-width: 480px) {
-  .legal-page h1 { font-size: 28px; }
+  .legal-page h1 {
+    font-size: 2.4rem;
+  }
 }

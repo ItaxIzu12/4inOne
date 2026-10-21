@@ -7,12 +7,12 @@
   // Finanzen sind zahlenlastig: überall gleich breite Ziffern, damit Beträge sauber untereinander stehen.
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
-  // Bereichsfarbe Finanzen (grün): Dialoge, Dropdowns und Kalender erben sie. Kontrast 5,3:1 auf Weiß.
-  --accent: #1e7a4d;
-  --accent-glow: #1e7a4d;
-  --accent-hover: #186340;
-  --accent-soft: #e3f6ec;
-  --lavender: #e3f6ec;
+  // Bereichsfarbe Finanzen (grün): Dialoge, Dropdowns und Kalender erben sie. Kontrast 6,3:1 auf Weiß, 5,5:1 auf der Tönung.
+  --accent: var(--finance-accent);
+  --accent-glow: var(--finance-accent);
+  --accent-hover: color-mix(in srgb, var(--finance-accent) 85%, #000);
+  --accent-soft: var(--finance-soft);
+  --lavender: var(--finance-soft);
   --fin-red: #c6324b;
   --fin-red-soft: #fde8eb;
   --fin-blue: #2f6fbf;
@@ -387,7 +387,7 @@ h3 {
   height: 21px;
 }
 .tile--green {
-  --cat: #1e7a4d;
+  --cat: var(--finance-accent);
 }
 .tile--goal {
   --cat: #b5384f;

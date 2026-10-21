@@ -76,7 +76,7 @@ INSTALLED_APPS = [
     'reisen',
     'connections',
     'integrations',
-    # Öffentliche Website: Kontaktformular und cookielose Besucherzählung
+    # Öffentliche Website: cookielose Besucherzählung
     'website',
 ]
 
@@ -288,8 +288,7 @@ REST_FRAMEWORK = {
         # Haushaltsdaten über einen längeren Zeitraum, deshalb das strenge
         # Limit für Datenexporte (ARCHITEKTUR.md §3.9), pro Nutzer.
         'data_export': f"{env.int('RATE_LIMIT_DATA_EXPORT', default=2)}/min",
-        # Öffentliche Website (website/views.py): Kontaktformular gegen Spam, Seitenzählung gegen Hochzählen.
-        'contact': f"{env.int('RATE_LIMIT_CONTACT', default=5)}/hour",
+        # Öffentliche Website (website/views.py): Seitenzählung gegen künstliches Hochzählen.
         'pageview': f"{env.int('RATE_LIMIT_PAGEVIEW', default=120)}/min",
     },
 }
@@ -324,10 +323,7 @@ FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:4200').rstrip('/')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='4inOne <no-reply@4inone.local>')
 CONTACT_INVITE_EXPIRY_DAYS = env.int('CONTACT_INVITE_EXPIRY_DAYS', default=14)
 
-# Kontaktformular (website/): Empfänger der Weiterleitung (leer = nur speichern, im Admin lesbar) und wie lange
-# Anfragen und die Tageszähler der Besucherzählung aufbewahrt werden (`manage.py prune_website`, täglich).
-CONTACT_RECIPIENT = env('CONTACT_RECIPIENT', default='')
-CONTACT_RETENTION_DAYS = env.int('CONTACT_RETENTION_DAYS', default=180)
+# Besucherzählung (website/): wie lange die Tageszähler aufbewahrt werden (`manage.py prune_website`, täglich).
 PAGEVIEW_RETENTION_DAYS = env.int('PAGEVIEW_RETENTION_DAYS', default=730)
 
 # CORS

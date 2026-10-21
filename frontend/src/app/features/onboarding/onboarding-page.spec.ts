@@ -35,6 +35,22 @@ describe('OnboardingPage', () => {
     expect(c.selected()).toEqual(['finanzen', 'haushalt']);
     expect(api.complete).not.toHaveBeenCalled();
   });
+  it('explains linking with the shared example chain and marks choices with an icon in the area colour', () => {
+    const f = TestBed.createComponent(OnboardingPage);
+    f.detectChanges();
+    const el = f.nativeElement as HTMLElement;
+    expect(el.querySelector('app-link-chain')).toBeTruthy();
+    expect(el.querySelector('.welcome-tile')).toBeNull();
+    const c = f.componentInstance;
+    c.usage.set('personal');
+    c.move(3);
+    c.toggle('reisen');
+    f.detectChanges();
+    const travel = el.querySelector('.domain-options .tone-travel') as HTMLElement;
+    expect(travel.classList).toContain('selected');
+    expect(travel.querySelector('.selection app-icon')).toBeTruthy();
+    expect(el.querySelector('.domain-options')?.textContent).not.toContain('✓');
+  });
   it('redirects an existing account without displaying onboarding', () => {
     api.getProfile.mockReturnValue(of({ needs_onboarding: false }));
     const nav = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);

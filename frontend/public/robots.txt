@@ -6,4 +6,3 @@ Disallow: /einladung
 Disallow: /passwort-zuruecksetzen
 Disallow: /email-bestaetigen
 Disallow: /einstellungen
-Disallow: /kontakt/danke

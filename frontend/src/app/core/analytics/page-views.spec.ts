@@ -2,7 +2,7 @@ import { PageViews, TRACKED_PATHS } from './page-views';
 
 describe('PageViews.pathOf', () => {
   it('counts public pages without query or fragment', () => {
-    expect(PageViews.pathOf('/kontakt?ref=mail#form', false)).toBe('/kontakt');
+    expect(PageViews.pathOf('/impressum?ref=mail#oben', false)).toBe('/impressum');
     expect(PageViews.pathOf('/', false)).toBe('/');
   });
 

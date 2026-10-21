@@ -44,8 +44,8 @@ Beispieldaten.
 
 ## Brand Commitments
 
-Name „4inOne“, Zeichen aus vier weichen Feldern (`<app-brand>`), Leitsatz „Dein Alltag. Alles verbunden.“, Schrift
-Instrument Sans, Sprache Deutsch in Du-Form, ruhig und erwachsen. Linke Navigation und bestehende Icons bleiben.
+Name „4inOne“, Zeichen aus vier weichen Feldern in den Bereichsfarben (`<app-brand>`), Leitsatz „Dein Alltag. Alles
+verbunden.“, Schrift Schibsted Grotesk für alles (Google Font, selbst gehostet, ohne Kursive), Sprache Deutsch in Du-Form, ruhig und erwachsen. Linke Navigation und bestehende Icons bleiben.
 
 ## Evidence on Hand
 

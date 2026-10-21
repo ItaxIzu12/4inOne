@@ -1,0 +1,112 @@
+@use '../styles/editorial' as editorial;
+
+// Beispielkette (shared/link-chain): weiße Karte, vier Zeilen mit Bereichssymbol, Art, Titel und Wert, dahinter die
+// Lichtlinien. Erbt die Tokens der Seite (--card, --line, --ink …); Bereichsfarben kommen aus dem Mixin `area-tones`.
+:host {
+  display: block;
+}
+@include editorial.area-tones;
+.chain {
+  margin: 0;
+}
+.chain__panel {
+  position: relative;
+  padding: 24px;
+  border: 1px solid var(--line, #e6e0d4);
+  border-radius: var(--radius, 16px);
+  background: var(--card, #fff);
+}
+.chain__head {
+  margin: 0 0 8px;
+  color: var(--ink-soft, #4a5263);
+  font-size: 14px;
+  font-weight: 600;
+}
+.chain__list {
+  display: grid;
+  gap: 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chain__row {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 10px 12px 10px 0;
+}
+.chain__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--c);
+  color: var(--c-on);
+}
+.chain__icon app-icon {
+  width: 22px;
+  height: 22px;
+}
+.chain__text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.3;
+}
+.chain__text small {
+  color: var(--c-deep);
+  font-size: 13px;
+  font-weight: 600;
+}
+.chain__text b {
+  overflow: hidden;
+  color: var(--ink, #121826);
+  font-size: 17px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chain__value {
+  color: var(--ink-soft, #4a5263);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.chain__meter {
+  grid-column: 2 / -1;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--c-tint);
+}
+.chain__meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--c);
+  transform-origin: left;
+}
+figcaption {
+  margin-top: 14px;
+  color: var(--ink, #121826);
+  font-size: 16px;
+  font-weight: 500;
+}
+// Schmale Spalten (Handy, Anmelde-Seitenleiste): Werte ausblenden — Titel + Art reichen, der Satz erklärt den Nutzen
+@container (max-width: 380px) {
+  .chain__panel {
+    padding: 16px;
+  }
+  .chain__value {
+    display: none;
+  }
+  .chain__list {
+    gap: 14px;
+  }
+}
+:host {
+  container-type: inline-size;
+}

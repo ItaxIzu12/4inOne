@@ -1,0 +1,64 @@
+// 404: eine schmale Spalte im Rahmen der öffentlichen Seiten (shared/public-shell),
+// im Stil der Startseite: kräftige Überschrift, Knöpfe in Tinte.
+.contact {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 640px;
+}
+h1 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--display); // Stil der Startseite (shared/styles/_editorial.scss)
+  font-size: clamp(2.4rem, 1.7rem + 2.6vw, 4rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+.lede {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 18px;
+  line-height: 1.5;
+}
+.btn {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 var(--space-6);
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease-out,
+    transform 120ms ease-out;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn--quiet {
+  background: var(--ground-2);
+  color: var(--ink);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover {
+    background: #252e44;
+  }
+  .btn--quiet:hover {
+    background: var(--line);
+  }
+}
+

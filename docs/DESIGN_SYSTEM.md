@@ -22,14 +22,16 @@ Complex underneath, simple on top. Weniger Elemente, bessere Ordnung — keine D
 
 - Marke: `--brand-primary #245fb0` (Links, Fokusring, Startseite).
 - Bereiche — **Akzente, keine Flächenfüller** (Symbol, kleiner Aktiv-Indikator, kleine Statusinfo):
-  Finanzen `--finance-accent #1e7a4d` · Haushalt `--household-accent #b8432a` (warmes Coral) ·
-  Organisation `--organization-accent #7541b5` · Reisen `--travel-accent #246db8`; je `--*-soft` als helle Fläche.
+  Finanzen `--finance-accent #0b6e4b` · Haushalt `--household-accent #a8325a` · Organisation
+  `--organization-accent #8a5800` · Reisen `--travel-accent #2453b4`; je `--*-soft` als helle Fläche
+  (`#e4f4ec` · `#fce8ee` · `#fcefd9` · `#e7edfb`). Das sind die dunklen Textvarianten der Logo-Farben
+  `#0f9d6b` · `#e04f78` · `#e3961a` · `#3b6fe0` (Flächen, Logo, Startseite; seit 21.10.2026).
 - Status überall gleich: `--success #1e7a4d`, `--warning #8a5a00`, `--error #b3261e` (= `--danger`), `--info #245fb0`,
   je mit `--*-soft`. Status nie nur über Farbe (immer Text dazu). Badges sparsam, nur für echten Status.
 
 ### Typografie
 
-Systemschrift (`--font-body`, Helvetica/Arial) — bewusst, für eine ruhige Produkt-UI. Vier Gewichte:
+Schibsted Grotesk (`--font-body` = `--font-display`, selbst gehostet, keine Kursive; seit 21.10.2026). Vier Gewichte:
 400 `--fw-regular`, 500 `--fw-medium`, 600 `--fw-semibold`, 700 `--fw-bold`.
 
 | Rolle | Token | Größe |
@@ -116,6 +118,91 @@ Abstand — nie nur über Farbe.
   „Verknüpft“; ohne JavaScript oder mit reduzierter Bewegung ist alles sofort sichtbar. Bereiche als echte Reiter
   (Pfeiltasten, Pos1/Ende), das Bild folgt.
 
+- **Neue Bereichsfarben in der App, Onboarding neu (21.10.2026, aktueller Stand):** Die globalen Bereichstokens in
+  `styles.css` folgen jetzt Logo und Startseite (dunkle Textvariante für Schrift/Symbole, Tönung als Fläche):
+  `--finance-accent #0B6E4B / --finance-soft #E4F4EC`, `--household-accent #A8325A / #FCE8EE`,
+  `--organization-accent #8A5800 / #FCEFD9` (vorher Violett), `--travel-accent #2453B4 / #E7EDFB`; alle ≥ 5,3:1 auf
+  Weiß und auf der eigenen Tönung. `--m-finance/--m-organize` (vorher Violett-Grau) zeigen auf diese Tokens.
+  Bereichsseiten nachgezogen (21.10.2026): die rund 40 festen Altwerte (#1e7a4d, #b8432a, #7541b5, #246db8 samt
+  Tönungen/Hover) in `finanzen/`, `haushalt/`, `familie/`, `organisation/`, `reisen/`, Benachrichtigungen,
+  Verknüpfungs-Chips, Import-Dialog, Datumswahl und Startseiten-Deck zeigen jetzt auf die Tokens; `--accent-hover`
+  je Bereich per `color-mix` (85 % + Schwarz, ≥ 7,6:1 mit Weiß). Weiß auf gefüllten Akzenten: Finanzen 6,3 ·
+  Haushalt 6,4 · Organisation 6,0 · Reisen 7,1:1 — auch das dunkle Amber trägt weiße Schrift; das helle Logo-Amber
+  `#e3961a` bleibt Logo/Startseite vorbehalten und bekäme dunkle Schrift. Bewusst unverändert: Erfolgsgrün
+  (`--success`, gleicher Wert wie früher Finanzen) für „Gespeichert“, MFA-Schritt erledigt, Plus-Beträge. Kalender-
+  Kategorie „Arbeit“ (`--c-arbeit`) zeigt jetzt auf `--organization-accent` statt Violett; die ungenutzte Regel
+  `.status--violet` in `reisen/trip-common.scss` ist entfernt (Reise-Status kennt nur green/blue/gray/red).
+  Untere Tableiste und Seitenleiste (`layout/app-shell.scss`, gemeinsame Regel) nutzen die Tokens statt fester Werte;
+  „Start“ in Tinte `#121826` statt Markenblau. Aufbau und Icons der Navigation unverändert. `favicon.ico` (Browser-Tab)
+  aus dem neuen `favicon.svg` neu erzeugt (16/32/48 px), Manifest `theme_color #121826`, `background_color #FAF8F4`.
+  Onboarding (`features/onboarding`) im Startseiten-Stil: warmweißer Grund, weiße Karte mit Rand, Schritte mit
+  Tinten-Ziffern, Display-Titel; Schritt 1 erklärt Verknüpfen mit `app-link-chain` statt schräger Kacheln;
+  Auswahlkarten weiß mit Rand, gewählt = Tintenrand + Haken-Symbol (statt ✓/› als Text), Bereiche mit Farbfeld,
+  gewählter Bereich in seiner Tönung; Zusammenfassung als Pillen in Bereichstönung; Knöpfe als Pillen (Tinte /
+  Tintenrand); Handy ganzflächig mit Fortschrittsbalken in Tinte. Logik unverändert. Noch offen: Innerhalb der
+  Bereichsseiten stehen die alten Akzentfarben an ~40 Stellen fest im Code (z. B. `private-finance.scss --accent`,
+  `haushalt.scss`, `einkauf-tab.scss`, `familie.css`).
+- **Login/Registrierung im Startseiten-Stil, Kette als Baustein (21.10.2026):** Die Beispielkette
+  ist jetzt der globale Baustein `shared/link-chain` (`app-link-chain`; Eingänge `heading`, `caption`, `links`;
+  Lichtlinien über `viewChildren`, Werte bei Containerbreite ≤ 380 px ausgeblendet). Die Bereichsklassen `.tone-*`
+  (`--c`, `--c-deep`, `--c-tint`, `--c-on`) kommen aus dem Mixin `editorial.area-tones`. Startseite nutzt den Baustein
+  im Hero (Hero-Abstand unten etwas kleiner). Login und Registrierung: Markenspalte warmweiß mit Überschrift, Satz und
+  Kette statt der schrägen Symbolkacheln in alten Farben; Formular weiß, Display-Titel, Felder 52 px mit Rand
+  `#948C7E` (3,3:1), Fokus Tinte, Knöpfe als Pillen in Tinte bzw. mit Tintenrand, Trenner „Neu bei 4inOne?“ mit
+  Linien. Am Handy keine Symbolreihe mehr, nur Zurück + Logo + Formular. Formularlogik unverändert.
+- **Eine Schrift, keine Kursive, Nutzen statt Deko (21.10.2026):** Schibsted Grotesk (Google Font,
+  OFL, variabel 400–900) ersetzt Instrument Sans und Instrument Serif überall (App, Website, Formulare, Logo, Teilen-
+  Bild); selbst gehostet, zwei Teildateien nach Zeichenbereich, `font-synthesis-style: none`, `em/i/cite` normal.
+  Startseite nach externer Kritik geschärft: kürzerer Einstieg, die vier schwebenden Karten um das Logo ersetzt durch
+  eine Beispielkette, die den Nutzen einer Verknüpfung zeigt (Gerät → Sparziel → Aufgabe → Termin, jede Verbindung
+  real), „Ohne Anmeldung ausprobieren“ als gleichwertiger Rand-Knopf neben „Konto erstellen“ (Hero, So geht’s, Fragen).
+  Kontaktseite, Danke-Seite, Formular-Baustein und der öffentliche Backend-Endpunkt `/api/v1/site/contact/` samt
+  Tabelle (Migration `website.0002`) entfernt. `familie.css`: `.people-card` mit `min-width: 0` (breitere Schrift
+  erzeugte bei 360 px 3 px Überstand). Der folgende Eintrag gilt sonst weiter.
+- **Logo, Unterseiten, ohne Kontakt (21.10.2026):** Das Logo (`shared/brand`, Favicon, App-Icons,
+  Teilen-Bild) nutzt die vier Bereichsfarben der Startseite (Finanzen `#0F9D6B`, Reisen `#3B6FE0`, Organisation
+  `#E3961A`, Haushalt `#E04F78`), Schriftzug in Tinte `#121826`; das Favicon zeichnet die Felder als echte
+  Blütenform (enge Ecke zur Mitte). Impressum, Datenschutz, Nutzungsbedingungen und Barrierefreiheit (dazu Kontakt,
+  Danke, 404) im Stil der Startseite über dieselben Tokens (`shared/styles/_editorial.scss` als SCSS-Mixin für
+  Startseite und `shared/public-shell`). Der Kontaktbereich auf der Startseite und der Kontakt-Link im Fuß sind
+  entfernt (Nutzerwunsch); `/kontakt` bleibt erreichbar (404 „Fehler melden“). Der Name im Kachel-Fuß steht immer in
+  der Markenschrift, nur Überschriften nutzen die Serife. Der folgende Eintrag gilt sonst weiter.
+- **Startseite „Editorial hell“ (21.10.2026):** Auf Nutzerwunsch („modern, elegant, Agentur-Niveau,
+  nicht verspielt; bunte, einheitliche Farben für die vier Bereiche; hochwertige Karten und Animationen; stilvolle
+  Schrift; klar erklären, was die App ist“) aus drei Richtungen gewählt und mit ui-taste, ui-ux-pro-max, magic-ui und
+  impeccable umgesetzt. Werte, Aufbau und Bausteine: `design-system/4inone/MASTER.md`. Ersetzt Runde 3 (Blüten-Motiv,
+  Inclusive Sans — Schrift entfernt). Neue globale Bausteine: `shared/spotlight` (Lichtkegel, Magic Card) und
+  `shared/animated-beam` (Lichtlinie, Animated Beam); `app-tile-footer` farblich und typografisch über `--tf-*`
+  anpassbar (Host setzt keine eigenen Werte mehr, die die Seite überdecken würden).
+- **Startseite, Runde 3: weniger generisch (20.10.2026):** Nach eigener Kritik („wirkt zu zwei
+  Dritteln wie eine KI-Vorlage“) mit `ui-ux-pro-max` und dem Taste-Skill umgebaut (Richtung „One motif“, Prüfung
+  `inspect.mjs`: 0 FAIL, 0 WARN; Bewertung nach `critique.md` ≈ 8/10). Die Blüte ist das einzige Motiv. Schrift
+  Inclusive Sans statt Plus Jakarta Sans (humanistisch, auf Nutzerwunsch). Neu: Satz-Bänder mit Schaltern (wer
+  sieht was), Karteikarten-FAQ, Coupon-Kontakt, echter 16-s-Mitschnitt der Demo (VP9, 183 KB, `tag-morgens.webm`).
+  `app-area-deck`: Vorschau-Zeilen mit echten Inhalten (`preview`), einmaliges Auffächern (`fanIn`), Größen über
+  `--deck-title/-text/-small`, Punktfarbe über `--deck-dot`; Nachbarkarten ohne `aria-label` (Name aus sichtbarem
+  Text, WCAG 2.5.3), keine Linien/Schatten. `app-tile-footer`: die vier Bereichsfelder bilden das Zeichen (enge Ecke
+  zur Mitte), ohne Icons; Größen über `--tf-*`. Kopf ohne Glas-Effekt. Der folgende Eintrag gilt sonst weiter.
+- **Globale Bausteine Fächer und Kachel-Fußzeile (20.10.2026):** Nach Auswahl aus der Kombai-Galerie
+  (Vorbilder „Daymoor“ und „Yieldr“, nichts kopiert, in unser System übertragen):
+  `shared/area-deck` (`app-area-deck`) zeigt beliebige Bereichskarten als Fächer — gleich für alle vier Bereiche,
+  nur die Farbe wechselt (Logo-Feld als Symbolgrund, helles Feld für Stichworte und Nachbarkarten, Text Tinte).
+  Bewegung 450 ms transform/opacity, keine Auto-Drehung, Wischen am Handy, horizontal abgeschnitten (kein
+  seitliches Scrollen). `shared/tile-footer` (`app-tile-footer`) ersetzt den dunklen Startseiten-Fuß (`full`) und
+  den Fuß von `shared/public-shell` (`compact`). Startseite: Fächer im Hero, das Bento der Bereiche entfällt (sonst
+  doppelt), das echte Startseiten-Bild sitzt jetzt in „Ein Tag mit 4inOne“. Der folgende Eintrag gilt sonst weiter.
+- **Öffentliche Startseite, Neuentwurf (20.10.2026):** Auf Nutzerwunsch komplett neu erfunden, mit dem
+  Skill `ui-ux-pro-max` (Designsystem in `design-system/4inone/MASTER.md`; der automatische Erstvorschlag — dunkles
+  Glas, Handschrift-Fonts, Video-Hero — wurde als unpassend verworfen). Stil Bento + Soft UI: Karten Radius 24 px mit
+  8-px-Ecke, Schatten zweistufig, Papiergrund `#F7F6F2`, Karten weiß, Tinte `#0F1B3D` (15,6:1), Akzent `#1E40AF`
+  (8,1:1), gedämpft `#475569` (7:1); Bereichsfarben nur als Kachelgrund/Symbolfeld, Text darauf Tinte (≥ 8,8:1).
+  Schrift Plus Jakarta Sans variabel (60 KB, OFL, `public/fonts/plus-jakarta-sans`), nur auf `/` — die App bleibt
+  bei Instrument Sans. Bewegung: Paket `motion` 14.4 als `motion/mini` (Web Animations API) + `inView`/`stagger`,
+  Landing-Chunk 40 KB (11,6 KB übertragen); nur transform/opacity, Dauer 400–700 ms, ease-out `[0.22, 1, 0.36, 1]`,
+  Versatz 60 ms. Hero-Bilder neu aus der Demo (Tagesplan, 08:30). Am Handy keine Desktop-Ausschnitte in den
+  Bereichskacheln (unlesbar), Kopf ≤ 420 px nur „Anmelden“. FAQ als natives `<details>` (sanftes Aufklappen per
+  `::details-content`, wo unterstützt). Kontaktformular als gemeinsame Komponente `shared/contact-form` (Startseite
+  und `/kontakt`). Die alte Startseite (Satz-Bühne, Verknüpfungs-Karte `link-steps`, Teilen-Schalter) ist entfernt.
 - **Öffentliche Unterseiten (20.10.2026):** Impressum, Datenschutz, Nutzungsbedingungen, Barrierefreiheit, Kontakt,
   Danke und 404 stehen im gemeinsamen Rahmen `shared/public-shell` im Stil der Startseite: Kopfzeile 72 px mit Marke
   (22 px, Handy 20) und „Anmelden“ / „Konto erstellen“ (Pill, `--brand-primary`), Inhalt max. 1120 px, Fußzeile mit
@@ -432,10 +519,10 @@ Marketing material may use more expressive imagery than the daily product.
 
 Use a consistent orientation system:
 
-- Finanzen — green
-- Haushalt — warmes Coral (`#b8432a`, Fläche `#fdeee9`, dunkel `#9c3722`; 5,4:1 auf Weiß)
-- Organisation — purple
-- Reisen — blue
+- Finanzen — green (`--finance-accent #0b6e4b`)
+- Haushalt — Beere (`--household-accent #a8325a`, Fläche `--household-soft #fce8ee`; 6,4:1 auf Weiß)
+- Organisation — Amber (`--organization-accent #8a5800`; weiße Schrift auf der Füllung 6,0:1)
+- Reisen — blue (`--travel-accent #2453b4`)
 
 Domain colors are accents, not backgrounds for entire dense screens.
 

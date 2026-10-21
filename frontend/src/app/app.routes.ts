@@ -117,22 +117,6 @@ export const routes: Routes = [
     data: { shell: 'bare', hideHeader: true },
   },
   {
-    path: 'kontakt',
-    title: 'Kontakt | 4inOne',
-    loadComponent: () => import('./features/kontakt/kontakt').then((m) => m.Kontakt),
-    data: {
-      shell: 'bare',
-      hideHeader: true,
-      description: 'Frage, Fehler oder Idee? Schreib dem Team von 4inOne über das Kontaktformular.',
-    },
-  },
-  {
-    path: 'kontakt/danke',
-    title: 'Danke für deine Nachricht | 4inOne',
-    loadComponent: () => import('./features/kontakt/danke').then((m) => m.KontaktDanke),
-    data: { shell: 'bare', hideHeader: true },
-  },
-  {
     path: 'impressum',
     title: 'Impressum | 4inOne',
     data: {

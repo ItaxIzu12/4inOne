@@ -55,8 +55,14 @@ export class AppShell {
       this.destroyRef.onDestroy(() => observer.disconnect());
     });
   }
+  /**
+   * Suche in der Kopfzeile vorerst aus (21.10.2026, Nutzerwunsch): Feld und ⌘K sind ausgeblendet, die Logik
+   * (Startseite filtert über ?q=, siehe dashboard.ts) bleibt erhalten. Zum Einschalten auf true setzen.
+   */
+  readonly searchEnabled = false;
   @HostListener('document:keydown', ['$event'])
   focusDashboardSearch(event: KeyboardEvent) {
+    if (!this.searchEnabled) return;
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
       this.dashboardSearch()?.nativeElement.focus();

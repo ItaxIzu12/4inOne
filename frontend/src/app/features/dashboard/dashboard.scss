@@ -1,37 +1,46 @@
 // Startseite „Tagesplan“ (17.10.2026): ruhig, modern, erklärbar. Eine Zeilen-Form für alles — Zeit · Bereichs-Symbol ·
 // Titel/Hinweis (Bereich als Wort vorn) · Pfeil. Der Tag in Gruppen (Überfällig, Als Nächstes, Später, Ohne Uhrzeit,
-// Vorbei); „Als Nächstes“ nur hellblau hinterlegt, Überfälliges über rote Schrift und rotes Symbol. Symbole und Farben
-// wie in der Navigation (Kontrast ≥ 5,3:1). Weiße Flächen auf hellem Grund, weiche Ecken mit einer engeren Ecke.
+// Vorbei); „Als Nächstes“ warm hinterlegt, Überfälliges über rote Schrift und rotes Symbol. Bereichssymbole als
+// Farbfeld wie auf der Startseite (Logo-Farbe, helles Symbol; Amber mit Tinte). Weiße Karten mit feinem Rand auf
+// warmweißem Grund (21.10.2026, Farbwelt der Website).
 // Rechte Spalte: dashboard-side.scss · Menü, Hinweise, Suche: dashboard-parts.scss.
 :host {
   display: block;
-  --ink: #101d40;
+  --ink: var(--text-primary);
   --text: var(--text-primary);
   --muted: var(--text-secondary);
   --hover: var(--surface-hover);
   --link: var(--brand-primary);
   --late: #b3261e;
-  --next: #eef4fd;
-  --card-r: 20px 20px 8px 20px;
+  --next: var(--surface-pressed);
+  --card-r: var(--radius-lg);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   color: var(--text);
 }
 .finance {
   --tone: var(--finance-accent);
   --tone-soft: var(--finance-soft);
+  --tone-fill: var(--finance-fill);
+  --tone-on: var(--finance-on);
 }
 .household {
   --tone: var(--household-accent);
   --tone-soft: var(--household-soft);
+  --tone-fill: var(--household-fill);
+  --tone-on: var(--household-on);
 }
 .organisation,
 .family {
   --tone: var(--organization-accent);
   --tone-soft: var(--organization-soft);
+  --tone-fill: var(--organization-fill);
+  --tone-on: var(--organization-on);
 }
 .travel {
   --tone: var(--travel-accent);
   --tone-soft: var(--travel-soft);
+  --tone-fill: var(--travel-fill);
+  --tone-on: var(--travel-on);
 }
 .sr-only {
   position: absolute;
@@ -60,8 +69,8 @@ h1 {
   color: var(--ink);
   font-size: clamp(26px, 1.2rem + 0.9vw, 34px);
   font-weight: var(--fw-bold);
-  line-height: 1.15;
-  letter-spacing: -0.025em;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
 }
 .greeting__day {
   margin: var(--space-2) 0 0;
@@ -128,6 +137,7 @@ h1 {
 // ---------- Tagesplan ----------
 .plan__card {
   padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--card-r);
   background: #fff;
 }
@@ -159,7 +169,7 @@ h1 {
 }
 .today-row {
   display: grid;
-  grid-template-columns: 56px 30px minmax(0, 1fr) 16px;
+  grid-template-columns: 56px 32px minmax(0, 1fr) 16px;
   align-items: center;
   gap: var(--space-3);
   width: 100%;
@@ -188,15 +198,15 @@ h1 {
 .row__icon {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 10px 10px 4px 10px;
-  background: var(--tone-soft, var(--surface-app));
-  color: var(--tone, var(--muted));
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--tone-fill, var(--surface-pressed));
+  color: var(--tone-on, var(--muted));
 }
 .row__icon app-icon {
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
 }
 .item-copy {
   display: grid;
@@ -243,7 +253,10 @@ h1 {
   background: #fcebea;
   color: var(--late);
 }
-// Vorbei: ruhiger
+// Vorbei: ruhiger (Symbol blasser, Text gedämpft)
+.today-row.is-past .row__icon {
+  opacity: 0.5;
+}
 .today-row.is-past .time,
 .today-row.is-past strong {
   color: var(--muted);
@@ -254,7 +267,7 @@ h1 {
     background: var(--hover);
   }
   .today-row--lead:hover {
-    background: #e4eefc;
+    background: var(--border-subtle);
   }
 }
 
@@ -328,7 +341,7 @@ h1 {
     font-size: 15px;
   }
   .today-row {
-    grid-template-columns: 46px 30px minmax(0, 1fr) 16px;
+    grid-template-columns: 46px 32px minmax(0, 1fr) 16px;
     gap: var(--space-2);
     padding: 8px var(--space-2);
   }

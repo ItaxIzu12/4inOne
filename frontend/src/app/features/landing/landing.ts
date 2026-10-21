@@ -1,202 +1,200 @@
 import { afterNextRender, Component, DestroyRef, ElementRef, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { inView, stagger } from 'motion';
+import { animate } from 'motion/mini';
+import { AnimatedBeam } from '../../shared/animated-beam/animated-beam';
+import { LinkChain } from '../../shared/link-chain/link-chain';
+import { AreaTone } from '../../shared/area-deck/area-deck';
 import { Brand } from '../../shared/brand/brand';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
-import { LinkSteps } from './link-steps';
+import { Spotlight } from '../../shared/spotlight/spotlight.directive';
+import { TileFooter } from '../../shared/tile-footer/tile-footer';
 
-type DomainKey = 'finanzen' | 'haushalt' | 'organisation' | 'reisen';
-
-interface Domain {
-  key: DomainKey;
-  name: string;
+/** Ein Bereich der App, so wie er auf der Startseite erklärt wird. Inhalte stammen aus der echten Demo. */
+interface Area {
+  key: string;
+  tone: AreaTone;
   icon: IconName;
-  summary: string;
-  parts: string;
-  /** Echter Ausschnitt aus der Demo (public/images/landing) — keine nachgebauten Oberflächen. */
-  image: string;
-  alt: string;
+  name: string;
+  /** Was der Bereich für dich tut — ein Satz. */
+  promise: string;
+  features: string[];
+  /** Ein echter Wert aus der Demo, als kleine Vorschau. */
+  fact: { label: string; value: string; meter?: number };
+  demo: string;
+  /** Optional ein echter Screenshot aus der Demo (public/images/landing). */
+  shot?: { name: string; alt: string };
 }
 
-/** Teilen ist eine eigene Entscheidung: was andere sehen, wenn man teilt — nach dem echten Rechtemodell. */
-interface Share {
+interface Step {
+  title: string;
+  text: string;
+}
+
+interface Rule {
   key: string;
-  sentence: string;
+  label: string;
   on: string;
   off: string;
-  /** Finanzen lassen sich nicht teilen: Der Schalter steht fest auf „aus“. */
   locked?: boolean;
-  tone: 'green' | 'blue' | 'yellow' | 'pink';
 }
 
+interface Question {
+  q: string;
+  a: string;
+}
+
+/** Ausklingen wie bei einer Kamerafahrt: schnell los, weich ankommen. */
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
 /**
- * Öffentliche Startseite (/ ohne Anmeldung). Idee: Das Zeichen von 4inOne — vier weiche Felder, eins je Bereich — ist
- * im ersten Satz das Wort „Alles“: Beim ersten Besuch entfaltet es sich zu Finanzen, Haushalt, Organisation und
- * Reisen. Danach: wie eine Verknüpfung entsteht (zum Durchschieben, mit den echten Beschriftungen), was sie tut und
- * nicht tut, die vier Bereiche (echte Screenshots) und der Unterschied zwischen Verknüpfen und Teilen.
+ * Öffentliche Startseite (/ ohne Anmeldung) — Richtung „Editorial hell“ (design-system/4inone/MASTER.md).
+ * Aufgabe: in Sekunden erklären, was 4inOne ist (eine App für Finanzen, Haushalt, Termine und Reisen, die verknüpft,
+ * was zusammengehört, und privat bleibt), und zum Konto oder zur Demo führen.
  *
- * Ehrlich bleiben: gezeigt wird nur, was es gibt — Verknüpfungen (V1) und Vorschläge (V1) sind live,
- * Automationen, KI, Banking, externe Kalender oder Buchungen nicht. Bilder sind echte Demo-Screenshots.
+ * Welt: warmweißer Grund, Schibsted Grotesk (kräftige Überschriften), vier kräftige Bereichsfarben
+ * mit gleicher Helligkeit. Der Hero beweist den Nutzen einer Verknüpfung an einem Beispiel (Waschmaschine → Sparziel
+ * → Aufgabe → Termin); Lichtimpulse laufen die Kette entlang (shared/animated-beam). Karten mit Lichtkegel unter der
+ * Maus (shared/spotlight). Eine Schrift für alles (Schibsted Grotesk), keine Kursive.
+ *
+ * Ehrlich bleiben: nur echte Funktionen und Demo-Daten — keine Kundenstimmen, Bewertungen, Nutzerzahlen oder Preise.
  */
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [RouterLink, Brand, AppIcon, LinkSteps],
+  imports: [RouterLink, Brand, AppIcon, TileFooter, AnimatedBeam, LinkChain, Spotlight],
   templateUrl: './landing.html',
-  // Abschnitte 2–4 · Grundgerüst (Kopf, Hero, Abschluss, Bewegung, Breiten) — getrennt, damit jede Datei schlank bleibt.
-  // Reihenfolge wichtig: landing.scss zuletzt, sonst überschreiben die Grundregeln der Abschnitte die Handy-Regeln.
-  styleUrls: ['./landing-sections.scss', './landing.scss'],
+  // Reihenfolge wichtig: Grundgerüst zuerst, dann Abschnitte, zuletzt Breiten (überschreiben die Grundregeln).
+  styleUrls: ['./landing.scss', './landing-sections.scss', './landing-end.scss'],
 })
 export class Landing {
-  readonly domains: Domain[] = [
+  readonly areas: Area[] = [
     {
       key: 'finanzen',
-      name: 'Finanzen',
+      tone: 'finance',
       icon: 'finance',
-      summary: 'Budgets, Transaktionen und Sparziele übersichtlich verwalten.',
-      parts: 'Monatsbudget · Kategorie-Budgets · geplante Ausgaben · Sparziele',
-      image: 'finanzen',
-      alt: 'Finanzen in 4inOne: Monatsübersicht mit Restbudget, Einnahmen, Ausgaben und Budgetstatus je Kategorie.',
+      name: 'Finanzen',
+      promise: 'Wohin dein Geld geht, auf einen Blick. Nur du siehst es.',
+      features: ['Monatsbudget und Kategorien', 'Sparziele mit Fortschritt', 'Kontoauszug als Datei importieren'],
+      fact: { label: 'Oktober übrig', value: '702,29 €', meter: 0.77 },
+      demo: '/demo/finanzen',
+      shot: { name: 'finanzen', alt: 'Finanzen in der Demo: Monatsübersicht mit Restbudget, Einnahmen, Ausgaben und Budgetstatus je Kategorie.' },
     },
     {
       key: 'haushalt',
-      name: 'Haushalt',
+      tone: 'household',
       icon: 'household',
-      summary: 'Aufgaben, Einkäufe, Geräte und Verträge an einem Ort.',
-      parts: 'Aufgaben & Routinen · Einkaufslisten · Geräte · Verträge',
-      image: 'haushalt',
-      alt: 'Haushalt in 4inOne: Einkaufslisten mit Fortschritt, eine geöffnete Liste und die Mitglieder des Haushalts.',
+      name: 'Haushalt',
+      promise: 'Aufgaben, Einkauf, Geräte und Verträge, mit allen, die mit dir wohnen.',
+      features: ['Routinen mit Zuständigkeit', 'Gemeinsame Einkaufslisten', 'Garantien und Wartungstermine'],
+      fact: { label: 'Geschirrspüler, Wartung', value: 'in 12 Tagen' },
+      demo: '/demo/haushalt',
     },
     {
       key: 'organisation',
-      name: 'Organisation',
+      tone: 'organisation',
       icon: 'calendar',
-      summary: 'Termine, Aufgaben und Notizen klar organisiert.',
-      parts: 'Kalender · Aufgaben · Notizen · Heute-Ansicht',
-      image: 'organisation',
-      alt: 'Organisation in 4inOne: Monatskalender mit Terminen und die Liste der heutigen und kommenden Termine.',
+      name: 'Organisation',
+      promise: 'Termine, Aufgaben und Notizen. Der Tag geordnet, bevor er beginnt.',
+      features: ['Kalender mit Tag, Woche, Monat', 'Wiederkehrende Aufgaben', 'Notizen und Dateien'],
+      fact: { label: 'Zahnarzt, Praxis Dr. Weber', value: '16:00' },
+      demo: '/demo/organisation',
     },
     {
       key: 'reisen',
-      name: 'Reisen',
+      tone: 'travel',
       icon: 'travel',
-      summary: 'Reisen planen, packen und das Reisebudget im Blick behalten.',
-      parts: 'Planung · Packliste · Reisebudget · Mitreisende',
-      image: 'reisen',
-      alt: 'Reisen in 4inOne: Planung einer Wochenendreise nach Berlin mit Aufgaben, Teilnehmern sowie Anreise und Unterkunft.',
+      name: 'Reisen',
+      promise: 'Von der ersten Idee bis zum gepackten Koffer, gemeinsam oder allein.',
+      features: ['Planung mit Anreise und Unterkunft', 'Packliste zum Abhaken', 'Reisebudget und Mitreisende'],
+      fact: { label: 'Berlin, Packliste', value: '12 / 24', meter: 0.5 },
+      demo: '/demo/reisen',
+      shot: { name: 'reisen', alt: 'Reisen in der Demo: Planung einer Wochenendreise nach Berlin mit Aufgaben, Mitreisenden sowie Anreise und Unterkunft.' },
     },
   ];
 
-  readonly shares: Share[] = [
+  readonly steps: Step[] = [
+    { title: 'Ohne Anmeldung ausprobieren', text: 'Die Demo zeigt alle vier Bereiche mit Beispieldaten. Gespeichert wird nichts.' },
+    { title: 'Konto erstellen', text: 'Mit E-Mail und Passwort. Auf Wunsch mit zweitem Faktor abgesichert.' },
+    { title: 'Mit einem Bereich anfangen und verknüpfen', text: 'Ein Monatsbudget, die Einkaufsliste oder die nächste Reise. Was zusammengehört, verbindest du mit einem Tipp.' },
+  ];
+
+  /** Wer sieht was — nach dem echten Rechtemodell. Finanzen sind nie teilbar. */
+  readonly rules: Rule[] = [
     {
       key: 'haushalt',
-      sentence: 'Haushalt mit Alex teilen',
-      on: 'Alex sieht Aufgaben, Einkauf und Zuhause. Deine Finanzen, Termine und Notizen sieht Alex nicht.',
+      label: 'Haushalt mit Alex teilen',
+      on: 'Alex sieht Aufgaben, Einkauf und Zuhause. Nicht deine Finanzen, Termine oder Notizen.',
       off: 'Nur du siehst deinen Haushalt.',
-      tone: 'green',
     },
     {
       key: 'reise',
-      sentence: 'Reise „Berlin“ mit Ben teilen',
-      on: 'Ben sieht genau diese Reise: Planung, Packliste und Budget. Keine anderen Reisen und nicht deinen Haushalt.',
+      label: 'Reise „Berlin“ mit Ben teilen',
+      on: 'Ben sieht genau diese Reise: Planung, Packliste und Budget.',
       off: 'Nur du siehst die Reise.',
-      tone: 'blue',
-    },
-    {
-      key: 'verknuepfung',
-      sentence: 'Sparziel mit der Reise verknüpfen',
-      on: 'Ben sieht die Reise weiter, dein Sparziel aber nicht. Auch nicht, dass es eine Verknüpfung gibt.',
-      off: 'Reise und Sparziel stehen für sich.',
-      tone: 'yellow',
     },
     {
       key: 'finanzen',
-      sentence: 'Finanzen teilen',
+      label: 'Finanzen teilen',
       on: '',
-      off: 'Andere Nutzer erhalten keinen Zugriff auf deinen persönlichen Finanzbereich.',
+      off: 'Nicht möglich. Deinen Finanzbereich sieht nur du, auch über Verknüpfungen nicht.',
       locked: true,
-      tone: 'pink',
     },
   ];
 
-  readonly active = signal<DomainKey>('finanzen');
-  /** Zwei Schalter stehen beim Laden auf „an“, damit man sofort sieht, was Teilen bedeutet. */
-  readonly shared = signal<Record<string, boolean>>({ haushalt: true, reise: false, verknuepfung: true, finanzen: false });
+  readonly faq: Question[] = [
+    { q: 'Muss ich alle vier Bereiche nutzen?', a: 'Nein. Jeder Bereich funktioniert für sich. Starte mit dem, den du brauchst, und nimm später dazu, was passt.' },
+    { q: 'Wer sieht meine Daten?', a: 'Nur du. Den Haushalt teilst du mit den Menschen, die darin wohnen, eine Reise mit den Mitreisenden. Deinen Finanzbereich kann niemand sonst sehen, auch nicht über eine Verknüpfung.' },
+    { q: 'Kann ich 4inOne ausprobieren, bevor ich ein Konto erstelle?', a: 'Ja. Die Demo läuft ohne Anmeldung mit Beispieldaten. Du kannst alles anklicken; gespeichert wird nichts.' },
+    { q: 'Muss ich mein Bankkonto verbinden?', a: 'Nein, 4inOne verbindet sich nicht mit deiner Bank. Ausgaben trägst du selbst ein oder importierst einen Kontoauszug als Datei, mit Vorschau vor dem Speichern.' },
+    { q: 'Gibt es eine App?', a: '4inOne läuft im Browser, am Handy wie am Computer, ohne Installation. Eine App aus dem App Store oder Play Store gibt es nicht.' },
+    { q: 'Wie schützt 4inOne mein Konto?', a: 'Passwörter werden nur als sicherer Hash gespeichert, die Anmeldung lässt sich mit einem zweiten Faktor absichern, und du siehst und beendest deine angemeldeten Geräte in den Einstellungen.' },
+    { q: 'Kann ich mein Konto wieder löschen?', a: 'Ja, jederzeit in den Einstellungen unter „Profil“. Dein Konto und deine Daten werden dann gelöscht.' },
+  ];
+
+  // ---------- Wer sieht was ----------
+  /** Ein Schalter steht beim Laden auf „an“, damit man sofort sieht, was Teilen bewirkt. */
+  readonly ruleState = signal<Record<string, boolean>>({ haushalt: true, reise: false, finanzen: false });
+
+  isOn(rule: Rule): boolean {
+    return !rule.locked && this.ruleState()[rule.key];
+  }
+
+  toggle(rule: Rule): void {
+    if (rule.locked) return;
+    this.ruleState.update((state) => ({ ...state, [rule.key]: !state[rule.key] }));
+  }
+
+  /** Bei reduzierter Bewegung: alles sofort im Endzustand. */
+  readonly calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   constructor() {
     const destroy = inject(DestroyRef);
     afterNextRender(() => {
+      // Ohne Web Animations API (ältere Browser, Testumgebung) oder bei reduzierter Bewegung: nichts verstecken.
+      if (this.calm || typeof Element.prototype.animate !== 'function') return;
       const root = this.host.nativeElement;
-      const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (calm || typeof IntersectionObserver === 'undefined') return;
-      // Ohne JavaScript (und mit reduzierter Bewegung) ist alles sofort sichtbar und das Zeichen schon entfaltet.
-      // Nur wenn Bewegung erwünscht ist: das Zeichen entfaltet sich einmal, Abschnitte blenden beim Scrollen ein.
       root.classList.add('motion-ready');
-      requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('is-bloomed')));
-      const observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            if (!entry.isIntersecting) continue;
-            entry.target.classList.add('is-visible');
-            observer.unobserve(entry.target);
-          }
-        },
-        // Schwelle 0: Am Handy sind manche Abschnitte viel höher als der Bildschirm — ein Anteil (z. B. 12 %) würde
-        // dort bei schnellem Wischen nie erreicht, der Abschnitt bliebe leer. Es reicht, dass sein Anfang
-        // im oberen Bildschirmbereich ankommt.
-        { rootMargin: '0px 0px -8% 0px', threshold: 0 },
-      );
-      root.querySelectorAll('[data-reveal]').forEach((el) => observer.observe(el));
-      destroy.onDestroy(() => observer.disconnect());
+      const stops: (() => void)[] = [];
+      destroy.onDestroy(() => stops.forEach((stop) => stop()));
+      // Hero: Text klärt sich aus leichter Unschärfe, danach rücken die vier Bereiche um das Zeichen zusammen.
+      animate(root.querySelectorAll('[data-hero]'), { opacity: [0, 1], filter: ['blur(8px)', 'blur(0)'], transform: ['translateY(14px)', 'none'] }, { duration: 0.8, ease: EASE, delay: stagger(0.09) });
+      animate(root.querySelectorAll('.chain__row'), { opacity: [0, 1], transform: ['translateY(12px)', 'none'] }, { duration: 0.7, ease: EASE, delay: stagger(0.12, { startDelay: 0.3 }) });
+      // Abschnitte: einmal beim Hereinkommen, gestaffelt.
+      root.querySelectorAll<HTMLElement>('[data-reveal]').forEach((section) => {
+        stops.push(
+          inView(
+            section,
+            () => {
+              animate(section.querySelectorAll('[data-item]'), { opacity: [0, 1], transform: ['translateY(20px)', 'none'] }, { duration: 0.7, ease: EASE, delay: stagger(0.07) });
+              section.classList.add('is-in');
+            },
+            { margin: '0px 0px -12% 0px' },
+          ),
+        );
+      });
     });
-  }
-
-  // ---------- Bereiche als Reiter ----------
-
-  domain(key: DomainKey): Domain {
-    return this.domains.find((d) => d.key === key)!;
-  }
-
-  select(key: DomainKey): void {
-    this.active.set(key);
-  }
-
-  /** Reiter-Tastatur wie üblich: Pfeile wechseln, Pos1/Ende springen; der Fokus folgt der Auswahl. */
-  onTabKey(event: KeyboardEvent): void {
-    const keys = this.domains.map((d) => d.key);
-    const index = keys.indexOf(this.active());
-    const next =
-      event.key === 'ArrowDown' || event.key === 'ArrowRight'
-        ? (index + 1) % keys.length
-        : event.key === 'ArrowUp' || event.key === 'ArrowLeft'
-          ? (index + keys.length - 1) % keys.length
-          : event.key === 'Home'
-            ? 0
-            : event.key === 'End'
-              ? keys.length - 1
-              : -1;
-    if (next < 0) return;
-    event.preventDefault();
-    this.active.set(keys[next]);
-    queueMicrotask(() => document.getElementById(`bereich-tab-${keys[next]}`)?.focus());
-  }
-
-  // ---------- Teilen vs. Verknüpfen ----------
-
-  isOn(share: Share): boolean {
-    return !share.locked && this.shared()[share.key];
-  }
-
-  shareResult(share: Share): string {
-    if (share.key === 'verknuepfung' && this.isOn(share) && !this.shared()['reise']) {
-      return 'Reise und Sparziel gehören zusammen. Ben sieht keines von beiden, solange du die Reise nicht mit ihm teilst.';
-    }
-    return this.isOn(share) ? share.on : share.off;
-  }
-
-  toggle(share: Share): void {
-    if (share.locked) return;
-    this.shared.update((state) => ({ ...state, [share.key]: !state[share.key] }));
   }
 }

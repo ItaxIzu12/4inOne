@@ -22,16 +22,16 @@ import { PublicShell } from '../../shared/public-shell/public-shell';
         </p>
         <div class="actions">
           <a routerLink="/" class="btn">Zur Startseite</a>
-          <a routerLink="/kontakt" class="btn btn--quiet">Fehler melden</a>
+          <a routerLink="/demo" class="btn btn--quiet">Ohne Anmeldung ausprobieren</a>
         </div>
       </div>
     </app-public-shell>
   `,
-  styleUrl: '../kontakt/kontakt.scss',
+  styleUrl: './not-found.scss',
   styles: `
     .code {
       margin: 0;
-      color: var(--brand-primary);
+      color: var(--travel-deep);
       font-size: 15px;
       font-weight: var(--fw-semibold);
       letter-spacing: 0.08em;

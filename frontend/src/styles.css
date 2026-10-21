@@ -1,48 +1,82 @@
-/* Hausschrift: Instrument Sans als variable Schrift (Gewicht 400–700, Breite 75–100 %), eine Datei für alle
-   Schnitte. Selbst gehostet (Datenschutz, Tempo); swap zeigt sofort die Ersatzschrift, nichts bleibt unsichtbar. */
+/* Hausschrift: Schibsted Grotesk (Google Fonts, OFL) als variable Schrift (Gewicht 400–900), für App, Website,
+   Formulare und Logo. Selbst gehostet statt über das Google-CDN (keine IP-Übertragung an Dritte, LG München
+   20.01.2022); zwei Teildateien nach Zeichenbereich, swap zeigt sofort die Ersatzschrift. Bewusst ohne Kursiv. */
 @font-face {
-  font-family: 'Instrument Sans';
-  src: url('/fonts/instrument-sans/InstrumentSans-Variable.woff2') format('woff2-variations'),
-    url('/fonts/instrument-sans/InstrumentSans-Variable.woff2') format('woff2');
-  font-weight: 400 700;
-  font-stretch: 75% 100%;
+  font-family: 'Schibsted Grotesk';
+  src: url('/fonts/schibsted-grotesk/SchibstedGrotesk-Variable.woff2') format('woff2-variations'),
+    url('/fonts/schibsted-grotesk/SchibstedGrotesk-Variable.woff2') format('woff2');
+  font-weight: 400 900;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  src: url('/fonts/schibsted-grotesk/SchibstedGrotesk-Variable-ext.woff2') format('woff2-variations'),
+    url('/fonts/schibsted-grotesk/SchibstedGrotesk-Variable-ext.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+    U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Keine Kursive: auch kein künstlich geneigter Ersatz durch den Browser. */
+:root {
+  font-synthesis-style: none;
+}
+em,
+i,
+cite {
+  font-style: normal;
 }
 
 /* 4inOne Design System — kanonisch beschrieben in docs/DESIGN_SYSTEM.md (bei Änderungen dort mitpflegen).
    Oben die semantischen Tokens (System V3); darunter die älteren Namen, die nur noch auf sie zeigen. */
 
 :root {
-  /* ---------- Flächen: leicht ins Blau getönt, Karten heben sich nur minimal ab ---------- */
-  --surface-app: #f4f6fa;
+  /* ---------- Flächen: warmweiß wie Startseite/Login (21.10.2026), Karten weiß ---------- */
+  --surface-app: #faf8f4;
   --surface-card: #ffffff;
   --surface-elevated: #ffffff;
-  --surface-hover: #f6f8fb;
-  --surface-pressed: #eef2f7;
-  --surface-sunken: #eef2f7;
+  --surface-hover: #f6f3ec;
+  --surface-pressed: #f2eee6;
+  --surface-sunken: #f2eee6;
 
-  /* ---------- Text: getöntes Navy statt Schwarz ---------- */
-  --text-primary: #1b2a44;
-  --text-secondary: #56657c; /* ≥ 5:1 auf --surface-app */
-  --text-muted: #56657c;
+  /* ---------- Text: Tinte wie auf der Website ---------- */
+  --text-primary: #121826;
+  --text-secondary: #4a5263; /* 7,6:1 auf --surface-app */
+  --text-muted: #4a5263;
   --text-on-accent: #ffffff;
 
   /* ---------- Linien ---------- */
-  --border-subtle: #e7ebf1;
-  --border-default: #dfe4ed;
-  --border-strong: #b9c0ce;
+  --border-subtle: #ece6db;
+  --border-default: #e6e0d4;
+  --border-strong: #c4bcae;
 
   /* ---------- Marke und Bereiche (Akzente, keine Flächenfüller) ---------- */
-  --brand-primary: #245fb0;
-  --finance-accent: #1e7a4d;
-  --finance-soft: #e9f6ef;
-  --household-accent: #b8432a;
-  --household-soft: #fdeee9;
-  --organization-accent: #7541b5;
-  --organization-soft: #f3ecfc;
-  --travel-accent: #246db8;
-  --travel-soft: #e8f1fd;
+  /* Hauptfarbe für Knöpfe, Links, Fokus: Tinte (vorher Markenblau #245fb0) */
+  --brand-primary: #121826;
+  --brand-primary-hover: #252e44;
+  /* Dieselben vier Farben wie Logo und Startseite (shared/styles/_editorial.scss): hier die dunkle Textvariante,
+     damit Schrift und Symbole auf Weiß ≥ 4,5:1 bleiben; die Tönung als Fläche. */
+  --finance-accent: #0b6e4b;
+  --finance-soft: #e4f4ec;
+  --household-accent: #a8325a;
+  --household-soft: #fce8ee;
+  --organization-accent: #8a5800;
+  --organization-soft: #fcefd9;
+  --travel-accent: #2453b4;
+  --travel-soft: #e7edfb;
+  /* Volle Logo-Farben für Farbfelder (Symbol darauf in --*-on; Amber trägt Tinte, Weiß hätte nur 2,4:1) */
+  --finance-fill: #0f9d6b;
+  --finance-on: #ffffff;
+  --household-fill: #e04f78;
+  --household-on: #ffffff;
+  --organization-fill: #e3961a;
+  --organization-on: #121826;
+  --travel-fill: #3b6fe0;
+  --travel-on: #ffffff;
 
   /* ---------- Status: überall dieselbe Bedeutung ---------- */
   --success: #1e7a4d;
@@ -106,31 +140,31 @@
   --canvas: var(--surface-app);
   --wash: var(--surface-app);
   --surface: var(--surface-card);
-  --lavender: #e9e5f6;
+  --lavender: var(--surface-pressed);
   --mint: #ddeedc;
   --surface-recessed: var(--surface-app);
   --text: var(--text-primary);
   --text-body: var(--text-primary);
   --border: var(--border-default);
 
-  --accent: #514775;
-  --accent-glow: #625687;
-  --accent-hover: #40365f;
+  --accent: var(--brand-primary);
+  --accent-glow: var(--brand-primary);
+  --accent-hover: var(--brand-primary-hover);
   --accent-ink: #ffffff;
-  --accent-soft: #e9e5f6;
+  --accent-soft: var(--surface-pressed);
   --danger: var(--error);
   --danger-soft: var(--error-soft);
 
-  --m-finance: #514775;
+  --m-finance: var(--finance-accent);
   --m-household: var(--household-accent);
-  --m-organize: #625687;
-  --m-finance-soft: #e9e5f6;
+  --m-organize: var(--organization-accent);
+  --m-finance-soft: var(--finance-soft);
 
   --m-household-soft: var(--household-soft);
-  --m-organize-soft: rgba(32, 87, 83, 0.12);
+  --m-organize-soft: var(--organization-soft);
 
   --color-cloud-canvas: var(--canvas);
-  --color-lavender-mist: #e9e5f6;
+  --color-lavender-mist: var(--surface-pressed);
   --color-card-white: var(--surface);
   --color-fog-surface: var(--surface-recessed);
   --color-midnight-plum: var(--text);
@@ -153,9 +187,9 @@
   --color-dusk-sage: var(--text-muted);
   --color-amber: var(--color-amber-glow);
 
-  /* Instrument Sans (OFL, selbst gehostet unter public/fonts — kein externer Schrift-Server). */
-  --font-display: 'Instrument Sans', Helvetica, Arial, sans-serif;
-  --font-body: 'Instrument Sans', Helvetica, Arial, sans-serif;
+  /* Schibsted Grotesk (Google Fonts, OFL, selbst gehostet unter public/fonts — kein externer Schrift-Server). */
+  --font-display: 'Schibsted Grotesk', Helvetica, Arial, sans-serif;
+  --font-body: 'Schibsted Grotesk', Helvetica, Arial, sans-serif;
 
   --text-caption: 12px;
   --leading-caption: 1.3;
@@ -363,4 +397,13 @@ body:has(app-einkauf-tab .checkout-bar) app-back-to-top .back-to-top {
     --content-padding-x: 16px;
     --fs-page: var(--fs-page-mobile);
   }
+}
+
+/* Schibsted Grotesk setzt mit Tabellenziffern (tnum) auch . , : auf Ziffernbreite — „21 . Oktober“, „702 , 29 €“,
+   „16 : 00“. Deshalb bleiben Ziffern überall proportional; ersetzt die ~40 einzelnen `tabular-nums` in den
+   Komponenten (Aufräumen dort später möglich). */
+*,
+*::before,
+*::after {
+  font-variant-numeric: normal !important;
 }

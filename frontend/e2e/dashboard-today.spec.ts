@@ -110,9 +110,8 @@ test('personal dashboard finds own tasks in the search and never links into the 
   await page.route('**/api/v1/organisation/tasks/**', route =>
     route.fulfill({json: [{id: 123, title: 'Mein privater Plan', status: 'OPEN', priority: 'MEDIUM', due_date: null}]}),
   );
-  await page.goto('/');
+  await page.goto('/?q=privater'); // Suchfeld vorerst aus, Suche über ?q= bleibt
   await expect(page.locator('h1')).toContainText('Mira');
-  await page.getByRole('searchbox', {name: 'Deinen Überblick durchsuchen'}).fill('privater');
   await expect(page.locator('.search-results a')).toHaveAttribute('href', '/organisation?kind=task&id=123');
   await expect(page.locator('main a[href^="/demo"]')).toHaveCount(0);
 });

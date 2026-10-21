@@ -203,7 +203,7 @@ small {
   left: -20px;
   width: 3px;
   border-radius: 0 3px 3px 0;
-  background: #b8432a;
+  background: var(--household-accent);
 }
 .row__main {
   display: grid;
@@ -377,7 +377,7 @@ small {
   cursor: pointer;
 }
 .detail-tabs button[aria-selected='true'] {
-  border-bottom-color: #b8432a;
+  border-bottom-color: var(--household-accent);
   color: var(--accent-hover);
   font-weight: 600;
 }

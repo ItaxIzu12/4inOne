@@ -1,7 +1,7 @@
 // Startseite › übernommene Bausteine (unverändert im Verhalten): „Hinzufügen“-Menü, Hinweise (Einladungen,
 // E-Mail bestätigen), Suchergebnisse, Detail-Fenster. Eigene Datei, damit dashboard.scss schlank bleibt.
 :host {
-  --ink: #101d40;
+  --ink: var(--text-primary);
   --muted: var(--text-secondary);
   --line: var(--border-subtle);
   --hover: var(--surface-hover);
@@ -13,18 +13,26 @@
 .finance {
   --tone: var(--finance-accent);
   --soft: var(--finance-soft);
+  --fill: var(--finance-fill);
+  --on: var(--finance-on);
 }
 .household {
   --tone: var(--household-accent);
   --soft: var(--household-soft);
+  --fill: var(--household-fill);
+  --on: var(--household-on);
 }
 .organisation {
   --tone: var(--organization-accent);
   --soft: var(--organization-soft);
+  --fill: var(--organization-fill);
+  --on: var(--organization-on);
 }
 .travel {
   --tone: var(--travel-accent);
   --soft: var(--travel-soft);
+  --fill: var(--travel-fill);
+  --on: var(--travel-on);
 }
 // ---------- Hinzufügen ----------
 .quick {
@@ -37,7 +45,7 @@
   gap: 8px;
   min-height: 44px;
   padding: 0 16px;
-  border: 1px solid #d6dfeb;
+  border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   background: #fff;
   color: var(--ink);
@@ -52,8 +60,8 @@
 }
 .quick__toggle:hover,
 .quick__toggle[aria-expanded='true'] {
-  border-color: #b9c6da;
-  background: #f7f9fc;
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
 }
 .quick__toggle app-icon {
   width: 18px;
@@ -106,8 +114,8 @@
   width: 28px;
   height: 28px;
   border-radius: var(--r-sm);
-  background: var(--soft);
-  color: var(--tone);
+  background: var(--fill, var(--surface-pressed));
+  color: var(--on, var(--muted));
 }
 .quick__icon app-icon {
   width: 16px;
@@ -232,7 +240,7 @@ button:focus-visible {
   height: 16px;
 }
 
-// „Hinzufügen“ ist die eine Hauptaktion der Seite: voll gerundet in der Markenfarbe, gibt beim Drücken nach
+// „Hinzufügen“ ist die eine Hauptaktion der Seite: voll gerundet in Tinte (wie „Konto erstellen“), gibt beim Drücken nach
 .quick__toggle {
   min-height: 46px;
   padding: 0 var(--space-5);
@@ -250,7 +258,7 @@ button:focus-visible {
 }
 .quick__toggle:hover,
 .quick__toggle[aria-expanded='true'] {
-  background: #1c4f96;
+  background: var(--brand-primary-hover);
   border-color: transparent;
 }
 @media (max-width: 760px) {

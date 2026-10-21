@@ -89,10 +89,10 @@ describe('Dashboard', () => {
     expect(travel).toContain('1 Aufgabe offen');
     expect(travel).toContain('2 / 4 gepackt');
   });
-  it('offers the shared dashboard search', () => {
+  it('keeps the header search switched off for now (searchEnabled = false)', () => {
     const f = TestBed.createComponent(Dashboard);
     f.detectChanges();
-    expect(f.nativeElement.querySelector('.dashboard-search')).toBeTruthy();
+    expect(f.nativeElement.querySelector('.dashboard-search')).toBeNull();
     expect(f.nativeElement.textContent).not.toContain('Suche in 4inOne');
   });
 

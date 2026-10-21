@@ -24,7 +24,6 @@ const pages = [
   ['/demo', '0.8'],
   ['/registrieren', '0.6'],
   ['/login', '0.4'],
-  ['/kontakt', '0.5'],
   ['/impressum', '0.2'],
   ['/datenschutz', '0.2'],
   ['/nutzungsbedingungen', '0.2'],

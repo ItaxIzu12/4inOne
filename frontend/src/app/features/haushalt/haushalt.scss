@@ -3,14 +3,14 @@
 :host {
   display: block;
   color: var(--text);
-  // Bereichsfarbe Haushalt (docs/DESIGN_SYSTEM.md: warmes Coral). Nur hier
+  // Bereichsfarbe Haushalt (docs/DESIGN_SYSTEM.md: Beere, Token --household-accent). Nur hier
   // überschrieben — die Kindkomponenten erben die Variablen. Kontrast:
-  // Coral auf Weiß 5,4:1, weiß auf Coral 5,4:1, Coral auf Coral-Fläche 4,8:1.
-  --accent: #b8432a;
-  --accent-glow: #b8432a;
-  --accent-hover: #9c3722;
-  --accent-soft: #fdeee9;
-  --lavender: #fdeee9;
+  // Beere auf Weiß 6,4:1, weiß auf Beere 6,4:1, Beere auf der Tönung 5,5:1.
+  --accent: var(--household-accent);
+  --accent-glow: var(--household-accent);
+  --accent-hover: color-mix(in srgb, var(--household-accent) 85%, #000);
+  --accent-soft: var(--household-soft);
+  --lavender: var(--household-soft);
 }
 .hh-main {
   // Dunkleres Grau als in der Shell: Sekundärtext hält so auf Weiß, Grau und
@@ -115,7 +115,7 @@
   display: none;
 }
 .subtab.is-active {
-  background: #fdeee9;
+  background: var(--household-soft);
   color: var(--accent-hover);
   font-weight: 600;
   box-shadow: none;

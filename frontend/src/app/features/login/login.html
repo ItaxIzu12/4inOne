@@ -1,16 +1,13 @@
 <main class="auth-page" [class.is-register]="mode() === 'register'">
   <aside class="auth-brand">
     <a class="auth-brand__logo" routerLink="/" (click)="goHome()"> <app-brand /> </a>
-    <h2 class="auth-brand__headline">Dein Alltag.<br />Alles verbunden.</h2>
-    <p class="auth-brand__lede">
-      4inOne verbindet Finanzen, Haushalt, Organisation und Reisen. Jeder Bereich funktioniert auch
-      allein — wenn Dinge zusammengehören, kann 4inOne sie miteinander verbinden.
-    </p>
-    <div class="brand-orbits" aria-hidden="true">
-      <i><app-icon name="finance" /></i><i><app-icon name="calendar" /></i
-      ><i><app-icon name="household" /></i><i><app-icon name="travel" /></i>
+    <div class="auth-brand__body">
+      <h2 class="auth-brand__headline">Dein Alltag.<br />Alles verbunden.</h2>
+      <p class="auth-brand__lede">
+        Finanzen, Haushalt, Termine und Reisen in einer App. Und alles, was zusammengehört, ist verknüpft.
+      </p>
+      <app-link-chain class="auth-brand__chain" />
     </div>
-    <p class="auth-brand__trust">Finanzen · Haushalt · Organisation · Reisen</p>
   </aside>
 
   <section class="auth-panel">
@@ -30,11 +27,6 @@
         <span class="auth-panel__top-spacer" aria-hidden="true"></span>
       </div>
 
-      <div class="mobile-domain-icons" aria-hidden="true">
-        <app-icon name="finance" /><app-icon name="household" /><app-icon
-          name="calendar"
-        /><app-icon name="travel" />
-      </div>
       @if (mode() === 'login') {
         <div class="auth-intro">
           <h1>Willkommen zurück</h1>

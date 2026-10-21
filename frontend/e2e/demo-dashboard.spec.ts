@@ -22,8 +22,9 @@ for (const width of [390, 820, 1536]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
     await page.screenshot({ path: `test-results/new-demo-${width}.png`, fullPage: true });
-    // Die Suche oben findet weiterhin Aufgaben, auch wenn die Startseite sie nicht auflistet.
-    await page.getByRole('searchbox', { name: 'Demo-Überblick durchsuchen' }).fill('Geschenk');
+    // Suchfeld vorerst aus; die Suche (über ?q=) findet weiterhin Aufgaben, die die Startseite nicht auflistet.
+    await expect(page.getByRole('searchbox')).toHaveCount(0);
+    await page.goto('/demo?q=Geschenk');
     await expect(page.locator('.search-results')).toContainText('Geschenk kaufen');
     await page.locator('.search-results a', { hasText: 'Geschenk kaufen' }).click();
     await expect(page).toHaveURL(/\/demo\/organisation/);

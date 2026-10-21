@@ -1,13 +1,13 @@
 @use '../../shared/styles/domain-layout' as domain;
 // Organisation: Seitenhülle (Kopf, Reiter, Formular-Extras). Die Reiter selbst
-// haben eigene Stile (org-*.scss). Lila ist die Bereichsfarbe.
+// haben eigene Stile (org-*.scss). Amber (Token --organization-accent) ist die Bereichsfarbe.
 :host {
   display: block;
   color: var(--text-primary);
   // Dieselbe Organisationsfarbe wie Navigation und Startseite (Token), vorher eigenes #6d3fc4.
   --accent: var(--organization-accent);
   --accent-glow: var(--organization-accent);
-  --accent-hover: #5a2fa8;
+  --accent-hover: color-mix(in srgb, var(--organization-accent) 85%, #000);
   --accent-soft: var(--organization-soft);
   --lavender: var(--organization-soft);
 }

@@ -36,17 +36,11 @@
           <div class="intro">
             <h1 #heading tabindex="-1">Willkommen<br />bei 4inOne</h1>
             <p>
-              Finanzen, Haushalt, Organisation und Reisen an einem Ort. Für einen einfacheren
-              Alltag.
+              Finanzen, Haushalt, Organisation und Reisen in einer App. Was zusammengehört, verknüpfst du, zum Beispiel
+              ein Gerät mit seinem Sparziel.
             </p>
           </div>
-          <div class="welcome-domains" aria-label="Deine vier Bereiche">
-            @for (domain of domains; track domain.key) {
-              <div [class]="'welcome-tile ' + domain.key">
-                <app-icon [name]="domain.icon" /><span>{{ domain.label }}</span>
-              </div>
-            }
-          </div>
+          <app-link-chain class="welcome-chain" />
         }
         @case (2) {
           <h1 #heading tabindex="-1">Wie möchtest du<br />4inOne nutzen?</h1>
@@ -60,7 +54,7 @@
               <app-icon name="home" /><span
                 ><strong>Nur für mich</strong
                 ><small>Ich nutze 4inOne hauptsächlich alleine.</small></span
-              ><span aria-hidden="true">{{ usage() === 'personal' ? '✓' : '›' }}</span></button
+              ><span class="selection" aria-hidden="true">@if (usage() === 'personal') {<app-icon name="check" />}</span></button
             ><button
               [attr.aria-pressed]="usage() === 'shared'"
               [class.selected]="usage() === 'shared'"
@@ -69,7 +63,7 @@
               <app-icon name="people" /><span
                 ><strong>Mit Partner / Familie / WG</strong
                 ><small>Ich möchte meinen Alltag gemeinsam planen.</small></span
-              ><span aria-hidden="true">{{ usage() === 'shared' ? '✓' : '›' }}</span>
+              ><span class="selection" aria-hidden="true">@if (usage() === 'shared') {<app-icon name="check" />}</span>
             </button>
           </div>
           <p class="privacy-note">
@@ -83,15 +77,13 @@
           <div class="domain-options" role="group" aria-label="Bereiche auswählen">
             @for (domain of domains; track domain.key) {
               <button
-                [class]="domain.key"
+                [class]="domain.key + ' tone-' + domain.tone"
                 [class.selected]="selected().includes(domain.key)"
                 [attr.aria-pressed]="selected().includes(domain.key)"
                 (click)="toggle(domain.key)"
               >
-                <span class="selection" aria-hidden="true">{{
-                  selected().includes(domain.key) ? '✓' : ''
-                }}</span
-                ><app-icon [name]="domain.icon" /><strong>{{ domain.label }}</strong
+                <span class="selection" aria-hidden="true">@if (selected().includes(domain.key)) {<app-icon name="check" />}</span
+                ><span class="domain-icon" aria-hidden="true"><app-icon [name]="domain.icon" /></span><strong>{{ domain.label }}</strong
                 ><small>{{ domain.description }}</small>
               </button>
             }
@@ -109,7 +101,7 @@
               <div class="summary-domains">
                 @for (domain of domains; track domain.key) {
                   @if (selected().includes(domain.key)) {
-                    <span [class]="domain.key"
+                    <span [class]="domain.key + ' tone-' + domain.tone"
                       ><app-icon [name]="domain.icon" />{{ domain.label }}</span
                     >
                   }

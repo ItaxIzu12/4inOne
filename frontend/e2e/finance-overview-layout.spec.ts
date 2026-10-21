@@ -18,15 +18,14 @@ for (const width of [390, 1440]) {
     await expect(page.locator('.topbar')).toBeInViewport();
     await page.getByRole('button', {name:'Budgets', exact:true}).click();
     await expect(page.locator('.finance-overview')).toHaveCount(0);
-    await page.getByRole('searchbox').fill('Berlin');
-    await page.getByRole('searchbox').press('Enter');
-    await expect(page).toHaveURL(/\/demo\?q=Berlin/);
+    // Suche in der Kopfzeile vorerst aus (searchEnabled); die Logik bleibt über ?q= erreichbar.
+    await expect(page.getByRole('searchbox')).toHaveCount(0);
+    await page.goto('/demo?q=Berlin');
     await expect(page.locator('.search-results')).toContainText('Berlin Wochenende');
-    await expect(page.getByRole('searchbox')).toHaveValue('Berlin');
     for (const area of ['haushalt', 'organisation', 'reisen']) {
       await page.goto(`/demo/${area}`);
       await expect(page.locator('.topbar--dashboard')).toBeVisible();
-      await expect(page.getByRole('searchbox')).toBeVisible();
+      await expect(page.getByRole('searchbox')).toHaveCount(0);
     }
   });
 }

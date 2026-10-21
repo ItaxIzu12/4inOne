@@ -58,7 +58,7 @@
 }
 .profile-saved {
   margin: 0;
-  color: #1e7a4d;
+  color: var(--success);
   font-weight: 600;
 }
 .profile-save {

@@ -186,8 +186,8 @@ small {
   font-weight: 600;
 }
 .badge--today {
-  background: #fdeee9;
-  color: #9c3722;
+  background: var(--household-soft);
+  color: var(--household-accent);
 }
 .badge--late {
   background: #fde2e2;
@@ -220,8 +220,8 @@ small {
   color: #2a5bb8;
 }
 .avatar--rose {
-  background: #fdeee9;
-  color: #9c3722;
+  background: var(--household-soft);
+  color: var(--household-accent);
 }
 .avatar--all {
   background: var(--surface-sunken);

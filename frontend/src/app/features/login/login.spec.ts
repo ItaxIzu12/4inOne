@@ -49,6 +49,14 @@ describe('Login', () => {
     expect(compiled.querySelector('.secondary-button')?.getAttribute('href')).toBe('/registrieren');
   });
 
+  for (const mode of ['login', 'register'] as const) {
+    it(`explains the app in the brand column with the shared example chain (${mode})`, () => {
+      const compiled = createLogin(mode).nativeElement as HTMLElement;
+      expect(compiled.querySelector('.auth-brand app-link-chain')).toBeTruthy();
+      expect(compiled.querySelector('.brand-orbits, .mobile-domain-icons')).toBeNull();
+    });
+  }
+
   it('does not submit the register form when the password is shorter than 10 characters', () => {
     const fixture = createLogin('register');
     const component = fixture.componentInstance;

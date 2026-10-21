@@ -46,7 +46,7 @@ urlpatterns = [
     path('api/v1/today/', TodayOverviewView.as_view(), name='today-overview'),
     path('api/v1/fx/rates/', ExchangeRatesView.as_view(), name='fx-rates'),
     path('api/v1/haushalt/', include('haushalt.urls')),
-    # Öffentliche Website ohne Anmeldung: Kontaktformular, cookielose Besucherzählung
+    # Öffentliche Website ohne Anmeldung: cookielose Besucherzählung
     path('api/v1/site/', include('website.urls')),
     # OnboardingStatusView liegt in finanzen/views.py (braucht Transaction/
     # Category von dort), ist aber kein finanzen-spezifischer Endpunkt —

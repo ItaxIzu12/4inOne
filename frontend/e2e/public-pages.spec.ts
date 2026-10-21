@@ -1,45 +1,24 @@
 import { test, expect, Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-/** Öffentliche Seiten ohne Anmeldung: Kontakt → Danke, 404, Titel/Beschreibung, Teilen-Vorschau, robots.txt. */
+/** Öffentliche Seiten ohne Anmeldung: 404, Titel/Beschreibung, Teilen-Vorschau, robots.txt. */
 async function visitor(page: Page) {
-  const sent: unknown[] = [];
   await page.route('**/api/v1/**', async (r) => {
     const url = new URL(r.request().url()).pathname;
     if (url.endsWith('/auth/csrf/')) return r.fulfill({ json: { csrfToken: 'test' } });
     if (url.endsWith('/auth/refresh/')) return r.fulfill({ status: 401, json: {} });
-    if (url.endsWith('/site/contact/')) {
-      sent.push(r.request().postDataJSON());
-      return r.fulfill({ status: 204 });
-    }
     return r.fulfill({ status: 204 });
   });
-  return sent;
 }
 
 const axe = async (page: Page) =>
   (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations.map((v) => v.id);
 
-test('contact form: errors in words, then sends and shows the thank-you page', async ({ page }) => {
-  const sent = await visitor(page);
+test('the contact page no longer exists: /kontakt shows the 404 page', async ({ page }) => {
+  await visitor(page);
   await page.goto('/kontakt');
-  await expect(page).toHaveTitle('Kontakt | 4inOne');
-  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /Kontaktformular/);
-  expect(await axe(page)).toEqual([]);
-
-  await page.getByRole('button', { name: 'Nachricht senden' }).click();
-  await expect(page.getByText('Bitte gib deinen Namen an.')).toBeVisible();
-  expect(sent).toHaveLength(0);
-
-  await page.getByLabel('Name').fill('Mia');
-  await page.getByLabel('E-Mail-Adresse').fill('mia@example.com');
-  await page.getByLabel('Nachricht').fill('Hallo, ich habe eine Frage zu Reisen.');
-  await page.getByRole('button', { name: 'Nachricht senden' }).click();
-
-  await expect(page).toHaveURL(/\/kontakt\/danke$/);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Danke für deine Nachricht!');
-  expect(sent).toEqual([{ name: 'Mia', email: 'mia@example.com', message: 'Hallo, ich habe eine Frage zu Reisen.', website: '' }]);
-  expect(await axe(page)).toEqual([]);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Diese Seite gibt es nicht.');
+  await expect(page.locator('a[href="/kontakt"]')).toHaveCount(0);
 });
 
 test('unknown addresses show a 404 page that search engines do not index', async ({ page }) => {
@@ -68,8 +47,12 @@ test('legal pages have their own title and no app navigation; footer links are l
     await expect(page).toHaveTitle(title);
     await expect(page.locator('app-bottom-nav, app-header')).toHaveCount(0);
   }
-  const links = page.getByRole('navigation', { name: 'Rechtliches und Kontakt' }).getByRole('link');
-  await expect(links).toHaveCount(5);
+  const links = page.getByRole('navigation', { name: 'Rechtliches' }).getByRole('link');
+  await expect(links).toHaveCount(4);
+  // Rechtsseiten im Stil der Startseite: Hausschrift, keine Kursive, warmweißer Grund
+  expect(await page.locator('h1').evaluate((h) => getComputedStyle(h).fontFamily)).toContain('Schibsted Grotesk');
+  expect(await page.evaluate(() => [...document.querySelectorAll('body *')].filter((e) => getComputedStyle(e).fontStyle === 'italic').length)).toBe(0);
+  expect(await page.locator('app-public-shell').evaluate((h) => getComputedStyle(h).backgroundColor)).toBe('rgb(250, 248, 244)');
   for (const box of await links.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))) {
     expect(box).toBeGreaterThanOrEqual(44);
   }

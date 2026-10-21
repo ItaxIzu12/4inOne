@@ -21,7 +21,7 @@ input {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-  outline: 3px solid #2861ae;
+  outline: 3px solid #121826;
 }
 .shell {
   display: grid;
@@ -31,7 +31,7 @@ input:focus-visible {
 .sidebar {
   padding: 30px 20px;
   background: #fff;
-  border-right: 1px solid #edf0f6;
+  border-right: 1px solid #ece6db;
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -40,7 +40,7 @@ input:focus-visible {
 }
 .claim {
   font-size: 13px;
-  color: #64728c;
+  color: #4a5263;
   margin: 8px 0 44px;
 }
 .sidebar nav {
@@ -55,24 +55,24 @@ input:focus-visible {
   padding: 12px 16px;
   border-radius: 13px;
   font-size: 15px;
-  color: #495977;
+  color: #4a5263;
 }
 .sidebar nav a:hover,
 .sidebar nav a.active {
-  background: #edf5ff;
-  color: #1c519b;
+  background: #f2eee6;
+  color: #121826;
 }
 .finance {
-  color: #308754;
+  color: var(--finance-accent);
 }
 .household {
-  color: #ba507e;
+  color: var(--household-accent);
 }
 .calendar {
-  color: #8656c3;
+  color: var(--organization-accent);
 }
 .travel {
-  color: #397cc4;
+  color: var(--travel-accent);
 }
 .nav-space {
   height: 25px;
@@ -80,9 +80,9 @@ input:focus-visible {
 .sidebar-note {
   margin-top: auto;
   padding: 20px;
-  color: #64728c;
+  color: #4a5263;
   font-size: 14px;
-  background: #f8fafd;
+  background: #faf8f4;
   border-radius: 16px;
 }
 .workspace {
@@ -94,9 +94,9 @@ input:focus-visible {
   align-items: center;
   gap: 10px 20px;
   padding: 10px 36px;
-  background: #edf5ff;
-  color: #1c519b;
-  border-bottom: 1px solid #d7e8fb;
+  background: #f2eee6;
+  color: #121826;
+  border-bottom: 1px solid #e6e0d4;
   font-size: 14px;
 }
 .demo-banner__label {
@@ -110,20 +110,20 @@ input:focus-visible {
   height: 18px;
 }
 .demo-banner__hint {
-  color: #3b5f8f;
+  color: #4a5263;
 }
 .demo-banner__cta {
   margin-left: auto;
   flex-shrink: 0;
   padding: 6px 14px;
   border-radius: 999px;
-  background: #1c519b;
+  background: #121826;
   color: #fff;
   font-weight: 600;
   text-decoration: none;
 }
 .demo-banner__cta:hover {
-  background: #163f78;
+  background: #252e44;
 }
 .mobile-brand,
 .mobile-nav {
@@ -140,9 +140,9 @@ input:focus-visible {
 .dialog-body input {
   padding: 12px;
   min-height: 48px;
-  border: 1px solid #dde4ee;
+  border: 1px solid #e6e0d4;
   border-radius: 10px;
-  background: #f8fafd;
+  background: #faf8f4;
 }
 .dialog-body label {
   font-weight: 600;
@@ -189,7 +189,7 @@ input:focus-visible {
     z-index: 40;
     padding: 9px 8px calc(8px + env(safe-area-inset-bottom));
     background: #fff;
-    border-top: 1px solid #e6ecf3;
+    border-top: 1px solid #ece6db;
   }
   .mobile-nav a {
     flex: 1;
@@ -204,10 +204,10 @@ input:focus-visible {
     justify-content: center;
     gap: 5px;
     font-size: 12px;
-    color: #606e86;
+    color: #4a5263;
   }
   .mobile-nav .active {
-    color: #142143;
+    color: #121826;
   }
   .dialog-body {
     font-size: 16px;
@@ -226,7 +226,7 @@ input:focus-visible {
   white-space: nowrap;
   padding: 12px 18px;
   background: #fff;
-  border: 2px solid #2864b5;
+  border: 2px solid #121826;
   border-radius: 10px;
 }
 .skip-link:focus {
@@ -249,7 +249,7 @@ input:focus-visible {
   border-radius: 25px;
   background: #ffffffc9;
   padding: 30px 18px;
-  box-shadow: 0 10px 26px #6a8bb50a;
+  box-shadow: 0 10px 26px #1218260a;
 }
 .sidebar nav {
   gap: 15px;
@@ -259,9 +259,9 @@ input:focus-visible {
   border: 1px solid transparent;
 }
 .sidebar nav a.active {
-  background: linear-gradient(110deg, #deefff, #eaf6ff);
+  background: #f2eee6;
   border-color: #fff;
-  box-shadow: 0 6px 12px #718ebb0c;
+  box-shadow: 0 6px 12px #1218260c;
 }
 .sidebar nav app-icon {
   width: 24px;
@@ -269,26 +269,26 @@ input:focus-visible {
   filter: none;
 }
 .home {
-  color: #237eea;
+  color: var(--text-primary);
 }
 .finance {
-  color: #17af51;
+  color: var(--finance-accent);
 }
 .household {
-  color: #eb4b92;
+  color: var(--household-accent);
 }
 .calendar {
-  color: #9346ed;
+  color: var(--organization-accent);
 }
 .travel {
-  color: #2e8aef;
+  color: var(--travel-accent);
 }
 .nav-space {
   height: 12px;
-  border-bottom: 1px solid #e9edf5;
+  border-bottom: 1px solid #ece6db;
 }
 .sidebar-note {
-  background: linear-gradient(140deg, #f1fff7, #fff, #ffeff8);
+  background: #faf8f4;
   border: 1px solid #fff;
   padding: 22px;
   line-height: 1.6;
@@ -296,10 +296,10 @@ input:focus-visible {
 .demo-banner {
   margin: 0 16px 12px;
   padding: 10px 20px;
-  background: linear-gradient(110deg, #deefff, #eaf6ff);
+  background: #f2eee6;
   border: 1px solid #fff;
   border-radius: 18px;
-  box-shadow: 0 6px 12px #718ebb0c;
+  box-shadow: 0 6px 12px #1218260c;
 }
 @media (max-width: 1250px) {
   .shell {
@@ -331,10 +331,10 @@ input:focus-visible {
   .mobile-nav {
     background: #ffffffed;
     backdrop-filter: blur(18px);
-    box-shadow: 0 -5px 20px #627ca00c;
+    box-shadow: 0 -5px 20px #1218260c;
   }
   .mobile-nav .active {
-    color: #164ed0;
+    color: #121826;
   }
 }
 
@@ -343,7 +343,7 @@ input:focus-visible {
   position: relative;
 }
 .profile-button:focus-visible {
-  outline: 2px solid #164ed0;
+  outline: 2px solid #121826;
   outline-offset: 2px;
   border-radius: 14px;
 }
@@ -361,10 +361,10 @@ input:focus-visible {
   right: 0;
   width: min(320px, calc(100vw - 24px));
   padding: 8px;
-  border: 1px solid #e3e9f4;
+  border: 1px solid #e6e0d4;
   border-radius: 18px;
   background: #fff;
-  box-shadow: 0 18px 40px #1a2a5a24;
+  box-shadow: 0 18px 40px #12182624;
 }
 .account-head {
   display: flex;
@@ -393,13 +393,13 @@ input:focus-visible {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
-  color: #56627a;
+  color: #4a5263;
 }
 .account-group {
   display: grid;
   gap: 2px;
   padding: 6px 0;
-  border-top: 1px solid #edf0f6;
+  border-top: 1px solid #ece6db;
 }
 .account-group a,
 .account-group button {
@@ -412,7 +412,7 @@ input:focus-visible {
   border: 0;
   border-radius: 10px;
   background: none;
-  color: #142143;
+  color: #121826;
   font: inherit;
   font-size: 14px;
   text-align: left;
@@ -421,11 +421,11 @@ input:focus-visible {
 }
 .account-group a:hover,
 .account-group button:hover:not(:disabled) {
-  background: #f1f5fb;
+  background: #f6f3ec;
 }
 .account-group a:focus-visible,
 .account-group button:focus-visible {
-  outline: 2px solid #164ed0;
+  outline: 2px solid #121826;
   outline-offset: -2px;
 }
 .account-group .kompass-icon,
@@ -433,7 +433,7 @@ input:focus-visible {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  color: #4b5b7a;
+  color: #4a5263;
 }
 .account-error {
   margin: 4px 12px 8px;
@@ -442,16 +442,33 @@ input:focus-visible {
 }
 
 /* Domain icons remain colored; selected links also tint their label and background. */
-.sidebar nav a, .mobile-nav a { --nav-accent: #235bb5; --nav-soft: #edf3fc; color: #566176; }
-.sidebar nav a[data-domain="finance"], .mobile-nav a[data-domain="finance"] { --nav-accent: #1e7a4d; --nav-soft: #edf7f1; }
-.sidebar nav a[data-domain="household"], .mobile-nav a[data-domain="household"] { --nav-accent: #b8432a; --nav-soft: #fdf1ed; }
-.sidebar nav a[data-domain="calendar"], .mobile-nav a[data-domain="calendar"] { --nav-accent: #7541b5; --nav-soft: #f4effb; }
-.sidebar nav a[data-domain="travel"], .mobile-nav a[data-domain="travel"] { --nav-accent: #246db8; --nav-soft: #edf4fc; }
+.sidebar nav a, .mobile-nav a { --nav-accent: #121826; --nav-soft: #f2eee6; --nav-fill: #121826; --nav-on: #fff; color: #4a5263; }
+/* Bereichsfarben = Logo/Startseite (Tokens in styles.css: dunkle Textvariante + Tönung) */
+.sidebar nav a[data-domain="finance"], .mobile-nav a[data-domain="finance"] { --nav-accent: var(--finance-accent); --nav-soft: var(--finance-soft); --nav-fill: var(--finance-fill); --nav-on: var(--finance-on); }
+.sidebar nav a[data-domain="household"], .mobile-nav a[data-domain="household"] { --nav-accent: var(--household-accent); --nav-soft: var(--household-soft); --nav-fill: var(--household-fill); --nav-on: var(--household-on); }
+.sidebar nav a[data-domain="calendar"], .mobile-nav a[data-domain="calendar"] { --nav-accent: var(--organization-accent); --nav-soft: var(--organization-soft); --nav-fill: var(--organization-fill); --nav-on: var(--organization-on); }
+.sidebar nav a[data-domain="travel"], .mobile-nav a[data-domain="travel"] { --nav-accent: var(--travel-accent); --nav-soft: var(--travel-soft); --nav-fill: var(--travel-fill); --nav-on: var(--travel-on); }
 .sidebar nav a app-icon, .mobile-nav a app-icon { color: var(--nav-accent); filter: none; width: 24px; height: 24px; }
 .sidebar nav a.active, .mobile-nav a.active { color: var(--nav-accent); background: var(--nav-soft); box-shadow: none; border-color: transparent; }
-.sidebar-note, .demo-banner { color: #53627a; background: #f1f5fa; box-shadow: none; }
-.sidebar { background: #fff; border-color: #e7ebf1; }
-a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offset: 3px; }
+/* Handy-Tableiste wie die Startseite: Symbole in Bereichsfarbe, der aktive Reiter als Farbfeld mit hellem Symbol
+   (Amber mit Tinte). Jedes Symbol hat dieselbe Box, damit beim Wechsel nichts springt. */
+.mobile-nav a app-icon {
+  box-sizing: content-box;
+  width: 22px;
+  height: 22px;
+  padding: 6px;
+  border-radius: 11px;
+  transition: background-color 180ms ease-out, color 180ms ease-out;
+}
+.mobile-nav a { gap: 2px; }
+.mobile-nav a.active { background: transparent; color: var(--text-primary); font-weight: 600; }
+.mobile-nav a.active app-icon { background: var(--nav-fill); color: var(--nav-on); }
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav a app-icon { transition: none; }
+}
+.sidebar-note, .demo-banner { color: #4a5263; background: #f2eee6; box-shadow: none; }
+.sidebar { background: #fff; border-color: #ece6db; }
+a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offset: 3px; }
 
 // ---------------------------------------------------------------------------
 // Kopfzeile — ein einziger Block (vorher mehrfach überschrieben).
@@ -472,8 +489,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   padding: 12px 28px;
   border: 0;
   border-radius: 0;
-  background: #f8fafdf2;
-  box-shadow: inset 0 -1px #e7ebf1;
+  background: #faf8f4f2;
+  box-shadow: inset 0 -1px #ece6db;
   backdrop-filter: blur(12px);
 }
 .brand-group {
@@ -499,8 +516,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   padding: 4px 10px;
   border: 0;
   border-radius: 999px;
-  background: #eef2f7;
-  color: #56657c;
+  background: #f2eee6;
+  color: #4a5263;
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -533,13 +550,13 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   min-height: 46px;
   margin: 0;
   padding: 0 10px 0 2px;
-  border: 1px solid #e1e7f0;
+  border: 1px solid #e6e0d4;
   border-radius: 12px;
   background: #fff;
 }
 .dashboard-search:focus-within {
-  border-color: #9db6e3;
-  box-shadow: 0 0 0 3px #e6eefb;
+  border-color: #121826;
+  box-shadow: 0 0 0 3px rgb(18 24 38 / 0.1);
 }
 .search-submit {
   display: grid;
@@ -549,7 +566,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   padding: 0;
   border: 0;
   background: transparent;
-  color: #405574;
+  color: #4a5263;
 }
 .dashboard-search app-icon {
   width: 19px;
@@ -562,19 +579,19 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   border: 0;
   outline: none;
   background: none;
-  color: #142143;
+  color: #121826;
   font: inherit;
   font-size: 14px;
 }
 .dashboard-search input::placeholder {
-  color: #526079;
+  color: #4a5263;
 }
 .dashboard-search kbd {
   padding: 3px 7px;
-  border: 1px solid #e1e7f0;
+  border: 1px solid #e6e0d4;
   border-radius: 6px;
-  background: #f6f8fb;
-  color: #566780;
+  background: #f6f3ec;
+  color: #4a5263;
   font: inherit;
   font-size: 12px;
   white-space: nowrap;
@@ -592,10 +609,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   place-items: center;
   width: 40px;
   height: 40px;
-  border: 1px solid #e1e7f0;
+  border: 1px solid #e6e0d4;
   border-radius: 12px;
   background: #fff;
-  color: #3b5b8f;
+  color: #4a5263;
 }
 .dashboard-date__icon app-icon {
   width: 19px;
@@ -606,11 +623,11 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   line-height: 1.25;
 }
 .dashboard-date__text small {
-  color: #526079;
+  color: #4a5263;
   font-size: 12px;
 }
 .dashboard-date__text b {
-  color: #142143;
+  color: #121826;
   font-size: 14px;
   font-weight: 600;
 }
@@ -621,7 +638,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   gap: 10px;
   margin-left: 4px;
   padding-left: 14px;
-  border-left: 1px solid #e1e7f0;
+  border-left: 1px solid #e6e0d4;
 }
 .topbar:not(:has(.dashboard-date)) .profile {
   margin-left: auto;
@@ -632,10 +649,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   width: 44px;
   height: 44px;
   padding: 0;
-  border: 1px solid #e1e7f0;
+  border: 1px solid #e6e0d4;
   border-radius: 50%;
   background: #fff;
-  color: #1f2a44;
+  color: #121826;
 }
 .icon-button app-icon {
   width: 21px;
@@ -647,17 +664,17 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   gap: 10px;
   min-height: 48px;
   padding: 4px 12px 4px 4px;
-  border: 1px solid #e1e7f0;
+  border: 1px solid #e6e0d4;
   border-radius: 999px;
   background: #fff;
-  color: #142143;
+  color: #121826;
   font: inherit;
   text-align: left;
 }
 .icon-button:hover,
 .profile-button:hover {
-  border-color: #c9d5e8;
-  background: #fbfcfe;
+  border-color: #c4bcae;
+  background: #faf8f4;
 }
 .avatar {
   display: grid;
@@ -691,13 +708,13 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   white-space: nowrap;
 }
 .profile-text small {
-  color: #526079;
+  color: #4a5263;
   font-size: 12px;
 }
 .profile-button .chevron {
   width: 16px;
   height: 16px;
-  color: #526079;
+  color: #4a5263;
 }
 // Mittlere Breite: Datum kompakt, Profil ohne Namen
 @media (min-width: 761px) and (max-width: 1250px) {
@@ -758,7 +775,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid #235bb5; outline-offs
   }
   .mobile-date {
     display: inline;
-    color: #526079;
+    color: #4a5263;
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;

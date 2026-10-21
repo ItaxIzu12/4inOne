@@ -1,672 +1,224 @@
-// Öffentliche Startseite — Richtung „Der Satz ist die Bühne“ (tasteskill, seed 1029055409).
-// Idee: Das Zeichen von 4inOne (vier weiche Felder, je eine engere Ecke) ist im ersten Satz das Wort „Alles“ und
-// entfaltet sich beim ersten Besuch zu den vier Bereichen. Die Form der Felder ist die Formsprache der ganzen Seite:
-// große Radien, eine engere Ecke. Marke und Schrift bleiben (Instrument Sans, Tokens aus styles.css); die vier
-// hellen Markenfarben tragen die großen Flächen. Keine Verläufe, kein Glas, keine Schatten in Ruhe, keine Linien.
+@use '../../shared/styles/editorial' as editorial;
+
+// Öffentliche Startseite — Grundgerüst: Tokens, Browser-Flächen, Kopf, Knöpfe, Hero mit Beispielkette.
+// Richtung „Editorial hell“ (design-system/4inone/MASTER.md): warmweißer Grund, Schibsted Grotesk für alles,
+// vier kräftige Bereichsfarben gleicher Helligkeit (Fläche, dunkle Textvariante, Tönung). Beispielkette: shared/link-chain.
+// Abschnitte: landing-sections.scss · Fragen und Breiten: landing-end.scss.
 :host {
+  @include editorial.tokens;
   display: block;
-  // Fünf Stufen: Anzeige (Hero), Überschrift, Zwischenüberschrift, Lead 22, Text 18, Klein 15
-  --fs-h2: clamp(2rem, 1.3rem + 2.2vw, 3.5rem);
-  --fs-h3: clamp(1.75rem, 1.25rem + 1.6vw, 2.75rem);
-  --ink: #101d40; // Wortmarke
-  --text: var(--text-primary);
-  --soft: var(--text-secondary);
-  --ground: #f4f6fa;
-  --paper: #ffffff;
-  --mat: #e8ecf3;
-  --green: #76cda4;
-  --pink: #efa1c2;
-  --yellow: #ffd175;
-  --blue: #99c5ff;
-  --green-field: #d9f1e5;
-  --pink-field: #fbe3ed;
-  --blue-field: #dcebff;
-  --accent: var(--brand-primary);
-  // Weiche Kanten nach dem Zeichen: groß, mit einer engeren Ecke
-  --r: 28px;
-  --r-tight: 8px;
-  --r-small: 18px;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --gutter: var(--content-padding-x);
-  color: var(--text);
-  background: var(--paper);
-  font-family: var(--font-body);
-  font-size: 18px;
-  line-height: 1.55;
-  text-rendering: optimizeLegibility;
-  overflow-x: clip;
+  font-size: 17px;
+  line-height: 1.6;
 }
-::selection {
-  background: var(--blue-field);
+// Browser-Flächen gehören zum Design: Auswahl, Fokus, Unterstreichungen
+:host ::selection {
+  background: var(--travel-tint);
   color: var(--ink);
 }
-a {
-  color: inherit;
-  text-decoration: none;
+:host ::ng-deep :is(input, textarea, button) {
+  font-family: inherit;
 }
-:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: 3px;
+@include editorial.area-tones;
+.wrap {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right));
+}
+[id] {
+  scroll-margin-top: 88px;
 }
 h1,
 h2,
 h3 {
   margin: 0;
   color: var(--ink);
-  font-family: var(--font-display);
-  font-weight: var(--fw-bold);
   text-wrap: balance;
 }
+h1,
 h2 {
-  font-size: var(--fs-h2);
-  line-height: 0.98;
-  letter-spacing: -0.035em;
+  @include editorial.display;
+}
+h3 {
+  font-family: var(--sans);
 }
 p {
   margin: 0;
-  color: inherit; // die globale Absatzfarbe nicht übernehmen (Fußzeile ist dunkel)
 }
-ul,
-ol {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+a {
+  color: inherit;
+  text-underline-offset: 3px;
 }
-.wrap {
-  width: 100%;
-  max-width: 1344px; // 1280 Inhalt + Ränder
-  margin-inline: auto;
-  padding-inline: var(--gutter);
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
-.statement {
-  max-width: 34ch;
-  color: var(--text);
-  font-size: clamp(22px, 1.1rem + 0.8vw, 28px);
-  line-height: 1.32;
-  letter-spacing: -0.01em;
-  text-wrap: pretty;
+main {
+  outline: none;
 }
-.section {
-  padding-block: clamp(96px, 11vw, 168px);
-}
-
-// ---------- Sprunglink, Kopfzeile ----------
 .skip-link {
   position: absolute;
   top: -100px;
-  left: var(--space-4);
+  left: 16px;
   z-index: 50;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-pill);
-  background: var(--ink);
-  color: #fff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 600;
 }
 .skip-link:focus {
-  top: var(--space-3);
+  top: 16px;
 }
-.site-head {
+
+// ---------- Kopf ----------
+.head {
   position: sticky;
   top: 0;
   z-index: 30;
-  background: var(--ground);
+  background: rgb(250 248 244 / 0.94);
+  border-bottom: 1px solid transparent;
+  transition: border-color 200ms ease-out;
 }
-.site-head__inner {
+.head__inner {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
-  max-width: 1344px;
-  min-height: 72px;
-  margin-inline: auto;
-  padding-inline: var(--gutter);
+  gap: 24px;
+  min-height: 76px;
 }
-.site-head__brand {
+.head__brand {
   display: inline-flex;
-  min-height: 44px;
   align-items: center;
+  min-height: 44px;
+  text-decoration: none;
 }
-.site-head__brand app-brand {
+.head__brand app-brand {
   font-size: 22px;
 }
-.site-head__nav {
+.head__nav {
   display: flex;
-  gap: var(--space-1);
-  margin-left: var(--space-5);
-}
-.site-head__nav a,
-.text-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-pill);
-  color: var(--text);
-  font-size: 15px;
-  font-weight: var(--fw-medium);
-  transition:
-    background-color var(--motion-fast) ease-out,
-    color var(--motion-fast) ease-out;
-}
-.site-head__nav a:hover,
-.text-link:hover {
-  background: var(--mat);
-  color: var(--ink);
-}
-.site-head__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  gap: 4px;
   margin-left: auto;
 }
+.head__nav a,
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 180ms ease-out;
+}
+.head__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.link--arrow app-icon {
+  width: 18px;
+  height: 18px;
+  transition: transform 220ms var(--ease);
+}
 
-// ---------- Knöpfe: eine Form, voll gerundet ----------
+// ---------- Knöpfe ----------
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
   min-height: 52px;
-  padding: 0 var(--space-6);
+  padding: 0 26px;
   border: 0;
-  border-radius: var(--radius-pill);
-  font-size: var(--fs-body);
-  font-weight: var(--fw-semibold);
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
   white-space: nowrap;
+  cursor: pointer;
   transition:
-    background-color 160ms ease-out,
-    color 160ms ease-out,
-    transform 160ms var(--ease-out);
-}
-.btn:hover {
-  transform: translateY(-2px);
+    background-color 200ms ease-out,
+    transform 200ms var(--ease),
+    box-shadow 200ms ease-out;
 }
 .btn:active {
-  transform: translateY(0) scale(0.98);
-}
-.btn--primary {
-  background: var(--accent);
-  color: #fff;
-}
-.btn--primary:hover {
-  background: #1c4f96;
-}
-.btn--quiet {
-  background: var(--mat);
-  color: var(--ink);
-}
-.btn--quiet:hover {
-  background: #dce2ec;
-}
-.btn--light {
-  background: #fff;
-  color: var(--ink);
-}
-.btn--light:hover {
-  background: var(--blue-field);
+  transform: scale(0.98);
 }
 .btn--small {
   min-height: 44px;
-  padding: 0 var(--space-5);
+  padding: 0 18px;
   font-size: 15px;
 }
-
-// ---------- Bereichsfarben (nur kleine Akzente in den Produkt-Ausschnitten) ----------
-.tone-finanzen {
-  --tone: var(--finance-accent);
-  --tone-soft: var(--finance-soft);
-  --tone-field: var(--green-field);
-  --tone-petal: var(--green);
+.btn--ink {
+  background: var(--ink);
+  color: #fff;
 }
-.tone-haushalt {
-  --tone: var(--household-accent);
-  --tone-soft: var(--household-soft);
-  --tone-field: var(--pink-field);
-  --tone-petal: var(--pink);
-}
-.tone-organisation {
-  --tone: var(--organization-accent);
-  --tone-soft: var(--organization-soft);
-  --tone-field: var(--yellow-field);
-  --tone-petal: var(--yellow);
-}
-.tone-reisen {
-  --tone: var(--travel-accent);
-  --tone-soft: var(--travel-soft);
-  --tone-field: var(--blue-field);
-  --tone-petal: var(--blue);
-}
-
-// ================================================================== 1 · Hero
-.hero {
-  padding: clamp(40px, 6vw, 96px) 0 clamp(72px, 9vw, 136px);
-  background: var(--ground);
-}
-.hero__title {
-  // Breite der zweiten Zeile (4 Felder + „verbunden.“) ≈ 9.3 em, dazu Luft für den Rollbalken — so groß wie möglich, ohne überzulaufen
-  font-size: min(calc((100vw - 80px) / 9.6), 10.5rem);
-  line-height: 0.94;
-  letter-spacing: -0.045em;
-}
-.hero__line {
-  display: block;
-}
-.hero__line--two {
-  display: flex;
-  align-items: center;
-  gap: 0.16em;
-  margin-top: 0.06em;
-}
-// Das Zeichen als Wort: vier Felder auf Höhe der Großbuchstaben
-.bloom {
-  display: grid;
-  grid-template-columns: repeat(4, 0.98em);
-  gap: 0.05em;
-  flex: none;
-  height: 0.76em;
-}
-.petal {
-  // Schriftgröße der Überschrift erben: die Bewegung rechnet in deren em; nur die Beschriftung ist 15 px
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 14px 12px 12px;
-  overflow: hidden;
+// Der zweite Weg ist ein echter Knopf, nicht nur ein Textlink: gleiche Größe, Rand in Tinte
+.btn--outline {
+  background: transparent;
   color: var(--ink);
-  // Wie im Zeichen: jede Fläche hat eine engere Ecke, die zur Mitte zeigt
-  border-radius: var(--r) var(--r) var(--r-tight) var(--r);
-}
-.petal app-icon {
-  width: 22px;
-  height: 22px;
-}
-.petal > span {
-  font-size: 15px;
-  font-weight: var(--fw-semibold);
-  line-height: 1.15;
-  letter-spacing: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.petal--green {
-  background: var(--green);
-}
-.petal--pink {
-  background: var(--pink);
-  border-radius: var(--r) var(--r) var(--r) var(--r-tight);
-}
-.petal--yellow {
-  background: var(--yellow);
-  border-radius: var(--r) var(--r-tight) var(--r) var(--r);
-}
-.petal--blue {
-  background: var(--blue);
-  border-radius: var(--r-tight) var(--r) var(--r) var(--r);
-}
-.hero__word {
-  display: inline-block;
+  box-shadow: inset 0 0 0 1.5px var(--ink);
 }
 
-.hero__foot {
+// ---------- Hero ----------
+.hero {
+  padding: clamp(40px, 6vw, 88px) 0 clamp(56px, 7vw, 104px);
+  overflow-x: clip;
+}
+.hero__inner {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: var(--space-5) var(--space-8);
-  align-items: end;
-  margin-top: clamp(40px, 5vw, 72px);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  align-items: center;
+  gap: clamp(40px, 6vw, 96px);
+}
+h1 {
+  font-size: clamp(2.6rem, 1.4rem + 3.8vw, 5rem);
+  line-height: 1;
+  letter-spacing: -0.035em;
 }
 .hero__lead {
-  max-width: 40ch;
-  color: var(--text);
-  font-size: 22px;
-  line-height: 1.45;
-  text-wrap: pretty;
+  max-width: 44ch;
+  margin-top: 24px;
+  color: var(--ink-soft);
+  font-size: clamp(18px, 1rem + 0.3vw, 21px);
+  line-height: 1.6;
 }
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
-  justify-self: end;
-}
-.hero__note {
-  grid-column: 2;
-  justify-self: end;
-  color: var(--soft);
-  font-size: 15px;
-}
-
-// Der Ausschnitt öffnet sich wie ein Fenster auf die echte Startseite
-.hero__shot {
-  margin-top: clamp(48px, 6vw, 88px);
-  margin-bottom: 0;
-}
-.shutter {
-  padding: clamp(8px, 1vw, 14px);
-  border-radius: calc(var(--r) + 6px) calc(var(--r) + 6px) var(--r-small) calc(var(--r) + 6px);
-  background: var(--mat);
-  overflow: hidden;
-}
-.shutter picture,
-.shutter img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.shutter img {
-  border-radius: var(--r) var(--r) var(--r-tight) var(--r);
-  background: #fff;
-}
-figcaption {
-  margin-top: var(--space-3);
-  color: var(--soft);
-  font-size: 15px;
-}
-
-// ================================================================== 5 · Abschluss + Fußzeile
-.site-foot {
-  position: relative;
-  overflow: hidden;
-  padding-top: clamp(88px, 10vw, 152px);
-  background: var(--ink);
-  color: #dfe6f3;
-}
-.site-foot__top {
-  display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
-  gap: var(--space-8);
-  align-items: start;
-}
-.site-foot h2 {
-  color: #fff;
-  font-size: var(--fs-h2);
-  line-height: 0.96;
-  letter-spacing: -0.04em;
-}
-.site-foot__invite p {
-  max-width: 34ch;
-  margin: var(--space-5) 0 var(--space-6);
-  font-size: 22px;
-}
-.site-foot__links {
-  display: grid;
-  gap: 2px;
-  justify-items: start;
-}
-.site-foot__links a {
-  display: inline-flex;
   align-items: center;
-  min-height: 44px;
-  padding: 0 var(--space-3);
-  margin-left: calc(-1 * var(--space-3));
-  border-radius: var(--radius-pill);
-  color: #fff;
-  font-size: 18px;
-  transition: background-color 160ms ease-out;
-}
-.site-foot__links a:hover {
-  background: #22315a;
-}
-.site-foot__legal {
-  margin-top: clamp(64px, 8vw, 120px);
-  color: #b9c5dc;
-  font-size: 15px;
-}
-.site-foot__name {
-  margin: 0 0 0 -0.04em;
-  padding-left: var(--gutter);
-  color: #fff;
-  font-size: clamp(7rem, 27vw, 26rem);
-  font-weight: var(--fw-bold);
-  line-height: 0.8;
-  letter-spacing: -0.06em;
-  white-space: nowrap;
-  transform: translateY(24%);
-  user-select: none;
+  gap: 12px;
+  margin-top: 32px;
 }
 
-// ================================================================== Bewegung
+@media (hover: hover) and (pointer: fine) {
+  .head__nav a:hover,
+  .link:hover {
+    background: var(--ground-2);
+  }
+  .link--arrow:hover app-icon {
+    transform: translateX(3px);
+  }
+  .btn--ink:hover {
+    background: #252e44;
+  }
+  .btn--outline:hover {
+    background: var(--ink);
+    color: #fff;
+  }
+}
 
-// Erster Besuch: Das Zeichen sitzt erst einen Moment als kleines 2×2 vorn im Satz, dann entfaltet es sich zu den
-// vier Bereichen; „verbunden.“ gleitet nach, danach öffnet sich das Fenster auf die echte Startseite (≈ 2 s).
-// Nur mit Bewegung und JavaScript; ohne beides steht der Endzustand sofort da.
-@media (prefers-reduced-motion: no-preference) {
-  :host(.motion-ready) .petal {
-    transform-origin: 0 0;
-    transition:
-      transform 1000ms var(--ease-out),
-      border-radius 1000ms var(--ease-out);
-  }
-  :host(.motion-ready) .petal > * {
-    transition: opacity 420ms ease-out 1100ms;
-  }
-  :host(.motion-ready:not(.is-bloomed)) .petal > * {
+// Bewegung: nur verstecken, wenn motion gleich übernimmt (landing.ts); sonst ist alles sofort da
+:host(.motion-ready) {
+  [data-hero],
+  ::ng-deep .chain__row {
     opacity: 0;
   }
-  // Ausgangslage: jedes Feld an seiner Stelle im kleinen Zeichen (2×2 wie das Logo: grün · blau / gelb · pink)
-  :host(.motion-ready:not(.is-bloomed)) .petal--green {
-    transform: translate(0, 0) scale(0.36, 0.47);
-  }
-  :host(.motion-ready:not(.is-bloomed)) .petal--pink {
-    transform: translate(calc(-1.03em + 0.38em), 0.38em) scale(0.36, 0.47);
-  }
-  :host(.motion-ready:not(.is-bloomed)) .petal--yellow {
-    transform: translate(calc(-2.06em), 0.38em) scale(0.36, 0.47);
-  }
-  :host(.motion-ready:not(.is-bloomed)) .petal--blue {
-    transform: translate(calc(-3.09em + 0.38em), 0) scale(0.36, 0.47);
-  }
-  :host(.motion-ready) .petal--green {
-    transition-delay: 350ms;
-  }
-  :host(.motion-ready) .petal--pink {
-    transition-delay: 410ms;
-  }
-  :host(.motion-ready) .petal--yellow {
-    transition-delay: 470ms;
-  }
-  :host(.motion-ready) .petal--blue {
-    transition-delay: 530ms;
-  }
-  :host(.motion-ready) .hero__word {
-    transition:
-      opacity 700ms ease-out 770ms,
-      transform 900ms var(--ease-out) 770ms;
-  }
-  :host(.motion-ready:not(.is-bloomed)) .hero__word {
+  [data-reveal]:not(.is-in) [data-item] {
     opacity: 0;
-    transform: translateX(-1.6em);
-  }
-
-  // Das Fenster auf die echte Startseite öffnet sich von unten, das Bild setzt sich dabei
-  :host(.motion-ready) .shutter {
-    transition: clip-path 1100ms var(--ease-out) 1000ms;
-  }
-  :host(.motion-ready) .shutter img {
-    transition: transform 1400ms var(--ease-out) 1000ms;
-  }
-  :host(.motion-ready:not(.is-bloomed)) .shutter {
-    clip-path: inset(100% 0 0 0 round var(--r));
-  }
-  :host(.motion-ready:not(.is-bloomed)) .shutter img {
-    transform: scale(1.12);
-  }
-  .shutter {
-    clip-path: inset(0 0 0 0 round 0);
-  }
-
-  // Abschnitte: Überschrift, dann Text, dann Bild — gestaffelt beim Hineinscrollen
-  :host(.motion-ready) [data-reveal] :is(h2, .statement, .stage, .compare__col, .notes, .areas__lead, .area, .areas__sheet, .band, .share__a11y) {
-    // Kurz und flach: Wer schnell tippt, trifft Schalter und Reiter auch während des Einblendens
-    opacity: 0;
-    transform: translateY(16px);
-    transition:
-      opacity 500ms ease-out var(--d, 0ms),
-      transform 600ms var(--ease-out) var(--d, 0ms),
-      background-color 280ms ease-out;
-  }
-  :host(.motion-ready) [data-reveal].is-visible :is(h2, .statement, .stage, .compare__col, .notes, .areas__lead, .area, .areas__sheet, .band, .share__a11y) {
-    opacity: 1;
-    transform: none;
-  }
-  [data-reveal] .statement,
-  [data-reveal] .areas__lead {
-    --d: 80ms;
-  }
-  [data-reveal] .stage,
-  [data-reveal] .areas__sheet {
-    --d: 160ms;
-  }
-  [data-reveal] .compare__col:nth-child(2),
-  [data-reveal] .area:nth-child(2),
-  [data-reveal] .band:nth-child(2) {
-    --d: 80ms;
-  }
-  [data-reveal] .area:nth-child(3),
-  [data-reveal] .band:nth-child(3) {
-    --d: 160ms;
-  }
-  [data-reveal] .area:nth-child(4),
-  [data-reveal] .band:nth-child(4) {
-    --d: 240ms;
-  }
-}
-
-// ================================================================== Breiten
-// Unter 1280 px passen vier beschriftete Felder nicht mehr in die Zeile. Dann steht das Zeichen selbst als Wort:
-// „Dein Alltag. [Zeichen] verbunden.“ — 2 × 2 wie das Logo (grün · blau / gelb · pink), mit den Bereichs-Symbolen.
-// Zeile 2 ≈ 0.8 em Zeichen + 0.14 em Abstand + 4.98 em Wort ≈ 6 em.
-@media (max-width: 1279px) {
-  .hero__title {
-    font-size: min(calc((100vw - 48px) / 6.2), 9rem, max(22vh, 3rem));
-  }
-  .hero__line--two {
-    gap: 0.14em;
-  }
-  .bloom {
-    grid-template-columns: repeat(2, 0.39em);
-    grid-auto-rows: 0.39em;
-    gap: 0.03em;
-    height: auto;
-  }
-  .petal {
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-  }
-  .petal > span {
-    display: none;
-  }
-  .petal app-icon {
-    width: 0.17em;
-    height: 0.17em;
-  }
-  .petal--green {
-    border-radius: 0.17em 0.17em 0.05em 0.17em;
-  }
-  .petal--blue {
-    grid-area: 1 / 2;
-    border-radius: 0.17em 0.17em 0.17em 0.05em;
-  }
-  .petal--yellow {
-    grid-area: 2 / 1;
-    border-radius: 0.17em 0.05em 0.17em 0.17em;
-  }
-  .petal--pink {
-    grid-area: 2 / 2;
-    border-radius: 0.05em 0.17em 0.17em 0.17em;
-  }
-}
-@media (max-width: 1100px) {
-  .areas__grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .site-foot__top {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-@media (max-width: 900px) {
-  .site-head__nav {
-    display: none;
-  }
-  .steps__intro,
-  .share__intro,
-  .compare,
-  .notes__list,
-  .hero__foot {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .hero__actions,
-  .hero__note {
-    grid-column: 1;
-    justify-self: start;
-  }
-}
-@media (max-width: 640px) {
-  :host {
-    font-size: 16px;
-  }
-  .compare p {
-    font-size: 18px;
-  }
-  .site-head__inner {
-    gap: var(--space-3);
-  }
-  .site-head__brand app-brand {
-    font-size: 22px;
-  }
-  .site-head__actions .text-link {
-    padding-inline: var(--space-2);
-  }
-  .site-head__actions .btn--small {
-    padding-inline: var(--space-4);
-  }
-  .hero__actions {
-    width: 100%;
-  }
-  .hero__actions .btn {
-    flex: 1 1 100%;
-  }
-  .band__inner {
-    align-items: flex-start;
-  }
-  .band__result {
-    font-size: 15px;
-  }
-  .site-foot__name {
-    font-size: 34vw;
-  }
-}
-@media (max-width: 1279px) and (prefers-reduced-motion: no-preference) {
-  // Zeichen als Wort: die vier Felder wachsen aus ihrer Mitte zum Logo
-  :host(.motion-ready) .petal {
-    transform-origin: 50% 50%;
-  }
-  :host(.motion-ready:not(.is-bloomed)) :is(.petal--green, .petal--pink, .petal--yellow, .petal--blue) {
-    transform: scale(0.42);
-  }
-  :host(.motion-ready:not(.is-bloomed)) .hero__word {
-    transform: translateY(0.3em);
-  }
-}
-
-// Kleine Handys: In der Kopfzeile ist nur Platz für Marke + „Anmelden“. „Konto erstellen“ steht direkt darunter groß
-// im ersten Bildschirm (und in der Fußzeile) — abgeschnitten in der Kopfzeile wäre es nur halb zu sehen.
-@media (max-width: 400px) {
-  // Überschriften auf schmalen Handys eine Stufe kleiner, damit sie bei zwei Zeilen bleiben
-  :host {
-    --fs-h2: 1.75rem;
-    --fs-h3: 1.5rem;
-  }
-  .site-head__actions .btn--small {
-    display: none;
-  }
-  .site-head__actions .text-link {
-    padding-inline: var(--space-4);
-    background: var(--mat);
-  }
-}
-@media (max-width: 340px) {
-  :host {
-    --fs-h2: 1.5rem;
-    --fs-h3: 1.375rem;
   }
 }

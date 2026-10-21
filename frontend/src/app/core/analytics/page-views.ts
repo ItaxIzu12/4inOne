@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../api.config';
 
 /** Nur öffentliche Seiten werden gezählt — dieselbe Liste wie im Backend (website/views.py › TRACKED_PATHS). */
 export const TRACKED_PATHS = new Set([
-  '/', '/demo', '/login', '/registrieren', '/kontakt', '/kontakt/danke',
+  '/', '/demo', '/login', '/registrieren',
   '/impressum', '/datenschutz', '/nutzungsbedingungen', '/barrierefreiheit', '/404',
 ]);
 

@@ -1,0 +1,99 @@
+<div
+  class="deck"
+  [class.is-stacked]="stacked()"
+  role="group"
+  aria-roledescription="Kartenfächer"
+  [attr.aria-label]="label()"
+  (keydown)="onKey($event)"
+  (pointerdown)="onPointerDown($event)"
+  (pointerup)="onPointerUp($event)"
+>
+  <div class="deck__stage">
+    @for (card of cards(); track card.key; let i = $index) {
+      @let d = offset(i);
+      <!-- Jede Karte behält ihr Element: nur die Lage wechselt, so gleitet der Fächer statt zu springen. -->
+      <div
+        [class]="'slot tone-' + card.tone"
+        [class.is-active]="d === 0"
+        [class.is-left]="d === -1"
+        [class.is-right]="d === 1"
+        [class.is-back]="d < -1 || d > 1"
+        [attr.aria-hidden]="d < -1 || d > 1 ? 'true' : null"
+      >
+        @if (d === 0) {
+          <!-- data-ui: ein echtes Interface-Fragment (Ausschnitt mit Demo-Daten), kein Schmuck -->
+          <article class="card" data-ui [attr.aria-labelledby]="'deck-' + card.key">
+            <span class="card__icon" aria-hidden="true"><app-icon [name]="card.icon" /></span>
+            <h3 [id]="'deck-' + card.key">{{ card.name }}</h3>
+            <p>{{ card.text }}</p>
+            @if (card.preview; as preview) {
+              <div class="preview">
+                <p class="preview__source">{{ preview.source }}</p>
+                <ul class="preview__rows">
+                  @for (row of preview.rows; track row.label) {
+                    <li [class.is-late]="row.state === 'late'" [class.is-next]="row.state === 'next'">
+                      <span class="preview__label">{{ row.label }}</span>
+                      @if (row.value) {
+                        <span class="preview__value">{{ row.value }}</span>
+                      }
+                      @if (row.meter !== undefined) {
+                        <span class="preview__meter" aria-hidden="true"><i [style.transform]="'scaleX(' + row.meter + ')'"></i></span>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            } @else if (card.tags?.length) {
+              <ul class="card__tags" aria-label="Darin">
+                @for (tag of card.tags; track tag) {
+                  <li>{{ tag }}</li>
+                }
+              </ul>
+            }
+            @if (card.link; as link) {
+              <a class="card__link" [routerLink]="link.path" [queryParams]="link.query ?? null">
+                {{ link.label }} <app-icon name="arrow" aria-hidden="true" />
+              </a>
+            }
+          </article>
+        } @else {
+          <button
+            type="button"
+            class="card card--side"
+            [attr.tabindex]="d < -1 || d > 1 ? -1 : null"
+            (click)="select(i)"
+          >
+            <!-- Kein aria-label: der Name kommt aus dem sichtbaren Text (WCAG 2.5.3), dazu wofür der Knopf ist -->
+            <span class="card__icon" aria-hidden="true"><app-icon [name]="card.icon" /></span>
+            <span class="card__name">{{ card.name }}</span>
+            @if (card.preview?.rows?.[0]; as first) {
+              <span class="card__peek">{{ first.value ?? first.label }}</span>
+            }
+            <span class="sr-only">, nach vorn holen</span>
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="deck__controls">
+    <button type="button" class="deck__step" aria-label="Vorheriger Bereich" (click)="select(active() - 1)">
+      <app-icon name="chevron-left" aria-hidden="true" />
+    </button>
+    <div class="deck__dots">
+      @for (card of cards(); track card.key; let i = $index) {
+        <button
+          type="button"
+          [class]="'deck__dot tone-' + card.tone"
+          [attr.aria-label]="card.name"
+          [attr.aria-current]="i === active() ? 'true' : null"
+          (click)="select(i)"
+        ></button>
+      }
+    </div>
+    <button type="button" class="deck__step" aria-label="Nächster Bereich" (click)="select(active() + 1)">
+      <app-icon name="arrow" aria-hidden="true" />
+    </button>
+  </div>
+  <p class="sr-only" aria-live="polite">{{ current().name }}: {{ current().text }}</p>
+</div>

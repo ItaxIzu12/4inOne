@@ -124,6 +124,7 @@
 .people-card {
   display: grid;
   gap: var(--space-4);
+  min-width: 0; /* nie breiter als die Spalte, auch bei längeren Wörtern (Schrift Schibsted Grotesk läuft etwas breiter) */
   padding: 20px 22px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
@@ -216,13 +217,13 @@
   flex-shrink: 0;
   border-radius: 50%;
   background: var(--finance-soft);
-  color: var(--finance, #1e7a4d);
+  color: var(--finance-accent);
   font-size: var(--fs-body);
   font-weight: var(--fw-semibold);
 }
-.people-avatar[data-tone='1'] { background: var(--household-soft); color: #b8432a; }
-.people-avatar[data-tone='2'] { background: var(--travel-soft); color: #246db8; }
-.people-avatar[data-tone='3'] { background: var(--organization-soft); color: #7541b5; }
+.people-avatar[data-tone='1'] { background: var(--household-soft); color: var(--household-accent); }
+.people-avatar[data-tone='2'] { background: var(--travel-soft); color: var(--travel-accent); }
+.people-avatar[data-tone='3'] { background: var(--organization-soft); color: var(--organization-accent); }
 .people-avatar[data-tone='4'] { background: var(--warning-soft); color: #8a5a00; }
 .people-avatar--pending {
   background: var(--surface-sunken);
@@ -328,11 +329,11 @@
   flex-shrink: 0;
   border-radius: 50%;
   background: var(--travel-soft);
-  color: #246db8;
+  color: var(--travel-accent);
 }
 .people-area[data-kind='HOUSEHOLD'] {
   background: var(--household-soft);
-  color: #b8432a;
+  color: var(--household-accent);
 }
 .people-area--pending {
   background: var(--surface-sunken);

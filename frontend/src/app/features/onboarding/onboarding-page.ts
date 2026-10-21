@@ -4,11 +4,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { OnboardingApiService } from '../../core/onboarding/onboarding-api.service';
 import { Brand } from '../../shared/brand/brand';
+import { AreaTone } from '../../shared/area-deck/area-deck';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
+import { LinkChain } from '../../shared/link-chain/link-chain';
 @Component({
   selector: 'app-onboarding-page',
   standalone: true,
-  imports: [ErrorNoticeDirective, Brand, AppIcon],
+  imports: [ErrorNoticeDirective, Brand, AppIcon, LinkChain],
   templateUrl: './onboarding-page.html',
   styleUrl: './onboarding-page.scss',
 })
@@ -25,27 +27,31 @@ export class OnboardingPage {
   readonly usage = signal<'personal' | 'shared' | null>(null);
   readonly selected = signal<string[]>([]);
   readonly stages = ['Willkommen', 'Nutzung', 'Interessen', 'Fertig'];
-  readonly domains: { key: string; label: string; icon: IconName; description: string }[] = [
+  readonly domains: { key: string; tone: AreaTone; label: string; icon: IconName; description: string }[] = [
     {
       key: 'finanzen',
+      tone: 'finance',
       label: 'Finanzen',
       icon: 'finance',
       description: 'Budgets, Ausgaben und mehr im Blick behalten.',
     },
     {
       key: 'haushalt',
+      tone: 'household',
       label: 'Haushalt',
       icon: 'household',
       description: 'Aufgaben, Einkaufslisten und alles rund um dein Zuhause.',
     },
     {
       key: 'organisation',
+      tone: 'organisation',
       label: 'Organisation',
       icon: 'calendar',
       description: 'Termine, To-dos und wichtige Erinnerungen.',
     },
     {
       key: 'reisen',
+      tone: 'travel',
       label: 'Reisen',
       icon: 'travel',
       description: 'Reisen planen und Vorfreude sammeln.',

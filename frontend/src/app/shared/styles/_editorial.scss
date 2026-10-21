@@ -1,0 +1,87 @@
+// Gemeinsame Tokens der öffentlichen Seiten im Stil „Editorial hell“ (design-system/4inone/MASTER.md):
+// Startseite (features/landing) und Unterseiten (shared/public-shell: Rechtliches, Kontakt, Danke, 404).
+// Eine Quelle für beide, damit Farben, Schriften und der Kachel-Fuß überall gleich sind.
+//
+//   @use '../../shared/styles/editorial' as editorial;
+//   :host { @include editorial.tokens; }
+
+@mixin tokens {
+  --ground: #faf8f4;
+  --ground-2: #f2eee6;
+  --card: #ffffff;
+  --ink: #121826;
+  --ink-soft: #4a5263; // 7,4:1 auf --ground
+  --line: #e6e0d4;
+  // Eine Schrift für alles (global, styles.css): Schibsted Grotesk — Überschriften kräftig, Text ruhig
+  --display: var(--font-display, 'Schibsted Grotesk', sans-serif);
+  --sans: var(--font-body, 'Schibsted Grotesk', sans-serif);
+  --radius: 16px;
+  --shadow: 0 1px 2px rgb(18 24 38 / 0.05), 0 12px 32px -8px rgb(18 24 38 / 0.14);
+  --shadow-lift: 0 2px 4px rgb(18 24 38 / 0.06), 0 24px 48px -12px rgb(18 24 38 / 0.22);
+  --gutter: clamp(20px, 4vw, 48px);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  // Vier Bereiche: Fläche · Text auf Weiß (≥ 6:1) · Tönung — dieselben Farben wie das Logo (shared/brand)
+  --finance: #0f9d6b;
+  --finance-deep: #0b6e4b;
+  --finance-tint: #e4f4ec;
+  --household: #e04f78;
+  --household-deep: #a8325a;
+  --household-tint: #fce8ee;
+  --organisation: #e3961a;
+  --organisation-deep: #8a5800;
+  --organisation-tint: #fcefd9;
+  --travel: #3b6fe0;
+  --travel-deep: #2453b4;
+  --travel-tint: #e7edfb;
+  // Der globale Kachel-Fuß (shared/tile-footer) übernimmt Schrift und Farben
+  --tf-display: var(--display);
+  --tf-display-weight: 700;
+  --tf-primary: var(--ink);
+  --tf-name-bg: var(--ground-2);
+  --tf-name-fg: var(--ink);
+  --tf-name-muted: var(--ink-soft);
+  --tf-finance: var(--finance-tint);
+  --tf-travel: var(--travel-tint);
+  --tf-organisation: var(--organisation-tint);
+  --tf-household: var(--household-tint);
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  caret-color: var(--ink);
+}
+
+// Überschriften der öffentlichen Seiten: dieselbe Schrift, kräftig und eng gesetzt — ohne Kursiv
+@mixin display {
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+// Bereichsklassen: setzen --c (Fläche), --c-deep (Text auf Weiß), --c-tint (Tönung), --c-on (Symbol auf der Fläche).
+// Erwartet die Farb-Tokens aus `tokens` (oder Fallbacks).
+@mixin area-tones {
+  .tone-finance {
+    --c: var(--finance, #0f9d6b);
+    --c-deep: var(--finance-deep, #0b6e4b);
+    --c-tint: var(--finance-tint, #e4f4ec);
+    --c-on: #fff;
+  }
+  .tone-household {
+    --c: var(--household, #e04f78);
+    --c-deep: var(--household-deep, #a8325a);
+    --c-tint: var(--household-tint, #fce8ee);
+    --c-on: #fff;
+  }
+  .tone-organisation {
+    --c: var(--organisation, #e3961a);
+    --c-deep: var(--organisation-deep, #8a5800);
+    --c-tint: var(--organisation-tint, #fcefd9);
+    --c-on: #121826; // Weiß hätte auf Amber nur 2,4:1
+  }
+  .tone-travel {
+    --c: var(--travel, #3b6fe0);
+    --c-deep: var(--travel-deep, #2453b4);
+    --c-tint: var(--travel-tint, #e7edfb);
+    --c-on: #fff;
+  }
+}
