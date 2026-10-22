@@ -19,7 +19,9 @@ import {
   PersonalTask,
 } from '../organisation/organisation-api.service';
 import { ReisenApi, Trip } from '../reisen/reisen-api.service';
+import { AnimatedBeam } from '../../shared/animated-beam/animated-beam';
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   HostListener,
@@ -120,7 +122,10 @@ function ddmm(isoDate: string): string {
     Modal,
     RouterLink,
     NgTemplateOutlet,
+    AnimatedBeam,
   ],
+  // Alle Zustände sind Signals (auch der Tagesplan, siehe `plan`) — OnPush prüft nur bei echten Änderungen.
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.html',
   // Tagesplan · rechte Spalte (Demnächst, Budget, Für dich, erste Schritte) · übernommene Bausteine (Menü, Hinweise, Suche)
   styleUrls: ['./dashboard.scss', './dashboard-side.scss', './dashboard-parts.scss'],
@@ -439,38 +444,53 @@ export class Dashboard {
     const clock = this.clockOf(row);
     return clock !== null && clock < this.clockNow;
   }
-  /** Reihenfolge des Tages: überfällig → was noch kommt (nach Uhrzeit) → ohne Uhrzeit → schon vorbei. */
-  private get ordered(): TodayRow[] {
+  /**
+   * Der Tagesplan wird EINMAL je Datenänderung berechnet (computed) statt in jedem Getter bei jedem
+   * Change-Detection-Durchlauf neu zu filtern und zu sortieren. Die Getter darunter bleiben die Schnittstelle.
+   * Reihenfolge: überfällig → was noch kommt (nach Uhrzeit) → ohne Uhrzeit → schon vorbei.
+   */
+  private readonly plan = computed(() => {
     const all = this.allItems;
+    this.now(); // „vorbei“ hängt an der Uhrzeit
     const late = all.filter((r) => r.late);
     const timed = all.filter((r) => this.clockOf(r) !== null).sort((a, b) => a.time.localeCompare(b.time));
     const coming = timed.filter((r) => !this.isPast(r));
-    const past = timed.filter((r) => this.isPast(r));
-    const untimed = all.filter((r) => !r.late && this.clockOf(r) === null);
-    return [...late, ...coming, ...untimed, ...past];
-  }
+    const gone = timed.filter((r) => this.isPast(r));
+    const untimedAll = all.filter((r) => !r.late && this.clockOf(r) === null);
+    const ordered = [...late, ...coming, ...untimedAll, ...gone];
+    const items = this.todayExpanded() ? ordered : ordered.slice(0, TODAY_ROWS);
+    // Als Nächstes: der nächste Termin, der heute noch kommt; sonst die erste Aufgabe ohne Uhrzeit; sonst nichts.
+    const lead = items.find((r) => this.clockOf(r) !== null && !this.isPast(r)) ?? items.find((r) => !r.late && this.clockOf(r) === null) ?? null;
+    // Verglichen wird über einen festen Schlüssel, nicht über das Objekt: die Zeilen werden je Abruf neu gebaut.
+    const key = lead ? rowKey(lead) : null;
+    const rest = items.filter((r) => !r.late && rowKey(r) !== key);
+    return {
+      items,
+      hidden: Math.max(0, all.length - TODAY_ROWS),
+      overdue: items.filter((r) => r.late),
+      lead,
+      rest,
+      later: rest.filter((r) => this.clockOf(r) !== null && !this.isPast(r)),
+      untimed: rest.filter((r) => this.clockOf(r) === null),
+      past: rest.filter((r) => this.isPast(r)),
+    };
+  });
   get items(): TodayRow[] {
-    const ordered = this.ordered;
-    return this.todayExpanded() ? ordered : ordered.slice(0, TODAY_ROWS);
+    return this.plan().items;
   }
   get hiddenToday(): number {
-    return Math.max(0, this.allItems.length - TODAY_ROWS);
+    return this.plan().hidden;
   }
-  /** Überfälliges steht als eigene Zeile über der Bühne — sichtbar, aber nicht „als Nächstes“. */
+  /** Überfälliges steht als eigene Gruppe oben — sichtbar, aber nicht „als Nächstes“. */
   get overdue(): TodayRow[] {
-    return this.items.filter((r) => r.late);
+    return this.plan().overdue;
   }
-  /** Als Nächstes: der nächste Termin, der heute noch kommt; sonst die erste Aufgabe ohne Uhrzeit; sonst nichts. */
   get lead(): TodayRow | null {
-    const items = this.items;
-    return items.find((r) => this.clockOf(r) !== null && !this.isPast(r)) ?? items.find((r) => !r.late && this.clockOf(r) === null) ?? null;
+    return this.plan().lead;
   }
-  /** Alles Übrige unter der Bühne (ohne Überfälliges und ohne „Als Nächstes“). Verglichen wird über einen festen
-   * Schlüssel, nicht über das Objekt: die Zeilen werden bei jedem Abruf neu gebaut. */
+  /** Alles Übrige (ohne Überfälliges und ohne „Als Nächstes“). */
   get rest(): TodayRow[] {
-    const lead = this.lead;
-    const key = lead ? rowKey(lead) : null;
-    return this.items.filter((r) => !r.late && rowKey(r) !== key);
+    return this.plan().rest;
   }
   /** Erste Schritte für neue Konten — der Moment, in dem sonst eine leere Seite steht. Jeder Schritt öffnet das
    * vorhandene Formular und hakt sich ab, sobald es echte Daten dazu gibt. Verschwindet, wenn alle drei erledigt sind. */
@@ -527,14 +547,43 @@ export class Dashboard {
   });
   /** Tagesplan-Gruppen unter „Als Nächstes“: später heute (mit Uhrzeit), ohne Uhrzeit, schon vorbei. */
   get later(): TodayRow[] {
-    return this.rest.filter((r) => this.clockOf(r) !== null && !this.isPast(r));
+    return this.plan().later;
   }
   get untimed(): TodayRow[] {
-    return this.rest.filter((r) => this.clockOf(r) === null);
+    return this.plan().untimed;
   }
   get past(): TodayRow[] {
-    return this.rest.filter((r) => this.isPast(r));
+    return this.plan().past;
   }
+  /** Kennzahl „Heute“ im Überblick-Band: was heute noch offen ist und was überfällig ist — aus dem Tagesplan. */
+  readonly todayStats = computed(() => {
+    const all = this.allItems;
+    this.now();
+    return { open: all.filter((i) => !i.late && !this.isPast(i)).length, late: all.filter((i) => i.late).length };
+  });
+  /** Welche der beiden „Demnächst“-Kacheln fehlen (Reise / Frist) — dort steht ein ehrlicher Leerzustand mit Weg. */
+  readonly soonHas = computed(() => {
+    const rows = this.soon();
+    return { trip: rows.some((r) => r.key === 'trip'), deadline: rows.some((r) => r.key === 'deadline') };
+  });
+  /** Letzte Buchungen (höchstens vier) aus dem echten Monatsstand: Notiz oder Kategorie, Datum, Betrag mit Vorzeichen. */
+  readonly ledger = computed(() => {
+    const f = this.finance();
+    if (!f) return null;
+    // Ältere oder knappe Antworten können ohne Kategorien/Buchungen kommen — dann eben eine leere Liste
+    const names = new Map((f.categories ?? []).filter((c) => c.id !== null).map((c) => [c.id, c.name]));
+    return (f.recent ?? []).slice(0, 4).map((t) => {
+      const income = t.type === 'INCOME';
+      const category = names.get(t.category) ?? (income ? 'Einnahme' : 'Ausgabe');
+      return {
+        id: t.id,
+        title: t.note?.trim() || category,
+        meta: `${t.note?.trim() ? `${category} · ` : ''}${ddmm(t.date)}`,
+        amount: `${income ? '+' : '−'} ${euros(t.amount.replace('-', ''))}`,
+        income,
+      };
+    });
+  });
   /** Eine Zeile unter der Begrüßung: Datum und Stand des Tages — nur aus echten Zahlen. */
   get dayLine(): string {
     if (this.todayLoading() || this.todayError()) return this.date;

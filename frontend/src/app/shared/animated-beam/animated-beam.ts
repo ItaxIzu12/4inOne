@@ -24,7 +24,9 @@ import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject
           [style.stroke]="color()"
           [style.animation-delay.s]="delay()"
           [style.animation-duration.s]="duration()"
+          [style.animation-iteration-count]="iterations()"
           [class.is-reverse]="reverse()"
+          [class.is-finite]="iterations() !== 'infinite'"
         />
       </svg>
     }
@@ -63,6 +65,26 @@ import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject
         stroke-dashoffset: 0;
       }
     }
+    /* Begrenzte Impulse: ein- und ausblenden, damit nach dem letzten nichts am Linienanfang stehen bleibt */
+    .beam__pulse.is-finite {
+      opacity: 0;
+      animation-name: beam-finite;
+      animation-fill-mode: forwards;
+    }
+    @keyframes beam-finite {
+      0% {
+        stroke-dashoffset: 1000;
+        opacity: 0;
+      }
+      12%,
+      88% {
+        opacity: 1;
+      }
+      100% {
+        stroke-dashoffset: 0;
+        opacity: 0;
+      }
+    }
     @media (prefers-reduced-motion: reduce) {
       .beam__pulse {
         display: none;
@@ -78,6 +100,8 @@ export class AnimatedBeam {
   /** Biegung der Linie in px (positiv nach oben). */
   readonly curvature = input(0);
   readonly delay = input(0);
+  /** Anzahl der Impulse; „infinite“ für die Website, eine feste Zahl in der App (Ruhe, Akku). */
+  readonly iterations = input<number | 'infinite'>('infinite');
   readonly duration = input(3.2);
   readonly reverse = input(false);
 

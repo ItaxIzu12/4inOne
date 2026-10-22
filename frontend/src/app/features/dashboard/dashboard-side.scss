@@ -1,5 +1,6 @@
-// Startseite › rechte Spalte (am Handy darunter): Demnächst, Budget, Für dich — dieselbe ruhige Zeilen-Form wie
-// der Tagesplan — und die ersten Schritte für neue Konten.
+// Startseite › Überblick-Band (Heute, Budget, Reise, Haushalt) und rechte Spalte (Für dich, Letzte Buchungen) —
+// dazu die ersten Schritte für neue Konten. Kacheln: weiß, feiner Rand, Kopf mit Bereichs-Farbfeld, große Zahl in
+// der Display-Schrift, eine Zeile Kontext. Desktop 4 Spalten, Tablet/Handy 2 × 2.
 .side__card {
   margin: 0;
   padding: var(--space-2);
@@ -9,78 +10,254 @@
   color: var(--text);
   text-decoration: none;
 }
-// Demnächst
-.soon__card {
+
+// ---------- Überblick-Band ----------
+.kpis {
   display: grid;
-  gap: 2px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.kpis > .budget,
+.kpis > .soon {
+  display: contents; // Budget- und Demnächst-Kacheln sitzen direkt im Raster des Bandes
+}
+.soon__card {
+  display: contents;
+  margin: 0;
+  padding: 0;
   list-style: none;
 }
-.soon__row {
+.soon__card > li {
   display: grid;
-  grid-template-columns: 50px 32px minmax(0, 1fr) 16px;
-  align-items: center;
-  gap: var(--space-3);
-  min-height: 56px;
-  padding: 8px var(--space-3);
-  border-radius: var(--radius-md);
+  min-width: 0;
+}
+.kpi {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: 132px;
+  margin: 0;
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--card-r);
+  background: var(--surface-card);
   color: var(--text);
   text-decoration: none;
-  transition: background-color 140ms ease-out;
+  transition:
+    border-color 150ms ease-out,
+    transform 150ms var(--ease-out),
+    box-shadow 150ms ease-out;
 }
-.soon__empty {
-  padding: var(--space-4);
+.kpi:active {
+  transform: scale(0.99);
+}
+.kpi__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
   color: var(--muted);
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: var(--fw-semibold);
 }
-.soon__card--skeleton,
-.for-you__card--skeleton {
-  display: grid;
-  gap: var(--space-2);
+.kpi__head h2 {
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: 0;
 }
-.soon__card--skeleton span,
-.for-you__card--skeleton span {
-  height: 48px;
-  border-radius: var(--radius-md);
-  background: var(--surface-app);
+.kpi__head .row__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
 }
-// Budget: eine Zahl, ein Balken
-.budget__card {
-  display: grid;
-  gap: var(--space-2);
-  padding: var(--space-4);
-  transition: background-color 140ms ease-out;
+.kpi__head .row__icon app-icon {
+  width: 16px;
+  height: 16px;
 }
-.budget__value {
+.kpi__when {
+  margin-left: auto;
   color: var(--ink);
-  font-size: 22px;
+  font-weight: var(--fw-semibold);
+}
+.kpi__value,
+.budget__value,
+.soon__row .item-copy strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 26px;
   font-weight: var(--fw-bold);
-  letter-spacing: -0.015em;
-  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kpi small,
+.soon__row .item-copy small {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.kpi small.is-late {
+  color: var(--late);
+  font-weight: var(--fw-semibold);
+}
+.kpi__value--quiet,
+.budget__value--quiet {
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0;
+  white-space: normal;
 }
 .budget__value.is-over {
   color: var(--late);
 }
-.budget__value--quiet {
-  font-size: 17px;
-  font-weight: var(--fw-semibold);
-}
 .budget__bar {
   display: block;
   height: 6px;
+  margin-top: 2px;
+  overflow: hidden;
   border-radius: var(--radius-pill);
   background: var(--finance-soft);
-  overflow: hidden;
 }
 .budget__bar span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--finance-accent);
+  background: var(--finance-fill);
 }
-.budget__card small {
+.soon__row .item-copy {
+  gap: var(--space-1);
+}
+.soon__row .item-copy small {
+  white-space: normal; // „in 12 Tagen · 4 Aufgaben offen · 12 / 24 gepackt“ vollständig
+}
+// Leerzustand einer Kachel: ruhiger, gleicher Aufbau
+.kpi--empty .item-copy strong {
   color: var(--muted);
-  font-size: 14px;
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0;
 }
+.kpi--empty .row__icon {
+  background: var(--surface-pressed);
+  color: var(--muted);
+}
+.soon__empty {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--muted);
+  font-size: 15px;
+}
+.kpis .soon__empty {
+  grid-column: span 2;
+  align-content: center;
+}
+.soon__card--skeleton {
+  display: contents;
+}
+.soon__card--skeleton span,
+.for-you__card--skeleton span {
+  display: block;
+  min-height: 56px;
+  border-radius: var(--card-r);
+  background: var(--surface-pressed);
+}
+.kpis .soon__card--skeleton span {
+  min-height: 132px;
+}
+.for-you__card--skeleton {
+  display: grid;
+  gap: var(--space-2);
+}
+@media (hover: hover) and (pointer: fine) {
+  a.kpi:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 6px 16px -10px rgb(18 24 38 / 0.18);
+    transform: translateY(-1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kpi {
+    transition: none;
+  }
+  a.kpi:hover,
+  .kpi:active {
+    transform: none;
+  }
+}
+@media (max-width: 1100px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .kpis {
+    gap: var(--space-3);
+  }
+  .kpi {
+    min-height: 120px;
+    padding: var(--space-3) var(--space-4) var(--space-4);
+  }
+  .kpi__value,
+  .budget__value,
+  .soon__row .item-copy strong {
+    font-size: 20px;
+    white-space: normal; // schmale Kacheln: umbrechen (mit Silbentrennung) statt abschneiden
+    hyphens: auto;
+    overflow-wrap: anywhere;
+  }
+  .kpi__head {
+    font-size: 13px;
+  }
+  .kpi__when {
+    display: none; // „in 12 Tagen“ steht schon darunter
+  }
+}
+
+// ---------- Letzte Buchungen ----------
+.ledger {
+  display: grid;
+  gap: var(--space-3);
+}
+.ledger__list {
+  margin: 0;
+  padding: 0 var(--space-2);
+  list-style: none;
+}
+.ledger__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-2) 0;
+}
+.ledger__row + .ledger__row {
+  border-top: 1px solid var(--border-subtle);
+}
+.ledger__row .item-copy strong {
+  font-size: 15px;
+}
+.ledger__row .item-copy small {
+  font-size: 13px;
+}
+.ledger__amount {
+  flex: none;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+.ledger__amount.is-income {
+  color: var(--finance-accent);
+}
+
 // Für dich: die zwei Einträge als Zeilen, die Aktion als ruhiger Link
 .connection-preview,
 .for-you__card {
@@ -96,13 +273,14 @@
 }
 .connection-object {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 16px;
+  grid-template-columns: 36px minmax(0, 1fr) 16px;
   align-items: center;
   gap: var(--space-3);
   min-height: 52px;
   padding: 6px var(--space-3);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: var(--surface-app);
+  background: var(--surface-card);
   color: var(--ink);
   text-decoration: none;
   transition: background-color 140ms ease-out;
@@ -117,6 +295,16 @@
 .connection-object strong {
   font-size: 15px;
   font-weight: var(--fw-semibold);
+}
+// Das Paar: beide Einträge übereinander, die Lichtlinie läuft zwischen ihren Farbfeldern (shared/animated-beam)
+.connection-pair {
+  position: relative;
+  display: grid;
+  gap: var(--space-5);
+}
+.connection-pair .connection-object {
+  position: relative;
+  z-index: 1;
 }
 .connection-preview__action {
   justify-self: start;
@@ -156,8 +344,6 @@
   height: 16px;
 }
 @media (hover: hover) and (pointer: fine) {
-  .soon__row:hover,
-  .budget__card:hover,
   .connection-object:hover {
     background: var(--hover);
   }
@@ -258,8 +444,4 @@
   .steps__item:hover {
     background: var(--hover);
   }
-}
-// Demnächst-Hinweise vollständig zeigen (z. B. „in 12 Tagen · 4 Aufgaben offen · 12 / 24 gepackt“)
-.soon__row .item-copy small {
-  white-space: normal;
 }

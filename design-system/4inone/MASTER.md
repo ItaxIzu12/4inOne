@@ -29,20 +29,24 @@ Tinte (Text `#C9CFDB`, 11:1).
 global über `--font-body`/`--font-display`). Überschriften 700, −0,03 em (H1 clamp(42–80 px), H2 clamp(34–56 px)),
 Text 17 px, Lead 18–21 px. **Keine Kursive** (nutzergewünscht: wirkt generiert) — `font-synthesis-style: none`.
 
-## Aufbau
-Kopf (Bereiche · So geht’s · Privatsphäre · Fragen, Anmelden, Konto erstellen) → Hero: „Dein Alltag. Alles
-verbunden.“, ein kurzer Satz, zwei gleichwertige Knöpfe („Konto erstellen“, „Ohne Anmeldung ausprobieren“), rechts die
-Beispielkette Waschmaschine → Sparziel → Angebote vergleichen → Lieferung mit Lichtlinien und dem Satz „Vom Gerät
-direkt zum Sparziel und zur nächsten Aufgabe.“ (jede Verbindung gibt es wirklich; Werte als Beispiel beschriftet) → Vier Bereiche:
-Karten verschiedener Größe (Finanzen/Reisen breit mit echtem Screenshot), je Versprechen, drei Funktionen, ein
-echter Wert „Beispiel aus der Demo“, Link in die Demo → So einfach geht’s: drei Schritte (kräftige Ziffern)
-(Demo zuerst) neben der echten App-Startseite → Verbunden. Nicht geteilt. (dunkel): Sparziel ↔ Waschmaschine mit Lichtlinie,
-Schalter „wer sieht was“ (Finanzen gesperrt) → Häufige Fragen (mit Weg zur Demo) → Kachel-Fuß (global, Farben per
-`--tf-*`; Links Impressum · Datenschutz · Nutzungsbedingungen · Barrierefreiheit). Kein Kontaktbereich.
+## Aufbau (22.10.2026, „Produkt im Mittelpunkt“)
+Kopf (Ausprobieren · Bereiche · Privatsphäre · Fragen, Anmelden, Konto erstellen) → Hero zentriert: „Dein ganzer Alltag
+auf einer Startseite.“, ein Satz, „Konto erstellen“ + „Ohne Anmeldung ausprobieren“, Hinweis „Läuft im Browser …“ →
+Bühne: echtes Dashboard im Passepartout, Handy davor (am Handy nur das Handy) → Aussage-Absatz (erster Satz Tinte,
+Rest gedämpft) → „Probier aus, was 4inOne verbindet.“ (Verknüpfungs-Probe: Beispiel wählen, Vorschläge mit Grund
+verknüpfen, Lichtlinie, „bewusst nicht vorgeschlagen“) → Bereiche als Umschalter mit echtem Screenshot
+→ „Privat ist die Grundeinstellung.“ als Faktenliste → Häufige Fragen → Abschluss-Band in Tinte → Kachel-Fuß.
+Nie: Unschärfe-Einblendung, Satzfetzen-Paare („X. Y.“) als Überschriften, Häkchen-Listen, 1-2-3-Schritte.
 
 ## Anmeldung / Registrierung
 Split: links Warmweiß mit Überschrift, Satz und `app-link-chain`; rechts Formular auf Weiß. Felder 52 px, Radius 12,
 Rand `#948C7E`, Fokus Tinte; Hauptknopf Tinte, Zweitweg mit Tintenrand. ≤ 760 px nur das Formular.
+
+## App (Dashboard, Rahmen)
+Gleiche Tokens wie die Website über `styles.css`: warmweißer Grund, Tinte als Hauptfarbe, Bereichs-Farbfelder
+(`--*-fill`/`--*-on`). Dashboard „Kommandozentrale“: große Begrüßung, Überblick-Band mit vier Kacheln (Heute,
+Budget, Reise, Haushalt), Tagesplan mit Farbfeldern, rechts Für dich und Letzte Buchungen.
+Kopfzeile ohne Suche, deckend. Tableiste und Seitenleiste: aktiver Eintrag als Farbfeld.
 
 ## Unterseiten
 Gleicher Kopf, kräftiger Titel bis 64 px, Abschnitte mit feiner Linie (`--line`) und kräftiger H2, Text in
@@ -53,15 +57,15 @@ Radius 16, Rand ODER Schatten; Lichtkegel unter der Maus in der Bereichsfarbe (`
 −4 px + größerer Schatten. Keine gleich großen Icon-Karten als Seitengerüst.
 
 ## Bewegung
-Ein großer Moment: Lichtimpulse laufen die Beispielkette entlang (`app-animated-beam`, 2,4 s, versetzt).
-Hero-Text klärt sich aus Unschärfe (Blur Fade, 0,8 s, gestaffelt 90 ms), Kettenglieder steigen nacheinander ein; Abschnitte steigen
-einmal gestaffelt ein. Reduzierte Bewegung / ohne JS: alles sofort sichtbar, nur ruhende Linien.
+Bewegung sparsam: das Produktbild setzt sich beim Laden (nur transform); Lichtimpulse laufen die Beispielkette entlang.
+Inhalte sind nie versteckt (keine Einblend-Effekte). Reduzierte Bewegung: keine Bewegung, nur ruhende Linien.
 
 ## Globale Bausteine (frontend/src/app/shared)
 - `appSpotlight` — setzt `--spot-x/-y/-o` unter dem Mauszeiger; Aussehen bestimmt das Element.
 - `app-animated-beam` — `[container] [from] [to] color curvature delay duration reverse`; SVG hinter den
   Elementen, Neuberechnung per ResizeObserver, `--beam-base` für die ruhende Linie.
 - `app-tile-footer` — `variant="full|compact"`, Farben/Schrift über `--tf-*`.
+- `app-animated-beam [iterations]` — `'infinite'` (Website) oder feste Zahl (App: 3, dann Ruhe).
 - `app-link-chain` — Beispielkette (`heading`, `caption`, `links`); Startseite und Anmeldung. Bereichsfarben per
   Mixin `editorial.area-tones`.
 - `app-area-deck` — Fächer (derzeit nicht auf `/`, bleibt für App/Onboarding verfügbar).

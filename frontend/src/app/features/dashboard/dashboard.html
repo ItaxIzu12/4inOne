@@ -1,10 +1,10 @@
 <app-shell [dashboardHeader]="true" [searchValue]="boardQuery()" (dashboardQuery)="boardQuery.set($event)">
-  <!-- Startseite (17.10.2026, „Tagesplan“): ruhig und erklärbar. Eine Zeilen-Form für alles: Zeit · Titel · Bereich.
-       Links der Tag in Gruppen (Überfällig, Als Nächstes, Später, Ohne Uhrzeit, Vorbei), rechts bzw. darunter
-       Demnächst, Budget, Für dich. Kein zweites Menü — die Bereiche erreicht man über die Navigation. -->
+  <!-- Startseite (22.10.2026, „Kommandozentrale“ im Stil der Website): große Begrüßung, ein Band mit vier
+       Kennzahlen (Heute, Budget, Reise, Haushalt — echte Werte, je ein Weg in den Bereich), darunter links der Tag in
+       Gruppen, rechts Für dich (Verknüpfung mit Lichtlinie) und Letzte Buchungen. -->
   <main id="main-content" class="dashboard" tabindex="-1">
     <header class="greeting">
-      <div>
+      <div class="greeting__copy">
         <h1>{{ greeting }}, {{ name() }}!</h1>
         <p class="greeting__day">{{ dayLine }}</p>
       </div>
@@ -116,6 +116,80 @@
         </section>
       }
 
+      <!-- Überblick: vier Kennzahlen aus echten Daten, je ein Weg in den Bereich (am Handy 2 × 2) -->
+      <div class="kpis" role="group" aria-label="Überblick">
+        <a class="kpi kpi--today organisation" [routerLink]="organisationPath()" [attr.aria-busy]="todayLoading() || null">
+          <span class="kpi__head"><span class="row__icon" aria-hidden="true"><app-icon name="check-circle" /></span>Heute</span>
+          @if (todayLoading()) {
+            <span class="line-skeleton" aria-hidden="true"></span><span class="sr-only">Wird geladen</span>
+          } @else if (todayError()) {
+            <span class="kpi__value kpi__value--quiet">Gerade nicht verfügbar</span>
+          } @else {
+            @let st = todayStats();
+            <span class="kpi__value">{{ st.open }} offen</span>
+            <small [class.is-late]="st.late > 0">{{ st.late ? st.late + ' überfällig' : 'nichts überfällig' }}</small>
+          }
+        </a>
+
+        <section class="budget finance" aria-labelledby="budget-title">
+          <a class="budget__card kpi" [routerLink]="domainPath('finanzen')" [attr.aria-busy]="(!budget() && !financeError()) || null">
+            <span class="kpi__head"><span class="row__icon" aria-hidden="true"><app-icon name="finance" /></span><h2 id="budget-title">Budget</h2></span>
+            @if (financeError()) {
+              <span class="budget__value budget__value--quiet">Gerade nicht verfügbar</span>
+            } @else if (budget(); as b) {
+              @if (b.set) {
+                <span class="budget__value" [class.is-over]="b.over">{{ b.value }}</span>
+                <span class="budget__bar" aria-hidden="true"><span [style.width.%]="b.share"></span></span>
+                <small>{{ b.of }}</small>
+              } @else {
+                <span class="budget__value budget__value--quiet">{{ b.hasData ? b.spent + ' ausgegeben' : 'Starte mit deinem Monatsbudget' }}</span>
+                <small>Mit einem Monatsbudget siehst du hier, was noch übrig ist.</small>
+              }
+            } @else {
+              <span class="line-skeleton" aria-hidden="true"></span><span class="sr-only">Wird geladen</span>
+            }
+          </a>
+        </section>
+
+        <section class="soon" aria-labelledby="soon-title" [attr.aria-busy]="soonLoading() || null">
+          <h2 id="soon-title" class="sr-only">Demnächst</h2>
+          @if (soonLoading()) {
+            <div class="soon__card--skeleton" role="status" aria-label="Wird geladen"><span></span><span></span></div>
+          } @else if (soon().length) {
+            <ul class="soon__card">
+              @for (row of soon(); track row.key) {
+                <li>
+                  <a [class]="'soon__row kpi ' + row.tone" [routerLink]="row.path" [queryParams]="row.query">
+                    <span class="kpi__head"
+                      ><span class="row__icon" aria-hidden="true"><app-icon [name]="areaIcon(row.tone)" /></span>{{ row.area }}<span class="kpi__when">{{ row.when }}</span></span
+                    >
+                    <span class="item-copy"><strong>{{ row.title }}</strong><small>{{ row.meta }}</small></span>
+                  </a>
+                </li>
+              }
+              @if (!soonHas().trip) {
+                <li>
+                  <a class="soon__row kpi kpi--empty travel" [routerLink]="travelPath()">
+                    <span class="kpi__head"><span class="row__icon" aria-hidden="true"><app-icon name="travel" /></span>Reisen</span>
+                    <span class="item-copy"><strong>Keine Reise geplant</strong><small>Plane die nächste Reise</small></span>
+                  </a>
+                </li>
+              }
+              @if (!soonHas().deadline) {
+                <li>
+                  <a class="soon__row kpi kpi--empty household" [routerLink]="domainPath('haushalt')">
+                    <span class="kpi__head"><span class="row__icon" aria-hidden="true"><app-icon name="household" /></span>Haushalt</span>
+                    <span class="item-copy"><strong>Keine Frist</strong><small>in den nächsten Wochen</small></span>
+                  </a>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="kpi soon__empty">In den nächsten Wochen steht keine Reise und keine Frist an.</p>
+          }
+        </section>
+      </div>
+
       <div class="board-grid">
         <section class="today plan" aria-labelledby="today-title">
           <header class="plan__head">
@@ -204,48 +278,6 @@
         </section>
 
         <div class="side">
-          <section class="soon" aria-labelledby="soon-title" [attr.aria-busy]="soonLoading() || null">
-            <h2 id="soon-title">Demnächst</h2>
-            @if (soonLoading()) {
-              <div class="side__card soon__card--skeleton" role="status" aria-label="Wird geladen"><span></span><span></span></div>
-            } @else if (soon().length) {
-              <ul class="side__card soon__card">
-                @for (row of soon(); track row.key) {
-                  <li>
-                    <a [class]="'soon__row ' + row.tone" [routerLink]="row.path" [queryParams]="row.query">
-                      <span class="time">{{ row.when }}</span>
-                      <span class="row__icon" aria-hidden="true"><app-icon [name]="areaIcon(row.tone)" /></span>
-                      <span class="item-copy"><strong>{{ row.title }}</strong><small>{{ row.meta }}</small></span>
-                      <app-icon class="chevron" name="arrow" aria-hidden="true" />
-                    </a>
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="side__card soon__empty">In den nächsten Wochen steht keine Reise und keine Frist an.</p>
-            }
-          </section>
-
-          <section class="budget finance" aria-labelledby="budget-title">
-            <h2 id="budget-title">Budget</h2>
-            <a class="side__card budget__card" [routerLink]="domainPath('finanzen')" [attr.aria-busy]="(!budget() && !financeError()) || null">
-              @if (financeError()) {
-                <span class="budget__value budget__value--quiet">Gerade nicht verfügbar</span>
-              } @else if (budget(); as b) {
-                @if (b.set) {
-                  <span class="budget__value" [class.is-over]="b.over">{{ b.value }}</span>
-                  <span class="budget__bar" aria-hidden="true"><span [style.width.%]="b.share"></span></span>
-                  <small>{{ b.of }}</small>
-                } @else {
-                  <span class="budget__value budget__value--quiet">{{ b.hasData ? b.spent + ' ausgegeben' : 'Starte mit deinem Monatsbudget' }}</span>
-                  <small>Mit einem Monatsbudget siehst du hier, was noch übrig ist.</small>
-                }
-              } @else {
-                <span class="line-skeleton" aria-hidden="true"></span><span class="sr-only">Wird geladen</span>
-              }
-            </a>
-          </section>
-
           @if (!forYou() && forYouLoading()) {
             <section class="for-you" aria-labelledby="for-you-title" aria-busy="true">
               <h2 id="for-you-title">Für dich</h2>
@@ -259,12 +291,16 @@
                 @let pair = demoPair()!;
                 <div class="side__card connection-preview">
                   <p class="connection-preview__lead">{{ demoPairLinked() ? 'Diese zwei Einträge sind verknüpft. Mit einem Tipp kommst du vom einen zum anderen.' : 'Diese zwei Einträge gehören wohl zusammen. Verknüpft kommst du mit einem Tipp vom einen zum anderen.' }}</p>
+                  <div class="connection-pair" #pairStage>
                   <a class="connection-object finance" routerLink="/demo/finanzen" [queryParams]="{tab:'goals'}">
-                    <span class="row__icon" aria-hidden="true"><app-icon name="finance" /></span><span><small>Finanzen · Sparziel</small><strong>{{ pair.goal.title }}</strong></span><app-icon class="chevron" name="arrow" aria-hidden="true" />
+                    <span class="row__icon" #pairA aria-hidden="true"><app-icon name="finance" /></span><span><small>Finanzen · Sparziel</small><strong>{{ pair.goal.title }}</strong></span><app-icon class="chevron" name="arrow" aria-hidden="true" />
                   </a>
                   <a class="connection-object organisation" routerLink="/demo/organisation" [queryParams]="{kind:'task',id:pair.task.id}">
-                    <span class="row__icon" aria-hidden="true"><app-icon name="calendar" /></span><span><small>Organisation · Aufgabe</small><strong>{{ pair.task.title }}</strong></span><app-icon class="chevron" name="arrow" aria-hidden="true" />
+                    <span class="row__icon" #pairB aria-hidden="true"><app-icon name="calendar" /></span><span><small>Organisation · Aufgabe</small><strong>{{ pair.task.title }}</strong></span><app-icon class="chevron" name="arrow" aria-hidden="true" />
                   </a>
+                  <!-- Die eine Bewegung der Seite: dieselbe Lichtlinie wie auf der Startseite, drei Impulse, dann Ruhe (bei reduzierter Bewegung gar keine) -->
+                  <app-animated-beam [container]="pairStage" [from]="pairA" [to]="pairB" color="#0f9d6b" [duration]="2.4" [iterations]="3" />
+                  </div>
                   <button class="head-link connection-preview__action" (click)="openForYou($event)">{{ demoPairLinked() ? 'Verbindung ansehen' : 'Zusammenhang ansehen' }}<app-icon name="arrow" aria-hidden="true" /></button>
                 </div>
               } @else {
@@ -277,6 +313,30 @@
                   <span class="for-you__action">{{ f.action }} <app-icon name="arrow" aria-hidden="true" /></span>
                 </a>
               }
+            </section>
+          }
+
+          <!-- Letzte Buchungen: die echten, zuletzt erfassten Beträge des Monats -->
+          @if (ledger(); as rows) {
+            <section class="ledger" aria-labelledby="ledger-title">
+              <header class="plan__head">
+                <h2 id="ledger-title">Letzte Buchungen</h2>
+                <a class="head-link" [routerLink]="domainPath('finanzen')" [queryParams]="{ tab: 'transactions' }">Alle</a>
+              </header>
+              <div class="side__card">
+                @if (rows.length) {
+                  <ul class="ledger__list">
+                    @for (row of rows; track row.id) {
+                      <li class="ledger__row">
+                        <span class="item-copy"><strong>{{ row.title }}</strong><small>{{ row.meta }}</small></span>
+                        <span class="ledger__amount" [class.is-income]="row.income">{{ row.amount }}</span>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="soon__empty">Noch keine Buchungen in diesem Monat.</p>
+                }
+              </div>
             </section>
           }
         </div>

@@ -118,7 +118,62 @@ Abstand — nie nur über Farbe.
   „Verknüpft“; ohne JavaScript oder mit reduzierter Bewegung ist alles sofort sichtbar. Bereiche als echte Reiter
   (Pfeiltasten, Pos1/Ende), das Bild folgt.
 
-- **Neue Bereichsfarben in der App, Onboarding neu (21.10.2026, aktueller Stand):** Die globalen Bereichstokens in
+- **Landingpage: Verknüpfen zum Ausprobieren (22.10.2026, aktueller Stand):** Nach externer Kritik („noch wenig echte
+  Produktinteraktion“, „Mehrwert nur teilweise sofort erkennbar“) ersetzt eine Verknüpfungs-Probe die statische
+  Beispielkette und rückt direkt hinter den Aussage-Absatz (vor die Bereiche; Navigation „Ausprobieren“). Drei
+  Beispiele (Reise · Gerät · Vertrag, `aria-pressed`-Auswahl); je Ausgangseintrag Vorschläge mit Begründung in
+  Alltagssprache nach den echten Engine-Regeln (Reise ↔ Aufgabe/Termin/Sparziel, Gerät ↔ Sparziel, Vertrag ↔
+  Aufgabe) und je ein „Bewusst nicht vorgeschlagen“ mit Grund („Die Zeit allein reicht nie“, „Nur der Anbieter ist
+  gleich“). „Verknüpfen“ zieht eine Lichtlinie (`app-animated-beam`, 2 Impulse) zum Ziel, füllt dessen Farbfeld,
+  der Zähler „Verknüpft mit N Einträgen“ ist `aria-live`; „Nicht relevant“ nimmt den Vorschlag weg; „Zurücksetzen“.
+  Knopfname folgt dem sichtbaren Wort („Verknüpfen: …“ / „Verknüpft: …, Verbindung lösen“, kein doppeltes
+  `aria-pressed`). Nur auf der Seite, nichts gespeichert, so beschriftet. Form bewusst anders als die Bereichs-Karte:
+  eigenes Band `--ground-2` über die volle Breite, Quelle als Block mit 14-px-Ecken, Vorschläge als Liste mit Linien,
+  „nicht vorgeschlagen“ gestrichelt. Überschrift Bereiche spezifischer: „Jeder Bereich hat seine eigenen Werkzeuge.“
+- **Landingpage „Produkt im Mittelpunkt“ (22.10.2026, Nutzerwahl):** Neu aufgebaut nach dem Muster
+  hochwertiger SaaS-Seiten (verglichen: Linear, Mercury, Things): das echte Produkt statt Deko. Hero zentriert: H1 „Dein
+  ganzer Alltag auf einer Startseite.“, ein Satz, „Konto erstellen“ (Tinte) + „Ohne Anmeldung ausprobieren“ (Rand),
+  Hinweis „Läuft im Browser …“. Darunter die Bühne: echtes Dashboard (Aufnahme der Demo, 1440 × 900, @2x) im
+  Passepartout (8 px `--ground-2`, Radius 22, weicher Schatten) und das Handy (Tinten-Rahmen, Radius 36) davor; am
+  Handy nur das Handy-Bild. Dann ein großer Aussage-Absatz (erster Satz Tinte, Rest `#6F6A5F`, 5,1:1), die vier Bereiche
+  als Umschalter (WAI-ARIA-Tabs mit Pfeiltasten; Reiter-Pillen mit Farbfeld, Panel mit drei Fähigkeiten als Liste mit
+  Linien und echtem Screenshot; am Handy lesbarer Ausschnitt hinter der Seitenleiste), „Ein Eintrag führt zum
+  nächsten.“ mit `app-link-chain`, „Privat ist die Grundeinstellung.“ als Faktenliste, Fragen, Abschluss-Band in Tinte.
+  Entfernt: Unschärfe-Einblendung, Satzfetzen-Überschriften, Karten mit Häkchen-Listen, 1-2-3-Schritte, dunkler
+  Schalter-Block, `motion`-Animationen (Seite 29,6 kB). Einzige Bewegung: das Produktbild setzt sich beim Laden (nur
+  transform, nicht bei reduzierter Bewegung). Screenshots in `public/images/landing` neu aus der Demo erzeugt.
+- **Dashboard „Kommandozentrale“ (22.10.2026, Nutzerwahl):** SaaS-typischer Aufbau aus echten
+  Daten. Unter der Begrüßung ein Überblick-Band mit vier Kacheln (Desktop 4 Spalten, ab 1100 px 2 × 2): Heute
+  („N offen“, überfällig in Rot), Budget (Zahl + Balken in Finanzgrün), Reise und Haushalt (aus „Demnächst“; fehlt
+  eines, steht dort ein ehrlicher Leerzustand mit Weg in den Bereich). Kachel: weiß, Rand `--border-subtle`, Radius 16,
+  Kopf mit 30-px-Farbfeld + Bereichswort, Wert 26 px Display (Handy 20 px, umbrechend mit Silbentrennung), eine
+  Zeile Kontext; Hover: Rand `--border-strong`, weicher Schatten, −1 px. Darunter links der Tagesplan, rechts Für dich
+  (Verknüpfung mit Lichtlinie, 3 Impulse) und neu „Letzte Buchungen“ (höchstens vier echte Buchungen des Monats:
+  Notiz oder Kategorie, Kategorie · Datum, Betrag mit Vorzeichen, Einnahmen in Finanzgrün; Link „Alle“).
+  `.budget`/`.soon` bleiben als Bausteine (per `display: contents` im Raster des Bandes); der Datumsblock entfällt.
+- **Seitenleiste mit Farbfeldern (22.10.2026, Nutzerwunsch):** Linke Navigation wie Tableiste und
+  Startseite: Symbole in Bereichsfarbe in einer gleichen 36-px-Box, der aktive Eintrag als Farbfeld
+  (`--nav-fill`/`--nav-on`, Amber mit Tinte) auf warmer Fläche `--surface-pressed`, Text Tinte 600. Symbolformen,
+  Reihenfolge und Einträge unverändert. Unter 800 px Fensterhöhe entfällt der Deko-Hinweis „Alles Wichtige …“.
+- **App in der Website-Farbwelt, Kopfzeile ohne Suche, Dashboard neu (21.10.2026):**
+  Zentrale Tokens (`styles.css`): `--surface-app #FAF8F4`, Hover `#F6F3EC`, Press/Sunken `#F2EEE6`,
+  `--text-primary #121826`, `--text-secondary #4A5263`, Linien `#ECE6DB` / `#E6E0D4` / `#C4BCAE`,
+  `--brand-primary #121826` (Tinte statt Markenblau; `--brand-primary-hover #252E44`), `--accent*` und Lavendel-Altnamen
+  zeigen darauf. Neu: Flächenfarben `--finance-fill #0F9D6B`, `--household-fill #E04F78`, `--organization-fill
+  #E3961A`, `--travel-fill #3B6FE0` mit `--*-on` (Weiß; Amber trägt Tinte). Status (`--info` Blau, `--error` Rot)
+  unverändert. **Ziffern:** Schibsted Grotesk setzt mit `tabular-nums` auch `. , :` auf Ziffernbreite („21 .
+  Oktober“, „16 : 00“) — eine globale Regel hält Ziffern überall proportional. `layout/app-shell.scss`: alle festen
+  Blau-/Grautöne auf die warme Palette; Suchfeld und ⌘K ausgeblendet (`searchEnabled = false`, Logik über `?q=`
+  bleibt); Kopfzeile und Tableiste deckend statt Weichzeichner (Scroll-Leistung am Handy); Tableiste: Symbole in
+  Bereichsfarbe, aktiver Reiter als Farbfeld (`--nav-fill`/`--nav-on`), gleiche Box für alle Symbole (kein Springen).
+  Seitenleiste bleibt in Aufbau und Symbolen. Dashboard: Begrüßung in der Display-Schrift (40 px, Handy 30), Karten
+  weiß mit Rand `--border-subtle`, Radius 16; Tagesplan-Zeilen mit Bereichs-Farbfeld 36 px, „Als Nächstes“ in der
+  Tönung seines Bereichs mit größerer Uhrzeit, Vorbei blass; rechte Spalte neu geordnet: Budget (Zahl 32 px
+  Display, Balken in Finanzgrün) → Demnächst (Datumsblock Tag groß / Monat klein) → Für dich (Sparziel und Aufgabe
+  übereinander, dazwischen die Lichtlinie der Startseite, in der App nur 3 Impulse: `app-animated-beam
+  [iterations]`). Am Handy Titel zweizeilig statt abgeschnitten. Leistung: Tagesplan als ein `computed` statt
+  zehn Getter je Durchlauf, `ChangeDetectionStrategy.OnPush`, Ladeflächen in fester Höhe.
+- **Neue Bereichsfarben in der App, Onboarding neu (21.10.2026):** Die globalen Bereichstokens in
   `styles.css` folgen jetzt Logo und Startseite (dunkle Textvariante für Schrift/Symbole, Tönung als Fläche):
   `--finance-accent #0B6E4B / --finance-soft #E4F4EC`, `--household-accent #A8325A / #FCE8EE`,
   `--organization-accent #8A5800 / #FCEFD9` (vorher Violett), `--travel-accent #2453B4 / #E7EDFB`; alle ≥ 5,3:1 auf

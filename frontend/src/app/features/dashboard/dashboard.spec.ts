@@ -63,14 +63,35 @@ describe('Dashboard', () => {
     expect(budget).toContain('250,00 € übrig');
     expect(budget).toContain('von 3.000,00 €');
   });
-  it('is not a second menu: today first, then Demnächst/Für dich/Budget — no area tiles, no static image', () => {
+  it('Kommandozentrale: overview band (budget, Demnächst) above today, no old area menu, no static image', () => {
     const f = TestBed.createComponent(Dashboard);
     f.detectChanges();
     const el = f.nativeElement as HTMLElement;
     expect(el.querySelectorAll('.domain, .domains').length).toBe(0);
-    expect(el.querySelector('.today')!.compareDocumentPosition(el.querySelector('.soon')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(el.querySelector('.soon')!.compareDocumentPosition(el.querySelector('.budget')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Seit 22.10.2026: das Überblick-Band (Heute · Budget · Reise · Haushalt) steht über dem Tagesplan
+    expect(el.querySelectorAll('.kpis .kpi').length).toBeGreaterThanOrEqual(2);
+    expect(el.querySelector('.budget')!.compareDocumentPosition(el.querySelector('.soon')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(el.querySelector('.soon')!.compareDocumentPosition(el.querySelector('.today')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(el.querySelector('img, .connected, .suggestion')).toBeNull();
+  });
+  it('lists the latest real bookings with category, date and signed amount', () => {
+    const f = TestBed.createComponent(Dashboard);
+    f.detectChanges();
+    TestBed.inject(HttpTestingController).expectOne((req) => req.url.includes('/finanzen/private/summary/')).flush({
+      available: '250.00', total: '3000.00', budget: '3000.00', expenses: '2750.00', has_data: true,
+      categories: [{ id: 7, name: 'Lebensmittel', color: '#0f9d6b', amount: '28.30' }],
+      recent: [
+        { id: 1, amount: '28.30', type: 'EXPENSE', category: 7, date: '2026-10-21', note: 'REWE', currency: 'EUR' },
+        { id: 2, amount: '3420.00', type: 'INCOME', category: 99, date: '2026-10-01', note: '', currency: 'EUR' },
+      ],
+    });
+    f.detectChanges();
+    const rows = Array.from((f.nativeElement as HTMLElement).querySelectorAll('.ledger__row')).map((r) => r.textContent!.replace(/\s+/g, ' ').trim());
+    expect(rows[0]).toContain('REWE');
+    expect(rows[0]).toContain('Lebensmittel · 21.10.');
+    expect(rows[0]).toContain('− 28,30 €');
+    expect(rows[1]).toContain('Einnahme');
+    expect(rows[1]).toContain('+ 3.420,00 €');
   });
   it('uses the actual upcoming trip and skips completed or cancelled trips', () => {
     const f = TestBed.createComponent(Dashboard);

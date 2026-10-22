@@ -54,8 +54,7 @@ for (const width of [360, 820, 1440]) {
     // mitten im Übergang (zufällig, je nach Timing).
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    // Das Zeichen steht im Satz für „Alles“ (für Screenreader als Wort, die Felder sind aria-hidden)
-    await expect(page.getByRole('heading', { level: 1, name: /Dein Alltag\.\s*Alles verbunden\./ })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Dein ganzer Alltag auf einer Startseite.' })).toBeVisible();
     await expect(page.locator('app-dashboard')).toHaveCount(0);
     await expect(page.locator('.demo-banner')).toHaveCount(0);
     expect(calls).toEqual([]);
@@ -66,7 +65,7 @@ for (const width of [360, 820, 1440]) {
       (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations,
     ).toEqual([]);
     await expect(page.getByText('Starte mit dem Bereich, den du brauchst.')).toHaveCount(0);
-    await expect(page.getByRole('heading', { name: /Verbunden\.\s*Nicht geteilt\./ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Privat ist die Grundeinstellung.' })).toBeVisible();
     await page.evaluate(() => window.scrollTo(0, 700));
     expect(Math.abs((await page.locator('header.head').boundingBox())!.y)).toBeLessThan(2);
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -148,9 +147,9 @@ test('private links require login; legacy bookmarks retain query and fragment', 
 test('landing: honest story in order, one hero action, real links, no invented claims', async ({ page }) => {
   await session(page);
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Alles verbunden.');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Dein ganzer Alltag auf einer Startseite.');
   const headings = await page.getByRole('heading', { level: 2 }).allInnerTexts();
-  const order = ['Vier Bereiche', 'So einfach', 'Verbunden.', 'Häufige Fragen', 'Fang mit einem'];
+  const order = ['Probier aus', 'Jeder Bereich hat', 'Privat ist', 'Häufige Fragen', 'Schau dir 4inOne'];
   expect(order.map((t) => headings.findIndex((h) => h.replace(/\s+/g, ' ').includes(t)))).toEqual([...order.keys()]);
   // Keine erfundenen Behauptungen: keine Stimmen, Sterne, Nutzerzahlen, Preise, KI
   await expect(page.locator('main')).not.toContainText(/KI|Testimonial|Bewertung|Tausende|kostenlos|gratis|Bank-level|automatisch gebucht/);
@@ -174,48 +173,49 @@ test('landing: questions open with the keyboard; sharing is explained; no contac
   await page.keyboard.press('Enter');
   await expect(question).toHaveAttribute('open', '');
   await expect(question).toContainText('Deinen Finanzbereich kann niemand sonst sehen');
-  // Die vier Bereiche führen in die Demo
-  await expect(page.locator('#bereiche .card__link')).toHaveCount(4);
-  // Teilen: Finanzen bleiben gesperrt
-  const finance = page.getByRole('switch', { name: 'Finanzen teilen' });
-  await expect(finance).toHaveAttribute('aria-disabled', 'true');
-  // gesperrt: auch per Tastatur bleibt er aus
-  await finance.focus();
-  await page.keyboard.press('Space');
-  await expect(finance).toHaveAttribute('aria-checked', 'false');
+  // Die vier Bereiche: Umschalter per Tastatur (Pfeiltasten), jeder Bereich führt in seine Demo
+  const tabs = page.getByRole('tablist', { name: 'Bereiche' }).getByRole('tab');
+  await expect(tabs).toHaveCount(4);
+  await tabs.first().focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('tab', { name: 'Haushalt' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Haushalt' })).toBeFocused();
+  await expect(page.getByRole('tabpanel')).toContainText('Gemeinsame Einkaufsliste');
+  await expect(page.getByRole('tabpanel').getByRole('link', { name: 'Haushalt in der Demo ansehen' })).toHaveAttribute('href', '/demo/haushalt');
+  await page.keyboard.press('End');
+  await expect(page.getByRole('tab', { name: 'Reisen' })).toHaveAttribute('aria-selected', 'true');
+  // Teilen: Finanzen bleiben immer privat
+  await expect(page.locator('#privat')).toContainText('Finanzen bleiben immer privat');
   // Kein Kontaktbereich mehr auf der Startseite und kein Kontakt-Link im Fuß
   await expect(page.locator('#kontakt')).toHaveCount(0);
   await expect(page.locator('footer a[href="/kontakt"]')).toHaveCount(0);
 });
 
-test('landing: motion plays once and ends fully visible; reduced motion shows everything at once', async ({ page }) => {
+test('landing: nothing waits on motion; the product picture is visible at once, also with reduced motion', async ({ page }) => {
   await session(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  await expect(page.locator('app-landing')).toHaveClass(/motion-ready/);
-  for (let y = 0; y < 9000; y += 600) await page.evaluate((top) => window.scrollTo(0, top), y);
-  await page.waitForTimeout(1200);
-  const hidden = await page.evaluate(() =>
-    [...document.querySelectorAll('[data-item],[data-hero],.chain__row')].filter((e) => getComputedStyle(e).opacity !== '1').length,
-  );
-  expect(hidden).toBe(0);
-
+  // Inhalte sind nie versteckt: die einzige Bewegung (Produktbild setzt sich) läuft nur über transform
+  for (const sel of ['.hero h1', '.stage__desk', '.stage__phone', '#fragen .question'])
+    await expect(page.locator(sel).first()).toHaveCSS('opacity', '1');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.reload();
-  await expect(page.locator('app-landing')).not.toHaveClass(/motion-ready/);
-  await expect(page.locator('#fragen [data-item]').first()).toHaveCSS('opacity', '1');
+  expect(await page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running').length)).toBe(0);
+  await expect(page.locator('.stage__desk')).toBeVisible();
 });
 
-test('landing on a phone (390 px): no sideways scrolling, big tap targets, the example chain fits', async ({ page }) => {
+test('landing on a phone (390 px): no sideways scrolling, big tap targets, the product and the example chain fit', async ({ page }) => {
   await session(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  // Die Beispielkette bleibt am Handy im Bildschirm, und ihr erstes Glied ist schon im ersten Bildschirm zu sehen
-  for (const box of await page.locator('.chain__row').evaluateAll((els) => els.map((e) => e.getBoundingClientRect())))
+  // Am Handy zeigt die Bühne das Handy-Bild, und es beginnt schon im ersten Bildschirm; das Rechner-Bild entfällt
+  expect(await page.locator('.stage__phone').evaluate((e) => e.getBoundingClientRect().top < innerHeight)).toBe(true);
+  await expect(page.locator('.stage__desk')).toBeHidden();
+  // Die Verknüpfungs-Probe bleibt im Bildschirm
+  for (const box of await page.locator('#verknuepfen .sug, #verknuepfen .source').evaluateAll((els) => els.map((e) => e.getBoundingClientRect())))
     expect(box.left >= 0 && box.right <= 390).toBe(true);
-  expect(await page.locator('.chain__head').evaluate((e) => e.getBoundingClientRect().top < innerHeight)).toBe(true);
   const small = await page.locator('main a, main button, main summary, header a').evaluateAll((els) =>
     // Links mitten im Fließtext sind ausgenommen (WCAG 2.5.8, Inline-Ausnahme)
     els.filter((e) => getComputedStyle(e).display !== 'inline' && e.getBoundingClientRect().height > 0 && e.getBoundingClientRect().height < 44).map((e) => e.textContent?.trim()),
@@ -223,3 +223,21 @@ test('landing on a phone (390 px): no sideways scrolling, big tap targets, the e
   expect(small).toEqual([]);
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 });
+
+test('landing: visitors link two entries themselves and see the line, the count and the reason', async ({ page }) => {
+  await session(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const play = page.locator('#verknuepfen');
+  const hotel = play.getByRole('button', { name: 'Verknüpfen: Hotel in Berlin bestätigen' });
+  await hotel.click();
+  await expect(play.getByRole('button', { name: 'Verknüpft: Hotel in Berlin bestätigen, Verbindung lösen' })).toBeVisible();
+  await expect(play.locator('.source__count')).toHaveText('Verknüpft mit 1 Eintrag');
+  await expect(play.locator('app-animated-beam svg')).toHaveCount(1);
+  await play.getByRole('button', { name: 'Ein Gerät' }).click();
+  await expect(play.getByRole('button', { name: 'Ein Gerät' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(play.locator('.suggestions')).toContainText('Das Sparziel nennt das Gerät beim Namen.');
+  await expect(play.locator('.sug--skipped')).toContainText('Neue Spülmaschine');
+  expect((await new AxeBuilder({ page }).include('#verknuepfen').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+});
+

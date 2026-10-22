@@ -1,9 +1,10 @@
-// Startseite „Tagesplan“ (17.10.2026): ruhig, modern, erklärbar. Eine Zeilen-Form für alles — Zeit · Bereichs-Symbol ·
-// Titel/Hinweis (Bereich als Wort vorn) · Pfeil. Der Tag in Gruppen (Überfällig, Als Nächstes, Später, Ohne Uhrzeit,
-// Vorbei); „Als Nächstes“ warm hinterlegt, Überfälliges über rote Schrift und rotes Symbol. Bereichssymbole als
-// Farbfeld wie auf der Startseite (Logo-Farbe, helles Symbol; Amber mit Tinte). Weiße Karten mit feinem Rand auf
-// warmweißem Grund (21.10.2026, Farbwelt der Website).
+// Startseite (22.10.2026, „Kommandozentrale“; Band und rechte Spalte: dashboard-side.scss) — „Editorial hell“ wie
+// Website, Login, Onboarding: warmweißer Grund, weiße
+// Karten mit feinem Rand, Tinte, Schibsted Grotesk. Große Begrüßung in der Display-Schrift. Eine Zeilen-Form für
+// alles — Zeit · Bereichs-Farbfeld · Titel/Hinweis · Pfeil. Der Tag in Gruppen (Überfällig, Als Nächstes, Später,
+// Ohne Uhrzeit, Vorbei); „Als Nächstes“ in der Tönung seines Bereichs, Überfälliges über rote Schrift und Symbol.
 // Rechte Spalte: dashboard-side.scss · Menü, Hinweise, Suche: dashboard-parts.scss.
+// Leistung: nur transform/opacity/Hintergrund animiert, keine Weichzeichner, Ladezustände mit fester Höhe (kein CLS).
 :host {
   display: block;
   --ink: var(--text-primary);
@@ -12,10 +13,13 @@
   --hover: var(--surface-hover);
   --link: var(--brand-primary);
   --late: #b3261e;
-  --next: var(--surface-pressed);
   --card-r: var(--radius-lg);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   color: var(--text);
+}
+:host ::selection {
+  background: var(--travel-soft);
+  color: var(--text-primary);
 }
 .finance {
   --tone: var(--finance-accent);
@@ -53,7 +57,7 @@
 .dashboard {
   max-width: var(--content-max-width);
   margin: 0 auto;
-  padding: var(--space-5) var(--content-padding-x) var(--space-9);
+  padding: var(--space-7) var(--content-padding-x) var(--space-9);
 }
 
 // ---------- Begrüßung ----------
@@ -61,22 +65,26 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-5);
   margin-bottom: var(--space-7);
+}
+.greeting__copy {
+  min-width: 0;
 }
 h1 {
   margin: 0;
   color: var(--ink);
-  font-size: clamp(26px, 1.2rem + 0.9vw, 34px);
+  font-family: var(--font-display);
+  font-size: 2.5rem;
   font-weight: var(--fw-bold);
-  line-height: 1.1;
+  line-height: 1.05;
   letter-spacing: -0.03em;
+  text-wrap: balance;
 }
 .greeting__day {
-  margin: var(--space-2) 0 0;
+  margin: var(--space-3) 0 0;
   color: var(--muted);
-  font-size: 16px;
-  font-variant-numeric: tabular-nums;
+  font-size: 17px;
 }
 
 // ---------- Raster ----------
@@ -100,6 +108,9 @@ h1 {
 .side {
   gap: var(--space-6);
 }
+.board-overview > .kpis {
+  margin-bottom: var(--space-3);
+}
 .plan__head {
   display: flex;
   align-items: center;
@@ -110,9 +121,9 @@ h1 {
 .side h2 {
   margin: 0;
   color: var(--ink);
-  font-size: 17px;
-  font-weight: var(--fw-semibold);
-  letter-spacing: -0.01em;
+  font-size: 20px;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.015em;
 }
 .head-link {
   display: inline-flex;
@@ -127,7 +138,11 @@ h1 {
   font: inherit;
   font-size: 15px;
   font-weight: var(--fw-semibold);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
   cursor: pointer;
+  transition: background-color 150ms ease-out;
 }
 .head-link app-icon {
   width: 16px;
@@ -139,7 +154,7 @@ h1 {
   padding: var(--space-2);
   border: 1px solid var(--border-subtle);
   border-radius: var(--card-r);
-  background: #fff;
+  background: var(--surface-card);
 }
 .plan__group {
   margin: 0;
@@ -169,12 +184,12 @@ h1 {
 }
 .today-row {
   display: grid;
-  grid-template-columns: 56px 32px minmax(0, 1fr) 16px;
+  grid-template-columns: 56px 36px minmax(0, 1fr) 16px;
   align-items: center;
   gap: var(--space-3);
   width: 100%;
-  min-height: 56px;
-  padding: 8px var(--space-3);
+  min-height: 60px;
+  padding: 10px var(--space-3);
   border: 0;
   border-radius: var(--radius-md);
   background: transparent;
@@ -183,34 +198,34 @@ h1 {
   text-align: left;
   cursor: pointer;
   transition:
-    background-color 140ms ease-out,
+    background-color 150ms ease-out,
     transform 120ms ease-out;
 }
 .today-row:active {
-  transform: scale(0.995);
+  transform: scale(0.99);
 }
 .time {
   color: var(--ink);
   font-size: 15px;
   font-weight: var(--fw-semibold);
-  font-variant-numeric: tabular-nums;
 }
+// Bereichs-Farbfeld wie auf der Startseite: Logo-Farbe, helles Symbol (Amber trägt Tinte)
 .row__icon {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
   background: var(--tone-fill, var(--surface-pressed));
   color: var(--tone-on, var(--muted));
 }
 .row__icon app-icon {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
 }
 .item-copy {
   display: grid;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
 .item-copy strong {
@@ -232,14 +247,24 @@ h1 {
   width: 16px;
   height: 16px;
   color: var(--muted);
+  transition: transform 150ms ease-out;
 }
-// Als Nächstes: dezent hinterlegt, Uhrzeit und „in 8 Std.“ in der Markenfarbe
+// Als Nächstes: in der Tönung seines Bereichs, Uhrzeit größer, „in 2 Std.“ in der dunklen Bereichsfarbe
 .today-row--lead {
-  background: var(--next);
+  min-height: 72px;
+  background: var(--tone-soft, var(--surface-pressed));
+}
+.today-row--lead .time {
+  font-size: 19px;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+}
+.today-row--lead strong {
+  font-size: 17px;
 }
 .today-row--lead .time,
 .today-row--lead small b {
-  color: var(--link);
+  color: var(--tone, var(--ink));
 }
 .today-row--lead small b {
   font-weight: var(--fw-semibold);
@@ -250,12 +275,12 @@ h1 {
   color: var(--late);
 }
 .today-row.is-late .row__icon {
-  background: #fcebea;
+  background: var(--error-soft);
   color: var(--late);
 }
-// Vorbei: ruhiger (Symbol blasser, Text gedämpft)
+// Vorbei: ruhiger (Feld blasser, Text gedämpft)
 .today-row.is-past .row__icon {
-  opacity: 0.5;
+  opacity: 0.45;
 }
 .today-row.is-past .time,
 .today-row.is-past strong {
@@ -267,11 +292,17 @@ h1 {
     background: var(--hover);
   }
   .today-row--lead:hover {
-    background: var(--border-subtle);
+    background: var(--tone-soft, var(--surface-pressed));
+  }
+  .today-row:hover .chevron {
+    transform: translateX(2px);
+  }
+  .head-link:hover {
+    background: var(--surface-pressed);
   }
 }
 
-// Leer, Laden, Fehler
+// Leer, Laden, Fehler (Ladeflächen in fester Höhe — nichts springt, wenn die Daten kommen)
 .state {
   display: grid;
   justify-items: start;
@@ -293,16 +324,16 @@ h1 {
   padding: var(--space-2);
 }
 .skeleton span {
-  height: 48px;
+  height: 56px;
   border-radius: var(--radius-md);
-  background: var(--surface-app);
+  background: var(--surface-pressed);
 }
 .line-skeleton {
   display: block;
   width: 70%;
-  height: 20px;
-  border-radius: var(--radius-pill);
-  background: var(--surface-app);
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-pressed);
 }
 .partial-error {
   display: flex;
@@ -315,7 +346,8 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .today-row {
+  .today-row,
+  .chevron {
     transition: none;
   }
 }
@@ -332,17 +364,29 @@ h1 {
   }
   .greeting {
     align-items: center;
-    margin-bottom: var(--space-5);
+    margin-bottom: var(--space-6);
   }
   h1 {
-    font-size: 24px;
+    font-size: 1.875rem;
   }
   .greeting__day {
+    margin-top: var(--space-2);
     font-size: 15px;
   }
   .today-row {
-    grid-template-columns: 46px 32px minmax(0, 1fr) 16px;
+    grid-template-columns: 46px 36px minmax(0, 1fr) 16px;
     gap: var(--space-2);
-    padding: 8px var(--space-2);
+    padding: 10px var(--space-2);
+  }
+  .today-row--lead .time {
+    font-size: 17px;
+  }
+  // Schmale Spalte: Titel dürfen zweizeilig sein statt nach 20 Zeichen abzubrechen
+  .item-copy strong {
+    display: -webkit-box;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 }

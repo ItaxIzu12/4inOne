@@ -329,8 +329,7 @@ input:focus-visible {
     margin: 0 12px 10px;
   }
   .mobile-nav {
-    background: #ffffffed;
-    backdrop-filter: blur(18px);
+    background: #fff; // deckend statt Weichzeichner (Scroll-Leistung)
     box-shadow: 0 -5px 20px #1218260c;
   }
   .mobile-nav .active {
@@ -450,6 +449,27 @@ input:focus-visible {
 .sidebar nav a[data-domain="travel"], .mobile-nav a[data-domain="travel"] { --nav-accent: var(--travel-accent); --nav-soft: var(--travel-soft); --nav-fill: var(--travel-fill); --nav-on: var(--travel-on); }
 .sidebar nav a app-icon, .mobile-nav a app-icon { color: var(--nav-accent); filter: none; width: 24px; height: 24px; }
 .sidebar nav a.active, .mobile-nav a.active { color: var(--nav-accent); background: var(--nav-soft); box-shadow: none; border-color: transparent; }
+/* Seitenleiste wie Tableiste und Startseite (22.10.2026): Symbole in Bereichsfarbe, der aktive Eintrag als Farbfeld
+   mit hellem Symbol (Amber mit Tinte), dahinter die warme Fläche. Gleiche Box für alle Symbole, nichts springt. */
+.sidebar nav a app-icon {
+  box-sizing: content-box;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  padding: 8px;
+  border-radius: 10px;
+  transition: background-color 180ms ease-out, color 180ms ease-out;
+}
+.sidebar nav a { gap: 12px; padding-block: 8px; }
+.sidebar nav a.active { background: var(--surface-pressed); color: var(--text-primary); font-weight: 600; }
+.sidebar nav a.active app-icon { background: var(--nav-fill); color: var(--nav-on); }
+/* Niedrige Fenster: der Deko-Hinweis „Alles Wichtige …“ weicht, damit die Navigation Luft behält */
+@media (max-height: 800px) {
+  .sidebar-note { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar nav a app-icon { transition: none; }
+}
 /* Handy-Tableiste wie die Startseite: Symbole in Bereichsfarbe, der aktive Reiter als Farbfeld mit hellem Symbol
    (Amber mit Tinte). Jedes Symbol hat dieselbe Box, damit beim Wechsel nichts springt. */
 .mobile-nav a app-icon {
@@ -489,9 +509,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   padding: 12px 28px;
   border: 0;
   border-radius: 0;
-  background: #faf8f4f2;
+  background: #faf8f4; // deckend statt Weichzeichner: spart am Handy bei jedem Scroll-Frame Rechenzeit
   box-shadow: inset 0 -1px #ece6db;
-  backdrop-filter: blur(12px);
 }
 .brand-group {
   display: grid;
@@ -745,7 +764,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
     gap: 12px;
     min-height: 0;
     padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px;
-    background: #fffffff2;
+    background: #fff; // deckend: ohne Weichzeichner schimmerte sonst Text durch
   }
   .brand-group,
   .topbar:not(.topbar--demo) .brand-group {

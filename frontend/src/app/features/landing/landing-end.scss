@@ -1,24 +1,24 @@
-// Öffentliche Startseite — Fragen und alle Breiten (zuletzt geladen). Fuß: shared/tile-footer.
+// Öffentliche Startseite — Fragen, Abschluss-Band und alle Breiten (zuletzt geladen). Fuß: shared/tile-footer.
 
 // ---------- Fragen ----------
+.faq-section {
+  padding-top: 0;
+}
 .faq {
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   align-items: start;
   gap: clamp(40px, 6vw, 96px);
 }
 .faq__head {
   position: sticky;
   top: 112px;
+  display: grid;
+  gap: 16px;
 }
 .faq__head p {
-  max-width: 34ch;
-  margin-top: 20px;
   color: var(--ink-soft);
   font-size: 18px;
-}
-.faq__demo {
-  margin-top: 24px;
 }
 .question {
   border-bottom: 1px solid var(--line);
@@ -34,8 +34,8 @@
   min-height: 72px;
   padding: 18px 4px;
   color: var(--ink);
-  font-size: 19px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 600;
   line-height: 1.35;
   list-style: none;
   cursor: pointer;
@@ -47,13 +47,13 @@
   display: grid;
   flex: none;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: var(--ground-2);
   transition:
-    transform 320ms var(--ease),
-    background-color 200ms ease-out;
+    transform 300ms var(--ease),
+    background-color 180ms ease-out;
 }
 .question__mark app-icon {
   width: 16px;
@@ -77,12 +77,53 @@
     block-size: 0;
     overflow: clip;
     transition:
-      block-size 360ms var(--ease),
-      content-visibility 360ms allow-discrete;
+      block-size 320ms var(--ease),
+      content-visibility 320ms allow-discrete;
   }
   .question[open]::details-content {
     block-size: auto;
   }
+}
+
+// ---------- Abschluss-Band (Tinte) ----------
+.closer {
+  padding: clamp(80px, 10vw, 136px) 0;
+  background: var(--ink);
+  color: #fff;
+}
+.closer__inner {
+  display: grid;
+  justify-items: center;
+  gap: 20px;
+  text-align: center;
+}
+.closer h2 {
+  max-width: 18ch;
+  color: #fff;
+}
+.closer p {
+  max-width: 44ch;
+  color: rgb(255 255 255 / 0.74);
+  font-size: 18px;
+}
+.closer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.btn--light {
+  background: #fff;
+  color: var(--ink);
+}
+.btn--ghost {
+  background: transparent;
+  color: #fff;
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.6);
+}
+.closer :focus-visible {
+  outline-color: #fff;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -92,29 +133,28 @@
   .question[open] summary:hover .question__mark {
     background: #252e44;
   }
+  .btn--light:hover {
+    background: var(--ground-2);
+  }
+  .btn--ghost:hover {
+    background: rgb(255 255 255 / 0.1);
+  }
 }
 
 // ---------- Breiten ----------
 @media (max-width: 1080px) {
-  .hero__inner,
-  .steps,
-  .privacy,
+  .panel,
+  .play__stage,
+  .privacy__inner,
   .faq {
     grid-template-columns: minmax(0, 1fr);
   }
+  .privacy__head,
   .faq__head {
     position: static;
   }
-  .bento {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .card--finanzen,
-  .card--reisen {
-    grid-column: 1 / -1;
-  }
-  .card--haushalt,
-  .card--organisation {
-    grid-column: span 1;
+  .panel__shot {
+    order: -1;
   }
 }
 @media (max-width: 900px) {
@@ -124,49 +164,105 @@
   .head__actions {
     margin-left: auto;
   }
-  .section__head {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
+// Handy: das Handy-Bild trägt die Bühne (das Desktop-Bild wäre zu klein zum Lesen)
 @media (max-width: 640px) {
   .head__inner {
     gap: 8px;
+    min-height: 64px;
   }
   .head__brand app-brand {
     font-size: 20px;
   }
-  .hero__actions .btn,
-  .steps__actions .btn,
-  .faq__demo {
-    flex: 1 1 100%;
+  h1 {
+    font-size: 2.5rem;
+    letter-spacing: -0.035em;
+  }
+  .hero__lead {
+    font-size: 18px;
+  }
+  .hero__actions {
     width: 100%;
   }
-  .bento {
-    grid-template-columns: minmax(0, 1fr);
+  .hero__actions .btn,
+  .closer__actions .btn {
+    flex: 1 1 100%;
   }
-  .card--finanzen,
-  .card--reisen,
-  .card--haushalt,
-  .card--organisation {
-    grid-column: 1 / -1;
-    grid-template-columns: minmax(0, 1fr);
+  .stage {
+    padding-bottom: 64px;
   }
-  // Desktop-Ausschnitte wären am Handy unlesbar klein: dort nur Text und der Wert aus der Demo
-  .card__shot {
+  .stage__desk {
     display: none;
   }
-  .card__body {
-    padding: 22px;
+  .stage__phone {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: min(76vw, 300px);
+    margin-inline: auto;
+    padding: 8px;
+    border-radius: 44px;
   }
-  h1 {
-    font-size: 2.6rem;
+  .stage__phone img {
+    border-radius: 36px;
   }
-  .pair {
-    flex-direction: column;
-    gap: 40px;
+  .statement__text {
+    font-size: 1.375rem;
   }
-  .pair__item:last-of-type {
-    align-self: flex-end;
+  .tabs {
+    width: auto;
+    margin-inline: calc(-1 * var(--gutter));
+    padding-inline: var(--gutter);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .tab {
+    border: 1px solid var(--line);
+    background: var(--card);
+  }
+  .panel {
+    padding: 12px 12px 24px;
+    border-radius: 22px;
+  }
+  .panel__copy {
+    padding: 4px 8px 0;
+  }
+  // Ausschnitt oben links: Kopf und erste Inhalte lesbar groß statt der ganzen Seite in Miniatur
+  .panel__shot {
+    aspect-ratio: 4 / 3;
+    padding: 0;
+    border-radius: 16px;
+  }
+  .panel__shot img {
+    width: 190%;
+    max-width: none;
+    height: auto;
+    margin-left: -38%; // beginnt hinter der Seitenleiste der App (≈ 20 % der Aufnahme)
+    border-radius: 0;
+  }
+  .fact {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 20px 0;
+  }
+  // Probe am Handy: Knopf unter den Text, ganze Breite für die Begründung
+  .sug {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+  .sug__actions {
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;
+    justify-items: start;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .sug__link,
+  .sug__dismiss {
+    min-height: 44px;
+  }
+  .source {
+    padding: 20px;
   }
   .question summary {
     font-size: 17px;
