@@ -1,0 +1,8 @@
+# Verschlüsseltes Backup von Datenbank und hochgeladenen Dateien (deploy/scripts/backup.sh).
+[Unit]
+Description=4inOne: Backup
+
+[Service]
+Type=oneshot
+User=deploy
+ExecStart=/srv/4inone/deploy/scripts/backup.sh

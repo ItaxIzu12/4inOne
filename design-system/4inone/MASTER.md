@@ -35,7 +35,7 @@ auf einer Startseite.“, ein Satz, „Konto erstellen“ + „Ohne Anmeldung au
 Bühne: echtes Dashboard im Passepartout, Handy davor (am Handy nur das Handy) → Aussage-Absatz (erster Satz Tinte,
 Rest gedämpft) → „Probier aus, was 4inOne verbindet.“ (Verknüpfungs-Probe: Beispiel wählen, Vorschläge mit Grund
 verknüpfen, Lichtlinie, „bewusst nicht vorgeschlagen“) → Bereiche als Umschalter mit echtem Screenshot
-→ „Privat ist die Grundeinstellung.“ als Faktenliste → Häufige Fragen → Abschluss-Band in Tinte → Kachel-Fuß.
+→ „Privat ist die Grundeinstellung.“ als Faktenliste → Häufige Fragen → Abschluss-Band (einziger Abschluss) → klassischer Fuß (Marke, Spalten Bereiche/Produkt/Rechtliches, ©-Leiste).
 Nie: Unschärfe-Einblendung, Satzfetzen-Paare („X. Y.“) als Überschriften, Häkchen-Listen, 1-2-3-Schritte.
 
 ## Anmeldung / Registrierung
@@ -48,9 +48,10 @@ Gleiche Tokens wie die Website über `styles.css`: warmweißer Grund, Tinte als 
 Budget, Reise, Haushalt), Tagesplan mit Farbfeldern, rechts Für dich und Letzte Buchungen.
 Kopfzeile ohne Suche, deckend. Tableiste und Seitenleiste: aktiver Eintrag als Farbfeld.
 
-## Unterseiten
-Gleicher Kopf, kräftiger Titel bis 64 px, Abschnitte mit feiner Linie (`--line`) und kräftiger H2, Text in
-`--ink-soft` 17 px, Lesespalte 720 px; Platzhalter-Hinweis in Amber-Tönung; kompakter Kachel-Fuß.
+## Unterseiten (Rechtliches, 404)
+Gleicher Kopf mit feiner Linie. Rechtsseiten: links Navigation „Rechtliche Seiten“, rechts der Text auf einem weißen
+Blatt (Radius 28), H1/H2 650, Lesespalte 68 ch, Platzhalter-Hinweis in Ocker-Tönung; am Handy die Navigation als
+wischbare Pillen. Fuß kompakt: Marke + Rechtliches (aktuelle Seite markiert) + ©-Leiste.
 
 ## Karten
 Radius 16, Rand ODER Schatten; Lichtkegel unter der Maus in der Bereichsfarbe (`appSpotlight`, nur Maus); Hover
@@ -64,7 +65,7 @@ Inhalte sind nie versteckt (keine Einblend-Effekte). Reduzierte Bewegung: keine 
 - `appSpotlight` — setzt `--spot-x/-y/-o` unter dem Mauszeiger; Aussehen bestimmt das Element.
 - `app-animated-beam` — `[container] [from] [to] color curvature delay duration reverse`; SVG hinter den
   Elementen, Neuberechnung per ResizeObserver, `--beam-base` für die ruhende Linie.
-- `app-tile-footer` — `variant="full|compact"`, Farben/Schrift über `--tf-*`.
+- `app-tile-footer` — klassischer Fuß, `variant="full|compact"`, Farben über `--tf-*` (von der Seite geerbt).
 - `app-animated-beam [iterations]` — `'infinite'` (Website) oder feste Zahl (App: 3, dann Ruhe).
 - `app-link-chain` — Beispielkette (`heading`, `caption`, `links`); Startseite und Anmeldung. Bereichsfarben per
   Mixin `editorial.area-tones`.
@@ -74,3 +75,11 @@ Inhalte sind nie versteckt (keine Einblend-Effekte). Reduzierte Bewegung: keine 
 Erfundene Stimmen, Bewertungen, Zahlen, Preise („kostenlos“); Kursive; Serifen-Mix; schwebende Karten um ein Logo;
 Eyebrows; Verlaufs-Text; Glas als Deko; farbige
 Seitenränder an Karten; mehr als ein dunkler Abschnitt; Icons auf Amber in Weiß.
+
+## Farbidentität „Soft Editorial“ (22.10.2026)
+Porcelain `#F7F7F4` · Weiß · Sage `#ECEFEA` · Deep Forest `#172523` · Linien `#DDE1DA` · Sekundärtext `#52615B` ·
+Akzent Evergreen `#17694F`. Bereiche gedeckt (`#17694F`, `#AB445F` (Fläche und Text), `#9A641E`/Text `#85561A`,
+`#3D6B9A`) nur für Symbole, Balken, Labels, kleine Flächen; Logo behält seine Farben. Landing: Hero Porcelain,
+Bereiche Weiß, Verknüpfen Deep Forest, Privatsphäre Sage, Fragen Weiß, Abschluss Deep Forest, Fuß Porcelain.
+Schrift bleibt Schibsted Grotesk; Website-Überschriften 650. Landing-H1 bis 60 px, am Handy fließend 27–32 px (immer 4 Zeilen). Hover nur auf Klickbarem, nur am Rechner und bei Tastatur-Fokus gleich: Pfeil rückt 4 px vor, Tab-Fläche gleitet, Vorschau gestrichelt. Scroll-Einblenden nur für H2 und Bild je Abschnitt (12 px, scroll-gebunden, CSS `view()`), nie Fließtext oder Hero. Karten 20–28 px, Schatten sehr zurückhaltend.
+

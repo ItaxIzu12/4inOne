@@ -44,7 +44,7 @@ Beispieldaten.
 
 ## Brand Commitments
 
-Name „4inOne“, Zeichen aus vier weichen Feldern in den Bereichsfarben (`<app-brand>`), Leitsatz „Dein Alltag. Alles
+Name „4inOne“, Zeichen aus vier weichen Feldern in eigenen, kräftigen Farben (`<app-brand>`; die UI nutzt seit 22.10.2026 gedeckte Bereichstöne, „Soft Editorial“), Leitsatz „Dein Alltag. Alles
 verbunden.“, Schrift Schibsted Grotesk für alles (Google Font, selbst gehostet, ohne Kursive), Sprache Deutsch in Du-Form, ruhig und erwachsen. Linke Navigation und bestehende Icons bleiben.
 
 ## Evidence on Hand

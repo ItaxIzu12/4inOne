@@ -54,7 +54,7 @@ for (const width of [360, 820, 1440]) {
     // mitten im Übergang (zufällig, je nach Timing).
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1, name: 'Dein ganzer Alltag auf einer Startseite.' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Vier Bereiche für deinen Alltag – und was zusammengehört, ist verbunden.' })).toBeVisible();
     await expect(page.locator('app-dashboard')).toHaveCount(0);
     await expect(page.locator('.demo-banner')).toHaveCount(0);
     expect(calls).toEqual([]);
@@ -70,7 +70,7 @@ for (const width of [360, 820, 1440]) {
     expect(Math.abs((await page.locator('header.head').boundingBox())!.y)).toBeLessThan(2);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: `test-results/landing-${width}.png`, fullPage: true });
-    await page.locator('.hero').getByRole('link', { name: 'Ohne Anmeldung ausprobieren' }).click();
+    await page.locator('.hero').getByRole('link', { name: 'Demo ohne Anmeldung testen' }).click();
     await expect(page).toHaveURL('/demo');
     await expect(page.locator('.demo-banner')).toBeVisible();
     await expect(page.getByRole('heading', { name: /^(Guten Morgen|Guten Tag|Guten Abend),? Sophie!$/ })).toBeVisible();
@@ -147,17 +147,19 @@ test('private links require login; legacy bookmarks retain query and fragment', 
 test('landing: honest story in order, one hero action, real links, no invented claims', async ({ page }) => {
   await session(page);
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Dein ganzer Alltag auf einer Startseite.');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Vier Bereiche für deinen Alltag – und was zusammengehört, ist verbunden.');
   const headings = await page.getByRole('heading', { level: 2 }).allInnerTexts();
-  const order = ['Probier aus', 'Jeder Bereich hat', 'Privat ist', 'Häufige Fragen', 'Schau dir 4inOne'];
+  const order = ['Vier Apps wissen', 'Probier aus', 'Jeder Bereich hat', 'Privat ist', 'Häufige Fragen', 'Fang mit einem Bereich an'];
   expect(order.map((t) => headings.findIndex((h) => h.replace(/\s+/g, ' ').includes(t)))).toEqual([...order.keys()]);
   // Keine erfundenen Behauptungen: keine Stimmen, Sterne, Nutzerzahlen, Preise, KI
   await expect(page.locator('main')).not.toContainText(/KI|Testimonial|Bewertung|Tausende|kostenlos|gratis|Bank-level|automatisch gebucht/);
   // Ein klarer Aufruf im Hero, echte Ziele
   await expect(page.locator('.hero .btn--ink')).toHaveCount(1);
-  await expect(page.locator('.hero').getByRole('link', { name: 'Konto erstellen' })).toHaveAttribute('href', '/registrieren');
+  // Hauptweg ist die Demo, Registrierung der zweite Weg
+  await expect(page.locator('.hero .btn--ink')).toHaveAttribute('href', '/demo');
+  await expect(page.locator('.closer').getByRole('link', { name: 'Konto erstellen' })).toHaveAttribute('href', '/registrieren');
   await expect(page.getByRole('link', { name: 'Anmelden' }).first()).toHaveAttribute('href', '/login');
-  await expect(page.locator('.hero').getByRole('link', { name: 'Ohne Anmeldung ausprobieren' })).toHaveAttribute('href', '/demo');
+  await expect(page.locator('.hero').getByRole('link', { name: 'Demo ohne Anmeldung testen' })).toHaveAttribute('href', '/demo');
   for (const href of ['/impressum', '/datenschutz', '/nutzungsbedingungen', '/barrierefreiheit'])
     await expect(page.locator(`footer a[href="${href}"]`)).toHaveCount(1);
   // Echte Produktbilder mit Alternativtext und festen Maßen (kein Springen beim Laden)
@@ -168,7 +170,7 @@ test('landing: honest story in order, one hero action, real links, no invented c
 test('landing: questions open with the keyboard; sharing is explained; no contact section', async ({ page }) => {
   await session(page);
   await page.goto('/');
-  const question = page.locator('#fragen details').filter({ hasText: 'Wer sieht meine Daten?' });
+  const question = page.locator('#fragen details').filter({ hasText: 'Wer sieht meine persönlichen Daten?' });
   await question.locator('summary').focus();
   await page.keyboard.press('Enter');
   await expect(question).toHaveAttribute('open', '');
@@ -184,8 +186,9 @@ test('landing: questions open with the keyboard; sharing is explained; no contac
   await expect(page.getByRole('tabpanel').getByRole('link', { name: 'Haushalt in der Demo ansehen' })).toHaveAttribute('href', '/demo/haushalt');
   await page.keyboard.press('End');
   await expect(page.getByRole('tab', { name: 'Reisen' })).toHaveAttribute('aria-selected', 'true');
-  // Teilen: Finanzen bleiben immer privat
-  await expect(page.locator('#privat')).toContainText('Finanzen bleiben immer privat');
+  // Teilen: Finanzen sind nicht teilbar, Verknüpfen ändert keine Rechte (als Beispiel gezeigt)
+  await expect(page.locator('#privat .share')).toContainText('Nicht teilbar');
+  await expect(page.locator('#privat .share')).toContainText('ändert keine Rechte');
   // Kein Kontaktbereich mehr auf der Startseite und kein Kontakt-Link im Fuß
   await expect(page.locator('#kontakt')).toHaveCount(0);
   await expect(page.locator('footer a[href="/kontakt"]')).toHaveCount(0);
@@ -229,9 +232,12 @@ test('landing: visitors link two entries themselves and see the line, the count 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const play = page.locator('#verknuepfen');
+  // Erst die Reise anlegen, dann erscheinen die Vorschläge; der Fokus folgt
+  await play.getByRole('button', { name: 'Reise anlegen' }).click();
+  await expect(play.locator('.suggestions__label').first()).toBeFocused();
   const hotel = play.getByRole('button', { name: 'Verknüpfen: Hotel in Berlin bestätigen' });
   await hotel.click();
-  await expect(play.getByRole('button', { name: 'Verknüpft: Hotel in Berlin bestätigen, Verbindung lösen' })).toBeVisible();
+  await expect(play.getByRole('button', { name: 'Verbindung lösen: Hotel in Berlin bestätigen' })).toBeVisible();
   await expect(play.locator('.source__count')).toHaveText('Verknüpft mit 1 Eintrag');
   await expect(play.locator('app-animated-beam svg')).toHaveCount(1);
   await play.getByRole('button', { name: 'Ein Gerät' }).click();

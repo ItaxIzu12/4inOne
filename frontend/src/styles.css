@@ -35,47 +35,50 @@ cite {
    Oben die semantischen Tokens (System V3); darunter die älteren Namen, die nur noch auf sie zeigen. */
 
 :root {
-  /* ---------- Flächen: warmweiß wie Startseite/Login (21.10.2026), Karten weiß ---------- */
-  --surface-app: #faf8f4;
+  /* ---------- Flächen „Soft Editorial“ (22.10.2026): Porcelain, Karten weiß, Sage als zweite Fläche ---------- */
+  --surface-app: #f7f7f4;
   --surface-card: #ffffff;
   --surface-elevated: #ffffff;
-  --surface-hover: #f6f3ec;
-  --surface-pressed: #f2eee6;
-  --surface-sunken: #f2eee6;
+  --surface-hover: #f1f3ef;
+  --surface-pressed: #ecefea;
+  --surface-sunken: #ecefea;
 
-  /* ---------- Text: Tinte wie auf der Website ---------- */
-  --text-primary: #121826;
-  --text-secondary: #4a5263; /* 7,6:1 auf --surface-app */
-  --text-muted: #4a5263;
+  /* ---------- Text: Deep Forest ---------- */
+  --text-primary: #172523;
+  --text-secondary: #52615b; /* 6,1:1 auf Porcelain, 5,6:1 auf Sage */
+  --text-muted: #52615b;
   --text-on-accent: #ffffff;
 
   /* ---------- Linien ---------- */
-  --border-subtle: #ece6db;
-  --border-default: #e6e0d4;
-  --border-strong: #c4bcae;
+  --border-subtle: #e6e9e3;
+  --border-default: #dde1da;
+  --border-strong: #b9c0b6;
+  --border-control: #879189; /* Feldränder: 3,0:1 auf Weiß (WCAG 1.4.11) */
 
   /* ---------- Marke und Bereiche (Akzente, keine Flächenfüller) ---------- */
-  /* Hauptfarbe für Knöpfe, Links, Fokus: Tinte (vorher Markenblau #245fb0) */
-  --brand-primary: #121826;
-  --brand-primary-hover: #252e44;
-  /* Dieselben vier Farben wie Logo und Startseite (shared/styles/_editorial.scss): hier die dunkle Textvariante,
-     damit Schrift und Symbole auf Weiß ≥ 4,5:1 bleiben; die Tönung als Fläche. */
-  --finance-accent: #0b6e4b;
-  --finance-soft: #e4f4ec;
-  --household-accent: #a8325a;
-  --household-soft: #fce8ee;
-  --organization-accent: #8a5800;
-  --organization-soft: #fcefd9;
-  --travel-accent: #2453b4;
-  --travel-soft: #e7edfb;
-  /* Volle Logo-Farben für Farbfelder (Symbol darauf in --*-on; Amber trägt Tinte, Weiß hätte nur 2,4:1) */
-  --finance-fill: #0f9d6b;
+  /* Hauptfarbe für Knöpfe und Fokus: Deep Forest. Evergreen ist der Akzent (Links, Fortschritt, aktive Zustände) —
+     nicht für Knöpfe, weil es zugleich die Finanzen-Farbe ist. */
+  --brand-primary: #172523;
+  --brand-primary-hover: #22332f;
+  --accent-evergreen: #17694f;
+  /* Bereichsfarben „Soft Editorial“ (gedeckt; das Logo behält seine eigenen Farben, shared/brand): hier die
+     Textvariante, ≥ 4,5:1 auf Weiß, Porcelain und Sage; die Tönung nur für kleine Flächen. */
+  --finance-accent: #17694f;
+  --finance-soft: #e4efe9;
+  --household-accent: #ab445f;
+  --household-soft: #f6e8ec;
+  --organization-accent: #85561a;
+  --organization-soft: #f5ecdf;
+  --travel-accent: #36608b;
+  --travel-soft: #e4ebf3;
+  /* Flächen für Farbfelder; Symbol darauf weiß (≥ 4,7:1) */
+  --finance-fill: #17694f;
   --finance-on: #ffffff;
-  --household-fill: #e04f78;
+  --household-fill: #ab445f;
   --household-on: #ffffff;
-  --organization-fill: #e3961a;
-  --organization-on: #121826;
-  --travel-fill: #3b6fe0;
+  --organization-fill: #9a641e;
+  --organization-on: #ffffff;
+  --travel-fill: #3d6b9a;
   --travel-on: #ffffff;
 
   /* ---------- Status: überall dieselbe Bedeutung ---------- */

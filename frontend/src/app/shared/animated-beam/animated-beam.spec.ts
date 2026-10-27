@@ -8,7 +8,7 @@ import { AnimatedBeam } from './animated-beam';
   template: `
     <div #box style="position:relative;width:300px;height:200px">
       <span #a></span><span #b></span>
-      <app-animated-beam [container]="box" [from]="a" [to]="b" color="#0f9d6b" />
+      <app-animated-beam [container]="box" [from]="a" [to]="b" color="#17694f" />
     </div>
   `,
 })

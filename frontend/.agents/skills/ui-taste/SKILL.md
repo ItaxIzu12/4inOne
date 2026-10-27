@@ -3,7 +3,7 @@ name: ui-taste
 description: Give your coding agent better UI taste. Build and polish web and iOS interfaces with Uizze's anti-ui-slop playbooks and optional real-product references. Use for UI design, implementation, redesign, critique, or a final visual review in Claude Code, Codex, Cursor, or Copilot.
 license: Apache-2.0; see LICENSE and NOTICE for third-party attribution
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
   author: "UIZZE <business@uizze.com>"
   compatibility: "Designed for Claude Code, Codex, Cursor, and GitHub Copilot; works in any agent that can read project files and fetch a URL."
   tags: "ui-design, design-system, design-review, frontend, web-ui, ios-ui"
@@ -17,7 +17,7 @@ metadata:
 
 “Make it look better” gets old after the tenth prompt. Give your agent a workflow for choosing layouts, fixing visual hierarchy, and polishing the details you notice when you use the app.
 
-Built on [Uizze's](https://uizze.com) anti-ui-slop workflow. Eight design playbooks for web and iOS, with optional real-product references, fonts and icons through Uizze MCP.
+Built on [Uizze's](https://uizze.com) anti-ui-slop workflow. Focused design playbooks for web and iOS, including native audits, with optional real-product references, fonts and icons through Uizze MCP.
 
 **Free skill. No account required.** Agent-connected references and materials use the optional paid MCP.
 
@@ -38,6 +38,12 @@ Read the brief, existing UI, components, tokens, assets, and any PRODUCT.md or D
 
 Identify the audience, primary task, important states, and intended result. Ask only about missing choices that would materially change the work. A precise request is enough to proceed; do not turn a small fix into a discovery workshop.
 
+## Image first, then implement
+
+Follow [Uizze's image-to-UI workflow](references/uizze-image-to-ui.md) before visual implementation. When an authorized image-generation tool is available, new visual work and approved redesigns start with a realistic UI image, inspected before code. An approved supplied image takes precedence. Save its actual dimensions and build the target 1:1 with semantic components and real controls, not a screenshot background.
+
+Render at that viewport once assets and fonts load, compare with the stable target, correct visible mismatches and inspect again. Preserve the approved identity at other sizes. A small technical fix or read-only audit does not need a new image; if image tools are unavailable, explain that and use an existing target or the project's conventions without pretending generation or visual verification succeeded.
+
 ## Select the workflow
 
 Load the playbook for the requested action, plus the platform and craft guidance needed to execute it:
@@ -46,8 +52,8 @@ Load the playbook for the requested action, plus the platform and craft guidance
 - Product or dashboard work: [operate](reference/operate.md)
 - Refinement and polish: [polish](reference/polish.md)
 - Simplification: [distill](reference/distill.md)
-- Explicit audit: [audit](reference/audit.md), read-only unless fixes were requested
-- Native iOS: [iOS](reference/ios.md), alongside the action's playbook
+- Explicit web audit: [audit](reference/audit.md), read-only unless fixes were requested
+- Native iOS: [iOS](reference/ios.md), alongside the action's playbook; for an audit, use [native audit](reference/audit.native.md) instead of a DOM scan
 - Explicit `/overdrive`, “Uizze Overdrive”, or a request for exceptional interaction work: [Overdrive](reference/overdrive.md)
 
 For implementation, use [craft](reference/craft.md) after the direction is settled. Load only relevant files; multiple complementary playbooks are allowed. Overdrive is opt-in, not the default for ordinary UI work. It requires a chosen direction before implementation.

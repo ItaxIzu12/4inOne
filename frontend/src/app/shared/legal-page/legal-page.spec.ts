@@ -39,6 +39,14 @@ describe('LegalPage', () => {
 
     expect(warning).toBeTruthy();
     expect(warning?.textContent).toContain('Platzhaltertext');
-    expect(warning?.textContent).toContain('von einem Anwalt prüfen und ersetzen');
+    expect(warning?.textContent).toContain('noch nicht rechtsverbindlich');
+    expect(warning?.textContent).not.toMatch(/\.md\b/); // keine internen Dateinamen öffentlich
+  });
+
+  it('lets readers switch between the four legal pages', () => {
+    const fixture = TestBed.createComponent(HostComponent);
+    fixture.detectChanges();
+    const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('nav[aria-label="Rechtliche Seiten"] a')).map((a) => a.getAttribute('href'));
+    expect(links).toEqual(['/impressum', '/datenschutz', '/nutzungsbedingungen', '/barrierefreiheit']);
   });
 });

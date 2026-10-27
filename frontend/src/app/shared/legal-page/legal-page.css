@@ -1,35 +1,82 @@
-/* Rechtsseiten (Impressum, Datenschutz, Nutzungsbedingungen, Barrierefreiheit) im Stil der Startseite:
-   Überschriften kräftig in der Hausschrift, Text in Tinte, Lesespalte max. 720 px. Tokens kommen aus dem Rahmen
-   (shared/public-shell → shared/styles/_editorial.scss). Der Inhalt kommt per <ng-content> aus der jeweiligen Seite —
-   deshalb ::ng-deep, begrenzt auf .legal-page__content. */
+/* Rechtsseiten (Impressum, Datenschutz, Nutzungsbedingungen, Barrierefreiheit), „Soft Editorial“ (22.10.2026):
+   links eine Navigation zwischen den vier Seiten (aktuelle Seite markiert, aria-current), rechts der Text auf einem
+   weißen Blatt (Radius 28, feiner Rand) — dieselbe Typografie wie die Startseite. Am Handy wird die Navigation zur
+   wischbaren Leiste über dem Blatt. Tokens aus shared/public-shell → shared/styles/_editorial.scss. Der Inhalt kommt
+   per <ng-content> aus der jeweiligen Seite — deshalb ::ng-deep, begrenzt auf .legal-page__content. */
+.legal {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(32px, 5vw, 72px);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ---------- Navigation zwischen den Rechtsseiten ---------- */
+.legal__nav {
+  position: sticky;
+  top: 108px;
+  display: grid;
+  gap: 2px;
+}
+.legal__nav-head {
+  margin: 0 0 6px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+.legal__nav a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  color: var(--ink-soft);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease-out,
+    color 160ms ease-out;
+}
+.legal__nav a.is-current {
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 650;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+/* ---------- Das Blatt ---------- */
 .legal-page {
   display: flex;
   flex-direction: column;
   gap: 32px;
-  max-width: 720px;
-  margin: 0 auto;
+  min-width: 0;
+  padding: clamp(28px, 5vw, 64px);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--card);
 }
-
 .legal-page h1 {
   margin: 0;
   color: var(--ink);
   font-family: var(--display);
-  font-size: clamp(2.4rem, 1.7rem + 2.6vw, 4rem);
-  font-weight: 700;
-  line-height: 1.02;
+  font-size: clamp(2.2rem, 1.6rem + 2vw, 3.5rem);
+  font-weight: 650;
+  line-height: 1.04;
   letter-spacing: -0.03em;
   /* „Barrierefreiheitserklärung“ ist breiter als ein Handy: lange Wörter deutsch trennen statt seitlich scrollen */
   hyphens: auto;
   overflow-wrap: break-word;
 }
 
-/* Hinweis auf Platzhaltertext: Tönung Amber, Text in dunklem Amber (5,3:1) */
+/* Hinweis auf Platzhaltertext: Ocker-Tönung, Symbol in dunklem Ocker, Text in Forest (≥ 13:1) */
 .legal-warning {
   display: flex;
   align-items: flex-start;
   gap: 12px;
   padding: 16px 20px;
-  border-radius: var(--radius);
+  border-radius: 20px;
   background: var(--organisation-tint);
 }
 .legal-warning svg {
@@ -50,7 +97,8 @@
 .legal-page__content {
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 36px;
+  max-width: 68ch;
 }
 .legal-page__content ::ng-deep section {
   display: flex;
@@ -63,9 +111,9 @@
   margin: 0;
   color: var(--ink);
   font-family: var(--display);
-  font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.8rem);
-  font-weight: 700;
-  line-height: 1.15;
+  font-size: clamp(1.35rem, 1.2rem + 0.6vw, 1.65rem);
+  font-weight: 650;
+  line-height: 1.2;
   letter-spacing: -0.02em;
 }
 .legal-page__content ::ng-deep h3 {
@@ -85,7 +133,7 @@
   padding-left: 20px;
 }
 .legal-page__content ::ng-deep a {
-  color: var(--ink);
+  color: var(--evergreen, var(--ink));
   font-weight: 600;
   text-underline-offset: 3px;
 }
@@ -108,12 +156,54 @@
   transition: background-color 180ms ease-out;
 }
 @media (hover: hover) and (pointer: fine) {
+  .legal__nav a:not(.is-current):hover {
+    background: var(--ground-2);
+    color: var(--ink);
+  }
   .legal-page .back-link:hover {
     background: var(--ground-2);
   }
 }
+
+/* ---------- Tablet und Handy: Navigation als Leiste über dem Blatt ---------- */
+@media (max-width: 900px) {
+  .legal {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .legal__nav {
+    position: static;
+    display: flex;
+    gap: 8px;
+    margin-inline: calc(-1 * var(--gutter));
+    padding: 2px var(--gutter);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .legal__nav::-webkit-scrollbar {
+    display: none;
+  }
+  .legal__nav-head {
+    display: none;
+  }
+  .legal__nav a {
+    flex: none;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--card);
+  }
+  .legal__nav a.is-current {
+    background: var(--ink);
+    color: #fff;
+    box-shadow: none;
+  }
+}
 @media (max-width: 480px) {
+  .legal-page {
+    padding: 24px 20px 28px;
+    border-radius: 22px;
+  }
   .legal-page h1 {
-    font-size: 2.4rem;
+    font-size: 2.1rem;
   }
 }

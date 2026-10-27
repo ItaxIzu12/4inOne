@@ -1,0 +1,9 @@
+# Löscht abgelaufene Tageszähler der Besucherzählung (PAGEVIEW_RETENTION_DAYS). Ausgelöst von 4inone-prune.timer.
+[Unit]
+Description=4inOne: alte Besucherzähler löschen
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/srv/4inone/backend
+ExecStart=/srv/4inone/backend/.venv/bin/python manage.py prune_website

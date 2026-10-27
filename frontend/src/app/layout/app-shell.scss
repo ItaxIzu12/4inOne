@@ -21,7 +21,7 @@ input {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
-  outline: 3px solid #121826;
+  outline: 3px solid #172523;
 }
 .shell {
   display: grid;
@@ -31,7 +31,7 @@ input:focus-visible {
 .sidebar {
   padding: 30px 20px;
   background: #fff;
-  border-right: 1px solid #ece6db;
+  border-right: 1px solid #e6e9e3;
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -40,7 +40,7 @@ input:focus-visible {
 }
 .claim {
   font-size: 13px;
-  color: #4a5263;
+  color: #52615b;
   margin: 8px 0 44px;
 }
 .sidebar nav {
@@ -55,12 +55,12 @@ input:focus-visible {
   padding: 12px 16px;
   border-radius: 13px;
   font-size: 15px;
-  color: #4a5263;
+  color: #52615b;
 }
 .sidebar nav a:hover,
 .sidebar nav a.active {
-  background: #f2eee6;
-  color: #121826;
+  background: #ecefea;
+  color: #172523;
 }
 .finance {
   color: var(--finance-accent);
@@ -80,9 +80,9 @@ input:focus-visible {
 .sidebar-note {
   margin-top: auto;
   padding: 20px;
-  color: #4a5263;
+  color: #52615b;
   font-size: 14px;
-  background: #faf8f4;
+  background: #f7f7f4;
   border-radius: 16px;
 }
 .workspace {
@@ -94,9 +94,9 @@ input:focus-visible {
   align-items: center;
   gap: 10px 20px;
   padding: 10px 36px;
-  background: #f2eee6;
-  color: #121826;
-  border-bottom: 1px solid #e6e0d4;
+  background: #ecefea;
+  color: #172523;
+  border-bottom: 1px solid #dde1da;
   font-size: 14px;
 }
 .demo-banner__label {
@@ -110,20 +110,20 @@ input:focus-visible {
   height: 18px;
 }
 .demo-banner__hint {
-  color: #4a5263;
+  color: #52615b;
 }
 .demo-banner__cta {
   margin-left: auto;
   flex-shrink: 0;
   padding: 6px 14px;
   border-radius: 999px;
-  background: #121826;
+  background: #172523;
   color: #fff;
   font-weight: 600;
   text-decoration: none;
 }
 .demo-banner__cta:hover {
-  background: #252e44;
+  background: #22332f;
 }
 .mobile-brand,
 .mobile-nav {
@@ -140,9 +140,9 @@ input:focus-visible {
 .dialog-body input {
   padding: 12px;
   min-height: 48px;
-  border: 1px solid #e6e0d4;
+  border: 1px solid #dde1da;
   border-radius: 10px;
-  background: #faf8f4;
+  background: #f7f7f4;
 }
 .dialog-body label {
   font-weight: 600;
@@ -189,7 +189,7 @@ input:focus-visible {
     z-index: 40;
     padding: 9px 8px calc(8px + env(safe-area-inset-bottom));
     background: #fff;
-    border-top: 1px solid #ece6db;
+    border-top: 1px solid #e6e9e3;
   }
   .mobile-nav a {
     flex: 1;
@@ -204,10 +204,10 @@ input:focus-visible {
     justify-content: center;
     gap: 5px;
     font-size: 12px;
-    color: #4a5263;
+    color: #52615b;
   }
   .mobile-nav .active {
-    color: #121826;
+    color: #172523;
   }
   .dialog-body {
     font-size: 16px;
@@ -226,7 +226,7 @@ input:focus-visible {
   white-space: nowrap;
   padding: 12px 18px;
   background: #fff;
-  border: 2px solid #121826;
+  border: 2px solid #172523;
   border-radius: 10px;
 }
 .skip-link:focus {
@@ -259,7 +259,7 @@ input:focus-visible {
   border: 1px solid transparent;
 }
 .sidebar nav a.active {
-  background: #f2eee6;
+  background: #ecefea;
   border-color: #fff;
   box-shadow: 0 6px 12px #1218260c;
 }
@@ -285,10 +285,10 @@ input:focus-visible {
 }
 .nav-space {
   height: 12px;
-  border-bottom: 1px solid #ece6db;
+  border-bottom: 1px solid #e6e9e3;
 }
 .sidebar-note {
-  background: #faf8f4;
+  background: #f7f7f4;
   border: 1px solid #fff;
   padding: 22px;
   line-height: 1.6;
@@ -296,7 +296,7 @@ input:focus-visible {
 .demo-banner {
   margin: 0 16px 12px;
   padding: 10px 20px;
-  background: #f2eee6;
+  background: #ecefea;
   border: 1px solid #fff;
   border-radius: 18px;
   box-shadow: 0 6px 12px #1218260c;
@@ -333,7 +333,7 @@ input:focus-visible {
     box-shadow: 0 -5px 20px #1218260c;
   }
   .mobile-nav .active {
-    color: #121826;
+    color: #172523;
   }
 }
 
@@ -342,7 +342,7 @@ input:focus-visible {
   position: relative;
 }
 .profile-button:focus-visible {
-  outline: 2px solid #121826;
+  outline: 2px solid #172523;
   outline-offset: 2px;
   border-radius: 14px;
 }
@@ -360,7 +360,7 @@ input:focus-visible {
   right: 0;
   width: min(320px, calc(100vw - 24px));
   padding: 8px;
-  border: 1px solid #e6e0d4;
+  border: 1px solid #dde1da;
   border-radius: 18px;
   background: #fff;
   box-shadow: 0 18px 40px #12182624;
@@ -392,13 +392,13 @@ input:focus-visible {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
-  color: #4a5263;
+  color: #52615b;
 }
 .account-group {
   display: grid;
   gap: 2px;
   padding: 6px 0;
-  border-top: 1px solid #ece6db;
+  border-top: 1px solid #e6e9e3;
 }
 .account-group a,
 .account-group button {
@@ -411,7 +411,7 @@ input:focus-visible {
   border: 0;
   border-radius: 10px;
   background: none;
-  color: #121826;
+  color: #172523;
   font: inherit;
   font-size: 14px;
   text-align: left;
@@ -420,11 +420,11 @@ input:focus-visible {
 }
 .account-group a:hover,
 .account-group button:hover:not(:disabled) {
-  background: #f6f3ec;
+  background: #f1f3ef;
 }
 .account-group a:focus-visible,
 .account-group button:focus-visible {
-  outline: 2px solid #121826;
+  outline: 2px solid #172523;
   outline-offset: -2px;
 }
 .account-group .kompass-icon,
@@ -432,7 +432,7 @@ input:focus-visible {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  color: #4a5263;
+  color: #52615b;
 }
 .account-error {
   margin: 4px 12px 8px;
@@ -441,7 +441,7 @@ input:focus-visible {
 }
 
 /* Domain icons remain colored; selected links also tint their label and background. */
-.sidebar nav a, .mobile-nav a { --nav-accent: #121826; --nav-soft: #f2eee6; --nav-fill: #121826; --nav-on: #fff; color: #4a5263; }
+.sidebar nav a, .mobile-nav a { --nav-accent: #172523; --nav-soft: #ecefea; --nav-fill: #172523; --nav-on: #fff; color: #52615b; }
 /* Bereichsfarben = Logo/Startseite (Tokens in styles.css: dunkle Textvariante + Tönung) */
 .sidebar nav a[data-domain="finance"], .mobile-nav a[data-domain="finance"] { --nav-accent: var(--finance-accent); --nav-soft: var(--finance-soft); --nav-fill: var(--finance-fill); --nav-on: var(--finance-on); }
 .sidebar nav a[data-domain="household"], .mobile-nav a[data-domain="household"] { --nav-accent: var(--household-accent); --nav-soft: var(--household-soft); --nav-fill: var(--household-fill); --nav-on: var(--household-on); }
@@ -486,9 +486,9 @@ input:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav a app-icon { transition: none; }
 }
-.sidebar-note, .demo-banner { color: #4a5263; background: #f2eee6; box-shadow: none; }
-.sidebar { background: #fff; border-color: #ece6db; }
-a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offset: 3px; }
+.sidebar-note, .demo-banner { color: #52615b; background: #ecefea; box-shadow: none; }
+.sidebar { background: #fff; border-color: #e6e9e3; }
+a:focus-visible, button:focus-visible { outline: 2px solid #172523; outline-offset: 3px; }
 
 // ---------------------------------------------------------------------------
 // Kopfzeile — ein einziger Block (vorher mehrfach überschrieben).
@@ -509,8 +509,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   padding: 12px 28px;
   border: 0;
   border-radius: 0;
-  background: #faf8f4; // deckend statt Weichzeichner: spart am Handy bei jedem Scroll-Frame Rechenzeit
-  box-shadow: inset 0 -1px #ece6db;
+  background: #f7f7f4; // deckend statt Weichzeichner: spart am Handy bei jedem Scroll-Frame Rechenzeit
+  box-shadow: inset 0 -1px #e6e9e3;
 }
 .brand-group {
   display: grid;
@@ -535,8 +535,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   padding: 4px 10px;
   border: 0;
   border-radius: 999px;
-  background: #f2eee6;
-  color: #4a5263;
+  background: #ecefea;
+  color: #52615b;
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -569,13 +569,13 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   min-height: 46px;
   margin: 0;
   padding: 0 10px 0 2px;
-  border: 1px solid #e6e0d4;
+  border: 1px solid #dde1da;
   border-radius: 12px;
   background: #fff;
 }
 .dashboard-search:focus-within {
-  border-color: #121826;
-  box-shadow: 0 0 0 3px rgb(18 24 38 / 0.1);
+  border-color: #172523;
+  box-shadow: 0 0 0 3px rgb(23 37 35 / 0.1);
 }
 .search-submit {
   display: grid;
@@ -585,7 +585,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   padding: 0;
   border: 0;
   background: transparent;
-  color: #4a5263;
+  color: #52615b;
 }
 .dashboard-search app-icon {
   width: 19px;
@@ -598,19 +598,19 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   border: 0;
   outline: none;
   background: none;
-  color: #121826;
+  color: #172523;
   font: inherit;
   font-size: 14px;
 }
 .dashboard-search input::placeholder {
-  color: #4a5263;
+  color: #52615b;
 }
 .dashboard-search kbd {
   padding: 3px 7px;
-  border: 1px solid #e6e0d4;
+  border: 1px solid #dde1da;
   border-radius: 6px;
-  background: #f6f3ec;
-  color: #4a5263;
+  background: #f1f3ef;
+  color: #52615b;
   font: inherit;
   font-size: 12px;
   white-space: nowrap;
@@ -628,10 +628,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   place-items: center;
   width: 40px;
   height: 40px;
-  border: 1px solid #e6e0d4;
+  border: 1px solid #dde1da;
   border-radius: 12px;
   background: #fff;
-  color: #4a5263;
+  color: #52615b;
 }
 .dashboard-date__icon app-icon {
   width: 19px;
@@ -642,11 +642,11 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   line-height: 1.25;
 }
 .dashboard-date__text small {
-  color: #4a5263;
+  color: #52615b;
   font-size: 12px;
 }
 .dashboard-date__text b {
-  color: #121826;
+  color: #172523;
   font-size: 14px;
   font-weight: 600;
 }
@@ -657,7 +657,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   gap: 10px;
   margin-left: 4px;
   padding-left: 14px;
-  border-left: 1px solid #e6e0d4;
+  border-left: 1px solid #dde1da;
 }
 .topbar:not(:has(.dashboard-date)) .profile {
   margin-left: auto;
@@ -668,10 +668,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   width: 44px;
   height: 44px;
   padding: 0;
-  border: 1px solid #e6e0d4;
+  border: 1px solid #dde1da;
   border-radius: 50%;
   background: #fff;
-  color: #121826;
+  color: #172523;
 }
 .icon-button app-icon {
   width: 21px;
@@ -683,17 +683,17 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   gap: 10px;
   min-height: 48px;
   padding: 4px 12px 4px 4px;
-  border: 1px solid #e6e0d4;
+  border: 1px solid #dde1da;
   border-radius: 999px;
   background: #fff;
-  color: #121826;
+  color: #172523;
   font: inherit;
   text-align: left;
 }
 .icon-button:hover,
 .profile-button:hover {
-  border-color: #c4bcae;
-  background: #faf8f4;
+  border-color: #b9c0b6;
+  background: #f7f7f4;
 }
 .avatar {
   display: grid;
@@ -727,13 +727,13 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   white-space: nowrap;
 }
 .profile-text small {
-  color: #4a5263;
+  color: #52615b;
   font-size: 12px;
 }
 .profile-button .chevron {
   width: 16px;
   height: 16px;
-  color: #4a5263;
+  color: #52615b;
 }
 // Mittlere Breite: Datum kompakt, Profil ohne Namen
 @media (min-width: 761px) and (max-width: 1250px) {
@@ -794,7 +794,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid #121826; outline-offs
   }
   .mobile-date {
     display: inline;
-    color: #4a5263;
+    color: #52615b;
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;

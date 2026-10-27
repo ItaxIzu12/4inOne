@@ -79,7 +79,7 @@ describe('Dashboard', () => {
     f.detectChanges();
     TestBed.inject(HttpTestingController).expectOne((req) => req.url.includes('/finanzen/private/summary/')).flush({
       available: '250.00', total: '3000.00', budget: '3000.00', expenses: '2750.00', has_data: true,
-      categories: [{ id: 7, name: 'Lebensmittel', color: '#0f9d6b', amount: '28.30' }],
+      categories: [{ id: 7, name: 'Lebensmittel', color: '#17694f', amount: '28.30' }],
       recent: [
         { id: 1, amount: '28.30', type: 'EXPENSE', category: 7, date: '2026-10-21', note: 'REWE', currency: 'EUR' },
         { id: 2, amount: '3420.00', type: 'INCOME', category: 99, date: '2026-10-01', note: '', currency: 'EUR' },

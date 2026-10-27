@@ -2,7 +2,7 @@
 
 // ---------- Fragen ----------
 .faq-section {
-  padding-top: 0;
+  background: var(--card); // weißes Band
 }
 .faq {
   display: grid;
@@ -88,7 +88,7 @@
 // ---------- Abschluss-Band (Tinte) ----------
 .closer {
   padding: clamp(80px, 10vw, 136px) 0;
-  background: var(--ink);
+  background: var(--forest);
   color: #fff;
 }
 .closer__inner {
@@ -131,7 +131,7 @@
     background: var(--line);
   }
   .question[open] summary:hover .question__mark {
-    background: #252e44;
+    background: #22332f;
   }
   .btn--light:hover {
     background: var(--ground-2);
@@ -146,6 +146,7 @@
   .panel,
   .play__stage,
   .privacy__inner,
+  .problem__inner,
   .faq {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -175,8 +176,10 @@
     font-size: 20px;
   }
   h1 {
-    font-size: 2.5rem;
-    letter-spacing: -0.035em;
+    // die Überschrift ist ein ganzer Satz: 32 px ab 390 px Breite, darunter kleiner (27 px bei 320) — so bleibt sie
+    // auf jedem Handy bei 4 Zeilen und der Demo-Knopf im ersten Bild
+    font-size: clamp(1.6875rem, 0.2rem + 7.4vw, 2rem);
+    letter-spacing: -0.03em;
   }
   .hero__lead {
     font-size: 18px;
@@ -185,8 +188,22 @@
     width: 100%;
   }
   .hero__actions .btn,
-  .closer__actions .btn {
+  .closer__actions .btn,
+  .play__next .btn {
     flex: 1 1 100%;
+  }
+  .play__next {
+    padding: 20px;
+  }
+  .play__next.is-quiet {
+    padding: 0;
+  }
+  // Beispiel-Auswahl: am Handy ohne Symbole, damit alle drei nebeneinander passen (wischbar bleibt nur bei 320 px)
+  .pick {
+    padding: 0 16px;
+  }
+  .pick__icon {
+    display: none;
   }
   .stage {
     padding-bottom: 64px;
@@ -196,6 +213,7 @@
   }
   .stage__phone {
     position: relative;
+    left: auto;
     right: auto;
     bottom: auto;
     width: min(76vw, 300px);
@@ -205,9 +223,6 @@
   }
   .stage__phone img {
     border-radius: 36px;
-  }
-  .statement__text {
-    font-size: 1.375rem;
   }
   .tabs {
     width: auto;
@@ -221,6 +236,15 @@
     border: 1px solid var(--line);
     background: var(--card);
   }
+  // am Handy hat jeder Tab seine eigene Fläche: keine gleitende Markierung
+  .tabs__glider,
+  .tabs.has-glider .tabs__glider {
+    display: none;
+  }
+  .tabs.has-glider .tab[aria-selected='true'] {
+    background: var(--card);
+    box-shadow: 0 1px 2px rgb(23 37 35 / 0.08);
+  }
   .panel {
     padding: 12px 12px 24px;
     border-radius: 22px;
@@ -228,37 +252,43 @@
   .panel__copy {
     padding: 4px 8px 0;
   }
-  // Ausschnitt oben links: Kopf und erste Inhalte lesbar groß statt der ganzen Seite in Miniatur
+  // Handy: ein einzelnes Element der Aufnahme in fast Originalgröße (Budgetstatus, Fristen, Termine, nächste Reise)
   .panel__shot {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: var(--mw) / var(--mh);
     padding: 0;
     border-radius: 16px;
   }
   .panel__shot img {
-    width: 190%;
-    max-width: none;
-    height: auto;
-    margin-left: -38%; // beginnt hinter der Seitenleiste der App (≈ 20 % der Aufnahme)
-    border-radius: 0;
+    width: calc(100% * 1440 / var(--mw));
+    margin-left: calc(-100% * var(--mx) / var(--mw));
+    margin-top: calc(-100% * var(--my) / var(--mw));
   }
   .fact {
     grid-template-columns: minmax(0, 1fr);
     padding: 20px 0;
   }
+  // Vorher/Nachher: Beschriftung über dem Text, damit der Text die ganze Breite hat
+  .compare dl > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+  .compare__item {
+    padding: 20px;
+  }
   // Probe am Handy: Knopf unter den Text, ganze Breite für die Begründung
   .sug {
     grid-template-columns: 40px minmax(0, 1fr);
   }
+  // linksbündig unter dem Text, in jedem Zustand gleich (am Rechner rechtsbündig mit Höchstbreite)
   .sug__actions {
     grid-column: 2;
-    display: flex;
-    flex-wrap: wrap;
-    justify-items: start;
+    justify-content: flex-start;
+    max-width: none;
     gap: 4px;
     margin-top: 8px;
   }
   .sug__link,
-  .sug__dismiss {
+  .sug__minor {
     min-height: 44px;
   }
   .source {
@@ -272,5 +302,39 @@
 @media (max-width: 420px) {
   .head__actions .btn--small {
     display: none;
+  }
+}
+
+// ---------- Einblenden beim Scrollen ----------
+// Nur Überschrift und Bild je Abschnitt, kurz und leicht (12 px, Transparenz). Reines CSS, an die Scroll-Position
+// gebunden: kein JavaScript, kein Warten — kann ein Browser das nicht, steht alles einfach da (auch vorgerendert).
+// Kommt ein Element von oben zurück ins Bild, ist es schon fertig: Beim Zurückscrollen passiert nichts.
+// Hero ausgenommen (beim Laden ohnehin sichtbar), die Probe und Fließtext ebenso.
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    #problem-title,
+    #play-title,
+    #areas-title,
+    #privacy-title,
+    #faq-title,
+    #closer-title {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+    // Bild bzw. Beispiel: etwas später als die Überschrift
+    .compare,
+    .panel__shot,
+    .share {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 8% entry 38%;
+    }
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
 }

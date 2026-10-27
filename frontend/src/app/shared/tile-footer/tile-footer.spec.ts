@@ -12,29 +12,31 @@ describe('TileFooter', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  it('always carries the legal links (compact by default, no invitation)', () => {
+  it('always carries the legal links; compact shows the brand and nothing else', () => {
     const el = render();
     const legal = Array.from(el.querySelectorAll('nav[aria-label="Rechtliches"] a')).map((a) => a.getAttribute('href'));
     expect(legal).toEqual(['/impressum', '/datenschutz', '/nutzungsbedingungen', '/barrierefreiheit']);
-    expect(el.querySelector('.tile--invite')).toBeNull();
-    expect(el.querySelector('.tile--areas')).toBeNull();
+    expect(el.querySelector('.tf__logo app-brand')).toBeTruthy();
+    expect(el.querySelector('nav[aria-label="Produkt"], .tf__area')).toBeNull();
+    expect(el.querySelector('.tf__bar')?.textContent).toContain('4inOne');
   });
 
-  it('full: invitation to register and the four areas, each leading into the demo', () => {
+  it('full: columns Bereiche (into the demo), Produkt and Rechtliches — no big wordmark, no colour tiles', () => {
     const el = render('full');
-    expect(el.querySelector('.tile--invite a')?.getAttribute('href')).toBe('/registrieren');
-    const areas = Array.from(el.querySelectorAll('.tile--areas a')).map((a) => [a.querySelector('.area__name')?.textContent, a.getAttribute('href')]);
+    const areas = Array.from(el.querySelectorAll('.tf__area')).map((a) => [a.textContent?.trim(), a.getAttribute('href')]);
     expect(areas).toEqual([
-      // Reihenfolge wie im Zeichen: grün, blau, gelb, rosa
       ['Finanzen', '/demo/finanzen'],
-      ['Reisen', '/demo/reisen'],
-      ['Organisation', '/demo/organisation'],
       ['Haushalt', '/demo/haushalt'],
+      ['Organisation', '/demo/organisation'],
+      ['Reisen', '/demo/reisen'],
     ]);
+    const product = Array.from(el.querySelectorAll('nav[aria-label="Produkt"] a')).map((a) => a.getAttribute('href'));
+    expect(product).toEqual(['/demo', '/#verknuepfen', '/login', '/registrieren']);
+    expect(el.querySelector('.tile__word, .tile--areas, .tile--invite')).toBeNull();
   });
 
   it('areas can lead elsewhere, e.g. into the signed-in app', () => {
     const el = render('full', '');
-    expect(el.querySelector('.tile--areas a')?.getAttribute('href')).toBe('/finanzen');
+    expect(el.querySelector('.tf__area')?.getAttribute('href')).toBe('/finanzen');
   });
 });

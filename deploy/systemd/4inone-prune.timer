@@ -1,0 +1,10 @@
+# Täglich um 03:30. Aktivieren: sudo systemctl enable --now 4inone-prune.timer
+[Unit]
+Description=4inOne: alte Besucherzähler täglich löschen
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

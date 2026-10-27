@@ -12,13 +12,13 @@
 .chain__panel {
   position: relative;
   padding: 24px;
-  border: 1px solid var(--line, #e6e0d4);
+  border: 1px solid var(--line, #dde1da);
   border-radius: var(--radius, 16px);
   background: var(--card, #fff);
 }
 .chain__head {
   margin: 0 0 8px;
-  color: var(--ink-soft, #4a5263);
+  color: var(--ink-soft, #52615b);
   font-size: 14px;
   font-weight: 600;
 }
@@ -63,14 +63,14 @@
 }
 .chain__text b {
   overflow: hidden;
-  color: var(--ink, #121826);
+  color: var(--ink, #172523);
   font-size: 17px;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .chain__value {
-  color: var(--ink-soft, #4a5263);
+  color: var(--ink-soft, #52615b);
   font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
@@ -91,7 +91,7 @@
 }
 figcaption {
   margin-top: 14px;
-  color: var(--ink, #121826);
+  color: var(--ink, #172523);
   font-size: 16px;
   font-weight: 500;
 }

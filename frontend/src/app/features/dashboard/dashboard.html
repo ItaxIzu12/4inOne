@@ -299,7 +299,7 @@
                     <span class="row__icon" #pairB aria-hidden="true"><app-icon name="calendar" /></span><span><small>Organisation · Aufgabe</small><strong>{{ pair.task.title }}</strong></span><app-icon class="chevron" name="arrow" aria-hidden="true" />
                   </a>
                   <!-- Die eine Bewegung der Seite: dieselbe Lichtlinie wie auf der Startseite, drei Impulse, dann Ruhe (bei reduzierter Bewegung gar keine) -->
-                  <app-animated-beam [container]="pairStage" [from]="pairA" [to]="pairB" color="#0f9d6b" [duration]="2.4" [iterations]="3" />
+                  <app-animated-beam [container]="pairStage" [from]="pairA" [to]="pairB" color="#17694f" [duration]="2.4" [iterations]="3" />
                   </div>
                   <button class="head-link connection-preview__action" (click)="openForYou($event)">{{ demoPairLinked() ? 'Verbindung ansehen' : 'Zusammenhang ansehen' }}<app-icon name="arrow" aria-hidden="true" /></button>
                 </div>

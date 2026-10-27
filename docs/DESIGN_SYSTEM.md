@@ -118,7 +118,116 @@ Abstand — nie nur über Farbe.
   „Verknüpft“; ohne JavaScript oder mit reduzierter Bewegung ist alles sofort sichtbar. Bereiche als echte Reiter
   (Pfeiltasten, Pos1/Ende), das Bild folgt.
 
-- **Landingpage: Verknüpfen zum Ausprobieren (22.10.2026, aktueller Stand):** Nach externer Kritik („noch wenig echte
+- **Landingpage V4 (24.10.2026, aktueller Stand, nach Agentur-Brief):** Schrift bleibt Schibsted Grotesk
+  (Nutzerentscheid gegen Manrope). Farben aus dem Brief: Sekundärtext `#52615B` (6,1:1 Porcelain), Haushalt
+  `#AB445F` als Fläche und Text (≥ 4,75:1 auf allen Flächen, ersetzt `#B75369`/`#9E4559`), App-weit. Hero: „Vier
+  Bereiche für deinen Alltag – und was zusammengehört, ist verbunden.“, „Demo ohne Anmeldung testen“ (Tinte) +
+  „So funktioniert’s“ (zur Probe), „Mit Beispieldaten · Ohne Registrierung“, Produktbild näher am Text; H1 bis 60 px,
+  Handy 32 px. Problem-Abschnitt „Vier Apps wissen nichts voneinander. Dein Alltag schon.“ mit zwei
+  Vorher-/Mit-4inOne-Karten (Reise, Waschmaschine) und Link zur Probe. Probe in vier Schritten mit Schrittanzeige
+  (`aria-current="step"`): Anlegen → Vorschläge → Entscheiden (je Vorschlag Verknüpfen · Später · Ablehnen,
+  Zustand als Wort; abgelehnt durchgestrichen mit „Rückgängig“, später gestrichelt) → Ergebnis je Bereich („keine
+  neuen Einträge, niemand bekommt Zugriff“); Fokus bleibt nach jeder Entscheidung in der Zeile. Ehrlich: nur echte
+  Vorschlagsarten (Aufgabe, Termin, Sparziel), keine Packlisten-Automatik, als Vorschau gekennzeichnet. Bereichs-
+  Panels: Problem (Zitat), Funktionen, größerer lesbarer Screenshot, „Dein Nutzen“. Datenschutz: drei belegte Fakten +
+  Beispiel „Wer sieht was“ (Finanzen nur du/nicht teilbar, Haushalt du und Alex, Reise du und Ben, Verknüpfung ändert
+  keine Rechte). Fragen um „Wie funktionieren Verknüpfungen?“, „Welche Funktionen gibt es schon?“ (inkl. was noch
+  fehlt) und „Was kostet 4inOne?“ („steht noch nicht fest“). Abschluss „Probier aus, wie deine Alltagsbereiche
+  zusammenarbeiten.“ mit „Demo ausprobieren“. Fuß: „So funktioniert’s“ ergänzt, kein „Kontakt“ (Seite existiert
+  nicht). Probe-Styles in `landing-play.scss` (Budget). Labor-Messung (Produktions-Build, CSP): Handy gedrosselt
+  LCP 1,8 s · CLS 0 · INP ≈ 88 ms; Rechner 1,4 s · 0 · 64 ms.
+- **Offene Punkte V4 (25.10.2026):** H1 am Handy fließend `clamp(1.6875rem, 0.2rem + 7.4vw, 2rem)` — 27 px bei 320,
+  32 px ab 390; überall 4 Zeilen, Demo-Knopf im ersten Bild. Probe: statt zweier Live-Regionen (Zähler, Ergebnis)
+  eine feste unsichtbare Statuszeile (`role="status"`, `.sr-only`) mit einem Satz je Entscheidung („„Reisekasse
+  Berlin“ verknüpft. Verknüpft mit 1 Eintrag.“, „Beispiel zurückgesetzt.“). Barrierefreiheitsbaum geprüft (Playwright
+  `ariaSnapshot`): Sprunglink, benannte Abschnitte in Leserichtung, H1→H2→H3 ohne Sprung, benannte Navigationen im
+  Fuß; ein Test mit echtem Screenreader (VoiceOver/NVDA) steht noch aus. Rechtsseiten: Hinweis „Platzhaltertext —
+  noch nicht rechtsverbindlich …“ ohne interne Dateinamen. Öffentliche Seiten vorgerendert (`app.routes.server.ts`),
+  Hydration ohne Event-Replay wegen strenger CSP; Webserver-Regeln in `deploy/nginx/`.
+- **Hover auf der Landingpage (25.10.2026):** Hover nur als Zugabe am Rechner (`@media (hover: hover) and (pointer:
+  fine)`), gleiches Feedback bei `:focus-visible`, nur Bewegung/Transparenz, 180–320 ms, bei „Bewegung reduzieren“ ohne
+  Weg. (1) Probe: Überfahren/Fokus von „Verknüpfen“ zeigt die Verbindung als **gestrichelte, neutrale Vorschau**
+  (`app-animated-beam [preview]`, `--beam-preview`), erst nach dem Klick farbig mit Impuls; auf Touch keine Vorschau.
+  (2) Hauptwege in die Demo („Demo ohne Anmeldung testen“, „Demo ausprobieren“) mit Pfeil (`.btn--go`), der 4 px
+  vorrückt; Textlinks mit Pfeil ebenso. (3) Bereichs-Tabs: weiße Fläche gleitet zum gewählten Tab (`.tabs__glider`,
+  ab 641 px; vorgerendert trägt der Tab die Fläche selbst), beim Überfahren nimmt das Symbol die Bereichsfarbe an.
+  Bewusst nicht: Hover auf nicht klickbaren Karten, Kippen, Glühen, Magnet-Knöpfe, Inhalte nur beim Hover.
+- **Einblenden beim Scrollen (25.10.2026):** nur je Abschnitt die H2 (`#problem-title` … `#closer-title`) und das
+  Bild/Beispiel (`.compare`, `.panel__shot`, `.share`), 12 px + Transparenz. Reines CSS mit `animation-timeline:
+  view()` (`landing-end.scss`), an die Scroll-Position gebunden statt zeitgesteuert: kein JavaScript, nichts wartet.
+  Überschrift voll sichtbar, sobald sie ganz im Bild ist (`entry 0%–100%`), Bild etwas später (`entry 8%–38%`, ≈ 250 px).
+  Von oben zurück, nach Ankersprung und am Seitenende sofort voll da. Ohne Browser-Unterstützung (`@supports`) oder bei
+  „Bewegung reduzieren“ keine Animation. Hero, Fließtext, Knöpfe und die Probe blenden nicht ein. Hinweis zum Messen:
+  `html` scrollt weich — Tests scrollen mit `behavior: 'instant'`.
+- **Audit-Runde (25.10.2026, /ui-taste):** Jede Kernaussage einmal — „was zusammengehört“ nur in der H1 (Hero-Zeile
+  darunter jetzt konkret: „… Und die Reisekasse weiß, zu welcher Reise sie gehört.“), Abschluss eigene Aussage „Fang mit
+  einem Bereich an und nimm später dazu, was du brauchst.“, „ändert keine Rechte“ nur noch im Freigabe-Beispiel.
+  Bereichs-Panels ohne Versprechen-Zeile (Problem → drei Funktionen → Nutzen → Link). Screenshot-Ausschnitt je Bereich
+  aus Daten (`shot.desk` [x, y, Breite] 3:2, `shot.phone` [x, y, Breite, Höhe]): am Handy ein Element in fast
+  Originalgröße (Budgetstatus, Fristen, Termine heute, nächste Reise), Ränder nie durch Text. Probe im Startzustand mit
+  einer Hauptaktion („Reise anlegen“), Demo als leiser Textlink, „Zurücksetzen“ erst nach der ersten Aktion; am Handy
+  Beispiel-Knöpfe ohne Symbol (alle drei in einer Zeile ab 360 px). Hero-Zeile mit `text-wrap: pretty`.
+  Zweite Runde: verknüpfte Zeile zeigt den Zustand einmal als Wort („✓ Verknüpft“), der Knopf sagt, was er tut
+  („Lösen“, Name „Verbindung lösen: …“); Aktionen am Handy in jedem Zustand linksbündig unter dem Text;
+  „Zurücksetzen“ textbündig (`margin-inline: -14px` gegen den Innenabstand der Klickfläche).
+- **Landing-Audit umgesetzt (24.10.2026):** Warum jetzt im Hero („Budget, Termine, Einkauf und
+  Reisen liegen meist in vier Apps …“), der Absatz danach kurz als Brücke zur Probe („Die Reisekasse zur Reise …
+  Verknüpft wird nur, was du bestätigst.“, max. 34 px, unten Abstand zum dunklen Band). Verknüpfungs-Probe: vor dem
+  Anlegen eine Vorschau der drei Vorschläge (nur Bereich und Titel, gedämpft, ohne Knöpfe); der Kasten darunter passt
+  zum Zustand („Lieber gleich die ganze App sehen? → Demo ansehen“, erst nach dem ersten Verknüpfen „Das war ein
+  Ausschnitt … In der Demo weitermachen“); Auswahl-Pillen am Handy wischbar; Knöpfe „Verknüpfen“/„Nicht relevant“
+  44 px. Handy-Bild im Hero links über der Seitenleiste, damit „Für dich“ sichtbar bleibt; am Handy lädt das
+  Rechner-Bild nicht mehr (`<picture>`). Bereichs-Screenshots als lesbarer Ausschnitt (3:2, ohne Seitenleiste,
+  1,7-fach). Neuer E2E-Test `e2e/landing-journey.spec.ts` (Erstbesuch Handy/Rechner, nur Tastatur, tote Links,
+  WCAG 2.2, Skript-Einschleusung über die Adresse, keine fremden Server). Produktions-Build ohne Inline-Skript
+  (`inlineCritical: false`), geprüft unter strenger CSP.
+- **Von der Idee zur Demo (22.10.2026, Nutzerwunsch):** Leitsatz „nicht schöner, sondern besser
+  zur Demo führen“. Hauptaktion überall die Demo: Hero dunkel „Ohne Anmeldung ausprobieren“, Rand „Konto erstellen“,
+  darunter „Die Demo startet sofort mit Beispieldaten. Kein Konto, nichts wird gespeichert.“; Kopf der Startseite und
+  der Unterseiten „Demo ansehen“ statt „Konto erstellen“ (Anmelden bleibt). Absatz nach dem Hero sagt zuerst das
+  Warum: „Budget, Termine, Einkauf und Reisen liegen meist in vier Apps, die nichts voneinander wissen.“ und dann die
+  Antwort. Nach der Verknüpfungs-Probe ein nächster Schritt „Das war ein Ausschnitt … In der Demo weitermachen“
+  (heller Knopf auf Deep Forest, Rahmen 20 px). Symbol-Links in `index.html` mit `?v=2`, damit Browser gespeicherte
+  alte Symbole (Angular-Standard) neu laden.
+- **Fuß und Rechtsseiten neu (22.10.2026, Nutzerwunsch):** `shared/tile-footer` ist jetzt ein
+  klassischer Fuß auf Porcelain mit feiner Linie oben: links Marke (`app-brand`, 22 px) mit Leitsatz (voll: plus ein
+  Satz), rechts Link-Spalten, unten eine ©-Leiste („Läuft im Browser …“). `full` (Startseite): Bereiche (Bereichsfarbe
+  nur als 8-px-Punkt, Links in die Demo), Produkt (Demo ansehen, Anmelden, Konto erstellen), Rechtliches. `compact`
+  (Rechtsseiten, 404): Marke + Rechtliches in einer Reihe, aktuelle Seite unterstrichen und `aria-current`. Entfallen:
+  großer Schriftzug, Kacheln, Einladung. Farben über `--tf-ink/-muted/-line/-ground/-hover` und `--tf-finance …`
+  (von der Seite geerbt; der Host setzt keine eigenen Werte). Rechtsseiten (`shared/legal-page`, alle vier):
+  links „Rechtliche Seiten“ (Navigation zwischen den vier Seiten, aktuelle Seite als weiße Karte), rechts der Text
+  auf einem weißen Blatt (Radius 28, Rand `--line`, Innenabstand bis 64 px), H1 650 bis 56 px, H2 650, Lesespalte
+  68 ch, Links Evergreen, Platzhalter-Hinweis in Ocker-Tönung (Radius 20, ohne Emoji); ≤ 900 px Navigation als
+  wischbare Pillen über dem Blatt (aktuelle Seite in Forest). Kopf der Unterseiten mit feiner Linie wie die Startseite.
+  axe (2.2 AA + Best Practice) ohne Befund auf /, den vier Rechtsseiten und 404, 1440 und 390 px.
+- **„Soft Editorial“ – neue Farbidentität für App und Website (22.10.2026, Nutzerwahl):** Neutral
+  Porcelain `#F7F7F4`, Weiß, Sage `#ECEFEA`, Deep Forest `#172523` (Text, Knöpfe, dunkle Bänder), Linien `#DDE1DA`,
+  Sekundärtext `#4F5D59`, Feldrand `#879189`; Akzent Evergreen `#17694F` (Links/Fortschritt, nicht Knöpfe). Bereichs-
+  farben gedeckt (Finanzen `#17694F`, Haushalt `#B75369`, Organisation `#9A641E`, Reisen `#3D6B9A`) mit dunklerer
+  Textvariante für Haushalt (`#9E4559`) und Organisation (`#85561A`), weil die Vorgaben als kleine Schrift auf
+  Porcelain/Sage unter 4,5:1 lagen; Organisation trägt jetzt weißes Symbol (5,0:1). Logo behält seine Farben.
+  Schrift bleibt Schibsted Grotesk (Nutzerentscheid gegen Manrope/Newsreader); Website-Überschriften 650 statt 700.
+  Umgesetzt über die Tokens (`styles.css`, `shared/styles/_editorial.scss`) und eine Zuordnung aller festen Werte
+  (App-Rahmen, Login, Onboarding, Dashboard, Fuß, Beam-Farben). Landing-Farbverteilung: Kopf/Hero Porcelain ·
+  Bereiche weißes Band (Panel in Porcelain) · Verknüpfungs-Probe auf Deep Forest (weiße Quellkarte, Texte `#FFF` /
+  `#C3CEC9` 9,8:1, Bereichswort in Tönung, Knöpfe weiß bzw. weiß umrandet, Fokus weiß) · Privatsphäre Sage · Fragen
+  Weiß · Abschluss Deep Forest · Fuß Porcelain mit weißen Bereichs-Karten (Radius 24, Farbpunkt statt Pastellfläche).
+  Website-Radius-Token 20. Produkt-Screenshots neu aufgenommen. Nicht übernommen: „So funktioniert's“ (entfernt) und
+  eine Packlisten-Automatik (gibt es nicht). Prüfung: axe 2.2 AA ohne Verstöße auf /, /login, /registrieren,
+  /impressum, /demo, /demo/finanzen, /demo/haushalt (1440/390); auf /demo/organisation und /demo/reisen bestehender
+  Verstoß 2.5.3 (Label in Name) bei Kalenderzellen/Reisezeilen — als eigene Aufgabe angelegt.
+- **Ein Abschluss, Reise als Ablauf, WCAG-2.2-Prüfung (22.10.2026):** Der Kachel-Fuß (`shared/
+  tile-footer`, Variante `full`) hat keine eigene Einladung mehr („Fang mit einem Bereich an“ doppelte das Tinten-Band);
+  ihr Gedanke steht jetzt im Abschluss-Band („… Danach fängst du mit einem Bereich an und verknüpfst später, was
+  zusammengehört.“). Die vier Bereichs-Kacheln stehen in einer Reihe (≤ 900 px 2 × 2). Verknüpfungs-Probe, Beispiel
+  „Eine Reise“: zuerst „Neue Reise“ mit Ziel und Zeitraum und dem Knopf „Reise anlegen“, rechts ein gestrichelter
+  Hinweis; nach dem Anlegen erscheinen die Vorschläge (nur Verschiebung, keine Deckkraft), der Fokus springt auf
+  „Vorschläge“; „Zurücksetzen“ beginnt wieder beim Anlegen. Nur echte Vorschlagsarten (Aufgabe, Termin, Sparziel),
+  keine erfundene Packlisten-Automatik. Prüfung WCAG 2.2 AA (axe mit 2.2-Regeln auf /, /impressum, /datenschutz bei
+  1440 und 390 px; Tastatur-Durchgang): keine Verstöße; alle Fokus-Stopps mit sichtbarem Rahmen; fokussierbare
+  Elemente der Startseite mit `scroll-margin-top: 96px`, damit der Fokus nie unter dem festen Kopf liegt (2.4.11).
+- **Landingpage: Verknüpfen zum Ausprobieren (22.10.2026):** Nach externer Kritik („noch wenig echte
   Produktinteraktion“, „Mehrwert nur teilweise sofort erkennbar“) ersetzt eine Verknüpfungs-Probe die statische
   Beispielkette und rückt direkt hinter den Aussage-Absatz (vor die Bereiche; Navigation „Ausprobieren“). Drei
   Beispiele (Reise · Gerät · Vertrag, `aria-pressed`-Auswahl); je Ausgangseintrag Vorschläge mit Begründung in

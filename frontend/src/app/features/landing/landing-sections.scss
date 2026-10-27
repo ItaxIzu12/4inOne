@@ -22,25 +22,80 @@ h2 {
   font-size: 18px;
 }
 
-// ---------- Aussage (erster Satz Tinte, der Rest gedämpft) ----------
-.statement {
-  padding: clamp(32px, 5vw, 64px) 0 0;
+// ---------- Problem: kurze Aussage links, zwei Vorher-Nachher-Beispiele rechts ----------
+.problem__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: start;
+  gap: clamp(40px, 6vw, 88px);
 }
-.statement__text {
-  max-width: 34ch;
-  color: #6f6a5f; // gedämpft, 5,1:1 auf Warmweiß — besteht auch als normaler Text (axe zählt erst 700 als fett)
-  font-size: clamp(1.625rem, 1.1rem + 1.6vw, 2.5rem);
+.problem__head {
+  display: grid;
+  gap: 16px;
+}
+.problem__head p {
+  max-width: 44ch;
+  color: var(--ink-soft);
+  font-size: 18px;
+}
+.problem__next {
+  justify-self: start;
+  margin-left: -14px;
+  color: var(--evergreen);
   font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.025em;
-  text-wrap: pretty;
 }
-.statement__text strong {
+.compare {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.compare__item {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--card);
+}
+.compare__item h3 {
+  margin-bottom: 14px;
+  font-size: 18px;
+  font-weight: 650;
+}
+.compare dl {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+.compare dl > div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+}
+.compare dt {
+  font-size: 14px;
+  font-weight: 650;
+}
+.compare dd {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.compare__before dt,
+.compare__before dd {
+  color: var(--ink-soft);
+}
+.compare__after dt {
+  color: var(--evergreen);
+}
+.compare__after dd {
   color: var(--ink);
-  font-weight: inherit;
 }
 
-// ---------- Bereiche ----------
+// ---------- Bereiche (weißes Band) ----------
+.areas {
+  background: var(--card);
+}
 .tabs {
   display: flex;
   gap: 8px;
@@ -51,13 +106,40 @@ h2 {
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: var(--card);
+  background: var(--ground);
   scrollbar-width: none;
 }
 .tabs::-webkit-scrollbar {
   display: none;
 }
+// Gleitende weiße Fläche hinter dem gewählten Tab (Position aus landing.ts › glider). Ohne Messung (vorgerendert,
+// erstes Bild) trägt der gewählte Tab die Fläche selbst — die Markierung erscheint erst, wenn sie stimmt.
+.tabs {
+  position: relative;
+}
+.tabs__glider {
+  display: none;
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgb(23 37 35 / 0.08);
+  transition:
+    transform 320ms var(--ease),
+    width 320ms var(--ease);
+}
+.tabs.has-glider .tabs__glider {
+  display: block;
+}
+.tabs.has-glider .tab[aria-selected='true'] {
+  background: transparent;
+  box-shadow: none;
+}
 .tab {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   flex: none;
   align-items: center;
@@ -93,8 +175,9 @@ h2 {
   height: 16px;
 }
 .tab[aria-selected='true'] {
-  background: var(--ground-2);
+  background: var(--card);
   color: var(--ink);
+  box-shadow: 0 1px 2px rgb(23 37 35 / 0.08);
 }
 .tab[aria-selected='true'] .tab__icon {
   background: var(--c);
@@ -102,13 +185,13 @@ h2 {
 }
 .panel {
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.5fr);
   align-items: center;
   gap: clamp(32px, 5vw, 72px);
   padding: clamp(24px, 3vw, 40px);
   border: 1px solid var(--line);
   border-radius: 28px;
-  background: var(--card);
+  background: var(--ground);
 }
 .panel:focus-visible {
   border-radius: 28px;
@@ -123,9 +206,22 @@ h2 {
   font-size: clamp(1.75rem, 1.4rem + 1vw, 2.25rem);
   line-height: 1.1;
 }
-.panel__promise {
+.panel__problem {
   color: var(--ink-soft);
-  font-size: 18px;
+  font-size: 16px;
+}
+.panel__problem::before {
+  content: '„';
+}
+.panel__problem::after {
+  content: '“';
+}
+.panel__benefit {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 16px;
 }
 .panel__features {
   display: grid;
@@ -152,8 +248,21 @@ h2 {
   color: var(--c-deep);
   font-weight: 600;
 }
+// Lesbarer Ausschnitt statt der ganzen Seite in Miniatur. Je Bereich aus den Daten (landing.ts › shot.desk/phone, in
+// Pixeln der Aufnahme 1440 × 900): Breite des Bilds = 1440 / Ausschnittbreite, Versatz entsprechend. Prozent-Ränder
+// beziehen sich auf die Breite des Rahmens — deshalb auch margin-top.
 .panel__shot {
+  aspect-ratio: 3 / 2;
+  padding: 0;
   box-shadow: none;
+}
+.panel__shot img {
+  width: calc(100% * 1440 / var(--dw, 820));
+  max-width: none;
+  height: auto;
+  margin-left: calc(-100% * var(--dx, 320) / var(--dw, 820));
+  margin-top: calc(-100% * var(--dy, 100) / var(--dw, 820));
+  border-radius: 0;
 }
 @media (prefers-reduced-motion: no-preference) {
   .panel__shot img,
@@ -168,306 +277,10 @@ h2 {
   }
 }
 
-// ---------- Verknüpfen zum Ausprobieren ----------
-// Eigenes warmes Band (volle Breite), eckigere Formen als die Bereichs-Karte: Quelle als kräftiger Block mit 14 px
-// Ecken, Vorschläge als Liste mit Linien statt Karten. Die Lichtlinie (shared/animated-beam) läuft von der Quelle zum
-// verknüpften Vorschlag — die eine Interaktion, die den Kern von 4inOne erlebbar macht.
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-.play {
-  border-block: 1px solid var(--line);
+// ---------- Privatsphäre (Sage-Band) ----------
+.privacy {
   background: var(--ground-2);
 }
-.play__head {
-  display: grid;
-  gap: 16px;
-  max-width: 720px;
-}
-.play__head p {
-  max-width: 52ch;
-  color: var(--ink-soft);
-  font-size: 18px;
-}
-.play__pick {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 32px 0 24px;
-}
-.pick {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 0 18px 0 7px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--card);
-  color: var(--ink);
-  font: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color 160ms ease-out,
-    border-color 160ms ease-out,
-    color 160ms ease-out;
-}
-.pick__icon {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  background: var(--c);
-  color: var(--c-on);
-}
-.pick__icon app-icon {
-  width: 16px;
-  height: 16px;
-}
-.pick[aria-pressed='true'] {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: #fff;
-}
-.play__stage {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-  align-items: start;
-  gap: clamp(40px, 7vw, 120px);
-}
-.source,
-.suggestions {
-  position: relative;
-  z-index: 1;
-}
-.source {
-  display: grid;
-  gap: 4px;
-  padding: 24px;
-  border-radius: 14px;
-  background: var(--card);
-  box-shadow: 0 1px 0 var(--line), 0 24px 40px -28px rgb(18 24 38 / 0.25);
-}
-.source__icon {
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  margin-bottom: 12px;
-  border-radius: 14px;
-  background: var(--c);
-  color: var(--c-on);
-}
-.source__icon app-icon {
-  width: 26px;
-  height: 26px;
-}
-.source small,
-.sug small {
-  color: var(--c-deep);
-  font-size: 13px;
-  font-weight: 600;
-}
-.source strong {
-  @include editorial.display;
-  font-size: 28px;
-  line-height: 1.1;
-}
-.source__meta {
-  color: var(--ink-soft);
-  font-size: 15px;
-}
-.source__count {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
-  color: var(--ink);
-  font-size: 15px;
-  font-weight: 600;
-}
-.suggestions ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.suggestions__label {
-  margin-bottom: 4px;
-  color: var(--ink-soft);
-  font-size: 13px;
-  font-weight: 600;
-}
-.sug {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 4px 16px;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--line);
-}
-.suggestions ul .sug:first-child {
-  border-top: 1px solid var(--line);
-}
-.sug__icon {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
-  background: var(--c-tint);
-  color: var(--c-deep);
-  transition:
-    background-color 200ms ease-out,
-    color 200ms ease-out;
-}
-.sug__icon app-icon {
-  width: 20px;
-  height: 20px;
-}
-.sug.is-linked .sug__icon {
-  background: var(--c);
-  color: var(--c-on);
-}
-.sug__copy {
-  display: grid;
-  min-width: 0;
-}
-.sug strong {
-  color: var(--ink);
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-.sug__meta {
-  color: var(--ink-soft);
-  font-size: 14px;
-}
-.sug__reason {
-  margin-top: 8px;
-  color: var(--ink);
-  font-size: 15px;
-  line-height: 1.45;
-}
-.sug__actions {
-  display: grid;
-  justify-items: end;
-  gap: 2px;
-}
-.sug__link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--ink);
-  color: #fff;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background-color 160ms ease-out,
-    color 160ms ease-out,
-    transform 140ms var(--ease);
-}
-.sug__link:active {
-  transform: scale(0.97);
-}
-.sug__link app-icon {
-  width: 16px;
-  height: 16px;
-}
-.sug__link.is-on {
-  background: var(--card);
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1.5px var(--ink);
-}
-.sug__dismiss {
-  min-height: 40px;
-  padding: 0 8px;
-  border: 0;
-  background: transparent;
-  color: var(--ink-soft);
-  font: inherit;
-  font-size: 14px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-.sug--empty {
-  display: block;
-  color: var(--ink-soft);
-}
-.skipped {
-  margin-top: 28px;
-}
-.sug--skipped {
-  grid-template-columns: 40px minmax(0, 1fr);
-  border-top: 1px dashed #b5ad9f;
-  border-bottom: 1px dashed #b5ad9f;
-}
-.sug--skipped .sug__icon {
-  background: transparent;
-  box-shadow: inset 0 0 0 1px #b5ad9f;
-  color: var(--ink-soft);
-}
-.sug--skipped strong {
-  color: var(--ink-soft);
-}
-.sug--skipped small {
-  color: var(--ink-soft);
-}
-.play__foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 24px;
-  margin-top: 32px;
-}
-.play__foot p {
-  max-width: 62ch;
-  color: var(--ink-soft);
-  font-size: 15px;
-}
-.play__foot .link {
-  border: 0;
-  background: transparent;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  text-decoration: underline;
-  cursor: pointer;
-}
-@media (hover: hover) and (pointer: fine) {
-  .pick:not([aria-pressed='true']):hover {
-    border-color: var(--ink);
-  }
-  .sug__link:not(.is-on):hover {
-    background: #252e44;
-  }
-  .sug__link.is-on:hover {
-    background: var(--ground);
-  }
-  .sug__dismiss:hover {
-    color: var(--ink);
-  }
-}
-
-// ---------- Privatsphäre ----------
 .privacy__inner {
   display: grid;
   grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
@@ -475,10 +288,98 @@ h2 {
   gap: clamp(40px, 6vw, 96px);
 }
 .privacy__head {
-  position: sticky;
-  top: 112px;
   display: grid;
   gap: 16px;
+}
+.privacy__head .facts {
+  margin-top: 8px;
+}
+// in der schmalen Spalte: Titel über dem Text statt zweispaltig
+.privacy__head .fact {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  padding: 18px 0;
+}
+// Freigabe-Beispiel: als „Beispiel“ gekennzeichnet, Wer-sieht-was als Text (nicht nur Farbe)
+.share {
+  margin: 0;
+  padding: clamp(20px, 3vw, 32px);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--card);
+}
+.share__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 650;
+}
+.share__head span {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--ground-2);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+.share ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.share__row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-areas: 'icon what who' 'icon note who';
+  align-items: center;
+  gap: 0 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.share__icon {
+  display: grid;
+  grid-area: icon;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--c);
+  color: var(--c-on);
+}
+.share__icon app-icon {
+  width: 18px;
+  height: 18px;
+}
+.share__what {
+  grid-area: what;
+  color: var(--ink);
+  font-weight: 600;
+}
+.share__note {
+  grid-area: note;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+.share__who {
+  grid-area: who;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--ground);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.share__link {
+  margin-top: 16px;
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+.share__link strong {
+  color: var(--ink);
 }
 .privacy__head p {
   max-width: 36ch;
@@ -513,5 +414,10 @@ h2 {
   .tab:not([aria-selected='true']):hover {
     background: var(--ground);
     color: var(--ink);
+  }
+  // Das Symbol nimmt schon die Bereichsfarbe an — so sieht der Tab aus, wenn man ihn wählt
+  .tab:not([aria-selected='true']):hover .tab__icon {
+    background: var(--c);
+    color: var(--c-on);
   }
 }

@@ -52,7 +52,7 @@ test('legal pages have their own title and no app navigation; footer links are l
   // Rechtsseiten im Stil der Startseite: Hausschrift, keine Kursive, warmweißer Grund
   expect(await page.locator('h1').evaluate((h) => getComputedStyle(h).fontFamily)).toContain('Schibsted Grotesk');
   expect(await page.evaluate(() => [...document.querySelectorAll('body *')].filter((e) => getComputedStyle(e).fontStyle === 'italic').length)).toBe(0);
-  expect(await page.locator('app-public-shell').evaluate((h) => getComputedStyle(h).backgroundColor)).toBe('rgb(250, 248, 244)');
+  expect(await page.locator('app-public-shell').evaluate((h) => getComputedStyle(h).backgroundColor)).toBe('rgb(247, 247, 244)'); // Porcelain (Soft Editorial)
   for (const box of await links.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))) {
     expect(box).toBeGreaterThanOrEqual(44);
   }
@@ -64,7 +64,7 @@ test('share preview, touch icon and robots.txt are in place', async ({ page, req
   await page.goto('/');
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /og-image\.png$/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
-  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', 'apple-touch-icon.png');
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', /^apple-touch-icon\.png(\?v=\d+)?$/); // ?v= erzwingt das Neuladen gespeicherter Symbole
   for (const file of ['/og-image.png', '/apple-touch-icon.png']) {
     const response = await request.get(file);
     expect(response.headers()['content-type']).toContain('image/png');

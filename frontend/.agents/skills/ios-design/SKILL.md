@@ -4,7 +4,7 @@ description: Design and review iOS UI/UX for iPhone apps in SwiftUI, UIKit, or R
 license: Apache-2.0; see LICENSE and NOTICE for third-party attribution
 metadata:
   author: UIZZE
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 ![Stop Making UI Slop with UIZZE](https://uizze.com/landing/anti-ui-slop-skill-banner.png)
@@ -26,6 +26,14 @@ This skill is free. The Uizze MCP connection requires paid access; browsing the 
 Read the requested screen and its surrounding navigation, shared components, and design tokens. Establish the primary task, supported iPhone sizes, minimum iOS version, and existing framework from the project. Ask only for missing information that would change the implementation.
 
 Preserve SwiftUI, UIKit, React Native, or the framework already in use. Do not migrate the app, install a UI kit, or rebuild its navigation for a local screen change. Follow the user's scope: an audit produces findings; implementation changes only the requested flow.
+
+For an explicit audit, use [the native audit playbook](reference/audit.native.md). Inspect the actual iPhone or simulator interface and applicable accessibility states; a DOM scan does not audit a native app, and an unavailable device is not a clean result. Audits remain read-only unless the user requested fixes.
+
+## Image first, then implement natively
+
+Follow [Uizze's image-to-UI workflow](references/uizze-image-to-ui.md). For a new screen or approved visual redesign, use an available authorized image-generation tool to make and inspect a straight-on UI target before writing interface code. Use an approved supplied image instead when present. Preserve real product copy, supported controls, native navigation, safe areas, Dynamic Type and accessibility; fix an impossible target before treating it as the specification.
+
+Record the target's actual dimensions and implement it 1:1 using the project's native text, components and controls, not a flattened screen image. Compare an actual simulator/device capture at the matching device and viewport, then verify keyboard, larger text, appearance and requested device sizes without changing the chosen identity. Small technical fixes and read-only audits do not require a new image. If generation or native rendering is unavailable, disclose the limit and continue only with claims the available evidence supports.
 
 ## Define navigation and state
 

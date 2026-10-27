@@ -170,7 +170,7 @@ small {
   place-items: center;
   width: 24px;
   height: 24px;
-  border: 1.5px solid #948c7e; // 3,3:1 zum Weiß — leere Auswahlmarke bleibt erkennbar
+  border: 1.5px solid #879189; // 3,3:1 zum Weiß — leere Auswahlmarke bleibt erkennbar
   border-radius: 50%;
   color: #fff;
 }
@@ -359,11 +359,11 @@ button:disabled {
 @media (hover: hover) and (pointer: fine) {
   .usage-options button:not(.selected):hover,
   .domain-options button:not(.selected):hover {
-    border-color: #948c7e;
+    border-color: #879189;
     transform: translateY(-2px);
   }
   .primary:not(:disabled):hover {
-    background: #252e44;
+    background: #22332f;
   }
   .secondary:not(:disabled):hover {
     background: var(--ink);

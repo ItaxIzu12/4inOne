@@ -6,7 +6,7 @@ import { Nutzungsbedingungen } from './nutzungsbedingungen/nutzungsbedingungen';
 import { Barrierefreiheit } from './barrierefreiheit/barrierefreiheit';
 
 /**
- * Regressionsschutz: der "vor Veröffentlichung von einem Anwalt prüfen"-
+ * Regressionsschutz: der Platzhalter-
  * Warnhinweis muss auf JEDER der vier Rechtsseiten tatsächlich gerendert
  * werden — nicht nur theoretisch in der geteilten Komponente vorhanden sein.
  * Schlägt fehl, falls eine Seite künftig versehentlich ohne <app-legal-page>
@@ -35,7 +35,8 @@ describe('Warnhinweis auf allen vier Rechtsseiten', () => {
       const warning = (fixture.nativeElement as HTMLElement).querySelector('.legal-warning');
       expect(warning).toBeTruthy();
       expect(warning?.textContent).toContain('Platzhaltertext');
-      expect(warning?.textContent).toContain('von einem Anwalt prüfen und ersetzen');
+      expect(warning?.textContent).toContain('noch nicht rechtsverbindlich');
+      expect(warning?.textContent).not.toMatch(/\.md\b/); // keine internen Dateinamen öffentlich
     });
   }
 });

@@ -1,4 +1,4 @@
-// Gemeinsame Tokens der öffentlichen Seiten im Stil „Editorial hell“ (design-system/4inone/MASTER.md):
+// Gemeinsame Tokens der öffentlichen Seiten, „Soft Editorial“ seit 22.10.2026 (design-system/4inone/MASTER.md):
 // Startseite (features/landing) und Unterseiten (shared/public-shell: Rechtliches, Kontakt, Danke, 404).
 // Eine Quelle für beide, damit Farben, Schriften und der Kachel-Fuß überall gleich sind.
 //
@@ -6,44 +6,46 @@
 //   :host { @include editorial.tokens; }
 
 @mixin tokens {
-  --ground: #faf8f4;
-  --ground-2: #f2eee6;
+  --ground: #f7f7f4;
+  --ground-2: #ecefea;
   --card: #ffffff;
-  --ink: #121826;
-  --ink-soft: #4a5263; // 7,4:1 auf --ground
-  --line: #e6e0d4;
+  --ink: #172523;
+  --ink-soft: #52615b; // 6,1:1 auf --ground, 5,6:1 auf --ground-2
+  --forest: #172523; // dunkle Bänder (Verknüpfen, Abschluss)
+  --evergreen: #17694f; // Akzent: Links, Fortschritt, aktive Zustände
+  --line: #dde1da;
   // Eine Schrift für alles (global, styles.css): Schibsted Grotesk — Überschriften kräftig, Text ruhig
   --display: var(--font-display, 'Schibsted Grotesk', sans-serif);
   --sans: var(--font-body, 'Schibsted Grotesk', sans-serif);
-  --radius: 16px;
-  --shadow: 0 1px 2px rgb(18 24 38 / 0.05), 0 12px 32px -8px rgb(18 24 38 / 0.14);
-  --shadow-lift: 0 2px 4px rgb(18 24 38 / 0.06), 0 24px 48px -12px rgb(18 24 38 / 0.22);
+  --radius: 20px;
+  --shadow: 0 1px 2px rgb(23 37 35 / 0.05), 0 12px 32px -8px rgb(23 37 35 / 0.14);
+  --shadow-lift: 0 2px 4px rgb(23 37 35 / 0.06), 0 24px 48px -12px rgb(23 37 35 / 0.22);
   --gutter: clamp(20px, 4vw, 48px);
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  // Vier Bereiche: Fläche · Text auf Weiß (≥ 6:1) · Tönung — dieselben Farben wie das Logo (shared/brand)
-  --finance: #0f9d6b;
-  --finance-deep: #0b6e4b;
-  --finance-tint: #e4f4ec;
-  --household: #e04f78;
-  --household-deep: #a8325a;
-  --household-tint: #fce8ee;
-  --organisation: #e3961a;
-  --organisation-deep: #8a5800;
-  --organisation-tint: #fcefd9;
-  --travel: #3b6fe0;
-  --travel-deep: #2453b4;
-  --travel-tint: #e7edfb;
-  // Der globale Kachel-Fuß (shared/tile-footer) übernimmt Schrift und Farben
-  --tf-display: var(--display);
-  --tf-display-weight: 700;
-  --tf-primary: var(--ink);
-  --tf-name-bg: var(--ground-2);
-  --tf-name-fg: var(--ink);
-  --tf-name-muted: var(--ink-soft);
-  --tf-finance: var(--finance-tint);
-  --tf-travel: var(--travel-tint);
-  --tf-organisation: var(--organisation-tint);
-  --tf-household: var(--household-tint);
+  // Vier Bereiche (gedeckt, nur für Symbole, Balken, Beschriftungen, kleine Flächen): Fläche · Text (≥ 4,5:1 auf
+  // Weiß, Porcelain und Sage) · Tönung. Das Logo (shared/brand) behält seine eigenen Farben.
+  --finance: #17694f;
+  --finance-deep: #17694f;
+  --finance-tint: #e4efe9;
+  --household: #ab445f;
+  --household-deep: #ab445f;
+  --household-tint: #f6e8ec;
+  --organisation: #9a641e;
+  --organisation-deep: #85561a;
+  --organisation-tint: #f5ecdf;
+  --travel: #3d6b9a;
+  --travel-deep: #36608b;
+  --travel-tint: #e4ebf3;
+  // Der globale Fuß (shared/tile-footer) übernimmt die Farben
+  --tf-ink: var(--ink);
+  --tf-muted: var(--ink-soft);
+  --tf-line: var(--line);
+  --tf-ground: var(--ground);
+  --tf-hover: var(--ground-2);
+  --tf-finance: var(--finance);
+  --tf-household: var(--household);
+  --tf-organisation: var(--organisation);
+  --tf-travel: var(--travel);
   background: var(--ground);
   color: var(--ink);
   font-family: var(--sans);
@@ -53,7 +55,7 @@
 // Überschriften der öffentlichen Seiten: dieselbe Schrift, kräftig und eng gesetzt — ohne Kursiv
 @mixin display {
   font-family: var(--display);
-  font-weight: 700;
+  font-weight: 650; // ruhiger als 700: nicht jede Überschrift muss schreien
   letter-spacing: -0.03em;
 }
 
@@ -61,27 +63,27 @@
 // Erwartet die Farb-Tokens aus `tokens` (oder Fallbacks).
 @mixin area-tones {
   .tone-finance {
-    --c: var(--finance, #0f9d6b);
-    --c-deep: var(--finance-deep, #0b6e4b);
-    --c-tint: var(--finance-tint, #e4f4ec);
+    --c: var(--finance, #17694f);
+    --c-deep: var(--finance-deep, #17694f);
+    --c-tint: var(--finance-tint, #e4efe9);
     --c-on: #fff;
   }
   .tone-household {
-    --c: var(--household, #e04f78);
-    --c-deep: var(--household-deep, #a8325a);
-    --c-tint: var(--household-tint, #fce8ee);
+    --c: var(--household, #ab445f);
+    --c-deep: var(--household-deep, #ab445f);
+    --c-tint: var(--household-tint, #f6e8ec);
     --c-on: #fff;
   }
   .tone-organisation {
-    --c: var(--organisation, #e3961a);
-    --c-deep: var(--organisation-deep, #8a5800);
-    --c-tint: var(--organisation-tint, #fcefd9);
-    --c-on: #121826; // Weiß hätte auf Amber nur 2,4:1
+    --c: var(--organisation, #9a641e);
+    --c-deep: var(--organisation-deep, #85561a);
+    --c-tint: var(--organisation-tint, #f5ecdf);
+    --c-on: #fff; // 5,0:1 auf Ocker
   }
   .tone-travel {
-    --c: var(--travel, #3b6fe0);
-    --c-deep: var(--travel-deep, #2453b4);
-    --c-tint: var(--travel-tint, #e7edfb);
+    --c: var(--travel, #3d6b9a);
+    --c-deep: var(--travel-deep, #36608b);
+    --c-tint: var(--travel-tint, #e4ebf3);
     --c-on: #fff;
   }
 }

@@ -1,52 +1,42 @@
-<footer [class]="'tf tf--' + variant()" [attr.aria-labelledby]="variant() === 'full' ? 'tf-title' : null">
-  <div class="tf__grid">
-    @if (variant() === 'full') {
-      <section class="tile tile--invite">
-        <h2 id="tf-title">Fang mit einem<br />Bereich an</h2>
-        <p>Und verknüpfe später, was für dich zusammengehört.</p>
-        <div class="tile__actions">
-          <a routerLink="/registrieren" class="tf-btn">Konto erstellen</a>
-          <a routerLink="/demo" class="tf-link">Demo ansehen <app-icon name="arrow" aria-hidden="true" /></a>
-        </div>
-      </section>
-
-      <nav class="tile tile--areas" aria-label="Die vier Bereiche in der Demo">
-        @for (area of areas; track area.tone) {
-          <a [class]="'area tone-' + area.tone" [routerLink]="areaBase() + '/' + area.path">
-            <span class="area__name">{{ area.name }}</span>
-            <span class="area__go">In der Demo öffnen</span>
-          </a>
-        }
-      </nav>
-    }
-
-    <div class="tile tile--name">
-      @if (variant() === 'compact') {
-        <span class="sign" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+<footer [class]="'tf tf--' + variant()">
+  <div class="tf__inner">
+    <div class="tf__brand">
+      <a routerLink="/" class="tf__logo" aria-label="4inOne – Startseite"><app-brand /></a>
+      <p class="tf__claim">Dein Alltag. Alles verbunden.</p>
+      @if (variant() === 'full') {
+        <p class="tf__note">Finanzen, Haushalt, Organisation und Reisen in einer App. Privat, bis du etwas teilst.</p>
       }
-      <p class="tile__word" aria-hidden="true">4inOne</p>
-      <p class="tile__claim">Dein Alltag. Alles verbunden.</p>
     </div>
 
-    <div class="tile tile--links">
+    <div class="tf__cols">
       @if (variant() === 'full') {
-        <nav aria-label="Produkt">
-          <p class="links__head">Produkt</p>
+        <nav class="tf__col" aria-label="Die vier Bereiche in der Demo">
+          <p class="tf__head">Bereiche</p>
+          @for (area of areas; track area.tone) {
+            <a [class]="'tf__area tone-' + area.tone" [routerLink]="areaBase() + '/' + area.path">{{ area.name }}</a>
+          }
+        </nav>
+        <nav class="tf__col" aria-label="Produkt">
+          <p class="tf__head">Produkt</p>
+          <a routerLink="/demo">Demo ansehen</a>
+          <a routerLink="/" fragment="verknuepfen">So funktioniert’s</a>
           <a routerLink="/login">Anmelden</a>
           <a routerLink="/registrieren">Konto erstellen</a>
-          <a routerLink="/demo">Demo ansehen</a>
         </nav>
       }
-      <nav aria-label="Rechtliches">
-        @if (variant() === 'full') {
-          <p class="links__head">Rechtliches</p>
-        }
-        <a routerLink="/impressum">Impressum</a>
-        <a routerLink="/datenschutz">Datenschutz</a>
-        <a routerLink="/nutzungsbedingungen">Nutzungsbedingungen</a>
-        <a routerLink="/barrierefreiheit">Barrierefreiheit</a>
+      <nav class="tf__col" aria-label="Rechtliches">
+        <p class="tf__head">Rechtliches</p>
+        <a routerLink="/impressum" routerLinkActive="is-current" ariaCurrentWhenActive="page">Impressum</a>
+        <a routerLink="/datenschutz" routerLinkActive="is-current" ariaCurrentWhenActive="page">Datenschutz</a>
+        <a routerLink="/nutzungsbedingungen" routerLinkActive="is-current" ariaCurrentWhenActive="page">Nutzungsbedingungen</a>
+        <a routerLink="/barrierefreiheit" routerLinkActive="is-current" ariaCurrentWhenActive="page">Barrierefreiheit</a>
       </nav>
-      <p class="tile__legal">© {{ year }} 4inOne</p>
+    </div>
+  </div>
+  <div class="tf__bar">
+    <div class="tf__bar-inner">
+      <p>© {{ year }} 4inOne</p>
+      <p>Läuft im Browser, am Handy wie am Computer.</p>
     </div>
   </div>
 </footer>

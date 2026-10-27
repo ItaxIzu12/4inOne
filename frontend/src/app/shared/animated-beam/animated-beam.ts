@@ -5,7 +5,7 @@ import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject
  * Magic UI, nach Angular übertragen). Das SVG liegt absolut im `container` (der `position: relative` haben muss)
  * und hinter den verbundenen Elementen; der Verlauf wird bei jeder Größenänderung neu berechnet.
  *
- *   <app-animated-beam [container]="stage" [from]="a" [to]="b" color="#0f9d6b" [delay]="0.4" />
+ *   <app-animated-beam [container]="stage" [from]="a" [to]="b" color="#17694f" [delay]="0.4" />
  *
  * Bei reduzierter Bewegung bleibt nur die ruhende Linie. Rein dekorativ: aria-hidden.
  */
@@ -15,7 +15,7 @@ import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (geometry(); as g) {
-      <svg [attr.width]="g.w" [attr.height]="g.h" [attr.viewBox]="'0 0 ' + g.w + ' ' + g.h" aria-hidden="true" focusable="false">
+      <svg [attr.width]="g.w" [attr.height]="g.h" [attr.viewBox]="'0 0 ' + g.w + ' ' + g.h" [class.is-preview]="preview()" aria-hidden="true" focusable="false">
         <path class="beam__base" [attr.d]="g.d" />
         <path
           class="beam__pulse"
@@ -48,7 +48,7 @@ import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject
       stroke-linecap: round;
     }
     .beam__base {
-      stroke: var(--beam-base, rgb(18 24 38 / 0.12));
+      stroke: var(--beam-base, rgb(23 37 35 / 0.12));
       stroke-width: 1.5;
     }
     .beam__pulse {
@@ -85,9 +85,29 @@ import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject
         opacity: 0;
       }
     }
+    /* Vorschau („was würde verbunden?“): gestrichelt, ohne Impuls, kurz eingeblendet */
+    .is-preview {
+      animation: beam-in 180ms ease-out both;
+    }
+    .is-preview .beam__base {
+      stroke: var(--beam-preview, rgb(23 37 35 / 0.4));
+      stroke-width: 1.75;
+      stroke-dasharray: 4 7;
+    }
+    .is-preview .beam__pulse {
+      display: none;
+    }
+    @keyframes beam-in {
+      from {
+        opacity: 0;
+      }
+    }
     @media (prefers-reduced-motion: reduce) {
       .beam__pulse {
         display: none;
+      }
+      .is-preview {
+        animation: none;
       }
     }
   `,
@@ -96,7 +116,7 @@ export class AnimatedBeam {
   readonly container = input.required<HTMLElement>();
   readonly from = input.required<HTMLElement>();
   readonly to = input.required<HTMLElement>();
-  readonly color = input('#3b6fe0');
+  readonly color = input('#3d6b9a');
   /** Biegung der Linie in px (positiv nach oben). */
   readonly curvature = input(0);
   readonly delay = input(0);
@@ -104,6 +124,8 @@ export class AnimatedBeam {
   readonly iterations = input<number | 'infinite'>('infinite');
   readonly duration = input(3.2);
   readonly reverse = input(false);
+  /** Nur Vorschau: gestrichelte Linie ohne Impuls (z. B. beim Überfahren von „Verknüpfen“). */
+  readonly preview = input(false);
 
   readonly geometry = signal<{ w: number; h: number; d: string } | null>(null);
 

@@ -178,7 +178,7 @@
 @media (hover: hover) and (pointer: fine) {
   a.kpi:hover {
     border-color: var(--border-strong);
-    box-shadow: 0 6px 16px -10px rgb(18 24 38 / 0.18);
+    box-shadow: 0 6px 16px -10px rgb(23 37 35 / 0.18);
     transform: translateY(-1px);
   }
 }
@@ -409,7 +409,7 @@
   width: 24px;
   height: 24px;
   border-radius: 8px;
-  box-shadow: inset 0 0 0 2px #948c7e;
+  box-shadow: inset 0 0 0 2px #879189;
 }
 .is-done .steps__check {
   background: var(--finance-accent);

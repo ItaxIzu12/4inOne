@@ -49,4 +49,4 @@ export class LinkChain {
   });
 }
 
-const TONE_COLOR: Record<AreaTone, string> = { finance: '#0f9d6b', household: '#e04f78', organisation: '#e3961a', travel: '#3b6fe0' };
+const TONE_COLOR: Record<AreaTone, string> = { finance: '#17694f', household: '#ab445f', organisation: '#9a641e', travel: '#3d6b9a' };

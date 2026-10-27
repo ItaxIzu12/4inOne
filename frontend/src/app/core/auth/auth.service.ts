@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { DOCUMENT, Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Observable, tap, switchMap, shareReplay } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
 
@@ -26,9 +27,19 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
+/**
+ * Hinweis-Cookie für den Webserver (deploy/nginx): „angemeldet: ja“. Die Startseite / ist für Besucher vorgerendert
+ * (Landingpage); wer angemeldet ist, bekommt dort sein Dashboard. Mit diesem Hinweis liefert nginx unter / die normale
+ * App statt der vorgerenderten Landingpage aus — sonst blitzte sie bei jedem Aufruf kurz auf.
+ * Enthält nur „1“: kein Geheimnis, keine Kennung, gibt keine Rechte (die Anmeldung selbst hängt am httpOnly-Cookie).
+ */
+export const SIGNED_IN_HINT = '4io_signed_in';
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly document = inject(DOCUMENT);
+  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
 
   // ARCHITEKTUR.md §3.1: Access-Token AUSSCHLIESSLICH im Speicher (Signal),
   // NIE in localStorage/sessionStorage — sonst könnte eine XSS-Lücke ihn
@@ -117,6 +128,7 @@ export class AuthService {
   forceLogout(): void {
     this._accessToken.set(null);
     this._currentUser.set(null);
+    this.setSignedInHint(false);
   }
 
   requestPasswordReset(email: string): Observable<{ detail: string }> {
@@ -179,5 +191,13 @@ export class AuthService {
   private applySession(res: AuthResponse): void {
     this._accessToken.set(res.access);
     this._currentUser.set(res.user);
+    this.setSignedInHint(true);
+  }
+
+  /** Setzt bzw. löscht den Hinweis für den Webserver (siehe SIGNED_IN_HINT). So lange wie das Refresh-Cookie (7 Tage). */
+  private setSignedInHint(on: boolean): void {
+    if (!this.browser) return;
+    const secure = this.document.location?.protocol === 'https:' ? '; Secure' : '';
+    this.document.cookie = `${SIGNED_IN_HINT}=${on ? '1' : ''}; Path=/; Max-Age=${on ? 60 * 60 * 24 * 7 : 0}; SameSite=Lax${secure}`;
   }
 }

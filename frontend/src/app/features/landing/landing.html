@@ -11,7 +11,7 @@
     </nav>
     <div class="head__actions">
       <a routerLink="/login" class="link">Anmelden</a>
-      <a routerLink="/registrieren" class="btn btn--ink btn--small">Konto erstellen</a>
+      <a routerLink="/demo" class="btn btn--ink btn--small">Demo ansehen</a>
     </div>
   </div>
 </header>
@@ -20,20 +20,24 @@
   <!-- 1 · Hero: eine Aussage, zwei Wege, darunter das echte Produkt (Rechner und Handy, Aufnahmen aus der Demo) -->
   <section class="hero" aria-labelledby="hero-title">
     <div class="wrap hero__copy">
-      <h1 id="hero-title">Dein ganzer Alltag auf einer Startseite.</h1>
+      <h1 id="hero-title">Vier Bereiche für deinen Alltag – und was zusammengehört, ist verbunden.</h1>
       <p class="hero__lead">
-        4inOne bündelt Budget, Termine, Haushalt und Reisen in einer App und verknüpft, was zusammengehört. Privat, bis
-        du etwas teilst.
+        Finanzen, Haushalt, Organisation und Reisen an einem Ort. Und die Reisekasse weiß, zu welcher Reise sie
+        gehört.
       </p>
+      <!-- Hauptweg ist die Demo; der zweite Weg erklärt erst (zur Probe), statt gleich nach Daten zu fragen -->
       <div class="hero__actions">
-        <a routerLink="/registrieren" class="btn btn--ink">Konto erstellen</a>
-        <a routerLink="/demo" class="btn btn--outline">Ohne Anmeldung ausprobieren</a>
+        <a routerLink="/demo" class="btn btn--ink btn--go">Demo ohne Anmeldung testen<app-icon name="arrow" aria-hidden="true" /></a>
+        <a routerLink="/" fragment="verknuepfen" class="btn btn--outline">So funktioniert’s</a>
       </div>
-      <p class="hero__note">Läuft im Browser, am Handy wie am Computer. Ohne Installation.</p>
+      <p class="hero__note">Mit Beispieldaten · Ohne Registrierung</p>
     </div>
 
     <figure class="wrap stage">
       <div class="stage__desk frame">
+        <!-- Am Handy ist dieses Bild ausgeblendet: dort zeigt die Quelle auf das Handy-Bild, das ohnehin geladen wird -->
+        <picture>
+        <source media="(max-width: 640px)" srcset="images/landing/mobil@2x.webp" />
         <img
           src="images/landing/start.webp"
           srcset="images/landing/start.webp 1440w, images/landing/start@2x.webp 2880w"
@@ -43,12 +47,14 @@
           fetchpriority="high"
           alt="Die Startseite von 4inOne in der Demo: vier Kennzahlen für heute, Budget, die nächste Reise und eine Frist im Haushalt, darunter der Tagesplan, ein Verknüpfungs-Vorschlag und die letzten Buchungen."
         />
+        </picture>
       </div>
       <div class="stage__phone">
         <img
           src="images/landing/mobil@2x.webp"
           width="390"
           height="844"
+          fetchpriority="high"
           alt="Dieselbe Startseite am Handy, mit der Navigation unten."
         />
       </div>
@@ -56,14 +62,30 @@
     </figure>
   </section>
 
-  <!-- 2 · Aussage: was das Produkt ist, in einem großen Absatz (erster Satz dunkel, der Rest gedämpft) -->
-  <section id="produkt" class="statement" aria-label="Was 4inOne ist">
-    <div class="wrap">
-      <p class="statement__text">
-        <strong>Vier Bereiche, die jeder für sich funktionieren.</strong>
-        Finanzen, Haushalt, Organisation und Reisen haben eigene Werkzeuge, vom Monatsbudget bis zur Packliste. Darüber
-        liegt eine Ebene, die zusammenbringt, was zusammengehört.
-      </p>
+  <!-- 2 · Das Problem kurz, mit zwei Vorher-Nachher-Beispielen, und der Übergang zur Probe -->
+  <section id="produkt" class="section problem" aria-labelledby="problem-title">
+    <div class="wrap problem__inner">
+      <div class="problem__head">
+        <h2 id="problem-title">Vier Apps wissen nichts voneinander. Dein Alltag schon.</h2>
+        <p>
+          Du planst eine Reise, passt dein Budget an und denkst an das Hotel. Bisher hältst du das selbst zusammen.
+          In 4inOne hängt es an einer Stelle.
+        </p>
+        <a class="link link--arrow problem__next" routerLink="/" fragment="verknuepfen"
+          >Gleich hier ausprobieren<app-icon name="arrow" aria-hidden="true"
+        /></a>
+      </div>
+      <ul class="compare" aria-label="Zwei Beispiele, vorher und mit 4inOne">
+        @for (ex of compare; track ex.title) {
+          <li class="compare__item">
+            <h3>{{ ex.title }}</h3>
+            <dl>
+              <div class="compare__before"><dt>Vorher</dt><dd>{{ ex.before }}</dd></div>
+              <div class="compare__after"><dt>Mit 4inOne</dt><dd>{{ ex.after }}</dd></div>
+            </dl>
+          </li>
+        }
+      </ul>
     </div>
   </section>
 
@@ -73,8 +95,8 @@
       <div class="play__head">
         <h2 id="play-title">Probier aus, was 4inOne verbindet.</h2>
         <p>
-          Wähle einen Eintrag. 4inOne schlägt vor, was dazugehört, und sagt dir, warum. Ob verknüpft wird, entscheidest
-          du.
+          Wähle ein Beispiel. 4inOne schlägt vor, was aus deinen Einträgen dazugehört, und sagt dir, warum. Ob verknüpft
+          wird, entscheidest du – Vorschlag für Vorschlag.
         </p>
       </div>
 
@@ -91,51 +113,107 @@
         }
       </div>
 
+      <!-- Schrittanzeige: die Reihenfolge trägt Information (wo bin ich im Ablauf) -->
+      <ol class="stepper" aria-label="Ablauf">
+        @for (label of steps; track label; let i = $index) {
+          <li [class.is-done]="step() > i + 1" [class.is-current]="step() === i + 1" [attr.aria-current]="step() === i + 1 ? 'step' : null">
+            <span class="stepper__no" aria-hidden="true">{{ i + 1 }}</span>{{ label }}
+          </li>
+        }
+      </ol>
+
       @let sc = scenario();
       <div class="play__stage" #stage>
-        <div [class]="'source tone-' + sc.source.tone">
-          <span class="source__icon" #sourceIcon aria-hidden="true"><app-icon [name]="sc.source.icon" /></span>
-          <small>{{ sc.source.kind }}</small>
-          <strong>{{ sc.source.title }}</strong>
-          <span class="source__meta">{{ sc.source.meta }}</span>
-          <p class="source__count" aria-live="polite">
-            @if (linkedCount()) {
-              Verknüpft mit {{ linkedCount() }} {{ linkedCount() === 1 ? 'Eintrag' : 'Einträgen' }}
-            } @else {
-              Noch nichts verknüpft
-            }
-          </p>
-        </div>
+        @if (isCreated()) {
+          <div [class]="'source tone-' + sc.source.tone">
+            <span class="source__icon" #sourceIcon aria-hidden="true"><app-icon [name]="sc.source.icon" /></span>
+            <small>{{ sc.source.kind }}</small>
+            <strong>{{ sc.source.title }}</strong>
+            <span class="source__meta">{{ sc.source.meta }}</span>
+            <p class="source__count">
+              @if (linkedCount()) {
+                Verknüpft mit {{ linkedCount() }} {{ linkedCount() === 1 ? 'Eintrag' : 'Einträgen' }}
+              } @else {
+                Noch nichts verknüpft
+              }
+            </p>
+          </div>
+        } @else if (sc.create; as form) {
+          <!-- Schritt 1: der Eintrag entsteht (Beispielwerte, kein echtes Formular) -->
+          <div [class]="'source source--draft tone-' + sc.source.tone">
+            <span class="source__icon" aria-hidden="true"><app-icon [name]="sc.source.icon" /></span>
+            <strong>{{ form.title }}</strong>
+            <dl class="draft">
+              @for (field of form.fields; track field[0]) {
+                <div>
+                  <dt>{{ field[0] }}</dt>
+                  <dd>{{ field[1] }}</dd>
+                </div>
+              }
+            </dl>
+            <button type="button" class="btn btn--ink draft__go" (click)="create()">{{ form.action }}</button>
+          </div>
+        }
 
         <div class="suggestions">
-          <p class="suggestions__label">Vorschläge</p>
+          @if (!isCreated()) {
+            <!-- Vorschau: was nach dem Anlegen vorgeschlagen wird (Titel, ohne Begründung und Knöpfe) -->
+            <p class="suggestions__label">Passt dazu, sobald die Reise angelegt ist</p>
+            <ul class="preview">
+              @for (sug of sc.suggestions; track sug.key) {
+                <li [class]="'sug sug--preview tone-' + sug.tone">
+                  <span class="sug__icon" aria-hidden="true"><app-icon [name]="sug.icon" /></span>
+                  <span class="sug__copy"><small>{{ sug.kind }}</small><strong>{{ sug.title }}</strong></span>
+                </li>
+              }
+            </ul>
+            <p class="suggestions__wait">Leg die Reise an: Dann siehst du zu jedem Vorschlag, warum er passt, und entscheidest selbst.</p>
+          } @else {
+          <p class="suggestions__label" #suggestionsHead tabindex="-1">Vorschläge</p>
           <ul>
             @for (sug of visibleSuggestions(); track sug.key) {
-              <li [class]="'sug tone-' + sug.tone" [class.is-linked]="isLinked(sug)">
+              @let state = decisionOf(sug);
+              <li [class]="'sug tone-' + sug.tone + ' is-' + state" [attr.data-sug]="sug.key">
                 <span class="sug__icon" #suggestionIcon aria-hidden="true"><app-icon [name]="sug.icon" /></span>
                 <span class="sug__copy">
                   <small>{{ sug.kind }}</small>
                   <strong>{{ sug.title }}</strong>
                   <span class="sug__meta">{{ sug.meta }}</span>
                   <span class="sug__reason">{{ sug.reason }}</span>
+                  <!-- Zustand als Wort, nicht nur als Farbe -->
+                  @if (state !== 'open') {
+                    <span class="sug__state">
+                      @switch (state) {
+                        @case ('linked') { <app-icon name="check" aria-hidden="true" />Verknüpft }
+                        @case ('later') { Später prüfen: bleibt als Vorschlag offen }
+                        @case ('dismissed') { Abgelehnt: wird für dieses Paar nicht wieder vorgeschlagen }
+                      }
+                    </span>
+                  }
                 </span>
                 <span class="sug__actions">
-                  <!-- Name beginnt mit dem sichtbaren Wort (WCAG 2.5.3); der Zustand steckt im Namen, nicht doppelt in aria-pressed -->
-                  <button
-                    type="button"
-                    class="sug__link"
-                    [class.is-on]="isLinked(sug)"
-                    [attr.aria-label]="isLinked(sug) ? 'Verknüpft: ' + sug.title + ', Verbindung lösen' : 'Verknüpfen: ' + sug.title"
-                    (click)="toggleLink(sug)"
-                  >
-                    @if (isLinked(sug)) {
-                      <app-icon name="check" aria-hidden="true" />Verknüpft
-                    } @else {
-                      Verknüpfen
+                  @if (state === 'open' || state === 'later') {
+                    <button
+                      type="button"
+                      class="sug__link"
+                      [attr.aria-label]="'Verknüpfen: ' + sug.title"
+                      (click)="decide(sug, 'linked')"
+                      (mouseenter)="showPreview(sug, $event)"
+                      (focus)="showPreview(sug, $event)"
+                      (mouseleave)="hidePreview(sug)"
+                      (blur)="hidePreview(sug)"
+                    >Verknüpfen</button>
+                    @if (state === 'open') {
+                      <button type="button" class="sug__minor" [attr.aria-label]="'Später: ' + sug.title" (click)="decide(sug, 'later')">Später</button>
                     }
-                  </button>
-                  @if (!isLinked(sug)) {
-                    <button type="button" class="sug__dismiss" [attr.aria-label]="'Nicht relevant: ' + sug.title" (click)="dismiss(sug)">Nicht relevant</button>
+                    <button type="button" class="sug__minor" [attr.aria-label]="'Ablehnen: ' + sug.title" (click)="decide(sug, 'dismissed')">Ablehnen</button>
+                  } @else if (state === 'linked') {
+                    <!-- Der Zustand steht schon als Wort darüber („Verknüpft“) — der Knopf sagt, was er tut -->
+                    <button type="button" class="sug__link is-on" [attr.aria-label]="'Verbindung lösen: ' + sug.title" (click)="decide(sug, 'linked')">
+                      Lösen
+                    </button>
+                  } @else {
+                    <button type="button" class="sug__minor" [attr.aria-label]="'Rückgängig: ' + sug.title" (click)="decide(sug, 'dismissed')">Rückgängig</button>
                   }
                 </span>
               </li>
@@ -143,6 +221,29 @@
               <li class="sug sug--empty">Keine Vorschläge mehr. Abgelehnte schlägt 4inOne für dieses Paar nicht wieder vor.</li>
             }
           </ul>
+          @if (step() >= 3) {
+            <!-- Schritt 4: was im Produkt daraus entstünde — Verbindungen, keine neuen Einträge, keine Freigaben -->
+            <section class="outcome" aria-labelledby="outcome-title">
+              <h3 id="outcome-title">Ergebnis</h3>
+              @if (result().groups.length) {
+                <ul>
+                  @for (g of result().groups; track g.area) {
+                    <li [class]="'outcome__row tone-' + g.tone">
+                      <span class="outcome__area">{{ g.area }}</span>
+                      <span>{{ g.titles.join(', ') }} – verknüpft mit „{{ sc.source.title }}“</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p>Noch nichts verknüpft.</p>
+              }
+              <p class="outcome__note">
+                @if (result().later) { {{ result().later }} offen für später. }
+                @if (result().dismissed) { {{ result().dismissed }} abgelehnt. }
+                Es entstehen keine neuen Einträge, und niemand bekommt dadurch Zugriff.
+              </p>
+            </section>
+          }
           <div class="skipped">
             <p class="suggestions__label">Bewusst nicht vorgeschlagen</p>
             <div class="sug sug--skipped">
@@ -155,16 +256,37 @@
               </span>
             </div>
           </div>
+          }
         </div>
 
         @for (beam of beams(); track beam.key) {
-          <app-animated-beam [container]="beam.stage" [from]="beam.from" [to]="beam.to" [color]="beam.color" [duration]="2.2" [iterations]="2" />
+          <app-animated-beam [container]="beam.stage" [from]="beam.from" [to]="beam.to" [color]="beam.color" [duration]="2.2" [iterations]="2" [preview]="beam.preview" />
         }
       </div>
 
+      <!-- Der nächste Schritt nach dem Ausprobieren: dasselbe in der ganzen App sehen -->
+      <!-- Der nächste Schritt passt zum Zustand: vor dem Ausprobieren ein Angebot, danach „Das war ein Ausschnitt“ -->
+      <div class="play__next" [class.is-quiet]="!anyLinked()">
+        @if (anyLinked()) {
+          <div>
+            <p class="play__next-title">Das war ein Ausschnitt.</p>
+            <p>In der Demo verknüpfst du Einträge der Beispiel-Sophie und siehst alle vier Bereiche in Aktion, ohne Konto.</p>
+          </div>
+          <a routerLink="/demo" class="btn btn--light">In der Demo weitermachen</a>
+        } @else {
+          <p>
+            Lieber gleich die ganze App sehen?
+            <a routerLink="/demo" class="link link--arrow">Demo ansehen<app-icon name="arrow" aria-hidden="true" /></a>
+          </p>
+        }
+      </div>
+      <!-- Eine feste Statuszeile: sagt jede Entscheidung kurz an (die Knöpfe selbst nennen ihren Zustand) -->
+      <p class="sr-only" role="status">{{ announcement() }}</p>
       <div class="play__foot">
-        <p>Beispiel auf dieser Seite, gespeichert wird nichts. Eine Verknüpfung gibt niemandem Zugriff auf deine Einträge.</p>
-        <button type="button" class="link" (click)="reset()">Zurücksetzen</button>
+        <p>Vorschau mit Beispieldaten auf dieser Seite, gespeichert wird nichts.</p>
+        @if (canReset()) {
+          <button type="button" class="link" (click)="reset()">Zurücksetzen</button>
+        }
       </div>
     </div>
   </section>
@@ -174,10 +296,12 @@
     <div class="wrap">
       <div class="section__head">
         <h2 id="areas-title">Jeder Bereich hat seine eigenen Werkzeuge.</h2>
-        <p>Geld, Zuhause, Termine und Reisen. Jeder Bereich funktioniert allein, starte mit dem, den du gerade brauchst.</p>
+        <p>Geld, Zuhause, Termine und Reisen. Jeder Bereich funktioniert auch allein.</p>
       </div>
 
-      <div class="tabs" role="tablist" aria-label="Bereiche" (keydown)="onTabKey($event)">
+      @let g = glider();
+      <div class="tabs" [class.has-glider]="!!g" role="tablist" aria-label="Bereiche" #tablist (keydown)="onTabKey($event)">
+        <span class="tabs__glider" aria-hidden="true" [style.width.px]="g?.w" [style.transform]="g ? 'translateX(' + g.x + 'px)' : null"></span>
         @for (area of areas; track area.key) {
           <button
             type="button"
@@ -204,7 +328,7 @@
       >
         <div class="panel__copy">
           <h3>{{ area.name }}</h3>
-          <p class="panel__promise">{{ area.promise }}</p>
+          <p class="panel__problem">{{ area.problem }}</p>
           <dl class="panel__features">
             @for (f of area.features; track f.title) {
               <div>
@@ -213,15 +337,25 @@
               </div>
             }
           </dl>
+          <p class="panel__benefit"><strong>Dein Nutzen:</strong> {{ area.benefit }}</p>
           <a class="link link--arrow panel__link" [routerLink]="area.demo"
             >{{ area.name }} in der Demo ansehen<app-icon name="arrow" aria-hidden="true"
           /></a>
         </div>
-        <div class="panel__shot frame">
+        <div
+          class="panel__shot frame"
+          [style.--dx]="area.shot.desk[0]"
+          [style.--dy]="area.shot.desk[1]"
+          [style.--dw]="area.shot.desk[2]"
+          [style.--mx]="area.shot.phone[0]"
+          [style.--my]="area.shot.phone[1]"
+          [style.--mw]="area.shot.phone[2]"
+          [style.--mh]="area.shot.phone[3]"
+        >
           <img
             [src]="'images/landing/' + area.shot.name + '.webp'"
             [attr.srcset]="'images/landing/' + area.shot.name + '.webp 1440w, images/landing/' + area.shot.name + '@2x.webp 2880w'"
-            sizes="(max-width: 900px) 92vw, 720px"
+            sizes="(max-width: 640px) 300vw, (max-width: 900px) 160vw, 1200px"
             width="1440"
             height="900"
             loading="lazy"
@@ -233,21 +367,38 @@
     </div>
   </section>
 
-  <!-- 5 · Privatsphäre: ruhige Faktenliste nach dem echten Rechtemodell -->
+  <!-- 5 · Privatsphäre: Freigaben an einem gekennzeichneten Beispiel, dazu drei belegte Fakten -->
   <section id="privat" class="section privacy" aria-labelledby="privacy-title">
     <div class="wrap privacy__inner">
       <div class="privacy__head">
         <h2 id="privacy-title">Privat ist die Grundeinstellung.</h2>
         <p>Teilen ist bei 4inOne immer eine eigene Entscheidung, nie ein Nebeneffekt.</p>
+        <dl class="facts">
+          @for (fact of facts; track fact.title) {
+            <div class="fact">
+              <dt>{{ fact.title }}</dt>
+              <dd>{{ fact.text }}</dd>
+            </div>
+          }
+        </dl>
       </div>
-      <dl class="facts">
-        @for (fact of facts; track fact.title) {
-          <div class="fact">
-            <dt>{{ fact.title }}</dt>
-            <dd>{{ fact.text }}</dd>
-          </div>
-        }
-      </dl>
+      <figure class="share">
+        <figcaption class="share__head"><span>Beispiel</span>Wer sieht was</figcaption>
+        <ul>
+          @for (row of shareExample; track row.what) {
+            <li [class]="'share__row tone-' + row.tone">
+              <span class="share__icon" aria-hidden="true"><app-icon [name]="row.icon" /></span>
+              <span class="share__what">{{ row.what }}</span>
+              <span class="share__who">{{ row.who }}</span>
+              <span class="share__note">{{ row.note }}</span>
+            </li>
+          }
+        </ul>
+        <p class="share__link">
+          <strong>Verknüpfung:</strong> Reise „Berlin“ ↔ Sparziel „Reisekasse Berlin“. Ben sieht die Reise, aber nicht
+          dein Sparziel – eine Verknüpfung ändert keine Rechte.
+        </p>
+      </figure>
     </div>
   </section>
 
@@ -272,13 +423,13 @@
     </div>
   </section>
 
-  <!-- 7 · Abschluss: der einfachste nächste Schritt -->
+  <!-- 7 · Abschluss: der einzige Abschluss der Seite (der Fuß wiederholt ihn nicht) -->
   <section class="closer" aria-labelledby="closer-title">
     <div class="wrap closer__inner">
-      <h2 id="closer-title">Schau dir 4inOne mit Beispieldaten an.</h2>
-      <p>Die Demo zeigt alle vier Bereiche. Ohne Konto, gespeichert wird nichts.</p>
+      <h2 id="closer-title">Fang mit einem Bereich an und nimm später dazu, was du brauchst.</h2>
+      <p>In der Demo siehst du alle vier Bereiche mit Beispieldaten, ohne Konto. Gespeichert wird dabei nichts.</p>
       <div class="closer__actions">
-        <a routerLink="/demo" class="btn btn--light">Ohne Anmeldung ausprobieren</a>
+        <a routerLink="/demo" class="btn btn--light btn--go">Demo ausprobieren<app-icon name="arrow" aria-hidden="true" /></a>
         <a routerLink="/registrieren" class="btn btn--ghost">Konto erstellen</a>
       </div>
     </div>

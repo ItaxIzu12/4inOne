@@ -1,0 +1,541 @@
+@use '../../shared/styles/editorial' as editorial;
+
+// Öffentliche Startseite — Verknüpfen zum Ausprobieren (Deep-Forest-Band): Auswahl, Schritte, Quelle, Vorschläge mit
+// Zuständen (offen · verknüpft · später · abgelehnt), Ergebnis je Bereich, nächster Schritt.
+
+// ---------- Verknüpfen zum Ausprobieren ----------
+// Eigenes warmes Band (volle Breite), eckigere Formen als die Bereichs-Karte: Quelle als kräftiger Block mit 14 px
+// Ecken, Vorschläge als Liste mit Linien statt Karten. Die Lichtlinie (shared/animated-beam) läuft von der Quelle zum
+// verknüpften Vorschlag — die eine Interaktion, die den Kern von 4inOne erlebbar macht.
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.play {
+  --on-dark: #fff;
+  --on-dark-soft: #c3cec9; // 9,8:1 auf Deep Forest
+  --line-dark: rgb(255 255 255 / 0.16);
+  background: var(--forest);
+  color: var(--on-dark);
+  --beam-base: rgb(255 255 255 / 0.2);
+  --beam-preview: rgb(255 255 255 / 0.6); // Vorschau beim Überfahren von „Verknüpfen“: neutral, erst verknüpft farbig
+}
+.play h2 {
+  color: var(--on-dark);
+}
+.play :focus-visible {
+  outline-color: #fff;
+}
+.play__head {
+  display: grid;
+  gap: 16px;
+  max-width: 720px;
+}
+.play__head p {
+  max-width: 52ch;
+  color: var(--on-dark-soft);
+  font-size: 18px;
+}
+.play__pick {
+  display: flex;
+  gap: 8px;
+  margin: 32px 0 24px;
+  overflow-x: auto; // am Handy wischbar statt Umbruch mit einem einzelnen Knopf in Zeile zwei
+  scrollbar-width: none;
+}
+.play__pick::-webkit-scrollbar {
+  display: none;
+}
+.pick {
+  flex: none;
+}
+.pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 18px 0 7px;
+  border: 1px solid var(--line-dark);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--on-dark);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out,
+    color 160ms ease-out;
+}
+.pick__icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--c);
+  color: var(--c-on);
+}
+.pick__icon app-icon {
+  width: 16px;
+  height: 16px;
+}
+.pick[aria-pressed='true'] {
+  border-color: #fff;
+  background: #fff;
+  color: var(--forest);
+}
+.stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+.stepper li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--on-dark-soft);
+  font-size: 14px;
+  font-weight: 600;
+}
+.stepper__no {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1.5px solid rgb(255 255 255 / 0.4);
+  border-radius: 50%;
+  font-size: 13px;
+}
+.stepper .is-current {
+  color: #fff;
+}
+.stepper .is-current .stepper__no {
+  border-color: #fff;
+  background: #fff;
+  color: var(--forest);
+}
+.stepper .is-done .stepper__no {
+  border-color: rgb(255 255 255 / 0.7);
+  color: #fff;
+}
+.play__stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: clamp(40px, 7vw, 120px);
+}
+.source,
+.suggestions {
+  position: relative;
+  z-index: 1;
+}
+.source {
+  display: grid;
+  gap: 4px;
+  padding: 24px;
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--ink);
+}
+.source__icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  background: var(--c);
+  color: var(--c-on);
+}
+.source__icon app-icon {
+  width: 26px;
+  height: 26px;
+}
+.source small {
+  color: var(--c-deep);
+  font-size: 13px;
+  font-weight: 600;
+}
+.source strong {
+  @include editorial.display;
+  font-size: 28px;
+  line-height: 1.1;
+}
+.source__meta {
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+.source__count {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+// Schritt 1 (Reise): der Eintrag entsteht — wie ein kleines Formular, ehrlich als Beispiel
+.source--draft {
+  gap: 0;
+}
+.source--draft strong {
+  margin-bottom: 12px;
+}
+.draft {
+  margin: 0 0 20px;
+}
+.draft > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.draft > div:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.draft dt {
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+.draft dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 600;
+}
+.draft__go {
+  justify-self: start;
+}
+.suggestions__wait {
+  padding: 28px 24px;
+  border: 1px dashed rgb(255 255 255 / 0.3);
+  border-radius: 20px;
+  color: var(--on-dark-soft);
+  font-size: 16px;
+}
+.suggestions__label:focus {
+  outline: none;
+}
+.suggestions__label:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .suggestions ul,
+  .skipped {
+    animation: arrive 420ms var(--ease) both;
+  }
+  .skipped {
+    animation-delay: 80ms;
+  }
+}
+// nur Bewegung, keine Deckkraft: Text ist vom ersten Bild an voll lesbar
+@keyframes arrive {
+  from {
+    transform: translateY(10px);
+  }
+}
+.suggestions ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.suggestions__label {
+  margin-bottom: 4px;
+  color: var(--on-dark-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+.sug {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line-dark);
+}
+.suggestions ul .sug:first-child {
+  border-top: 1px solid var(--line-dark);
+}
+// auf Deep Forest: Bereich als helle Tönung (≥ 13:1), Text weiß bzw. gedämpft hell
+.sug small {
+  color: var(--c-tint);
+}
+.sug__icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: rgb(255 255 255 / 0.1);
+  color: var(--c-tint);
+  transition:
+    background-color 200ms ease-out,
+    color 200ms ease-out;
+}
+.sug__icon app-icon {
+  width: 20px;
+  height: 20px;
+}
+.sug.is-linked .sug__icon {
+  background: var(--c);
+  color: var(--c-on);
+}
+.sug__copy {
+  display: grid;
+  min-width: 0;
+}
+.sug strong {
+  color: var(--on-dark);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.sug__meta {
+  color: var(--on-dark-soft);
+  font-size: 14px;
+}
+.sug__reason {
+  margin-top: 8px;
+  color: var(--on-dark);
+  font-size: 15px;
+  line-height: 1.45;
+}
+.sug__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2px 4px;
+  max-width: 200px;
+}
+.sug__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px; // Projektstandard für Tippziele (WCAG 2.2 verlangt 24)
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--forest);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease-out,
+    color 160ms ease-out,
+    transform 140ms var(--ease);
+}
+.sug__link:active {
+  transform: scale(0.97);
+}
+.sug__link app-icon {
+  width: 16px;
+  height: 16px;
+}
+.sug__link.is-on {
+  background: transparent;
+  color: #fff;
+  box-shadow: inset 0 0 0 1.5px #fff;
+}
+.preview {
+  margin-bottom: 16px;
+}
+.sug--preview {
+  grid-template-columns: 40px minmax(0, 1fr);
+  padding: 14px 0;
+}
+.sug--preview strong {
+  color: var(--on-dark-soft);
+  font-weight: 500;
+}
+.sug__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--on-dark);
+  font-size: 14px;
+  font-weight: 600;
+}
+.sug__state app-icon {
+  width: 16px;
+  height: 16px;
+}
+.sug.is-later .sug__icon {
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.5);
+}
+// Abgelehnt: durchgestrichen und gedämpft, bleibt lesbar (≥ 9:1)
+.sug.is-dismissed strong {
+  color: var(--on-dark-soft);
+  text-decoration: line-through;
+}
+.sug.is-dismissed .sug__reason,
+.sug.is-dismissed .sug__meta {
+  color: var(--on-dark-soft);
+}
+.sug__minor {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--on-dark-soft);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.outcome {
+  margin-top: 24px;
+  padding: 20px 22px;
+  border: 1px solid var(--line-dark);
+  border-radius: 20px;
+}
+.outcome h3 {
+  margin-bottom: 10px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 650;
+}
+.outcome ul {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+.outcome__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: var(--on-dark);
+  font-size: 15px;
+}
+.outcome__area {
+  color: var(--c-tint);
+  font-weight: 650;
+}
+.outcome p {
+  color: var(--on-dark-soft);
+  font-size: 15px;
+}
+.sug--empty {
+  display: block;
+  color: var(--on-dark-soft);
+}
+.skipped {
+  margin-top: 28px;
+}
+.sug--skipped {
+  grid-template-columns: 40px minmax(0, 1fr);
+  border-top: 1px dashed rgb(255 255 255 / 0.3);
+  border-bottom: 1px dashed rgb(255 255 255 / 0.3);
+}
+.sug--skipped .sug__icon {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3);
+  color: var(--on-dark-soft);
+}
+.sug--skipped strong,
+.sug--skipped small {
+  color: var(--on-dark-soft);
+}
+// Nächster Schritt nach der Probe: heller Knopf auf Deep Forest, eine Zeile Erklärung
+.play__next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 32px;
+  margin-top: 40px;
+  padding: 24px 28px;
+  border: 1px solid var(--line-dark);
+  border-radius: 20px;
+}
+.play__next p {
+  max-width: 56ch;
+  color: var(--on-dark-soft);
+}
+// Vor dem Ausprobieren nur ein leiser Ausweg (Textlink), damit „Reise anlegen“ die einzige Hauptaktion ist
+.play__next.is-quiet {
+  margin-top: 32px;
+  padding: 0;
+  border: 0;
+}
+.play__next.is-quiet p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 8px;
+}
+// Text des Links bündig mit der Zeile darüber, wenn er umbricht (der Link hat 14 px Innenabstand für die Klickfläche)
+.play__next.is-quiet .link {
+  margin-left: -14px;
+  color: #fff;
+  font-weight: 600;
+}
+.play__next .play__next-title {
+  margin-bottom: 4px;
+  color: var(--on-dark);
+  font-size: 18px;
+  font-weight: 650;
+}
+.play__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-top: 32px;
+}
+.play__foot p {
+  max-width: 62ch;
+  color: var(--on-dark-soft);
+  font-size: 15px;
+}
+.play__foot .link {
+  margin-inline: -14px; // Text bündig mit dem Inhalt (der Link hat 14 px Innenabstand für die Klickfläche)
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pick:not([aria-pressed='true']):hover {
+    border-color: #fff;
+  }
+  .sug__link:not(.is-on):hover {
+    background: var(--ground-2);
+  }
+  .sug__link.is-on:hover {
+    background: rgb(255 255 255 / 0.1);
+  }
+  .sug__minor:hover {
+    color: #fff;
+  }
+  .play__foot .link:hover,
+  .play__next .link:hover {
+    background: rgb(255 255 255 / 0.1);
+  }
+}
+

@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { PublicShell } from '../public-shell/public-shell';
 
 /**
@@ -14,10 +14,17 @@ import { PublicShell } from '../public-shell/public-shell';
 @Component({
   selector: 'app-legal-page',
   standalone: true,
-  imports: [RouterLink, PublicShell],
+  imports: [RouterLink, RouterLinkActive, PublicShell],
   templateUrl: './legal-page.html',
   styleUrl: './legal-page.css',
 })
 export class LegalPage {
   readonly title = input.required<string>();
+  /** Die vier Rechtsseiten — Navigation daneben, damit man nicht über den Fuß springen muss. */
+  readonly pages = [
+    { path: '/impressum', label: 'Impressum' },
+    { path: '/datenschutz', label: 'Datenschutz' },
+    { path: '/nutzungsbedingungen', label: 'Nutzungsbedingungen' },
+    { path: '/barrierefreiheit', label: 'Barrierefreiheit' },
+  ];
 }

@@ -24,6 +24,11 @@
 [id] {
   scroll-margin-top: 88px;
 }
+// WCAG 2.4.11: beim Tabben scrollt der Fokus nie unter den feststehenden Kopf
+:is(a, button, summary, [tabindex]) {
+  scroll-margin-top: 96px;
+  scroll-margin-bottom: 24px;
+}
 h1,
 h2,
 h3 {
@@ -140,6 +145,17 @@ main {
 .btn:active {
   transform: scale(0.98);
 }
+// Hauptwege in die Demo: Pfeil, der beim Überfahren/Fokus ein Stück vorrückt („hier geht’s weiter“)
+.btn--go app-icon {
+  width: 18px;
+  height: 18px;
+  margin: 0 -4px 0 10px;
+  transition: transform 200ms var(--ease);
+}
+.btn--go:focus-visible app-icon,
+.link--arrow:focus-visible app-icon {
+  transform: translateX(4px);
+}
 .btn--small {
   min-height: 44px;
   padding: 0 18px;
@@ -157,7 +173,7 @@ main {
 
 // ---------- Hero ----------
 .hero {
-  padding-top: clamp(56px, 8vw, 112px);
+  padding-top: clamp(48px, 6vw, 88px);
   overflow-x: clip;
 }
 .hero__copy {
@@ -166,13 +182,14 @@ main {
   text-align: center;
 }
 h1 {
-  max-width: 15ch;
-  font-size: clamp(2.5rem, 1.2rem + 4.2vw, 5.25rem);
-  line-height: 1;
+  max-width: 24ch;
+  font-size: clamp(2.125rem, 1.1rem + 2.7vw, 3.75rem);
+  line-height: 1.03;
   letter-spacing: -0.035em;
 }
 .hero__lead {
   max-width: 46ch;
+  text-wrap: pretty; // kein einzelnes Wort in der letzten Zeile
   margin-top: 24px;
   color: var(--ink-soft);
   font-size: clamp(18px, 1rem + 0.35vw, 21px);
@@ -192,9 +209,10 @@ h1 {
 }
 
 // Produktbühne: das echte Dashboard in einem ruhigen Passepartout, davor das Handy
+// Produktbild nah am Text: der erste Bildschirm zeigt schon Kennzahlen des Dashboards
 .stage {
   position: relative;
-  margin-top: clamp(48px, 6vw, 80px);
+  margin-top: clamp(32px, 4vw, 56px);
   margin-bottom: 0;
   padding-bottom: clamp(56px, 7vw, 96px);
 }
@@ -204,7 +222,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 22px;
   background: var(--ground-2);
-  box-shadow: 0 30px 60px -30px rgb(18 24 38 / 0.28);
+  box-shadow: 0 30px 60px -30px rgb(23 37 35 / 0.28);
 }
 .frame img {
   display: block;
@@ -216,15 +234,16 @@ h1 {
   max-width: 1160px;
   margin-inline: auto;
 }
+// links vor der Seitenleiste der App: so bleibt rechts „Für dich“ (der Verknüpfungs-Vorschlag) frei
 .stage__phone {
   position: absolute;
-  right: max(var(--gutter), calc(50% - 600px));
+  left: max(var(--gutter), calc(50% - 600px));
   bottom: clamp(24px, 4vw, 56px);
   width: clamp(170px, 17vw, 236px);
   padding: 7px;
   border-radius: 36px;
   background: var(--ink);
-  box-shadow: 0 30px 50px -24px rgb(18 24 38 / 0.45);
+  box-shadow: 0 30px 50px -24px rgb(23 37 35 / 0.45);
 }
 .stage__phone img {
   display: block;
@@ -258,11 +277,12 @@ h1 {
   .link:hover {
     background: var(--ground-2);
   }
-  .link--arrow:hover app-icon {
-    transform: translateX(3px);
+  .link--arrow:hover app-icon,
+  .btn--go:hover app-icon {
+    transform: translateX(4px);
   }
   .btn--ink:hover {
-    background: #252e44;
+    background: #22332f;
   }
   .btn--outline:hover {
     background: var(--ink);

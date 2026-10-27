@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { AuthService } from './auth.service';
+import { AuthService, SIGNED_IN_HINT } from './auth.service';
 import { API_BASE_URL } from '../api.config';
 describe('AuthService', () => {
   let http: HttpTestingController;
@@ -37,5 +37,19 @@ describe('AuthService', () => {
     expect(req.request.body.accept_privacy).toBe(true);
     expect(req.request.body.household_name).toBeUndefined();
     req.flush({ access: 'access', user: { name: 'Anna', email: 'a@example.com' } });
+  });
+  it('sets only a non-secret routing hint for the web server, and clears it on logout', () => {
+    const hint = () => document.cookie.split('; ').find((c) => c.startsWith(`${SIGNED_IN_HINT}=`));
+    auth.forceLogout(); // frühere Tests teilen sich document
+    auth.login('a@example.com', 'password').subscribe();
+    http.expectOne(`${API_BASE_URL}/auth/csrf/`).flush({ csrfToken: 'csrf' });
+    http.expectOne(`${API_BASE_URL}/auth/login/`).flush({ mfa_required: true });
+    expect(hint()).toBeUndefined(); // MFA noch offen: nicht angemeldet
+    auth.login('a@example.com', 'password', true, '123456').subscribe();
+    http.expectOne(`${API_BASE_URL}/auth/login/`).flush({ access: 'secret-access', user: { name: 'Anna', email: 'a@example.com' } });
+    expect(hint()).toBe(`${SIGNED_IN_HINT}=1`);
+    expect(document.cookie).not.toContain('secret-access');
+    auth.forceLogout();
+    expect(hint()).toBeUndefined();
   });
 });

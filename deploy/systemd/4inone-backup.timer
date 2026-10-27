@@ -1,0 +1,10 @@
+# Täglich um 02:45. Aktivieren: sudo systemctl enable --now 4inone-backup.timer
+[Unit]
+Description=4inOne: tägliches Backup
+
+[Timer]
+OnCalendar=*-*-* 02:45:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

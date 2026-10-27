@@ -1,7 +1,7 @@
 @use '../styles/editorial' as editorial;
 
-// Rahmen der öffentlichen Unterseiten (Rechtliches, Kontakt, Danke, 404) im Stil der Startseite „Editorial hell“:
-// dieselben Tokens (shared/styles/_editorial.scss), dieselbe Kopfzeile, der globale Kachel-Fuß in kompakter Form.
+// Rahmen der öffentlichen Unterseiten (Rechtliches, 404) im Stil der Startseite („Soft Editorial“):
+// dieselben Tokens (shared/styles/_editorial.scss), dieselbe Kopfzeile, der globale Fuß in kompakter Form.
 // Alle Links ≥ 44 px hoch (Tippziel), Schrift ≥ 15 px.
 :host {
   @include editorial.tokens;
@@ -38,7 +38,8 @@
   position: sticky;
   top: 0;
   z-index: 30;
-  background: rgb(250 248 244 / 0.94);
+  border-bottom: 1px solid var(--line);
+  background: var(--ground);
 }
 .head__inner,
 .body {
@@ -99,7 +100,7 @@
     background: var(--ground-2);
   }
   .head__cta:hover {
-    background: #252e44;
+    background: #22332f;
   }
 }
 @media (max-width: 420px) {

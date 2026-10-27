@@ -284,7 +284,8 @@ test('month view: clicking a day opens "Termin hinzufügen" with that day locked
   const label = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
   // Tag aus dem aktuellen Monat (bei Monatsende ggf. der nächste Monat)
   if (d.getMonth() !== new Date().getMonth()) await page.getByRole('button', { name: 'Nächster Monat' }).click();
-  await page.locator('.month .cell').filter({ has: page.locator('.cell__num', { hasText: new RegExp(`^${d.getDate()}$`) }) }).filter({ hasNot: page.locator('.is-outside') }).first().click();
+  // .is-outside sitzt an der Zelle selbst (Tage des Vor-/Folgemonats im Raster) — daher :not() statt hasNot
+  await page.locator('.month .cell:not(.is-outside)').filter({ has: page.locator('.cell__num', { hasText: new RegExp(`^${d.getDate()}$`) }) }).first().click();
 
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('heading', { name: 'Termin hinzufügen' })).toBeVisible();
