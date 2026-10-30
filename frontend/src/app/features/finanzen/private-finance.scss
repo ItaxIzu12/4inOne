@@ -774,18 +774,6 @@ h3 {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
-.show-more {
-  width: 100%;
-  min-height: 44px;
-  margin-top: 8px;
-  border: 1px dashed #c9e3d4;
-  border-radius: var(--radius-md);
-  background: #f7fcf9;
-  color: #225f43;
-  font: inherit;
-  cursor: pointer;
-}
-
 // Formular-Ergänzungen
 .checkbox-row {
   display: flex;

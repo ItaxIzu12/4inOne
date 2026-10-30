@@ -1,4 +1,7 @@
-// Zeitraum-Umschalter und Tag/Woche/Zeitraum-Ansichten der Finanz-Übersicht.
+@use 'fin-look';
+
+// Zeitraum-Umschalter und Tag/Woche/Zeitraum-Ansichten der Finanz-Übersicht. Umschalter (.seg), Kopfkarte
+// (.fin-hero) und Tagesüberschriften (.day-head) aus _fin-look.scss — dieselben Formen wie die Monatsansicht.
 :host {
   display: grid;
   gap: 16px;
@@ -6,40 +9,19 @@
   --line: #edf0f4;
   --text-muted: #5a6577;
 }
+// In der Übersicht steht der Umschalter mit der Datumsauswahl der Seite in einer Zeile (finance-hero.scss setzt den
+// Wirt auf flex); alles Weitere dieser Ansicht nimmt die volle Breite.
+:host > :not(.bar) {
+  flex: 1 1 100%;
+  min-width: 0;
+}
 .bar {
+  flex: 0 1 auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-}
-.switch {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: #fff;
-}
-.switch button {
-  min-height: var(--control-height);
-  padding: 0 16px;
-  border: 0;
-  border-radius: var(--radius-md);
-  background: none;
-  color: #3d4a5c;
-  font: inherit;
-  font-size: var(--fs-secondary);
-  white-space: nowrap;
-  cursor: pointer;
-}
-.switch button:hover {
-  background: #f4f8f6;
-}
-.switch [aria-pressed='true'] {
-  background: var(--accent-soft, var(--finance-soft));
-  color: var(--accent-hover, var(--finance-accent));
-  font-weight: 600;
 }
 .card {
   min-width: 0;
@@ -51,65 +33,6 @@
 .card h2 {
   margin: 0 0 10px;
   font-size: var(--fs-body);
-}
-// Wie die Kennzahlen der Monatsansicht (private-finance.scss .kpi), damit jeder Zeitraum vertraut aussieht.
-.kpis {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.kpi {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  min-width: 0;
-  padding: 20px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: #fff;
-}
-.kpi__icon {
-  display: grid;
-  place-items: center;
-  flex: 0 0 48px;
-  height: 48px;
-  border-radius: var(--radius-lg);
-  background: var(--accent-soft, var(--finance-soft));
-  color: var(--accent, var(--finance-accent));
-}
-.kpi__icon app-icon {
-  width: 24px;
-  height: 24px;
-}
-.kpi__icon--down {
-  background: var(--fin-red-soft, #fde8eb);
-  color: var(--fin-red, #c6324b);
-}
-.kpi__icon--blue {
-  background: var(--fin-blue-soft, #e6f0fc);
-  color: var(--fin-blue, #2f6fbf);
-}
-.kpi__body {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-.kpi__label {
-  color: #3d4a5c;
-  font-size: var(--fs-secondary);
-}
-.kpi__value {
-  font-size: var(--fs-metric);
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.5px;
-}
-.kpi__hint {
-  color: var(--text-muted);
-  font-size: var(--fs-meta);
 }
 .list-title small {
   margin-left: 6px;
@@ -159,7 +82,22 @@
   cursor: pointer;
 }
 .row:hover {
-  background: #fafcfb;
+  background: var(--surface-hover, #f1f3ef);
+}
+.tile {
+  --cat: var(--finance-accent);
+  display: grid;
+  flex: 0 0 40px;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--cat) 13%, #fff);
+  color: var(--cat);
+}
+.tile app-icon {
+  width: 21px;
+  height: 21px;
 }
 .dot {
   display: inline-block;
@@ -248,31 +186,44 @@
   width: 15px;
   height: 15px;
 }
+// „Monat im Blick“ (Tag) und Monatsbudget (eigener Zeitraum): ruhige Zeilen mit Haarlinie — Bezeichnung links,
+// Betrag rechts, Zusatz darunter — wie die Werte der Kopfkarte, keine getönten Kästchen.
 .month__list {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .month__list li {
   display: grid;
-  gap: 2px;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  background: #f6f9f7;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border-subtle, #e6e9e3);
 }
-.month__list b {
-  font-size: var(--fs-subsection);
+.month__list li:first-child {
+  border-top: 0;
+  padding-top: 4px;
 }
 .month__list span {
-  color: #3d4a5c;
-  font-size: var(--fs-meta);
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.month__list b {
+  color: var(--text-primary);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.month__list b.minus {
+  color: var(--fin-red, #b3263e);
 }
 .month__list small {
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
+  grid-column: 1 / -1;
+  color: var(--text-secondary);
+  font-size: 13px;
 }
 .note {
   margin: 0;
@@ -325,44 +276,7 @@ button:focus-visible {
     flex-direction: column;
     align-items: stretch;
   }
-  .switch button {
-    flex: 1 1 auto;
-    padding: 0 6px;
-    font-size: var(--fs-meta);
-  }
-  // wie die Monatsansicht am Handy: zwei Spalten, die erste Karte über die volle Breite
-  .kpis {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 10px;
-  }
-  .kpi:first-child {
-    grid-column: 1 / -1;
-  }
-  .kpi {
-    gap: 10px;
-    padding: 14px 12px;
-  }
-  .kpi__icon {
-    flex-basis: 38px;
-    height: 38px;
-  }
-  .kpi__value {
-    font-size: var(--fs-section);
-  }
-  .kpi__label,
-  .kpi__hint {
-    font-size: var(--fs-caption);
-  }
-  .month__list {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 6px;
-  }
-  .month__list li {
-    grid-template-columns: 1fr auto;
-    align-items: baseline;
-    gap: 2px 10px;
-  }
-  .month__list small {
-    grid-column: 1 / -1;
+  .bar {
+    width: 100%;
   }
 }

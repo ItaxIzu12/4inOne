@@ -1,0 +1,321 @@
+// Finanzen — was neuen und wiederkehrenden Nutzern die Zahlen erklärt (29.10.2026): Erste Schritte (neues Konto),
+// Monatsrückblick (1.–7. des Monats), Fixkosten mit Jahressumme, „Wie entsteht diese Zahl?“ und Erklärsätze über
+// Listen. Eigene Datei wegen des Stil-Budgets je Datei; geladen nach finance-hero.scss.
+
+// ---------- Erste Schritte (neues Konto) ----------
+.start {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 24px;
+  padding: 24px 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: #fff;
+}
+.start__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+.start__head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.start__head p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.start__intro {
+  margin: 4px 0 12px;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.start__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.start__list li {
+  display: grid;
+  border-top: 1px solid var(--border-subtle);
+}
+.start__item {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 12px 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.start__check {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-pressed, #ecefea);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+.start__check app-icon {
+  width: 16px;
+  height: 16px;
+}
+.is-done .start__check {
+  background: var(--finance-accent);
+  color: #fff;
+}
+.start__copy {
+  display: grid;
+  gap: 2px;
+}
+.start__copy strong {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+.is-done .start__copy strong {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+.start__copy small {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.start__opt {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-pressed, #ecefea);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+.start__go {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+.start__alt {
+  justify-self: start;
+  margin: -6px 0 10px 32px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .start__item:hover {
+    background: var(--surface-hover, #f1f3ef);
+  }
+}
+
+// ---------- Monatsrückblick (1.–7. des Monats) ----------
+.review {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding: 24px 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: #fff;
+}
+.review__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.review h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.review__hide {
+  flex: none;
+  margin-right: -14px;
+}
+.review__lead {
+  margin: 0 0 8px;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.review__label {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+.review__top,
+.review__facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.review__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+.review__row b {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.review__bar {
+  display: block;
+  height: 6px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-pressed, #ecefea);
+}
+.review__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+.review__facts {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+.review__facts li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+.review__facts app-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--finance-accent);
+}
+.review__facts li.is-over app-icon {
+  color: var(--fin-red);
+}
+
+// ---------- Fixkosten: Summe pro Monat und aufs Jahr ----------
+.fixed-costs__sum {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.fixed-costs__sum small {
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.fixed-costs__year {
+  margin: 2px 0 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.fixed-costs__year b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+// ---------- „Wie entsteht diese Zahl?“ (Übersicht) und Erklärsatz über Listen ----------
+.calc {
+  margin-top: 10px;
+}
+.calc summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--finance-accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.calc .breakdown {
+  max-width: 420px;
+  margin-top: 4px;
+}
+.section-note {
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+// Budget-Dialog: was beim Löschen erhalten bleibt — leiser Hinweis, kleiner als die Feldbeschriftungen
+.impact-note {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  line-height: 1.45;
+}
+.impact-note app-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+
+// Kategorie-Budgets am Handy: jede Zeile gleich gebaut — Name und „… verfügbar“ immer in einer Zeile (Name kürzt
+// notfalls mit …), der Pfeil entfällt (die ganze Zeile ist der Knopf), damit die Beträge nicht umbrechen.
+@media (max-width: 520px) {
+  .budget-row > .chev {
+    display: none;
+  }
+  .budget-row__body {
+    grid-template-columns: minmax(0, 1fr); // sonst setzt die nicht umbrechende Kopfzeile die Mindestbreite
+  }
+  .budget-row__head {
+    flex-wrap: nowrap;
+  }
+  .budget-row__head b {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .budget-row__left {
+    flex: none;
+  }
+}
+
+// Fixkosten-Zeile: Status kurz („Gebucht“ mit Haken, „Noch offen · im Budget eingeplant“) — „monatlich“ sagt die Überschrift.
+.fixed-booked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.fixed-booked app-icon {
+  width: 14px;
+  height: 14px;
+}
+
+// Ausgaben am Handy: Ringdiagramm kleiner, damit die Ansicht nicht unnötig lang wird
+@media (max-width: 520px) {
+  .donut-wrap {
+    width: 140px;
+    height: 140px;
+  }
+}

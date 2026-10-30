@@ -77,14 +77,6 @@ input:focus-visible {
 .nav-space {
   height: 25px;
 }
-.sidebar-note {
-  margin-top: auto;
-  padding: 20px;
-  color: #52615b;
-  font-size: 14px;
-  background: #f7f7f4;
-  border-radius: 16px;
-}
 .workspace {
   min-width: 0;
 }
@@ -287,12 +279,6 @@ input:focus-visible {
   height: 12px;
   border-bottom: 1px solid #e6e9e3;
 }
-.sidebar-note {
-  background: #f7f7f4;
-  border: 1px solid #fff;
-  padding: 22px;
-  line-height: 1.6;
-}
 .demo-banner {
   margin: 0 16px 12px;
   padding: 10px 20px;
@@ -463,10 +449,6 @@ input:focus-visible {
 .sidebar nav a { gap: 12px; padding-block: 8px; }
 .sidebar nav a.active { background: var(--surface-pressed); color: var(--text-primary); font-weight: 600; }
 .sidebar nav a.active app-icon { background: var(--nav-fill); color: var(--nav-on); }
-/* Niedrige Fenster: der Deko-Hinweis „Alles Wichtige …“ weicht, damit die Navigation Luft behält */
-@media (max-height: 800px) {
-  .sidebar-note { display: none; }
-}
 @media (prefers-reduced-motion: reduce) {
   .sidebar nav a app-icon { transition: none; }
 }
@@ -486,7 +468,7 @@ input:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav a app-icon { transition: none; }
 }
-.sidebar-note, .demo-banner { color: #52615b; background: #ecefea; box-shadow: none; }
+.demo-banner { color: #52615b; background: #ecefea; box-shadow: none; }
 .sidebar { background: #fff; border-color: #e6e9e3; }
 a:focus-visible, button:focus-visible { outline: 2px solid #172523; outline-offset: 3px; }
 

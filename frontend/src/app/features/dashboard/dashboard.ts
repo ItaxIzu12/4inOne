@@ -5,10 +5,13 @@ import { devLinkPath } from '../../shared/dev-link';
 import {
   PrivateFinanceApi,
   FinanceSummary,
+  FinanceTransaction,
   SavingsGoal,
   euros,
   financeMonth,
 } from '../finanzen/private-finance-api.service';
+import { SpendCurveChart } from '../../shared/spend-curve/spend-curve';
+import { daysLeft, eurRound, spendCurve, spendingBudget } from '../../shared/spend-curve/spend-curve-data';
 import { HaushaltOverviewDto } from '../haushalt/haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from '../haushalt/haushalt-data-provider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -108,6 +111,11 @@ function todayOrder(item: TodayItem): string {
 function rowKey(row: TodayRow): string {
   return `${row.tone}|${row.time}|${row.title}`;
 }
+/** „8. Nov.“ — leer bei fehlendem oder kaputtem Datum (sonst wirft Intl „Invalid time value“ und die Seite steht). */
+function shortDay(isoDate: string | null | undefined): string {
+  const date = new Date(`${isoDate ?? ''}T12:00`);
+  return Number.isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'short' }).format(date);
+}
 function ddmm(isoDate: string): string {
   const [, month, day] = isoDate.split('-');
   return `${day}.${month}.`;
@@ -123,6 +131,7 @@ function ddmm(isoDate: string): string {
     RouterLink,
     NgTemplateOutlet,
     AnimatedBeam,
+    SpendCurveChart,
   ],
   // Alle Zustände sind Signals (auch der Tagesplan, siehe `plan`) — OnPush prüft nur bei echten Änderungen.
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -144,6 +153,8 @@ export class Dashboard {
   readonly householdError = signal(false);
   readonly finance = signal<FinanceSummary | null>(null);
   readonly financeError = signal(false);
+  /** Transaktionen für die kleine Ausgabenkurve (nur der laufende Monat wird gezeichnet); null = noch nicht da. */
+  readonly transactions = signal<FinanceTransaction[] | null>(null);
   readonly trips = signal<Trip[]>([]);
   readonly tripsError = signal(false);
   readonly tripsLoading = signal(true);
@@ -314,6 +325,12 @@ export class Dashboard {
         },
         error: () => this.financeError.set(true),
       });
+    // Nur für die Kurve: fehlt sie, bleibt die Karte mit Zahl und Transaktionen trotzdem vollständig
+    this.financeApi
+      .transactions()
+      .pipe(takeUntilDestroyed(this.destroy))
+      // Unerwartete Antwort (kein Array) wie „keine Daten“ behandeln — die Startseite darf daran nie hängen bleiben
+      .subscribe({ next: (rows) => this.transactions.set(Array.isArray(rows) ? rows : []), error: () => this.transactions.set([]) });
   }
   loadHousehold() {
     this.householdError.set(false);
@@ -522,7 +539,7 @@ export class Dashboard {
     const deadline = (this.household()?.deadlines ?? []).find((d) => d.days > 0 && d.days <= FOR_YOU_DAYS);
     if (deadline) {
       rows.push({
-        key: 'deadline', tone: 'household', icon: deadline.kind === 'vertrag' ? 'finance' : 'device', when: ddmm(deadline.date), area: 'Haushalt', title: deadline.name,
+        key: 'deadline', tone: 'household', icon: deadline.kind === 'vertrag' ? 'finance' : 'device', when: shortDay(deadline.date), area: 'Haushalt', title: deadline.name,
         meta: `${DEADLINE_LABEL[deadline.art] ?? 'Frist'} · in ${deadline.days} ${deadline.days === 1 ? 'Tag' : 'Tagen'}`,
         path: this.domainPath('haushalt'), query: { tab: 'zuhause', bereich: deadline.kind === 'vertrag' ? 'vertraege' : 'geraete' },
       });
@@ -544,6 +561,63 @@ export class Dashboard {
       of: `von ${euros(f.total)} im ${new Intl.DateTimeFormat('de-DE', { month: 'long' }).format(this.now())}`,
       share: total ? Math.min(100, Math.round((spent / total) * 100)) : 0,
     };
+  });
+  /**
+   * Finanzen-Karte: „Noch verfügbar“ als die eine große Zahl, dazu ein Tagessatz für den Rest des Monats und die
+   * Ausgabenkurve — alles aus dem echten Monatsstand (Server) und den echten Transaktionen. Ohne Monatsbudget gibt es
+   * keinen Tagessatz und keine Tempo-Linie, nur die Ausgaben.
+   */
+  readonly money = computed(() => {
+    const f = this.finance();
+    if (!f) return null;
+    const month = f.month || financeMonth();
+    const total = f.total === null ? null : Number(f.total) || null;
+    const curve = spendCurve(this.transactions() ?? [], month, total === null ? null : spendingBudget(total, f.saved), this.now());
+    const monthDate = new Date(`${month}-01T12:00`);
+    const monthName = new Intl.DateTimeFormat('de-DE', { month: 'long' }).format(Number.isNaN(monthDate.getTime()) ? this.now() : monthDate);
+    const left = daysLeft(curve, this.now());
+    const available = f.available === null ? null : Number(f.available);
+    const perDay = available !== null && available > 0 && left > 0 ? eurRound(Math.floor(available / left)) /* abgerundet wie im Finanzen-Tab: nie mehr versprechen, als da ist */ : null;
+    return {
+      set: f.available !== null && f.total !== null,
+      hasData: f.has_data,
+      over: available !== null && available < 0,
+      amount: f.available === null ? euros(f.expenses) : euros(f.available.replace('-', '')),
+      of: f.total === null ? '' : euros(f.total),
+      monthName,
+      left,
+      perDay,
+      curve: this.transactions() === null ? null : curve,
+      label: `Ausgaben im ${monthName}${curve.series.length ? `: bisher ${euros(f.spent ?? f.expenses)}` : ''}${total ? ` von ${euros(f.total)} Budget` : ''}`,
+    };
+  });
+  /** Nächste Reise als eigene Kachel: Countdown, Zeitraum und Stand der Vorbereitung (Packliste, Aufgaben). */
+  readonly tripCard = computed(() => {
+    const trip = this.nextTrip();
+    if (!trip) return null;
+    const days = this.daysUntil(trip);
+    const start = new Date(`${trip.start_date}T12:00`);
+    const sameMonth = trip.end_date?.slice(0, 7) === trip.start_date?.slice(0, 7);
+    const dates =
+      !trip.end_date || trip.start_date === trip.end_date ? shortDay(trip.start_date)
+      : sameMonth && !Number.isNaN(start.getTime()) ? `${start.getDate()}.–${shortDay(trip.end_date)}`
+      : `${shortDay(trip.start_date)} – ${shortDay(trip.end_date)}`;
+    return {
+      title: place(trip),
+      days,
+      when: this.tripDaysUntilLabel(trip),
+      dates,
+      tasks: trip.tasks_open ? `${trip.tasks_open} ${trip.tasks_open === 1 ? 'Aufgabe' : 'Aufgaben'} offen` : '',
+      packing: trip.packing_total ? `${trip.packing_packed} / ${trip.packing_total} gepackt` : '',
+      share: trip.packing_total ? Math.round((trip.packing_packed / trip.packing_total) * 100) : null,
+      query: { trip: trip.id },
+    };
+  });
+  /** Haushalt-Kachel: die nächste Frist (aus „Demnächst“) und der offene Einkauf. */
+  readonly homeCard = computed(() => {
+    const deadline = this.soon().find((r) => r.key === 'deadline') ?? null;
+    const shopping = this.household()?.shopping?.open_items ?? this.household()?.open_shopping_items ?? 0;
+    return { deadline, shopping };
   });
   /** Tagesplan-Gruppen unter „Als Nächstes“: später heute (mit Uhrzeit), ohne Uhrzeit, schon vorbei. */
   get later(): TodayRow[] {

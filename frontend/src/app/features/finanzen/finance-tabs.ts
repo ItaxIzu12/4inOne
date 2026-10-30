@@ -1,5 +1,5 @@
 import { IconName } from '../../shared/icons/app-icon';
-import { BudgetCategoryFigures, FinanceCategory, FinanceTransaction, PlannedItem, SavingsContributionDto, SavingsGoal } from './private-finance-api.service';
+import { ABBR, BudgetCategoryFigures, FinanceCategory, FinanceTransaction, PlannedItem, SavingsContributionDto, SavingsGoal } from './private-finance-api.service';
 
 /**
  * Reine Rechenhilfen für die Finanz-Reiter Übersicht, Ausgaben, Einnahmen,
@@ -28,20 +28,49 @@ export function monthTotal(rows: FinanceTransaction[], month: string, type: Fina
   return rows.filter((t) => t.type === type && inMonth(t, month)).reduce((sum, t) => sum + num(t.amount), 0);
 }
 
-/** Veränderung zum Vormonat: „+ 12 % zu Februar“ (null, wenn es im Vormonat nichts gab). */
-export function deltaLabel(current: number, previous: number, previousMonth: string): { text: string; up: boolean } | null {
-  if (previous <= 0) return null;
-  const pct = Math.round(((current - previous) / previous) * 100);
-  const sign = pct > 0 ? '+' : pct < 0 ? '−' : '±';
-  return { text: `${sign} ${Math.abs(pct)} % zu ${monthName(previousMonth)}`, up: pct >= 0 };
+/**
+ * Bis zu welchem Tag ein Monat mit dem Vormonat verglichen wird: im laufenden Monat bis heute (sonst stünde am 5. ein
+ * angebrochener Monat gegen einen ganzen — „85 % weniger“), in abgeschlossenen Monaten der ganze Monat (null).
+ */
+export function compareDay(month: string, todayIso: string): number | null {
+  return todayIso.slice(0, 7) === month ? Number(todayIso.slice(8, 10)) : null;
+}
+/** Letzter verglichener Tag eines Monats als „JJJJ-MM-TT“ — gekappt am Monatsende (30. März → 28. Februar). */
+function lastCompared(month: string, day: number | null): string {
+  const days = new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate();
+  return `${month}-${String(day === null ? days : Math.min(day, days)).padStart(2, '0')}`;
+}
+/** Summe eines Typs im Monat bis einschließlich Tag `day` (null = ganzer Monat). */
+export function monthTotalUntil(rows: FinanceTransaction[], month: string, type: FinanceTransaction['type'], day: number | null): number {
+  const last = lastCompared(month, day);
+  return rows.filter((t) => t.type === type && inMonth(t, month) && t.date <= last).reduce((sum, t) => sum + num(t.amount), 0);
+}
+/** Sparbeiträge im Monat bis einschließlich Tag `day` (null = ganzer Monat). */
+export function savedUntil(contributions: SavingsContributionDto[], month: string, day: number | null): number {
+  const last = lastCompared(month, day);
+  return contributions.filter((c) => inMonth(c, month) && c.date <= last).reduce((s, c) => s + num(c.amount), 0);
 }
 
-/** Euro-Differenz zum Vormonat: „+ 50 € zu Februar“. */
-export function deltaEuro(current: number, previous: number, previousMonth: string): { text: string; up: boolean } | null {
+/** „als im September“ — oder, wenn nur bis heute verglichen wird, „als zur gleichen Zeit im September“. */
+const versus = (month: string, partial: boolean) => `${partial ? 'zur gleichen Zeit ' : ''}im ${monthName(month)}`;
+
+/** Veränderung zum Vormonat: „12 % mehr als im Februar“ (null, wenn es im Vormonat nichts gab). */
+export function deltaLabel(current: number, previous: number, previousMonth: string, partial = false): { text: string; up: boolean } | null {
+  if (previous <= 0) return null;
+  const pct = Math.round(((current - previous) / previous) * 100);
+  // In Worten statt „+ 12 % zu September“ — man soll ohne Nachdenken lesen, ob es mehr oder weniger war
+  const when = versus(previousMonth, partial);
+  const text = pct === 0 ? `so viel wie ${when}` : `${Math.abs(pct)} % ${pct > 0 ? 'mehr' : 'weniger'} als ${when}`;
+  return { text, up: pct >= 0 };
+}
+
+/** Euro-Differenz zum Vormonat: „50 € mehr als im Februar“. */
+export function deltaEuro(current: number, previous: number, previousMonth: string, partial = false): { text: string; up: boolean } | null {
   if (previous <= 0 && current <= 0) return null;
   const diff = Math.round(current - previous);
-  const sign = diff > 0 ? '+' : diff < 0 ? '−' : '±';
-  return { text: `${sign} ${Math.abs(diff).toLocaleString('de-DE')} € zu ${monthName(previousMonth)}`, up: diff >= 0 };
+  const when = versus(previousMonth, partial);
+  const text = diff === 0 ? `so viel wie ${when}` : `${Math.abs(diff).toLocaleString('de-DE')} € ${diff > 0 ? 'mehr' : 'weniger'} als ${when}`;
+  return { text, up: diff >= 0 };
 }
 
 // ---------------------------------------------------------------------------
@@ -325,17 +354,26 @@ function reachMonth(goal: SavingsGoal, month: string): string | null {
   return shiftYm(month, Math.ceil(missing / rate));
 }
 
-/** Liegt das Ziel im Plan? Mit Zieltermin: Sparrate reicht bis dahin. Ohne Termin: es gibt eine Sparrate. */
+/** Liegt das Ziel im Plan? Die Sparrate muss es erreichen — vor dem Zieltermin und, wenn der Sparzeitraum endet,
+ * bis zu dessen letztem Monat (danach wird nichts mehr zurückgelegt). Ohne Termin genügt eine Sparrate. */
 export function goalOnTrack(goal: SavingsGoal, month: string): boolean {
   const reach = reachMonth(goal, month);
   if (!reach) return false;
+  if (goal.plan_month && !goal.plan_open_ended) {
+    const last = (goal.plan_end_month ?? goal.plan_month).slice(0, 7);
+    if (reach > last && num(goal.current_amount) < num(goal.target_amount)) return false;
+  }
   return !goal.target_date || reach <= goal.target_date.slice(0, 7);
 }
 
-/** Fast erreicht: höchstens 15 % oder 100 € fehlen. */
+/** Fast erreicht: höchstens 15 % fehlen — bei kleinen Zielen auch, wenn höchstens 100 € und höchstens 25 % fehlen
+ * (sonst wäre ein 150-€-Ziel schon bei der Hälfte „fast erreicht“). */
 export function goalNearlyDone(goal: SavingsGoal): boolean {
-  const missing = num(goal.target_amount) - num(goal.current_amount);
-  return missing > 0 && (missing <= 100 || missing / num(goal.target_amount) <= 0.15);
+  const target = num(goal.target_amount);
+  const missing = target - num(goal.current_amount);
+  if (missing <= 0 || target <= 0) return false;
+  const share = missing / target;
+  return share <= 0.15 || (missing <= 100 && share <= 0.25);
 }
 
 export function savedInMonth(contributions: SavingsContributionDto[], month: string): number {
@@ -404,7 +442,7 @@ export function insights(input: {
       list.push({ key: 'budget', icon: 'calendar', tone: 'warn', title: 'Monatsbudget überschritten', text: `Du liegst ${euro(-input.available)} über deinem Budget.` });
     } else {
       const pct = Math.round((input.available / input.budget) * 100);
-      list.push({ key: 'budget', icon: 'calendar', tone: pct >= 20 ? 'good' : 'warn', title: 'Monatsbudget prüfen', text: `Du hast ${pct} % deines Budgets übrig.${pct >= 20 ? ' Weiter so!' : ''}` });
+      list.push({ key: 'budget', icon: 'calendar', tone: pct >= 20 ? 'good' : 'warn', title: 'Monatsbudget prüfen', text: `Du hast ${pct} % deines Budgets übrig.` });
     }
   }
   for (const b of input.categoryBudgets.filter((x) => x.tone === 'over').slice(0, 1)) {
@@ -435,11 +473,67 @@ export function dayLabel(date: string, today: Date = new Date()): string {
   const y = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
   if (date === t) return 'Heute';
   if (date === iso(y)) return 'Gestern';
-  return `${date.slice(8, 10)}. ${SHORT[Number(date.slice(5, 7)) - 1]}. ${date.slice(0, 4)}`;
+  return `${date.slice(8, 10)}. ${ABBR[Number(date.slice(5, 7)) - 1]} ${date.slice(0, 4)}`;
 }
 
 /** „Sep. 2026“ für Zieltermine. */
 export function shortMonthYear(date: string | null): string {
   if (!date) return '—';
-  return `${SHORT[Number(date.slice(5, 7)) - 1]}. ${date.slice(0, 4)}`;
+  return `${ABBR[Number(date.slice(5, 7)) - 1]} ${date.slice(0, 4)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Monatsrückblick
+// ---------------------------------------------------------------------------
+
+export interface MonthReview {
+  month: string;
+  /** „Oktober“ */
+  name: string;
+  expenses: number;
+  /** Vergleich mit dem Monat davor in Worten (null ohne Daten im Vormonat). */
+  delta: { text: string; up: boolean } | null;
+  /** Die drei Kategorien mit den höchsten Ausgaben; `pct` relativ zur größten (für die Balken). */
+  top: { id: number | null; name: string; amount: number; pct: number }[];
+  /** Netto für Sparziele zurückgelegt (Einzahlungen minus Entnahmen). */
+  saved: number;
+  /** Sparziele mit Einzahlungen im Monat, höchstens zwei, größte zuerst. */
+  goals: { title: string; amount: number }[];
+  /** Gab es im Monat überhaupt etwas? Sonst kein Rückblick. */
+  hasData: boolean;
+}
+
+/**
+ * Rückblick auf einen abgeschlossenen Monat — nur aus echten Transaktionen und Sparbeiträgen, nichts geschätzt.
+ * `categoryName` löst die Kategorie-ID in einen Namen auf (wie in den Listen).
+ */
+export function monthReview(
+  month: string,
+  rows: FinanceTransaction[],
+  contributions: SavingsContributionDto[],
+  categoryName: (id: number | null) => string,
+): MonthReview {
+  const expenses = monthTotal(rows, month, 'EXPENSE');
+  const before = shiftYm(month, -1);
+  const byCategory = new Map<number | null, number>();
+  for (const t of rows) {
+    if (t.type !== 'EXPENSE' || !inMonth(t, month)) continue;
+    const id = t.category ?? null;
+    byCategory.set(id, (byCategory.get(id) ?? 0) + num(t.amount));
+  }
+  const sorted = [...byCategory.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const max = sorted[0]?.[1] ?? 0;
+  const inThisMonth = contributions.filter((c) => inMonth(c, month));
+  const perGoal = new Map<string, number>();
+  for (const c of inThisMonth) if (num(c.amount) > 0) perGoal.set(c.goal_title, (perGoal.get(c.goal_title) ?? 0) + num(c.amount));
+  return {
+    month,
+    name: monthName(month),
+    expenses,
+    delta: deltaLabel(expenses, monthTotal(rows, before, 'EXPENSE'), before),
+    top: sorted.map(([id, amount]) => ({ id, name: categoryName(id), amount, pct: max > 0 ? Math.round((amount / max) * 100) : 0 })),
+    saved: inThisMonth.reduce((s, c) => s + num(c.amount), 0),
+    goals: [...perGoal.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([title, amount]) => ({ title, amount })),
+    hasData: expenses > 0 || inThisMonth.length > 0 || rows.some((t) => inMonth(t, month)),
+  };
 }

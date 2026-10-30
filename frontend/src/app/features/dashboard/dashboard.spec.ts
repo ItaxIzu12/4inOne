@@ -63,16 +63,37 @@ describe('Dashboard', () => {
     expect(budget).toContain('250,00 € übrig');
     expect(budget).toContain('von 3.000,00 €');
   });
-  it('Kommandozentrale: overview band (budget, Demnächst) above today, no old area menu, no static image', () => {
+  it('layout (27.10.2026): the day first, then finance, then Demnächst — no tile band, no area menu, no static image', () => {
     const f = TestBed.createComponent(Dashboard);
     f.detectChanges();
     const el = f.nativeElement as HTMLElement;
-    expect(el.querySelectorAll('.domain, .domains').length).toBe(0);
-    // Seit 22.10.2026: das Überblick-Band (Heute · Budget · Reise · Haushalt) steht über dem Tagesplan
-    expect(el.querySelectorAll('.kpis .kpi').length).toBeGreaterThanOrEqual(2);
-    expect(el.querySelector('.budget')!.compareDocumentPosition(el.querySelector('.soon')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(el.querySelector('.soon')!.compareDocumentPosition(el.querySelector('.today')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(el.querySelectorAll('.domain, .domains, .kpis').length).toBe(0);
+    const order = ['.today', '.money', '.soon'].map((s) => el.querySelector(`.board > ${s}`));
+    expect(order.every(Boolean)).toBe(true);
+    expect(order[0]!.compareDocumentPosition(order[1]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(order[1]!.compareDocumentPosition(order[2]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(el.querySelector('img, .connected, .suggestion')).toBeNull();
+    // Begriff wie überall in Finanzen: „Transaktion“, nie „Buchung“
+    expect(el.textContent).not.toContain('Buchung');
+  });
+  it('finance card: available amount, a daily allowance for the rest of the month and the spend curve from real transactions', () => {
+    const f = TestBed.createComponent(Dashboard);
+    f.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    const now = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; // lokal, nicht UTC
+    http.expectOne((req) => req.url.includes('/finanzen/private/summary/')).flush({ month, available: '300.00', total: '1000.00', budget: '1000.00', expenses: '700.00', spent: '700.00', has_data: true, recent: [] });
+    http.expectOne((req) => req.url.endsWith('/finanzen/private/transactions/')).flush([
+      { id: 1, amount: '500.00', type: 'EXPENSE', category: 1, date: `${month}-01`, note: 'Miete', currency: 'EUR' },
+      { id: 2, amount: '3000.00', type: 'INCOME', category: 2, date: `${month}-01`, note: 'Gehalt', currency: 'EUR' },
+    ]);
+    f.detectChanges();
+    const card = (f.nativeElement as HTMLElement).querySelector('.money')!;
+    expect(card.querySelector('.money__value')!.textContent).toContain('300,00 €');
+    expect(card.querySelector('.money__pace')!.textContent).toMatch(/etwa .* pro Tag/);
+    const curve = f.componentInstance.money()!.curve!;
+    expect(curve.series[0]).toBe(500); // nur Ausgaben, Einnahmen zählen nicht
+    expect(card.querySelector('app-spend-curve [role="img"]')!.getAttribute('aria-label')).toContain('Ausgaben im');
   });
   it('lists the latest real bookings with category, date and signed amount', () => {
     const f = TestBed.createComponent(Dashboard);
@@ -109,6 +130,15 @@ describe('Dashboard', () => {
     expect(travel).toMatch(/in \d+ Tagen/);
     expect(travel).toContain('1 Aufgabe offen');
     expect(travel).toContain('2 / 4 gepackt');
+  });
+  it('trip dates: same month „1.–3. Feb.“, across months both dates; never crashes on odd data', () => {
+    const f = TestBed.createComponent(Dashboard);
+    f.detectChanges();
+    TestBed.inject(HttpTestingController).expectOne((req) => req.url.endsWith('/reisen/trips/')).flush([
+      { title: 'Lang', destination: 'Wien', status: 'PLANNED', start_date: '2099-02-26', end_date: '2099-03-02', packing_total: 0, packing_packed: 0, tasks_open: 0 },
+    ]);
+    expect(() => f.detectChanges()).not.toThrow();
+    expect(f.componentInstance.tripCard()?.dates.replace(/\s/g, ' ')).toBe('26. Feb. – 2. März');
   });
   it('keeps the header search switched off for now (searchEnabled = false)', () => {
     const f = TestBed.createComponent(Dashboard);

@@ -1,8 +1,18 @@
 // Budgetjahr (Dialog): Kopf mit Jahr-Auswahl, darunter zwölf Monate als ruhige Liste in zwei Spalten (Jan–Jun |
 // Jul–Dez). Gruppiert wird über Abstand und Haarlinien, nicht über zwölf umrandete Kästen; Status nie nur über Farbe
 // (Haken + fette Schrift + Fläche für den gewählten Monat, „Aktuell“ als Text).
+// Im Dialog: Kopf bleibt stehen, nur die Monatsliste scrollt — das Panel ist in der Höhe begrenzt (overflow: hidden),
+// sonst wären am Handy oder auf niedrigen Fenstern die letzten Monate nicht erreichbar.
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.budget-year {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .budget-year__head {
@@ -85,10 +95,16 @@ h2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-flow: column;
   column-gap: var(--space-5);
-  margin: var(--space-5) 0 0;
-  padding: var(--space-3) 0 0;
+  // Seitlich 4 px Luft, damit der Fokusrahmen im Scrollbereich nicht abgeschnitten wird
+  margin: var(--space-5) -4px 0;
+  padding: var(--space-3) 4px 4px;
   border-top: 1px solid var(--border-subtle);
   list-style: none;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
 }
 .budget-year__months li {
   border-bottom: 1px solid var(--border-subtle);
@@ -196,8 +212,16 @@ h2 {
   .budget-year__head {
     flex-wrap: wrap;
     align-items: flex-start;
+    gap: var(--space-3);
+  }
+  // „Jahr“ neben der Auswahl statt darüber: spart eine Zeile, die Monatsliste bekommt mehr Höhe
+  .budget-year__select {
+    grid-auto-flow: column;
+    align-items: center;
+    gap: var(--space-2);
   }
   .budget-year__months {
+    margin-top: var(--space-4);
     grid-template-rows: none;
     grid-template-columns: minmax(0, 1fr);
     grid-auto-flow: row;

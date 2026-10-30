@@ -123,8 +123,11 @@ for (const width of [390, 1440]) {
     });
     await page.goto('/finanzen');
     await expect(page.getByRole('heading', { name: 'Finanzen', exact: true })).toBeVisible();
-    await expect(page.getByText(/gibt es kein Budget\.\s+Lege eines fest/)).toBeVisible();
-    await page.getByRole('button', { name: 'Budget erstellen', exact: true }).click();
+    // Neues Konto: drei Schritte statt einer Kopfkarte voller Nullen
+    const start = page.getByRole('region', { name: 'So startest du mit Finanzen' });
+    await expect(start).toContainText('0 von 3 erledigt');
+    await expect(page.locator('.fin-hero')).toHaveCount(0);
+    await start.getByRole('button', { name: /Monatsbudget festlegen/ }).click();
     await page.getByLabel('Monatsbudget in EUR').fill('3000,00');
     // Zeitraum: Endmonat vor dem Start wird abgelehnt, „bis auf Weiteres“ gilt auch im Folgemonat
     await choose(page, 'Gilt für', 'Mehrere Monate');
@@ -198,7 +201,7 @@ for (const width of [390, 1440]) {
     await page.getByLabel('Sparrate pro Monat').fill('50');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(page.locator('.goal')).toContainText('69 %');
-    await expect(page.locator('.goal .plan')).toContainText(/50 €\s*Nur \d\d\.\d{4}/);
+    await expect(page.locator('.goal .plan')).toContainText(/50\s€ \/ Monat\s*Nur \S+ \d{4}/);
     // Ein Ziel gilt nur in seinem Zeitraum: im Folgemonat ist es weg …
     const thisMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     await pickMonth(page, page.locator('#finance-month'), nextMonth);
@@ -212,7 +215,7 @@ for (const width of [390, 1440]) {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await pickMonth(page, page.locator('#finance-month'), nextMonth);
     await expect(page.locator('.goal')).toHaveCount(1);
-    await expect(page.locator('.goal .plan')).toContainText(/Ab \d\d\.\d{4}, bis auf Weiteres/);
+    await expect(page.locator('.goal .plan')).toContainText(/Ab \S+ \d{4}/);
     await pickMonth(page, page.locator('#finance-month'), thisMonth);
     await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
     // Gespartes mindert das verfügbare Budget und steht in der Aufschlüsselung
@@ -230,7 +233,7 @@ for (const width of [390, 1440]) {
     await page.screenshot({ path: `test-results/finance-${width}.png`, fullPage: true });
     await page.goto('/');
     await expect(page.locator('.budget')).toContainText('2.470,00 € übrig');
-    await page.locator('.budget__card').click();
+    await page.locator('.money').getByRole('link', { name: 'Finanzen öffnen' }).click();
     await page.getByRole('button', { name: /Supermarkt/ }).click();
     await page.getByRole('button', { name: 'Eintrag löschen', exact: true }).click();
     await page.getByRole('button', { name: 'Ja, löschen', exact: true }).click();
@@ -510,7 +513,7 @@ test('a goal for another month is saved but not shown, and says so', async ({ pa
   expect(created).toHaveLength(1);
   expect(created[0]).toMatchObject({ plan_month: '2031-07-01', plan_end_month: '2031-09-01', plan_open_ended: false });
   await expect(page.getByRole('status').filter({ hasText: 'Sparziel gespeichert' })).toContainText(
-    'Es gilt nicht im angezeigten Monat und erscheint erst im Zeitraum: 07.2031 bis 09.2031.',
+    'Es gilt nicht im angezeigten Monat und erscheint erst im Zeitraum: Juli – Sept. 2031.',
   );
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
 });
@@ -597,15 +600,15 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
   await expect(page.getByRole('button', { name: /Septemberkauf/ }).first()).toBeVisible();
 });
 
-test('an empty goal list is centered on the whole card without touching the two-column grid', async ({ page }) => {
+test('an empty goal list spans the whole goal grid, centered', async ({ page }) => {
   await mockTwoMonths(page);
   await page.goto('/finanzen');
   await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
   await pickMonth(page, page.locator('#finance-month'), '2027-05'); // kein Ziel gilt hier mehr? „Ab Oktober“ gilt offen → 2026-08 ist leer
   await pickMonth(page, page.locator('#finance-month'), '2026-08');
-  const empty = page.locator('.goal-grid > .empty');
+  const empty = page.locator('.goal-cards > .empty');
   await expect(empty).toContainText('Für diesen Monat gibt es noch kein Sparziel');
-  const card = await page.locator('.goal-grid').boundingBox();
+  const card = await page.locator('.goal-cards').boundingBox();
   const box = await empty.boundingBox();
   expect(Math.abs(box!.x + box!.width / 2 - (card!.x + card!.width / 2))).toBeLessThan(2); // mittig
   expect(box!.width).toBeGreaterThan(card!.width - 2); // über beide Spalten
@@ -659,8 +662,8 @@ test('the year overview opens one level deeper, picking a month closes it; editi
   // Keine dauerhafte 12-Monats-Liste mehr, sondern „Jahresplanung“ mit Einstieg
   await expect(page.locator('app-budget-year')).toHaveCount(0);
   await expect(page.locator('.year-plan')).toContainText('von 12 Monaten');
-  await page.getByRole('button', { name: 'Jahresübersicht ansehen' }).click();
-  const yearDialog = page.getByRole('dialog', { name: /Budgetjahr/ });
+  await page.getByRole('button', { name: 'Budgets je Monat', exact: true }).click();
+  const yearDialog = page.getByRole('dialog', { name: /Budgets je Monat/ });
   await expect(yearDialog).toBeVisible();
   const timeline = yearDialog.locator('app-budget-year');
   await expect(timeline.locator('.budget-month')).toHaveCount(12);
@@ -747,7 +750,7 @@ test('changing a budget keeps its start month locked, and a new budget can be st
   const dialog = page.getByRole('dialog');
   const month = dialog.getByLabel('Startmonat');
   await expect(month).toBeDisabled();
-  await expect(dialog).toContainText('nicht der angezeigte Monat');
+  await expect(dialog).toContainText('Er lässt sich nicht ändern');
   await expect(dialog.getByLabel('Monatsbudget in EUR')).toBeEnabled();
 
   // stattdessen ein neues Budget ab dem angezeigten Monat
@@ -773,7 +776,7 @@ test('a budget that another budget overrides warns in the dialog and shows one v
   await page.getByRole('button', { name: 'Budgets', exact: true }).click();
 
   // Each month shows exactly one effective amount, including overlapping budgets.
-  await page.getByRole('button', { name: 'Jahresübersicht ansehen' }).click();
+  await page.getByRole('button', { name: 'Budgets je Monat', exact: true }).click();
   const rows = page.locator('app-budget-year .budget-month');
   await expect(rows).toHaveCount(12);
   await expect(rows.nth(6)).toContainText('3.000,00');
@@ -902,7 +905,8 @@ test('quick capture: an expense in three steps on a phone', async ({ page }) => 
   await expect(dialog.getByRole('group', { name: 'Typ' }).getByRole('button', { name: 'Ausgabe', pressed: true })).toBeVisible();
   const chips = dialog.getByRole('group', { name: 'Kategorie' }).getByRole('button');
   await expect(chips.first()).toHaveAttribute('aria-pressed', 'true');
-  for (const chip of await chips.all()) expect((await chip.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  // gerundet: während das Blatt hereinfährt, misst der Browser Bruchteile (43,99997 px)
+  for (const chip of await chips.all()) expect(Math.round((await chip.boundingBox())!.height)).toBeGreaterThanOrEqual(44);
   await page.keyboard.type('4,50');
   await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dialog).toHaveCount(0);

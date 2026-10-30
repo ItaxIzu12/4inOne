@@ -102,12 +102,26 @@
       white-space: nowrap;
     }
   }
-  // Sehr schmale Handys: Reiter behalten ihre Textbreite und lassen sich wischen, statt sich zu überlappen.
+  // Sehr schmale Handys (bis 360 px): alle Reiter ohne Wischen sichtbar — schmalere Ränder und 12 px Schrift statt
+  // eines abgeschnittenen letzten Reiters. Reicht der Platz trotzdem nicht, bleibt die Leiste wischbar.
   @media (max-width: 360px) {
+    .domain-sticky {
+      padding: 6px;
+    }
+    .domain-sticky .domain-tabs {
+      padding: 2px;
+    }
     .domain-sticky .domain-tabs button {
-      flex: 0 0 auto;
+      flex: 1 1 auto;
       min-width: max-content;
-      padding: 0 8px;
+      padding: 0 5px;
+      font-size: 12px;
+    }
+  }
+  // 320 px: noch etwas weniger Innenabstand, damit auch „Transaktionen“ ohne Wischen passt (Klickfläche bleibt ≥ 44 px hoch)
+  @media (max-width: 340px) {
+    .domain-sticky .domain-tabs button {
+      padding: 0 2px;
     }
   }
   .domain-page .caption,

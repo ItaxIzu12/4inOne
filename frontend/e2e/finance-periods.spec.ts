@@ -17,14 +17,18 @@ for (const width of [390, 1440]) {
     await switcher.getByRole('button', { name: 'Tag', exact: true }).click();
     await expect(page.locator('#finance-month')).toHaveCount(0);
     const view = page.locator('app-finance-period');
-    // Die Datumsauswahl steht unter dem Zeitraum-Umschalter, für jeden Zeitraum an derselben Stelle.
+    // Die Datumsauswahl gehört zum Zeitraum-Umschalter: am Rechner in derselben Zeile rechts, am Handy direkt darunter —
+    // für jeden Zeitraum an derselben Stelle, vor der Kopfkarte.
     const nav = page.locator('.date-row');
     const switchBox = (await switcher.boundingBox())!;
-    expect((await nav.boundingBox())!.y).toBeGreaterThan(switchBox.y + switchBox.height - 1);
-    // dieselben Begriffe wie im Monat — nur der Zeitraum darunter ändert sich
-    await expect(view.locator('.kpi__label')).toHaveText(['Einnahmen', 'Ausgaben', 'Gespart']);
-    await expect(view.locator('.kpi').nth(1)).toContainText('34,80 €');
-    await expect(view.locator('.kpi').nth(1)).toContainText('heute');
+    const navBox = (await nav.boundingBox())!;
+    if (width >= 900) expect(Math.abs(navBox.y + navBox.height / 2 - (switchBox.y + switchBox.height / 2))).toBeLessThan(8);
+    else expect(navBox.y).toBeGreaterThan(switchBox.y + switchBox.height - 1);
+    expect(navBox.y + navBox.height).toBeLessThanOrEqual((await view.locator('.fin-hero').boundingBox())!.y);
+    // Kopfkarte wie im Monat: Ausgaben als große Zahl, Einnahmen und Gespart daneben — nur der Zeitraum ändert sich
+    await expect(view.locator('.kpi__label')).toHaveText(['Ausgaben', 'Einnahmen', 'Gespart']);
+    await expect(view.locator('.kpi').first()).toContainText('34,80 €');
+    await expect(view.locator('.kpi').first()).toContainText('heute');
     await expect(view.locator('.list-title')).toHaveText('Transaktionen heute');
     await expect(view.locator('.rows')).toContainText('REWE');
     await expect(view.locator('.rows')).toContainText('Bäckerei');
@@ -36,34 +40,42 @@ for (const width of [390, 1440]) {
     await nav.getByRole('button', { name: 'Nächster Tag' }).click();
     await expect(view.locator('.empty')).toContainText('gab es keine Finanzbewegungen');
     await expect(view.locator('.kpi')).toHaveCount(0);
-    // „Aktueller Tag“ steht abseits des Weiter-Pfeils (kein versehentliches Antippen beim Blättern)
+    // „Aktueller Tag“ steht abseits des Weiter-Pfeils (kein versehentliches Antippen beim Blättern): am Rechner links
+    // neben der Auswahl, am Handy in eigener Zeile darunter
     const next = (await nav.getByRole('button', { name: 'Nächster Tag' }).boundingBox())!;
     const back = (await nav.getByRole('button', { name: 'Aktueller Tag', exact: true }).boundingBox())!;
-    const apart = Math.max(back.x - (next.x + next.width), back.y - (next.y + next.height));
+    const apart = Math.max(
+      back.x - (next.x + next.width),
+      next.x - (back.x + back.width),
+      back.y - (next.y + next.height),
+      next.y - (back.y + back.height),
+    );
     expect(apart).toBeGreaterThanOrEqual(12);
+    if (width >= 900) expect(back.x + back.width).toBeLessThanOrEqual(next.x); // links von der Auswahl
     await nav.getByRole('button', { name: 'Aktueller Tag', exact: true }).click();
-    await expect(view.locator('.kpi').nth(1)).toContainText('34,80 €');
+    await expect(view.locator('.kpi').first()).toContainText('34,80 €');
 
     // Woche: Kalenderwoche, Summen, Top-Kategorien
     await switcher.getByRole('button', { name: 'Woche' }).click();
     await expect(nav.locator('.week-label')).toHaveText(/^\d{2}\.\d{2}\.\d{4} – \d{2}\.\d{2}\.\d{4}$/);
     await expect(page.locator('main')).not.toContainText(/KW \d+/);
-    await expect(view.locator('.kpi__label')).toHaveText(['Einnahmen', 'Ausgaben', 'Gespart']);
-    await expect(view.locator('.kpi').nth(1)).toContainText('diese Woche');
+    await expect(view.locator('.kpi__label')).toHaveText(['Ausgaben', 'Einnahmen', 'Gespart']);
+    await expect(view.locator('.kpi').first()).toContainText('diese Woche');
+    await expect(view.locator('.day-head').first()).toBeVisible(); // Woche: nach Tagen gruppiert
     await expect(view.locator('.list-title')).toContainText('Transaktionen');
     await expect(view.getByRole('heading', { name: 'Top-Ausgabenkategorien' })).toBeVisible();
 
     // Benutzerdefiniert: falscher Zeitraum wird erklärt, kein Restbudget
     await switcher.getByRole('button', { name: 'Benutzerdefiniert' }).click();
     await expect(view.locator('.note')).toContainText('kein Restbudget');
-    await expect(view.locator('.kpi__label')).toHaveText(['Einnahmen', 'Ausgaben', 'Gespart']);
-    await expect(view.locator('.kpi').nth(1)).toContainText(/\d{2}\.\d{2}\.\d{4} – \d{2}\.\d{2}\.\d{4}/);
+    await expect(view.locator('.kpi__label')).toHaveText(['Ausgaben', 'Einnahmen', 'Gespart']);
+    await expect(view.locator('.kpi').first()).toContainText(/\d{2}\.\d{2}\.\d{4} – \d{2}\.\d{2}\.\d{4}/);
 
     // Zurück zum Monat: Budgetansicht wie bisher — mit denselben Begriffen
     await switcher.getByRole('button', { name: 'Monat' }).click();
     await expect(page.locator('#finance-month')).toBeVisible();
-    await expect(page.locator('.finance-page > .kpis')).toContainText('Vom Monatsbudget übrig');
-    await expect(page.locator('.finance-page > .kpis .kpi__label')).toContainText(['Einnahmen', 'Ausgaben', 'Gespart']);
+    await expect(page.locator('.finance-page > .kpis')).toContainText('Noch verfügbar im');
+    await expect(page.locator('.finance-page > .kpis .hero-stat .kpi__label')).toContainText(['Einnahmen', 'Ausgaben', 'Gespart']);
     await expect(page.locator('#tx-h')).toContainText('Transaktionen');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });

@@ -98,6 +98,22 @@ export interface BudgetCategoryFigures {
   available: string;
 }
 
+/** Ein Monat aus summary/year/: bis zum laufenden Monat mit denselben Werten wie summary/, künftige nur mit Budget. */
+export interface FinanceYearMonth {
+  month: string;
+  budget: string | null;
+  expenses: string | null;
+  saved: string | null;
+  /** Wie summary.available: Budget − ausgegeben − geplant − Sparbeiträge; null ohne Budget oder in der Zukunft. */
+  available: string | null;
+  has_data: boolean;
+  state: 'past' | 'current' | 'future';
+}
+export interface FinanceYearSummary {
+  year: string;
+  currency: string;
+  months: FinanceYearMonth[];
+}
 export interface FinanceSummary {
   month: string;
   currency: string;
@@ -193,7 +209,6 @@ export function budgetSpan(budget: FinanceBudget): string {
   }
   return longMonth(budget.month);
 }
-/** Zeitraum des Sparziels für Menschen: „Nur 09.2026“, „09.2026 bis 12.2026“, „Ab 09.2026, bis auf Weiteres“. */
 /** Gilt dieses Ziel (bzw. dieser Zeitraum aus dem Formular) im Monat `month` („JJJJ-MM“)? Wie backend SavingsGoal.covers. */
 export function goalCovers(
   period: { plan_month: string | null; plan_end_month: string | null; plan_open_ended: boolean },
@@ -205,13 +220,20 @@ export function goalCovers(
   if (period.plan_open_ended) return true;
   return month <= (period.plan_end_month ? period.plan_end_month.slice(0, 7) : start);
 }
+/** Wie die Zieltermine („Ziel Apr. 2027“): „Ab Apr. 2026“, „Juli – Sept. 2031“, „Nov. 2025 – Feb. 2026“, „Nur Apr. 2026“. */
 export function planRange(goal: SavingsGoal): string {
   if (!goal.plan_month) return '';
-  if (goal.plan_open_ended) return `Ab ${shortMonth(goal.plan_month)}, bis auf Weiteres`;
-  if (goal.plan_end_month && goal.plan_end_month.slice(0, 7) !== goal.plan_month.slice(0, 7))
-    return `${shortMonth(goal.plan_month)} bis ${shortMonth(goal.plan_end_month)}`;
-  return `Nur ${shortMonth(goal.plan_month)}`;
+  if (goal.plan_open_ended) return `Ab ${abbrMonth(goal.plan_month)}`;
+  if (goal.plan_end_month && goal.plan_end_month.slice(0, 7) !== goal.plan_month.slice(0, 7)) {
+    const sameYear = goal.plan_month.slice(0, 4) === goal.plan_end_month.slice(0, 4);
+    const from = sameYear ? ABBR[Number(goal.plan_month.slice(5, 7)) - 1] : abbrMonth(goal.plan_month);
+    return `${from} – ${abbrMonth(goal.plan_end_month)}`;
+  }
+  return `Nur ${abbrMonth(goal.plan_month)}`;
 }
+/** Monatskurzform für Datumsangaben im Text (Duden: „März“, „Mai“, „Juni“, „Juli“ ohne Punkt) — überall gleich. */
+export const ABBR = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
+const abbrMonth = (iso: string) => `${ABBR[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
 export function financeMonth() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -228,6 +250,10 @@ export class PrivateFinanceApi {
   private base = `${API_BASE_URL}/finanzen/private`;
   summary(month = financeMonth()) {
     return this.http.get<FinanceSummary>(`${this.base}/summary/`, { params: { month } });
+  }
+  /** Das Budgetjahr je Monat in einer Abfrage (Jahreskarte im Budgets-Reiter). */
+  yearSummary(year: string) {
+    return this.http.get<FinanceYearSummary>(`${this.base}/summary/year/`, { params: { year } });
   }
   categories() {
     return this.http.get<FinanceCategory[]>(`${this.base}/categories/`);

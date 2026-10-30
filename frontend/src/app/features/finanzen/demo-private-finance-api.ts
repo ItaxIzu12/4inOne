@@ -8,6 +8,8 @@ import {
   FinanceCategory,
   FinanceSummary,
   FinanceTransaction,
+  FinanceYearMonth,
+  FinanceYearSummary,
   GoalPreview,
   ImportResult,
   SavingsContributionDto,
@@ -252,6 +254,24 @@ export class DemoPrivateFinanceApi {
   // Wie PrivateFinanceApi.summary(): ohne Angabe gilt der laufende Monat.
   summary(month: string = financeMonth()): Observable<FinanceSummary> {
     return of(this.buildSummary(month));
+  }
+  /** Wie summary/year/: bis heute dieselben Zahlen wie summary(), künftige Monate nur mit Budget. */
+  yearSummary(year: string): Observable<FinanceYearSummary> {
+    const current = financeMonth();
+    const months = Array.from({ length: 12 }, (_, i): FinanceYearMonth => {
+      const month = `${year}-${String(i + 1).padStart(2, '0')}`;
+      const state = month > current ? 'future' : month === current ? 'current' : 'past';
+      if (state === 'future') {
+        const budget = winningBudget(this.budgetList, month);
+        return { month, budget: budget ? money(Number(budget.amount)) : null, expenses: null, saved: null, available: null, has_data: false, state };
+      }
+      const s = this.buildSummary(month);
+      return {
+        month, budget: s.total, expenses: s.expenses, saved: s.saved, available: s.available,
+        has_data: Number(s.expenses) > 0 || Number(s.saved) > 0, state,
+      };
+    });
+    return of({ year, currency: 'EUR', months });
   }
   budgetImpact(id: number): Observable<{ transactions: number; goals: number }> {
     if (!this.budgetList.some((b) => b.id === id)) return throwError(() => ({ status: 404 }));

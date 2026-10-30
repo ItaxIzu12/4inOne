@@ -1,0 +1,274 @@
+@use 'fin-look';
+
+// Finanzen (27.10.2026) — seitenbezogene Teile der neuen Finanz-Ansicht; die gemeinsamen Formen (Kopfkarte, Werte,
+// Tagesüberschrift, Segment-Umschalter) stehen in _fin-look.scss. Zuletzt geladen: überschreibt die alten
+// Kachel-Regeln in private-finance.scss. Eigene Datei wegen des Stil-Budgets je Datei.
+
+// ---------- Steuerzeile: Umschalter links, Datum rechts (Handy: untereinander, volle Breite) ----------
+.finance-overview app-finance-period {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+.finance-overview app-finance-period .date-row,
+.tx-bar + .date-row {
+  flex: 0 1 auto;
+  margin: 0 0 0 auto;
+}
+.tx-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-bottom: 0;
+}
+.tx-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-bottom: 20px;
+}
+.tx-toolbar .date-row {
+  margin: 0 0 0 auto;
+}
+
+// ---------- Übersicht ----------
+.fin-hero__curve {
+  --curve-height: 200px;
+}
+
+// ---------- Listen: Ausgaben in Tinte ----------
+// in allen Listen der Finanzen (Kontoauszug-Logik): Minus in Tinte, Plus in Grün
+.rows strong.negative {
+  color: var(--text-primary);
+}
+.all-rows .rows + .day-head {
+  margin-top: 22px;
+}
+
+// ---------- Budgets: Budget | Rest in einer Kopfkarte ----------
+.fin-hero--budget {
+  // Ziel des Sprungs aus „Dein Jahr“: Kopfzeile und Monatsauswahl bleiben darüber sichtbar
+  scroll-margin-top: 160px;
+}
+@media (max-width: 760px) {
+  .fin-hero--budget {
+    scroll-margin-top: 230px; // Monatsauswahl steht am Handy zweizeilig darüber
+  }
+}
+.fin-hero--budget .fin-hero__top {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 32px 48px;
+}
+.fin-hero--budget .kpi.fin-hero__plan {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 0 48px 0 0;
+  border: 0;
+  border-right: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: none;
+}
+.fin-hero__plan .fin-hero__value {
+  font-size: clamp(1.75rem, 1.3rem + 1.4vw, 2.25rem);
+}
+.fin-hero__plan .kpi__action {
+  justify-self: start;
+  margin: 8px 0 0 -14px;
+}
+.fin-hero--budget .budget-bar {
+  height: 8px;
+  margin: 14px 0 4px;
+}
+.fin-hero--budget .breakdown {
+  margin-top: 16px;
+}
+
+// ---------- Sparziele als Karten (der Abschnitt selbst ist keine Karte — keine Karten in Karten) ----------
+.card.goals-board {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.goals-board .card-head {
+  margin-bottom: 12px;
+}
+.goal-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); // zwei Spalten: vier Ziele ergeben ein ruhiges 2 × 2
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.goal-cards > li {
+  display: grid;
+}
+.goal-cards .goal {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'icon name pct'
+    'bar bar bar'
+    'amounts amounts amounts'
+    'foot foot foot';
+  align-items: center;
+  gap: 10px 12px;
+  width: 100%;
+  min-height: 0;
+  padding: 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  text-align: left;
+}
+.goal-cards .goal .tile {
+  grid-area: icon;
+}
+.goal-cards .goal__name {
+  grid-area: name;
+  display: grid;
+  min-width: 0;
+}
+.goal-cards .goal__name b {
+  overflow: hidden;
+  font-size: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.goal-cards .goal__name small {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.goal-cards .goal__pct {
+  grid-area: pct;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.goal-cards .goal__progress {
+  grid-area: bar;
+  display: block;
+}
+.goal-cards .goal__progress .track {
+  display: block;
+  width: 100%;
+  height: 8px;
+}
+.goal-cards .goal__amounts {
+  grid-area: amounts;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.goal-cards .goal__amounts b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.goal-cards .goal__foot {
+  grid-area: foot;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+.goal-cards .goal__date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.goal-cards .goal__date app-icon {
+  width: 14px;
+  height: 14px;
+}
+.goal-cards .goal__rate {
+  display: grid;
+  justify-items: end;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+}
+.goal-cards .goal__range {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+}
+.goal-cards .empty {
+  grid-column: 1 / -1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .goal-cards .goal:hover {
+    border-color: var(--border-strong, #cfd5cd);
+    background: #fff;
+  }
+}
+
+// ---------- Dialog „Transaktion“: der Betrag als Mittelpunkt (wie in Banking-Apps), Einnahme grün ----------
+.amount-input {
+  min-height: 64px !important;
+  font-family: var(--font-display) !important;
+  font-size: 34px !important;
+  letter-spacing: -0.03em !important;
+  font-weight: 700 !important;
+}
+.amount-input.is-income {
+  color: var(--finance-accent);
+}
+.amount-input::placeholder {
+  color: color-mix(in srgb, var(--text-secondary) 55%, #fff);
+}
+
+// ---------- Jahresplanung: am Handy Text über dem Link (statt schmaler Spalte) ----------
+@media (max-width: 760px) {
+  .year-plan {
+    flex-wrap: wrap;
+  }
+  .year-plan__text {
+    flex: 1 1 calc(100% - 64px);
+    min-width: 0;
+  }
+}
+
+// ---------- Breiten ----------
+@media (max-width: 900px) {
+  .finance-overview app-finance-period .date-row,
+  .tx-toolbar .date-row {
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
+  .fin-hero--budget .fin-hero__top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .fin-hero--budget .kpi.fin-hero__plan {
+    padding: 0 0 20px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+}
+@media (max-width: 760px) {
+  .goal-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .fin-hero__curve {
+    --curve-height: 150px;
+  }
+  .tx-toolbar {
+    margin-bottom: 16px;
+  }
+  .tx-bar {
+    width: 100%;
+  }
+}

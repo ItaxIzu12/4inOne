@@ -30,8 +30,10 @@ for (const width of [360, 390, 430, 768, 1440]) {
     const rows = page.locator('#all-rows .transaction');
     await expect(rows.first()).toContainText('Geplant');
     expect(await rows.count()).toBeGreaterThan(0);
-    // Jede Zeile nennt Datum und Kategorie und ist als „Geplant“ gekennzeichnet (Text, nicht nur Farbe)
-    for (const text of await rows.allInnerTexts()) expect(text).toMatch(/\d\d\.\d\d\.\d{4} • .+Geplant/s);
+    // Das Datum steht als Tagesüberschrift über den Zeilen; jede Zeile nennt die Kategorie und ist als „Geplant“
+    // gekennzeichnet (Text, nicht nur Farbe)
+    await expect(page.locator('#all-rows .day-head').first()).toBeVisible();
+    for (const text of await rows.allInnerTexts()) expect(text).toMatch(/.+ • .*Geplant/s);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }

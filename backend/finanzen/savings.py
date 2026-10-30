@@ -135,7 +135,8 @@ PLAN_HORIZON_MONTHS = 12
 
 
 def available_for_month(owner, month: date, planner: 'SavingsPlanner | None' = None):
-    """Restbudget nach Ausgaben und Sparreservierungen; Einnahmen erhöhen es nicht."""
+    """Restbudget nach Ausgaben, geplanten wiederkehrenden Ausgaben und Sparreservierungen — dieselbe Rechnung wie
+    „Noch verfügbar“; Einnahmen erhöhen es nicht."""
     from .models import MonthlyBudget, Transaction
     from .services import month_bounds
 
@@ -144,10 +145,15 @@ def available_for_month(owner, month: date, planner: 'SavingsPlanner | None' = N
     budget = MonthlyBudget.for_month(owner, month)
     if budget is None:
         return None, planned
+    from .private_api import recurring_planned  # lokal: private_api importiert dieses Modul
+
     first, last = month_bounds(month)
     rows = Transaction.objects.filter(owner=owner, datum__gte=first, datum__lt=last, currency='EUR')
     expense = rows.filter(type='EXPENSE').aggregate(t=Sum('amount'))['t'] or ZERO
-    return budget.amount - expense - saved, planned
+    # Wie „Noch verfügbar“ (month_figures): auch wiederkehrende, im Monat noch nicht gebuchte Ausgaben sind schon
+    # verplant — sonst meldeten die Warnungen „passt“, obwohl die Miete das Budget noch sprengt.
+    recurring = sum((item['amount'] for item in recurring_planned(owner, first, last, rows)), ZERO)
+    return budget.amount - expense - recurring - saved, planned
 
 
 def plan_alert(owner, start: date, planner: SavingsPlanner | None = None, months: int = PLAN_HORIZON_MONTHS):

@@ -25,6 +25,8 @@ import {
   todayIso,
   topCategories,
 } from './finance-periods';
+import { groupByDay } from './finance-overview';
+import { categoryIcon, dayLabel as nearDayLabel } from './finance-tabs';
 
 const PERIODS: FinancePeriod[] = ['day', 'week', 'month', 'custom'];
 const LIST_LIMIT = 10;
@@ -68,6 +70,14 @@ export class FinancePeriodView {
   readonly showAll = signal(false);
   readonly visibleRows = computed(() => (this.showAll() ? this.totals().rows : this.totals().rows.slice(0, LIST_LIMIT)));
   readonly hiddenCount = computed(() => Math.max(0, this.totals().rows.length - LIST_LIMIT));
+  /** Wie im Kontoauszug: nach Tagen gruppiert (Woche, eigener Zeitraum); der Tag selbst braucht keine Gruppen. */
+  readonly visibleGroups = computed(() => groupByDay(this.visibleRows()));
+  readonly categoryIcon = categoryIcon;
+  /** „Heute“/„Gestern“ für die jüngsten Tage, sonst „Samstag, 24. Oktober“. */
+  groupLabel(date: string, fallback: string): string {
+    const near = nearDayLabel(date);
+    return near === 'Heute' || near === 'Gestern' ? near : fallback;
+  }
   readonly monthSummary = signal<FinanceSummary | null>(null);
 
   readonly rangeIssue = computed(() => (this.period() === 'custom' ? customRangeError(this.range()) : null));
@@ -166,7 +176,11 @@ export class FinancePeriodView {
   }
   money(value: number | string): string {
     const n = Number(value);
-    return `${n.toLocaleString('de-DE', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })} €`;
+    return `${n.toLocaleString('de-DE', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}\u00a0€`; // „€“ nie allein in der nächsten Zeile
+  }
+  /** Buchungen und Tagessummen immer mit Cent („−77,00 €“) — wie in der Transaktionsliste. */
+  exact(value: number | string): string {
+    return `${Number(value).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u00a0€`;
   }
   categoryName(id: number | null): string {
     return this.categories().find((c) => c.id === id)?.name ?? 'Sonstiges';

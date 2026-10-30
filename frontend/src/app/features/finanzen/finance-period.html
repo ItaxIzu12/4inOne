@@ -1,5 +1,5 @@
 <div class="bar">
-  <div class="switch" role="group" aria-label="Zeitraum der Übersicht">
+  <div class="switch seg" role="group" aria-label="Zeitraum der Übersicht">
     @for (p of periods; track p) {
       <button type="button" [attr.aria-pressed]="period() === p" (click)="select(p)">{{ labels[p] }}</button>
     }
@@ -34,44 +34,58 @@
         <button type="button" class="link" (click)="showExpenses.emit()">Zu den Ausgaben<app-icon name="arrow" /></button>
       </section>
     } @else {
-      <!-- Dieselben Karten wie die Monatsansicht: Einnahmen · Ausgaben · Gespart; nur der Zeitraum darunter ändert sich -->
-      <ul class="kpis">
-        <li class="kpi">
-          <span class="kpi__icon" aria-hidden="true"><app-icon name="trend-up" /></span>
-          <span class="kpi__body"><span class="kpi__label">Einnahmen</span><b class="kpi__value num">{{ money(t.income) }}</b><span class="kpi__hint">{{ scope() }}</span></span>
-        </li>
-        <li class="kpi">
-          <span class="kpi__icon kpi__icon--down" aria-hidden="true"><app-icon name="arrow-down" /></span>
-          <span class="kpi__body"><span class="kpi__label">Ausgaben</span><b class="kpi__value num">{{ money(t.expenses) }}</b><span class="kpi__hint">{{ scope() }}</span></span>
-        </li>
-        <li class="kpi">
-          <span class="kpi__icon kpi__icon--blue" aria-hidden="true"><app-icon name="piggy" /></span>
-          <span class="kpi__body"><span class="kpi__label">Gespart</span><b class="kpi__value num">{{ money(t.saved) }}</b><span class="kpi__hint">{{ scope() }}</span></span>
-        </li>
-      </ul>
+      <!-- Dieselbe Kopfkarte wie die Monatsansicht (_fin-look.scss): Ausgaben als große Zahl, Einnahmen und Gespart
+           daneben — nur der Zeitraum ändert sich (beim eigenen Zeitraum nur einmal unter der großen Zahl, sonst dreimal dasselbe Datum) („heute“, „diese Woche“, „01.10.2026 – 27.10.2026“). -->
+      <section class="kpis fin-hero" aria-labelledby="period-figure">
+        <div class="fin-hero__top">
+          <div class="kpi fin-hero__main">
+            <h2 id="period-figure" class="kpi__label">Ausgaben</h2>
+            <p class="kpi__value fin-hero__value num">{{ money(t.expenses) }}</p>
+            <p class="kpi__hint fin-hero__sub">{{ scope() }}</p>
+          </div>
+          <dl class="hero-stats">
+            <div class="hero-stat kpi">
+              <dt class="kpi__label"><span class="hero-stat__dot hero-stat__dot--income" aria-hidden="true"></span>Einnahmen</dt>
+              <dd><b class="kpi__value num">{{ money(t.income) }}</b>@if (period() !== 'custom') {<small class="kpi__hint">{{ scope() }}</small>}</dd>
+            </div>
+            <div class="hero-stat kpi">
+              <dt class="kpi__label"><span class="hero-stat__dot hero-stat__dot--saved" aria-hidden="true"></span>Gespart</dt>
+              <dd><b class="kpi__value num">{{ money(t.saved) }}</b>@if (period() !== 'custom') {<small class="kpi__hint">{{ scope() }}</small>}</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
 
       <div class="grid" [class.grid--single]="period() !== 'week' || !top().length">
         <section class="card" aria-labelledby="period-rows">
           <h2 id="period-rows" class="list-title">Transaktionen <small>{{ scope() }}</small></h2>
           @if (t.rows.length) {
-            <ul class="rows">
-              @for (row of visibleRows(); track row.id) {
-                <li>
-                  <button type="button" class="row" (click)="openTransaction.emit(row)">
-                    <span class="dot" [style.background]="categoryColor(row.category)" aria-hidden="true"></span>
-                    <span class="row__text">
-                      <b>{{ rowTitle(row) }}</b>
-                      <small>{{ categoryName(row.category) }}@if (period() !== 'day') { · {{ shortDate(row.date) }} }</small>
-                    </span>
-                    <strong class="num" [class.minus]="row.type === 'EXPENSE'" [class.plus]="row.type === 'INCOME'">
-                      {{ row.type === 'EXPENSE' ? '−' : '+' }}{{ money(row.amount) }}
-                    </strong>
-                  </button>
-                </li>
+            @for (g of visibleGroups(); track g.date) {
+              @if (period() !== 'day') {
+                <h3 class="day-head">
+                  <span>{{ groupLabel(g.date, g.label) }}</span>
+                  <span class="day-head__sum num">{{ g.total < 0 ? '−' : '+' }}{{ exact(g.total < 0 ? -g.total : g.total) }}</span>
+                </h3>
               }
-            </ul>
+              <ul class="rows">
+                @for (row of g.rows; track row.id) {
+                  <li>
+                    <button type="button" class="row" (click)="openTransaction.emit(row)">
+                      <span class="tile" aria-hidden="true" [style.--cat]="categoryColor(row.category)"><app-icon [name]="categoryIcon(categoryName(row.category))" /></span>
+                      <span class="row__text">
+                        <b>{{ rowTitle(row) }}</b>
+                        <small>{{ categoryName(row.category) }}</small>
+                      </span>
+                      <strong class="num" [class.plus]="row.type === 'INCOME'">
+                        {{ row.type === 'EXPENSE' ? '−' : '+' }}{{ exact(row.amount) }}
+                      </strong>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
             @if (hiddenCount() > 0) {
-              <button type="button" class="link" (click)="showAll.set(!showAll())">
+              <button type="button" class="show-more" (click)="showAll.set(!showAll())">
                 {{ showAll() ? 'Weniger anzeigen' : (hiddenCount() === 1 ? '1 weitere Transaktion anzeigen' : hiddenCount() + ' weitere Transaktionen anzeigen') }}
               </button>
             }

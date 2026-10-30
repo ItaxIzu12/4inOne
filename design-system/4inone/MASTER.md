@@ -44,8 +44,14 @@ Rand `#948C7E`, Fokus Tinte; Hauptknopf Tinte, Zweitweg mit Tintenrand. ≤ 760 
 
 ## App (Dashboard, Rahmen)
 Gleiche Tokens wie die Website über `styles.css`: warmweißer Grund, Tinte als Hauptfarbe, Bereichs-Farbfelder
-(`--*-fill`/`--*-on`). Dashboard „Kommandozentrale“: große Begrüßung, Überblick-Band mit vier Kacheln (Heute,
-Budget, Reise, Haushalt), Tagesplan mit Farbfeldern, rechts Für dich und Letzte Buchungen.
+(`--*-fill`/`--*-on`). Dashboard (27.10.2026): große Begrüßung, „Heute“ als Zeitleiste | Finanzen-Karte (noch
+verfügbar, Tagessatz, Ausgabenkurve, letzte Transaktionen), darunter Für dich | Demnächst (Reise, Haushalt). Finanzen
+› Übersicht wie eine Banking-App: eine große Zahl, drei ruhige Werte, abfahrbare Ausgabenkurve, Transaktionen nach
+Tagen. Diagramme selbst gezeichnet (SVG), ohne Verläufe. Alle Finanz-Ansichten (Zeiträume, Transaktionen, Budgets,
+Sparziele) folgen derselben Kopfkarte, Steuerzeile (Segment + Datum) und Tagesliste (`finanzen/_fin-look.scss`).
+Erklären statt voraussetzen: Startliste für neue Konten, „Wie entsteht diese Zahl?“, (i)-Begriffe, am Monatsanfang
+ein Rückblick auf den Vormonat (ausblendbar) und unter Ausgaben die Fixkosten mit Jahressumme — nur echte Werte.
+Budgets › „Dein Jahr“: große Zahl, Urteil, zwölf Säulen in einer Reihe (Tönung = Budget, Füllung = Ausgaben, grün gehalten / rot überschritten), antippbar.
 Kopfzeile ohne Suche, deckend. Tableiste und Seitenleiste: aktiver Eintrag als Farbfeld.
 
 ## Unterseiten (Rechtliches, 404)

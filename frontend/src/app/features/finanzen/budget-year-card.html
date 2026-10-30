@@ -1,0 +1,56 @@
+@let l = lead();
+<section class="year" aria-labelledby="year-card-h">
+  <h2 id="year-card-h">Dein Jahr {{ data().year }}</h2>
+  <button type="button" class="year__edit" (click)="edit.emit()">
+    <app-icon name="edit" aria-hidden="true" />Budgets je Monat
+  </button>
+
+  <p class="year__total">
+    @if (l.amount) {
+      <b>{{ l.amount }}</b>
+    }
+    <span>{{ l.of }}</span>
+  </p>
+  @if (l.verdict) {
+    <p class="year__verdict" [class.is-over]="!l.ok"><app-icon [name]="l.ok ? 'check-circle' : 'info'" aria-hidden="true" />{{ l.verdict }}</p>
+  }
+
+  <ol class="year__bars">
+    @for (b of bars(); track b.month) {
+      <li>
+        <button
+          type="button"
+          [class]="'bar bar--' + b.tone"
+          [class.is-selected]="b.month === selected()"
+          [attr.aria-current]="b.month === selected() ? 'true' : null"
+          [attr.aria-label]="b.label + '. Monat anzeigen'"
+          (click)="monthPick.emit(b.month)"
+        >
+          <span class="bar__track" aria-hidden="true">
+            @if (b.plan) {
+              <span class="bar__plan" [style.height.%]="b.plan"></span>
+            }
+            @if (b.fill) {
+              <span class="bar__fill" [style.height.%]="b.fill"></span>
+            }
+            @if (b.save) {
+              <span class="bar__save" [style.bottom.%]="b.fill" [style.height.%]="b.save"></span>
+            }
+          </span>
+          <span class="bar__name" aria-hidden="true"><span class="bar__short">{{ b.short }}</span><span class="bar__letter">{{ b.letter }}</span></span>
+        </button>
+      </li>
+    }
+  </ol>
+
+  <ul class="year__legend">
+    <li><span class="key key--held" aria-hidden="true"></span>Im Budget</li>
+    <li><span class="key key--over" aria-hidden="true"></span>Überschritten</li>
+    <li><span class="key key--current" aria-hidden="true"></span>Laufender Monat</li>
+    <li><span class="key key--save" aria-hidden="true"></span>Für Sparziele</li>
+    <li><span class="key key--plan" aria-hidden="true"></span>Monatsbudget</li>
+    @if (hasFree()) {
+      <li><span class="key key--free" aria-hidden="true"></span>Ohne Budget</li>
+    }
+  </ul>
+</section>

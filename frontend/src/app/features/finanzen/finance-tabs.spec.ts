@@ -1,10 +1,11 @@
-import { FinanceCategory, FinanceTransaction, SavingsGoal } from './private-finance-api.service';
+import { FinanceCategory, FinanceTransaction, SavingsContributionDto, SavingsGoal } from './private-finance-api.service';
 import {
   axis,
   categoryBudgetStatus,
   categoryBudgets,
   categorySlices,
   dayLabel,
+  compareDay,
   deltaEuro,
   deltaLabel,
   donut,
@@ -18,8 +19,11 @@ import {
   incomeSources,
   insights,
   monthlyBars,
+  monthTotalUntil,
+  monthReview,
   recurringItems,
   savedInMonth,
+  savedUntil,
   sourceIcon,
   weeklyBars,
 } from './finance-tabs';
@@ -40,10 +44,21 @@ const goal = (over: Partial<SavingsGoal>): SavingsGoal => ({
 
 describe('Finanz-Reiter: Rechenregeln', () => {
   it('compares a month with the one before', () => {
-    expect(deltaLabel(3420, 3050, '2026-09')).toEqual({ text: '+ 12 % zu September', up: true });
-    expect(deltaLabel(1150, 1250, '2026-02')).toEqual({ text: '− 8 % zu Februar', up: false });
+    expect(deltaLabel(3420, 3050, '2026-09')).toEqual({ text: '12 % mehr als im September', up: true });
+    expect(deltaLabel(1150, 1250, '2026-02')).toEqual({ text: '8 % weniger als im Februar', up: false });
+    // laufender Monat: nur bis heute, gegen den Vormonat bis zum selben Tag
+    expect(deltaLabel(400, 500, '2026-09', true)).toEqual({ text: '20 % weniger als zur gleichen Zeit im September', up: false });
+    expect(compareDay('2026-10', '2026-10-05')).toBe(5);
+    expect(compareDay('2026-09', '2026-10-05')).toBeNull();
+    const rows = [tx(100, '2026-09-03'), tx(900, '2026-09-20'), tx(80, '2026-10-04'), tx(50, '2026-10-30')];
+    expect(monthTotalUntil(rows, '2026-09', 'EXPENSE', 5)).toBe(100);
+    expect(monthTotalUntil(rows, '2026-10', 'EXPENSE', 5)).toBe(80);
+    expect(monthTotalUntil(rows, '2026-09', 'EXPENSE', null)).toBe(1000);
+    // am 31. gegen einen Monat mit 30 Tagen: der ganze Vormonat
+    expect(monthTotalUntil(rows, '2026-09', 'EXPENSE', 31)).toBe(1000);
+    expect(savedUntil([{ id: 1, goal: 1, goal_title: 'J', amount: '50.00', date: '2026-09-10' }], '2026-09', 5)).toBe(0);
     expect(deltaLabel(100, 0, '2026-09')).toBeNull();
-    expect(deltaEuro(150, 100, '2026-02')?.text).toBe('+ 50 € zu Februar');
+    expect(deltaEuro(150, 100, '2026-02')?.text).toBe('50 € mehr als im Februar');
   });
 
   it('groups a month into calendar weeks with income, expenses and savings', () => {
@@ -101,12 +116,18 @@ describe('Finanz-Reiter: Rechenregeln', () => {
     expect(goalOnTrack(goal({}), '2026-10')).toBe(true);
     expect(goalOnTrack(goal({ target_date: '2026-11-01' }), '2026-10')).toBe(false);
     expect(goalOnTrack(goal({ monthly_amount: null }), '2026-10')).toBe(false);
-    expect(goalNearlyDone(goal({ target_amount: '150.00', current_amount: '80.00' }))).toBe(true);
+    // Sparzeitraum endet, bevor das Ziel erreicht ist (1.200 € fehlen, 300 € bis einschließlich Dezember = 900 €)
+    expect(goalOnTrack(goal({ plan_open_ended: false, plan_end_month: '2026-12-01' }), '2026-10')).toBe(false);
+    expect(goalOnTrack(goal({ plan_open_ended: false, plan_end_month: '2027-03-01' }), '2026-10')).toBe(true);
+    // fast erreicht: höchstens 15 % — oder bei kleinen Zielen höchstens 100 € UND höchstens 25 %
+    expect(goalNearlyDone(goal({ target_amount: '150.00', current_amount: '80.00' }))).toBe(false);
+    expect(goalNearlyDone(goal({ target_amount: '150.00', current_amount: '120.00' }))).toBe(true);
+    expect(goalNearlyDone(goal({ target_amount: '3000.00', current_amount: '2600.00' }))).toBe(true);
     expect(goalNearlyDone(goal({}))).toBe(false);
     expect(savedInMonth([{ id: 1, goal: 1, goal_title: 'J', amount: '300.00', date: '2026-10-01' }], '2026-10')).toBe(300);
     const hints = insights({ month: '2026-10', budget: 2000, available: 750, categoryBudgets: [], goals: [goal({})] });
     expect(hints.map((h) => h.title)).toEqual(['Monatsbudget prüfen', 'Sparziel Japan liegt im Plan']);
-    expect(hints[0].text).toBe('Du hast 38 % deines Budgets übrig. Weiter so!');
+    expect(hints[0].text).toBe('Du hast 38 % deines Budgets übrig.');
     expect(insights({ month: '2026-10', budget: 2000, available: -50, categoryBudgets: [], goals: [] })[0].title).toBe('Monatsbudget überschritten');
   });
 
@@ -114,7 +135,7 @@ describe('Finanz-Reiter: Rechenregeln', () => {
     const today = new Date(2026, 9, 4);
     expect(dayLabel('2026-10-04', today)).toBe('Heute');
     expect(dayLabel('2026-10-03', today)).toBe('Gestern');
-    expect(dayLabel('2026-03-03', today)).toBe('03. Mär. 2026');
+    expect(dayLabel('2026-03-03', today)).toBe('03. März 2026');
   });
 });
 
@@ -167,5 +188,47 @@ describe('budgetsFromSummary', () => {
     );
     expect([b.spent, b.planned, b.limit, b.left, b.pct, b.tone]).toEqual([120, 45, 300, 135, 55, 'ok']);
     expect(categoryBudgetStatus({ spent: 250, planned: 60, limit: 300, pct: 103 })).toBe('Überschritten');
+  });
+});
+
+describe('monthReview', () => {
+  const names: Record<number, string> = { 1: 'Wohnen', 2: 'Lebensmittel', 3: 'Freizeit', 4: 'Sonstiges' };
+  const name = (cid: number | null) => (cid === null ? 'Ohne Kategorie' : names[cid]);
+  const pay = (amount: number, date: string, goal_title: string): SavingsContributionDto => ({
+    id: ++id, goal: 1, goal_title, amount: amount.toFixed(2), date,
+  });
+
+  it('fasst einen Monat aus echten Buchungen zusammen', () => {
+    const rows = [
+      tx(500, '2026-10-01', { category: 1 }),
+      tx(200, '2026-10-05', { category: 2 }),
+      tx(100, '2026-10-09', { category: 3 }),
+      tx(20, '2026-10-12', { category: 4 }),
+      tx(2000, '2026-10-01', { type: 'INCOME', category: 9 }),
+      tx(1000, '2026-09-10', { category: 1 }),
+    ];
+    const r = monthReview('2026-10', rows, [
+      pay(300, '2026-10-02', 'Japan'),
+      pay(500, '2026-10-03', 'Wohnung'),
+      pay(100, '2026-10-20', 'Notgroschen'),
+      pay(-50, '2026-10-21', 'Japan'),
+      pay(999, '2026-09-30', 'Japan'),
+    ], name);
+    expect(r.name).toBe('Oktober');
+    expect(r.expenses).toBe(820);
+    expect(r.delta?.up).toBe(false);
+    expect(r.delta?.text).toContain('weniger als im September');
+    expect(r.top.map((c) => [c.name, c.amount, c.pct])).toEqual([['Wohnen', 500, 100], ['Lebensmittel', 200, 40], ['Freizeit', 100, 20]]);
+    // netto: Entnahmen werden abgezogen; Vormonat zählt nicht
+    expect(r.saved).toBe(850);
+    expect(r.goals).toEqual([{ title: 'Wohnung', amount: 500 }, { title: 'Japan', amount: 300 }]);
+    expect(r.hasData).toBe(true);
+  });
+
+  it('ohne Buchungen im Monat gibt es keinen Rückblick und keinen Vergleich', () => {
+    const r = monthReview('2026-10', [tx(80, '2026-08-03')], [], name);
+    expect(r.hasData).toBe(false);
+    expect(r.top).toEqual([]);
+    expect(r.delta).toBeNull();
   });
 });

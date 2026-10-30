@@ -534,6 +534,41 @@ def budget_categories(user, figures) -> list[dict]:
     return result
 
 
+class PrivateYearSummaryView(PrivateMixin, APIView):
+    """Das Budgetjahr auf einen Blick: je Monat Budget und — bis zum laufenden Monat — dieselben Kennzahlen wie
+    summary/ (month_figures), damit „im Budget geblieben“ hier nie etwas anderes sagt als im Monat selbst.
+    Künftige Monate tragen nur das geplante Budget. Nur lesend, nur eigene Daten."""
+
+    def get(self, request):
+        raw = request.query_params.get('year', str(timezone.localdate().year))
+        if not (raw.isdigit() and len(raw) == 4 and 2000 <= int(raw) <= 2100):
+            raise ValidationError({'year': 'Bitte ein Jahr zwischen 2000 und 2100 angeben.'})
+        year = int(raw)
+        current = timezone.localdate().replace(day=1)
+        months = []
+        for number in range(1, 13):
+            start, end = month_bounds(date(year, number, 1))
+            row = {'month': start.strftime('%Y-%m'), 'budget': None, 'expenses': None, 'saved': None,
+                   'available': None, 'has_data': False, 'state': 'future' if start > current else 'past'}
+            if start == current:
+                row['state'] = 'current'
+            if start > current:
+                budget = MonthlyBudget.for_month(request.user, start)
+                row['budget'] = money(budget.amount) if budget else None
+            else:
+                figures = month_figures(request.user, start, end)
+                budget = figures['budget']
+                row.update({'budget': money(budget.amount) if budget else None,
+                            'expenses': money(figures['expense']), 'saved': money(figures['saved']),
+                            'available': money(figures['available']) if budget else None,
+                            # Nur echte Bewegungen: Buchungen oder Einzahlungen im Monat. figures['saved'] enthält auch
+                            # geplante Raten und gehaltenes Erspartes — ein Monat ohne jede Buchung wäre sonst „gehalten“.
+                            'has_data': figures['rows'].exists() or SavingsContribution.objects.filter(
+                                owner=request.user, date__gte=start, date__lt=end).exists()})
+            months.append(row)
+        return Response({'year': raw, 'currency': 'EUR', 'months': months})
+
+
 class PrivateSummaryView(PrivateMixin, APIView):
     def get(self, request):
         raw = request.query_params.get('month', timezone.localdate().strftime('%Y-%m'))

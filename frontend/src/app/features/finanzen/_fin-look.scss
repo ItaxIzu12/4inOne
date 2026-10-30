@@ -1,0 +1,319 @@
+// Finanzen — gemeinsame Formen aller Ansichten (27.10.2026), eingebunden in private-finance (finance-hero.scss) und
+// finance-period (beide Komponenten kapseln ihre Stile, daher als Teildatei statt global):
+//   .fin-hero      Kopfkarte: eine große Zahl (.fin-hero__main), darunter/rechts ruhige Werte (.hero-stats),
+//                  optional Kurve, Balken oder Aufschlüsselung. .kpis/.kpi/.kpi__label bleiben als Klassen
+//                  (Tests, Meldungen) und verlieren hier ihr Kachel-Aussehen.
+//   .day-head      Tagesüberschrift in Listen („Heute“, „Samstag, 24. Oktober“) mit Tagessumme.
+//   .seg           Segment-Umschalter (Zeitraum, Art der Transaktionen): Sage-Spur, gewähltes Feld weiß.
+// Ausgaben stehen in Tinte, nur Einnahmen sind farbig (grün) — wie im Kontoauszug.
+
+.kpis.fin-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); // die alte .kpis-Regel legt vier Spalten an
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 28px 32px 24px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: #fff;
+}
+.fin-hero__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px 48px;
+}
+.fin-hero .kpi.fin-hero__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.fin-hero .kpi__label {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.fin-hero .fin-hero__value {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 1.5rem + 2.4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  white-space: nowrap; // ein Betrag bricht nie um („702,29 €“); die Größe passt sich der Breite an
+}
+.fin-hero .fin-hero__value small {
+  margin-left: 4px;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.fin-hero .kpi--danger .fin-hero__value {
+  color: var(--fin-red);
+}
+.fin-hero__sub {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.fin-hero__sub b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+// Ruhige Werte als Spalten mit Haarlinie (keine Kacheln)
+.hero-stats {
+  display: flex;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fin-hero .hero-stat {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 24px;
+  border: 0;
+  border-left: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: none;
+}
+.fin-hero .hero-stat:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.hero-stat dt,
+.hero-stat .kpi__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.hero-stat__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+}
+.hero-stat__dot--income {
+  background: var(--finance-accent);
+}
+.hero-stat__dot--expense {
+  background: var(--fin-red);
+}
+.hero-stat__dot--saved {
+  background: var(--fin-blue);
+}
+.hero-stat__dot--fixed {
+  background: var(--text-primary);
+}
+.hero-stat__dot--variable {
+  background: color-mix(in srgb, var(--text-primary) 30%, #fff);
+}
+.hero-stat__dot--goal {
+  background: var(--finance-accent);
+}
+.fin-hero__sub.is-good {
+  color: var(--finance-accent);
+}
+.fin-hero__sub.is-bad {
+  color: var(--fin-red);
+}
+// Anteil fest / variabel als ein geteilter Balken (Rest = variabel)
+.split-bar {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-primary) 18%, #fff);
+}
+.split-bar__fixed {
+  display: block;
+  height: 100%;
+  background: var(--text-primary);
+}
+.hero-stat dd {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+.hero-stat b,
+.hero-stat .kpi__value {
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.hero-stat small,
+.hero-stat .kpi__hint {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.hero-stat .is-good {
+  color: var(--finance-accent);
+}
+.hero-stat .is-bad {
+  color: var(--fin-red);
+}
+
+// Liste nach Tagen
+.day-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0 2px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+.day-head:first-of-type {
+  margin-top: 4px;
+}
+.day-head__sum {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+// Segment-Umschalter
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--surface-pressed, #ecefea);
+}
+.seg button {
+  flex: 1 1 auto;
+  min-height: 44px; // Projektregel: Umschalter 44 px
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    color 150ms ease-out,
+    box-shadow 150ms ease-out;
+}
+.seg button[aria-pressed='true'] {
+  background: #fff;
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(23 37 35 / 0.12);
+}
+@media (hover: hover) and (pointer: fine) {
+  .seg button:not([aria-pressed='true']):hover {
+    color: var(--text-primary);
+  }
+}
+
+@media (max-width: 760px) {
+  .kpis.fin-hero {
+    gap: 20px;
+    padding: 20px 18px 18px;
+  }
+  .fin-hero__top {
+    gap: 20px;
+  }
+  .hero-stats {
+    width: 100%;
+  }
+  .fin-hero .hero-stat {
+    flex: 1 1 0;
+    padding: 0 12px;
+  }
+  .hero-stat b,
+  .hero-stat .kpi__value {
+    font-size: 16px;
+    white-space: normal;
+  }
+  .hero-stat small,
+  .hero-stat .kpi__hint {
+    font-size: 12px;
+  }
+  .seg {
+    display: flex;
+    width: 100%;
+  }
+  .seg button {
+    padding: 0 8px;
+  }
+}
+// Sehr schmale Handys: die Werte als Zeilen (Bezeichnung links, Betrag rechts) statt drei enger Spalten,
+// und der Umschalter etwas kompakter, damit „Benutzerdefiniert“ ganz hineinpasst
+@media (max-width: 420px) {
+  .hero-stats {
+    flex-direction: column;
+  }
+  .fin-hero .hero-stat {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0 12px;
+    padding: 10px 0 0;
+    border-top: 1px solid var(--border-subtle);
+    border-left: 0;
+  }
+  .fin-hero .hero-stat:first-child {
+    padding-top: 10px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .hero-stat dd {
+    justify-items: end;
+    text-align: right;
+  }
+}
+@media (max-width: 360px) {
+  .seg button {
+    padding: 0 4px;
+    font-size: 13px;
+  }
+}
+
+// „… weitere anzeigen“ unter Listen — überall gleich (Transaktionen, Zeitraum-Ansicht): ruhige Fläche, volle Breite.
+.show-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: #fff;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.show-more:hover {
+  background: var(--surface-hover);
+}
+.show-more:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 2px;
+}

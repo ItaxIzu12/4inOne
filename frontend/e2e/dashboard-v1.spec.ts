@@ -37,7 +37,7 @@ test('no second menu: overdue first, the next appointment on the stage, Demnäch
   expect(await page.locator('.today-row').count()).toBeLessThanOrEqual(5);
 
   // Demnächst: nächste Reise und nächste Frist, je mit Weg dorthin
-  const trip = page.locator('.soon__row.travel');
+  const trip = page.locator('.soon__tile.travel');
   await expect(trip).toContainText('Berlin');
   await expect(trip).toContainText('in 12 Tagen');
   await expect(trip).toHaveAttribute('href', /\/demo\/reisen\?trip=/);

@@ -632,28 +632,14 @@
   gap: 10px 16px;
   margin-bottom: 18px;
 }
-// Leise Nebenaktion — der Hauptknopf bleibt „Ausgabe erfassen“ im Kopf.
+// Leise Nebenaktion im Kopf der Transaktionsliste (Textlink mit Symbol); der Hauptknopf bleibt „Transaktion“ oben.
 .tx-import {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  background: #fff;
-  color: #1e6b45;
-  font: inherit;
-  font-size: var(--fs-secondary);
-  font-weight: 600;
-  cursor: pointer;
-}
-.tx-import:hover {
-  border-color: #b9cdc4;
+  flex: none;
+  white-space: nowrap;
 }
 .tx-import app-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 .tx-switch {
   display: inline-flex;
@@ -745,7 +731,6 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
   min-height: 44px;
   padding: 0 14px;
   border: 1px solid var(--line-strong, var(--border-default));
@@ -767,9 +752,13 @@
   .period-bar > .month-switch {
     flex: 1 1 100%;
   }
-  // eigene Zeile, mittig — deutlich getrennt von den Pfeilen darüber
+  // eigene Zeile unter der Auswahl, volle Breite (bündig mit dem Datumsfeld), Text mittig — deutlich getrennt von den
+  // Pfeilen darüber; bleibt umrandet (Zweitaktion), damit er nicht mit „Transaktion erfassen“ konkurriert
   .to-today {
-    margin: 0 auto;
+    order: 1;
+    flex: 1 1 100%;
+    justify-content: center;
+    margin: 0;
   }
 }
 @media (max-width: 560px) {

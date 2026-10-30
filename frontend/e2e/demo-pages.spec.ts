@@ -16,7 +16,7 @@ test('the preview links to the new Finanzen design (not the older one) with demo
   await expect(page).toHaveURL(/\/finanzen$/);
   // Reiter des AKTUELLEN Designs (private-finance.html) — die ältere Demo-Seite hatte andere Bezeichner.
   for (const tab of ['Übersicht', 'Transaktionen', 'Budgets', 'Sparziele']) await expect(page.getByRole('button', { name: tab, exact: true })).toBeVisible();
-  await expect(page.locator('.kpis')).toContainText('Vom Monatsbudget übrig');
+  await expect(page.locator('.kpis')).toContainText('Noch verfügbar im');
   await expect(page.locator('.budget-empty')).toHaveCount(0); // der laufende Monat hat ein Demo-Budget
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 });

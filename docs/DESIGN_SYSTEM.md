@@ -251,7 +251,144 @@ Abstand — nie nur über Farbe.
   Entfernt: Unschärfe-Einblendung, Satzfetzen-Überschriften, Karten mit Häkchen-Listen, 1-2-3-Schritte, dunkler
   Schalter-Block, `motion`-Animationen (Seite 29,6 kB). Einzige Bewegung: das Produktbild setzt sich beim Laden (nur
   transform, nicht bei reduzierter Bewegung). Screenshots in `public/images/landing` neu aus der Demo erzeugt.
-- **Dashboard „Kommandozentrale“ (22.10.2026, Nutzerwahl):** SaaS-typischer Aufbau aus echten
+- **Dashboard-Neugestaltung und Finanzen-Übersicht (27.10.2026, Nutzerwahl „komplett neu“, „Noch verfügbar“,
+  „Ausgabenkurve“):** Kein Kachel-Band mehr. Raster `.board` (Desktop 1.5fr | 1fr, ab 1100 px eine Spalte):
+  `today money` / `foryou soon`; die Finanzen-Karte rückt 44 px ein, damit ihre Oberkante mit der Karte „Heute“
+  abschließt. „Heute“ als Zeitleiste: feine Schiene (2 px `--border-subtle`) durch die Bereichsfelder einer Gruppe
+  (erst ab zwei Zeilen), „Als Nächstes“ mit weißer Marke „in 40 Min.“ in Bereichsfarbe; der Zähler neben „Heute“
+  entfällt (steht schon unter der Begrüßung). Finanzen-Karte: Label „Noch verfügbar im Oktober · von 3.000,00 €“,
+  Zahl 2,75 rem Display, Tagessatz, kompakte Kurve (64 px), „Letzte Transaktionen“ (3). Demnächst als zwei Kacheln
+  (Reise: Zeitraum „8.–10. Nov.“, Titel 22 px Display, Countdown/Aufgaben, Packbalken in Reisefarbe; Haushalt:
+  Frist „8. Nov.“, Einkaufszeile). Seitenleiste ohne „Alles Wichtige …“-Karte.
+  **Ausgabenkurve** `shared/spend-curve` (`app-spend-curve`, Daten `spend-curve-data.ts`): aufsummierte Ausgaben des
+  Monats bis heute (nur Typ EXPENSE), gestrichelt das gleichmäßige Budget-Tempo, Punkt für heute; SVG ohne Bibliothek
+  (`preserveAspectRatio="none"` + `non-scaling-stroke`, Punkte als HTML). Kompakt = Bild mit `aria-label`; voll =
+  `role="slider"` (← → Pos1 Ende, Maus/Finger), Zeile darüber „Heute · 1.272,71 € ausgegeben · Plan: 2.613 €“, Achse
+  „1. Okt. … 31. Okt.“. Fläche Finanzgrün 11 %, keine Verläufe.
+  **Finanzen › Übersicht:** Zeitraum-Umschalter und Monatsauswahl in einer Zeile; darunter eine weiße Kopf-Karte:
+  „Noch verfügbar im Oktober 2026“, Zahl `clamp(2.5rem, …, 3.5rem)` Display, „etwa 140 € pro Tag für die restlichen
+  5 Tage · 23 % von 3.000 €“, rechts drei ruhige Werte mit Punkt (Einnahmen grün, Ausgaben rot, Gespart blau) durch
+  Haarlinien getrennt, darunter die Kurve (200 px, Handy 150 px). Wochenbalken entfallen in der Übersicht.
+  „Letzte Transaktionen“ nach Tagen gruppiert („Heute“, „Gestern“, sonst „Samstag, 24. Oktober“, mit Tagessumme),
+  Ausgaben in Tinte, Einnahmen grün. „Budgets“, „Sparziele“ und „Gut zu wissen“ (statt „Intelligente Hinweise“, ohne
+  Glühbirne und ohne „Weiter so!“) rechts. Klassen `.kpis/.kpi/.kpi--danger` bleiben am Kopf (Tests, Meldungen).
+  Stile in `finance-hero.scss` (Stil-Budget je Datei).
+  **Ganzer Finanzen-Bereich (27.10.2026, zweiter Schritt):** eine Formsprache für alle Ansichten, gemeinsame Teile in
+  `finanzen/_fin-look.scss` (per `@use` in `finance-hero.scss` und `finance-period.scss`, weil beide Komponenten ihre
+  Stile kapseln). **Steuerzeile:** Segment-Umschalter `.seg` (Sage-Spur `--surface-pressed`, Radius 12, gewähltes Feld
+  weiß mit feinem Schatten, 40 px hoch; Handy volle Breite, gleich breite Felder) links, Datumsauswahl rechts in
+  derselben Zeile; unter 900 px darunter. Gilt für Zeitraum (Tag · Woche · Monat · Benutzerdefiniert) und Art
+  (Alle · Ausgaben · Einnahmen · Geplant). Die Bereichs-Reiter bleiben wie in allen Bereichen. **Kopfkarte**
+  `.kpis.fin-hero` (weiß, Radius 16, 28/32 px, Handy 20/18): eine große Zahl (`.fin-hero__value`, Display
+  `clamp(2.25rem, …, 3.5rem)`, nie umbrechend) mit Label und Unterzeile, rechts bzw. darunter ruhige Werte
+  (`.hero-stats`, Haarlinien, farbiger Punkt: Einnahmen grün, Ausgaben rot, Gespart blau, Fixkosten Tinte, Variable
+  hell). Je Ansicht: Übersicht „Noch verfügbar“ + Kurve; Tag/Woche/Zeitraum „Ausgaben“ + Einnahmen/Gespart;
+  Transaktionen › Alle „Ausgaben im …“ + Einnahmen/Gespart; › Ausgaben „Gesamtausgaben“ + Fixkosten/Variable und ein
+  geteilter Balken fest/variabel; Budgets links „Monatsbudget“ (Gültigkeit, „Budget ändern“) | rechts „Noch
+  verfügbar“ mit Balken, Tagessatz und Aufschlüsselung (unter 900 px untereinander); Sparziele „Gespart im …“ +
+  Aktive Sparziele/Sparrate. Alte Kachel-Klassen `.kpis/.kpi/.kpi__label/.kpi--danger` bleiben als Haken für Tests
+  und Meldungen. **Listen** überall nach Tagen gruppiert (`.day-head`: „Heute“, „Gestern“, sonst „Samstag,
+  24. Oktober“, rechts Tagessumme; ein Tag nur mit Geplantem zeigt „geplant“), Zeile ohne Datum; Ausgaben in Tinte,
+  Einnahmen grün. „Letzte Ausgaben“ entfällt in Transaktionen › Ausgaben (stand doppelt zur vollständigen Liste);
+  dort Kategorien | Vergleich nebeneinander, Wiederkehrende darunter. **Sparziele als Karten** (`.goal-cards`, 2
+  Spalten, Handy 1; der Abschnitt selbst ist keine Karte): Symbol · Name/Status · Prozent groß, Balken, „1.800 € von
+  3.000 €“, Fuß mit Zieltermin | Sparrate „300 € / Monat“ + Zeitraum. „Insights & Hinweise“ heißt „Gut zu wissen“.
+  Perioden-Liste mit Kategorie-Feld statt Punkt.
+  **Nachschliff (29.10.2026):** Bereichs-Reiter bis 360 px mit 12 px Schrift und schmaleren Rändern (`domain-layout.scss`),
+  bis 340 px 2 px Innenabstand — alle vier Reiter in allen Bereichen ohne Wischen auch bei 320 px. „Monat im Blick“
+  (Tag) und Monatsbudget (Zeitraum) als Zeilen mit Haarlinie statt getönter Kästchen. Beträge der Finanzen mit
+  geschütztem Leerzeichen vor „€“. Kurve: Zeile „Budget anteilig: 2.806 €“ statt „Plan“, darunter eine Legende
+  („Ausgaben, aufsummiert“ durchgezogen · „Budget gleichmäßig auf den Monat verteilt“ gestrichelt). Dialoge:
+  Beträge beim Bearbeiten deutsch („6,50“, „3.000,00“ statt „6.50“/„3000.00“); Betrag im Transaktions-Dialog als
+  Mittelpunkt (64 px Feld, 34 px Display, fett, Einnahme grün).
+  Verständlichkeit: Vormonatsvergleich in Worten („12 % mehr als im September“, „50 € weniger als im September“,
+  „so viel wie im …“) statt „+ 12 % zu September“ (`finance-tabs.ts › deltaLabel/deltaEuro`); Anteil „23 % deines
+  Budgets von 3.000 €“.
+  Sprung zurück („Aktueller Monat/Woche/Tag“, `.to-today`) steht am Rechner links neben der Datumsauswahl und kommt in
+  der Tab-Reihenfolge davor; am Handy in eigener Zeile darunter, volle Breite bündig mit dem Datumsfeld (Text mittig, umrandet), damit die Auswahl nicht springt, wenn er
+  erscheint. Gilt in Übersicht, Zeiträumen, Transaktionen, Budgets und Sparzielen.
+  Hauptaktion je Reiter (Kopf am Rechner, schwebender Knopf am Handy, `headAction()`): Übersicht und Transaktionen
+  „Transaktion“ (Name „Transaktion erfassen“); Budgets „Budget“ mit Stift („Budget ändern“) bzw. Plus („Budget
+  festlegen“) — der kleine Link „Budget ändern“ in der Kopfkarte und der Knopf im leeren Budget-Monat entfallen
+  (genau ein Einstieg); Sparziele „Sparziel“ („Sparziel erstellen“) — der zweite Knopf über der Liste entfällt. Der
+  Abstandhalter des Handy-Knopfs hält das Seitenende frei.
+  **Verständlichkeit für neue Nutzer (29.10.2026):** (1) Übersicht eines neuen Kontos: Karte „So startest du mit
+  Finanzen“ (`.start`, „0 von 3 erledigt“) mit drei Schritten — Monatsbudget festlegen · Erste Ausgabe erfassen (darunter
+  „Oder Kontoauszug als CSV importieren“) · Sparziel anlegen (optional); Kreis mit Nummer, erledigt grün mit Haken und
+  durchgestrichen; jeder Schritt öffnet den vorhandenen Dialog. Sichtbar, solange Budget oder Transaktion fehlen; im
+  Monat ohne Budget und ohne Daten ersetzt sie Kopfkarte, Kurve und leere Karten (keine Wand aus Nullen, kein zweiter
+  Startknopf). (2) Unter der großen Zahl aufklappbar „Wie entsteht diese Zahl?“ (`details.calc`): Monatsbudget −
+  ausgegeben − Geplant − Sparbeiträge = Noch verfügbar. (3) Begriffe erklärt, wo sie stehen: `shared/term-hint`
+  (`app-term-hint`, (i) 18 px, Klickfläche 44 px, Toggletip statt Hover, Blase Tinte/weiß, bleibt per Messung 16 px im
+  Bild, Escape/Klick daneben schließt, Text als Statusmeldung) bei Geplant, Sparbeiträge (Übersicht + Budgets) und
+  Fixkosten; unter „Geplant“ in Transaktionen ein Erklärsatz über der Liste.
+  **Monatsrückblick und Fixkosten (29.10.2026):** (4) In den ersten sieben Tagen des laufenden Monats (nicht bei
+  sichtbarer Startliste) steht oben in der Übersicht `section.review` „Dein {Vormonat} im Rückblick“: Zeile mit
+  Ausgaben und Vergleich zum Monat davor in Worten (`deltaLabel`), „Wofür am meisten“ mit den drei größten Kategorien
+  (Name + Betrag, darunter 6-px-Balken relativ zur größten in `categoryColor`), Fakten mit Symbol: für Sparziele
+  zurückgelegt (netto), bis zu zwei Ziele mit Einzahlung, Budget gehalten oder überschritten (aus `summary` des
+  Vormonats). Daten nur aus echten Buchungen (`monthReview()` in `finance-tabs.ts`). „Ausblenden“ (Textknopf rechts
+  oben) speichert den Monat in `localStorage` (`4io-finanzen-rueckblick-ausgeblendet`). (5) Transaktionen › Ausgaben:
+  `section.fixed-costs` ersetzt „Wiederkehrende Ausgaben“ (Überschrift-ID `rec-exp-h` bleibt): „Fixkosten“ mit
+  (i), Summe pro Monat groß (Display, `<small>pro Monat</small>`), darunter „Aufs Jahr gerechnet …“ fett und Anteil an
+  den Ausgaben des Monats, dann die wiederkehrenden Posten als Zeilen mit Kachel. Styles: `finanzen/finance-guide.scss`
+  (Start, Rückblick, Fixkosten, Rechnung, Erklärsatz; ausgelagert wegen des 12-kB-Style-Budgets je Datei).
+  **„Dein Jahr“ im Budgets-Reiter (29.10.2026):** `finanzen/budget-year-card.{ts,html,scss}` ersetzt die Zeile
+  „Jahresplanung · Jahresübersicht ansehen“ (die bleibt nur als Rückfall, solange `summary/year/` lädt oder fehlt). Karte
+  weiß, Rand `--border-subtle`, Radius 16, Abstand oben 24; Raster `1fr auto`. Kopf: H2 „Dein Jahr {Jahr}“ (Display
+  22/20 px), rechts Textknopf „Budgets je Monat“ (Stift) → bestehender Dialog (`app-budget-year`, Titel jetzt „Budgets je
+  Monat · {Jahr}“); ≤ 760 px wird der Knopf zur Fußzeile der Karte (volle Breite, Trennlinie oben, 44 px). Darunter die
+  große Zahl (Ausgaben bisher, Display 30/26 px) mit „ausgegeben von {€} Jahresbudget“ (sekundär) und das Urteil mit
+  Symbol (Haken grün, bei Überschreitung (i) rot): „In X von Y Monaten im Budget geblieben“; bewertet werden nur
+  abgeschlossene Monate mit Budget und Buchungen. Zwölf Säulen als Knöpfe in EINER Reihe (Höhe 132/104 px): getönte
+  Säule (Finanzgrün 11 %) = Monatsbudget, Füllung = Ausgaben, beide relativ zur höchsten Säule; gehalten
+  `--finance-accent`, überschritten `--fin-red`, laufender Monat Finanzgrün 45 %, ohne Budget Grau 45 %, künftige nur
+  Tönung; 2-px-Grundlinie für leere Monate. Monatsname darunter (Jan…Dez; ≤ 520 px Anfangsbuchstabe; laufender Monat
+  fett, angezeigter Monat fett + unterstrichen, `aria-current`). Jede Säule mit `aria-label` in Worten (Monat, ausgegeben,
+  Budget, Zustand bzw. „um … überschritten“). Antippen: Monat wechseln, Fokus bleibt, Sprung zur Budget-Kopfkarte
+  (`scroll-margin-top` 160/230 px, ohne Animation bei reduzierter Bewegung). Zielgröße: ab 360 px ≥ 24 px breit; bei
+  320 px gilt die WCAG-2.2-Ausnahme „gleichwertige Bedienung“ (Monatsauswahl, Dialog). Füllung wächst einmal von unten
+  (520 ms, aus bei `prefers-reduced-motion`). Legende: Im Budget · Überschritten · Laufender Monat · Monatsbudget
+  (· Ohne Budget), Handy 2 × 2.
+  Dialog „Budgets je Monat“ (`budget-timeline.scss`): Kopf (Titel, Zahl, Jahr) bleibt stehen, nur die Monatsliste scrollt
+  (`overflow-y: auto`, `overscroll-behavior: contain`, 4 px seitliche Luft für den Fokusrahmen) — das Panel ist in der
+  Höhe begrenzt, vorher waren am Handy September–Dezember nicht erreichbar. Beim Öffnen (`openYear()`) wird der
+  angezeigte Monat in den sichtbaren Teil gescrollt. ≤ 640 px: „Jahr“ steht neben der Auswahl statt darüber.
+  **UI-Taste-Durchgang Finanzen (30.10.2026):** (a) Ausgabenkurve (Finanzen + Startseite): Tempo-Linie = Monatsbudget
+  minus Sparbeiträge (`spendingBudget()` in `shared/spend-curve/spend-curve-data.ts`), dieselbe Grundlage wie „Noch
+  verfügbar“; Legende „Budget für Ausgaben (ohne Sparbeiträge), gleichmäßig verteilt“. (b) „Kontoauszug importieren“
+  ist ein Textlink mit Symbol im Kopf der Transaktionsliste (`.all-rows__head .tx-import`), nicht mehr in der
+  Steuerleiste. (c) „Budgetstatus“ erscheint nur bei echter Überschreitung (Monatsbudget oder Kategorie über Limit);
+  „fast ausgeschöpft“ zeigt allein die Kategorie-Zeile. „Gut zu wissen“: Übersicht ohne „Monatsbudget prüfen“ und
+  „liegt im Plan“ (`overviewHints`), Sparziele nur „fast erreicht“ und „langfristig“ (`goalHints`). (d) Datumsangaben im
+  Text mit einer Monatskurzform `ABBR` (Jan., Feb., März, Apr., Mai, Juni, Juli, Aug., Sept., Okt., Nov., Dez.):
+  „01. Okt. 2026“, „Ziel Juli 2027“, Sparziel-Zeitraum „Ab Apr. 2026“, „Juli – Sept. 2031“, „Nur Okt. 2026“.
+  Buchungen und Tagessummen in der Zeitraum-Ansicht immer mit Cent (`exact()`), wie in der Transaktionsliste.
+  (e) Budget-Dialog: Lösch-Hinweis als leise `.impact-note` (Symbol, 13 px, sekundär) statt großer Absatz; der gesperrte
+  Startmonat erklärt sich („Er lässt sich nicht ändern – …“). (f) Kategorie-Budgets ≤ 520 px: Name und „… verfügbar“
+  immer in einer Zeile (Name kürzt mit …), kein Pfeil — jede Zeile gleich gebaut.
+  (g) „… weitere anzeigen“ überall gleich: `.show-more` in `_fin-look.scss` (volle Breite, 44 px, weiß, Rand
+  `--border-subtle`, Text Akzent 600; Hover `--surface-hover`) — Transaktionen und Zeitraum-Ansicht. (h) Ausgaben:
+  Vergleichskarte heißt „Die letzten sechs Monate“ und zeigt nur den Verlauf (Betrag/Vergleich stehen in der
+  Kopfkarte); Ringdiagramm ≤ 520 px 140 px. Fixkosten-Zeilen kurz: „✓ Gebucht“, „Noch offen · im Budget eingeplant“,
+  „Nächste: …“ („monatlich“ sagt die Überschrift). (i) Untertitel im Kopf je Reiter (`intro()`). (j) Benutzerdefinierter
+  Zeitraum: Datum nur einmal unter der großen Zahl. (k) Filter und Suche der Transaktionsliste nur, wenn es Einträge gibt
+  oder gefiltert wird; leeres „Geplant“ sagt nur „Für … ist nichts geplant.“ (Erklärung steht darüber). (l) „Bereits
+  gespart“ startet mit „0,00“. (m) Übersicht Desktop: links Letzte Transaktionen + Gut zu wissen, rechts Budgets +
+  Sparziele (Spalten etwa gleich lang; am Handy folgt „Gut zu wissen“ direkt auf die Transaktionen).
+  **Rechenprüfung (30.10.2026):** (n) Vormonatsvergleich fair: im laufenden Monat bis heute gegen den Vormonat bis
+  zum selben Tag (`compareDay`, `monthTotalUntil`, `savedUntil`), Text „… als zur gleichen Zeit im September“;
+  abgeschlossene Monate ganz gegen ganz. (o) „Ausgaben“ in Übersicht und „Alle Transaktionen“ = bis heute gebucht
+  (`spentNow`, wie „Bereits ausgegeben“); künftig datierte stehen unter „Geplant“. (p) „Fast erreicht“: höchstens 15 %
+  fehlen, bei kleinen Zielen höchstens 100 € UND 25 %; „im Plan“ beachtet das Ende des Sparzeitraums. (q) „Dein Jahr“:
+  Sparbeiträge als blauer Abschnitt auf der Ausgaben-Füllung (`--fin-blue`, Legende „Für Sparziele“), Kopf „… ausgegeben,
+  dazu … für Sparziele – von … Jahresbudget“; ein Monat zählt nur mit echten Buchungen oder Einzahlungen als bewertet.
+  (r) Tagessatz auf der Startseite abgerundet wie im Finanzen-Tab. Backend: Warnungen (`available_for_month`) ziehen
+  geplante wiederkehrende Ausgaben ab wie `month_figures`.
+  Backend: `GET finanzen/private/summary/year/?year=JJJJ` (nur lesend, nur eigene Daten, Jahr 2000–2100) liefert je Monat
+  budget, expenses, saved, available, has_data, state (past/current/future) — bis zum laufenden Monat über
+  `month_figures`, damit Jahr und Monat nie verschieden urteilen; künftige Monate nur mit Budget.
+- **Dashboard „Kommandozentrale“ (22.10.2026, abgelöst am 27.10.2026):** SaaS-typischer Aufbau aus echten
   Daten. Unter der Begrüßung ein Überblick-Band mit vier Kacheln (Desktop 4 Spalten, ab 1100 px 2 × 2): Heute
   („N offen“, überfällig in Rot), Budget (Zahl + Balken in Finanzgrün), Reise und Haushalt (aus „Demnächst“; fehlt
   eines, steht dort ein ehrlicher Leerzustand mit Weg in den Bereich). Kachel: weiß, Rand `--border-subtle`, Radius 16,

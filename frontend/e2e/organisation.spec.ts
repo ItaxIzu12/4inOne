@@ -244,9 +244,14 @@ test.describe('demo preview', () => {
     const cal = page.locator('app-org-calendar');
     await cal.getByRole('button', { name: 'Monat', exact: true }).click();
     const current = await cal.locator('#cal-title').innerText();
+    // Zwei Monate vor: der 1. des nächsten Monats kann noch in der laufenden Woche liegen (z. B. 1. November an einem
+    // Sonntag), dann gäbe es zu Recht keinen Knopf „Aktuelle Woche“
     await cal.getByRole('button', { name: 'Nächster Monat' }).click();
     await expect(cal.locator('#cal-title')).not.toHaveText(current);
-    const title = await cal.locator('#cal-title').innerText(); // z. B. „November 2026“
+    const next = await cal.locator('#cal-title').innerText();
+    await cal.getByRole('button', { name: 'Nächster Monat' }).click();
+    await expect(cal.locator('#cal-title')).not.toHaveText(next);
+    const title = await cal.locator('#cal-title').innerText(); // z. B. „Dezember 2026“
     // In die Woche: die Woche des 1. dieses Monats, nicht die aktuelle
     await cal.getByRole('button', { name: 'Woche', exact: true }).click();
     await expect(cal.locator('.today-btn')).toHaveText('Aktuelle Woche');

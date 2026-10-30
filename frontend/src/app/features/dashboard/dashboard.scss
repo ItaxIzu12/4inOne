@@ -1,9 +1,9 @@
-// Startseite (22.10.2026, „Kommandozentrale“; Band und rechte Spalte: dashboard-side.scss) — „Editorial hell“ wie
-// Website, Login, Onboarding: warmweißer Grund, weiße
-// Karten mit feinem Rand, Tinte, Schibsted Grotesk. Große Begrüßung in der Display-Schrift. Eine Zeilen-Form für
-// alles — Zeit · Bereichs-Farbfeld · Titel/Hinweis · Pfeil. Der Tag in Gruppen (Überfällig, Als Nächstes, Später,
-// Ohne Uhrzeit, Vorbei); „Als Nächstes“ in der Tönung seines Bereichs, Überfälliges über rote Schrift und Symbol.
-// Rechte Spalte: dashboard-side.scss · Menü, Hinweise, Suche: dashboard-parts.scss.
+// Startseite (27.10.2026, Neugestaltung; rechte Spalte: dashboard-side.scss) — „Soft Editorial“ wie Website und
+// Login: Porcelain-Grund, weiße Karten mit feinem Rand, Tinte, Schibsted Grotesk, große Begrüßung in der
+// Display-Schrift. Links der Tag als Zeitleiste (Zeit · Bereichsfeld auf einer feinen Schiene · Titel · Pfeil) in
+// Gruppen (Überfällig, Als Nächstes, Später, Ohne Uhrzeit, Vorbei); „Als Nächstes“ in der Tönung seines Bereichs mit
+// „in 40 Min.“, Überfälliges über rote Schrift und Wort. Rechts Finanzen, Demnächst, Für dich.
+// Menü, Hinweise, Suche: dashboard-parts.scss.
 // Leistung: nur transform/opacity/Hintergrund animiert, keine Weichzeichner, Ladezustände mit fester Höhe (kein CLS).
 :host {
   display: block;
@@ -87,38 +87,54 @@ h1 {
   font-size: 17px;
 }
 
-// ---------- Raster ----------
+// ---------- Raster: links der Tag (über die ganze Höhe), rechts Finanzen · Demnächst · Für dich ----------
 .board-overview {
   display: grid;
   gap: var(--space-5);
 }
-.board-grid {
+.board {
   display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(300px, 1fr);
-  gap: var(--space-6);
+  grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr);
+  // Zwei Zeilen statt einer langen rechten Spalte: oben Tag | Finanzen, darunter Für dich | Demnächst
+  grid-template-areas:
+    'today money'
+    'foryou soon';
+  gap: var(--space-6) var(--space-7);
   align-items: start;
 }
+.board > .today {
+  grid-area: today;
+}
+.board > .money {
+  grid-area: money;
+  margin-top: 44px; // Oberkante wie die Karte „Heute“ (deren Überschrift steht darüber: 32 px + 12 px Abstand)
+}
+.board > .soon {
+  grid-area: soon;
+}
+.board > .for-you {
+  grid-area: foryou;
+}
 .plan,
-.side,
-.side > section {
+.soon,
+.for-you {
   display: grid;
   align-content: start;
   gap: var(--space-3);
 }
-.side {
-  gap: var(--space-6);
-}
-.board-overview > .kpis {
-  margin-bottom: var(--space-3);
-}
 .plan__head {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
   min-height: 32px;
 }
+.plan__head .head-link {
+  margin-left: auto;
+}
 .plan h2,
-.side h2 {
+.soon h2,
+.for-you h2,
+.money h2 {
   margin: 0;
   color: var(--ink);
   font-size: 20px;
@@ -176,11 +192,27 @@ h1 {
   font-size: 15px;
 }
 .today-list {
+  position: relative;
   display: grid;
   gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+// Zeitleiste: eine feine Schiene durch die Bereichsfelder einer Gruppe (Mitte des Felds: Rand 12 + Zeit 56 + Abstand
+// 12 + halbes Feld 18 = 98 px). Nur ab zwei Zeilen — eine einzelne Zeile braucht keine Verbindung.
+.today-list:has(> li + li)::before {
+  content: '';
+  position: absolute;
+  top: 30px;
+  bottom: 30px;
+  left: 97px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--border-subtle);
+}
+.today-list > li {
+  position: relative;
 }
 .today-row {
   display: grid;
@@ -249,10 +281,20 @@ h1 {
   color: var(--muted);
   transition: transform 150ms ease-out;
 }
-// Als Nächstes: in der Tönung seines Bereichs, Uhrzeit größer, „in 2 Std.“ in der dunklen Bereichsfarbe
+// Als Nächstes: in der Tönung seines Bereichs, Uhrzeit größer, „in 2 Std.“ als weiße Marke in der Bereichsfarbe
 .today-row--lead {
-  min-height: 72px;
+  grid-template-columns: 56px 36px minmax(0, 1fr) auto;
+  min-height: 76px;
   background: var(--tone-soft, var(--surface-pressed));
+}
+.until {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-card);
+  color: var(--tone, var(--ink));
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
 }
 .today-row--lead .time {
   font-size: 19px;
@@ -354,8 +396,12 @@ h1 {
 
 // ---------- Breiten ----------
 @media (max-width: 1100px) {
-  .board-grid {
+  .board {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'today' 'money' 'soon' 'foryou';
+  }
+  .board > .money {
+    margin-top: 0;
   }
 }
 @media (max-width: 760px) {
@@ -377,6 +423,12 @@ h1 {
     grid-template-columns: 46px 36px minmax(0, 1fr) 16px;
     gap: var(--space-2);
     padding: 10px var(--space-2);
+  }
+  .today-row--lead {
+    grid-template-columns: 46px 36px minmax(0, 1fr) auto;
+  }
+  .today-list:has(> li + li)::before {
+    left: 79px; // 8 + 46 + 8 + 18 − 1
   }
   .today-row--lead .time {
     font-size: 17px;
