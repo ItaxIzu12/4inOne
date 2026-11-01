@@ -4,6 +4,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MfaApiService } from '../../core/mfa/mfa-api.service';
 import { AppShell } from '../../layout/app-shell';
+import { SettingsLayout } from '../einstellungen/settings-layout';
 
 type Step = 'loading' | 'active' | 'start' | 'scan' | 'codes';
 
@@ -16,7 +17,7 @@ const STEPS = ['App holen', 'Code scannen', 'Bestätigen'];
 @Component({
   selector: 'app-mfa-setup',
   standalone: true,
-  imports: [ErrorNoticeDirective, AppShell, RouterLink],
+  imports: [ErrorNoticeDirective, AppShell, SettingsLayout, RouterLink],
   templateUrl: './mfa-setup.html',
   styleUrls: ['../einstellungen/einstellungen.css', '../profil/profil.css', './mfa-setup.css'],
 })

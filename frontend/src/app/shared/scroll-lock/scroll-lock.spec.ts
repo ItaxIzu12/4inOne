@@ -12,7 +12,8 @@ describe('scroll lock', () => {
   it('locks the html element (the real scroll container) and counts nested locks', () => {
     lockScroll();
     expect(htmlOverflow()).toBe('hidden');
-    expect(document.body.style.overflow).toBe('hidden');
+    // body bleibt unberührt — sonst schnitte height: 100 % die Seite ab und die Scrollposition sprünge auf 0
+    expect(document.body.style.overflow).toBe('');
     lockScroll(); // z. B. „Wirklich löschen?“ über einem Formular
     unlockScroll();
     expect(htmlOverflow()).toBe('hidden');

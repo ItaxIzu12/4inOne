@@ -478,6 +478,11 @@ DETAIL_VIEW_COVERAGE = {
     'InvitationAcceptView': 'core/test_invitations.py (IDOR)', 'InvitationDeclineView': 'core/test_invitations.py (IDOR)',
     'InvitationRevokeView': 'core/test_invitations.py (IDOR)', 'SessionDetailView': 'core/test_sessions.py',
     'TripRemindersView': 'test_no_list_endpoint… + test_trip_overview', 'TripSavingsView': 'test_connections_never_reveal…',
+    # Gemeinsame Kalender (31.10.2026): fremd = 404, Mitglied ohne Besitz = 403, Rollen, Austreten/Entfernen/Löschen
+    'CalendarDetailView': 'organisation/test_shared_calendars.py (foreign ids, only the owner manages)',
+    'CalendarMemberView': 'organisation/test_shared_calendars.py (leaving/removing, roles)',
+    'ShareGivenView': 'organisation/test_calendar_shares.py (only own shares, role change, ending)',
+    'ShareReceivedView': 'organisation/test_calendar_shares.py (only shares made for me)',
 }
 
 

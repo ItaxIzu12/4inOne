@@ -9,13 +9,14 @@ for (const width of [320, 360, 390]) {
       ['finanzen', 'expenses', 'Transaktion erfassen'], ['haushalt', 'aufgaben', 'Aufgabe hinzufügen'],
       ['organisation', 'calendar', 'Termin hinzufügen'],
     ]) {
-      // Haushalt-Übersicht: bewusst kein Hauptknopf — weder im Kopf noch unten. Finanzen hat eine feste
+      // Haushalt-Übersicht: bewusst kein Hauptknopf — weder im Kopf noch unten (die Avatare „wer ist dabei“ sind keine
+      // Hauptaktion und zählen hier nicht). Finanzen hat eine feste
       // Hauptaktion „+ Transaktion“ in allen Reitern (Design System V3). Organisation startet im Kalender.
       await page.goto(`/demo/${domain}`);
       await expect(page.locator('.domain-tabs')).toBeVisible();
       if (domain === 'haushalt') {
         await expect(page.locator('app-mobile-action')).toHaveCount(0);
-        await expect(page.locator('.domain-heading button')).toHaveCount(0);
+        await expect(page.locator('.domain-heading button:not(app-household-people button)')).toHaveCount(0);
       }
       if (domain === 'finanzen') await expect(page.locator('app-mobile-action button')).toHaveText('Transaktion erfassen');
       if (domain === 'finanzen') {
@@ -29,7 +30,7 @@ for (const width of [320, 360, 390]) {
       const button = page.locator('app-mobile-action button');
       await expect(button).toBeVisible();
       await expect(button).toHaveText(label);
-      await expect(page.locator('.domain-heading button')).toBeHidden();
+      await expect(page.locator('.domain-heading button:not(app-household-people button)')).toBeHidden();
       const box = await button.boundingBox();
       const navBox = await page.locator('.mobile-nav').boundingBox();
       expect(box!.height).toBeGreaterThanOrEqual(48);

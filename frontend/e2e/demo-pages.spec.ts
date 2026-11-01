@@ -27,10 +27,9 @@ test('the preview links to Organisation with demo data, never to the login scree
   await page.getByRole('link', { name: 'Organisation' }).first().click();
   await expect(page).toHaveURL(/\/organisation$/);
   await expect(page).not.toHaveURL(/\/login/);
-  // Organisation startet im Kalender (keine eigene Übersicht) — mit Demo-Terminen
-  await expect(page.locator('#org-tab-calendar')).toHaveAttribute('aria-current', 'page');
-  await page.getByRole('button', { name: 'Tag', exact: true }).click();
-  await expect(page.locator('.agenda__row').getByText('Zahnarzt').first()).toBeVisible(); // Demo-Termin
+  // Organisation startet bei „Heute“ — mit dem Demo-Termin des Tages in der Tageslinie
+  await expect(page.locator('#org-tab-today')).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.line__event').getByText('Zahnarzt').first()).toBeVisible(); // Demo-Termin
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 });
 
@@ -58,6 +57,6 @@ test('the preview links to Reisen with demo data, never to the login screen', as
   await expect(page).not.toHaveURL(/\/login/);
   await expect(page.getByRole('heading', { name: 'Reisen', exact: true })).toBeVisible();
   // Demo: Meine Reisen zeigt die Berlin-Reise als Karte.
-  await expect(page.locator('app-trip-list .trip', { hasText: 'Berlin Wochenende' })).toBeVisible();
+  await expect(page.locator('app-trip-list .pass', { hasText: 'Berlin Wochenende' })).toBeVisible();
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 });

@@ -13,6 +13,8 @@ let nextId = 0;
  * (`HH:MM:SS` aus der API wird akzeptiert). Erst die Stunde, dann die Minute (5er-Schritte); mit der Minute
  * schließt sich das Fenster. Tasten: Pfeile bewegen, Pos1/Ende springen, Enter/Leertaste wählt, Esc schließt.
  */
+let timeTextId = 0;
+
 @Component({
   selector: 'app-time-picker',
   standalone: true,
@@ -34,6 +36,8 @@ export class AppTimePicker implements ControlValueAccessor, AfterViewInit {
 
   protected readonly labelledBy = signal<string | null>(null);
   protected readonly ariaLabel = signal<string | null>(null);
+  /** Der sichtbare Wert gehört zum vorgelesenen Namen („Beginn, 09:00 Uhr“) — WCAG 2.5.3 „Label in Name“. */
+  protected readonly textId = `tp-text-${++timeTextId}`;
   protected readonly open = signal(false);
   private readonly formDisabled = signal(false);
   protected readonly disabled = computed(() => this.formDisabled() || this.disabledInput());

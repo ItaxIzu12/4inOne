@@ -1,0 +1,251 @@
+// Haushalt › Einkaufen (31.10.2026): Ansicht „Kacheln“ (Muster wie Bring!) neben der Liste, und der Weg zu den
+// Finanzen sichtbar in der Leiste „im Wagen“. Eigene Datei wegen des Stil-Budgets von einkauf-tab.scss; die
+// Bereichsfarben der Kacheln kommen aus den tone--*-Klassen dort.
+
+// ---------- Umschalter Liste | Kacheln ----------
+.view-switch {
+  display: inline-flex;
+  gap: 2px;
+  margin: 12px 0 2px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+.view-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: calc(var(--radius-md) - 3px);
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-meta);
+  cursor: pointer;
+}
+.view-switch button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+}
+.view-switch app-icon {
+  width: 16px;
+  height: 16px;
+}
+.view-switch button:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 1px;
+}
+
+// ---------- Kacheln ----------
+.tiles__head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 18px 0 8px;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+.tiles__head span {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tile {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 96px;
+  padding: 12px 8px;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 140ms ease;
+}
+.tile:active {
+  transform: scale(0.96);
+}
+.tile:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 2px;
+}
+.tile__icon {
+  width: 26px;
+  height: 26px;
+}
+.tile__name {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  line-height: 1.25;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+.tile__qty {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+// Im Wagen: ruhig, mit Haken; antippen legt zurück auf die Liste
+.tile--done {
+  min-height: 72px;
+  background: var(--surface-sunken);
+}
+.tile--done .tile__icon {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+.tile--done .tile__name {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+// Oft gekauft: weiß mit gestricheltem Rand (Vorschlag, nicht auf der Liste)
+.tile--suggest {
+  position: relative;
+  min-height: 84px;
+  border: 1.5px dashed var(--border-strong, #c9d0c8);
+  background: var(--surface);
+}
+.tile--suggest .tile__icon {
+  color: var(--text-secondary);
+}
+.tile__plus {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+.tile--suggest:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.tiles__empty {
+  grid-column: 1 / -1;
+  padding: 18px 4px;
+}
+
+// ---------- Leiste „im Wagen“: Weg zu den Finanzen sichtbar ----------
+.checkout-bar__count {
+  display: grid;
+  gap: 1px;
+}
+.checkout-bar__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: color-mix(in srgb, #fff 82%, transparent);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.ck-short {
+  display: none;
+}
+.checkout-bar__hint app-icon {
+  width: 13px;
+  height: 13px;
+}
+
+@media (max-width: 560px) {
+  // Handy: kurzer Knopf, damit „wird zur Ausgabe in Finanzen“ in eine Zeile passt (Name bleibt per aria-label)
+  .ck-long {
+    display: none;
+  }
+  .ck-short {
+    display: inline;
+  }
+  .view-switch {
+    display: flex;
+  }
+  .view-switch button {
+    flex: 1;
+    justify-content: center;
+  }
+  .tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .tile {
+    min-height: 88px;
+  }
+}
+
+// ---------- Gruppenkopf: Auf-/Zuklappen und „⋯“ je 44 px (WCAG 2.2 Zielgröße, keine Überlappung) ----------
+.group__head {
+  grid-template-columns: 32px minmax(0, 1fr) auto 44px 44px;
+  column-gap: 4px;
+}
+.group__toggle {
+  width: 44px;
+  height: 44px;
+}
+
+// ---------- Handy/Tablet: Listen als umbrechende Pillen statt abgeschnittener Kartenreihe ----------
+@media (max-width: 900px) {
+  .list-cards {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0 0 4px;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+  .list-card {
+    flex: 0 1 auto;
+    border-radius: 999px;
+  }
+  .list-card__main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 14px 0 12px;
+  }
+  .list-card__icon {
+    width: 20px;
+    height: 20px;
+  }
+  .list-card__icon app-icon {
+    width: 18px;
+    height: 18px;
+  }
+  .list-card__text {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .list-card__text b {
+    white-space: nowrap;
+  }
+  .list-card .bar {
+    display: none;
+  }
+  // „Einkauf wird zur Ausgabe“ sagt am Handy schon die Leiste „im Wagen“
+  .side-card--soft {
+    display: none;
+  }
+}
+
+// Listennamen nicht mitten im Wort trennen („Wochenein-kauf“) — nur ein einzelnes überlanges Wort bricht notfalls
+.list-card__text b {
+  hyphens: manual;
+}
+
+// Sehr schmale Handys: der Hinweis darf umbrechen, sonst passt die Leiste nicht in die Breite
+@media (max-width: 360px) {
+  .checkout-bar__hint {
+    white-space: normal;
+  }
+}

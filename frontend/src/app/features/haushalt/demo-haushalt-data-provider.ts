@@ -1,3 +1,4 @@
+import { AttachmentItem } from '../../shared/attachments/attachment-field';
 import { Injectable, inject } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -37,9 +38,10 @@ import { UPCOMING_DAYS, cancellationDeadline, computeContractStatus, isRunning, 
 // Demo-Implementierung ist; eine Fehlregistrierung in app.routes.ts fällt
 // dadurch sofort auf, statt stillschweigend echte Daten zu schreiben.
 
-const ANNA: MemberLoadDto = { user_id: 'demo-member-anna', name: 'Anna', points: 0, count: 0 };
-const BEN: MemberLoadDto = { user_id: 'demo-member-ben', name: 'Ben', points: 0, count: 0 };
-const MEMBERS = [ANNA, BEN];
+// Dieselben Personen wie überall in der Demo: Sophie (du) und Max im Haushalt; Lena ist eine Freundin, nicht im Haushalt.
+const SOPHIE: MemberLoadDto = { user_id: 'demo-member-sophie', name: 'Sophie', points: 0, count: 0 };
+const MAX: MemberLoadDto = { user_id: 'demo-member-max', name: 'Max', points: 0, count: 0 };
+const MEMBERS = [SOPHIE, MAX];
 const memberName = (id: Id | null) => MEMBERS.find((m) => m.user_id === id)?.name ?? null;
 const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString();
 const DEMO_DEFAULT_PRICE = 3.5;
@@ -65,8 +67,8 @@ function item(
     section,
     is_checked: checked,
     checked_at: checked ? hoursAgo(1) : null,
-    checked_by_name: checked ? 'Anna' : null,
-    added_by_name: 'Anna',
+    checked_by_name: checked ? 'Sophie' : null,
+    added_by_name: 'Sophie',
     created_at: hoursAgo(30),
     updated_at: hoursAgo(30),
     ...extra,
@@ -82,8 +84,8 @@ function listItems(list: string, rows: [string, SectionKey, string, boolean?][])
 
 function task(partial: Partial<TaskDto> & Pick<TaskDto, 'id' | 'title'>): TaskDto {
   return {
-    assigned_to: ANNA.user_id,
-    assigned_to_name: ANNA.name,
+    assigned_to: SOPHIE.user_id,
+    assigned_to_name: SOPHIE.name,
     description: '',
     status: 'open',
     due_date: null,
@@ -152,11 +154,11 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
 
   private nextId = 1;
   private lists: Omit<ShoppingListDto, 'item_count' | 'checked_count'>[] = [
-    { id: DEFAULT_LIST, name: 'Wocheneinkauf', description: 'Unser regelmäßiger Wocheneinkauf für den Haushalt.', icon: 'wagen', archived: false, created_at: '2024-04-12T10:00:00Z', updated_at: hoursAgo(2), created_by_name: 'Anna' },
-    { id: 'demo-list-2', name: 'Drogerie', description: 'Pflege und Bad.', icon: 'drogerie', archived: false, created_at: '2024-05-02T10:00:00Z', updated_at: hoursAgo(26), created_by_name: 'Anna' },
-    { id: 'demo-list-3', name: 'Baumarkt', description: 'Für das Kinderzimmer.', icon: 'baumarkt', archived: false, created_at: '2024-06-20T10:00:00Z', updated_at: hoursAgo(72), created_by_name: 'Ben' },
-    { id: 'demo-list-4', name: 'Getränke', description: '', icon: 'getraenke', archived: false, created_at: '2024-07-01T10:00:00Z', updated_at: hoursAgo(5), created_by_name: 'Ben' },
-    { id: 'demo-list-5', name: 'Party / Gäste', description: 'Grillabend am Samstag.', icon: 'party', archived: false, created_at: '2024-08-15T10:00:00Z', updated_at: hoursAgo(48), created_by_name: 'Anna' },
+    { id: DEFAULT_LIST, name: 'Wocheneinkauf', description: 'Unser regelmäßiger Wocheneinkauf für den Haushalt.', icon: 'wagen', archived: false, created_at: '2024-04-12T10:00:00Z', updated_at: hoursAgo(2), created_by_name: 'Sophie' },
+    { id: 'demo-list-2', name: 'Drogerie', description: 'Pflege und Bad.', icon: 'drogerie', archived: false, created_at: '2024-05-02T10:00:00Z', updated_at: hoursAgo(26), created_by_name: 'Sophie' },
+    { id: 'demo-list-3', name: 'Baumarkt', description: 'Für das Kinderzimmer.', icon: 'baumarkt', archived: false, created_at: '2024-06-20T10:00:00Z', updated_at: hoursAgo(72), created_by_name: 'Max' },
+    { id: 'demo-list-4', name: 'Getränke', description: '', icon: 'getraenke', archived: false, created_at: '2024-07-01T10:00:00Z', updated_at: hoursAgo(5), created_by_name: 'Max' },
+    { id: 'demo-list-5', name: 'Party / Gäste', description: 'Grillabend am Samstag.', icon: 'party', archived: false, created_at: '2024-08-15T10:00:00Z', updated_at: hoursAgo(48), created_by_name: 'Sophie' },
   ];
   private items: ShoppingItemDto[] = [
     item('demo-item-1', 'Bananen', 'obst_gemuese', '1 kg'),
@@ -165,9 +167,9 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     item('demo-item-4', 'Joghurt', 'kuehlregal', '4 Becher'),
     item('demo-item-5', 'Nudeln', 'vorrat', '500 g'),
     item('demo-item-6', 'Spülmittel', 'haushalt'),
-    item('demo-item-7', 'Äpfel', 'obst_gemuese', '1 kg', { is_checked: true, added_by_name: 'Ben', created_at: hoursAgo(20) }),
+    item('demo-item-7', 'Äpfel', 'obst_gemuese', '1 kg', { is_checked: true, added_by_name: 'Max', created_at: hoursAgo(20) }),
     item('demo-item-8', 'Tomaten', 'obst_gemuese', '500 g', { is_checked: true, created_at: hoursAgo(2) }),
-    item('demo-item-9', 'Paprika (rot)', 'obst_gemuese', '3 Stück', { added_by_name: 'Ben', created_at: hoursAgo(5) }),
+    item('demo-item-9', 'Paprika (rot)', 'obst_gemuese', '3 Stück', { added_by_name: 'Max', created_at: hoursAgo(5) }),
     item('demo-item-10', 'Käse (Gouda)', 'kuehlregal', '250 g'),
     item('demo-item-11', 'Brötchen', 'backwaren', '6 Stück', { created_at: hoursAgo(24) }),
     ...listItems('demo-list-2', [
@@ -214,14 +216,14 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     task({ id: 'demo-task-5', title: 'Kühlschrank reinigen', effort: 2, due_date: addDaysIso(3), room: 'kueche', duration_minutes: 20, priority: 'niedrig' }),
     task({ id: 'demo-task-6', title: 'Bettwäsche wechseln', description: 'Alle Betten', recurrence: 'weekly', recurrence_days: 7, due_date: addDaysIso(4), room: 'schlafzimmer', duration_minutes: 15, assigned_to: null, assigned_to_name: null, streak: 3 }),
     // Weitere Routinen — erst ab morgen fällig, damit „Heute“ ruhig bleibt.
-    task({ id: 'demo-task-7', title: 'Küche sauber halten', description: 'Arbeitsflächen, Spüle, Herd', recurrence: 'daily', recurrence_days: 1, due_date: addDaysIso(1), due_time: '20:00:00', room: 'kueche', duration_minutes: 15, streak: 12, last_done_at: hoursAgo(3), last_done_by_name: 'Anna' }),
-    task({ id: 'demo-task-8', title: 'Wäsche waschen', description: 'Bei Bedarf, mind. 1× täglich', recurrence: 'daily', recurrence_days: 1, due_date: addDaysIso(1), due_time: '22:00:00', room: 'waschkueche', duration_minutes: 10, assigned_to: BEN.user_id, assigned_to_name: BEN.name, streak: 5, last_done_at: hoursAgo(2), last_done_by_name: 'Ben' }),
-    task({ id: 'demo-task-9', title: 'Staubsaugen', description: 'Alle Wohnräume', recurrence: 'weekly', recurrence_days: 7, effort: 2, due_date: addDaysIso(2), room: 'alle', duration_minutes: 30, assigned_to: BEN.user_id, assigned_to_name: BEN.name, streak: 6 }),
-    task({ id: 'demo-task-10', title: 'Rauchmelder prüfen', description: 'Testknopf drücken', recurrence: 'monthly', recurrence_months: 1, due_date: addDaysIso(25), room: 'flur', duration_minutes: 5, assigned_to: BEN.user_id, assigned_to_name: BEN.name, streak: 3 }),
+    task({ id: 'demo-task-7', title: 'Küche sauber halten', description: 'Arbeitsflächen, Spüle, Herd', recurrence: 'daily', recurrence_days: 1, due_date: addDaysIso(1), due_time: '20:00:00', room: 'kueche', duration_minutes: 15, streak: 12, last_done_at: hoursAgo(3), last_done_by_name: 'Sophie' }),
+    task({ id: 'demo-task-8', title: 'Wäsche waschen', description: 'Bei Bedarf, mind. 1× täglich', recurrence: 'daily', recurrence_days: 1, due_date: addDaysIso(1), due_time: '22:00:00', room: 'waschkueche', duration_minutes: 10, assigned_to: MAX.user_id, assigned_to_name: MAX.name, streak: 5, last_done_at: hoursAgo(2), last_done_by_name: 'Max' }),
+    task({ id: 'demo-task-9', title: 'Staubsaugen', description: 'Alle Wohnräume', recurrence: 'weekly', recurrence_days: 7, effort: 2, due_date: addDaysIso(2), room: 'alle', duration_minutes: 30, assigned_to: MAX.user_id, assigned_to_name: MAX.name, streak: 6 }),
+    task({ id: 'demo-task-10', title: 'Rauchmelder prüfen', description: 'Testknopf drücken', recurrence: 'monthly', recurrence_months: 1, due_date: addDaysIso(25), room: 'flur', duration_minutes: 5, assigned_to: MAX.user_id, assigned_to_name: MAX.name, streak: 3 }),
     task({ id: 'demo-task-11', title: 'Fenster putzen', description: 'Innen und außen', recurrence: 'monthly', recurrence_months: 1, due_date: addDaysIso(12), room: 'alle', duration_minutes: 60, effort: 3, is_paused: true, streak: 0 }),
-    task({ id: 'demo-task-12', title: 'Rasen mähen', description: 'Garten vorne und hinten', recurrence: 'weekly', recurrence_days: 7, due_date: addDaysIso(5), room: 'aussen', duration_minutes: 45, effort: 2, assigned_to: BEN.user_id, assigned_to_name: BEN.name, is_paused: true, streak: 0 }),
+    task({ id: 'demo-task-12', title: 'Rasen mähen', description: 'Garten vorne und hinten', recurrence: 'weekly', recurrence_days: 7, due_date: addDaysIso(5), room: 'aussen', duration_minutes: 45, effort: 2, assigned_to: MAX.user_id, assigned_to_name: MAX.name, is_paused: true, streak: 0 }),
   ];
-  private load: MemberLoadDto[] = [{ ...ANNA, points: 5, count: 3 }, { ...BEN, points: 4, count: 3 }];
+  private load: MemberLoadDto[] = [{ ...SOPHIE, points: 5, count: 3 }, { ...MAX, points: 4, count: 3 }];
 
   private folder: StoredEntry[] = [
     contract('demo-folder-1', 'Hausratversicherung', 'Beispiel-Versicherung', {
@@ -235,7 +237,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     contract('demo-folder-10', 'Internet & Telefon', 'Beispiel-Telekom', {
       category: 'Internet', cost: '39.99', end_date: addMonthsIso(todayIso(), 9), notice_period_days: 90, auto_renewal: true,
     }),
-    contract('demo-folder-11', 'Handyvertrag Anna', 'Beispiel-Mobil', {
+    contract('demo-folder-11', 'Handyvertrag Sophie', 'Beispiel-Mobil', {
       category: 'Mobilfunk', cost: '17.99', end_date: addMonthsIso(todayIso(), 14), notice_period_days: 30,
     }),
     contract('demo-folder-12', 'Streaming', 'Beispiel-Stream', { category: 'Abo', cost: '13.99' }),
@@ -304,7 +306,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
 
   createShoppingList(input: ShoppingListInput): Observable<ShoppingListDto> {
     const now = new Date().toISOString();
-    const created = { archived: false, ...input, name: input.name.trim(), id: `demo-list-new-${this.nextId++}`, created_at: now, updated_at: now, created_by_name: 'Anna' };
+    const created = { archived: false, ...input, name: input.name.trim(), id: `demo-list-new-${this.nextId++}`, created_at: now, updated_at: now, created_by_name: 'Sophie' };
     this.lists.push(created);
     return of(this.listDto(created));
   }
@@ -334,7 +336,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     const booked = this.trips.slice(-10);
     const totalAmount = booked.reduce((sum, trip) => sum + trip.amount, 0);
     const totalCount = booked.reduce((sum, trip) => sum + trip.count, 0);
-    const owner = list.created_by_name ?? 'Anna';
+    const owner = list.created_by_name ?? 'Sophie';
     const members: ShoppingMemberDto[] = MEMBERS.map((m) => ({ user_id: m.user_id, name: m.name, is_owner: m.name === owner }));
     return of({
       list: this.listDto(list),
@@ -383,7 +385,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     this.touch(found.shopping_list);
     if (patch.is_checked !== undefined) {
       found.checked_at = patch.is_checked ? new Date().toISOString() : null;
-      found.checked_by_name = patch.is_checked ? 'Anna' : null;
+      found.checked_by_name = patch.is_checked ? 'Sophie' : null;
     }
     if (patch.section) {
       const known = this.memory.find((m) => m.name.toLowerCase() === found.name.toLowerCase());
@@ -551,7 +553,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
       done_this_week: this.doneThisWeek,
       done_last_week: 3,
       open_total: open.length,
-      assigned_to_me: open.filter((t) => t.assigned_to === ANNA.user_id).length,
+      assigned_to_me: open.filter((t) => t.assigned_to === SOPHIE.user_id).length,
     });
   }
 
@@ -604,13 +606,13 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     if (!found) return throwError(() => new Error('Demo-Aufgabe nicht gefunden.'));
     if (found.is_paused) return throwError(() => new Error('Diese Routine ist pausiert.'));
     this.load = this.load.map((m) =>
-      m.user_id === ANNA.user_id ? { ...m, points: m.points + found.effort, count: m.count + 1 } : m,
+      m.user_id === SOPHIE.user_id ? { ...m, points: m.points + found.effort, count: m.count + 1 } : m,
     );
     this.doneThisWeek += 1;
     // Demo: die Serie wächst, wenn der laufende Zeitraum noch nicht erledigt war.
     if (found.streak !== null && !(found.last_done_at && found.last_done_at.slice(0, 10) === todayIso())) found.streak += 1;
     found.last_done_at = new Date().toISOString();
-    found.last_done_by_name = ANNA.name;
+    found.last_done_by_name = SOPHIE.name;
     if (found.recurrence_days || found.recurrence_months) found.due_date = nextDueDate(found);
     else {
       found.is_done = true;
@@ -669,6 +671,34 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
 
   deleteFolderEntry(id: Id): Observable<void> {
     this.folder = this.folder.filter((e) => e.id !== id);
+    for (const file of this.files.get(id) ?? []) this.blobs.delete(file.id);
+    this.files.delete(id);
+    return of(undefined);
+  }
+
+  // Fotos/PDF in der Demo: nur in diesem Browser-Tab (kein Server)
+  private files = new Map<Id, AttachmentItem[]>();
+  private blobs = new Map<number, Blob>();
+  private nextFileId = 1;
+  uploadFolderFile(entryId: Id, file: File): Observable<AttachmentItem> {
+    if (!this.folder.some((e) => e.id === entryId)) return throwError(() => new Error('Demo-Eintrag nicht gefunden.'));
+    if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      return throwError(() => new Error('Nur Fotos (JPG, PNG, WebP) und PDF bis 10 MB.'));
+    }
+    const list = this.files.get(entryId) ?? [];
+    if (list.length >= 10) return throwError(() => new Error('Höchstens 10 Dateien je Eintrag.'));
+    const item: AttachmentItem = { id: this.nextFileId++, name: file.name, content_type: file.type, size: file.size, can_delete: true };
+    this.blobs.set(item.id, file);
+    this.files.set(entryId, [...list, item]);
+    return of(item);
+  }
+  folderFileBlob(_entryId: Id, fileId: number): Observable<Blob> {
+    const blob = this.blobs.get(fileId);
+    return blob ? of(blob) : throwError(() => new Error('Datei nicht gefunden.'));
+  }
+  removeFolderFile(entryId: Id, fileId: number): Observable<void> {
+    this.blobs.delete(fileId);
+    this.files.set(entryId, (this.files.get(entryId) ?? []).filter((f) => f.id !== fileId));
     return of(undefined);
   }
 
@@ -712,6 +742,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
       cost: isContract ? (input.cost ?? null) : null,
       maintenance_due_date: isContract ? null : maintenance,
       deadlines,
+      attachments: [...(this.files.get(input.id) ?? [])],
     };
     if (!isContract || !detail) delete entry.contract_number;
     return entry;

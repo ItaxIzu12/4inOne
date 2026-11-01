@@ -128,7 +128,7 @@ export const TRANSPORT_LABELS: Record<Exclude<Trip['transport_type'], ''>, strin
   OTHER: 'Sonstiges',
 };
 export function transportIcon(type: Trip['transport_type']): IconName {
-  return type === 'TRAIN' ? 'train' : type === 'CAR' || type === 'BUS' ? 'car' : type === 'FLIGHT' ? 'travel' : 'car';
+  return type === 'TRAIN' ? 'train' : type === 'BUS' ? 'bus' : type === 'FLIGHT' ? 'travel' : 'car';
 }
 
 // ---------- Packliste ----------
@@ -250,3 +250,63 @@ export function planningTips(trip: Pick<Trip, 'transport_type' | 'start_date' | 
   tips.push('Klären, wie du vor Ort bezahlst (Karte, Bargeld).');
   return tips.slice(0, 3);
 }
+
+// ---------- Bordkarte („Von hier nach dort“, 31.10.2026) ----------
+/** „Berlin, Deutschland“ → Ort „Berlin“ und Zusatz „Deutschland“ — für die große Zielzeile der Bordkarte. */
+export function placeParts(value: string | null | undefined): { place: string; region: string } {
+  const [place, ...rest] = (value ?? '').split(',').map((p) => p.trim()).filter(Boolean);
+  return { place: place ?? '', region: rest.join(', ') };
+}
+/** Der Abschnitt rechts auf der Bordkarte: große Zahl und was sie bedeutet. Nur aus Datum und Zeitraum. */
+export function passStub(trip: Pick<Trip, 'start_date' | 'end_date' | 'status'>, today: string): { big: string; small: string } {
+  const phase = tripPhase(trip, today);
+  if (phase === 'cancelled') return { big: '–', small: 'Abgesagt' };
+  if (phase === 'past') return { big: String(tripDays(trip)), small: tripDays(trip) === 1 ? 'Tag unterwegs' : 'Tage unterwegs' };
+  if (phase === 'ongoing') return { big: String(daysUntil(today, trip.start_date) + 1), small: `Tag von ${tripDays(trip)}` };
+  const days = daysUntil(trip.start_date, today);
+  if (days === 0) return { big: 'Heute', small: 'geht’s los' };
+  if (days === 1) return { big: '1', small: 'Tag bis zur Abreise' };
+  return { big: String(days), small: 'Tage bis zur Abreise' };
+}
+/** Packliste als Anteil — bewusst getrennt von den Aufgaben: ein gepacktes T-Shirt und eine Buchung wiegen nicht
+ * gleich (Abnahme 31.10.2026). Ohne Packliste: null. */
+export function packingShare(packed: number, total: number): { packed: number; total: number; pct: number } | null {
+  return total ? { packed, total, pct: percent(packed, total) } : null;
+}
+
+// ---------- Planung als Countdown-Linie ----------
+/** Abschnitte der Planung, gemessen an der Reise: was überfällig ist, was vor der Abreise erledigt sein muss, dann
+ * der Abreisetag als Marke, was unterwegs ansteht, was danach kommt und was kein Datum hat. */
+export type TimelineKey = 'late' | 'before' | 'during' | 'after' | 'none';
+export const TIMELINE_LABELS: Record<TimelineKey, string> = {
+  late: 'Überfällig',
+  before: 'Vor der Abreise',
+  during: 'Unterwegs',
+  after: 'Nach der Reise',
+  none: 'Ohne Datum',
+};
+export function taskTimeline(
+  tasks: readonly TripTask[],
+  trip: Pick<Trip, 'start_date' | 'end_date'>,
+  today: string,
+): { key: TimelineKey; label: string; tasks: TripTask[] }[] {
+  const order: TimelineKey[] = ['late', 'before', 'during', 'after', 'none'];
+  const buckets = new Map<TimelineKey, TripTask[]>(order.map((k) => [k, []]));
+  for (const t of tasks) {
+    const d = t.due_date;
+    const key: TimelineKey = !d ? 'none' : t.status === 'OPEN' && d < today ? 'late' : d < trip.start_date ? 'before' : d <= trip.end_date ? 'during' : 'after';
+    buckets.get(key)!.push(t);
+  }
+  return order.filter((k) => buckets.get(k)!.length).map((key) => ({ key, label: TIMELINE_LABELS[key], tasks: buckets.get(key)! }));
+}
+
+// ---------- Budget: Farben je Kategorie (gestapelter Balken, immer mit Beschriftung) ----------
+export const BUDGET_COLOR: Record<BudgetCategory, string> = {
+  UNTERKUNFT: '#36608b',
+  TRANSPORT: '#5b8fc7',
+  ESSEN: '#d9822b',
+  AKTIVITAETEN: '#2e9b57',
+  SHOPPING: '#c94f7c',
+  SONSTIGES: '#8a93a3',
+  RESERVE: '#b6c1cf',
+};

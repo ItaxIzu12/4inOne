@@ -252,7 +252,7 @@
   }
   .hero-stat small,
   .hero-stat .kpi__hint {
-    font-size: 12px;
+    font-size: 13px; // nicht kleiner: Vergleiche wie „7 % mehr als …“ sind Inhalt, keine Fußnote
   }
   .seg {
     display: flex;

@@ -1,6 +1,7 @@
 import { PersonalEvent, PersonalNote, PersonalTask } from './organisation-api.service';
 import {
   dayWord,
+  groupTaskList,
   eventsOn,
   expandEvents,
   filterTasks,
@@ -97,5 +98,25 @@ describe('Organisation: Notizen', () => {
     expect(noteEdited(new Date(2026, 9, 4, 9).toISOString(), now)).toBe('Heute');
     expect(noteEdited(new Date(2026, 9, 3, 9).toISOString(), now)).toBe('Gestern');
     expect(noteEdited(new Date(2026, 9, 2, 9).toISOString(), now)).toBe('02.10.2026');
+  });
+});
+
+describe('groupTaskList', () => {
+  const now = new Date(2026, 9, 31, 10, 0);
+  let n = 0;
+  const t = (due: string | null, project?: string): PersonalTask => ({
+    id: ++n, title: `A${n}`, description: '', due_date: due, due_time: null, priority: 'MEDIUM', status: 'OPEN', project,
+  });
+
+  it('nach Tag: Überfällig · Heute · Morgen · Nächste 7 Tage · Später · Ohne Datum, leere Gruppen fallen weg', () => {
+    const groups = groupTaskList([t(null), t('2026-12-01'), t('2026-11-04'), t('2026-11-01'), t('2026-10-31'), t('2026-10-20')], 'day', now);
+    expect(groups.map((g) => g.label)).toEqual(['Überfällig', 'Heute', 'Morgen', 'Nächste 7 Tage', 'Später', 'Ohne Datum']);
+    expect(groups[0].late).toBe(true);
+    expect(groupTaskList([t('2026-10-31')], 'day', now).map((g) => g.label)).toEqual(['Heute']);
+  });
+
+  it('nach Projekt: alphabetisch, gleiche Namen zusammen, ohne Projekt zuletzt', () => {
+    const groups = groupTaskList([t(null), t(null, 'Umzug'), t(null, 'Bewerbung'), t(null, 'umzug ')], 'project', now);
+    expect(groups.map((g) => [g.label, g.tasks.length])).toEqual([['Bewerbung', 1], ['Umzug', 2], ['Ohne Projekt', 1]]);
   });
 });

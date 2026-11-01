@@ -11,7 +11,10 @@
     [attr.aria-labelledby]="labelledBy()"
     [attr.aria-owns]="notices.message() ? 'global-error-notice' : null"
   >
-    <ng-content />
+    <!-- Scrollbereich: das Panel selbst schneidet ab, damit das Schließen-Kreuz beim Scrollen stehen bleibt -->
+    <div class="modal-scroll">
+      <ng-content />
+    </div>
     <button type="button" class="modal-close" [attr.aria-label]="closeLabel()" (click)="requestClose()">
       <icon-close />
     </button>

@@ -1,6 +1,6 @@
 import { Field } from './field';
 import { ErrorNoticeService } from '../error-notice/error-notice';
-import { afterNextRender, Injector, Component, DestroyRef, ElementRef, contentChildren, effect, inject, input, output, signal } from '@angular/core';
+import { afterNextRender, Injector, Component, DestroyRef, ElementRef, computed, contentChildren, effect, inject, input, output, signal } from '@angular/core';
 import { AppIcon, IconName } from '../icons/app-icon';
 import { Modal } from '../modal/modal';
 
@@ -33,6 +33,21 @@ export class ModalForm {
   readonly title = input.required<string>();
   readonly submitLabel = input('Speichern');
   readonly cancelLabel = input('Abbrechen');
+  /** Symbole der Fußknöpfe (01.11.2026, einheitlich in allen Dialogen). Ohne Angabe passend zum Text gewählt. */
+  readonly submitIcon = input<IconName | ''>('');
+  readonly cancelIcon = input<IconName | ''>('');
+  protected readonly submitIconName = computed<IconName>(() => {
+    if (this.submitIcon()) return this.submitIcon() as IconName;
+    const label = this.submitLabel();
+    if (/importieren/i.test(label)) return 'upload';
+    if (/^Vorschau/i.test(label)) return 'arrow';
+    if (/^Schließen/i.test(label)) return 'close';
+    return 'check';
+  });
+  protected readonly cancelIconName = computed<IconName>(() => {
+    if (this.cancelIcon()) return this.cancelIcon() as IconName;
+    return /prüfen|zurück/i.test(this.cancelLabel()) ? 'arrow-left' : 'close';
+  });
   readonly saving = input(false);
   readonly error = input('');
   /** Text des Löschen-Buttons; leer = kein Löschen möglich. */

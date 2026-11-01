@@ -1,11 +1,65 @@
-// Notizen: ruhige Liste statt Kartenwand — Titel, eine Zeile Vorschau, Datum, Anheften.
+// Notizen als Zettelwand (31.10.2026): oben „Schnell notieren“, darunter Karten mit Vorschau. Angeheftete stehen
+// zuerst und tragen die zarte Organisationsfläche — wie die angeheftete Notiz unter „Heute“.
+.quick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  margin-bottom: 14px;
+  padding: 6px 6px 6px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg, 16px);
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(23 37 35 / 0.06);
+}
+.quick:focus-within {
+  border-color: var(--organization-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--organization-accent) 18%, transparent);
+}
+.quick > app-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--organization-accent);
+}
+.quick input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-body);
+}
+.quick input:focus-visible {
+  outline: none;
+}
+.quick__save {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--brand-primary, #172523);
+  color: #fff;
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.quick__save:disabled {
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  cursor: default;
+}
 .search {
   display: flex;
   align-items: center;
   gap: 8px;
   max-width: 420px;
   min-height: 44px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
   padding: 0 12px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -31,89 +85,131 @@
 .search:focus-within {
   border-color: var(--accent);
 }
-.group {
-  padding: 14px 10px 6px;
-}
 .group + .group {
-  margin-top: 16px;
+  margin-top: 24px;
 }
 .group h2 {
-  margin: 0 8px 6px;
-  color: var(--text-muted);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 2px 10px;
+  color: var(--text-secondary);
   font-size: var(--fs-meta);
-  font-weight: 600;
-  letter-spacing: 0.2px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
-.notes {
+.group h2 span {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .note {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 60px;
+  min-width: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg, 16px);
+  background: #fff;
+  transition: transform 160ms ease, box-shadow 160ms ease;
 }
-.note + .note {
-  border-top: 1px solid var(--line);
+.note:hover {
+  box-shadow: 0 6px 18px rgb(23 37 35 / 0.08);
+  transform: translateY(-2px);
+}
+.note.is-pinned {
+  border-color: color-mix(in srgb, var(--organization-accent) 22%, transparent);
+  background: var(--organization-soft, #f5ecdf);
 }
 .note__main {
   display: grid;
   flex: 1;
-  gap: 2px;
+  align-content: start;
+  gap: 4px;
   min-width: 0;
-  min-height: 52px;
-  padding: 8px;
+  min-height: 132px;
+  padding: 16px 48px 14px 16px;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: inherit;
   background: none;
   color: var(--text);
   font: inherit;
   text-align: left;
-  align-content: center;
   cursor: pointer;
 }
-.note__main:hover {
-  background: var(--surface-hover);
+.note__main:focus-visible,
+.pin:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 2px;
 }
 .note__title {
+  display: -webkit-box;
   overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  margin-bottom: 2px;
   font-size: var(--fs-body);
   font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.note__line {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.note__preview {
-  overflow: hidden;
-  color: var(--text-muted);
+.note__img {
+  width: 100%;
+  height: 120px;
+  margin-top: 6px;
+  border-radius: var(--radius-sm);
+}
+.note__files {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-secondary);
   font-size: var(--fs-meta);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+.note__files app-icon {
+  width: 14px;
+  height: 14px;
 }
 .note__when {
-  flex: 0 0 auto;
+  align-self: end;
+  margin-top: 8px;
   color: var(--text-muted);
   font-size: var(--fs-meta);
   font-variant-numeric: tabular-nums;
 }
 .pin {
+  position: absolute;
+  top: 4px;
+  right: 4px;
   display: grid;
-  flex: 0 0 44px;
   place-items: center;
   width: 44px;
   height: 44px;
   border: 0;
   border-radius: var(--radius-md);
   background: none;
-  color: #b6b3c6;
+  color: #8592a6;
   cursor: pointer;
 }
 .pin:hover {
-  background: var(--surface-hover);
+  background: color-mix(in srgb, var(--organization-accent) 10%, transparent);
 }
 .pin[aria-pressed='true'] {
-  color: var(--accent);
+  color: var(--organization-accent);
 }
 .pin app-icon {
   width: 18px;
@@ -124,6 +220,7 @@
   justify-items: center;
   gap: 8px;
   padding: 36px 16px;
+  text-align: center;
 }
 .empty h3 {
   margin: 0;
@@ -152,11 +249,23 @@
   width: 16px;
   height: 16px;
 }
-@media (max-width: 760px) {
+@media (prefers-reduced-motion: reduce) {
+  .note,
+  .note:hover {
+    transition: none;
+    transform: none;
+  }
+}
+@media (max-width: 560px) {
   .search {
     max-width: none;
   }
-  .group {
-    padding: 10px 4px 4px;
+  // Am Handy eine Spalte, kompakter — die Wand wird zur Liste aus Zetteln
+  .board {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .note__main {
+    min-height: 0;
   }
 }

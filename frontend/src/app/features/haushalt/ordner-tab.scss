@@ -660,3 +660,10 @@ small {
   color: var(--text-secondary);
   font-size: var(--fs-secondary);
 }
+
+// Fotos & PDF im Geräte-/Vertragsdialog in der Haushaltsfarbe
+.att-household {
+  --att-accent: var(--household-accent);
+  --att-soft: var(--household-soft);
+  --att-on: var(--household-on);
+}

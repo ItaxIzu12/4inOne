@@ -1,11 +1,17 @@
+import { HouseholdPeople } from './household-people.service';
+import { ScopeNote } from '../../shared/scope-note/scope-note';
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { lockScrollWhile } from '../../shared/scroll-lock/scroll-lock';
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
+import { map, of, switchMap } from 'rxjs';
+import { AttachmentField, AttachmentItem } from '../../shared/attachments/attachment-field';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AppIcon } from '../../shared/icons/app-icon';
+import { AppIcon, IconName } from '../../shared/icons/app-icon';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
+import { MONTH_ABBR } from '../../shared/form/date-utils';
+import { NextDeadline, devicesByRoom, nextDeadlines } from './zuhause-logic';
 import { AppDatePicker } from '../../shared/form/date-picker';
 import { Field } from '../../shared/form/field';
 import { AppSelect, SelectOption } from '../../shared/form/select';
@@ -84,9 +90,9 @@ const DEVICE_STATUS_FORM: SelectOption[] = [
 @Component({
   selector: 'app-ordner-tab',
   standalone: true,
-  imports: [ErrorNoticeDirective, DecimalPipe, AppIcon, AppSelect, Field, ModalForm, AppDatePicker, RowMenu, ConnectionsSection],
+  imports: [ErrorNoticeDirective, DecimalPipe, AppIcon, AppSelect, Field, ModalForm, AppDatePicker, RowMenu, ConnectionsSection, AttachmentField, ScopeNote],
   templateUrl: './ordner-tab.html',
-  styleUrls: ['./haushalt-common.scss', './haushalt-stats.scss', './ordner-tab.scss'],
+  styleUrls: ['./haushalt-common.scss', './haushalt-stats.scss', './ordner-tab.scss', './zuhause-tab.scss'],
 })
 export class OrdnerTab {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
@@ -120,6 +126,21 @@ export class OrdnerTab {
       ? sortContracts(filterContracts(this.contracts(), this.query(), this.status() as ContractFilter), this.sort())
       : filterDevices(this.devices(), this.query(), this.status() as DeviceFilter),
   );
+
+  // ---------- Als Nächstes und Räume (31.10.2026) ----------
+  /** Die nächsten Fristen dieses Bereichs (Wartung, Garantie, Kündigung) als Zeitleiste über der Liste. */
+  protected readonly nextUp = computed(() => nextDeadlines(this.isContracts() ? this.contracts() : this.devices()));
+  protected readonly dayNum = (iso: string) => String(Number(iso.slice(8, 10)));
+  protected readonly monthAbbr = (iso: string) => MONTH_ABBR[Number(iso.slice(5, 7)) - 1];
+  protected readonly nextIcon = (n: NextDeadline): IconName => (n.entry.kind === 'vertrag' ? 'finance' : deviceIcon(n.entry));
+  /** Geräte nach Raum gruppiert, sobald sie in mindestens zwei Räumen stehen; Verträge bleiben eine Liste. */
+  protected readonly listGroups = computed(() => {
+    const rows = this.visible();
+    if (!rows.length) return [];
+    if (this.isContracts()) return [{ key: 'all', label: '', icon: undefined as IconName | undefined, items: rows }];
+    const groups = devicesByRoom(rows);
+    return groups.length > 1 ? groups : [{ key: 'all', label: '', icon: undefined as IconName | undefined, items: rows }];
+  });
 
   // ---------- Auswahl und Detail ----------
   protected readonly selectedId = signal<Id | null>(null);
@@ -318,14 +339,30 @@ export class OrdnerTab {
 
   // ---------- Formular ----------
 
+  /** Wer den Eintrag sieht (Kind-Konten nicht), bei Verträgen: Beträge bleiben privat. */
+  private readonly people = inject(HouseholdPeople, { optional: true });
+  protected readonly folderAudience = computed(() => {
+    const base = this.people?.audience(true) || 'Alle Erwachsenen im Haushalt sehen diesen Eintrag.';
+    return this.formKind() === 'vertrag' && !this.formCostHidden() ? `${base} Den Betrag siehst nur du.` : base;
+  });
+
+  // Fotos & PDF (31.10.2026): beim Anlegen und Bearbeiten; wirkt beim Speichern
+  protected readonly formAttachments = signal<AttachmentItem[]>([]);
+  private readonly attachmentBox = viewChild(AttachmentField);
+  protected readonly loadFile = (fileId: number) => this.provider.folderFileBlob(this.editingId()!, fileId);
+
   protected openNew(): void {
     this.editingId.set(null);
+    this.formAttachments.set([]);
+    this.attachmentBox()?.reset();
     this.formCostHidden.set(false);
     this.fillForm({ kind: this.kind(), name: '', ...EMPTY_ENTRY });
   }
 
   protected openEdit(entry: FolderEntryDto): void {
     this.editingId.set(entry.id);
+    this.formAttachments.set(entry.attachments ?? []);
+    this.attachmentBox()?.reset();
     this.formCostHidden.set(entry.cost_visible === false);
     const number = this.contractNumber()?.id === entry.id ? this.contractNumber()!.value : '';
     this.fillForm({ ...entry, contract_number: number });
@@ -441,7 +478,22 @@ export class OrdnerTab {
     this.formSaving.set(true);
     this.formError.set(null);
     const request = id === null ? this.provider.createFolderEntry(input) : this.provider.updateFolderEntry(id, input);
-    request.subscribe({
+    let saved: FolderEntryDto | null = null;
+    request
+      .pipe(
+        // Dateien erst nach dem Eintrag: ein neues Gerät braucht zuerst seine ID
+        switchMap((stored) => {
+          saved = stored;
+          this.editingId.set(stored.id); // erneuter Versuch ändert denselben Eintrag statt einen zweiten anzulegen
+          const box = this.attachmentBox();
+          return box
+            ? box
+                .commit((file) => this.provider.uploadFolderFile(stored.id, file), (fileId) => this.provider.removeFolderFile(stored.id, fileId))
+                .pipe(map(() => stored))
+            : of(stored);
+        }),
+      )
+      .subscribe({
       next: (stored) => {
         this.formSaving.set(false);
         this.formOpen.set(false);
@@ -452,6 +504,15 @@ export class OrdnerTab {
       },
       error: (error: unknown) => {
         this.formSaving.set(false);
+        if (saved) {
+          // Eintrag gespeichert, eine Datei nicht: Dialog bleibt offen, Kacheln zeigen den echten Stand
+          const stored: FolderEntryDto = saved;
+          const reason = this.firstApiError(error) ?? (error instanceof Error ? error.message : '');
+          this.formError.set(`Gespeichert, aber eine Datei konnte nicht hochgeladen werden.${reason ? ' ' + reason : ''} Du kannst es noch einmal versuchen.`);
+          this.provider.getFolderEntry(stored.id).subscribe({ next: (fresh) => this.formAttachments.set(fresh.attachments ?? []), error: () => undefined });
+          this.load();
+          return;
+        }
         this.formError.set(this.firstApiError(error) ?? 'Speichern hat nicht geklappt. Bitte Eingaben prüfen.');
       },
     });

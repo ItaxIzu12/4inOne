@@ -19,9 +19,9 @@
           <p>Wirklich löschen? Das lässt sich nicht rückgängig machen.</p>
           <div class="modal-form__actions">
             <button type="button" class="mf-btn mf-btn--danger" [disabled]="saving()" (click)="confirmDelete()">
-              Ja, löschen
+              <app-icon name="trash" aria-hidden="true" />Ja, löschen
             </button>
-            <button type="button" class="mf-btn mf-btn--soft" (click)="confirmingDelete.set(false)">Behalten</button>
+            <button type="button" class="mf-btn mf-btn--soft" (click)="confirmingDelete.set(false)"><app-icon name="arrow-left" aria-hidden="true" />Behalten</button>
           </div>
         </div>
       } @else {
@@ -33,14 +33,19 @@
           }
           <span class="modal-form__spacer"></span>
           <button type="button" class="mf-btn mf-btn--soft" [disabled]="saving()" (click)="closed.emit()">
-            {{ cancelLabel() }}
+            <app-icon [name]="cancelIconName()" aria-hidden="true" />{{ cancelLabel() }}
           </button>
-          <button type="submit" class="mf-btn mf-btn--primary" [disabled]="saving()" [attr.aria-busy]="saving()">
-            @if (saving()) {
-              <span class="mf-spinner" aria-hidden="true"></span>
-            }
-            {{ saving() ? 'Wird gespeichert …' : submitLabel() }}
-          </button>
+          <!-- Leeres submitLabel = nur ansehen (z. B. Termin eines gemeinsamen Kalenders ohne Schreibrecht) -->
+          @if (submitLabel()) {
+            <button type="submit" class="mf-btn mf-btn--primary" [disabled]="saving()" [attr.aria-busy]="saving()">
+              @if (saving()) {
+                <span class="mf-spinner" aria-hidden="true"></span>
+              } @else {
+                <app-icon [name]="submitIconName()" aria-hidden="true" />
+              }
+              {{ saving() ? 'Wird gespeichert …' : submitLabel() }}
+            </button>
+          }
         </div>
       }
     </footer>

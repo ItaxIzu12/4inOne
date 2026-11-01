@@ -1,4 +1,20 @@
-@if (notes().length) {
+<!-- Schnell notieren: ein Gedanke, Enter, fertig — Titel und Anheften gibt es im Dialog -->
+<form class="quick" (submit)="submitQuick($event)">
+  <label class="sr-only" for="quick-note">Schnell notieren</label>
+  <app-icon name="edit" aria-hidden="true" />
+  <input
+    id="quick-note"
+    type="text"
+    placeholder="Schnell notieren …"
+    autocomplete="off"
+    [maxLength]="quickMax"
+    [value]="draft()"
+    (input)="draft.set($any($event.target).value)"
+  />
+  <button type="submit" class="quick__save" [disabled]="busy() || !draft().trim()">Speichern</button>
+</form>
+
+@if (notes().length > 3) {
   <label class="search">
     <app-icon name="search" aria-hidden="true" />
     <span class="sr-only">Notizen durchsuchen</span>
@@ -6,31 +22,10 @@
   </label>
 }
 
-<ng-template #row let-n>
-  <li class="note">
-    <button type="button" class="note__main" (click)="openNote.emit(n)">
-      <span class="note__title">{{ title(n) }}</span>
-      @if (preview(n); as line) {
-        <span class="note__preview">{{ line }}</span>
-      }
-    </button>
-    <span class="note__when">{{ edited(n.updated_at) }}</span>
-    <button
-      type="button"
-      class="pin"
-      [attr.aria-pressed]="n.pinned"
-      [attr.aria-label]="n.pinned ? title(n) + ' lösen' : title(n) + ' anheften'"
-      (click)="togglePin.emit(n)"
-    >
-      <app-icon name="star" />
-    </button>
-  </li>
-</ng-template>
-
 @if (!notes().length) {
   <section class="card empty">
     <h3>Noch keine Notizen</h3>
-    <p class="muted">Halte Ideen und wichtige Informationen fest.</p>
+    <p class="muted">Halte Ideen und wichtige Informationen fest — oben in einer Zeile oder ausführlich im Dialog.</p>
     <button type="button" class="link-btn" (click)="openNote.emit(undefined)"><app-icon name="plus" />Notiz erstellen</button>
   </section>
 } @else if (!pinned().length && !others().length) {
@@ -39,22 +34,35 @@
     <p class="muted">Für „{{ search().trim() }}“ gibt es keinen Treffer.</p>
   </section>
 } @else {
-  @if (pinned().length) {
-    <section class="card group" aria-labelledby="notes-pinned">
-      <h2 id="notes-pinned">Angeheftet</h2>
-      <ul class="notes">
-        @for (n of pinned(); track n.id) {
-          <ng-container *ngTemplateOutlet="row; context: { $implicit: n }" />
-        }
-      </ul>
-    </section>
-  }
-  @if (others().length) {
-    <section class="card group" aria-labelledby="notes-all">
-      <h2 id="notes-all">{{ pinned().length ? 'Alle Notizen' : 'Notizen' }}</h2>
-      <ul class="notes">
-        @for (n of others(); track n.id) {
-          <ng-container *ngTemplateOutlet="row; context: { $implicit: n }" />
+  @for (group of groups(); track group.key) {
+    <section class="group" [attr.aria-labelledby]="'notes-' + group.key">
+      <h2 [id]="'notes-' + group.key">{{ group.label }} <span>{{ group.list.length }}</span></h2>
+      <ul class="board">
+        @for (n of group.list; track n.id) {
+          <li class="note" [class.is-pinned]="n.pinned">
+            <button type="button" class="note__main" (click)="openNote.emit(n)">
+              <b class="note__title">{{ title(n) }}</b>
+              @for (line of preview(n); track $index) {
+                <span class="note__line">{{ line }}</span>
+              }
+              @if (n.attachments?.length) {
+                <!-- Anhänge (Test 31.10.2026): erstes Foto als Vorschau, dazu die Zahl -->
+                @let photo = firstImage(n);
+                @if (photo) {<app-file-thumb class="note__img" [load]="loadFile" [fileId]="photo.id" />}
+                <small class="note__files"><app-icon name="image" aria-hidden="true" />{{ n.attachments!.length === 1 ? '1 Anhang' : n.attachments!.length + ' Anhänge' }}</small>
+              }
+              <small class="note__when">{{ edited(n.updated_at) }}</small>
+            </button>
+            <button
+              type="button"
+              class="pin"
+              [attr.aria-pressed]="n.pinned"
+              [attr.aria-label]="n.pinned ? title(n) + ' lösen' : title(n) + ' anheften'"
+              (click)="togglePin.emit(n)"
+            >
+              <app-icon name="star" />
+            </button>
+          </li>
         }
       </ul>
     </section>

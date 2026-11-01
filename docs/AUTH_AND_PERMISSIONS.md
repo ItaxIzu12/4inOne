@@ -177,6 +177,59 @@ Private file deletion is registered at the model level, including account cascad
 files are removed only after the database transaction commits; rollback preserves both file and record. Existing
 orphan files from deletions performed before this change are not automatically removed.
 
+## Gemeinsame Kalender (31.10.2026)
+
+Code: `backend/organisation/calendars.py` (alle Regeln), `calendar_views.py` (API), Modelle `SharedCalendar`,
+`CalendarMember`, `PersonalEvent.calendar`. Tests: `organisation/test_shared_calendars.py` (15) und die Abdeckung in
+`core/test_permission_matrix.py`.
+
+- **Privat bleibt privat:** Ein Termin ist entweder privat (`calendar=None`, sichtbar nur für `owner`) oder gehört zu
+  genau einem gemeinsamen Kalender. Private Termine erscheinen für andere nirgends — kein „beschäftigt“, kein Zähler,
+  nicht auf „Heute“/Startseite, nicht in Verknüpfungen (Registry `CALENDAR_EVENT` bleibt bewusst owner-only).
+- **Mitglied** nur über eine angenommene Einladung (`Invitation.Scope.CALENDAR`, nur Kontakte, einladen nur
+  Besitzer:in). Offene Einladung = kein Zugriff. Rollen: OWNER · EDITOR („Kann bearbeiten“) · VIEWER („Kann ansehen“).
+- **Sehen** = Mitglied. **Anlegen/Ändern/Löschen** = OWNER oder EDITOR (sonst 403). Fremde/nicht vorhandene Kalender
+  und Termine → 404 (auch eine fremde Kalender-ID beim Anlegen eines Termins).
+- **Kalender eines Termins ändern** nur die Person, die ihn eingetragen hat (sonst könnte ein Mitglied einen
+  gemeinsamen Termin für alle verschwinden lassen).
+- **Austreten/Entfernen** wirkt sofort. **Kalender löschen** (nur Besitzer:in) → Termine werden wieder private Termine
+  ihrer Ersteller:innen (`on_delete=SET_NULL`), offene Einladungen werden zurückgezogen (Signal). Konto der
+  Besitzer:in gelöscht → dasselbe.
+- Ausgabe nur Anzeigenamen (`created_by`, Mitglieder), nie E-Mail-Adressen. Grenzen: 20 Kalender je Besitzer:in,
+  30 Mitglieder je Kalender. Antworten `Cache-Control: no-store`.
+
+### Kalenderfreigabe wie Outlook (31.10.2026)
+
+Zusätzlich zu den Gruppen-Kalendern kann jede Person ihren **eigenen Kalender** für einzelne Personen freigeben.
+Code: `organisation/calendars.py` (`sharing_owner_ids`, `shared_with_me_ids`, `visible_events`, `can_edit_event`,
+`set_audience`, `end_share`, `change_share_role`), Modelle `CalendarShare` (owner → grantee, Rolle) und `EventShare`
+(Termin → Person), API `organisation/shares/` (GET), `shares/given/<user_id>/` (PATCH Rolle, DELETE),
+`shares/received/<user_id>/` (DELETE). Tests: `organisation/test_calendar_shares.py` (16).
+
+- **Neue Termine sind privat.** Eine Freigabe zeigt nichts von allein: sichtbar wird nur, was die Erstellerin/der
+  Ersteller ausdrücklich mit dieser Person teilt (`shared_with`). Private Termine bleiben unsichtbar.
+- **Freigeben = Einladung** (`Invitation.Scope.MY_CALENDAR`, `scope_id` = eigenes Konto, nur Kontakte, nur die
+  Besitzer:in lädt ein). Offene Einladung = kein Zugriff; `shared_with` darf nur Personen mit angenommener Freigabe
+  enthalten (sonst 400).
+- **Rolle je Freigabe:** VIEWER sieht geteilte Termine, EDITOR darf sie auch ändern/löschen. Wer einen Termin sieht,
+  bestimmt nur die Erstellerin/der Ersteller (`shared_with` von anderen → 403). Private Termine anderer → 404.
+- `shared_with` wird nur der Erstellerin/dem Ersteller ausgegeben; Empfänger sehen nicht, wer den Termin sonst sieht.
+  `shared_by` (Konto-ID) kennzeichnet für mich freigegebene Termine.
+- **Beenden** (Besitzer:in: `given`, Empfänger:in: `received`) wirkt sofort und löscht die `EventShare`-Zeilen dieser
+  Person (`end_share`, in einer Transaktion).
+
+## Fotos & PDF an Geräten und Verträgen (31.10.2026)
+
+Code: `haushalt/models.py` `FolderAttachment`, `FolderEntryViewSet.add_attachment` / `.attachment`, Prüfung
+`organisation/files.py` `prepare_upload` (gemeinsam mit Notiz-Anhängen). Tests: `haushalt/test_ordner_anhaenge.py`.
+
+- **Sehen** wie der Eintrag: alle erwachsenen Mitglieder des Haushalts; Kind-Konten 403 (`NoChildAccount`), andere
+  Haushalte 404. Inhalt nur über die API (privater Speicher, `nosniff`, `sandbox`-CSP, `no-store`).
+- **Anhängen**: wer den Eintrag bearbeiten darf; nur JPG/PNG/WebP/PDF, Typ am Inhalt, 10 MB je Datei, 10 je Eintrag,
+  500 MB je Haushalt. Fotos werden ohne EXIF (GPS, Kamera, Zeit) neu gespeichert.
+- **Löschen**: nur die hochladende Person oder Haushalts-Admins (sonst 403); die Antwort meldet das je Datei als
+  `can_delete`. Eintrag gelöscht → Dateien gelöscht (Signal räumt den Speicher nach dem Commit auf).
+
 ## Demo permissions
 
 Demo data belongs to the demo environment, not to arbitrary logged-in users.

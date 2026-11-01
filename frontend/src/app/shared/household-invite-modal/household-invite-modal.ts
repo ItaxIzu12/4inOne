@@ -1,3 +1,4 @@
+import { AppIcon } from '../icons/app-icon';
 import { ErrorNoticeDirective } from '../error-notice/error-notice';
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -25,7 +26,7 @@ interface Candidate {
 @Component({
   selector: 'app-household-invite-modal',
   standalone: true,
-  imports: [ErrorNoticeDirective, Modal, RouterLink, AppSelect],
+  imports: [ErrorNoticeDirective, Modal, RouterLink, AppSelect, AppIcon],
   templateUrl: './household-invite-modal.html',
   styleUrl: './household-invite-modal.css',
 })

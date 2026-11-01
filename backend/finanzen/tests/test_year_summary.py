@@ -111,3 +111,37 @@ def test_savings_warnings_count_recurring_costs_like_the_summary(users):
     summary = client.get('/api/v1/finanzen/private/summary/', {'month': nxt.strftime('%Y-%m')}).data
     assert summary['available'] == '400.00'
     assert available_for_month(a, nxt)[0] == Decimal('400.00')
+
+
+def test_year_summary_loads_the_savings_plan_once(users):
+    """Zwölf Monate rechnen, aber Ziele und Einzahlungen nur einmal laden (ein SavingsPlanner je Anfrage)."""
+    a, _, client = users
+    year = timezone.localdate().year - 1
+    MonthlyBudget.objects.create(owner=a, month=date(year, 1, 1), open_ended=True, amount=Decimal('1000'))
+    from unittest import mock
+    from finanzen import private_api
+    with mock.patch.object(private_api, 'SavingsPlanner', wraps=private_api.SavingsPlanner) as planner:
+        assert client.get(URL, {'year': year}).status_code == 200
+    assert planner.call_count == 1
+
+
+def test_summary_endpoints_are_rate_limited(users, settings):
+    """Monats- und Jahresstand haben ein eigenes Limit pro Nutzer (gegen Dauerabfragen durch Bugs oder Skripte)."""
+    from finanzen.private_api import PrivateSummaryView, PrivateYearSummaryView, SavingsGoalViewSet
+    from finanzen.throttling import FinanceSummaryRateThrottle
+    assert PrivateSummaryView.throttle_classes == [FinanceSummaryRateThrottle]
+    assert PrivateYearSummaryView.throttle_classes == [FinanceSummaryRateThrottle]
+    assert SavingsGoalViewSet.preview_new.kwargs['throttle_classes'] == [FinanceSummaryRateThrottle]
+    _, _, client = users
+    rest = settings.REST_FRAMEWORK
+    settings.REST_FRAMEWORK = {**rest, 'DEFAULT_THROTTLE_RATES': {**rest['DEFAULT_THROTTLE_RATES'], 'finanzen_summary': '2/min'}}
+    from rest_framework.settings import api_settings
+    api_settings.reload()
+    try:
+        FinanceSummaryRateThrottle.THROTTLE_RATES = api_settings.DEFAULT_THROTTLE_RATES
+        codes = [client.get(URL).status_code for _ in range(3)]
+    finally:
+        settings.REST_FRAMEWORK = rest
+        api_settings.reload()
+        FinanceSummaryRateThrottle.THROTTLE_RATES = api_settings.DEFAULT_THROTTLE_RATES
+    assert codes == [200, 200, 429]

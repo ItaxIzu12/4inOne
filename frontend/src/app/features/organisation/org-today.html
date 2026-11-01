@@ -1,0 +1,136 @@
+@let l = line();
+<!-- Dein Tag: die eine Zeile, was heute ansteht — in der Organisationsfarbe -->
+<section class="day-hero" aria-labelledby="day-h">
+  <p class="day-hero__date">Dein Tag</p>
+  <h2 id="day-h" class="day-hero__title">{{ title() }}</h2>
+  @if (next(); as n) {
+    <p class="day-hero__next">
+      <app-icon name="clock" aria-hidden="true" />Als Nächstes: <b>{{ n.event.title }}</b> {{ n.text }}
+    </p>
+  }
+  @if (lateCount() || (l.free && !dayOver())) {
+    <ul class="day-hero__chips">
+      @if (lateCount()) {
+        <li class="day-hero__chip day-hero__chip--late">{{ lateCount() }} überfällig</li>
+      }
+      @if (l.free && !dayOver()) {
+        <li class="day-hero__chip"><app-icon name="clock" aria-hidden="true" />{{ span(l.free) }} ohne Termin</li>
+      }
+    </ul>
+  }
+</section>
+
+<div class="day-grid">
+  <!-- Tageslinie: Termine in Folge, dazwischen die Zeit ohne Termin (die App kennt nur, was eingetragen ist) -->
+  <section class="card line-card" aria-labelledby="line-h">
+    <div class="card-head">
+      <h2 id="line-h">Tageslinie</h2>
+      <button type="button" class="head-link" (click)="showAll.emit('calendar')">Kalender öffnen <app-icon name="arrow" aria-hidden="true" /></button>
+    </div>
+    @if (l.allDay.length) {
+      <ul class="all-day" aria-label="Ganztägig">
+        @for (e of l.allDay; track e.id) {
+          <li>
+            <button type="button" [class]="'all-day__chip cat-' + (e.category ?? 'sonstiges')" (click)="openEvent.emit(e)">
+              <app-icon [name]="category(e.category).icon" aria-hidden="true" />{{ e.title }}<span class="sr-only">, ganztägig</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+    @if (loading()) {
+      <p class="muted" role="status">Termine werden geladen …</p>
+    } @else {
+      <ol class="line">
+        @for (item of l.items; track $index) {
+          @if (item.kind === 'event') {
+            <li class="line__row">
+              <span class="line__time">{{ clock(item.start) }}</span>
+              <button
+                type="button"
+                [class]="'line__event cat-' + (item.event.category ?? 'sonstiges')"
+                [class.is-past]="item.past"
+                [class.is-now]="item.now"
+                (click)="openEvent.emit(item.event)"
+              >
+                <b>{{ item.event.title }}@if (item.now) {<span class="line__now">jetzt</span>}</b>
+                <small>
+                  {{ eventEnd(item.event) ? 'bis ' + eventEnd(item.event) : '' }}{{ item.event.location ? (eventEnd(item.event) ? ' · ' : '') + item.event.location : '' }}
+                  <span class="sr-only">, {{ category(item.event.category).label }}</span>
+                </small>
+                @if (item.event.calendar_name) {<span class="cal-tag" [attr.data-color]="item.event.calendar_color">{{ item.event.calendar_name }}@if (item.event.created_by) { · von {{ item.event.created_by }}}</span>} @else if (item.event.shared_by) {<span class="cal-tag" data-color="slate">Kalender von {{ item.event.created_by }}</span>}
+                <app-link-hints [items]="eventLinks()[item.event.id]" />
+              </button>
+            </li>
+          } @else {
+            <li class="line__row line__row--free">
+              <span class="line__time">{{ clock(item.start) }}</span>
+              <button type="button" class="line__free" (click)="addEvent.emit(today)">
+                <!-- Vorgelesen wird der sichtbare Text plus Zeitraum (WCAG 2.5.3) -->
+                <span>{{ item.open ? 'ab hier kein Termin' : span(item.minutes) + ' ohne Termin' }}<span class="sr-only">{{ item.open ? ' (ab ' + clock(item.start) + ')' : ', ' + clock(item.start) + ' bis ' + clock(item.end) }}. Termin eintragen</span></span>
+                <app-icon name="plus" aria-hidden="true" />
+              </button>
+            </li>
+          }
+        } @empty {
+          <li class="line__empty">
+            <p class="muted">{{ dayOver() ? 'Der Tag ist vorbei.' : 'Heute keine Termine.' }}</p>
+          </li>
+        }
+      </ol>
+    }
+  </section>
+
+  <div class="day-side">
+    <!-- Aufgaben für heute -->
+    <section class="card" aria-labelledby="day-tasks-h">
+      <div class="card-head">
+        <h2 id="day-tasks-h">Aufgaben heute @if (dueTasks().length) {<span class="count">{{ dueTasks().length }}</span>}</h2>
+        <button type="button" class="head-link" (click)="showAll.emit('tasks')">Alle Aufgaben <app-icon name="arrow" aria-hidden="true" /></button>
+      </div>
+      <ul class="day-tasks">
+        @for (d of dueTasks(); track d.task.id) {
+          <li class="day-task" [class.is-done]="justDone() === d.task.id">
+            <button
+              type="button"
+              class="box"
+              [attr.aria-label]="d.task.title + ' als erledigt markieren'"
+              [disabled]="busy() || justDone() === d.task.id"
+              (click)="tick(d.task)"
+            >
+              @if (justDone() === d.task.id) {<app-icon name="check" aria-hidden="true" />}
+            </button>
+            <button type="button" class="day-task__main" (click)="openTask.emit(d.task)">
+              <span class="day-task__title">{{ d.task.title }}</span>
+              <small>
+                @if (d.late) {<span class="late">überfällig</span>}
+                @if (d.task.due_time) {<span>{{ d.task.due_time.slice(0, 5) }} Uhr</span>}
+                @if (d.task.project) {<span>{{ d.task.project }}</span>}
+                @if (d.task.priority === 'HIGH') {<span class="late">Hoch</span>}
+              </small>
+              <app-link-hints [items]="taskLinks()[d.task.id]" />
+            </button>
+          </li>
+        } @empty {
+          <li class="muted day-tasks__empty">Für heute ist keine Aufgabe fällig.</li>
+        }
+      </ul>
+    </section>
+
+    <!-- Angeheftete Notiz: das, was man heute griffbereit haben will -->
+    @if (pinned(); as n) {
+      <section class="card note-mini" aria-labelledby="pin-h">
+        <div class="card-head">
+          <h2 id="pin-h"><app-icon name="star" aria-hidden="true" />Angeheftet</h2>
+          <button type="button" class="head-link" (click)="showAll.emit('notes')">Alle Notizen <app-icon name="arrow" aria-hidden="true" /></button>
+        </div>
+        <button type="button" class="note-mini__body" (click)="openNote.emit(n)">
+          <b>{{ noteTitle(n) }}</b>
+          @for (lineText of noteLines(n, 3); track $index) {
+            <span>{{ lineText }}</span>
+          }
+        </button>
+      </section>
+    }
+  </div>
+</div>

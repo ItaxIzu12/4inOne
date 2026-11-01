@@ -19,8 +19,58 @@ export interface PersonalEvent {
   category?: EventCategory;
   /** Nur in der Zeitraum-Liste: Beginn der Serie (zum Bearbeiten). */
   series_starts_at?: string;
+  /** Gemeinsamer Kalender (31.10.2026) — null/fehlend = privat (nur ich). */
+  calendar?: number | null;
+  calendar_name?: string;
+  calendar_color?: CalendarColor | '';
+  /** Bei gemeinsamen Terminen anderer: wer ihn eingetragen hat (Anzeigename). Leer = von mir. */
+  created_by?: string;
+  /** Darf ich ändern/löschen? (privat: immer; gemeinsam: Rolle „Kann bearbeiten“ oder Besitzer:in) */
+  can_edit?: boolean;
+  /** Kalenderfreigabe (31.10.2026): mit wem ich diesen eigenen Termin teile (Konto-IDs). Nur bei eigenen Terminen
+   * gefüllt — Empfänger sehen nicht, wer ihn sonst noch sieht. Leer = niemand. */
+  shared_with?: number[];
+  /** Für mich freigegeben: wessen Kalender (Konto-ID). null = eigener Termin oder gemeinsamer Kalender. */
+  shared_by?: number | null;
 }
-export type EventInput = Omit<PersonalEvent, 'id' | 'series_starts_at'>;
+export type EventInput = Omit<PersonalEvent, 'id' | 'series_starts_at' | 'calendar_name' | 'calendar_color' | 'created_by' | 'can_edit' | 'shared_by'>;
+
+// ---------- Gemeinsame Kalender (31.10.2026, backend/organisation/calendars.py) ----------
+export type CalendarColor = 'amber' | 'blue' | 'green' | 'rose' | 'violet' | 'slate';
+export type CalendarRole = 'OWNER' | 'EDITOR' | 'VIEWER';
+export interface SharedCalendarMember {
+  user_id: number;
+  name: string;
+  role: CalendarRole;
+  is_self: boolean;
+}
+export interface SharedCalendar {
+  id: number;
+  name: string;
+  color: CalendarColor;
+  /** Meine Rolle in diesem Kalender. */
+  role: CalendarRole;
+  is_owner: boolean;
+  members: SharedCalendarMember[];
+  /** Nur für Besitzer:in: offene Einladungen. */
+  pending?: { invitation_id: number; name: string; role: CalendarRole }[];
+}
+// ---------- Kalenderfreigabe wie Outlook (31.10.2026, backend/organisation/calendar_views.py) ----------
+export type ShareRole = Exclude<CalendarRole, 'OWNER'>;
+export interface CalendarSharePerson {
+  user_id: number;
+  name: string;
+  role: ShareRole;
+}
+export interface CalendarShares {
+  /** Mein Konto als Bereich für Einladungen (scope_id von MY_CALENDAR). */
+  owner_id: number;
+  /** Für diese Personen ist mein Kalender freigegeben. */
+  given: CalendarSharePerson[];
+  /** Diese Personen haben ihren Kalender für mich freigegeben. */
+  received: CalendarSharePerson[];
+  pending: { invitation_id: number; name: string; role: ShareRole }[];
+}
 /** Ergebnis von POST events/import/ — je Termin „new“, „duplicate“ oder „invalid“ (mit Grund). */
 export interface EventImportResult {
   new: number;
@@ -48,11 +98,19 @@ export interface PersonalTask {
 }
 /** Schreibend: `recurrence` setzt die Wiederholung (null = einmalig). */
 export type TaskInput = Partial<Omit<PersonalTask, 'id' | 'repeat'>> & { recurrence?: Repeat | null };
+/** Anhang einer Notiz (Foto oder PDF, 31.10.2026). Inhalt nur über fileBlob() — nie als öffentlicher Link. */
+export interface NoteAttachment {
+  id: number;
+  name: string;
+  content_type: string;
+  size: number;
+}
 export interface PersonalNote {
   id: number;
   title: string;
   body: string;
   pinned: boolean;
+  attachments?: NoteAttachment[];
   created_at: string;
   updated_at: string;
 }
@@ -129,6 +187,51 @@ export class OrganisationApi {
     return this.http.delete<void>(`${this.base}/${kind === 'event' ? 'events' : 'tasks'}/${id}/`);
   }
 
+  // ---------- Gemeinsame Kalender ----------
+  calendars() {
+    return this.http.get<SharedCalendar[]>(`${this.base}/calendars/`);
+  }
+  createCalendar(name: string, color: CalendarColor) {
+    return this.http.post<SharedCalendar>(`${this.base}/calendars/`, { name, color });
+  }
+  updateCalendar(id: number, data: Partial<Pick<SharedCalendar, 'name' | 'color'>>) {
+    return this.http.patch<SharedCalendar>(`${this.base}/calendars/${id}/`, data);
+  }
+  deleteCalendar(id: number) {
+    return this.http.delete<void>(`${this.base}/calendars/${id}/`);
+  }
+  /** Mitglied entfernen (Besitzer:in) oder selbst austreten (eigene user_id). */
+  removeCalendarMember(id: number, userId: number) {
+    return this.http.delete<void>(`${this.base}/calendars/${id}/members/${userId}/`);
+  }
+  changeCalendarRole(id: number, userId: number, role: Exclude<CalendarRole, 'OWNER'>) {
+    return this.http.patch<SharedCalendar>(`${this.base}/calendars/${id}/members/${userId}/`, { role });
+  }
+  /** Einladen geht über die gemeinsame Einladungs-API — nur Personen aus den eigenen Kontakten. */
+  inviteToCalendar(id: number, contactId: number, role: Exclude<CalendarRole, 'OWNER'>) {
+    return this.http.post<unknown>(`${API_BASE_URL}/invitations/`, { contact_id: contactId, scope_type: 'CALENDAR', scope_id: id, role });
+  }
+
+  // ---------- Kalenderfreigabe ----------
+  shares() {
+    return this.http.get<CalendarShares>(`${this.base}/shares/`);
+  }
+  /** Freigeben = einladen; erst nach dem Annehmen sieht die Person Termine, die ich mit ihr teile. */
+  shareMyCalendar(ownerId: number, contactId: number, role: ShareRole) {
+    return this.http.post<unknown>(`${API_BASE_URL}/invitations/`, { contact_id: contactId, scope_type: 'MY_CALENDAR', scope_id: ownerId, role });
+  }
+  changeShareRole(userId: number, role: ShareRole) {
+    return this.http.patch<CalendarShares>(`${this.base}/shares/given/${userId}/`, { role });
+  }
+  /** Freigabe für diese Person beenden — mit ihr geteilte Termine verschwinden sofort bei ihr. */
+  endShare(userId: number) {
+    return this.http.delete<void>(`${this.base}/shares/given/${userId}/`);
+  }
+  /** Den Kalender dieser Person nicht mehr sehen. */
+  leaveShare(ownerId: number) {
+    return this.http.delete<void>(`${this.base}/shares/received/${ownerId}/`);
+  }
+
   // ---------- Notizen ----------
   notes() {
     return this.http.get<PersonalNote[]>(`${this.base}/notes/`);
@@ -140,5 +243,21 @@ export class OrganisationApi {
   }
   removeNote(id: number) {
     return this.http.delete<void>(`${this.base}/notes/${id}/`);
+  }
+
+  // ---------- Anhänge (Fotos/PDF an Notizen) ----------
+  /** Hochladen an eine eigene Notiz. Der Server prüft den Typ am Inhalt und entfernt Standort-/Kameradaten aus Fotos. */
+  uploadNoteFile(noteId: number, file: File) {
+    const body = new FormData();
+    body.append('file', file, file.name);
+    body.append('note', String(noteId));
+    return this.http.post<NoteAttachment>(`${this.base}/files/`, body);
+  }
+  /** Inhalt als Blob (mit Anmeldung) — für Vorschau/Öffnen per Objekt-URL. */
+  fileBlob(id: number) {
+    return this.http.get(`${this.base}/files/${id}/inhalt/`, { responseType: 'blob' });
+  }
+  removeFile(id: number) {
+    return this.http.delete<void>(`${this.base}/files/${id}/`);
   }
 }

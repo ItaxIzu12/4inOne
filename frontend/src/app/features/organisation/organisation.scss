@@ -10,6 +10,8 @@
   --accent-hover: color-mix(in srgb, var(--organization-accent) 85%, #000);
   --accent-soft: var(--organization-soft);
   --lavender: var(--organization-soft);
+  // Kleinste Schrift im Bereich 13 px (wie Haushalt und Finanzen) — 12 px war auf dem Handy zu klein.
+  --fs-caption: var(--fs-meta, 13px);
 }
 .organisation-page {
   max-width: var(--content-max-width);
@@ -206,10 +208,61 @@
   }
 }
 
-// Termin: „Ganztägig“ neben dem Datum, auf Höhe des Felds.
-.checkbox-row--inline {
-  align-self: end;
-  min-height: 44px;
+// Termin: „Ganztägig“ als eigene Zeile mit Schalter — die ganze Zeile ist klickbar.
+.allday-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 48px;
+  padding: 6px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  cursor: pointer;
+}
+.allday-row > span {
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+}
+// Schalter aus einem echten Kontrollkästchen (Formular, Tastatur, Screenreader „Schalter“); Spur ≥ 3:1 Kontrast
+.switch {
+  position: relative;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border-radius: 999px;
+  background: #7d8796;
+  appearance: none;
+  cursor: pointer;
+}
+.switch::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
+  content: '';
+}
+.switch:checked {
+  background: var(--organization-fill);
+}
+.switch:checked::after {
+  transform: translateX(18px);
+}
+.switch:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .switch,
+  .switch::after {
+    transition: background-color 150ms ease-out, transform 150ms ease-out;
+  }
 }
 .series-note {
   display: flex;
@@ -258,4 +311,130 @@
 }
 .link-btn:hover {
   text-decoration: underline;
+}
+
+// ---------- Gemeinsame Kalender im Termin-Dialog (31.10.2026) ----------
+[data-color='green'] { --cal: #2e8b57; }
+[data-color='blue'] { --cal: #2f6fb5; }
+[data-color='amber'] { --cal: #b8741a; }
+[data-color='rose'] { --cal: #c4456f; }
+[data-color='violet'] { --cal: #7451b8; }
+[data-color='slate'] { --cal: #5b6b7f; }
+.cal-choice {
+  display: grid;
+  gap: 8px;
+}
+.cal-choice__label {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+}
+.cal-choice__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cal-choice__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.cal-choice__chip app-icon {
+  width: 15px;
+  height: 15px;
+}
+.cal-choice__chip[aria-pressed='true'] {
+  border-color: var(--brand-primary);
+  box-shadow: inset 0 0 0 1px var(--brand-primary);
+}
+.cal-choice__chip:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.cal-choice__chip:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.cal-choice__dot,
+.ro-event__dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cal, var(--text-secondary));
+}
+.cal-choice__avatar {
+  display: grid;
+  flex: 0 0 22px;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--surface-recessed);
+  color: var(--text-primary);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+.cal-choice__hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.ro-event {
+  display: grid;
+  gap: 6px;
+}
+.ro-event p {
+  margin: 0;
+}
+.ro-event__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+}
+.ro-event__title {
+  margin: 0;
+  font-size: var(--fs-subsection);
+}
+.ro-event__when,
+.ro-event__line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+}
+.ro-event__line app-icon,
+.ro-event__note app-icon {
+  width: 15px;
+  height: 15px;
+}
+.ro-event__desc {
+  color: var(--text-secondary);
+  white-space: pre-line;
+}
+.ro-event__note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px !important;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
 }

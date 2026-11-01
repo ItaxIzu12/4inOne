@@ -104,6 +104,12 @@ export class ConnectionsApi {
     });
   }
 
+  /** Für Hinweise in Listen: je sichtbarem Objekt die sichtbaren Gegenstücke (Schlüssel = ID als Text). Fehlende
+   * Objekte haben keine sichtbare Verknüpfung — der Server unterscheidet das bewusst nicht von „nicht vorhanden“. */
+  summary(type: ConnectionObjectType, ids: readonly (number | string)[]): Observable<Record<string, ConnectedObject[]>> {
+    return this.http.get<Record<string, ConnectedObject[]>>(`${this.base}/summary/`, { params: { object_type: type, ids: ids.join(',') } });
+  }
+
   remove(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}/`);
   }

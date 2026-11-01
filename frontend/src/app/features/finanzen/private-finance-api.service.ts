@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { API_BASE_URL } from '../../core/api.config';
 import { ImportRow } from './finance-import';
+import { MONTH_ABBR } from '../../shared/form/date-utils';
 export interface FinanceCategory {
   id: number;
   name: string;
@@ -231,8 +232,7 @@ export function planRange(goal: SavingsGoal): string {
   }
   return `Nur ${abbrMonth(goal.plan_month)}`;
 }
-/** Monatskurzform für Datumsangaben im Text (Duden: „März“, „Mai“, „Juni“, „Juli“ ohne Punkt) — überall gleich. */
-export const ABBR = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
+const ABBR = MONTH_ABBR;
 const abbrMonth = (iso: string) => `${ABBR[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
 export function financeMonth() {
   const d = new Date();

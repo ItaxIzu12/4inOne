@@ -7,7 +7,7 @@ export type Relation = 'FAMILY' | 'FRIEND';
 
 /** Etwas, das du mit einer Person heute wirklich teilst (oder zu dem du sie hinzufügen darfst). */
 export interface SharedArea {
-  kind: 'TRIP' | 'HOUSEHOLD';
+  kind: 'TRIP' | 'HOUSEHOLD' | 'CALENDAR' | 'MY_CALENDAR';
   id: number;
   title: string;
 }

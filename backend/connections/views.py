@@ -12,6 +12,7 @@ from connections.serializers import (
     ConnectionCreateSerializer,
     ObjectQuerySerializer,
     OptionsQuerySerializer,
+    SummaryQuerySerializer,
     SuggestionAcceptSerializer,
     SuggestionKeySerializer,
     SuggestionQuerySerializer,
@@ -64,6 +65,18 @@ class ConnectionListCreateView(ConnectionsView):
             data.get('relation_type'),
         )
         return Response(created, status=status.HTTP_201_CREATED)
+
+
+class ConnectionSummaryView(ConnectionsView):
+    """GET ?object_type=&ids=1,2,3 — nur lesend: je Objekt die sichtbaren Gegenstücke (für Hinweise in Listen).
+    Schlüssel sind die IDs als Text; Objekte ohne sichtbare Verbindung fehlen."""
+
+    def get(self, request):
+        query = SummaryQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        data = query.validated_data
+        summary = services.get_connection_summary(request.user, data['object_type'], data['ids'])
+        return Response({str(key): value for key, value in summary.items()})
 
 
 class ConnectionDetailView(ConnectionsView):

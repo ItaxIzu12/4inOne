@@ -1,13 +1,14 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { Component, computed, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import { LinkHints, connectionHints } from '../../shared/connections/link-hints';
 import { AppIcon } from '../../shared/icons/app-icon';
-import { Id, MemberLoadDto, TaskDto } from './haushalt-api.service';
+import { Id, MemberLoadDto, TaskDto, TaskRoom } from './haushalt-api.service';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
 import { recurrenceLabel, relativeDay, todayIso } from './haushalt-logic';
-import { NO_FILTERS, PRIORITY_LABEL, TaskFilters, dueLabel, durationLabel, filterTasks, room } from './aufgaben-logic';
-import { ScopeNote } from '../../shared/scope-note/scope-note';
+import { NO_FILTERS, PRIORITY_LABEL, TaskFilters, dueLabel, durationLabel, filterTasks, initials, room } from './aufgaben-logic';
+import { TaskGroup, groupTasks } from './zuhause-logic';
 import { RoutinenTab } from './routinen-tab';
 import { TaskForm, TaskFormChange } from './task-form';
 
@@ -40,7 +41,7 @@ const VIEW_STATUS: Record<AufgabenView, TaskFilters['status']> = {
 @Component({
   selector: 'app-aufgaben-tab',
   standalone: true,
-  imports: [ErrorNoticeDirective, AppIcon, RouterLink, TaskForm, RoutinenTab, ScopeNote],
+  imports: [ErrorNoticeDirective, AppIcon, LinkHints, TaskForm, RoutinenTab],
   templateUrl: './aufgaben-tab.html',
   styleUrls: ['./haushalt-common.scss', './aufgaben-tab.scss'],
 })
@@ -53,6 +54,19 @@ export class AufgabenTab {
   readonly newRequest = input(0);
   /** Alle · Heute · Überfällig · Wiederkehrend · Erledigt — in der URL (?ansicht=). */
   readonly view = model<AufgabenView>('alle');
+  /** Raumfilter (aus „Heute“ › Räume); leer = alle Räume. Zwei-Wege, damit „Alle Räume“ ihn zurücksetzt. */
+  readonly room = model<TaskRoom | ''>('');
+  protected readonly roomName = computed(() => room(this.room() as TaskRoom)?.label ?? '');
+  /** Gruppierung der offenen Liste: nach Tag (Standard), Raum oder Person (Person nur bei mehreren Personen). */
+  protected readonly groupBy = signal<'tag' | 'raum' | 'person'>('tag');
+  protected readonly groupOptions = computed(() =>
+    this.members().length > 1
+      ? ([['tag', 'Nach Tag'], ['raum', 'Nach Raum'], ['person', 'Nach Person']] as const)
+      : ([['tag', 'Nach Tag'], ['raum', 'Nach Raum']] as const),
+  );
+  /** Gerade abgehakt: Haken und Durchstreichen kurz zeigen, dann verschwindet die Zeile. */
+  protected readonly justDone = signal<Id | null>(null);
+  protected readonly initials = initials;
   protected readonly views = AUFGABEN_VIEWS;
   protected readonly viewLabel = VIEW_LABEL;
   /** „Aufgabe hinzufügen“ in der Ansicht Wiederkehrend öffnet das Formular der Routinen. */
@@ -100,9 +114,16 @@ export class AufgabenTab {
   }
   protected readonly visible = computed(() => {
     const q = this.search().trim().toLocaleLowerCase('de');
-    return this.inView(this.view()).filter((t) => this.matches(t, q));
+    const r = this.room();
+    return this.inView(this.view()).filter((t) => this.matches(t, q) && (!r || t.room === r));
   });
+  /** Offene Ansichten gruppiert; „Erledigt“ bleibt eine Liste (neueste zuerst). */
+  protected readonly groups = computed<TaskGroup[]>(() =>
+    this.view() === 'erledigt' ? [{ key: 'done', label: '', tasks: this.visible() }] : groupTasks(this.visible(), this.groupBy()),
+  );
   /** Anzahl je Ansicht für die Chips (Alle ohne Zahl). */
+  /** Wohin Aufgaben gehören („✈ Berlin Wochenende“) — ein Abruf für die sichtbare Liste. */
+  protected readonly links = connectionHints('HOUSEHOLD_TASK', () => this.visible().map((t) => t.id));
   protected readonly counts = computed(() => ({
     heute: this.inView('heute').length,
     ueberfaellig: this.inView('ueberfaellig').length,
@@ -124,17 +145,22 @@ export class AufgabenTab {
     this.view.set(view);
   }
 
-  /** Zeile unter dem Titel: nur, was etwas aussagt (Priorität „Normal“ fällt weg). */
+  /** Zeile unter dem Titel: nur, was etwas aussagt (Priorität „Normal“ fällt weg). Was die Gruppe schon sagt
+   * (Tag, Raum, Person), steht nicht noch einmal in der Zeile; die Person steht rechts als Kürzel. */
   protected meta(t: TaskDto): { due: string; late: boolean; parts: string[] } {
     const due = dueLabel(t);
     const parts: string[] = [];
+    const by = this.view() === 'erledigt' ? null : this.groupBy();
     const r = room(t.room);
-    if (r) parts.push(r.label);
-    if (t.assigned_to_name) parts.push(t.rotate ? `${t.assigned_to_name} (reihum)` : t.assigned_to_name);
+    if (r && by !== 'raum') parts.push(r.label);
+    if (t.rotate && t.assigned_to_name) parts.push('reihum');
     if (t.duration_minutes) parts.push(durationLabel(t.duration_minutes));
     if (t.priority !== 'mittel') parts.push(PRIORITY_LABEL[t.priority]);
     if (t.recurrence_days || t.recurrence_months) parts.push(recurrenceLabel(t.recurrence_days, t.recurrence_months));
-    return { due: t.due_date ? due.text : '', late: due.tone === 'late', parts };
+    // Nach Tag gruppiert: die Gruppe nennt den Tag — außer ein genaues Datum sagt mehr (Diese Woche / Später)
+    const groupSaysDay = by === 'tag' && ['Heute', 'Morgen'].includes(due.text);
+    const showDue = !!t.due_date && !groupSaysDay && !(by === 'tag' && due.tone === 'late' && due.text === 'Gestern');
+    return { due: showDue ? due.text : '', late: due.tone === 'late', parts };
   }
 
   constructor() {
@@ -220,27 +246,35 @@ export class AufgabenTab {
     this.provider.completeTask(task.id, task.due_date).subscribe({
       next: (updated) => {
         this.completing.set(null);
-        this.tasks.update((tasks) =>
-          (tasks ?? [])
-            .map((t) => (t.id === task.id ? updated : t))
-            .filter((t) => !t.is_done)
-            .sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999')),
-        );
-        this.reloadLoad();
-        this.loadDone();
-        if (updated.is_done) {
-          this.saved.emit(`„${task.title}“ erledigt.`);
-        } else {
-          const next = updated.due_date ? relativeDay(updated.due_date) : '';
-          const who = updated.assigned_to_name && updated.rotate ? ` · ${updated.assigned_to_name} ist dran` : '';
-          this.saved.emit(`„${task.title}“ erledigt · wieder fällig ${next}${who}.`);
-        }
+        // Erledigt-Moment: Haken und Durchstreichen kurz zeigen (bei reduzierter Bewegung sofort weiter)
+        this.justDone.set(task.id);
+        const calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+        setTimeout(() => this.afterComplete(task, updated), calm ? 0 : 520);
       },
       error: () => {
         this.completing.set(null);
         this.actionError.set(`„${task.title}“ konnte nicht abgehakt werden. Bitte noch einmal versuchen.`);
       },
     });
+  }
+
+  private afterComplete(task: TaskDto, updated: TaskDto): void {
+    this.justDone.set(null);
+    this.tasks.update((tasks) =>
+      (tasks ?? [])
+        .map((t) => (t.id === task.id ? updated : t))
+        .filter((t) => !t.is_done)
+        .sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999')),
+    );
+    this.reloadLoad();
+    this.loadDone();
+    if (updated.is_done) {
+      this.saved.emit(`„${task.title}“ erledigt.`);
+    } else {
+      const next = updated.due_date ? relativeDay(updated.due_date) : '';
+      const who = updated.assigned_to_name && updated.rotate ? ` · ${updated.assigned_to_name} ist dran` : '';
+      this.saved.emit(`„${task.title}“ erledigt · wieder fällig ${next}${who}.`);
+    }
   }
 
   // ---------- Formular (TaskForm) ----------

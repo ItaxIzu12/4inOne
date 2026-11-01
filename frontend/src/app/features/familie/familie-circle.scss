@@ -1,0 +1,192 @@
+// Personen & Gruppen › „Dein Kreis“ (31.10.2026): dunkle Kopfkarte in Tinte (Personen sind bereichsübergreifend,
+// deshalb keine Bereichsfarbe) mit den Gesichtern des Kreises, gezählten Fakten und dem Datenschutz-Versprechen in
+// einer Zeile. Darunter: Geteiltes als Marken in der Bereichsfarbe statt abgeschnittener Text.
+.circle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 30px;
+  border-radius: 22px var(--radius-sm) 22px 22px;
+  background: var(--brand-primary, #172523);
+  color: #fff;
+}
+.circle__copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.circle__kicker {
+  margin: 0;
+  color: color-mix(in srgb, #fff 80%, transparent);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.circle h1 {
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 3.6vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+.circle__facts {
+  margin: 0;
+  color: color-mix(in srgb, #fff 93%, transparent);
+  font-size: var(--fs-body);
+}
+.circle__promise {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 64ch;
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: rgb(255 255 255 / 0.08);
+  color: color-mix(in srgb, #fff 93%, transparent);
+  font-size: var(--fs-secondary);
+  line-height: 1.5;
+}
+.circle__promise b {
+  color: #fff;
+}
+.circle__promise app-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: #9fe0bd;
+}
+// Gesichter des Kreises: überlappend, mit Tinten-Rand
+.circle__faces {
+  display: flex;
+  margin: 0;
+  padding: 0 0 0 14px;
+  list-style: none;
+}
+.circle__faces .people-avatar {
+  width: 64px;
+  height: 64px;
+  margin-left: -14px;
+  border: 3px solid var(--brand-primary, #172523);
+  font-size: 20px;
+  font-weight: 700;
+}
+.circle__more {
+  background: #fff !important;
+  color: var(--brand-primary, #172523) !important;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .circle__faces .people-avatar {
+    animation: rise 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .circle__faces .people-avatar:nth-child(2) { animation-delay: 50ms; }
+  .circle__faces .people-avatar:nth-child(3) { animation-delay: 100ms; }
+  .circle__faces .people-avatar:nth-child(n + 4) { animation-delay: 150ms; }
+}
+// nur Bewegung, nie Transparenz
+@keyframes rise {
+  from { transform: translateY(8px); }
+}
+
+// ---------- Geteiltes als Marken ----------
+.shared-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.shared-chip {
+  --k: var(--text-secondary);
+  --k-soft: var(--surface-hover);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: var(--k-soft);
+  color: var(--k);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  line-height: 1.25;
+  /* nur umbrechen, wenn ein einzelnes Wort nicht passt — sonst zwischen Wörtern */
+  overflow-wrap: break-word;
+}
+.shared-chip[data-kind='TRIP'] {
+  --k: var(--travel-accent);
+  --k-soft: var(--travel-soft);
+}
+.shared-chip[data-kind='CALENDAR'],
+.shared-chip[data-kind='MY_CALENDAR'] {
+  --k: var(--organization-accent);
+  --k-soft: var(--organization-soft);
+}
+.shared-chip[data-kind='HOUSEHOLD'] {
+  --k: var(--household-accent);
+  --k-soft: var(--household-soft);
+}
+.shared-chip--pending {
+  /* offen, noch nichts geteilt: gestrichelt statt Fläche */
+  border: 1px dashed var(--border-strong);
+  background: transparent;
+}
+/* „+2 weitere“ / „Weniger“: klappt alle geteilten Bereiche einer Person auf */
+.shared-chip--more {
+  min-height: 32px;
+  border: 1px solid var(--border-default);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  cursor: pointer;
+}
+.shared-chip--more:hover {
+  background: var(--surface-hover);
+}
+.shared-chip--more:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.shared-chip--demo {
+  min-height: 32px;
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  cursor: pointer;
+}
+.shared-chip--demo:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.shared-chip app-icon {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 760px) {
+  .circle {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding: 22px 20px;
+    border-radius: 20px var(--radius-sm) 20px 20px;
+  }
+  .circle__faces {
+    grid-row: 1;
+  }
+  .circle__faces .people-avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 16px;
+  }
+}

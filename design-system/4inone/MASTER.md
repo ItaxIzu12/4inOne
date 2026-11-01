@@ -52,6 +52,23 @@ Sparziele) folgen derselben Kopfkarte, Steuerzeile (Segment + Datum) und Tagesli
 Erklären statt voraussetzen: Startliste für neue Konten, „Wie entsteht diese Zahl?“, (i)-Begriffe, am Monatsanfang
 ein Rückblick auf den Vormonat (ausblendbar) und unter Ausgaben die Fixkosten mit Jahressumme — nur echte Werte.
 Budgets › „Dein Jahr“: große Zahl, Urteil, zwölf Säulen in einer Reihe (Tönung = Budget, Füllung = Ausgaben, grün gehalten / rot überschritten), antippbar.
+Haushalt: „Dein Zuhause, Raum für Raum“ — Kopfkarte in der Haushaltsfarbe (einzige Bereichsfläche), Räume nach Dringlichkeit, Aufgaben nach Tag/Raum/Person, ruhiger Erledigt-Moment; Einkaufen wahlweise als Kacheln; Zuhause mit Zeitleiste „Als Nächstes“ und Geräten nach Raum.
+Organisation: „Dein Tag, Stunde für Stunde“ — neuer Startreiter Heute mit Kopfkarte in der Organisationsfarbe (einzige Bereichsfläche), Tageslinie mit freier Zeit zum Antippen, Aufgaben heute und angeheftete Notiz; Kalender mit Kategoriefarben, Legende und Woche als Handy-Start; Aufgaben nach Tag/Projekt mit Erledigt-Moment; Notizen als Zettelwand mit „Schnell notieren“.
+Reisen: „Von hier nach dort“ — Bordkarte in der Reisefarbe (einzige Bereichsfläche: Abreise → Ziel, Tage bis zur Abreise, gezählte Vorbereitung), weitere Reisen als Karten mit Kalenderblatt; Planung als Countdown-Linie mit Abreise-Marke, Packliste mit Kategorie-Ringen, Budget mit „Noch übrig“ groß und gestapeltem Balken; Dialoge mit Live-Bordkarte und Chips.
+Verknüpfungen: sichtbar statt versteckt — kleine Marken in der Bereichsfarbe am Eintrag („✈ Berlin Wochenende“) und „Gehört zu dieser Reise“ in der Reise-Übersicht; nichts wird automatisch verknüpft.
+Startseite: „Vier Antworten“ — je Bereich die eine Antwort in seiner Handschrift (heute ausgegeben, Aufgaben heute, als Nächstes + freie Zeit, Tage bis zur Reise), darunter Dein Tag, Finanzen, Dein Fortschritt (ehrliche Ringe) mit Idee für heute und die Bordkarte der nächsten Reise.
+Abnahme (31.10.2026): Zahlen und Balken haben immer eine ausgesprochene Bedeutung (kein „Vorbereitet“ aus gemischten Größen, keine unbeschrifteten Balken), Zeitlücken heißen „ohne Termin“ statt „frei“, Monatssummen „bis heute im Oktober“.
+Personen & Gruppen: „Dein Kreis“ — dunkle Kopfkarte mit Gesichtern, gezählten Fakten und dem Versprechen in einer Zeile; Geteiltes als Marken in Bereichsfarbe. Einstellungen: Seitennavigation am Rechner, Kontoschutz als ehrliche Liste, durchgängig Tinte statt Blau.
+Gemeinsame Kalender: Termine wahlweise „Nur ich“ oder in einem gemeinsamen Kalender (Familie, WG); Private bleiben für andere völlig unsichtbar; Filter Alle · Nur meine · je Kalender; Marken „Familie · von Max“.
+Kalenderfreigabe wie Outlook: eigener Kalender für Personen freigebbar (ansehen/bearbeiten, nach Annehmen); neue Termine privat; „Wer sieht den Termin?“ mit Nur ich · Gruppe · Personen; Filter „Kalender von …“.
+Dialoge: langer Inhalt scrollt im Dialog, Schließen bleibt stehen.
+Notizen: Fotos & PDF anhängen (Test), Vorschau auf der Karte, Fotos ohne Standortdaten.
+Geräte/Verträge: Fotos & PDF beim Anlegen und Bearbeiten, Haushaltsfarbe; löschen nur Hochladende oder Admins.
+Termin-Dialog: „Ganztägig“ als Schalter-Zeile; „Ganztägig“ in Listen nicht fett.
+Haushalt: Avatare im Kopf → „Wer ist dabei?“; Dialoge nennen, wer den Eintrag sieht.
+Rückmeldungen: helle Karte mit Symbol, × und Zeitleiste; oben in der Mitte (Handy volle Breite); ~5 s, pausiert unter dem Zeiger.
+Dialog-Knöpfe immer mit Symbol: × Abbrechen, ✓ Speichern, Papierkorb Löschen.
+Tagesblatt: Tag mit Terminen anklicken → Liste des Tages + „Termin an diesem Tag“, nach dem Speichern zurück; leere Tage direkt neu; Woche mit „+“-Fläche je Spalte.
 Kopfzeile ohne Suche, deckend. Tableiste und Seitenleiste: aktiver Eintrag als Farbfeld.
 
 ## Unterseiten (Rechtliches, 404)

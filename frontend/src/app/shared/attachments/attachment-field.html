@@ -1,0 +1,41 @@
+<div class="na" role="group" [attr.aria-labelledby]="headingId">
+  <div class="na__head">
+    <p class="na__label" [id]="headingId">Fotos &amp; PDF <span>(optional)</span></p>
+    <label class="na__add">
+      <input type="file" class="sr-only" multiple [accept]="accept" (change)="pick($event)" />
+      <app-icon name="upload" aria-hidden="true" />Foto oder PDF anhängen
+    </label>
+  </div>
+
+  @if (tiles().length) {
+    <ul class="na__grid">
+      @for (t of tiles(); track t.key) {
+        <li class="na__tile" [class.is-new]="!t.id">
+          <button type="button" class="na__open" (click)="view(t)">
+            @if (t.isImage) {
+              <app-file-thumb class="na__thumb" [load]="load()" [fileId]="t.id" [file]="t.file" />
+            } @else {
+              <span class="na__thumb na__pdf" aria-hidden="true"><app-icon name="file-text" /><b>PDF</b></span>
+            }
+            <span class="na__name">{{ t.name }}</span>
+            <span class="sr-only"> – öffnen</span>
+          </button>
+          @if (t.canDelete) {
+            <button type="button" class="na__remove" (click)="remove(t)">
+              <app-icon name="close" aria-hidden="true" /><span class="sr-only">{{ t.name }} entfernen</span>
+            </button>
+          }
+          @if (!t.id) {<span class="na__badge">neu</span>}
+        </li>
+      }
+    </ul>
+  }
+
+  @if (error()) {
+    <p class="na__error" role="alert">{{ error() }}</p>
+  }
+  <p class="na__hint">
+    <app-icon name="lock" aria-hidden="true" />{{ privacy() }} Standort und Kameradaten werden aus Fotos entfernt.
+    @if (dirty()) {<b> Wird beim Speichern übernommen.</b>}
+  </p>
+</div>

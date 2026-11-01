@@ -50,6 +50,6 @@ describe('SpendCurveChart', () => {
     expect(el.querySelector('.readout')!.textContent!.replace(/\s/g, ' ')).toContain('150,00 € ausgegeben');
     plot.dispatchEvent(new KeyboardEvent('keydown', { key: 'End' }));
     fixture.detectChanges();
-    expect(plot.getAttribute('aria-valuetext')).toContain('Heute:'); // letzter Tag des laufenden Monats
+    expect(plot.getAttribute('aria-valuetext')).toMatch(/^Bis heute im \p{L}+:/u); // laufender Monat: Summe bis heute
   });
 });

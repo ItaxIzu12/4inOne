@@ -8,8 +8,9 @@ import { HomeCurrency } from '../../core/fx/home-currency';
 // wirklich existiert, daher ist "meine Rolle" hier immer OWNER (siehe withSummary()) und der Kontaktpicker
 // braucht keinen echten Contacts-Endpunkt.
 const DEMO_CONTACTS: ContactOption[] = [
-  { id: 201, name: 'Tom Schulz' },
-  { id: 202, name: 'Lena' },
+  // Dieselben Personen wie Personen & Gruppen (demo-contacts-api.service.ts) und Organisation: Max 301, Lena 302
+  { id: 301, name: 'Max' },
+  { id: 302, name: 'Lena' },
 ];
 
 // Wie demo-organisation-api.ts: keine HTTP-Aufrufe, ersetzt ReisenApi nur für die öffentliche Demo-Route
@@ -52,7 +53,18 @@ const BLANK: Omit<TripBase, 'id' | 'title' | 'start_date' | 'end_date'> = {
   created_at: at(-5, '09:00'),
   updated_at: at(-5, '09:00'),
 };
-const BERLIN = 12;
+export const BERLIN = 12;
+/** Tage bis zum nächsten `month`/`day` (Monat 1–12), mindestens `min` Tage entfernt — damit die Demo-Reisen zur
+ * Jahreszeit passen (Sommerurlaub im Sommer, Skifahren im Winter), egal wann jemand die Demo öffnet. */
+function daysToNext(month: number, day: number, min = 30): number {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let target = new Date(now.getFullYear(), month - 1, day);
+  while ((target.getTime() - today.getTime()) / 86_400_000 < min) target = new Date(target.getFullYear() + 1, month - 1, day);
+  return Math.round((target.getTime() - today.getTime()) / 86_400_000);
+}
+const SUMMER = daysToNext(7, 11);
+const SKI = daysToNext(2, 6);
 type PackSeed = [string, PackingItem['category'], number | null];
 // [Titel, Kategorie, abgehakt vor X Tagen | null = offen] — 12 von 24 erledigt, wie im Entwurf.
 const BERLIN_PACKING: PackSeed[] = [
@@ -90,8 +102,8 @@ export class DemoReisenApi {
       id: 2,
       title: 'Italien Sommerurlaub',
       destination: 'Gardasee, Italien',
-      start_date: dateOnly(75),
-      end_date: dateOnly(89),
+      start_date: dateOnly(SUMMER),
+      end_date: dateOnly(SUMMER + 14),
       status: 'PLANNED',
       travel_type: 'BEACH',
       transport_type: 'FLIGHT',
@@ -107,8 +119,8 @@ export class DemoReisenApi {
       id: 3,
       title: 'Skifahren Schweiz',
       destination: 'Davos, Schweiz',
-      start_date: dateOnly(150),
-      end_date: dateOnly(155),
+      start_date: dateOnly(SKI),
+      end_date: dateOnly(SKI + 5),
       status: 'PLANNED',
       travel_type: 'WINTER',
       transport_type: 'CAR',
@@ -159,12 +171,12 @@ export class DemoReisenApi {
   ];
   // Berlin: 4 offene Aufgaben (wie im Entwurf), eine erledigt; Erinnerungen sind Aufgaben mit Uhrzeit.
   private taskList: TripTask[] = [
-    { id: 1, trip: 1, title: 'Online Check-in', due_date: dateOnly(BERLIN - 2), due_time: '18:00', status: 'OPEN', note: '', assignee: 1, assignee_name: 'Anna' },
-    { id: 2, trip: 1, title: 'Reisepass prüfen', due_date: dateOnly(BERLIN - 1), due_time: null, status: 'OPEN', note: '', assignee: 1, assignee_name: 'Anna' },
-    { id: 3, trip: 1, title: 'Restaurant reservieren', due_date: dateOnly(5), due_time: null, status: 'OPEN', note: '', assignee: 201, assignee_name: 'Tom Schulz' },
+    { id: 1, trip: 1, title: 'Online Check-in', due_date: dateOnly(BERLIN - 2), due_time: '18:00', status: 'OPEN', note: '', assignee: 1, assignee_name: 'Sophie' },
+    { id: 2, trip: 1, title: 'Reisepass prüfen', due_date: dateOnly(BERLIN - 1), due_time: null, status: 'OPEN', note: '', assignee: 1, assignee_name: 'Sophie' },
+    { id: 3, trip: 1, title: 'Restaurant reservieren', due_date: dateOnly(5), due_time: null, status: 'OPEN', note: '', assignee: 301, assignee_name: 'Max' },
     { id: 4, trip: 1, title: 'Museumstickets kaufen', due_date: null, due_time: null, status: 'OPEN', note: '', assignee: null, assignee_name: '' },
-    { id: 5, trip: 1, title: 'Hotel buchen', due_date: dateOnly(-8), due_time: null, status: 'DONE', note: '', assignee: 1, assignee_name: 'Anna' },
-    { id: 6, trip: 2, title: 'Mietwagen vergleichen', due_date: dateOnly(30), due_time: null, status: 'OPEN', note: '', assignee: null, assignee_name: '' },
+    { id: 5, trip: 1, title: 'Hotel buchen', due_date: dateOnly(-8), due_time: null, status: 'DONE', note: '', assignee: 1, assignee_name: 'Sophie' },
+    { id: 6, trip: 2, title: 'Mietwagen vergleichen', due_date: dateOnly(SUMMER - 45), due_time: null, status: 'OPEN', note: '', assignee: null, assignee_name: '' },
     { id: 7, trip: 4, title: 'Flug buchen', due_date: dateOnly(-100), due_time: null, status: 'DONE', note: '', assignee: null, assignee_name: '' },
   ];
   private eventList: TripEvent[] = [
@@ -190,15 +202,14 @@ export class DemoReisenApi {
     { id: 5, trip: 1, category: 'SONSTIGES', planned_amount: '30.00' },
   ];
   private participantList: TripParticipant[] = [
-    { id: 1, trip: 1, user: 1, display_name: 'Anna', is_self: true, role: 'OWNER', added_at: at(-5, '09:00') },
-    { id: 2, trip: 1, user: 201, display_name: 'Tom Schulz', is_self: false, role: 'EDITOR', added_at: at(-5, '09:05') },
-    { id: 3, trip: 2, user: 1, display_name: 'Anna', is_self: true, role: 'OWNER', added_at: at(-3, '10:00') },
-    { id: 4, trip: 2, user: 201, display_name: 'Tom Schulz', is_self: false, role: 'EDITOR', added_at: at(-3, '10:00') },
-    { id: 5, trip: 2, user: 202, display_name: 'Lena', is_self: false, role: 'VIEWER', added_at: at(-3, '10:00') },
-    { id: 6, trip: 2, user: 203, display_name: 'Jonas', is_self: false, role: 'VIEWER', added_at: at(-3, '10:00') },
-    { id: 7, trip: 3, user: 1, display_name: 'Anna', is_self: true, role: 'OWNER', added_at: at(-1, '18:00') },
-    { id: 8, trip: 3, user: 202, display_name: 'Lena', is_self: false, role: 'EDITOR', added_at: at(-1, '18:00') },
-    { id: 9, trip: 4, user: 1, display_name: 'Anna', is_self: true, role: 'OWNER', added_at: at(-90, '18:00') },
+    { id: 1, trip: 1, user: 1, display_name: 'Sophie', is_self: true, role: 'OWNER', added_at: at(-5, '09:00') },
+    { id: 2, trip: 1, user: 301, display_name: 'Max', is_self: false, role: 'EDITOR', added_at: at(-5, '09:05') },
+    { id: 3, trip: 2, user: 1, display_name: 'Sophie', is_self: true, role: 'OWNER', added_at: at(-3, '10:00') },
+    { id: 4, trip: 2, user: 301, display_name: 'Max', is_self: false, role: 'EDITOR', added_at: at(-3, '10:00') },
+    { id: 5, trip: 2, user: 302, display_name: 'Lena', is_self: false, role: 'VIEWER', added_at: at(-3, '10:00') },
+    { id: 7, trip: 3, user: 1, display_name: 'Sophie', is_self: true, role: 'OWNER', added_at: at(-1, '18:00') },
+    { id: 8, trip: 3, user: 302, display_name: 'Lena', is_self: false, role: 'EDITOR', added_at: at(-1, '18:00') },
+    { id: 9, trip: 4, user: 1, display_name: 'Sophie', is_self: true, role: 'OWNER', added_at: at(-90, '18:00') },
   ];
   private withSummary(trip: TripBase): Trip {
     const packing = this.packingList.filter((p) => p.trip === trip.id);
@@ -251,7 +262,7 @@ export class DemoReisenApi {
     this.tripList.push(created);
     // Wie TripViewSet.perform_create im Backend: eine neue Reise bekommt ihren Ersteller sofort als einzigen
     // Teilnehmer mit Rolle OWNER, ohne vorher eine Gruppe anzulegen.
-    this.participantList.push({ id: this.nextId++, trip: created.id, user: 1, display_name: 'Anna', is_self: true, role: 'OWNER', added_at: created.created_at });
+    this.participantList.push({ id: this.nextId++, trip: created.id, user: 1, display_name: 'Sophie', is_self: true, role: 'OWNER', added_at: created.created_at });
     return of(this.withSummary(created));
   }
   removeTrip(id: number): Observable<void> {
@@ -430,14 +441,44 @@ export class DemoReisenApi {
   participants(tripId: number): Observable<TripParticipant[]> {
     return of(this.participantList.filter((p) => p.trip === tripId).map((p) => ({ ...p })));
   }
-  /** Demo: eine Einladung wird nur bestätigt — angenommen wird sie hier nie (es gibt kein zweites Konto). */
-  inviteParticipant(tripId: number, contactId: number, _role: 'VIEWER' | 'EDITOR'): Observable<unknown> {
+  /** Demo: die Einladung bleibt offen, bis sie in „Personen & Gruppen“ mit „Demo: annehmen lassen“ angenommen wird
+   * (es gibt kein zweites Konto). `contactId` ist hier die Konto-ID der Person (Max 301, Lena 302). */
+  inviteParticipant(tripId: number, contactId: number, role: 'VIEWER' | 'EDITOR'): Observable<unknown> {
     const contact = DEMO_CONTACTS.find((c) => c.id === contactId);
     if (!contact) return throwError(() => ({ status: 400 }));
     if (this.participantList.some((p) => p.trip === tripId && p.user === contact.id)) {
       return throwError(() => ({ status: 400, error: { contact_id: [`${contact.name} ist bereits dabei.`] } }));
     }
+    if (!this.pending.some((p) => p.trip === tripId && p.user === contact.id)) {
+      // eigener Nummernkreis, damit die ID nicht mit Einladungen anderer Demo-Bereiche zusammenfällt
+      this.pending.push({ invitation_id: 50_000 + this.nextId++, trip: tripId, user: contact.id, name: contact.name, role });
+    }
     return of(null);
+  }
+
+  // ---------- Abgleich mit „Personen & Gruppen“ (Demo) ----------
+  /** Offene Reise-Einladungen (wie Invitation im Backend: geben noch keinen Zugriff). */
+  private pending: { invitation_id: number; trip: number; user: number; name: string; role: 'VIEWER' | 'EDITOR' }[] = [];
+  /** Für demo-contacts-api: Reisen mit Teilnehmenden, offenen Einladungen und ob man noch einladen kann. */
+  demoTripsFor(user: number): { id: number; title: string; joined: boolean; invitationId: number | null; canInvite: boolean }[] {
+    const today = dateOnly(0);
+    return this.tripList.map((trip) => {
+      const invite = this.pending.find((p) => p.trip === trip.id && p.user === user);
+      const joined = this.participantList.some((p) => p.trip === trip.id && p.user === user);
+      return { id: trip.id, title: trip.title, joined, invitationId: invite?.invitation_id ?? null, canInvite: !joined && !invite && trip.end_date >= today && trip.status !== 'CANCELLED' };
+    });
+  }
+  /** Einladen aus „Personen & Gruppen“ (Rolle wie dort: ansehen). */
+  demoInvite(tripId: number, user: number): void {
+    this.inviteParticipant(tripId, user, 'VIEWER').subscribe({ error: () => undefined });
+  }
+  /** „Demo: annehmen lassen“: aus der offenen Einladung wird eine Teilnahme. */
+  demoAccept(invitationId: number): boolean {
+    const invite = this.pending.find((p) => p.invitation_id === invitationId);
+    if (!invite) return false;
+    this.pending = this.pending.filter((p) => p !== invite);
+    this.participantList.push({ id: this.nextId++, trip: invite.trip, user: invite.user, display_name: invite.name, is_self: false, role: invite.role, added_at: new Date().toISOString() });
+    return true;
   }
   updateParticipantRole(id: number, role: TripParticipant['role']): Observable<TripParticipant> {
     const index = this.participantList.findIndex((p) => p.id === id);

@@ -17,10 +17,15 @@ import { HAUSHALT_DATA_PROVIDER } from '../haushalt/haushalt-data-provider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   OrganisationApi,
+  PersonalEvent,
   TodayData,
   TodayItem,
   PersonalTask,
 } from '../organisation/organisation-api.service';
+import { TripPass } from '../reisen/trip-pass';
+import { DashAnswers } from './dash-answers';
+import { DashProgress } from './dash-progress';
+import { financeAnswer, householdAnswer, ideaForToday, organisationAnswer, progressRings, spentOn, travelAnswer } from './dashboard-pulse';
 import { ReisenApi, Trip } from '../reisen/reisen-api.service';
 import { AnimatedBeam } from '../../shared/animated-beam/animated-beam';
 import {
@@ -85,6 +90,9 @@ const DEADLINE_LABEL: Record<string, string> = { kuendigung: 'Kündigungsfrist',
 
 /** Heute fokussiert halten: höchstens fünf Zeilen, der Rest liegt in den Bereichen. */
 const TODAY_ROWS = 5;
+/** Am Handy zuerst nur drei Einträge — die bereichsübergreifende Übersicht soll früh sichtbar sein (Abnahme 31.10.2026);
+ * „Alle anzeigen“ klappt den Rest auf. */
+const TODAY_ROWS_MOBILE = 3;
 
 function hhmm(iso: string): string {
   return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
@@ -132,6 +140,9 @@ function ddmm(isoDate: string): string {
     NgTemplateOutlet,
     AnimatedBeam,
     SpendCurveChart,
+    DashAnswers,
+    DashProgress,
+    TripPass,
   ],
   // Alle Zustände sind Signals (auch der Tagesplan, siehe `plan`) — OnPush prüft nur bei echten Änderungen.
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -166,6 +177,36 @@ export class Dashboard {
       .sort((a, b) => a.start_date.localeCompare(b.start_date));
     return upcoming[0] ?? null;
   });
+  /** Termine von heute mit Ende — für „als Nächstes“, freie Zeit und die Idee für heute (null = noch nicht geladen). */
+  readonly eventsToday = signal<PersonalEvent[] | null>(null);
+  /** „Vier Antworten“ (31.10.2026): je Bereich eine Antwort in seiner Handschrift (dashboard-pulse.ts). */
+  readonly answers = computed(() => {
+    const base = this.demo ? '/demo' : '';
+    const now = this.now();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const m = this.money();
+    const parts = [
+      financeAnswer(
+        m ? { set: m.set, over: m.over, amount: m.amount, perDay: m.perDay, monthName: m.monthName, lastDay: m.left <= 1 } : null,
+        spentOn(this.transactions(), today),
+        (v) => euros(String(v)),
+        base,
+      ),
+      householdAnswer(this.household(), base),
+      organisationAnswer(this.eventsToday(), this.organisationToday()?.items ?? null, now, base),
+      this.tripsLoading() ? null : travelAnswer(this.nextTrip(), today, base),
+    ];
+    // Erst zeigen, wenn alle vier da sind (oder fehlgeschlagen) — kein Springen der Karten beim Laden.
+    const settled = (parts[0] || this.financeError()) && (parts[1] || this.householdError()) && (parts[2] || this.todayError()) && (parts[3] || this.tripsError());
+    return settled ? parts.filter((p) => !!p) : [];
+  });
+  /** „Dein Fortschritt“: Ringe aus gezählten Werten. */
+  readonly rings = computed(() => progressRings(this.household(), this.finance(), this.nextTrip(), (v) => euros(String(v))));
+  /** „Idee für heute“: freie Zeit + offene Aufgabe von heute. */
+  readonly idea = computed(() => ideaForToday(this.eventsToday(), this.organisationToday()?.items ?? null, this.now()));
+  openTrip(id: number) {
+    void this.router.navigate([this.travelPath()], { queryParams: { trip: id } });
+  }
   /** Unterwegs ergibt sich aus dem Zeitraum (Reisen V1 speichert keinen Status „Unterwegs“). */
   private router = inject(Router);
   private destroy = inject(DestroyRef);
@@ -205,7 +246,8 @@ export class Dashboard {
    * Fristen stehen unter „Demnächst“. Der Vorschlag kommt mit „Heute“ vom Server — solange das lädt, ein Platzhalter. */
   readonly forYouLoading = computed(() => this.live() && this.todayLoading());
   readonly demoPair = signal<{ goal: SavingsGoal; task: PersonalTask } | null>(null);
-  readonly demoPairLinked = signal(false);
+  /** In der Demo sind Sparziel und Aufgabe schon verknüpft (wie in DemoConnectionsApi) — sonst widerspräche sich die Demo. */
+  readonly demoPairLinked = signal(inject(DEMO_MODE));
   readonly demoPairDismissed = signal(false);
   readonly forYou = computed<ForYou | null>(() => {
     const pair = this.demoPair();
@@ -381,6 +423,7 @@ export class Dashboard {
     this.loadToday();
     this.loadHousehold();
     this.loadTrips();
+    this.loadEventsToday();
     if (this.demo) {
       forkJoin({ goals: this.financeApi.goals(financeMonth()), tasks: this.api.tasks() })
         .pipe(takeUntilDestroyed(this.destroy)).subscribe({ next: ({ goals, tasks }) => {
@@ -392,6 +435,16 @@ export class Dashboard {
     // „Als Nächstes“ und „vorbei“ bleiben aktuell, auch wenn die Seite den ganzen Tag offen ist
     const tick = setInterval(() => this.now.set(new Date()), 60_000);
     this.destroy.onDestroy(() => clearInterval(tick));
+  }
+  /** Termine von heute (mit Ende) aus der Organisation — Fehler bleiben still, die Karten fallen dann zurück. */
+  private loadEventsToday() {
+    if (!this.demo && !this.live()) return;
+    const now = new Date();
+    const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    this.api
+      .events({ start: day, end: day })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({ next: (events) => this.eventsToday.set(events), error: () => this.eventsToday.set([]) });
   }
   loadToday() {
     this.todayLoading.set(true);
@@ -430,9 +483,9 @@ export class Dashboard {
   /** Alles, was heute ansteht: überfällig → mit Uhrzeit (chronologisch) → heute ohne Uhrzeit → Sonstiges. */
   get allItems(): TodayRow[] {
     if (this.demo) {
-      return [...(this.organisationToday()?.items ?? [])]
-        .sort((a, b) => todayOrder(a).localeCompare(todayOrder(b)))
-        .map((item) => ({
+      const org = (this.organisationToday()?.items ?? []).map((item) => ({
+        order: todayOrder(item),
+        row: <TodayRow>{
           title: item.title,
           mobile: item.title,
           time: item.overdue ? ddmm(item.at.slice(0, 10)) : item.all_day ? 'Heute' : hhmm(item.at),
@@ -441,13 +494,34 @@ export class Dashboard {
           tone: 'organisation',
           source: item,
           late: item.overdue,
-        }));
+        },
+      }));
+      // Wie beim echten Konto (backend/connections/today.py) gehören die heutigen Haushaltsaufgaben dazu.
+      const home = (this.household()?.today ?? []).map((task) => {
+        const time = task.due_time ? task.due_time.slice(0, 5) : null;
+        return {
+          order: task.is_overdue ? `0${task.due_date}` : time ? `1${time}` : `2household${task.id}`,
+          row: <TodayRow>{
+            title: task.title,
+            mobile: task.title,
+            time: task.is_overdue && task.due_date ? ddmm(task.due_date) : (time ?? 'Heute'),
+            note: task.is_overdue ? 'Haushalt · überfällig' : task.assigned_to_name ? `Haushalt · ${task.assigned_to_name}` : 'Haushalt',
+            icon: 'household',
+            tone: 'household',
+            link: { path: ['/demo/haushalt'], query: { tab: 'aufgaben', task: String(task.id) } },
+            late: task.is_overdue,
+          },
+        };
+      });
+      return [...org, ...home].sort((a, b) => a.order.localeCompare(b.order)).map((r) => r.row);
     }
     if (!this.live()) return this.boardItems;
     return this.liveRows();
   }
-  /** Höchstens fünf Zeilen; „Alle anzeigen“ klappt den Rest an Ort und Stelle auf. */
+  /** Höchstens fünf Zeilen (Handy: drei); „Alle anzeigen“ klappt den Rest an Ort und Stelle auf. */
   readonly todayExpanded = signal(false);
+  private readonly todayLimit =
+    typeof matchMedia === 'function' && matchMedia('(max-width: 760px)').matches ? TODAY_ROWS_MOBILE : TODAY_ROWS;
   /** Uhrzeit von heute als „HH:MM“, sonst null (überfällig, ganztägig, Frist). */
   private clockOf(row: TodayRow): string | null {
     return !row.late && /^\d{2}:\d{2}$/.test(row.time) ? row.time : null;
@@ -475,7 +549,7 @@ export class Dashboard {
     const gone = timed.filter((r) => this.isPast(r));
     const untimedAll = all.filter((r) => !r.late && this.clockOf(r) === null);
     const ordered = [...late, ...coming, ...untimedAll, ...gone];
-    const items = this.todayExpanded() ? ordered : ordered.slice(0, TODAY_ROWS);
+    const items = this.todayExpanded() ? ordered : ordered.slice(0, this.todayLimit);
     // Als Nächstes: der nächste Termin, der heute noch kommt; sonst die erste Aufgabe ohne Uhrzeit; sonst nichts.
     const lead = items.find((r) => this.clockOf(r) !== null && !this.isPast(r)) ?? items.find((r) => !r.late && this.clockOf(r) === null) ?? null;
     // Verglichen wird über einen festen Schlüssel, nicht über das Objekt: die Zeilen werden je Abruf neu gebaut.
@@ -483,7 +557,7 @@ export class Dashboard {
     const rest = items.filter((r) => !r.late && rowKey(r) !== key);
     return {
       items,
-      hidden: Math.max(0, all.length - TODAY_ROWS),
+      hidden: Math.max(0, all.length - this.todayLimit),
       overdue: items.filter((r) => r.late),
       lead,
       rest,
@@ -659,13 +733,14 @@ export class Dashboard {
     });
   });
   /** Eine Zeile unter der Begrüßung: Datum und Stand des Tages — nur aus echten Zahlen. */
+  /** Zeile unter der Begrüßung — ohne Datum (steht schon in der Kopfzeile), nur was heute ansteht. */
   get dayLine(): string {
-    if (this.todayLoading() || this.todayError()) return this.date;
+    if (this.todayLoading() || this.todayError()) return '';
     const open = this.allItems.filter((i) => !i.late && !this.isPast(i)).length;
     const late = this.allItems.filter((i) => i.late).length;
-    if (!open && !late) return `${this.date} · heute nichts mehr offen`;
-    const head = open ? `${open} ${open === 1 ? 'Punkt' : 'Punkte'} heute` : 'heute nichts mehr geplant';
-    return `${this.date} · ${head}${late ? `, ${late} überfällig` : ''}`;
+    if (!open && !late) return 'Heute ist nichts mehr offen';
+    const head = open ? `${open} ${open === 1 ? 'Punkt' : 'Punkte'} heute` : 'Heute ist nichts mehr geplant';
+    return `${head}${late ? `, ${late} überfällig` : ''}`;
   }
   /** Bereich als Wort am Zeilenende — damit jede Zeile ohne Farbe verständlich ist. */
   areaOf(row: TodayRow): string {
@@ -780,6 +855,8 @@ export class Dashboard {
       this.router.navigate(['/organisation'], {
         queryParams: { kind: item.source.kind, id: item.source.id },
       });
+    else if (this.demo && item.link)
+      this.router.navigate(item.link.path, { queryParams: item.link.query });
     else if (this.demo && item.source)
       this.router.navigate(['/demo/organisation'], {
         queryParams: { kind: item.source.kind, id: item.source.id },

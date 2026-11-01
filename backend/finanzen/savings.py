@@ -106,6 +106,9 @@ class SavingsPlanner:
             month = row['m'].date() if hasattr(row['m'], 'date') and not isinstance(row['m'], date) else row['m']
             self.monthly[row['goal_id']][month] = row['total']
         self.goals = list(SavingsGoal.objects.filter(owner=owner, currency='EUR'))
+        # Geplante wiederkehrende Ausgaben je Monat (available_for_month) — hängen nur an Transaktionen, nicht an
+        # Sparzielen; einmal je Monat rechnen, auch wenn Warnungen denselben Monat mehrfach prüfen.
+        self.recurring: dict[date, Decimal] = {}
 
     def for_month(self, month_start: date) -> tuple[Decimal, Decimal]:
         """(insgesamt zurückgelegt, davon nur geplant) für den Monat — Summe über alle Ziele."""
@@ -152,8 +155,9 @@ def available_for_month(owner, month: date, planner: 'SavingsPlanner | None' = N
     expense = rows.filter(type='EXPENSE').aggregate(t=Sum('amount'))['t'] or ZERO
     # Wie „Noch verfügbar“ (month_figures): auch wiederkehrende, im Monat noch nicht gebuchte Ausgaben sind schon
     # verplant — sonst meldeten die Warnungen „passt“, obwohl die Miete das Budget noch sprengt.
-    recurring = sum((item['amount'] for item in recurring_planned(owner, first, last, rows)), ZERO)
-    return budget.amount - expense - recurring - saved, planned
+    if first not in planner.recurring:
+        planner.recurring[first] = sum((item['amount'] for item in recurring_planned(owner, first, last, rows)), ZERO)
+    return budget.amount - expense - planner.recurring[first] - saved, planned
 
 
 def plan_alert(owner, start: date, planner: SavingsPlanner | None = None, months: int = PLAN_HORIZON_MONTHS):
@@ -189,8 +193,11 @@ def goal_change_warning(owner, apply):
     months = [month]
     for _ in range(PLAN_HORIZON_MONTHS - 1):
         months.append(_next_month(months[-1]))
-    before_available = [available_for_month(owner, m)[0] for m in months]
-    before_alert = plan_alert(owner, month)
+    # Ein Planner je Stand (vorher/nachher) statt einem je Monat; die wiederkehrenden Ausgaben hängen nicht am Sparziel
+    # und werden für „nachher“ übernommen.
+    before_plan = SavingsPlanner(owner)
+    before_available = [available_for_month(owner, m, before_plan)[0] for m in months]
+    before_alert = plan_alert(owner, month, before_plan)
 
     class _Rollback(Exception):
         pass
@@ -198,10 +205,12 @@ def goal_change_warning(owner, apply):
     try:
         with transaction.atomic():
             apply()
-            after_rows = [available_for_month(owner, m) for m in months]
+            after_plan = SavingsPlanner(owner)
+            after_plan.recurring = before_plan.recurring
+            after_rows = [available_for_month(owner, m, after_plan) for m in months]
             after_available = [row[0] for row in after_rows]
             after_planned = [row[1] for row in after_rows]
-            after_alert = plan_alert(owner, month)
+            after_alert = plan_alert(owner, month, after_plan)
             raise _Rollback
     except _Rollback:
         pass

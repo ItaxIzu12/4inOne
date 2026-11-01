@@ -130,20 +130,26 @@ test('from the public demo, "Personen & Gruppen" works without signing in and sh
   const people = page.getByRole('region', { name: /Deine Personen/ });
   await expect(people.getByText('Max', { exact: true })).toBeVisible();
   await expect(people.getByText('Berlin Wochenende')).toBeVisible();
-  await expect(people.getByText('Noch nichts geteilt')).toBeVisible();
+  await expect(people.getByText('Kalender von Lena')).toBeVisible(); // Kalenderfreigabe (31.10.2026)
   await expect(page.getByText('möchte dich als Freund:in hinzufügen')).toBeVisible();
   await expect(page.getByRole('heading', { name: /Offene Einladungen/ })).toBeVisible();
 
   // Teilen: Lena zu einer kommenden Reise einladen — sie ist erst nach dem Annehmen dabei
   await page.getByRole('button', { name: 'Mit Lena teilen' }).click();
-  await page.getByRole('button', { name: 'Italien Sommerurlaub' }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Einladung gesendet. Lena ist bei „Italien Sommerurlaub“ dabei, sobald Lena annimmt.' })).toBeVisible();
-  await expect(people.getByText('Eingeladen · ausstehend')).toBeVisible();
+  await page.getByRole('button', { name: 'Berlin Wochenende' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Einladung gesendet. Lena ist bei „Berlin Wochenende“ dabei, sobald Lena annimmt.' })).toBeVisible();
+  // Offene Einladung wird auch neben bestehender Kalenderfreigabe gezeigt — geteilt ist dadurch noch nichts
+  await expect(people.getByText('Eingeladen · Berlin Wochenende')).toBeVisible();
   await page.getByRole('tab', { name: 'Geteilte Bereiche' }).click();
-  // Eine offene Einladung teilt noch nichts: nur Max ist wirklich bei einer Reise dabei.
-  await expect(page.getByText('Reise · mit Max')).toBeVisible();
-  await expect(page.getByText('Reise · mit Lena')).toHaveCount(0);
+  // Eine offene Einladung teilt noch nichts: bei Berlin ist nur Max dabei (Lena erst nach dem Annehmen).
+  const berlin = page.locator('li', { hasText: 'Berlin Wochenende' }).filter({ hasText: 'Reise · mit' });
+  await expect(berlin).toContainText('Reise · mit Max');
+  await expect(berlin).not.toContainText('Lena');
   await page.getByRole('tab', { name: 'Übersicht' }).click();
+  // Demo: Annehmen simulieren macht daraus einen geteilten Bereich
+  await people.getByRole('button', { name: /Demo: annehmen lassen/ }).click();
+  await expect(people.getByText('Eingeladen · Berlin Wochenende')).toHaveCount(0);
+  await expect(people.locator('.people-row', { hasText: 'Lena' }).locator('.shared-chip[data-kind="TRIP"]', { hasText: 'Berlin Wochenende' })).toBeVisible();
 
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 });

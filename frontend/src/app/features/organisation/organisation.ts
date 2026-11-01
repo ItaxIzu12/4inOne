@@ -1,10 +1,10 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, forkJoin } from 'rxjs';
+import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
@@ -15,12 +15,16 @@ import { AppSelect, SelectOption } from '../../shared/form/select';
 import { AppTimePicker } from '../../shared/form/time-picker';
 import { ModalForm } from '../../shared/form/modal-form';
 import { ScopeNote } from '../../shared/scope-note/scope-note';
-import { DayRange, EventInput, OrganisationApi, PersonalEvent, PersonalNote, PersonalTask, Repeat, TaskInput } from './organisation-api.service';
-import { EVENT_CATEGORIES, localDay } from './organisation-logic';
+import { CalendarShares, DayRange, EventInput, OrganisationApi, PersonalEvent, PersonalNote, PersonalTask, Repeat, SharedCalendar, TaskInput } from './organisation-api.service';
+import { EVENT_CATEGORIES, eventsOn, localDay } from './organisation-logic';
 import { CalendarView, OrgCalendar } from './org-calendar';
+import { CalendarFilter, OrgCalendars } from './org-calendars';
+import { OrgDaySheet } from './org-day-sheet';
+import { AttachmentField } from '../../shared/attachments/attachment-field';
 import { OrgTasks } from './org-tasks';
 import { OrgNotes } from './org-notes';
 import { OrgImportDialog } from './org-import-dialog';
+import { OrgToday } from './org-today';
 import { SaveFeedback } from '../../shared/save-feedback/save-feedback';
 
 export { localDay } from './organisation-logic';
@@ -30,15 +34,17 @@ const hhmm = (iso: string) => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
-export type OrgTab = 'calendar' | 'tasks' | 'notes';
-// Organisation V1 (docs/ORGANISATION_V1.md): genau diese drei Reiter.
+export type OrgTab = 'today' | 'calendar' | 'tasks' | 'notes';
+// Organisation (31.10.2026): „Heute“ zuerst — der Tag als eine Linie aus Terminen, Aufgaben und freier Zeit.
 const TABS: { key: OrgTab; label: string; icon: IconName }[] = [
+  { key: 'today', label: 'Heute', icon: 'clock' },
   { key: 'calendar', label: 'Kalender', icon: 'calendar' },
   { key: 'tasks', label: 'Aufgaben', icon: 'check-circle' },
   { key: 'notes', label: 'Notizen', icon: 'file-text' },
 ];
 const TAB_KEYS = TABS.map((t) => t.key);
 const HEAD_ACTIONS: Record<OrgTab, string> = {
+  today: 'Termin hinzufügen',
   calendar: 'Termin hinzufügen',
   tasks: 'Aufgabe hinzufügen',
   notes: 'Notiz erstellen',
@@ -72,7 +78,7 @@ function apiFieldError(error: unknown, field: string): string {
   standalone: true,
   imports: [
     MobileAction, ErrorNoticeDirective, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, ReactiveFormsModule,
-    AppSelect, AppDatePicker, AppTimePicker, OrgCalendar, OrgTasks, OrgNotes, ScopeNote, OrgImportDialog, SaveFeedback,
+    AppSelect, AppDatePicker, AppTimePicker, OrgCalendar, OrgCalendars, OrgDaySheet, AttachmentField, OrgTasks, OrgNotes, OrgToday, ScopeNote, OrgImportDialog, SaveFeedback,
   ],
   templateUrl: './organisation.html',
   styleUrl: './organisation.scss',
@@ -85,7 +91,7 @@ export class Organisation {
   private router = inject(Router);
   private loaded = false;
   readonly tabs = TABS;
-  readonly tab = signal<OrgTab>('calendar');
+  readonly tab = signal<OrgTab>('today');
   readonly headAction = computed(() => HEAD_ACTIONS[this.tab()]);
 
   // ---------- Daten ----------
@@ -104,8 +110,92 @@ export class Organisation {
   // ---------- Kalender ----------
   readonly selectedDay = signal(localDay(new Date()));
   readonly calendarView = signal<CalendarView>(
-    typeof matchMedia === 'function' && matchMedia('(max-width: 760px)').matches ? 'day' : 'month',
+    typeof matchMedia === 'function' && matchMedia('(max-width: 760px)').matches ? 'week' : 'month',
   );
+
+  // ---------- Gemeinsame Kalender (31.10.2026) ----------
+  readonly calendars = signal<SharedCalendar[]>([]);
+  readonly calendarFilter = signal<CalendarFilter>('all');
+  /** Kalenderfreigaben wie Outlook: für wen meiner freigegeben ist, wer seinen für mich freigegeben hat. */
+  readonly shares = signal<CalendarShares | null>(null);
+  /** Kalender-Ansicht nach Filter: alle, nur meine, ein gemeinsamer Kalender oder der Kalender einer Person. */
+  readonly visibleEvents = computed(() => {
+    const filter = this.calendarFilter();
+    const list = this.events();
+    if (filter === 'all') return list;
+    if (filter === 'mine') return list.filter((e) => !e.calendar && !e.shared_by);
+    if (typeof filter === 'string') return list.filter((e) => !e.calendar && e.shared_by === Number(filter.slice(1)));
+    return list.filter((e) => e.calendar === filter);
+  });
+  /** Mit wem ein eigener Termin geteilt wird (Konto-IDs; nur Personen mit Kalenderfreigabe). */
+  readonly audience = signal<number[]>([]);
+  readonly sharePeople = computed(() => this.shares()?.given ?? []);
+  toggleAudience(userId: number) {
+    this.audience.update((list) => (list.includes(userId) ? list.filter((id) => id !== userId) : [...list, userId]));
+  }
+  makePrivate() {
+    this.form.controls.calendar.setValue('');
+    this.audience.set([]);
+  }
+  /** Kalender, in die ich Termine eintragen darf (Besitzer:in oder „Kann bearbeiten“). */
+  readonly writableCalendars = computed(() => this.calendars().filter((c) => c.role !== 'VIEWER'));
+  /** Der geöffnete Termin gehört zu einem gemeinsamen Kalender und wurde von jemand anderem eingetragen. */
+  private readonly editingEvent = signal<PersonalEvent | null>(null);
+  readonly foreignEvent = computed(() => !!this.editingEvent()?.created_by);
+  /** Nur ansehen: gemeinsamer Termin ohne Schreibrecht. */
+  readonly eventReadOnly = computed(() => {
+    const e = this.editingEvent();
+    return this.editor() === 'event' && e && e.can_edit === false ? e : null;
+  });
+  /** Den Kalender eines fremden Termins ändert nur, wer ihn eingetragen hat (Server-Regel). */
+  readonly calendarLocked = computed(() => !!this.editId() && this.foreignEvent());
+  private readonly calendarValue = signal('');
+  readonly calendarHint = computed(() => {
+    if (this.calendarLocked()) return `Eingetragen von ${this.editingEvent()?.created_by} – wer den Termin sieht, bestimmt nur diese Person.`;
+    const id = Number(this.calendarValue());
+    const calendar = this.calendars().find((c) => c.id === id);
+    const chosen = new Set(this.audience());
+    const names = [
+      ...(calendar?.members.filter((m) => !m.is_self).map((m) => m.name) ?? []),
+      ...this.sharePeople().filter((p) => chosen.has(p.user_id)).map((p) => p.name),
+    ].filter((name, i, all) => all.indexOf(name) === i);
+    if (!calendar && !names.length) return 'Privat – nur du siehst diesen Termin.';
+    if (!names.length) return `Noch niemand außer dir in „${calendar!.name}“.`;
+    return `${names.join(', ')} ${names.length === 1 ? 'sieht' : 'sehen'} diesen Termin – deine anderen Termine bleiben privat.`;
+  });
+  loadCalendars() {
+    this.api.calendars().pipe(takeUntilDestroyed(this.destroy)).subscribe({
+      next: (list) => {
+        this.calendars.set(list);
+        const filter = this.calendarFilter();
+        if (typeof filter === 'number' && !list.some((c) => c.id === filter)) this.calendarFilter.set('all');
+      },
+      error: () => this.calendars.set([]),
+    });
+    this.api.shares().pipe(takeUntilDestroyed(this.destroy)).subscribe({
+      next: (raw) => {
+        // Nur eine vollständige Antwort übernehmen — sonst so tun, als gäbe es keine Freigaben
+        const shares = raw && Array.isArray(raw.given) && Array.isArray(raw.received) && Array.isArray(raw.pending) ? raw : null;
+        this.shares.set(shares);
+        if (!shares) return;
+        const filter = this.calendarFilter();
+        if (typeof filter === 'string' && filter.startsWith('p') && !shares.received.some((r) => `p${r.user_id}` === filter)) this.calendarFilter.set('all');
+      },
+      error: () => this.shares.set(null),
+    });
+  }
+  calendarsChanged() {
+    this.loadCalendars();
+    if (this.range) this.loadEvents(this.range);
+  }
+  /** „Samstag, 2. November · 18:30–21:00“ für die Nur-ansehen-Ansicht. */
+  readOnlyWhen(e: PersonalEvent): string {
+    const start = new Date(e.starts_at);
+    const day = start.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
+    if (e.all_day) return `${day} · ganztägig`;
+    const end = e.ends_at ? `–${hhmm(e.ends_at)}` : '';
+    return `${day} · ${hhmm(e.starts_at)}${end} Uhr`;
+  }
 
   // ---------- Formular Termin/Aufgabe ----------
   readonly saving = signal(false);
@@ -147,14 +237,19 @@ export class Organisation {
     priority: ['MEDIUM'],
     status: ['OPEN'],
     project: ['', Validators.maxLength(60)],
+    /** Gemeinsamer Kalender als ID-Text, '' = privat (nur ich). */
+    calendar: [''],
   });
 
   constructor() {
     const raw = this.route.snapshot.queryParamMap.get('tab');
-    // Alte Links (Übersicht, Dateien) landen im Kalender.
+    // Alte Links (Übersicht, Dateien) landen bei „Heute“.
     if (raw && TAB_KEYS.includes(raw as OrgTab)) this.tab.set(raw as OrgTab);
-    else if (raw) this.selectTab('calendar');
+    else if (raw) this.selectTab('today');
     this.load(true);
+    this.loadCalendars();
+    if (this.tab() === 'today') this.loadToday();
+    this.form.controls.calendar.valueChanges.pipe(takeUntilDestroyed(this.destroy)).subscribe((v) => this.calendarValue.set(v));
     // Wechsel auf ein anderes Objekt derselben Seite (z. B. Aufgabe → verknüpfter Termin)
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(() => {
       if (this.loaded) this.openFromQuery();
@@ -223,11 +318,18 @@ export class Organisation {
     });
   }
 
+  /** „Heute“ braucht nur die Termine dieses Tages (der Kalender lädt seinen Zeitraum selbst, sobald er erscheint). */
+  loadToday() {
+    const day = localDay(new Date());
+    this.loadEvents({ start: day, end: day });
+  }
+
   selectTab(tab: OrgTab) {
     this.tab.set(tab);
+    if (tab === 'today') this.loadToday();
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { tab: tab === 'calendar' ? null : tab },
+      queryParams: { tab: tab === 'today' ? null : tab },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
@@ -244,6 +346,8 @@ export class Organisation {
   /** Hauptknopf im Kopf — öffnet das passende Formular des Reiters. */
   headActionClick() {
     switch (this.tab()) {
+      case 'today':
+        return this.open('event', undefined, localDay(new Date()));
       case 'calendar':
         return this.open('event', undefined, this.selectedDay());
       case 'tasks':
@@ -263,7 +367,7 @@ export class Organisation {
       this.tab.set(tab);
       void this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { neu: null, tab: tab === 'calendar' ? null : tab },
+        queryParams: { neu: null, tab },
         queryParamsHandling: 'merge',
         replaceUrl: true,
       });
@@ -280,7 +384,7 @@ export class Organisation {
     this.tab.set(tab);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { kind: null, id: null, tab: tab === 'calendar' ? null : tab },
+      queryParams: { kind: null, id: null, tab },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
@@ -302,11 +406,38 @@ export class Organisation {
     for (const s of [this.formError, this.titleError, this.dateError, this.endError, this.endDateError, this.dueError, this.timeError]) s.set('');
   }
 
-  /** Termin von einem angeklickten Tag (Monatsansicht): der Tag steht fest und ist im Formular gesperrt. */
+  /** Termin von einem angeklickten Tag: der Tag steht fest und ist im Formular gesperrt. */
   readonly dateLocked = signal(false);
+  /** Tagesblatt (31.10.2026): angeklickter Tag mit Terminen; nach Termin-Dialog geht es dorthin zurück. */
+  readonly daySheet = signal<string | null>(null);
+  private returnToDay: string | null = null;
+  /** Klick auf einen Tag: mit Terminen erst das Tagesblatt, leere Tage direkt „Termin hinzufügen“. */
   openOnDay(day: string) {
+    if (eventsOn(this.visibleEvents(), day).length) {
+      this.daySheet.set(day);
+      return;
+    }
+    this.addOnDay(day);
+  }
+  private addOnDay(day: string) {
     this.open('event', undefined, day);
     this.dateLocked.set(true);
+  }
+  fromSheetOpen(e: PersonalEvent) {
+    this.returnToDay = this.daySheet();
+    this.daySheet.set(null);
+    this.open('event', e);
+  }
+  fromSheetAdd(day: string) {
+    this.returnToDay = day;
+    this.daySheet.set(null);
+    this.addOnDay(day);
+  }
+  /** Termin-Dialog zu: war er aus dem Tagesblatt geöffnet, zurück dorthin (weitere Termine eintragen). */
+  private editorClosed() {
+    this.editor.set(null);
+    if (this.returnToDay) this.daySheet.set(this.returnToDay);
+    this.returnToDay = null;
   }
   open(kind: 'event' | 'task', item?: PersonalEvent | PersonalTask, day?: string) {
     this.dateLocked.set(false);
@@ -314,7 +445,12 @@ export class Organisation {
       title: '', description: '', date: day ?? localDay(new Date()), all_day: false, start_time: '09:00', end_date: '',
       end_time: '', recurrence: '', location: '', category: 'sonstiges', due_date: '', due_time: '', priority: 'MEDIUM',
       status: 'OPEN', project: '',
+      // Neuer Termin: im gerade gefilterten gemeinsamen Kalender, wenn ich dort schreiben darf — sonst privat
+      calendar: typeof this.calendarFilter() === 'number' && this.writableCalendars().some((c) => c.id === this.calendarFilter()) ? String(this.calendarFilter()) : '',
     });
+    this.calendarValue.set(this.form.controls.calendar.value);
+    this.audience.set(item && 'starts_at' in item ? [...(item.shared_with ?? [])] : []);
+    this.editingEvent.set(item && 'starts_at' in item ? item : null);
     this.editor.set(kind);
     this.editId.set(item?.id);
     this.editingSeries.set(false);
@@ -336,6 +472,7 @@ export class Organisation {
         recurrence: item.recurrence ?? '',
         location: item.location,
         category: item.category ?? 'sonstiges',
+        calendar: item.calendar ? String(item.calendar) : '',
       });
     } else {
       this.form.patchValue({
@@ -350,7 +487,7 @@ export class Organisation {
   }
 
   close() {
-    if (!this.saving()) this.editor.set(null);
+    if (!this.saving()) this.editorClosed();
   }
 
   /** Datum + Uhrzeit → ISO; ganztägig oder ohne Uhrzeit: Mitternacht dieses Tags. */
@@ -378,6 +515,9 @@ export class Organisation {
       ends_at: ends ? ends.toISOString() : null,
       all_day: allDay,
       recurrence: v.recurrence as Repeat | '',
+      calendar: v.calendar ? Number(v.calendar) : null,
+      // Wer den Termin sieht, bestimmt nur, wer ihn eingetragen hat — bei fremden Terminen nichts mitschicken.
+      ...(this.foreignEvent() ? {} : { shared_with: this.audience() }),
     };
   }
 
@@ -416,7 +556,7 @@ export class Organisation {
     request.pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: () => {
         this.saving.set(false);
-        this.editor.set(null);
+        this.editorClosed();
         if (kind === 'event' && this.range) this.loadEvents(this.range);
         else this.reloadTasks();
       },
@@ -466,7 +606,7 @@ export class Organisation {
       .subscribe({
         next: () => {
           this.saving.set(false);
-          this.editor.set(null);
+          this.editorClosed();
           if (kind === 'event') this.events.update((list) => list.filter((e) => e.id !== id));
           else this.tasks.update((list) => list.filter((t) => t.id !== id));
         },
@@ -485,9 +625,16 @@ export class Organisation {
   readonly notePinned = signal(false);
   readonly noteError = signal('');
   readonly noteBodyError = signal('');
+  /** Anhänge der geöffneten Notiz (Fotos/PDF, Test 31.10.2026). */
+  readonly noteAttachments = signal<PersonalNote['attachments']>([]);
+  private readonly attachmentBox = viewChild(AttachmentField);
+  /** Private Datei mit Anmeldung laden (Vorschau/Öffnen). */
+  readonly loadFile = (id: number) => this.api.fileBlob(id);
 
   openNote(note?: PersonalNote) {
     this.noteId.set(note?.id);
+    this.noteAttachments.set(note?.attachments ?? []);
+    this.attachmentBox()?.reset();
     this.noteTitle.set(note?.title ?? '');
     this.noteBody.set(note?.body ?? '');
     this.notePinned.set(note?.pinned ?? false);
@@ -504,18 +651,61 @@ export class Organisation {
     this.noteBodyError.set(!title && !body ? 'Bitte schreib etwas in die Notiz.' : '');
     if (this.noteBodyError()) return;
     this.saving.set(true);
+    let saved = false;
     this.api
       .saveNote({ title, body, pinned: this.notePinned() }, this.noteId())
-      .pipe(takeUntilDestroyed(this.destroy))
+      .pipe(
+        // Anhänge erst nach der Notiz: eine neue Notiz braucht zuerst ihre ID
+        switchMap((note) => {
+          saved = true;
+          this.noteId.set(note.id); // erneuter Versuch ändert dieselbe Notiz statt eine zweite anzulegen
+          const box = this.attachmentBox();
+          return box
+            ? box.commit((file) => this.api.uploadNoteFile(note.id, file), (id) => this.api.removeFile(id)).pipe(map(() => note))
+            : of(note);
+        }),
+        takeUntilDestroyed(this.destroy),
+      )
       .subscribe({
         next: () => {
           this.saving.set(false);
           this.noteOpen.set(false);
           this.reloadNotes();
         },
+        error: (e: { status?: number; error?: { file?: string[] | string } }) => {
+          this.saving.set(false);
+          const reason = Array.isArray(e?.error?.file) ? e.error.file[0] : (e?.error?.file ?? '');
+          this.noteError.set(
+            saved
+              ? `Die Notiz ist gespeichert, aber eine Datei konnte nicht hochgeladen werden.${reason ? ' ' + reason : ''} Du kannst es noch einmal versuchen.`
+              : 'Die Notiz konnte nicht gespeichert werden.',
+          );
+          // Was schon hochgeladen ist, steht jetzt bei der Notiz — die Kacheln zeigen den echten Stand
+          if (saved) {
+            this.api.notes().pipe(takeUntilDestroyed(this.destroy)).subscribe((list) => {
+              this.notes.set(list);
+              this.noteAttachments.set(list.find((n) => n.id === this.noteId())?.attachments ?? []);
+            });
+          }
+        },
+      });
+  }
+
+  /** „Schnell notieren“: eine Zeile ohne Dialog als Notiz speichern (Titel ergibt sich aus der ersten Zeile). */
+  quickNote(text: string) {
+    if (this.saving() || !text.trim()) return;
+    this.saving.set(true);
+    this.api
+      .saveNote({ title: '', body: text.trim(), pinned: false })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.reloadNotes();
+        },
         error: () => {
           this.saving.set(false);
-          this.noteError.set('Die Notiz konnte nicht gespeichert werden.');
+          this.error.set('Die Notiz konnte nicht gespeichert werden.');
         },
       });
   }

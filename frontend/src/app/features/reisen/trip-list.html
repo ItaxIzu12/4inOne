@@ -7,12 +7,13 @@
     <button type="button" class="primary" (click)="create.emit()"><app-icon name="plus" />Reise erstellen</button>
   </section>
 } @else {
+  <!-- Die Bordkarte: laufende Reise(n), sonst die nächste -->
   @if (ongoing().length) {
     <section class="group" aria-labelledby="tl-now">
       <h2 id="tl-now" class="group__title">Jetzt unterwegs</h2>
-      <ul class="trips">
+      <ul class="passes">
         @for (t of ongoing(); track t.id) {
-          <li><ng-container *ngTemplateOutlet="card; context: { $implicit: t }" /></li>
+          <li><app-trip-pass [trip]="t" (open)="open.emit($event)" /></li>
         }
       </ul>
     </section>
@@ -21,25 +22,46 @@
   <section class="group" aria-labelledby="tl-upcoming">
     <h2 id="tl-upcoming" class="group__title">Bevorstehend <span class="group__count">{{ g.upcoming.length - ongoing().length }}</span></h2>
     @if (next(); as first) {
-      <div class="ahead">
-        <div class="ahead__next">
-          <p class="ahead__label">Als Nächstes</p>
-          <ng-container *ngTemplateOutlet="card; context: { $implicit: first }" />
-        </div>
-        @if (later().length) {
-          <div class="ahead__later">
-            <p class="ahead__label">Danach</p>
-            <ul class="rows">
-              @for (t of later(); track t.id) {
-                <li><ng-container *ngTemplateOutlet="row; context: { $implicit: t }" /></li>
-              }
-            </ul>
-          </div>
-        }
-      </div>
+      <app-trip-pass [trip]="first" (open)="open.emit($event)" />
     } @else if (!ongoing().length) {
       <p class="muted none">Keine bevorstehende Reise. <button type="button" class="link" (click)="create.emit()">Reise erstellen</button></p>
     }
+
+    <!-- Danach: Karten mit Kalenderblatt; zuletzt „Neue Reise“ -->
+    <ul class="later" [attr.aria-label]="later().length ? 'Weitere Reisen' : null">
+      @for (t of later(); track t.id) {
+        @let leafDate = leaf(t);
+        @let p = packing(t);
+        <li>
+          <button type="button" class="later-card" (click)="open.emit(t.id)">
+            <span class="later-card__head">
+              <span class="leaf" aria-hidden="true"><small>{{ leafDate.month }}</small><b>{{ leafDate.day }}</b></span>
+              <span class="later-card__title">
+                <b>{{ t.title }}</b>
+                <small>{{ place(t) }}</small>
+              </span>
+            </span>
+            <span class="later-card__when">{{ when(t) }} <small>{{ range(t) }}</small></span>
+            @if (p) {
+              <span class="later-card__prep">
+                <small class="later-card__bar-label">Packliste {{ p.packed }} von {{ p.total }}</small>
+                <span class="bar"><span [style.width.%]="p.pct"></span></span>
+                <small>{{ t.tasks_open ? (t.tasks_open === 1 ? '1 Aufgabe offen' : t.tasks_open + ' Aufgaben offen') : t.tasks_total ? 'Aufgaben erledigt' : 'Keine Aufgaben' }}</small>
+              </span>
+            } @else {
+              <small class="later-card__prep">{{ t.tasks_open ? (t.tasks_open === 1 ? '1 Aufgabe offen' : t.tasks_open + ' Aufgaben offen') : 'Noch keine Packliste' }}</small>
+            }
+          </button>
+        </li>
+      }
+      <li>
+        <button type="button" class="later-card later-card--new" (click)="create.emit()">
+          <span class="later-card__plus" aria-hidden="true"><app-icon name="plus" /></span>
+          <b>Neue Reise</b>
+          <small>Wohin · Wann · Wie</small>
+        </button>
+      </li>
+    </ul>
   </section>
 
   @if (g.past.length) {
@@ -78,41 +100,11 @@
   }
 }
 
-<ng-template #card let-t>
-  <button type="button" class="trip" [class.trip--muted]="t.status === 'CANCELLED'" [attr.aria-label]="label(t)" (click)="open.emit(t.id)">
-    <span class="trip__head">
-      <span class="tile" aria-hidden="true"><app-icon name="travel" /></span>
-      <span class="trip__title">
-        <b>{{ t.title }}</b>
-        <small>{{ t.destination || range(t) }}</small>
-      </span>
-      <app-icon class="chev" name="arrow" aria-hidden="true" />
-    </span>
-    <span class="trip__when">
-      <span class="trip__dates"><app-icon name="calendar" aria-hidden="true" />{{ range(t) }}</span>
-      <span class="when" [class.when--live]="isOngoing(t)">{{ when(t) }}</span>
-      @if (t.status !== 'PLANNED' && t.status !== 'CANCELLED') {
-        <span [class]="statusClass(t)">{{ statusLabel(t) }}</span>
-      }
-    </span>
-    <span class="trip__facts" aria-hidden="true">
-      <span class="fact"><app-icon name="check-circle" /><span [class.fact--open]="t.tasks_open > 0">{{ tasksText(t) }}</span></span>
-      <span class="fact"><app-icon name="luggage" /><span class="num">{{ packText(t) }}</span></span>
-      <span class="fact">
-        <app-icon name="coins" />
-        @if (t.budget_amount) {
-          <span class="num">{{ money(t.budget_spent, t) }} / {{ money(t.budget_amount, t) }}</span>
-        } @else {
-          <span>Kein Budget</span>
-        }
-      </span>
-    </span>
-  </button>
-</ng-template>
-
-<!-- Kompakte Zeile: für weitere kommende, vergangene und abgesagte Reisen. Ein Knopf, öffnet die Reise. -->
+<!-- Kompakte Zeile: für vergangene und abgesagte Reisen. Ein Knopf, öffnet die Reise. -->
 <ng-template #row let-t>
-  <button type="button" class="row" [class.row--muted]="t.status === 'CANCELLED'" [attr.aria-label]="label(t)" (click)="open.emit(t.id)">
+  @let leafDate = leaf(t);
+  <button type="button" class="row" [class.row--muted]="t.status === 'CANCELLED'" (click)="open.emit(t.id)">
+    <span class="leaf leaf--small" aria-hidden="true"><small>{{ leafDate.month }}</small><b>{{ leafDate.day }}</b></span>
     <span class="row__main">
       <b>{{ t.title }}</b>
       <small>{{ t.destination }}</small>
@@ -123,12 +115,8 @@
         <span [class]="statusClass(t)">{{ statusLabel(t) }}</span>
       } @else {
         <span class="when" [class.when--live]="isOngoing(t)" [class.when--past]="isPast(t)">{{ when(t) }}</span>
-        @if (openText(t); as todo) {
-          <span class="row__todo">{{ todo }}</span>
-        }
       }
     </span>
     <app-icon class="chev" name="arrow" aria-hidden="true" />
   </button>
 </ng-template>
-

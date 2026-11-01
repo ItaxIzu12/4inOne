@@ -61,16 +61,29 @@ describe('Reisen V1 (Demo)', () => {
 
   // ---------- Meine Reisen ----------
 
-  it('Meine Reisen groups upcoming and past trips; a card shows dates, countdown, tasks, packing and budget', async () => {
+  it('Meine Reisen: the next trip is a boarding pass (route, countdown, open tasks, packing, budget left), later trips are cards', async () => {
     const { root } = await open();
     const groups = Array.from(root.querySelectorAll('app-trip-list .group__title')).map(text);
     expect(groups).toEqual(['Bevorstehend 3', 'Vergangen 1']);
-    const berlin = Array.from(root.querySelectorAll('app-trip-list .trip')).find((c) => text(c).includes('Berlin Wochenende'))!;
-    expect(text(berlin)).toContain('In 12 Tagen');
+    const berlin = root.querySelector('app-trip-list .pass')!;
+    expect(text(berlin.querySelector('.pass__route'))).toContain('Düsseldorf');
+    expect(text(berlin.querySelector('.pass__route'))).toContain('Berlin');
+    expect(text(berlin.querySelector('.pass__stub'))).toBe('12 Tage bis zur Abreise');
     expect(text(berlin)).toContain('4 Aufgaben offen');
-    expect(text(berlin)).toContain('12 / 24 gepackt');
-    expect(text(berlin)).toContain('420 € / 700 €');
-    expect(berlin.getAttribute('aria-label')).toContain('Berlin Wochenende');
+    expect(text(berlin)).toContain('12/24 gepackt');
+    expect(text(berlin)).toContain('280 € übrig');
+    // Aufgaben und Packliste getrennt — kein zusammengerechneter „Vorbereitet“-Wert
+    expect(text(berlin)).not.toContain('Vorbereitet');
+    // Vorgelesen wird der sichtbare Inhalt (WCAG 2.5.3) — kein abweichendes aria-label
+    expect(berlin.getAttribute('aria-label')).toBeNull();
+    expect(text(berlin)).toContain('Berlin Wochenende');
+    // Weitere Reisen nach Datum; die Demo legt sie in die passende Jahreszeit (Skifahren im Februar, Sommer im Juli)
+    const later = Array.from(root.querySelectorAll('app-trip-list .later-card:not(.later-card--new)')).map(text);
+    expect(later[0]).toContain('Skifahren Schweiz');
+    expect(later[0]).toContain('Feb.');
+    expect(later[1]).toContain('Italien Sommerurlaub');
+    expect(later[1]).toContain('Juli');
+    expect(later[1]).toContain('Packliste 2 von 8');
     // Keine globalen Reiter wie Packlisten/Budget/Erinnerungen auf Meine Reisen.
     expect(root.querySelector('.tabs')).toBeNull();
   });
@@ -80,7 +93,7 @@ describe('Reisen V1 (Demo)', () => {
     const { root } = await open();
     expect(text(root.querySelector('app-trip-list h2'))).toBe('Noch keine Reisen');
     expect(text(root.querySelector('app-trip-list'))).toContain('Plane deine erste Reise');
-    expect(root.querySelectorAll('app-trip-list .trip, app-trip-list .row').length).toBe(0);
+    expect(root.querySelectorAll('app-trip-list :is(.pass, .later-card, .row)').length).toBe(0);
     // Nur ein „Reise erstellen“ — kein zweiter Knopf im Kopf.
     expect(Array.from(root.querySelectorAll('button')).filter((b) => text(b) === 'Reise erstellen').length).toBe(1);
   });
@@ -97,7 +110,7 @@ describe('Reisen V1 (Demo)', () => {
     spy.mockRestore();
     button(root, 'Erneut versuchen').click();
     root = await settle(fixture);
-    expect(root.querySelectorAll('app-trip-list .trip, app-trip-list .row').length).toBe(4);
+    expect(root.querySelectorAll('app-trip-list :is(.pass, .later-card:not(.later-card--new), .row)').length).toBe(4);
   });
 
   it('restricts new trip dates and validates changed ranges without locking historical edits', async () => {
@@ -124,16 +137,23 @@ describe('Reisen V1 (Demo)', () => {
 
   it('opening a trip shows exactly four tabs and the overview with concrete numbers', async () => {
     const { fixture, root } = await open();
-    (Array.from(root.querySelectorAll<HTMLButtonElement>('app-trip-list .trip')).find((c) => text(c).includes('Berlin')))!.click();
+    root.querySelector<HTMLButtonElement>('app-trip-list .pass')!.click();
     const page = await settle(fixture);
     expect(text(page.querySelector('h1'))).toBe('Berlin Wochenende');
     expect(Array.from(page.querySelectorAll('.tabs button')).map(text)).toEqual(['Übersicht', 'Planung', 'Packliste', 'Budget']);
+    const pass = page.querySelector('app-trip-overview .pass')!;
+    expect(text(pass.querySelector('.pass__stub'))).toBe('12 Tage bis zur Abreise');
+    expect(Array.from(pass.querySelectorAll('button.pass__chip')).map(text)).toEqual(['4 Aufgaben offen', '12/24 gepackt', '280 € übrig']);
+    // Bis zur Abreise: datierte Aufgaben vor der Abreise-Marke, ohne Datum danach
+    const track = Array.from(page.querySelectorAll('app-trip-overview .track li')).map(text);
+    expect(track[0]).toContain('Restaurant reservieren');
+    expect(track[3]).toContain('Abreise');
+    expect(track[4]).toContain('Museumstickets kaufen');
     const tiles = Array.from(page.querySelectorAll('app-trip-overview .tile-card')).map(text);
-    expect(tiles[0]).toContain('4 Aufgaben offen');
-    expect(tiles[1]).toContain('12 von 24 gepackt');
-    expect(tiles[2]).toContain('420 € von 700 €');
-    expect(tiles[3]).toContain('2 Personen');
-    expect(text(page.querySelector('app-trip-overview .countdown'))).toContain('In 12 Tagen');
+    expect(tiles[0]).toContain('12 von 24 gepackt');
+    expect(tiles[1]).toContain('280 € übrig');
+    expect(tiles[1]).toContain('420 € von 700 € ausgegeben');
+    expect(tiles[2]).toContain('2 Personen');
     expect(text(page.querySelector('app-trip-overview .facts'))).toContain('Düsseldorf');
     // Kein erfundener Bereitschafts-Score.
     expect(text(page)).not.toMatch(/\d+ % vorbereitet/);
@@ -280,8 +300,8 @@ describe('Reisen V1 (Demo)', () => {
     page = await settle(fixture);
     button(page, 'Restaurant reservieren bearbeiten').click();
     page = await settle(fixture);
-    expect(fixture.componentInstance.taskForm.getRawValue().assignee).toBe('201');
-    expect(fixture.componentInstance.assigneeOptions().map((o) => o.label)).toEqual(['Niemand bestimmtes', 'Anna (Du)', 'Tom Schulz']);
+    expect(fixture.componentInstance.taskForm.getRawValue().assignee).toBe('301');
+    expect(fixture.componentInstance.assigneeOptions().map((o) => o.label)).toEqual(['Niemand bestimmtes', 'Sophie (Du)', 'Max']);
   });
 
   it('Planung: an empty trip shows "Noch nichts geplant", and a time without a date is rejected', async () => {
@@ -296,12 +316,12 @@ describe('Reisen V1 (Demo)', () => {
 
   it('Planung: participants are listed with roles and a privacy note; the owner invites people in a dialog', async () => {
     const { fixture, root } = await open('/?trip=1&tab=planung');
-    expect(Array.from(root.querySelectorAll('app-trip-planning .people__name')).map(text)).toEqual(['Anna (Du)', 'Tom Schulz']);
+    expect(Array.from(root.querySelectorAll('app-trip-planning .people__name')).map(text)).toEqual(['Sophie (Du)', 'Max']);
     expect(text(root.querySelector('app-trip-planning .privacy'))).toContain('nie deine Finanzen');
     button(root, 'Verwalten').click();
     const page = await settle(fixture);
     expect(text(page.querySelector('#participants-heading'))).toBe('Teilnehmer – Berlin Wochenende');
-    fixture.componentInstance.newParticipantContactId.set(202);
+    fixture.componentInstance.newParticipantContactId.set(302);
     fixture.componentInstance.addParticipant();
     await settle(fixture);
     // Einladen statt Hinzufügen: Lena ist erst dabei, wenn sie annimmt.
@@ -372,7 +392,7 @@ describe('Reisen V1 (Demo)', () => {
     const page = await settle(fixture);
     expect(fixture.componentInstance.expenseEditor()).toBe(false);
     expect(Array.from(page.querySelectorAll('app-trip-budget .kpis dd')).map(text)).toEqual(['700 €', '500 €', '200 €']);
-    expect(text(page.querySelector('app-trip-budget .exp'))).toContain('vor der Reise');
+    expect(text(page.querySelector('app-trip-budget .exp-day'))).toContain('vor der Reise');
   });
 
   it('Budget: setting a budget and a currency for a trip without one', async () => {

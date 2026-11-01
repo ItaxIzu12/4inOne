@@ -207,3 +207,136 @@
     transition: background-color 150ms ease-out;
   }
 }
+
+// ---------- Gruppen (31.10.2026): nach Tag · Raum · Person, Raumfilter aus „Heute“, Erledigt-Moment ----------
+.list__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  border-bottom: 1px solid var(--surface-sunken);
+}
+.list__tools .search {
+  flex: 1 1 260px;
+  border-bottom: 0;
+}
+.group-by {
+  display: inline-flex;
+  gap: 2px;
+  margin: 4px 4px 4px auto;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+.group-by button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: calc(var(--radius-md) - 3px);
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-meta);
+  cursor: pointer;
+}
+.group-by button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+}
+.group-by button:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 1px;
+}
+.room-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 10px 8px 0;
+  font-size: var(--fs-secondary);
+}
+.room-filter__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-hover);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.room-filter__clear app-icon {
+  width: 15px;
+  height: 15px;
+}
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 8px 2px;
+  color: var(--text);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+.group-head.is-late {
+  color: #a12323;
+}
+.group-head app-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+}
+.group-head__count {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+// Zuständig als Kürzel rechts (Name steht für Screenreader in der Zeile)
+.who {
+  display: grid;
+  flex: 0 0 30px;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-size: 12px;
+  font-weight: 700;
+}
+// Erledigt-Moment
+.task.is-ticked .box::before {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.task.is-ticked .task__title {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .task.is-ticked .box app-icon {
+    animation: tick 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .task.is-ticked {
+    animation: fade-out 260ms 260ms ease both;
+  }
+}
+@keyframes tick {
+  from { transform: scale(0.4); }
+}
+@keyframes fade-out {
+  to { opacity: 0.35; }
+}
+@media (max-width: 560px) {
+  .group-by {
+    width: 100%;
+    margin: 0 0 6px;
+  }
+  .group-by button {
+    flex: 1;
+  }
+}

@@ -1,0 +1,236 @@
+<!-- Filter: wessen Termine im Kalender stehen -->
+<div class="cal-filter" role="group" aria-label="Welche Kalender anzeigen">
+  <button type="button" class="cal-chip" [attr.aria-pressed]="filter() === 'all'" (click)="filter.set('all')">Alle</button>
+  <button type="button" class="cal-chip" [attr.aria-pressed]="filter() === 'mine'" (click)="filter.set('mine')">
+    <app-icon name="lock" aria-hidden="true" />Nur meine
+  </button>
+  @for (c of calendars(); track c.id) {
+    <button type="button" class="cal-chip" [attr.data-color]="c.color" [attr.aria-pressed]="filter() === c.id" (click)="filter.set(c.id)">
+      <i class="cal-dot" aria-hidden="true"></i>{{ c.name }}
+    </button>
+  }
+  @for (r of shares()?.received ?? []; track r.user_id) {
+    <button type="button" class="cal-chip" data-color="slate" [attr.aria-pressed]="filter() === personFilter(r.user_id)" (click)="filter.set(personFilter(r.user_id))">
+      <span class="cal-avatar" aria-hidden="true">{{ r.name.slice(0, 1) }}</span>Kalender von {{ r.name }}
+    </button>
+  }
+  <button type="button" class="cal-chip cal-chip--manage" (click)="openManager()">
+    <app-icon [name]="calendars().length || shares()?.given?.length ? 'people' : 'plus'" aria-hidden="true" />Kalender teilen
+  </button>
+</div>
+
+<app-modal [open]="open()" [flush]="true" labelledBy="shared-cal-h" closeLabel="Schließen" (closed)="open.set(false)">
+  <div class="sc">
+    <header class="sc__head">
+      <h2 id="shared-cal-h">Kalender teilen</h2>
+      <p class="sc__promise">
+        <app-icon name="lock" aria-hidden="true" /><span>Neue Termine sind privat. <b>Private Termine sieht niemand</b> – auch nicht
+        als „beschäftigt“. Beim Eintragen wählst du unter „Wer sieht den Termin?“, mit wem du ihn teilst.</span>
+      </p>
+    </header>
+
+    @if (message()) {
+      <p class="sc__note" role="status">{{ message() }}</p>
+    }
+    @if (error()) {
+      <p class="sc__error" role="alert">{{ error() }}</p>
+    }
+
+    <!-- Mein Kalender: Personen freigeben (wie Outlook) — sie sehen nur ausdrücklich geteilte Termine -->
+    @if (shares(); as s) {
+      <section class="sc-card" data-color="slate" aria-labelledby="sc-mine">
+        <div class="sc-card__head">
+          <i class="cal-dot" aria-hidden="true"></i>
+          <h3 id="sc-mine">Dein Kalender</h3>
+          <span class="sc-card__role">Freigaben</span>
+        </div>
+        <p class="sc-muted">Wer eine Freigabe hat, sieht nur die Termine, die du mit dieser Person teilst.</p>
+        @if (s.given.length || s.pending.length) {
+          <ul class="sc-members" aria-label="Freigegeben für">
+            @for (g of s.given; track g.user_id) {
+              <li>
+                <span class="sc-avatar" aria-hidden="true">{{ g.name.slice(0, 1) }}</span>
+                <span class="sc-members__name">{{ g.name }}</span>
+                <span class="sc-ctrl">
+                <label class="sr-only" [for]="'share-role-' + g.user_id">Rolle von {{ g.name }}</label>
+                <select class="sc-select" [id]="'share-role-' + g.user_id" [value]="g.role" [disabled]="busy()" (change)="changeShareRole(g.user_id, $any($event.target).value)">
+                  <option value="VIEWER">Kann ansehen</option>
+                  <option value="EDITOR">Kann bearbeiten</option>
+                </select>
+                <button type="button" class="sc-icon" [disabled]="busy()" (click)="endShare(g.user_id, g.name)">
+                  <app-icon name="close" aria-hidden="true" /><span class="sr-only">Freigabe für {{ g.name }} beenden</span>
+                </button>
+                </span>
+              </li>
+            }
+            @for (p of s.pending; track p.invitation_id) {
+              <li class="is-pending">
+                <span class="sc-avatar" aria-hidden="true"><app-icon name="clock" /></span>
+                <span class="sc-members__name">{{ p.name }}</span>
+                <span class="sc-ctrl">
+                  <span class="sc-members__role">Eingeladen · {{ roleLabel[p.role] }}</span>
+                  @if (demo) {
+                    <button type="button" class="sc-link sc-link--demo" [disabled]="busy()" (click)="demoAccept(p.invitation_id, p.name)">Demo: annehmen lassen<span class="sr-only"> ({{ p.name }})</span></button>
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        }
+        @if (shareOpen()) {
+          @let options = shareCandidates();
+          <div class="sc-invite">
+            @if (contacts() === null) {
+              <p class="sc-muted" role="status">Deine Personen werden geladen …</p>
+            } @else if (!options.length) {
+              <p class="sc-muted">Dein Kalender ist schon für alle deine Personen freigegeben oder sie sind eingeladen. Neue Personen lädst du unter „Personen &amp; Gruppen“ ein.</p>
+            } @else {
+              <p class="sc-label" id="share-who">Für wen freigeben?</p>
+              <div class="sc-chips" role="group" aria-labelledby="share-who">
+                @for (o of options; track o.id) {
+                  <button type="button" class="cal-chip" [attr.aria-pressed]="shareContact() === o.id" (click)="shareContact.set(o.id)">{{ o.name }}</button>
+                }
+              </div>
+              <p class="sc-label" id="share-role">Bei geteilten Terminen darf die Person …</p>
+              <div class="sc-chips" role="group" aria-labelledby="share-role">
+                <button type="button" class="cal-chip" [attr.aria-pressed]="shareRole() === 'VIEWER'" (click)="shareRole.set('VIEWER')">nur ansehen</button>
+                <button type="button" class="cal-chip" [attr.aria-pressed]="shareRole() === 'EDITOR'" (click)="shareRole.set('EDITOR')">auch ändern</button>
+              </div>
+              <button type="button" class="sc-btn" [disabled]="busy() || shareContact() === null" (click)="share()">Einladung senden</button>
+            }
+          </div>
+        }
+        <div class="sc-card__actions">
+          <button type="button" class="sc-link" [attr.aria-expanded]="shareOpen()" (click)="startShare()"><app-icon name="plus" aria-hidden="true" />Person freigeben</button>
+        </div>
+      </section>
+
+      @if (s.received.length) {
+        <section class="sc-card" data-color="slate" aria-labelledby="sc-received">
+          <div class="sc-card__head">
+            <i class="cal-dot" aria-hidden="true"></i>
+            <h3 id="sc-received">Für dich freigegeben</h3>
+          </div>
+          <ul class="sc-members" aria-label="Kalender anderer Personen">
+            @for (r of s.received; track r.user_id) {
+              <li>
+                <span class="sc-avatar" aria-hidden="true">{{ r.name.slice(0, 1) }}</span>
+                <span class="sc-members__name">Kalender von {{ r.name }}</span>
+                <span class="sc-ctrl">
+                <span class="sc-members__role">{{ roleLabel[r.role] }}</span>
+                <button type="button" class="sc-icon" [disabled]="busy()" (click)="leaveShare(r.user_id, r.name)">
+                  <app-icon name="close" aria-hidden="true" /><span class="sr-only">Kalender von {{ r.name }} nicht mehr anzeigen</span>
+                </button>
+                </span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+
+    <p class="sc-section">Gemeinsame Kalender für Gruppen</p>
+    @for (c of calendars(); track c.id) {
+      <section class="sc-card" [attr.data-color]="c.color" [attr.aria-labelledby]="'sc-' + c.id">
+        <div class="sc-card__head">
+          <i class="cal-dot" aria-hidden="true"></i>
+          <h3 [id]="'sc-' + c.id">{{ c.name }}</h3>
+          <span class="sc-card__role">{{ c.is_owner ? 'Dein Kalender' : roleLabel[c.role] }}</span>
+        </div>
+        <ul class="sc-members" [attr.aria-label]="'Mitglieder von ' + c.name">
+          @for (m of c.members; track m.user_id) {
+            <li>
+              <span class="sc-avatar" aria-hidden="true">{{ m.name.slice(0, 1) }}</span>
+              <span class="sc-members__name">{{ m.name }}{{ m.is_self ? ' (du)' : '' }}</span>
+              @if (c.is_owner && m.role !== 'OWNER') {
+                <span class="sc-ctrl">
+                <label class="sr-only" [for]="'role-' + c.id + '-' + m.user_id">Rolle von {{ m.name }}</label>
+                <select class="sc-select" [id]="'role-' + c.id + '-' + m.user_id" [value]="m.role" [disabled]="busy()" (change)="changeRole(c, m.user_id, $any($event.target).value)">
+                  <option value="EDITOR">Kann bearbeiten</option>
+                  <option value="VIEWER">Kann ansehen</option>
+                </select>
+                <button type="button" class="sc-icon" [disabled]="busy()" (click)="remove(c, m.user_id, m.name)">
+                  <app-icon name="close" aria-hidden="true" /><span class="sr-only">{{ m.name }} entfernen</span>
+                </button>
+                </span>
+              } @else {
+                <span class="sc-members__role">{{ roleLabel[m.role] }}</span>
+              }
+            </li>
+          }
+          @for (p of c.pending ?? []; track p.invitation_id) {
+            <li class="is-pending">
+              <span class="sc-avatar" aria-hidden="true"><app-icon name="clock" /></span>
+              <span class="sc-members__name">{{ p.name }}</span>
+              <span class="sc-ctrl">
+                <span class="sc-members__role">Eingeladen · {{ roleLabel[p.role] }}</span>
+                @if (demo) {
+                  <button type="button" class="sc-link sc-link--demo" [disabled]="busy()" (click)="demoAccept(p.invitation_id, p.name)">Demo: annehmen lassen<span class="sr-only"> ({{ p.name }})</span></button>
+                }
+              </span>
+            </li>
+          }
+        </ul>
+
+        @if (c.is_owner) {
+          @if (inviteFor() === c.id) {
+            @let options = candidates(c);
+            <div class="sc-invite">
+              @if (contacts() === null) {
+                <p class="sc-muted" role="status">Deine Personen werden geladen …</p>
+              } @else if (!options.length) {
+                <p class="sc-muted">Alle deine Personen sind schon dabei oder eingeladen. Neue Personen lädst du unter „Personen &amp; Gruppen“ ein.</p>
+              } @else {
+                <p class="sc-label" [id]="'inv-who-' + c.id">Wen einladen?</p>
+                <div class="sc-chips" role="group" [attr.aria-labelledby]="'inv-who-' + c.id">
+                  @for (o of options; track o.id) {
+                    <button type="button" class="cal-chip" [attr.aria-pressed]="inviteContact() === o.id" (click)="inviteContact.set(o.id)">{{ o.name }}</button>
+                  }
+                </div>
+                <p class="sc-label" [id]="'inv-role-' + c.id">Darf die Person …</p>
+                <div class="sc-chips" role="group" [attr.aria-labelledby]="'inv-role-' + c.id">
+                  <button type="button" class="cal-chip" [attr.aria-pressed]="inviteRole() === 'EDITOR'" (click)="inviteRole.set('EDITOR')">Termine eintragen und ändern</button>
+                  <button type="button" class="cal-chip" [attr.aria-pressed]="inviteRole() === 'VIEWER'" (click)="inviteRole.set('VIEWER')">nur ansehen</button>
+                </div>
+                <button type="button" class="sc-btn" [disabled]="busy() || inviteContact() === null" (click)="invite(c)">Einladung senden</button>
+              }
+            </div>
+          }
+          <div class="sc-card__actions">
+            <button type="button" class="sc-link" [attr.aria-expanded]="inviteFor() === c.id" (click)="startInvite(c)"><app-icon name="plus" aria-hidden="true" />Person einladen</button>
+            @if (confirmDelete() === c.id) {
+              <span class="sc-confirm" role="group" [attr.aria-label]="'„' + c.name + '“ wirklich löschen?'">
+                <span>Löschen? Eure Termine werden wieder privat.</span>
+                <button type="button" class="sc-link" (click)="confirmDelete.set(null)">Abbrechen</button>
+                <button type="button" class="sc-link sc-link--danger" [disabled]="busy()" (click)="deleteCalendar(c)">Ja, löschen</button>
+              </span>
+            } @else {
+              <button type="button" class="sc-link sc-link--danger" (click)="confirmDelete.set(c.id)">Kalender löschen</button>
+            }
+          </div>
+        } @else {
+          <div class="sc-card__actions">
+            <button type="button" class="sc-link sc-link--danger" [disabled]="busy()" (click)="leave(c)">Austreten</button>
+          </div>
+        }
+      </section>
+    } @empty {
+      <p class="sc-muted">Noch kein gemeinsamer Kalender. Lege einen an und lade Personen aus „Dein Kreis“ ein.</p>
+    }
+
+    <form class="sc-new" (submit)="create($event)">
+      <h3>Neuer gemeinsamer Kalender</h3>
+      <label class="sc-label" for="sc-new-name">Name</label>
+      <input id="sc-new-name" class="sc-input" maxlength="60" placeholder="z. B. Familie oder WG" autocomplete="off" [value]="newName()" (input)="newName.set($any($event.target).value)" />
+      <p class="sc-label" id="sc-new-color">Farbe</p>
+      <div class="sc-chips" role="group" aria-labelledby="sc-new-color">
+        @for (col of colors; track col.value) {
+          <button type="button" class="cal-chip" [attr.data-color]="col.value" [attr.aria-pressed]="newColor() === col.value" (click)="newColor.set(col.value)">
+            <i class="cal-dot" aria-hidden="true"></i>{{ col.label }}
+          </button>
+        }
+      </div>
+      <button type="submit" class="sc-btn" [disabled]="busy() || !newName().trim()">Kalender anlegen</button>
+    </form>
+  </div>
+</app-modal>

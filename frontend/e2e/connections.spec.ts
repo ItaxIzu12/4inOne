@@ -91,7 +91,7 @@ for (const width of [390, 1280]) {
     expect((await new AxeBuilder({ page }).include('[role=dialog]').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 
     // Verbindung entfernen: beide Objekte bleiben, die Liste aktualisiert sich
-    await row.getByRole('button', { name: /Verbindung zu „Lieferung“ entfernen/ }).click();
+    await row.getByRole('button', { name: /^Verbindung entfernen zu „Lieferung“/ }).click();
     await expect(dialog.getByText('Noch nichts verknüpft.')).toBeVisible();
   });
 }
@@ -162,8 +162,8 @@ for (const width of [360, 390, 430, 768, 1024]) {
     await expect(block).toHaveCount(0);
     const row = dialog.locator('.connection', { hasText: 'Berlin' });
     await expect(row).toBeVisible();
-    const remove = row.getByRole('button', { name: /Verbindung zu „Berlin“ entfernen/ });
-    await expect(remove).toHaveText('Verbindung entfernen');
+    const remove = row.getByRole('button', { name: /^Verbindung entfernen zu „Berlin“/ });
+    await expect(remove).toContainText('Verbindung entfernen');
     const box = (await remove.boundingBox())!;
     expect(box.height).toBeGreaterThanOrEqual(44);
     expect(box.x + box.width).toBeLessThanOrEqual(width);

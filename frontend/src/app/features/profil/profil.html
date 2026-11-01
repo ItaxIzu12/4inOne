@@ -1,10 +1,6 @@
 <app-shell>
   <main id="main-content" class="settings-page" tabindex="-1">
-    <a class="settings-back" routerLink="/einstellungen">‹ Einstellungen</a>
-    <header class="settings-page__head">
-      <h1>Profil</h1>
-      <p>So erscheinst du in 4inOne.</p>
-    </header>
+    <app-settings-layout active="profil" heading="Profil" lead="So erscheinst du in 4inOne.">
 
     <form class="profile-form" (ngSubmit)="save()" novalidate>
       <div class="profile-field">
@@ -57,6 +53,7 @@
       <p>Dein Konto und alle zugehörigen Daten (Finanzen, Haushalt, Organisation, Reisen, Kontakte) werden endgültig gelöscht. Das lässt sich nicht rückgängig machen.</p>
       <button type="button" class="danger-zone__button" (click)="openDeleteModal()">Konto löschen</button>
     </section>
+    </app-settings-layout>
   </main>
 </app-shell>
 
@@ -72,9 +69,9 @@
       <p class="delete-account__error" role="alert">{{ deleteError() }}</p>
     }
     <div class="delete-account__actions">
-      <button type="button" class="delete-account__cancel" [disabled]="deleting()" (click)="closeDeleteModal()">Abbrechen</button>
+      <button type="button" class="delete-account__cancel" [disabled]="deleting()" (click)="closeDeleteModal()"><app-icon name="close" aria-hidden="true" />Abbrechen</button>
       <button type="button" class="delete-account__confirm" [disabled]="deleting()" [attr.aria-busy]="deleting()" (click)="confirmDelete()">
-        {{ deleting() ? 'Wird gelöscht …' : 'Konto endgültig löschen' }}
+        <app-icon name="trash" aria-hidden="true" />{{ deleting() ? 'Wird gelöscht …' : 'Konto endgültig löschen' }}
       </button>
     </div>
   </div>

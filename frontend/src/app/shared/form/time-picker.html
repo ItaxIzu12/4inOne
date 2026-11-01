@@ -4,16 +4,16 @@
   class="tp__trigger"
   aria-haspopup="true"
   [attr.id]="inputId()"
-  [attr.aria-labelledby]="labelledBy()"
-  [attr.aria-label]="ariaLabel()"
+  [attr.aria-labelledby]="labelledBy() ? labelledBy() + ' ' + textId : null"
+  [attr.aria-label]="ariaLabel() ? ariaLabel() + ', ' + (text() ? text() + ' Uhr' : (placeholder() || 'Uhrzeit wählen')) : null"
   [attr.aria-expanded]="open()"
   [disabled]="disabled()"
   (click)="toggle()"
 >
   @if (text(); as shown) {
-    <span class="tp__text">{{ shown }} Uhr</span>
+    <span class="tp__text" [id]="textId">{{ shown }} Uhr</span>
   } @else {
-    <span class="tp__text tp__text--placeholder">{{ placeholder() || 'Uhrzeit wählen' }}</span>
+    <span class="tp__text tp__text--placeholder" [id]="textId">{{ placeholder() || 'Uhrzeit wählen' }}</span>
   }
   <svg class="tp__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z" /></svg>
 </button>

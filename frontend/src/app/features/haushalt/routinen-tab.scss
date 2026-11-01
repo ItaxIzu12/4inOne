@@ -370,10 +370,6 @@ small {
 
 }
 @media (max-width: 1000px) {
-  .group__head,
-  .row {
-    grid-template-columns: 44px minmax(150px, 1.8fr) minmax(104px, 1fr) 40px minmax(76px, 0.7fr) 56px 40px;
-  }
   .who-name {
     display: none;
   }
@@ -407,6 +403,10 @@ small {
   .sort {
     display: none;
   }
+}
+// Liste statt Tabelle schon ab 1000 px Fensterbreite: mit Seitenleiste ist die Spalte bei Tablet-Breite schmal —
+// die Tabellenspalten liefen sonst rechts aus der Karte (Serie, Status abgeschnitten).
+@media (max-width: 1000px) {
   .group__head {
     display: flex;
     padding: 0 4px;
@@ -499,7 +499,6 @@ small {
     grid-column: 2 / 4;
     grid-row: 2;
   }
-
 }
 @media (prefers-reduced-motion: no-preference) {
   .switch,

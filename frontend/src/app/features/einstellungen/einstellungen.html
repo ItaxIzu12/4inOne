@@ -1,48 +1,67 @@
 <app-shell>
   <main id="main-content" class="settings-page" tabindex="-1">
-    <header class="settings-page__head">
-      <h1>Einstellungen</h1>
-      <p>Dein Konto, deine Sicherheit und deine Daten.</p>
-    </header>
+    <app-settings-layout active="overview" heading="Einstellungen" lead="Dein Konto, deine Sicherheit und deine Daten.">
+      <!-- Profil: wer du in 4inOne bist -->
+      <section class="settings-profile" aria-label="Dein Profil">
+        <span class="settings-profile__avatar" aria-hidden="true">{{ initials() }}</span>
+        <div class="settings-profile__text">
+          <strong>{{ name() }}</strong>
+          <span>{{ email() }}</span>
+          <span class="settings-profile__meta">Heimatwährung {{ currency() }}</span>
+        </div>
+        <a class="settings-profile__edit" routerLink="/einstellungen/profil">Bearbeiten</a>
+      </section>
 
-    <section class="settings-profile" aria-label="Dein Profil">
-      <span class="settings-profile__avatar" aria-hidden="true">{{ initials() }}</span>
-      <div class="settings-profile__text">
-        <strong>{{ name() }}</strong>
-        <span>{{ email() }}</span>
-      </div>
-    </section>
-
-    @for (group of groups; track group.title) {
-      <section class="settings-group" [attr.aria-labelledby]="'settings-' + group.id">
-        <h2 class="settings-group__title" [id]="'settings-' + group.id">{{ group.title }}</h2>
-        <ul class="settings-list">
-          @for (row of group.rows; track row.label) {
-            <li>
-              <a [routerLink]="row.route" class="settings-row">
-                <span class="settings-row__icon">
-                  @switch (row.icon) {
-                    @case ('profile') { <icon-profile /> }
-                    @case ('two-factor') { <icon-two-factor /> }
-                    @case ('sessions') { <icon-sessions /> }
-                    @case ('legal') { <icon-legal /> }
-                    @case ('info') { <icon-info /> }
-                  }
-                </span>
-                <span class="settings-row__text">
-                  <span class="settings-row__label">{{ row.label }}</span>
-                  <span class="settings-row__hint">{{ row.hint }}</span>
-                </span>
-                <icon-chevron class="settings-row__chevron" />
-              </a>
+      <!-- Kontoschutz: ehrliche Liste statt Punktzahl — was erledigt ist und was noch fehlt -->
+      <section class="settings-check" aria-labelledby="settings-check-h">
+        <h2 id="settings-check-h">Kontoschutz</h2>
+        <ul>
+          @for (c of checks(); track c.key) {
+            <li [class]="'settings-check__row is-' + c.state">
+              <span class="settings-check__mark" aria-hidden="true"><app-icon [name]="c.state === 'ok' ? 'check' : c.state === 'todo' ? 'info' : 'clock'" /></span>
+              <span class="settings-check__text">
+                <b>{{ c.title }}</b>
+                <span>{{ c.text }}</span>
+              </span>
+              @if (c.link) {
+                <a class="settings-check__go" [routerLink]="c.link">{{ c.action }}<app-icon name="arrow" aria-hidden="true" /></a>
+              }
             </li>
           }
         </ul>
       </section>
-    }
 
-    <button type="button" class="settings-logout" (click)="logout()">
-      <icon-logout />Abmelden
-    </button>
+      @for (group of groups; track group.title) {
+        <section class="settings-group" [id]="group.id" [attr.aria-labelledby]="'settings-' + group.id">
+          <h2 class="settings-group__title" [id]="'settings-' + group.id">{{ group.title }}</h2>
+          <ul class="settings-list">
+            @for (row of group.rows; track row.label) {
+              <li>
+                <a [routerLink]="row.route" class="settings-row">
+                  <span class="settings-row__icon">
+                    @switch (row.icon) {
+                      @case ('profile') { <icon-profile /> }
+                      @case ('two-factor') { <icon-two-factor /> }
+                      @case ('sessions') { <icon-sessions /> }
+                      @case ('legal') { <icon-legal /> }
+                      @case ('info') { <icon-info /> }
+                    }
+                  </span>
+                  <span class="settings-row__text">
+                    <span class="settings-row__label">{{ row.label }}</span>
+                    <span class="settings-row__hint">{{ row.hint }}</span>
+                  </span>
+                  <icon-chevron class="settings-row__chevron" />
+                </a>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <button type="button" class="settings-logout" (click)="logout()">
+        <icon-logout />Abmelden
+      </button>
+    </app-settings-layout>
   </main>
 </app-shell>

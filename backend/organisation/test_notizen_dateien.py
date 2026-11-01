@@ -12,7 +12,17 @@ from organisation.models import PersonalFile, PersonalNote
 
 pytestmark = pytest.mark.django_db
 BASE = '/api/v1/organisation/'
-PNG = b'\x89PNG\r\n\x1a\n' + b'\x00' * 64
+
+
+def _image(fmt='PNG', size=(8, 6), **save) -> bytes:
+    from PIL import Image
+
+    out = io.BytesIO()
+    Image.new('RGB', size, (200, 120, 40)).save(out, fmt, **save)
+    return out.getvalue()
+
+
+PNG = _image()
 PDF = b'%PDF-1.7\n%\xe2\xe3\xcf\xd3\n1 0 obj\n'
 
 
@@ -135,4 +145,80 @@ def test_metadata_can_change_and_delete_removes_the_stored_file(client, django_c
     with django_capture_on_commit_callbacks(execute=True):
         assert client.delete(f"{BASE}files/{entry['id']}/").status_code == 204
     import os
+    assert not os.path.exists(path)
+
+
+# --------------------------------------------------------------------------- Anhänge an Notizen (31.10.2026)
+
+
+def _jpeg_with_gps() -> bytes:
+    from PIL import Image
+
+    exif = Image.Exif()
+    exif[0x010F] = 'Testkamera'  # Hersteller
+    exif[0x0112] = 6  # Ausrichtung: 90° gedreht
+    exif[0x8825] = {1: 'N', 2: (52.0, 31.0, 12.0), 3: 'E', 4: (13.0, 24.0, 18.0)}  # GPS-Standort
+    return _image('JPEG', size=(40, 20), exif=exif)
+
+
+def _note(client, title='Waschmaschine'):
+    return client.post(BASE + 'notes/', {'title': title, 'body': 'Typenschild'}, format='json').data['id']
+
+
+def test_photo_on_a_note_loses_location_and_camera_data_and_is_turned_upright(client):
+    from PIL import Image
+
+    note = _note(client)
+    r = upload(client, 'IMG_0001.jpg', _jpeg_with_gps(), note=note)
+    assert r.status_code == 201, r.data
+    assert r.data['note'] == note and r.data['content_type'] == 'image/jpeg'
+    stored = b''.join(client.get(f"{BASE}files/{r.data['id']}/inhalt/").streaming_content)
+    with Image.open(io.BytesIO(stored)) as image:
+        assert not image.getexif()  # kein GPS, keine Kamera, keine Ausrichtung mehr
+        assert image.size == (20, 40)  # Ausrichtung ins Bild übernommen
+    assert b'Testkamera' not in stored
+    listed = client.get(BASE + 'notes/').data[0]['attachments']
+    assert listed == [{'id': r.data['id'], 'name': 'IMG_0001.jpg', 'content_type': 'image/jpeg', 'size': len(stored)}]
+
+
+def test_note_attachments_only_photos_and_pdf_and_at_most_ten(client, monkeypatch):
+    note = _note(client)
+    assert upload(client, 'liste.txt', b'Pass', note=note).status_code == 400
+    assert upload(client, 'plan.pdf', PDF, note=note).status_code == 201
+    monkeypatch.setattr(file_rules, 'MAX_NOTE_FILES', 2)
+    assert upload(client, 'a.png', PNG, note=note).status_code == 201
+    assert upload(client, 'b.png', PNG, note=note).status_code == 400
+    assert PersonalFile.objects.filter(note_id=note).count() == 2
+
+
+def test_fake_or_huge_images_are_rejected(client, monkeypatch):
+    note = _note(client)
+    assert upload(client, 'kaputt.png', b'\x89PNG\r\n\x1a\n' + b'\x00' * 64, note=note).status_code == 400
+    assert upload(client, 'falsch.jpg', PNG, note=note).status_code == 400  # PNG mit JPG-Endung
+    monkeypatch.setattr(file_rules, 'MAX_PIXELS', 10)
+    assert upload(client, 'gross.png', PNG, note=note).status_code == 400
+    assert not PersonalFile.objects.exists()
+
+
+def test_attaching_to_someone_elses_note_is_not_possible(client, users):
+    other = APIClient()
+    other.force_authenticate(users[1])
+    bobs_note = _note(other, 'Bob')
+    assert upload(client, 'a.png', PNG, note=bobs_note).status_code == 404
+    assert upload(client, 'a.png', PNG, note='abc').status_code == 404
+    assert upload(client, 'a.png', PNG, note=999999).status_code == 404
+    mine = upload(other, 'b.png', PNG, note=bobs_note).data
+    assert client.get(f"{BASE}files/{mine['id']}/inhalt/").status_code == 404
+    assert client.get(BASE + 'notes/').data == []
+
+
+def test_deleting_a_note_deletes_its_files(client, django_capture_on_commit_callbacks):
+    import os
+
+    note = _note(client)
+    entry = upload(client, 'a.png', PNG, note=note).data
+    path = PersonalFile.objects.get(pk=entry['id']).file.path
+    with django_capture_on_commit_callbacks(execute=True):
+        assert client.delete(f'{BASE}notes/{note}/').status_code == 204
+    assert not PersonalFile.objects.exists()
     assert not os.path.exists(path)

@@ -1,3 +1,4 @@
+import { HouseholdPeople } from './household-people.service';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
 import { AppDatePicker } from '../../shared/form/date-picker';
@@ -46,6 +47,8 @@ export interface TaskFormChange {
 })
 export class TaskForm {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
+  /** Wer die Aufgabe sieht — mit Namen (fehlt außerhalb der Haushalt-Seite). */
+  protected readonly people = inject(HouseholdPeople, { optional: true });
 
   readonly members = input<MemberLoadDto[]>([]);
   /** Beschriftung: „Neue Aufgabe“ / „Neue Routine“; Routinen starten wöchentlich. */

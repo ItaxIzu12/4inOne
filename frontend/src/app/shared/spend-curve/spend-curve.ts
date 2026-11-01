@@ -256,7 +256,9 @@ export class SpendCurveChart {
     const spent = c.series[day - 1];
     const pace = paceAt(c, day);
     const isToday = c.current && day === c.series.length;
-    const dayText = isToday ? 'Heute' : `Bis ${dayLabel(c.month, day)}`;
+    // „Bis heute im Oktober“ statt „Heute“: die Zahl ist die Monatssumme bis heute, nicht die Ausgabe dieses einen Tages
+    const monthLong = new Date(`${c.month}-01T12:00`).toLocaleDateString('de-DE', { month: 'long' });
+    const dayText = isToday ? `Bis heute im ${monthLong}` : `Bis ${dayLabel(c.month, day)}`;
     // „Budget anteilig“: so viel wäre bis zu diesem Tag dran, wenn das Budget gleichmäßig über den Monat verteilt wird
     const paceText = pace === null ? '' : `Budget anteilig: ${eurRound(pace)}`;
     return {

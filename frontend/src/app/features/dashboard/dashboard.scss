@@ -98,6 +98,7 @@ h1 {
   // Zwei Zeilen statt einer langen rechten Spalte: oben Tag | Finanzen, darunter Für dich | Demnächst
   grid-template-areas:
     'today money'
+    'pulse soon'
     'foryou soon';
   gap: var(--space-6) var(--space-7);
   align-items: start;
@@ -111,6 +112,14 @@ h1 {
 }
 .board > .soon {
   grid-area: soon;
+}
+.board > .pulse {
+  grid-area: pulse;
+}
+
+// Vier Antworten über dem Raster
+app-dash-answers {
+  margin-bottom: var(--space-2);
 }
 .board > .for-you {
   grid-area: foryou;
@@ -398,26 +407,28 @@ h1 {
 @media (max-width: 1100px) {
   .board {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: 'today' 'money' 'soon' 'foryou';
+    grid-template-areas: 'today' 'money' 'pulse' 'soon' 'foryou';
   }
   .board > .money {
     margin-top: 0;
   }
+
 }
 @media (max-width: 760px) {
   .dashboard {
-    padding-top: var(--space-6);
+    padding-top: var(--space-4);
   }
+  // Kompakter Kopf am Handy: die vier Antworten sollen im ersten Bildschirm stehen
   .greeting {
     align-items: center;
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-4);
   }
   h1 {
-    font-size: 1.875rem;
+    font-size: 1.625rem;
   }
   .greeting__day {
-    margin-top: var(--space-2);
-    font-size: 15px;
+    margin-top: var(--space-1);
+    font-size: 14px;
   }
   .today-row {
     grid-template-columns: 46px 36px minmax(0, 1fr) 16px;

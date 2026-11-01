@@ -47,7 +47,9 @@ describe('Finanz-Reiter: Rechenregeln', () => {
     expect(deltaLabel(3420, 3050, '2026-09')).toEqual({ text: '12 % mehr als im September', up: true });
     expect(deltaLabel(1150, 1250, '2026-02')).toEqual({ text: '8 % weniger als im Februar', up: false });
     // laufender Monat: nur bis heute, gegen den Vormonat bis zum selben Tag
-    expect(deltaLabel(400, 500, '2026-09', true)).toEqual({ text: '20 % weniger als zur gleichen Zeit im September', up: false });
+    expect(deltaLabel(400, 500, '2026-09', 5)).toEqual({ text: '20 % weniger als bis 5. Sept.', up: false });
+    // am 31. gegen einen Monat mit 30 Tagen: „bis 30. Sept.“
+    expect(deltaLabel(500, 500, '2026-09', 31)).toEqual({ text: 'so viel wie bis 30. Sept.', up: true });
     expect(compareDay('2026-10', '2026-10-05')).toBe(5);
     expect(compareDay('2026-09', '2026-10-05')).toBeNull();
     const rows = [tx(100, '2026-09-03'), tx(900, '2026-09-20'), tx(80, '2026-10-04'), tx(50, '2026-10-30')];

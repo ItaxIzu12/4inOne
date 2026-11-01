@@ -22,6 +22,10 @@
     </div>
     <span class="bar" role="progressbar" aria-label="Packliste" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="pct()"><span [style.width.%]="pct()"></span></span>
 
+    @if (allPacked()) {
+      <p class="all-packed" role="status"><span aria-hidden="true"><app-icon name="check" /></span>Alles gepackt – gute Reise!</p>
+    }
+
     @if (canEdit()) {
       <form class="quick" (submit)="submit($event)">
         <label class="quick__field" for="packing-quick">
@@ -35,9 +39,28 @@
     }
   </section>
 
+  <!-- Kategorien auf einen Blick: Ring je Kategorie, antippen springt zur Gruppe -->
+  @if (tiles().length > 1) {
+    <ul class="cat-tiles" aria-label="Kategorien">
+      @for (c of tiles(); track c.category) {
+        <li>
+          <button type="button" class="cat-tile" [class.is-full]="c.packed === c.total" (click)="jump(c.category)">
+            <span class="cat-tile__ring" [style.--p]="c.pct + '%'" aria-hidden="true">
+              <i></i>
+              @if (c.packed === c.total) {<app-icon name="check" />} @else {<app-icon [name]="c.icon" />}
+            </span>
+            <b>{{ c.short }}</b>
+            <small class="num">{{ c.packed }}/{{ c.total }}<span class="sr-only"> gepackt – anzeigen</span></small>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  <div class="groups">
   @for (g of groups(); track g.category) {
     @let open = !collapsed().has(g.category);
-    <section class="card group" [attr.aria-labelledby]="'pk-' + g.category">
+    <section class="card group" [id]="'pk-sec-' + g.category" [attr.aria-labelledby]="'pk-' + g.category">
       <h3 class="group__heading">
         <button type="button" class="group__head" [attr.aria-expanded]="open" [attr.aria-controls]="'pk-list-' + g.category" (click)="toggleGroup(g.category)">
           <app-icon class="group__icon" [name]="g.icon" aria-hidden="true" />
@@ -68,6 +91,7 @@
       <button type="button" class="link" (click)="view.set('all')">Alle anzeigen</button>
     </div>
   }
+  </div>
 
   @if (canEdit()) {
     <div class="foot">

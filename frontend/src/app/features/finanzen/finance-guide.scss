@@ -319,3 +319,21 @@
     height: 140px;
   }
 }
+
+// Reiter auf Tablet-Breite (761–1000 px): ohne Symbole, damit alle vier Reiter in die Zeile passen
+// (sonst wurde „Sparziele“ abgeschnitten und die Leiste scrollte unsichtbar seitlich)
+@media (min-width: 761px) and (max-width: 1000px) {
+  .tabs button app-icon {
+    display: none;
+  }
+  .tabs button {
+    padding: 0 12px;
+  }
+}
+
+// Handy: Hinweise unter Kennzahlen nicht unter 13 px (private-finance.scss setzt sie dort auf --fs-caption)
+@media (max-width: 760px) {
+  .kpi__hint {
+    font-size: var(--fs-meta);
+  }
+}

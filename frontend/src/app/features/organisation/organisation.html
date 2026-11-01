@@ -31,12 +31,32 @@
       </div>
     }
     @switch (tab()) {
+      @case ('today') {
+        @if (eventsError()) {
+          <p class="inline-error" [appErrorNotice]="eventsError()">{{ eventsError() }}</p>
+        }
+        <app-org-today
+          [events]="events()"
+          [tasks]="tasks()"
+          [notes]="notes()"
+          [loading]="eventsLoading()"
+          [busy]="saving()"
+          (openEvent)="open('event', $event)"
+          (addEvent)="open('event', undefined, $event)"
+          (openTask)="open('task', $event)"
+          (toggleTask)="toggle($event)"
+          (openNote)="openNote($event)"
+          (showAll)="selectTab($event)"
+        />
+      }
       @case ('calendar') {
         @if (eventsError()) {
           <p class="inline-error" [appErrorNotice]="eventsError()">{{ eventsError() }}</p>
         }
+        <!-- Gemeinsame Kalender: filtern und verwalten (31.10.2026) -->
+        <app-org-calendars [calendars]="calendars()" [shares]="shares()" [(filter)]="calendarFilter" (changed)="calendarsChanged()" />
         <app-org-calendar
-          [events]="events()"
+          [events]="visibleEvents()"
           [loading]="eventsLoading()"
           [(selectedDay)]="selectedDay"
           [(view)]="calendarView"
@@ -45,6 +65,7 @@
           (addEvent)="open('event', undefined, $event)"
           (addEventOnDay)="openOnDay($event)"
         />
+        <app-org-day-sheet [day]="daySheet()" [events]="visibleEvents()" (openEvent)="fromSheetOpen($event)" (add)="fromSheetAdd($event)" (closed)="daySheet.set(null)" />
         <p class="cal-import">
           <span>Termine aus Google, Apple oder Outlook übernehmen?</span>
           <button type="button" class="link-btn" (click)="importOpen.set(true)"><app-icon name="upload" aria-hidden="true" />Kalender importieren</button>
@@ -67,7 +88,7 @@
         @if (loading()) {
           <p class="state" role="status">Notizen werden geladen …</p>
         } @else {
-          <app-org-notes [notes]="notes()" (openNote)="openNote($event)" (togglePin)="togglePin($event)" />
+          <app-org-notes [notes]="notes()" [busy]="saving()" (openNote)="openNote($event)" (togglePin)="togglePin($event)" (quickNote)="quickNote($event)" />
         }
       }
     }
@@ -78,19 +99,58 @@
 <app-modal-form
   icon="calendar"
   [formGroup]="form"
-  [title]="(editor() === 'event' ? 'Termin' : 'Aufgabe') + (editId() ? ' bearbeiten' : ' hinzufügen')"
+  [title]="eventReadOnly() ? 'Termin' : (editor() === 'event' ? 'Termin' : 'Aufgabe') + (editId() ? ' bearbeiten' : ' hinzufügen')"
   [open]="editor() !== null"
   [saving]="saving()"
   [error]="formError()"
-  [deleteLabel]="editId() ? (editor() === 'event' ? 'Termin' : 'Aufgabe') + ' löschen' : ''"
+  [deleteLabel]="editId() && !eventReadOnly() ? (editor() === 'event' ? 'Termin' : 'Aufgabe') + ' löschen' : ''"
+  [submitLabel]="eventReadOnly() ? '' : 'Speichern'"
+  [cancelLabel]="eventReadOnly() ? 'Schließen' : 'Abbrechen'"
   (submitted)="save()"
   (closed)="close()"
   (deleted)="remove()"
 >
+  <!-- Gemeinsamer Termin ohne Schreibrecht: nur ansehen (31.10.2026) -->
+  @if (eventReadOnly(); as ro) {
+    <div class="ro-event">
+      <p class="ro-event__tag" [attr.data-color]="ro.calendar_color || 'slate'"><i class="ro-event__dot" aria-hidden="true"></i>@if (ro.calendar_name) {{{ ro.calendar_name }}@if (ro.created_by) { · eingetragen von {{ ro.created_by }}}} @else {Kalender von {{ ro.created_by }}}</p>
+      <h3 class="ro-event__title">{{ ro.title }}</h3>
+      <p class="ro-event__when">{{ readOnlyWhen(ro) }}</p>
+      @if (ro.location) {<p class="ro-event__line"><app-icon name="map-pin" aria-hidden="true" />{{ ro.location }}</p>}
+      @if (ro.description) {<p class="ro-event__desc">{{ ro.description }}</p>}
+      <p class="ro-event__note"><app-icon name="lock" aria-hidden="true" />{{ ro.calendar_name ? 'In diesem Kalender kannst du Termine nur ansehen.' : ro.created_by + ' hat diesen Termin mit dir geteilt – du kannst ihn ansehen.' }}</p>
+    </div>
+  } @else {
   <app-field label="Titel" [error]="titleError()">
     <input id="entry-title" formControlName="title" maxlength="120" required [placeholder]="editor() === 'event' ? 'z. B. Teammeeting' : 'z. B. Präsentation vorbereiten'" />
   </app-field>
   @if (editor() === 'event') {
+    <!-- Wer sieht den Termin? Neu ist er privat; teilen mit einem gemeinsamen Kalender und/oder mit Personen,
+         für die mein Kalender freigegeben ist (31.10.2026, wie Outlook) -->
+    <div class="cal-choice">
+      <p class="cal-choice__label" id="cal-choice-h">Wer sieht den Termin?</p>
+      <div class="cal-choice__chips" role="group" aria-labelledby="cal-choice-h">
+        <button type="button" class="cal-choice__chip" [attr.aria-pressed]="!form.controls.calendar.value && !audience().length" [disabled]="calendarLocked()" (click)="makePrivate()">
+          <app-icon name="lock" aria-hidden="true" />Nur ich
+        </button>
+        @for (c of writableCalendars(); track c.id) {
+          <button type="button" class="cal-choice__chip" [attr.data-color]="c.color" [attr.aria-pressed]="form.controls.calendar.value === '' + c.id" [disabled]="calendarLocked()" (click)="form.controls.calendar.setValue(form.controls.calendar.value === '' + c.id ? '' : '' + c.id)">
+            <i class="cal-choice__dot" aria-hidden="true"></i>{{ c.name }}
+          </button>
+        }
+        @if (!foreignEvent()) {
+          @for (p of sharePeople(); track p.user_id) {
+            <button type="button" class="cal-choice__chip cal-choice__chip--person" [attr.aria-pressed]="audience().includes(p.user_id)" (click)="toggleAudience(p.user_id)">
+              <span class="cal-choice__avatar" aria-hidden="true">{{ p.name.slice(0, 1) }}</span>{{ p.name }}
+            </button>
+          }
+        }
+      </div>
+      <p class="cal-choice__hint" aria-live="polite">{{ calendarHint() }}</p>
+      @if (!writableCalendars().length && !sharePeople().length) {
+        <p class="cal-choice__hint">Mit „Kalender teilen“ über dem Kalender gibst du ihn für Personen aus deinem Kreis frei – dann kannst du einzelne Termine mit ihnen teilen.</p>
+      }
+    </div>
     @if (editingSeries()) {
       <p class="series-note" role="note"><app-icon name="repeat" aria-hidden="true" />Änderungen gelten für alle Wiederholungen dieses Termins.</p>
     }
@@ -98,11 +158,15 @@
       <app-field label="Datum" [error]="dateError()" [hint]="dateLocked() ? 'Im Kalender gewählt' : ''">
         <app-date-picker mode="date" formControlName="date" [disabled]="dateLocked()" />
       </app-field>
-      <label class="checkbox-row checkbox-row--inline">
-        <input type="checkbox" formControlName="all_day" />
-        <span>Ganztägig</span>
-      </label>
+      <app-field label="Endet am" [optional]="true" hint="Nur bei Terminen über mehrere Tage." [error]="endDateError()">
+        <app-date-picker mode="date" formControlName="end_date" [clearable]="true" />
+      </app-field>
     </div>
+    <!-- Ganztägig direkt vor der Uhrzeit: der Schalter blendet Beginn und Ende aus -->
+    <label class="allday-row">
+      <span>Ganztägig</span>
+      <input type="checkbox" role="switch" class="switch" formControlName="all_day" />
+    </label>
     @if (!form.controls.all_day.value) {
       <div class="field-row">
         <app-field label="Beginn" [optional]="true">
@@ -114,21 +178,16 @@
       </div>
     }
     <div class="field-row">
-      <app-field label="Endet am" [optional]="true" hint="Nur bei Terminen über mehrere Tage." [error]="endDateError()">
-        <app-date-picker mode="date" formControlName="end_date" [clearable]="true" />
-      </app-field>
       <app-field label="Wiederholung">
         <app-select formControlName="recurrence" [options]="repeatOptions" />
-      </app-field>
-    </div>
-    <div class="field-row">
-      <app-field label="Ort" [optional]="true">
-        <input id="event-location" formControlName="location" maxlength="240" />
       </app-field>
       <app-field label="Kategorie">
         <app-select formControlName="category" [options]="categoryOptions" />
       </app-field>
     </div>
+    <app-field label="Ort" [optional]="true">
+      <input id="event-location" formControlName="location" maxlength="240" />
+    </app-field>
   } @else {
     <app-scope-note scope="private">Nur für dich sichtbar – nicht für andere im Haushalt.</app-scope-note>
     <div class="field-row">
@@ -159,8 +218,9 @@
   <app-field label="Beschreibung" [optional]="true">
     <textarea id="entry-description" formControlName="description" rows="3" maxlength="5000"></textarea>
   </app-field>
-  @if (editId()) {
+  @if (editId() && !foreignEvent()) {
     <app-connections [objectType]="editor() === 'event' ? 'CALENDAR_EVENT' : 'TASK'" [objectId]="editId()!" />
+  }
   }
 </app-modal-form>
 
@@ -182,6 +242,7 @@
   <app-field label="Inhalt" [error]="noteBodyError()" hint="Eine Zeile mit „•“ oder „-“ am Anfang wird zur Aufzählung.">
     <textarea id="note-body" rows="8" maxlength="10000" [value]="noteBody()" (input)="noteBody.set($any($event.target).value)"></textarea>
   </app-field>
+  <app-attachment-field [attachments]="noteAttachments() ?? []" [load]="loadFile" />
   <label class="checkbox-row">
     <input type="checkbox" [checked]="notePinned()" (change)="notePinned.set($any($event.target).checked)" />
     <span>Oben anheften<small>Angeheftete Notizen stehen immer zuerst.</small></span>

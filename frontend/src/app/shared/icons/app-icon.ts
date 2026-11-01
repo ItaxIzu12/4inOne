@@ -28,6 +28,7 @@ export type IconName =
   | 'repeat'
   | 'cart'
   | 'list'
+  | 'grid'
   | 'help'
   | 'washer'
   | 'fridge'
@@ -95,6 +96,7 @@ export type IconName =
   | 'lock'
   | 'mountain'
   | 'car'
+  | 'bus'
   | 'train'
   | 'ticket'
   | 'luggage'
@@ -105,6 +107,7 @@ export type IconName =
   | 'pie'
   | 'info'
   | 'smartphone'
+  | 'monitor'
   | 'backpack'
   | 'pill'
   | 'arrow-left'
@@ -176,6 +179,7 @@ export class AppIcon {
     repeat: 'M19.5 10A8 8 0 0 0 5.6 6.4L4 8m0-4.5V8h4.5M4.5 14a8 8 0 0 0 13.9 3.6L20 16m0 4.5V16h-4.5',
     cart: 'M3 4h2.2l2.3 11h10.3L20 8H6.3M9.5 19.5h.01M17 19.5h.01',
     list: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
+    grid: 'M4 4h6.5v6.5H4V4Zm9.5 0H20v6.5h-6.5V4ZM4 13.5h6.5V20H4v-6.5Zm9.5 0H20V20h-6.5v-6.5Z',
     help: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4m0 3h.01',
     washer: 'M5.5 3h13A1.5 1.5 0 0 1 20 4.5v15a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19.5v-15A1.5 1.5 0 0 1 5.5 3ZM4 7.5h16M7.5 5.3h.01M10.5 5.3h.01M12 10a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 4.5c1.3-.8 2.7.8 4 0',
     fridge: 'M6.5 2h11A1.5 1.5 0 0 1 19 3.5v17a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20.5v-17A1.5 1.5 0 0 1 6.5 2ZM5 9.5h14M8.5 5v2M8.5 12.5v3.5',
@@ -241,6 +245,7 @@ export class AppIcon {
     'archive': 'M3 4h18v4H3zM5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4',
     'mountain': 'M3 20 10 7l4 7 2-3 5 9H3Zm7-13 2.2 4L10 12.5 8 11',
     'car': 'M5 16V11l2-5h10l2 5v5M5 16h14M5 16v2.5h3V16m8 0v2.5h3V16M4 11h16M7.5 13.5h.01m9 0h.01',
+    'bus': 'M6 17V6.5A2.5 2.5 0 0 1 8.5 4h7A2.5 2.5 0 0 1 18 6.5V17M6 17h12M6 11h12M8 17v2.5h2.5V17m3 0v2.5H16V17M8.5 14h.01m7 0h.01',
     'train': 'M7 3h10a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2Zm-2 7h14M8.5 13.5h.01m7 0h.01M8 17l-2 4m10-4 2 4',
     'ticket': 'M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4V7Zm10 0v2m0 2.5v1m0 2.5v2',
     'luggage': 'M7 7h10a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Zm3 0V4h4v3m-4 4v5m4-5v5M8 20v1m8-1v1',
@@ -250,6 +255,7 @@ export class AppIcon {
     'coins': 'M4 7c0-1.7 3.1-3 7-3s7 1.3 7 3-3.1 3-7 3-7-1.3-7-3Zm0 0v5c0 1.7 3.1 3 7 3m-7-3v5c0 1.7 3.1 3 7 3m3-6.5c0-1.4 2.2-2.5 5-2.5M18 7v3',
     'pie': 'M12 3a9 9 0 1 0 9 9h-9V3Zm3 0a6 6 0 0 1 6 6h-6V3Z',
     'info': 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-10v6m0-9h.01',
+    'monitor': 'M3.5 5h17v11h-17zM8.5 20h7M12 16v4',
     'smartphone': 'M8 2.5h8a1.5 1.5 0 0 1 1.5 1.5v16a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 20V4A1.5 1.5 0 0 1 8 2.5Zm3 16h2',
     'backpack': 'M8 6V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1m-8 0h8a3 3 0 0 1 3 3v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V9a3 3 0 0 1 3-3Zm0 9h8v6H8v-6Zm4 0v2',
     'pill': 'M9.5 4.5a4.95 4.95 0 0 1 7 7l-5 5a4.95 4.95 0 0 1-7-7l5-5ZM7 9.5l7 7',

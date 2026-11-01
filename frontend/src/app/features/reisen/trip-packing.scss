@@ -1,6 +1,6 @@
 // Reise › Packliste: Fortschritt mit Schnell-Eingabe, darunter je Kategorie eine Karte mit großen Häkchen.
 :host {
-  max-width: 880px;
+  max-width: 1120px;
 }
 .progress {
   display: grid;
@@ -252,5 +252,155 @@
   }
   .group {
     padding: 4px 12px;
+  }
+}
+
+// ---------- Kategorie-Kacheln und Fertig-Moment (31.10.2026) ----------
+.cat-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+  padding: 0;
+  list-style: none;
+}
+.cat-tile {
+  position: relative; // hält den versteckten Vorlesetext in der Kachel (sonst ragte er aus der wischbaren Reihe)
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 116px;
+  padding: 14px 8px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+.cat-tile:hover {
+  border-color: color-mix(in srgb, var(--travel-accent) 30%, var(--border-subtle));
+  transform: translateY(-2px);
+}
+.cat-tile:focus-visible,
+.group__head:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 2px;
+}
+.cat-tile b {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cat-tile small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.cat-tile__ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+}
+.cat-tile__ring i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--travel-accent) var(--p, 0%), var(--travel-soft) 0);
+  -webkit-mask: radial-gradient(circle, transparent 0 18px, #000 19px);
+  mask: radial-gradient(circle, transparent 0 18px, #000 19px);
+}
+.cat-tile__ring app-icon {
+  position: relative;
+  width: 19px;
+  height: 19px;
+  color: var(--travel-accent);
+}
+.cat-tile.is-full .cat-tile__ring i {
+  -webkit-mask: none;
+  mask: none;
+  background: var(--travel-accent);
+}
+.cat-tile.is-full .cat-tile__ring app-icon {
+  color: #fff;
+  stroke-width: 3;
+}
+.group {
+  scroll-margin-top: 96px;
+}
+// Ab 1100 px zwei Spalten: die Liste wird halb so lang, Gruppen brechen nie auseinander
+@media (min-width: 1100px) {
+  .groups {
+    columns: 2;
+    column-gap: 14px;
+  }
+  .groups > * {
+    break-inside: avoid;
+    margin-bottom: 14px;
+  }
+}
+.all-packed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--travel-soft);
+  color: var(--blue-text);
+  font-weight: 600;
+}
+.all-packed span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--travel-accent);
+  color: #fff;
+}
+.all-packed app-icon {
+  width: 15px;
+  height: 15px;
+  stroke-width: 3;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .all-packed span app-icon {
+    animation: pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cat-tile,
+  .cat-tile:hover {
+    transition: none;
+    transform: none;
+  }
+}
+@keyframes pop {
+  from { transform: scale(0.3); }
+}
+@media (max-width: 560px) {
+  .cat-tiles {
+    display: flex;
+    gap: 8px;
+    margin: 12px -4px;
+    padding: 2px 4px 6px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .cat-tiles li {
+    flex: 0 0 104px;
+    scroll-snap-align: start;
+  }
+  .cat-tile {
+    min-height: 104px;
   }
 }

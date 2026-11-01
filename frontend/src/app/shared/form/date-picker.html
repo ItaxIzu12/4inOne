@@ -4,8 +4,8 @@
   class="dp__trigger"
   aria-haspopup="true"
   [attr.id]="inputId()"
-  [attr.aria-labelledby]="labelledBy()"
-  [attr.aria-label]="ariaLabel()"
+  [attr.aria-labelledby]="labelledBy() ? labelledBy() + ' ' + textId : null"
+  [attr.aria-label]="ariaLabel() ? ariaLabel() + ', ' + (text() || placeholderText()) : null"
   [attr.aria-expanded]="open()"
   [attr.aria-invalid]="invalid() ? 'true' : null"
   [attr.aria-describedby]="ariaDescribedby()"
@@ -13,9 +13,9 @@
   (click)="toggle()"
 >
   @if (text(); as shown) {
-    <span class="dp__text">{{ shown }}</span>
+    <span class="dp__text" [id]="textId">{{ shown }}</span>
   } @else {
-    <span class="dp__text dp__text--placeholder">{{ placeholder() || (mode() === 'month' ? 'Monat wählen' : 'Datum wählen') }}</span>
+    <span class="dp__text dp__text--placeholder" [id]="textId">{{ placeholderText() }}</span>
   }
   <svg class="dp__icon" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M4 5h16v16H4ZM8 3v4m8-4v4M4 10h16" />

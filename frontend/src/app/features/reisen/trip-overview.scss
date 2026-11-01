@@ -1,136 +1,252 @@
-// Reise › Übersicht: Countdown, vier Kacheln (Planung, Packliste, Budget, Teilnehmer) und die Eckdaten.
-.countdown {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin: 0 0 16px;
-  color: var(--text-primary);
-  font-size: var(--fs-body);
-}
-.countdown app-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--blue);
-}
-.countdown b {
-  color: var(--blue-text);
-  font-size: var(--fs-subsection);
-}
-.countdown--live b {
-  color: #17723f;
-}
-.countdown__len {
-  color: var(--text-muted);
-  font-size: var(--fs-secondary);
-}
-.tiles {
+// Reise › Übersicht (31.10.2026): Bordkarte, darunter „Bis zur Abreise“ als Linie | Packliste · Budget · Mitreisende,
+// zuletzt die Reisedetails mit Symbolen.
+.ov-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin: 0 0 16px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin: 18px 0 16px;
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--blue-text);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.link app-icon {
+  width: 15px;
+  height: 15px;
+}
+.link:focus-visible,
+.tile-card:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 2px;
+}
+// ---------- Linie bis zur Abreise ----------
+.track {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
+.track::before {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 13px;
+  width: 2px;
+  background: var(--travel-soft);
+  content: '';
+}
+.track li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 14px;
+  min-height: 52px;
+}
+.track__dot {
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--travel-accent);
+  border-radius: 50%;
+  background: #fff;
+}
+.track__task.is-late .track__dot {
+  border-color: #b3261e;
+  background: #b3261e;
+}
+.track__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.track__text b {
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+.track__depart {
+  grid-template-columns: 28px auto minmax(0, 1fr) !important;
+  margin: 4px 0;
+  padding: 8px 12px 8px 0;
+  border-radius: var(--radius-md);
+  background: var(--travel-soft);
+}
+.track__depart .track__dot {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: var(--travel-accent);
+  color: #fff;
+}
+.track__depart .track__dot app-icon {
+  width: 16px;
+  height: 16px;
+}
+.track__depart b {
+  color: var(--blue-text);
+}
+.track__depart small {
+  justify-self: end;
+}
+.more {
+  margin-top: 4px;
+}
+// ---------- Seitenkarten ----------
+.side {
+  display: grid;
+  gap: 12px;
+}
 .tile-card {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 16px;
   width: 100%;
-  height: 100%;
   padding: 16px 18px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: #fff;
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 .tile-card:hover {
-  border-color: #c9d6ee;
+  border-color: color-mix(in srgb, var(--travel-accent) 30%, var(--border-subtle));
+  box-shadow: 0 6px 16px rgb(23 37 35 / 0.06);
+}
+.tile-card__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
 }
 .tile-card__label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: var(--fs-meta);
   font-weight: 600;
 }
-.tile-card__label app-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--blue);
-}
 .tile-card__value {
   color: var(--text-primary);
-  font-size: var(--fs-subsection);
-  line-height: 1.3;
-}
-.tile-card__value.is-open {
-  color: var(--accent-hover);
+  font-size: var(--fs-body);
 }
 .tile-card__value.is-over {
-  color: #a32038;
-}
-.tile-card .bar {
-  width: 100%;
+  color: #b3261e;
 }
 .tile-card__go {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: auto;
+  margin-top: 4px;
   color: var(--blue-text);
   font-size: var(--fs-meta);
   font-weight: 600;
 }
 .tile-card__go app-icon {
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
+}
+.ring {
+  position: relative;
+  display: grid;
+  flex: 0 0 56px;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+}
+.ring i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--travel-accent) var(--p, 0%), var(--travel-soft) 0);
+  -webkit-mask: radial-gradient(circle, transparent 0 21px, #000 22px);
+  mask: radial-gradient(circle, transparent 0 21px, #000 22px);
+}
+.ring b {
+  position: relative;
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+.ring app-icon {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  color: var(--travel-accent);
+}
+.ring--budget.is-over i {
+  background: conic-gradient(#b3261e var(--p, 0%), #fdecea 0);
+}
+.ring--budget.is-over app-icon {
+  color: #b3261e;
 }
 .avatars {
   display: flex;
+  flex: 0 0 56px;
+  justify-content: center;
 }
 .avatar {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  margin-left: -6px;
+  width: 32px;
+  height: 32px;
+  margin-left: -8px;
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--blue-soft);
-  color: var(--accent-hover);
-  font-size: var(--fs-caption);
+  background: var(--travel-soft);
+  color: var(--blue-text);
+  font-size: var(--fs-meta);
   font-weight: 700;
 }
 .avatar:first-child {
   margin-left: 0;
 }
 .avatar--more {
-  background: var(--surface-sunken);
+  background: var(--surface-hover);
   color: var(--text-secondary);
+}
+// ---------- Gehört zu dieser Reise ----------
+.ov-links {
+  display: block;
+  margin-bottom: 16px;
+}
+// ---------- Reisedetails ----------
+.details .card-title {
+  margin-bottom: 14px;
 }
 .facts {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px 24px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px 24px;
   margin: 0;
 }
-.facts div {
-  min-width: 0;
-}
 .facts dt {
-  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
   font-size: var(--fs-meta);
 }
+.facts dt app-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--travel-accent);
+}
 .facts dd {
-  margin: 2px 0 0;
+  margin: 0;
   color: var(--text-primary);
-  font-size: var(--fs-body);
   overflow-wrap: anywhere;
 }
 .facts__note {
@@ -142,17 +258,24 @@
 .hint {
   margin-top: 12px;
 }
-@media (max-width: 1100px) {
-  .tiles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (prefers-reduced-motion: reduce) {
+  .tile-card {
+    transition: none;
+  }
+}
+@media (max-width: 960px) {
+  .ov-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (max-width: 560px) {
-  .tiles {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
+  .track__depart small {
+    display: none;
   }
-  .facts {
-    grid-template-columns: minmax(0, 1fr);
+  .ov-grid {
+    margin-top: 14px;
+  }
+  .tile-card {
+    padding: 14px;
   }
 }

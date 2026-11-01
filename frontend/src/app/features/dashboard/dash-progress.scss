@@ -1,0 +1,128 @@
+// Startseite › Dein Fortschritt + Idee für heute (31.10.2026)
+:host {
+  display: grid;
+  gap: 16px;
+  container-type: inline-size;
+}
+.card {
+  padding: 20px 22px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--surface-card);
+}
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  color: var(--text-primary);
+  font-size: var(--fs-subsection);
+}
+.rings {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rings li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.area-finanzen { --a: var(--finance-accent); --a-soft: var(--finance-soft); }
+.area-haushalt { --a: var(--household-accent); --a-soft: var(--household-soft); }
+.area-reisen { --a: var(--travel-accent); --a-soft: var(--travel-soft); }
+.ring {
+  position: relative;
+  display: grid;
+  flex: 0 0 58px;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+}
+.ring i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--a) var(--p, 0%), var(--a-soft) 0);
+  -webkit-mask: radial-gradient(circle, transparent 0 22px, #000 23px);
+  mask: radial-gradient(circle, transparent 0 22px, #000 23px);
+}
+.ring b {
+  position: relative;
+  color: var(--text-primary);
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+.ring__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.ring__text small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+}
+.ring__text b {
+  color: var(--a);
+  font-size: var(--fs-body);
+}
+.ring__text span {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.idea {
+  border: 1.5px dashed var(--border-strong, #b9c0b6);
+  background: none;
+}
+.idea h2 app-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--organization-accent);
+}
+.idea p {
+  margin: 0 0 6px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.idea__go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.idea__go app-icon {
+  width: 15px;
+  height: 15px;
+}
+.idea__go:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ring i {
+    animation: sweep 900ms 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+// der Ring dreht sich einmal auf — nur Bewegung, die Zahl steht von Anfang an
+@keyframes sweep {
+  from { transform: rotate(-90deg) scale(0.92); }
+}
+// Breit genug (linke Spalte am Rechner): Ringe nebeneinander
+@container (min-width: 560px) {
+  .rings {
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .card {
+    padding: 18px 16px;
+  }
+}

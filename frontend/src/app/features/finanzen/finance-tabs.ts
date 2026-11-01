@@ -1,5 +1,6 @@
 import { IconName } from '../../shared/icons/app-icon';
-import { ABBR, BudgetCategoryFigures, FinanceCategory, FinanceTransaction, PlannedItem, SavingsContributionDto, SavingsGoal } from './private-finance-api.service';
+import { BudgetCategoryFigures, FinanceCategory, FinanceTransaction, PlannedItem, SavingsContributionDto, SavingsGoal } from './private-finance-api.service';
+import { MONTH_ABBR as ABBR } from '../../shared/form/date-utils';
 
 /**
  * Reine Rechenhilfen für die Finanz-Reiter Übersicht, Ausgaben, Einnahmen,
@@ -51,24 +52,27 @@ export function savedUntil(contributions: SavingsContributionDto[], month: strin
   return contributions.filter((c) => inMonth(c, month) && c.date <= last).reduce((s, c) => s + num(c.amount), 0);
 }
 
-/** „als im September“ — oder, wenn nur bis heute verglichen wird, „als zur gleichen Zeit im September“. */
-const versus = (month: string, partial: boolean) => `${partial ? 'zur gleichen Zeit ' : ''}im ${monthName(month)}`;
+/** „im September“ — oder, wenn nur bis zu einem Tag verglichen wird, kurz „bis 30. Sept.“ (am Monatsende gekappt). */
+function versus(month: string, untilDay: number | null): string {
+  if (untilDay === null) return `im ${monthName(month)}`;
+  return `bis ${lastCompared(month, untilDay).slice(8, 10).replace(/^0/, '')}. ${ABBR[Number(month.slice(5, 7)) - 1]}`;
+}
 
 /** Veränderung zum Vormonat: „12 % mehr als im Februar“ (null, wenn es im Vormonat nichts gab). */
-export function deltaLabel(current: number, previous: number, previousMonth: string, partial = false): { text: string; up: boolean } | null {
+export function deltaLabel(current: number, previous: number, previousMonth: string, untilDay: number | null = null): { text: string; up: boolean } | null {
   if (previous <= 0) return null;
   const pct = Math.round(((current - previous) / previous) * 100);
   // In Worten statt „+ 12 % zu September“ — man soll ohne Nachdenken lesen, ob es mehr oder weniger war
-  const when = versus(previousMonth, partial);
+  const when = versus(previousMonth, untilDay);
   const text = pct === 0 ? `so viel wie ${when}` : `${Math.abs(pct)} % ${pct > 0 ? 'mehr' : 'weniger'} als ${when}`;
   return { text, up: pct >= 0 };
 }
 
 /** Euro-Differenz zum Vormonat: „50 € mehr als im Februar“. */
-export function deltaEuro(current: number, previous: number, previousMonth: string, partial = false): { text: string; up: boolean } | null {
+export function deltaEuro(current: number, previous: number, previousMonth: string, untilDay: number | null = null): { text: string; up: boolean } | null {
   if (previous <= 0 && current <= 0) return null;
   const diff = Math.round(current - previous);
-  const when = versus(previousMonth, partial);
+  const when = versus(previousMonth, untilDay);
   const text = diff === 0 ? `so viel wie ${when}` : `${Math.abs(diff).toLocaleString('de-DE')} € ${diff > 0 ? 'mehr' : 'weniger'} als ${when}`;
   return { text, up: diff >= 0 };
 }

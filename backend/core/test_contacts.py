@@ -81,7 +81,9 @@ def test_accepting_creates_a_mutual_connection_and_nothing_is_shared(mira, tom):
     mine = client_for(mira).get(URL).data
     assert mine['contacts'][0]['name'] == 'Tom'
     assert set(mine['contacts'][0]) == {'id', 'name', 'email', 'relation', 'since', 'shared', 'can_add_to', 'invited_to'}
-    assert mine['contacts'][0]['shared'] == [] and mine['contacts'][0]['can_add_to'] == []
+    # Nichts geteilt; angeboten wird nur, den eigenen Kalender freizugeben (wirkt erst nach Annehmen)
+    assert mine['contacts'][0]['shared'] == []
+    assert [a['kind'] for a in mine['contacts'][0]['can_add_to']] == ['MY_CALENDAR']
     assert client_for(tom).get(URL).data['contacts'][0]['name'] == 'Mira'
     assert mine['sent'] == [] and client_for(tom).get(URL).data['received'] == []
     # ein zweites Mal annehmen geht nicht
@@ -187,12 +189,15 @@ def test_overview_shows_only_what_is_really_shared_and_where_i_may_add_someone(m
 
     row = client_for(mira).get(URL).data['contacts'][0]
     assert row['shared'] == [{'kind': 'TRIP', 'id': together.pk, 'title': 'Berlin'}]
-    assert row['can_add_to'] == [{'kind': 'TRIP', 'id': upcoming.pk, 'title': 'Rom'}]
+    assert row['can_add_to'] == [
+        {'kind': 'TRIP', 'id': upcoming.pk, 'title': 'Rom'},
+        {'kind': 'MY_CALENDAR', 'id': mira.pk, 'title': 'Dein Kalender'},
+    ]
 
     # Tom ist nur Betrachter: er sieht die gemeinsame Reise, darf aber niemanden zu Miras Reisen hinzufügen
     toms = client_for(tom).get(URL).data['contacts'][0]
     assert toms['shared'] == [{'kind': 'TRIP', 'id': together.pk, 'title': 'Berlin'}]
-    assert toms['can_add_to'] == []
+    assert toms['can_add_to'] == [{'kind': 'MY_CALENDAR', 'id': tom.pk, 'title': 'Dein Kalender'}]
 
 
 def test_invites_carry_their_creation_time(mira, tom):

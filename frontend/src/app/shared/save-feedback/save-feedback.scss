@@ -1,0 +1,146 @@
+// Rückmeldung (01.11.2026): helle, schwebende Karte — eine echte Ebene, daher mit Schatten (DESIGN.md › Schatten).
+:host {
+  display: contents;
+}
+.toast {
+  --tone: var(--success, #2e7d4f);
+  --tone-soft: color-mix(in srgb, var(--tone) 12%, #fff);
+  // Rechner: oben in der Mitte; Handy: oben über die volle Breite, siehe unten
+  position: fixed;
+  z-index: 100;
+  top: 20px;
+  left: 50%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: min(520px, calc(100vw - 32px));
+  min-height: 64px;
+  padding: 12px 8px 12px 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-elevated, #fff);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-overlay), 0 1px 3px rgb(20 33 67 / 6%);
+  opacity: 0;
+  transform: translate(-50%, -12px);
+  pointer-events: none;
+  visibility: hidden;
+}
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+  visibility: visible;
+}
+.toast[data-tone='warning'] {
+  --tone: #a86500;
+}
+.toast[data-tone='error'] {
+  --tone: var(--danger, #b3261e);
+}
+.toast__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--tone-soft);
+  color: var(--tone);
+}
+.toast__icon app-icon {
+  width: 20px;
+  height: 20px;
+}
+.toast__text {
+  margin: 0;
+  font-size: var(--fs-body, 16px);
+  font-weight: 500;
+  line-height: 1.45;
+  overflow-wrap: break-word;
+}
+// Live-Region bleibt im DOM, auch ohne Meldung (sonst sagen Screenreader die erste Meldung nicht an)
+.toast:not(.is-visible) .toast__text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.toast__close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md, 12px);
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.toast__close:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.toast__close:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: -2px;
+}
+.toast__close app-icon {
+  width: 18px;
+  height: 18px;
+}
+// Verbleibende Zeit als dünne Leiste in der Tonfarbe
+.toast__time {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--tone-soft);
+}
+.toast__time i {
+  display: block;
+  height: 100%;
+  background: var(--tone);
+  transform-origin: left;
+  animation: toast-time linear forwards;
+}
+.toast__time i.is-paused {
+  animation-play-state: paused;
+}
+@keyframes toast-time {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    transition: opacity 180ms ease-out, transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 220ms;
+  }
+  .toast.is-visible {
+    transition: opacity 180ms ease-out, transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast__time {
+    display: none;
+  }
+}
+// Handy: oben über die ganze Breite (16 px Rand), unter Statusleiste/Notch — unten liegen Hauptknopf und Navigation
+@media (max-width: 760px) {
+  .toast {
+    top: calc(12px + env(safe-area-inset-top));
+    width: calc(100vw - 32px);
+    min-height: 56px;
+    padding: 10px 6px 10px 12px;
+  }
+  .toast__icon {
+    width: 36px;
+    height: 36px;
+  }
+  .toast__text {
+    font-size: var(--fs-secondary, 15px);
+  }
+}

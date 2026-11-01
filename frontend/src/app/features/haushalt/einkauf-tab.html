@@ -118,7 +118,11 @@
           <button type="submit" class="add__submit" [disabled]="!newName().trim() || adding()">Hinzufügen</button>
         </form>
         </div>
-        @if (d.suggestions.length > 0) {
+        <div class="view-switch" role="group" aria-label="Ansicht der Einkaufsliste">
+          <button type="button" [attr.aria-pressed]="view() === 'liste'" (click)="setView('liste')"><app-icon name="list" aria-hidden="true" />Liste</button>
+          <button type="button" [attr.aria-pressed]="view() === 'kacheln'" (click)="setView('kacheln')"><app-icon name="grid" aria-hidden="true" />Kacheln</button>
+        </div>
+        @if (view() === 'liste' && d.suggestions.length > 0) {
           <div class="suggest">
             <span class="muted small" id="suggest-label">Oft gekauft:</span>
             <ul class="chips" aria-labelledby="suggest-label">
@@ -138,6 +142,53 @@
         <p class="field-error action-error" [appErrorNotice]="actionError()">{{ actionError() }}</p>
       }
 
+      @if (view() === 'kacheln' && !shoppingMode()) {
+        <!-- Kacheln: antippen legt in den Wagen; Bereichssymbol statt Gruppenüberschrift -->
+        <h3 class="tiles__head">Auf der Liste <span>{{ tiles().length }}</span></h3>
+        <ul class="tiles">
+          @for (t of tiles(); track t.item.id) {
+            @let q = splitQuantity(t.item.quantity);
+            <li>
+              <button type="button" [class]="'tile tone--' + t.look.tone" [attr.aria-label]="itemLabel(t.item) + ' abhaken'" (click)="toggle(t.item)">
+                <app-icon class="tile__icon" [name]="t.look.icon" aria-hidden="true" />
+                <span class="tile__name">{{ t.item.name }}</span>
+                @if (q.amount || q.unit) {<span class="tile__qty">{{ q.amount }} {{ q.unit }}</span>}
+              </button>
+            </li>
+          } @empty {
+            <li class="tiles__empty">
+              <p class="muted">{{ checkedItems().length ? 'Alles im Wagen. Schließe den Einkauf ab, um ihn als Ausgabe zu buchen.' : 'Die Liste ist leer. Trage oben ein, was fehlt, oder tippe unten auf etwas, das du oft kaufst.' }}</p>
+            </li>
+          }
+        </ul>
+        @if (cartTiles().length) {
+          <h3 class="tiles__head">Im Wagen <span>{{ cartTiles().length }}</span></h3>
+          <ul class="tiles tiles--cart">
+            @for (t of cartTiles(); track t.item.id) {
+              <li>
+                <button type="button" class="tile tile--done" [attr.aria-label]="itemLabel(t.item) + ' zurück auf die Liste'" (click)="toggle(t.item)">
+                  <app-icon class="tile__icon" name="check" aria-hidden="true" />
+                  <span class="tile__name">{{ t.item.name }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+        @if (suggestTiles().length) {
+          <h3 class="tiles__head">Oft gekauft</h3>
+          <ul class="tiles tiles--suggest">
+            @for (sug of suggestTiles(); track sug.id) {
+              <li>
+                <button type="button" class="tile tile--suggest" [disabled]="adding()" [attr.aria-label]="sug.name + ' auf die Liste setzen'" (click)="addSuggestion(sug)">
+                  <app-icon class="tile__icon" [name]="(sectionIcons[sug.section] ?? sectionIcons.sonstiges).icon" aria-hidden="true" />
+                  <span class="tile__name">{{ sug.name }}</span>
+                  <app-icon class="tile__plus" name="plus" aria-hidden="true" />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      } @else {
       @for (group of groups(); track group.section.key) {
         @let open = !collapsed().has(group.section.key);
         @let look = sectionIcons[group.section.key];
@@ -196,6 +247,8 @@
         </div>
       }
 
+      }
+
       @if (shoppingMode() && cartItems().length > 0) {
         <details class="cart">
           <summary>Im Wagen <span class="pill">{{ cartItems().length }}</span></summary>
@@ -217,32 +270,17 @@
 
       @if (checkedItems().length > 0) {
         <div class="checkout-bar">
-          <span class="checkout-bar__count"><strong>{{ checkedItems().length }}</strong> im Wagen</span>
-          <button type="button" class="btn-primary" (click)="openComplete()">Einkauf abschließen</button>
+          <span class="checkout-bar__count">
+            <span><strong>{{ checkedItems().length }}</strong> im Wagen</span>
+            @if (canBook()) {<small class="checkout-bar__hint"><app-icon name="finance" aria-hidden="true" />wird zur Ausgabe in Finanzen</small>}
+          </span>
+          <button type="button" class="btn-primary" aria-label="Einkauf abschließen" (click)="openComplete()"><span class="ck-long">Einkauf abschließen</span><span class="ck-short">Abschließen</span></button>
         </div>
       }
     </section>
 
     <!-- Rechte Spalte -->
     <aside class="side">
-      <section class="card side-card" aria-labelledby="members-heading">
-        <div class="side-card__head">
-          <h2 id="members-heading">Mitglieder</h2>
-        </div>
-        <ul class="members">
-          @for (m of members(); track m.user_id) {
-            <li>
-              <span [class]="'avatar avatar--' + avatarTone(m.name)" aria-hidden="true">{{ initials(m.name) }}</span>
-              <span class="members__name">{{ m.name }}</span>
-              <span class="role" [class.role--owner]="m.is_owner">{{ m.is_owner ? 'Eigentümer' : 'Kann bearbeiten' }}</span>
-            </li>
-          }
-        </ul>
-        @if (!isDemo) {
-          <button type="button" class="invite" (click)="inviteMember()"><app-icon name="user-plus" aria-hidden="true" />Person einladen</button>
-        }
-      </section>
-
       <section class="card side-card side-card--soft" aria-labelledby="link-heading">
         <h2 id="link-heading">Einkauf wird zur Ausgabe</h2>
         <p class="muted small">
@@ -299,6 +337,7 @@
   (closed)="listFormOpen.set(false)"
   (deleted)="deleteList()"
 >
+  <app-scope-note scope="shared">{{ people?.audience() || 'Alle im Haushalt sehen und bearbeiten diese Liste.' }}</app-scope-note>
   <app-field label="Name">
     <input id="list-name" required type="text" maxlength="120" placeholder="z. B. Drogerie" [value]="listName()" (input)="listName.set($any($event.target).value)" />
   </app-field>

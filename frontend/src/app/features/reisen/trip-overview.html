@@ -1,86 +1,114 @@
 @let t = trip();
-<p class="countdown" [class.countdown--live]="live()">
-  <app-icon name="calendar" aria-hidden="true" />
-  <b>{{ when() }}</b>
-  <span class="countdown__len">{{ length() }}</span>
-</p>
+<app-trip-pass
+  mode="detail"
+  [trip]="t"
+  [packed]="packed()"
+  [packingTotal]="packingTotal()"
+  [tasksOpen]="tasksOpen()"
+  [tasksTotal]="tasksTotal()"
+  [budgetSpent]="budgetSpent()"
+  [budgetTotal]="budgetTotal()"
+  (openTab)="openTab.emit($event)"
+/>
 
-<ul class="tiles">
-  <li>
-    <button type="button" class="tile-card" (click)="openTab.emit('planung')">
-      <span class="tile-card__label"><app-icon name="check-circle" aria-hidden="true" />Planung</span>
-      <b class="tile-card__value" [class.is-open]="tasksOpen() > 0">
-        @if (tasksOpen()) {
-          {{ tasksOpen() === 1 ? '1 Aufgabe offen' : tasksOpen() + ' Aufgaben offen' }}
-        } @else {
-          {{ tasksTotal() ? 'Alles erledigt' : 'Noch nichts geplant' }}
+<div class="ov-grid">
+  <!-- Bis zur Abreise: die nächsten offenen Aufgaben auf einer Linie, die Abreise als Marke -->
+  <section class="card next" aria-labelledby="ov-next">
+    <div class="card-head">
+      <h2 id="ov-next" class="card-title"><app-icon name="check-circle" aria-hidden="true" />{{ phase() === 'upcoming' ? 'Bis zur Abreise' : 'Offene Aufgaben' }}</h2>
+      <button type="button" class="link" (click)="openTab.emit('planung')">Planung öffnen<app-icon name="arrow" aria-hidden="true" /></button>
+    </div>
+    @if (nextTasks().length || phase() === 'upcoming') {
+      <ol class="track">
+        @for (n of nextTasks(); track n.task.id; let i = $index) {
+          @if (phase() === 'upcoming' && i === departIndex()) {
+            <li class="track__depart"><span class="track__dot" aria-hidden="true"><app-icon [name]="transportIcon()" /></span><b>Abreise · {{ departLabel() }}</b><small>{{ length() }}</small></li>
+          }
+          <li class="track__task" [class.is-late]="n.due.urgent">
+            <span class="track__dot" aria-hidden="true"></span>
+            <span class="track__text">
+              <b>{{ n.task.title }}</b>
+              <small>
+                <span [class.late]="n.due.urgent">{{ n.due.text }}</span>@if (n.task.assignee_name) { · {{ n.task.assignee_name }} }
+              </small>
+            </span>
+          </li>
         }
-      </b>
-      <span class="tile-card__go">Planung öffnen<app-icon name="arrow" aria-hidden="true" /></span>
-    </button>
-  </li>
-  <li>
-    <button type="button" class="tile-card" (click)="openTab.emit('packliste')">
-      <span class="tile-card__label"><app-icon name="luggage" aria-hidden="true" />Packliste</span>
-      @if (packingTotal()) {
-        <b class="tile-card__value num">{{ packed() }} von {{ packingTotal() }} gepackt</b>
-        <span class="bar" aria-hidden="true"><span [style.width.%]="packPct()"></span></span>
-      } @else {
-        <b class="tile-card__value">Noch leer</b>
+        @if (phase() === 'upcoming' && departIndex() === nextTasks().length) {
+          <li class="track__depart"><span class="track__dot" aria-hidden="true"><app-icon [name]="transportIcon()" /></span><b>Abreise · {{ departLabel() }}</b><small>{{ length() }}</small></li>
+        }
+      </ol>
+      @if (moreTasks()) {
+        <button type="button" class="link more" (click)="openTab.emit('planung')">{{ moreTasks() === 1 ? 'Eine weitere Aufgabe' : moreTasks() + ' weitere Aufgaben' }}</button>
       }
-      <span class="tile-card__go">Packliste öffnen<app-icon name="arrow" aria-hidden="true" /></span>
-    </button>
-  </li>
-  <li>
-    <button type="button" class="tile-card" (click)="openTab.emit('budget')">
-      <span class="tile-card__label"><app-icon name="coins" aria-hidden="true" />Budget</span>
-      @if (budgetTotal()) {
-        <b class="tile-card__value num" [class.is-over]="budgetSpent() > budgetTotal()">{{ money(budgetSpent()) }} von {{ money(budgetTotal()) }}</b>
-        <span class="bar" [class.bar--over]="budgetSpent() > budgetTotal()" aria-hidden="true"><span [style.width.%]="budgetPct() > 100 ? 100 : budgetPct()"></span></span>
-      } @else if (budgetSpent()) {
-        <b class="tile-card__value num">{{ money(budgetSpent()) }} ausgegeben</b>
-      } @else {
-        <b class="tile-card__value">Kein Budget festgelegt</b>
+      @if (!tasksOpen()) {
+        <p class="muted">{{ tasksTotal() ? 'Alle Aufgaben erledigt.' : 'Noch keine Aufgaben – in der Planung kannst du welche anlegen oder Vorschläge übernehmen.' }}</p>
       }
-      <span class="tile-card__go">Budget öffnen<app-icon name="arrow" aria-hidden="true" /></span>
+    } @else {
+      <p class="muted">{{ tasksTotal() ? 'Alle Aufgaben erledigt.' : 'Keine Aufgaben für diese Reise.' }}</p>
+    }
+  </section>
+
+  <div class="side">
+    <button type="button" class="card tile-card" (click)="openTab.emit('packliste')">
+      <span class="ring" [style.--p]="packPct() + '%'" aria-hidden="true"><i></i><b class="num">{{ packingTotal() ? packPct() + '%' : '–' }}</b></span>
+      <span class="tile-card__text">
+        <span class="tile-card__label">Packliste</span>
+        <b class="tile-card__value num">{{ packingTotal() ? packed() + ' von ' + packingTotal() + ' gepackt' : 'Noch leer' }}</b>
+        <span class="tile-card__go">Packliste öffnen<app-icon name="arrow" aria-hidden="true" /></span>
+      </span>
     </button>
-  </li>
-  <li>
-    <button type="button" class="tile-card" (click)="openTab.emit('planung')">
-      <span class="tile-card__label"><app-icon name="people" aria-hidden="true" />Teilnehmer</span>
-      <b class="tile-card__value">{{ peopleText() }}</b>
-      @if (people().length) {
-        <span class="avatars" aria-hidden="true">
-          @for (p of people().slice(0, 4); track p.id) {
-            <span class="avatar">{{ initials(p.display_name) }}</span>
-          }
-          @if (people().length > 4) {
-            <span class="avatar avatar--more">+{{ people().length - 4 }}</span>
-          }
-        </span>
-      }
-      <span class="tile-card__go">In der Planung verwalten<app-icon name="arrow" aria-hidden="true" /></span>
+    <button type="button" class="card tile-card" (click)="openTab.emit('budget')">
+      <span class="ring ring--budget" [class.is-over]="budgetLeft() < 0" [style.--p]="(budgetPct() > 100 ? 100 : budgetPct()) + '%'" aria-hidden="true"><i></i><app-icon name="coins" /></span>
+      <span class="tile-card__text">
+        <span class="tile-card__label">Budget</span>
+        @if (budgetTotal()) {
+          <b class="tile-card__value num" [class.is-over]="budgetLeft() < 0">{{ budgetLeft() < 0 ? money(-budgetLeft()) + ' über Budget' : money(budgetLeft()) + ' übrig' }}</b>
+          <small class="num">{{ money(budgetSpent()) }} von {{ money(budgetTotal()) }} ausgegeben</small>
+        } @else if (budgetSpent()) {
+          <b class="tile-card__value num">{{ money(budgetSpent()) }} ausgegeben</b>
+        } @else {
+          <b class="tile-card__value">Kein Budget festgelegt</b>
+        }
+        <span class="tile-card__go">Budget öffnen<app-icon name="arrow" aria-hidden="true" /></span>
+      </span>
     </button>
-  </li>
-</ul>
+    <button type="button" class="card tile-card" (click)="openTab.emit('planung')">
+      <span class="avatars" aria-hidden="true">
+        @for (p of people().slice(0, 3); track p.id) {
+          <span class="avatar">{{ initials(p.display_name) }}</span>
+        }
+        @if (people().length > 3) {
+          <span class="avatar avatar--more">+{{ people().length - 3 }}</span>
+        }
+      </span>
+      <span class="tile-card__text">
+        <span class="tile-card__label">Wer reist mit</span>
+        <b class="tile-card__value">{{ peopleText() }}</b>
+        <span class="tile-card__go">In der Planung verwalten<app-icon name="arrow" aria-hidden="true" /></span>
+      </span>
+    </button>
+  </div>
+</div>
+
+<!-- Was aus den anderen Bereichen zu dieser Reise gehört — dieselbe Engine und dieselben Rechte wie im Dialog -->
+<app-connections class="ov-links" objectType="TRIP" [objectId]="t.id" heading="Gehört zu dieser Reise" variant="card" />
 
 <section class="card details" aria-labelledby="ov-details">
-  <div class="card-head">
-    <h2 id="ov-details" class="card-title"><app-icon name="travel" aria-hidden="true" />Eckdaten</h2>
-  </div>
+  <h2 id="ov-details" class="card-title"><app-icon name="map-pin" aria-hidden="true" />Reisedetails</h2>
   <dl class="facts">
-    <div><dt>Ziel</dt><dd>{{ t.destination || '—' }}</dd></div>
+    <div><dt><app-icon name="map-pin" aria-hidden="true" />Ziel</dt><dd>{{ t.destination || '—' }}</dd></div>
     @if (t.departure) {
-      <div><dt>Abreise</dt><dd>{{ t.departure }}</dd></div>
+      <div><dt><app-icon name="arrow-left" aria-hidden="true" />Abreise</dt><dd>{{ t.departure }}</dd></div>
     }
     @if (t.transport_type || t.transport_note) {
-      <div><dt>Transport</dt><dd>{{ t.transport_type ? transportLabels[t.transport_type] : '' }}{{ t.transport_type && t.transport_note ? ' · ' : '' }}{{ t.transport_note }}</dd></div>
+      <div><dt><app-icon [name]="transportIcon()" aria-hidden="true" />Transport</dt><dd>{{ t.transport_type ? transportLabels[t.transport_type] : '' }}{{ t.transport_type && t.transport_note ? ' · ' : '' }}{{ t.transport_note }}</dd></div>
     }
     @if (t.accommodation) {
-      <div><dt>Unterkunft</dt><dd>{{ t.accommodation }}{{ t.accommodation_area ? ' · ' + t.accommodation_area : '' }}</dd></div>
+      <div><dt><app-icon name="bed" aria-hidden="true" />Unterkunft</dt><dd>{{ t.accommodation }}{{ t.accommodation_area ? ' · ' + t.accommodation_area : '' }}</dd></div>
     }
     @if (t.notes) {
-      <div class="facts__note"><dt>Notiz</dt><dd>{{ t.notes }}</dd></div>
+      <div class="facts__note"><dt><app-icon name="file-text" aria-hidden="true" />Notiz</dt><dd>{{ t.notes }}</dd></div>
     }
   </dl>
   @if (!hasDetails() && canEdit() && t.my_role === 'OWNER') {

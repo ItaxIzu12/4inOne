@@ -289,3 +289,88 @@
     flex-direction: column;
   }
 }
+
+// ---------- Countdown-Linie (31.10.2026) ----------
+// Abschnitte nach Lage zur Reise; links eine feine Schiene mit Punkt je Aufgabe, die Abreise als Marke in der Reisefarbe.
+.tl-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 18px 0 2px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.tl-head span {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.tl-head.is-late {
+  color: #a12323;
+}
+.tl-rows {
+  position: relative;
+  padding-left: 24px;
+}
+.tl-rows::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 7px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--travel-soft);
+  content: '';
+}
+.tl-rows .row {
+  position: relative;
+}
+.tl-rows .row::before {
+  position: absolute;
+  top: 50%;
+  left: -22px;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  border: 2px solid var(--travel-accent);
+  border-radius: 50%;
+  background: #fff;
+  content: '';
+}
+.tl-rows.is-late .row::before {
+  border-color: #b3261e;
+  background: #b3261e;
+}
+.tl-depart {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 4px;
+  padding: 10px 14px 10px 10px;
+  border-radius: var(--radius-md);
+  background: var(--travel-soft);
+  color: var(--blue-text);
+  font-size: var(--fs-secondary);
+}
+.tl-depart b {
+  font-weight: 700;
+}
+.tl-depart__icon {
+  display: grid;
+  flex: 0 0 32px;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--travel-accent);
+  color: #fff;
+}
+.tl-depart__icon app-icon {
+  width: 17px;
+  height: 17px;
+}
+.row--empty {
+  padding: 12px 0;
+}

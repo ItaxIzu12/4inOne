@@ -3,9 +3,10 @@ import { Component, computed, effect, input, model, output, signal, untracked } 
 /** Ab so vielen Terminen zeigt die Agenda zunächst nur einen Teil. */
 const AGENDA_LIMIT = 10;
 import { AppIcon } from '../../shared/icons/app-icon';
+import { LinkHints, connectionHints } from '../../shared/connections/link-hints';
 import { isInCalendarWeek } from '../../shared/dates/calendar-week';
 import { DayRange, PersonalEvent } from './organisation-api.service';
-import { dayWord, endTime, eventCategory, eventsOn, gridRange, localDay, longDay, monthGrid, startTime, timeRange, weekOf } from './organisation-logic';
+import { EVENT_CATEGORIES, dayWord, endTime, eventCategory, eventsOn, gridRange, localDay, longDay, monthGrid, startTime, timeRange, weekOf } from './organisation-logic';
 
 export type CalendarView = 'day' | 'week' | 'month';
 
@@ -21,7 +22,7 @@ const SHORT_WEEKDAY = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 @Component({
   selector: 'app-org-calendar',
   standalone: true,
-  imports: [AppIcon],
+  imports: [AppIcon, LinkHints],
   templateUrl: './org-calendar.html',
   styleUrls: ['./org-common.scss', './org-calendar.scss'],
 })
@@ -30,7 +31,7 @@ export class OrgCalendar {
   readonly loading = input(false);
   readonly selectedDay = model(localDay(new Date()));
   readonly view = model<CalendarView>(
-    typeof matchMedia === 'function' && matchMedia('(max-width: 760px)').matches ? 'day' : 'month',
+    typeof matchMedia === 'function' && matchMedia('(max-width: 760px)').matches ? 'week' : 'month',
   );
   readonly openEvent = output<PersonalEvent>();
   readonly addEvent = output<string>();
@@ -60,6 +61,17 @@ export class OrgCalendar {
   protected readonly week = computed(() =>
     weekOf(this.selectedDay()).map((day) => ({ day, events: eventsOn(this.events(), day) })),
   );
+  /** Legende: nur die Kategorien, die im sichtbaren Zeitraum vorkommen — in fester Reihenfolge. */
+  protected readonly legend = computed(() => {
+    const used = new Set(this.agendaDays().flatMap((g) => g.events.map((e) => e.category ?? 'sonstiges')));
+    return used.size > 1 ? EVENT_CATEGORIES.filter((c) => used.has(c.value)) : [];
+  });
+  /** Wohin Termine gehören („✈ Berlin Wochenende“) — ein Abruf für alle Termine des Zeitraums. */
+  protected readonly links = connectionHints('CALENDAR_EVENT', () => this.agendaDays().flatMap((g) => g.events.map((e) => e.id)));
+  /** Punkte unter einem Tag (Streifen, Monat am Handy): je Kategorie einer, höchstens drei. */
+  protected dots(events: readonly PersonalEvent[]): string[] {
+    return [...new Set(events.map((e) => e.category ?? 'sonstiges'))].slice(0, 3);
+  }
   protected readonly dayEvents = computed(() => eventsOn(this.events(), this.selectedDay()));
   protected readonly title = computed(() => {
     const day = new Date(`${this.selectedDay()}T12:00`);
@@ -207,6 +219,14 @@ export class OrgCalendar {
   }
 
   /** Name für Screenreader: „Dienstag, 6. Oktober 2026, 2 Termine“. */
+  /** Was nach der sichtbaren Tageszahl vorgelesen wird: „. Oktober 2026 (Montag), 1 Termin“ — so beginnt der
+   * vorgelesene Name mit dem sichtbaren Text (WCAG 2.5.3 „Label in Name“). */
+  protected dayRest(day: string, count: number): string {
+    const d = new Date(`${day}T12:00`);
+    const month = d.toLocaleDateString('de-DE', { month: 'long' });
+    const weekday = d.toLocaleDateString('de-DE', { weekday: 'long' });
+    return `. ${month} ${d.getFullYear()} (${weekday}), ${count ? `${count} ${count === 1 ? 'Termin' : 'Termine'}` : 'keine Termine'}`;
+  }
   protected dayLabel(day: string, count: number): string {
     return `${longDay(day)}${count ? `, ${count} ${count === 1 ? 'Termin' : 'Termine'}` : ', keine Termine'}`;
   }

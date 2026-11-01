@@ -5,7 +5,7 @@ import { Observable, catchError, finalize, of, tap } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
 import { MembershipChanges } from '../access/membership-changes';
 
-export type InvitationScope = 'HOUSEHOLD' | 'TRIP';
+export type InvitationScope = 'HOUSEHOLD' | 'TRIP' | 'CALENDAR' | 'MY_CALENDAR';
 
 /** Eine In-App-Einladung so, wie das Backend sie zeigt (core/invitations.py › present) — ohne E-Mail-Adressen. */
 export interface Invitation {

@@ -244,3 +244,34 @@ textarea:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
+
+// Marke „Familie · von Max“ an gemeinsamen Terminen (Kalender, Heute) — 31.10.2026
+.cal-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 22px;
+  padding: 1px 9px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--cal, #5b6b7f) 13%, #fff);
+  color: color-mix(in srgb, var(--cal, #5b6b7f) 72%, #172523);
+  font-size: var(--fs-meta, 13px);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+}
+.cal-tag::before {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cal, #5b6b7f);
+  content: '';
+}
+.cal-tag[data-color='green'] { --cal: #2e8b57; }
+.cal-tag[data-color='blue'] { --cal: #2f6fb5; }
+.cal-tag[data-color='amber'] { --cal: #b8741a; }
+.cal-tag[data-color='rose'] { --cal: #c4456f; }
+.cal-tag[data-color='violet'] { --cal: #7451b8; }
+.cal-tag[data-color='slate'] { --cal: #5b6b7f; }

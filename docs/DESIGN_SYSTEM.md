@@ -80,7 +80,40 @@ Abstand — nie nur über Farbe.
 - Formulare: Labels immer sichtbar; Pflichtfehler und roter Rand **erst nach dem ersten Speichern**, danach live
   (`app-field` setzt `aria-invalid`; kein `.ng-touched`-Rot). Abbrechen prüft nichts.
 - Dialoge: `app-modal` / `app-modal-form` — Titel · Inhalt · Fuß (Abbrechen, Hauptaktion); Breite 520 px, Höhe nach
-  Inhalt (max. 680 px), am Handy als Blatt von unten.
+  Inhalt (max. 680 px), am Handy als Blatt von unten. Langer Inhalt scrollt in `.modal-scroll` (31.10.2026; vorher
+  schnitt das Panel ab und nichts ließ sich scrollen), das Schließen-Kreuz bleibt stehen; `flush`-Dialoge (Formulare,
+  „Kalender teilen“) bringen eigenen Innenabstand und eigenen Scrollbereich mit.
+- Anhänge (31.10.2026): gemeinsamer Baustein `shared/attachments/attachment-field.*` (`app-attachment-field`, Eingaben
+  `attachments`, `load`, `privacy`; `commit(upload, remove)`, `reset()`; Farbe über `--att-accent/--att-soft/--att-on`,
+  Standard Organisation, Haushalt `.att-household`), `shared/attachments/file-thumb.ts` (lädt private Bilder als Blob, Objekt-URL; CSP `img-src blob:` in
+  `deploy/nginx/snippets/4inone-security-headers.conf`). Backend: `PersonalFile.note`, Upload `files/` mit `note=<id>`,
+  nur JPG/PNG/WebP/PDF, max. 10 je Notiz; Fotos werden mit Pillow ohne EXIF neu gespeichert (`files.clean_image`).
+  Haushalt: `FolderAttachment` (Gerät/Vertrag), `ordner/{id}/anhaenge/` (POST) und `ordner/{id}/anhaenge/{anhang}/`
+  (GET, DELETE nur hochladende Person oder Admin); gemeinsame Prüfung `files.prepare_upload`.
+- Termin-Dialog (01.11.2026): `.allday-row` zwischen Datum und Uhrzeit, nur „Ganztägig“ (min. 48 px, Rahmen `--border-subtle`) mit `.switch` = natives
+  Kontrollkästchen `role="switch"` (`appearance: none`, Spur aus `#7d8796` ≥ 3:1, an `--organization-fill`).
+  Agenda/Tagesblatt: `.allday` statt `<b>` für „Ganztägig“.
+- Haushalt › wer ist dabei (01.11.2026): `haushalt/household-people.ts` (`app-household-people`, `.hp-*`) und
+  `haushalt/household-people.service.ts` (`HouseholdPeople`, von der Haushalt-Seite bereitgestellt; `audience(adultsOnly)`
+  für den Satz in `app-scope-note` der Dialoge). Quelle `HouseholdApiService.members()` (Demo:
+  `core/household/demo-household-api.service.ts`, Sophie/Max). Lädt neu bei `MembershipChanges`.
+- Demo-Besetzung (01.11.2026, in allen Bereichen gleich): **Sophie** (du; Kopfzeile, Finanzen, Haushalt-Admin, Reisen),
+  **Max** (Familie, Konto 301: Haushalt „Unser Zuhause“, Familien-Kalender, Kalenderfreigabe, Reisen Berlin und Italien),
+  **Lena** (Freundin, Konto 302: nicht im Haushalt; Reisen Italien und Skifahren; gibt ihren Kalender frei),
+  **Jonas** (nur offene Kontakt-Einladung). Neue Demo-Daten nutzen nur diese Personen.
+  Demo-Abgleich: `demo-contacts-api` führt Reisen nicht selbst, sondern liest sie aus `demo-reisen-api`
+  (`demoTripsFor`, `demoInvite`, `demoAccept`) — Entfernen/Einladen bei Reisen und in Personen & Gruppen zeigen
+  denselben Stand (solange nicht neu geladen wird). Im echten System rechnet `contacts/` ohnehin aus der Datenbank.
+- Personen & Gruppen: `.shared-chip--more` ist ein Knopf (`toggleExpanded`, `aria-expanded`) statt einer Zahl.
+- `shared/save-feedback` (01.11.2026): `.toast[data-tone]` (`success|warning|error`, sonst aus dem Text: `feedbackTone`),
+  Dauer `feedbackDuration` (5–9 s), Pause bei `mouseenter`/`focusin`, Eingaben `message`, `tone`, `stamp` (gleiche Meldung
+  neu starten), Ausgabe `dismissed`. Seiten setzen keinen eigenen Timer mehr. Live-Region `role=status` bleibt im DOM.
+- Demo-Abgleich Kalender: `demo-contacts-api` liest „Kalender: …“ und Kalenderfreigaben aus `demo-organisation-api`
+  (`demoLinksFor`, `demoInviteArea`, `demoAcceptNow`).
+- `shared/form/modal-form`: `submitIcon`/`cancelIcon` (optional); ohne Angabe passend zum Text (`submitIconName`:
+  „…importieren“ → upload, „Vorschau“ → arrow, „Schließen“ → close, sonst check; `cancelIconName`: „prüfen/zurück“ →
+  arrow-left, sonst close). Eigene Fußzeilen (Profil › Konto löschen, Reisen › Vorschläge, Person einladen) nutzen
+  dieselben Symbole, 16 px.
 - Fokus: global `:focus-visible { outline: 3px solid var(--brand-primary); outline-offset: 2px }` — verändert nie die
   Form des Elements; Komponenten passen ihn an, entfernen ihn nie ersatzlos.
 - Hover: leichte Flächen-/Linienänderung; Press: 1 px bzw. `--surface-pressed`; Bewegung 120–200 ms
@@ -377,7 +410,7 @@ Abstand — nie nur über Farbe.
   gespart“ startet mit „0,00“. (m) Übersicht Desktop: links Letzte Transaktionen + Gut zu wissen, rechts Budgets +
   Sparziele (Spalten etwa gleich lang; am Handy folgt „Gut zu wissen“ direkt auf die Transaktionen).
   **Rechenprüfung (30.10.2026):** (n) Vormonatsvergleich fair: im laufenden Monat bis heute gegen den Vormonat bis
-  zum selben Tag (`compareDay`, `monthTotalUntil`, `savedUntil`), Text „… als zur gleichen Zeit im September“;
+  zum selben Tag (`compareDay`, `monthTotalUntil`, `savedUntil`), Text kurz „… als bis 30. Sept.“ (am Monatsende gekappt);
   abgeschlossene Monate ganz gegen ganz. (o) „Ausgaben“ in Übersicht und „Alle Transaktionen“ = bis heute gebucht
   (`spentNow`, wie „Bereits ausgegeben“); künftig datierte stehen unter „Geplant“. (p) „Fast erreicht“: höchstens 15 %
   fehlen, bei kleinen Zielen höchstens 100 € UND 25 %; „im Plan“ beachtet das Ende des Sparzeitraums. (q) „Dein Jahr“:
@@ -385,6 +418,12 @@ Abstand — nie nur über Farbe.
   dazu … für Sparziele – von … Jahresbudget“; ein Monat zählt nur mit echten Buchungen oder Einzahlungen als bewertet.
   (r) Tagessatz auf der Startseite abgerundet wie im Finanzen-Tab. Backend: Warnungen (`available_for_month`) ziehen
   geplante wiederkehrende Ausgaben ab wie `month_figures`.
+  **Abschluss (30.10.2026):** (s) Reiter 761–1000 px ohne Symbole (Padding 12 px), damit alle vier in die Zeile passen.
+  (t) Kein lesbarer Text unter 13 px: Hinweise unter Kennzahlen am Handy `--fs-meta`, Monatsnamen in „Dein Jahr“ und
+  „Ab Apr. 2026“ 13 px. (u) Eine Monatskurzform `MONTH_ABBR` in `shared/form/date-utils.ts` (auch für die Kurvenachse);
+  `MONTH_SHORT` (drei Buchstaben) bleibt für Diagrammachsen. (v) Ausgaben-Ansicht: große Zahl, fest/variabel und Anteile
+  aus bis heute gebuchten Ausgaben (`expenseBooked`, wie der Vergleich). (w) Toter Code entfernt
+  (`finance-settings.ts/.scss`, `finanzen/budget/`).
   Backend: `GET finanzen/private/summary/year/?year=JJJJ` (nur lesend, nur eigene Daten, Jahr 2000–2100) liefert je Monat
   budget, expenses, saved, available, has_data, state (past/current/future) — bis zum laufenden Monat über
   `month_figures`, damit Jahr und Monat nie verschieden urteilen; künftige Monate nur mit Budget.
@@ -916,7 +955,8 @@ Device imagery may be used sparingly. Prefer normal device icons or small thumbn
 
 Should feel especially clean and productive.
 
-Use simple calendar/task/reminder icons and restrained purple accents.
+Use simple calendar/task/reminder icons and restrained amber accents (`--organization-accent`). The only full area
+fill is the Heute hero card (see „Organisation — Dein Tag, Stunde für Stunde“ below).
 
 ## Reisen
 
@@ -1012,3 +1052,212 @@ Handyansicht: Die zusätzliche dekorative Tagesachse entfällt; Uhrzeiten bleibe
 Ersetzt die dunkle Tagesbühne vollständig: weiße, dezent umrandete Tagesliste mit gleich großen Zeilen und ruhiger Markierung „Im Fokus“. Keine große Datumszahl oder Tagesachse. Priorisierung bleibt erhalten. Demo-Zusammenhang zeigt Sparziel und Aufgabe als zwei beschriftete, direkt erreichbare Objekte mit verbindender Erklärung und separater Aktion. Bestehende Navigation, Icons und Bereichsfarben bleiben bestehen. Diese Entscheidung ersetzt die vorherige Tagesbühnen-Gestaltung.
 Die vier unveränderten Bereichskarten bilden nun ein kompaktes Band unter der Begrüßung (Desktop vier Spalten,
 Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben die Bereiche direkt erreichbar.
+
+### Haushalt › Heute und Aufgaben — „Dein Zuhause, Raum für Raum“ (31.10.2026)
+
+- **Idee:** Räume sind der rote Faden des Haushalts (Task.room, später auch Geräte). Kein anderer Bereich hat sie;
+  sie machen den Bereich als „mein Zuhause“ erkennbar. Rechnungen in `haushalt/zuhause-logic.ts` (nur echte Daten).
+- **Kopfkarte** (`heute-hero.scss`, `.hero`): Fläche `--household-accent`, Radius 20 mit 8-px-Ecke oben rechts (wie die
+  Startseiten-Karte), Innenabstand 26/28 (Handy 20/18). Zeile Datum · „Dein Zuhause heute“ (14 px, Weiß 93 %), Titel
+  Display 28–40 px/700 „N Aufgaben heute“ + „ · ca. X Min.“ (Weiß 93 %, Handy eigene Zeile ohne Punkt) bzw. „Heute
+  ist nichts fällig“. Marken 30 px rund: „N überfällig“ weiß mit Beere-Text, „N heute erledigt“ (Haken) in dunklerer
+  Haushaltsfarbe. Verteilung (nur ≥ 2 Personen mit Erledigtem diesen Monat): „Diesen Monat erledigt: Anna 3 · Ben 3“ +
+  8-px-Balken je Person (weiß / 55 % weiß); ab 1100 px rechts neben der Zahl (schmaler darunter, sonst bricht der Titel). **Ausnahme** von „Bereichsfarben nur für
+  kleine Flächen“: genau diese eine Kopfkarte je Bereich darf die Bereichsfarbe als Fläche tragen.
+- **Räume** (`.rooms`): Überschrift „Nach Räumen“ (Abschnitt 20 px), Raster `auto-fill minmax(160px, 1fr)` (Handy 2
+  Spalten), max. 6, dringendste zuerst. Karte weiß, Rand `--border`, Radius 16, min. 124 px: Symbol 36 px auf
+  `--household-soft`, Name 600 (Trennung nur an Silben), Zustand 13 px sekundär („1 überfällig“ fett in Beere),
+  Balken 6 px (Füllung 8/40/72/100 % nach Stufe; ab „heute“ volle Haushaltsfarbe). Ganze Karte ist Knopf mit
+  `aria-label` in Worten; Hover Rand Beere 45 %, −1 px.
+- **Heute fällig:** volle Breite; Zeile Titel + „Raum · Dauer · ↻ Wiederholung“ (13 px). Rechner: Fälligkeit und
+  Priorität `auto` breit.
+- **Aufgaben:** Werkzeugzeile Suche | Umschalter (Sage-Spur, gewählt weiß, 38 px, 13 px; Handy volle Breite).
+  Raumfilter-Zeile „Nur Badezimmer · ✕ Alle Räume zeigen“. Gruppenüberschrift 13 px/700 + Anzahl (Überfällig
+  `#a12323`, Raum-Gruppen mit Raumsymbol). Kürzel-Kreis 30 px `--accent-soft`/`--accent-hover` 12 px/700.
+- **Erledigt-Moment** (Heute und Aufgaben): Kästchen gefüllt + Haken (260 ms, leichtes Überschwingen), Titel
+  durchgestrichen sekundär, Zeile auf 35 % (260 ms, danach entfernt bzw. neu geladen, insgesamt 520 ms); bei
+  `prefers-reduced-motion` ohne Animation und sofort. Einblenden von Titel und Raumkarten nur per `translateY`
+  (gestaffelt 40 ms), nie über Deckkraft — Text bleibt in jedem Moment kontrastfest.
+
+### Haushalt › Einkaufen — Kacheln und der Weg zu den Finanzen (31.10.2026)
+
+- **Umschalter** `.view-switch` „Liste · Kacheln“ (Sage-Spur, gewählt weiß, 38 px, Symbole `list`/`grid`; Handy volle
+  Breite) unter der Eingabezeile; Wahl in `localStorage` (`4io-einkauf-ansicht`), Standard „Liste“.
+- **Kacheln** (`einkauf-tiles.scss`): Raster `auto-fill minmax(104px, 1fr)` (Handy 3 Spalten), Abstand 8. Offene
+  Artikel: Kachel in der Tönung ihres Ladenbereichs (`tone--*`), Symbol 26 px, Name 13 px/600, Menge 12 px sekundär,
+  min. 96 px, Radius 12; antippen = in den Wagen (kurzes Eindrücken 0,96). „Im Wagen“: Sage-Fläche, Haken in Akzent,
+  Name durchgestrichen; antippen = zurück auf die Liste. „Oft gekauft“: weiß, 1,5 px gestrichelter Rand, „+“ oben
+  rechts; nur Vorschläge, die nicht schon auf der Liste stehen (`suggestTiles`). Überschriften „Auf der Liste N“,
+  „Im Wagen N“, „Oft gekauft“ (13 px/700). Jede Kachel ist ein Knopf mit Aktion im Namen („Bananen, 1 kg abhaken“).
+- **Leiste „im Wagen“**: Zahl + „im Wagen“ in einer Zeile, darunter „wird zur Ausgabe in Finanzen“ (12 px, Finanzen-
+  Symbol, Weiß 82 % auf Tinte) — nur wenn gebucht werden kann. Der Einkaufsmodus nutzt weiterhin die Liste.
+- Neues Symbol `grid` (vier Quadrate) in `shared/icons/app-icon.ts`.
+
+### Haushalt › Zuhause — Als Nächstes und Geräte nach Raum (31.10.2026)
+
+- **Kennzahlen** (`zuhause-tab.scss` überschreibt `haushalt-stats.scss` nur hier; Routinen behalten ihre Kacheln):
+  Chips 40 px, Radius rund, Zahl 16 px/700 + Beschriftung 14 px sekundär in einer Zeile; Symbol, Hinweis und Pfeil
+  ausgeblendet; Filterwirkung unverändert (antippbare Chips filtern die Liste).
+- **Als Nächstes** (`.next`, `nextDeadlines()` in `zuhause-logic.ts`): Fristen ab heute der laufenden Einträge
+  (nicht außer Betrieb/beendet/gekündigt), früheste zuerst, höchstens 4. Feste Spalten: ab 1100 px 4, darunter 2,
+  Handy 1 (nie 3 + 1). Karte weiß, Radius 16, min. 76 px: Kalenderblatt 56 px (Sage; ≤ 14 Tage Haushaltsfarbe mit
+  weißer Schrift), Name 600 mit Symbol (gekürzt mit „…“, voller Name im `aria-label`/Tooltip), darunter „Wartung ·
+  in 12 Tagen“ / „Garantie endet · …“ / „Kündigen bis · …“. Hover: Rand Beere 45 %, −1 px.
+- **Geräte nach Raum** (`devicesByRoom()`): Überschrift-Zeile im Listenkopf-Stil (13 px/700, Raumsymbol in Beere,
+  Anzahl gedämpft); Reihenfolge der Räume wie im Formular, „Ohne Raum“, zuletzt „Außer Betrieb“ (Archiv-Symbol).
+  Nur ab zwei Gruppen; Verträge bleiben eine Liste.
+- **Gerätesymbole** (`deviceIcon`): Spülmaschine, Wasch-/Trockner, Kühl-/Gefrier, Sauger, Heizung/Therme, Ofen/Herd/
+  Mikrowelle, Kaffee/Espresso, Handy/Tablet, Werkzeug/Mäher; sonst `device`.
+- **Handy-Zeile:** Raster `40px 1fr 16px`, Name volle Breite (keine Trennung mitten im Wort), Status-Marke und
+  nächste Frist darunter in einer Zeile.
+
+### Haushalt — Abschluss nach `/ui-taste` (31.10.2026)
+
+- **Kennzahlen** in `haushalt-stats.scss` jetzt grundsätzlich als Filter-Chips (Routinen und Zuhause gleich): 40 px rund,
+  Zahl 16/700 + Beschriftung 14 sekundär; Symbol, Hinweis und Pfeil ausgeblendet. Routinen: „N aktive Routinen“, „N heute
+  fällig“, „92 % erledigt (4 Wochen)“, „N geteilte Routinen“.
+- **Routinen-Liste** (`routinen-tab.scss`): Listenform (Symbol · Titel + Rhythmus · Fälligkeit über Serie · Schalter · Menü)
+  ab ≤ 1000 px Fensterbreite statt ≤ 760; nur die Handy-Details (Chips wischbar, Sortierung aus) bleiben ≤ 760.
+- **Schriftgröße:** im Haushalt `--fs-caption` = 13 px (`haushalt.scss :host`) — Zusatzzeilen, Marken, Zähler, Mengen nie
+  unter 13 px.
+- **Heute:** Zeit („ca. 45 Min.“) bis 960 px eigene Zeile, 0,75 em, ohne Trennpunkt.
+- **Einkaufen** (`einkauf-tiles.scss`): ≤ 900 px Listen als umbrechende Pillen (44 px, Symbol 18, Name nowrap, Zähler,
+  kein Balken, „Neue Liste“ gestrichelt); Seitenkarte „Einkauf wird zur Ausgabe“ ≤ 900 px aus. Leiste: Hinweis
+  „wird zur Ausgabe in Finanzen“ nowrap (≤ 360 px umbrechend), Knopf am Handy „Abschließen“ mit `aria-label` „Einkauf
+  abschließen“. Gruppenkopf Spalten `32px 1fr auto 44px 44px` (keine überlappenden Trefferflächen). Listennamen ohne
+  Silbentrennung (`hyphens: manual`).
+
+### Organisation — „Dein Tag, Stunde für Stunde“ (31.10.2026)
+
+- **Reiter:** Heute · Kalender · Aufgaben · Notizen. Heute ist Start (`organisation.ts`, `OrgTab = 'today' | …`), lädt nur
+  die Termine des Tages (`loadToday`); `?tab=` steht nur für die anderen Reiter, alte/unbekannte Werte → Heute.
+- **Heute** (`org-today.*`, Rechnungen in `org-day-logic.ts`): Kopfkarte `.day-hero` auf `--organization-accent`
+  (Radius 20 mit 8-px-Ecke oben rechts, Text ≥ 93 % Weiß, Titel 28–40 px Display), „Als Nächstes“ und Marken
+  (überfällig weiß/rot, freie Zeit dunkler Amber). Raster 1,4fr | 1fr (≤ 960 px eine Spalte). Tageslinie `ol.line`:
+  Zeit 44 px · Schiene 2 px · Termin (Kategorie über `--cat` aus `org-common.scss`, Tönung 10 %, Kante 4 px, ≥ 56 px)
+  bzw. freie Zeit (gestrichelt 1,5 px, 44 px, Plus in Amber). `dayLine()` zählt frei nur 07:00–22:00 ab jetzt, Lücken
+  ≥ 30 Min.; `nextUp()` ≤ 180 Min. als Abstand, sonst Uhrzeit. Aufgaben heute: Kästchen 44 px, überfällige zuerst.
+  Einblenden nur per `translateY` (nie Transparenz).
+- **Kalender** (`org-calendar.*`): `.week__ev` mit Kategorie-Tönung und 3-px-Kante; `.legend` (8-px-Punkte, 13 px) nur
+  bei ≥ 2 Kategorien im Zeitraum; `.cell__dots` (bis 3 Punkte à 6 px, je Kategorie) im Monat am Handy und im
+  Tagesstreifen. Handy-Start: Woche.
+- **Aufgaben** (`org-tasks.*`, `groupTaskList()` in `organisation-logic.ts`): Segment `.group-by` (38 px, weißer
+  aktiver Knopf) „Nach Tag · Nach Projekt“, gemerkt unter `4io-org-aufgaben-gruppe` (try/catch); Gruppenkopf `.group-h`
+  13 px Versalien mit Anzahl, Überfällig rot `#a12323`. Erledigt-Moment: Haken `tick` 240 ms, Zeile `settle`, nach
+  480 ms speichern (reduzierte Bewegung: sofort).
+- **Notizen** (`org-notes.*`): `.quick` (56 px, Radius 16, Fokusring in Amber, Speichern-Knopf in Tinte), Suche ab 4
+  Notizen, `.board` `repeat(auto-fill, minmax(230px, 1fr))` (≤ 560 px eine Spalte), Karte Radius 16, ≥ 132 px, Hover
+  hebt 2 px; angeheftet `--organization-soft`, Stern in Amber. Schnellnotiz: `quickNote()` in der Hülle speichert
+  `{ title: '', body, pinned: false }` über die bestehende Notiz-API (Server prüft Länge und Besitz wie bisher).
+- **Schrift:** `--fs-caption` im Bereich 13 px (`organisation.scss :host`).
+
+### Reisen — „Von hier nach dort“ (31.10.2026)
+
+- **Bordkarte** `trip-pass.*` (`app-trip-pass`, `mode="list" | "detail"`): Fläche `--travel-accent` mit feinem
+  135°-Linienmuster (3,5 % Weiß), Radius 22 mit 8-px-Ecke oben rechts, Text ≥ 93 % Weiß. Orte in Display 28–44 px,
+  Abrissteil (`.pass__stub`) 44–64 px, Perforation 2 px gestrichelt, Einkerbungen 24 px in `--surface-app`. Marken 32 px
+  (`color-mix` 24 % Schwarz), im Detail Knöpfe 36 px mit Pfeil. `container-type: inline-size`; ≤ 620 px Kartenbreite
+  Handy-Layout. Rechnungen in `reisen-logic.ts`: `placeParts`, `passStub`, `preparation` (gezählt, kein Score).
+- **Liste** `trip-list.*`: `.later` `repeat(auto-fill, minmax(250px, 1fr))`, `.later-card` ≥ 150 px, Hover hebt 2 px;
+  `.leaf` Kalenderblatt 48 px (klein 40 px, vergangen/abgesagt grau).
+- **Übersicht** `trip-overview.*`: Raster 1,5fr | ≥ 280 px (≤ 960 px eine Spalte); `.track` Linie mit 12-px-Punkten,
+  `.track__depart` Marke; `.tile-card` mit 56-px-Ring (`conic-gradient` + Maske, Zahl darüber).
+- **Planung** `trip-planning.*`: `taskTimeline()` (Überfällig · Vor der Abreise · Unterwegs · Nach der Reise · Ohne
+  Datum), `.tl-head`, `.tl-rows` (Schiene 2 px `--travel-soft`, Punkt 10 px), `.tl-depart`.
+- **Packliste** `trip-packing.*`: `.cat-tiles` (118 px Mindestbreite, Handy wischbar 104 px), Ring 48 px; `.all-packed`;
+  `.groups` ab 1100 px `columns: 2`.
+- **Budget** `trip-budget.*`: `.kpis` — DOM-Reihenfolge Gesamtbudget · Ausgegeben · Noch übrig (Rechnung für
+  Screenreader), sichtbar „Noch übrig“ per `order: -1` groß vorn; `.stack` 14 px (über Budget: roter Innenrand) +
+  `.legend`; Farben `BUDGET_COLOR`; `.exp-day` Tageskopf.
+- **Dialoge** `trip-dialogs.scss` (eigene Datei wegen Stilbudget von `reisen.scss`): `.ticket-preview` (sticky),
+  `.form-step` mit 24-px-Nummer, `.transport-chip`/`.category-chip` 44 px.
+- **Reisekopf ≤ 760 px:** `.heading-icon` aus, `h1` `overflow-wrap: break-word` (in `trip-dialogs.scss`). `.pass__facts`
+  setzt den Trennpunkt vor jeden Eintrag und schneidet ihn links per `clip-path` ab.
+- **Symbol:** `bus` neu in `shared/icons/app-icon.ts` (gleiche Strichsprache); `transportIcon('BUS')` nutzt es.
+
+### Verknüpfungen sichtbar (31.10.2026)
+
+- **`<app-link-hints [items] [exclude] [max]>`** (`shared/connections/link-hints.ts`): Pillen 24 px, Padding 0 9 px,
+  Symbol 13 px, Schrift `--fs-meta` 600, Farbe je Bereich (`dom-reisen|finanzen|haushalt|organisation` →
+  `--*-soft`/`--*-accent`), `max-width: min(240px, 100%)`, Titel mit Ellipse. Für Screenreader „verknüpft mit …“.
+  Daten über `connectionHints(type, ids)` — ein Abruf je Liste.
+- **`<app-connections variant="card" heading="…">`**: Karten-Variante (Padding 20/22, Rand `--border-subtle`, Radius
+  `--radius-lg`, Titel `--fs-subsection`) für Seiten; Standard bleibt der graue Abschnitt im Dialog.
+
+### Startseite — Vier Antworten, Fortschritt, Idee für heute (31.10.2026)
+
+- Rechnungen in `features/dashboard/dashboard-pulse.ts` (rein, getestet in `dashboard-pulse.spec.ts`): `financeAnswer`
+  (heute ausgegeben via `spentOn`, Tagessatz), `householdAnswer`, `organisationAnswer` (nutzt `dayLine`/`nextUp` aus
+  `organisation/org-day-logic.ts`; Termine des Tages lädt das Dashboard über `OrganisationApi.events`),
+  `travelAnswer` (`preparation`), `progressRings`, `ideaForToday`.
+- `app-dash-answers` (`dash-answers.*`): 4 Spalten, ≤ 1100 px 2 × 2; Karte ≥ 150 px (Handy 132), `--a`/`--a-soft` je
+  Bereich, Hover hebt 2 px, Einblenden gestaffelt nur per `translateY`.
+- `app-dash-progress` (`dash-progress.*`): `container-type: inline-size`, ab 560 px Ringe nebeneinander; Ring =
+  `conic-gradient` + Maske, dreht einmal auf (nur Bewegung); „Idee für heute“ gestrichelte Karte.
+- Raster `.board`: `'today money' 'pulse soon' 'foryou soon'`, ≤ 1100 px eine Spalte (today · money · pulse · soon ·
+  foryou). „Demnächst“: `app-trip-pass` über volle Breite (`.soon__pass`), Haushalt-Frist darunter.
+
+### Abnahme-Korrekturen (31.10.2026)
+
+- `spend-curve.ts`: Ablesewert am heutigen Tag „Bis heute im <Monat>“.
+- Tagessatz nur bei ≥ 2 Resttagen (Dashboard `money.left`, Finanzen `daysLeft()`).
+- Wortwahl Zeitlücken: „ohne Termin“ / „nichts eingetragen“ (`org-today.html`, `dashboard-pulse.ts`); nie „frei“.
+- `reisen-logic.ts`: `preparation()` ersetzt durch `packingShare()` (nur Packliste). `trip-pass` ohne
+  Vorbereitungsbalken; `trip-list` Balken = Packliste mit Beschriftung `.later-card__bar-label`; `dash-answers`
+  Balken nur mit `barLabel`.
+- Haushalt `.room__bar` entfällt → `.room__count` („n offene Aufgaben“, Trennlinie oben); `RoomState.fill` entfernt.
+- Dashboard ≤ 760 px: `TODAY_ROWS_MOBILE = 3`, `h1` 1.625rem, `.greeting` Abstand `--space-4`.
+- Demo: `daysToNext(month, day)` in `demo-reisen-api.ts`.
+- Nachtrag: `dashboard.ts dayLine` ohne Datum; `.hero__fairbar` ist eine `ul` mit `li` je Person (`flex-grow` = Anzahl,
+  `min-width: max-content`, 30 px, abwechselnd `#fff`/`#8f1f3c` und `color-mix(#000 28%, --household-accent)`/`#fff`);
+  `link-hints .hint__t` mit `overflow-wrap: anywhere` statt Ellipse; Demo-`allItems` mischt `household().today` ein.
+- Datum nur in der Kopfzeile: `uebersicht-tab` (`.hero__date` „Dein Zuhause heute“) und `org-today` (`.day-hero__date`
+  „Dein Tag“) ohne `dateLine`.
+
+### Personen & Gruppen und Einstellungen (31.10.2026)
+
+- `familie-circle.scss`: `.circle` (Tinte, Text ≥ 93 % Weiß, Schild `#9fe0bd`), `.circle__faces` (Avatare 64/48 px,
+  Rand 3 px Tinte, −14 px Überlappung, Einblenden nur per `translateY`), `.shared-chips`/`.shared-chip[data-kind]`
+  (28 px, Radius 12, `--travel-*`/`--household-*`). `familie.ts circleFacts()` zählt Personen, Familie, geteilte Bereiche.
+  `.people-row` Spalten `auto 0.8fr 1.4fr auto`.
+- `einstellungen/settings-layout.ts/.scss`: `220px | minmax(0, 720px)`, Navigation sticky (top 24 px), Links 44 px;
+  ≤ 960 px eine Spalte, Leiste aus, `.sl__back` an. Neues Symbol `monitor` in `app-icon`.
+- `einstellungen.css` (gemeinsam für Profil, Zwei-Faktor, Sitzungen): nur Tokens; `.settings-profile` (Avatar 64 px
+  Tinte), `.settings-check` mit `.is-ok` (`--success-soft`), `.is-todo` (`--warning-soft`, Knopf in Tinte), `.is-wait`.
+  Kontoschutz-Daten: `currentUser().email_verified`, `MfaApiService.status()`, `AuthService.sessions()` — unbekannt =
+  „wird geprüft …“, nie eine Behauptung.
+- Profil/Zwei-Faktor/Sitzungen: Blau-Werte (`#164ed0`, `#142143`, `#56627a`, …) durch Tokens ersetzt; kleinste Schrift
+  13 px.
+- `shared/scroll-lock`: sperrt nur noch `html` (nicht `body` — dessen `height: 100%` schnitt die Seite ab und setzte
+  die Scrollposition auf 0). `shared/modal`: erst entsperren, dann Fokus mit `preventScroll` zurückgeben.
+- WCAG 2.5.3: kein `aria-label`, das vom sichtbaren Text abweicht — stattdessen `.sr-only`-Zusatz nach dem sichtbaren
+  Text (z. B. Kalender `dayRest()`: „26“ + „. Oktober 2026 (Montag), 1 Termin“). Prüfung mit
+  `wcag21a`/`wcag21aa` auf allen Bereichsseiten.
+
+### Gemeinsame Kalender (31.10.2026)
+
+- `organisation/org-calendars.*` (`app-org-calendars`): Filter `CalendarFilter = 'all' | 'mine' | id` (Chips 44 px,
+  aktiv Tinte, Farbpunkt 10 px), Verwaltungs-Dialog (`app-modal`, max. 560 px, `.sc-card` mit 4-px-Farbkante,
+  Mitglieder-Zeilen 44 px, Rolle als natives `select`, Entfernen 44-px-Knopf mit verstecktem Namen).
+- `organisation.ts`: `calendars`, `calendarFilter`, `visibleEvents` (Filter), `writableCalendars`, `eventReadOnly`,
+  `calendarLocked`, `calendarHint`; Formularfeld `calendar` ('' = privat). `modal-form`: leeres `submitLabel` = ohne
+  Speichern-Knopf.
+- `.cal-tag[data-color]` in `org-common.scss` (Agenda, Heute); `.cal-choice*` und `.ro-event*` in `organisation.scss`.
+- Demo: `DemoOrganisationApi` mit Kalender „Familie“ (Sophie Besitzerin, Max „Kann bearbeiten“) und zwei gemeinsamen
+  Terminen; `DemoContactsApiService` teilt „Familie“ mit Max und bietet ihn Lena an.
+- Kalenderfreigabe (wie Outlook): Filter-Chip „Kalender von …“ (`CalendarFilter` `p<id>`, Initiale 22 px statt
+  Farbpunkt, Farbe Schiefer); Verwaltungs-Dialog heißt „Kalender teilen“ mit Karten „Dein Kalender“ (Freigaben mit
+  Rolle als `select`, Beenden-Knopf, „Person freigeben“ mit Personen- und Rollen-Chips) und „Für dich freigegeben“
+  (Entfernen), danach Zwischentitel `.sc-section` „Gemeinsame Kalender für Gruppen“. Bedienelemente einer Zeile in
+  `.sc-ctrl` (bricht als Gruppe rechtsbündig um, Namen brechen nie mitten im Wort). Termin-Dialog: „Wer sieht den
+  Termin?“ (🔒 Nur ich · Gruppen-Kalender · Personen-Chips mit Initiale `.cal-choice__avatar`, mehrfach wählbar),
+  Hinweis `aria-live`. Fremde freigegebene Termine: Marke „Kalender von …“ (Schiefer) und Nur-Ansehen-Ansicht.
+  Demo: Sophies Kalender für Max freigegeben („Badminton“ geteilt), Lenas Kalender für Sophie („Lenas Umzug“).
+- Tagesblatt `organisation/org-day-sheet.*` (`app-org-day-sheet`, `app-modal`): Kopf mit 44-px-Symbol, Zeilen
+  `.ds__row` (76 px Zeit | Text | Pfeil, min. 60 px), `.ds__add` (48 px, gestrichelt, `--organization-soft`). Steuerung in
+  `organisation.ts`: `daySheet`, `openOnDay` (mit Terminen → Tagesblatt, sonst Dialog), `fromSheetOpen`/`fromSheetAdd`,
+  `editorClosed` kehrt zum Tagesblatt zurück. Woche: `.week__col` als Flex-Spalte, `.week__add` füllt den Rest
+  (min. 44 px). Demo-Annehmen: `.sc-link--demo` (Kalender) und `.shared-chip--demo` (Personen & Gruppen), nur bei
+  `DEMO_MODE`; offene Einladungen neben Geteiltem: `.shared-chip--pending` (gestrichelt).
+- Datums-/Uhrzeitauswahl: `aria-labelledby` = Beschriftung + Wert-Span (`dp-text-n`/`tp-text-n`), bei Teil-Feldern
+  `aria-label` „Feld – Teil, Wert“.

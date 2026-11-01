@@ -16,6 +16,7 @@ from .models import Category, Transaction, MonthlyBudget, SavingsGoal, SavingsCo
 from .savings import SavingsPlanner, _next_month, contribution_date, goal_change_warning, plan_alert
 from .services import month_bounds
 from core.idempotency import idempotent
+from .throttling import FinanceSummaryRateThrottle
 
 ZERO = Decimal('0.00')
 # Grenzen gegen Tippfehler (eine Null zu viel, falsches Jahr) — wie im alten
@@ -399,10 +400,10 @@ class SavingsGoalViewSet(PrivateViewSet):
             for c in rows
         ])
 
-    @action(detail=False, methods=['post'], url_path='preview')
+    @action(detail=False, methods=['post'], url_path='preview', throttle_classes=[FinanceSummaryRateThrottle])
     def preview_new(self, request):
         return self._preview(request, None)
-    @action(detail=True, methods=['post'], url_path='preview')
+    @action(detail=True, methods=['post'], url_path='preview', throttle_classes=[FinanceSummaryRateThrottle])
     def preview_existing(self, request, pk=None):
         return self._preview(request, self.get_object())
     def _preview(self, request, instance):
@@ -473,7 +474,7 @@ def _same_day_in(month_start, source):
     return month_start.replace(day=min(source.day, last_day))
 
 
-def month_figures(user, start, end) -> dict:
+def month_figures(user, start, end, planner: SavingsPlanner | None = None) -> dict:
     """Die Kennzahlen eines Monats der PRIVATEN Finanzen — eine Stelle für
     die Finanzübersicht und „Heute“ (connections/today.py), damit beide nie
     auseinanderlaufen. Restbudget = Monatsbudget − ausgegeben − geplant − Sparreservierungen; Einnahmen bleiben
@@ -482,7 +483,7 @@ def month_figures(user, start, end) -> dict:
     income = rows.filter(type='INCOME').aggregate(total=Sum('amount'))['total'] or ZERO
     expense = rows.filter(type='EXPENSE').aggregate(total=Sum('amount'))['total'] or ZERO
     budget = MonthlyBudget.for_month(user, start)
-    planner = SavingsPlanner(user)
+    planner = planner or SavingsPlanner(user)  # mehrere Monate (Jahresstand): einmal laden, mehrfach rechnen
     saved, saved_planned = planner.for_month(start)
     planned_items = planned_expenses(user, start, end, rows)
     planned = sum((item['amount'] for item in planned_items), ZERO)
@@ -535,6 +536,7 @@ def budget_categories(user, figures) -> list[dict]:
 
 
 class PrivateYearSummaryView(PrivateMixin, APIView):
+    throttle_classes = [FinanceSummaryRateThrottle]
     """Das Budgetjahr auf einen Blick: je Monat Budget und — bis zum laufenden Monat — dieselben Kennzahlen wie
     summary/ (month_figures), damit „im Budget geblieben“ hier nie etwas anderes sagt als im Monat selbst.
     Künftige Monate tragen nur das geplante Budget. Nur lesend, nur eigene Daten."""
@@ -545,6 +547,7 @@ class PrivateYearSummaryView(PrivateMixin, APIView):
             raise ValidationError({'year': 'Bitte ein Jahr zwischen 2000 und 2100 angeben.'})
         year = int(raw)
         current = timezone.localdate().replace(day=1)
+        planner = SavingsPlanner(request.user)  # Ziele und Einzahlungen einmal laden statt zwölfmal
         months = []
         for number in range(1, 13):
             start, end = month_bounds(date(year, number, 1))
@@ -556,7 +559,7 @@ class PrivateYearSummaryView(PrivateMixin, APIView):
                 budget = MonthlyBudget.for_month(request.user, start)
                 row['budget'] = money(budget.amount) if budget else None
             else:
-                figures = month_figures(request.user, start, end)
+                figures = month_figures(request.user, start, end, planner)
                 budget = figures['budget']
                 row.update({'budget': money(budget.amount) if budget else None,
                             'expenses': money(figures['expense']), 'saved': money(figures['saved']),
@@ -570,6 +573,8 @@ class PrivateYearSummaryView(PrivateMixin, APIView):
 
 
 class PrivateSummaryView(PrivateMixin, APIView):
+    throttle_classes = [FinanceSummaryRateThrottle]
+
     def get(self, request):
         raw = request.query_params.get('month', timezone.localdate().strftime('%Y-%m'))
         try:

@@ -1,0 +1,136 @@
+// Organisation › Tagesblatt (31.10.2026): die Termine eines Tages, darunter „Termin an diesem Tag“.
+.ds {
+  display: grid;
+  gap: 14px;
+}
+.ds__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 44px; // Platz für das Schließen-Kreuz
+}
+.ds__icon {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md, 12px);
+  background: var(--organization-soft);
+  color: var(--organization-accent);
+}
+.ds__icon app-icon {
+  width: 20px;
+  height: 20px;
+}
+.ds__head h2 {
+  margin: 0;
+  font-size: var(--fs-title, 1.25rem);
+  line-height: 1.25;
+}
+.ds__count {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.ds__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border-subtle);
+}
+.ds__list > li {
+  border-bottom: 1px solid var(--border-subtle);
+}
+.ds__row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 4px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ds__row:hover {
+  background: var(--surface-hover);
+}
+.ds__row:focus-visible,
+.ds__add:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.ds__time {
+  display: grid;
+  align-self: start;
+  font-variant-numeric: tabular-nums;
+}
+.ds__time .allday {
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+}
+.ds__time small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.ds__text {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  min-width: 0;
+}
+.ds__text b {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: break-word;
+}
+.ds__text small,
+.ds__shared {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.ds__text small app-icon,
+.ds__shared app-icon {
+  width: 14px;
+  height: 14px;
+}
+.ds__chev {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+.ds__add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px dashed var(--organization-accent);
+  border-radius: var(--radius-md, 12px);
+  background: var(--organization-soft);
+  color: var(--organization-accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ds__add app-icon {
+  width: 18px;
+  height: 18px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ds__row {
+    transition: background-color 150ms ease-out;
+  }
+}

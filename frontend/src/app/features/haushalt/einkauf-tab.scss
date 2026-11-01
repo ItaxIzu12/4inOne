@@ -624,60 +624,6 @@ small {
 .side-card h2 {
   font-size: var(--fs-subsection);
 }
-.members {
-  display: grid;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.members li {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  min-height: 44px;
-  font-size: var(--fs-secondary);
-}
-.members__name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.role {
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-sunken);
-  color: #4b5567;
-  font-size: var(--fs-caption);
-  white-space: nowrap;
-}
-.role--owner {
-  background: var(--household-soft);
-  color: var(--household-accent);
-  font-weight: 600;
-}
-.invite {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-height: 44px;
-  margin-top: 4px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--text);
-  font: inherit;
-  font-size: var(--fs-secondary);
-  cursor: pointer;
-}
-.invite app-icon {
-  width: 20px;
-  height: 20px;
-  margin-left: 6px;
-  color: var(--text-muted);
-}
 // Symbolwahl im Listenformular
 .icon-choice {
   margin: 0;

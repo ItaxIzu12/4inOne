@@ -1,4 +1,4 @@
-<app-save-feedback [message]="saveMessage()" (dismissed)="dismissSaved()" />
+<app-save-feedback [message]="saveMessage()" [stamp]="saveStamp()" (dismissed)="dismissSaved()" />
 <app-shell>
   <main id="main-content" class="hh-main domain-page" tabindex="-1">
     <div class="domain-sticky">
@@ -8,6 +8,7 @@
           <h1>Haushalt</h1>
           <p class="page-subtitle">Alles rund um dein Zuhause.</p>
         </div>
+        <app-household-people />
         @if (headAction()) {
           <button type="button" class="btn-primary page-head__action" [attr.aria-label]="headAction()" (click)="headActionClick()">
             <app-icon name="plus" /> <span>{{ headAction() }}</span>
@@ -44,10 +45,11 @@
             (openTab)="selectTab($event)"
             (openZuhause)="openZuhause($event)"
             (create)="createFromToday($event)"
+            (openRoom)="openRoom($event)"
           />
         }
         @case ('aufgaben') {
-          <app-aufgaben-tab [newRequest]="newTaskRequest()" [view]="aufgabenView()" (viewChange)="setView($event)" (saved)="showSaved($event)" />
+          <app-aufgaben-tab [newRequest]="newTaskRequest()" [view]="aufgabenView()" [(room)]="aufgabenRoom" (viewChange)="setView($event)" (saved)="showSaved($event)" />
         }
         @case ('einkaufen') {
           <app-einkauf-tab [newRequest]="newTaskRequest()" (saved)="showSaved($event)" />

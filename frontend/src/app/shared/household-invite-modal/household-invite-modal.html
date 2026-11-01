@@ -8,17 +8,17 @@
 
   @if (!signedIn()) {
     <p class="invite-modal__text">In der Demo kannst du niemanden einladen. Mit deinem eigenen Konto lädst du Personen aus deinen Kontakten in deinen Haushalt ein.</p>
-    <button type="button" class="btn-primary" (click)="close()">Schließen</button>
+    <button type="button" class="btn-primary" (click)="close()"><app-icon name="close" aria-hidden="true" />Schließen</button>
   } @else if (sentTo(); as name) {
     <p class="invite-modal__success" role="status">
       Einladung gesendet. {{ name }} wird Mitglied von „{{ householdName() }}“, sobald {{ name }} annimmt.
     </p>
-    <button type="button" class="btn-primary" (click)="close()">Fertig</button>
+    <button type="button" class="btn-primary" (click)="close()"><app-icon name="check" aria-hidden="true" />Fertig</button>
   } @else if (loading()) {
     <p class="invite-modal__text" role="status">Wird geladen …</p>
   } @else if (!canInvite()) {
     <p class="invite-modal__text">Nur wer den Haushalt verwaltet, kann weitere Personen einladen.</p>
-    <button type="button" class="btn-primary" (click)="close()">Schließen</button>
+    <button type="button" class="btn-primary" (click)="close()"><app-icon name="close" aria-hidden="true" />Schließen</button>
   } @else if (!candidates().length) {
     <p class="invite-modal__text">
       @if (!contactCount()) {
@@ -50,7 +50,7 @@
       }
 
       <button type="submit" class="btn-primary" [disabled]="submitting()">
-        {{ submitting() ? 'Wird gesendet …' : 'Einladung senden' }}
+        <app-icon name="send" aria-hidden="true" />{{ submitting() ? 'Wird gesendet …' : 'Einladung senden' }}
       </button>
     </form>
   }

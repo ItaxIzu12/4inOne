@@ -1,10 +1,12 @@
+import { AppIcon } from '../../shared/icons/app-icon';
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { AppShell } from '../../layout/app-shell';
+import { SettingsLayout } from '../einstellungen/settings-layout';
 import { Modal } from '../../shared/modal/modal';
 import { AppSelect } from '../../shared/form/select';
 import { CURRENCY_OPTIONS } from '../../shared/currency/currencies';
@@ -15,7 +17,7 @@ import { ACCOUNT_DEFAULT_HOME_CURRENCY } from '../../core/fx/home-currency';
 @Component({
   selector: 'app-profil',
   standalone: true,
-  imports: [ErrorNoticeDirective, AppShell, RouterLink, FormsModule, Modal, AppSelect],
+  imports: [ErrorNoticeDirective, AppShell, SettingsLayout, FormsModule, Modal, AppSelect, AppIcon],
   templateUrl: './profil.html',
   styleUrls: ['../einstellungen/einstellungen.css', './profil.css'],
 })

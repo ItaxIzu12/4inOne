@@ -41,9 +41,10 @@ describe('AppDateTimePicker', () => {
     const { startDate, startTime, endDate } = setup();
     expect(startDate.textContent).toContain('25.09.2026');
     expect(startTime.textContent).toContain('09:00 Uhr');
-    expect(startDate.getAttribute('aria-label')).toBe('Beginn – Datum');
-    expect(startTime.getAttribute('aria-label')).toBe('Beginn – Uhrzeit');
-    expect(endDate.getAttribute('aria-label')).toBe('Ende – Datum'); // ohne „(optional)“
+    // Feld – Teil, dazu der sichtbare Wert (WCAG 2.5.3 „Label in Name“)
+    expect(startDate.getAttribute('aria-label')).toBe('Beginn – Datum, 25.09.2026');
+    expect(startTime.getAttribute('aria-label')).toBe('Beginn – Uhrzeit, 09:00 Uhr');
+    expect(endDate.getAttribute('aria-label')).toMatch(/^Ende – Datum, /); // ohne „(optional)“
   });
 
   it('picking a date keeps the time; the value stays in datetime-local format', async () => {

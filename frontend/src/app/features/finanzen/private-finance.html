@@ -167,7 +167,7 @@
                   @if (overBudget()) {
                     Budget überschritten · Monatsbudget {{ eur(s!.total) }}
                   } @else if (perDay()) {
-                    etwa <b>{{ eur(perDay()) }} pro Tag</b> für {{ daysLeft() === 1 ? 'den letzten Tag' : 'die restlichen ' + daysLeft() + ' Tage' }} · {{ freeShare() }} % deines Budgets von {{ eur(s!.total) }}
+                    @if (daysLeft() === 1) {heute ist der letzte Tag des Monats} @else {etwa <b>{{ eur(perDay()) }} pro Tag</b> für die restlichen {{ daysLeft() }} Tage} · {{ freeShare() }} % deines Budgets von {{ eur(s!.total) }}
                   } @else {
                     {{ freeShare() }} % deines Budgets von {{ eur(s!.total) }} verbleibend
                   }
@@ -189,7 +189,7 @@
                 </details>
               } @else {
                 <h2 id="hero-money-h" class="kpi__label">Ausgegeben im {{ monthLabel() }}</h2>
-                <p class="kpi__value fin-hero__value">{{ eur(expenseNow()) }}</p>
+                <p class="kpi__value fin-hero__value">{{ eur(spentNow()) }}</p>
                 <p class="kpi__hint fin-hero__sub">Monatsbudget noch nicht festgelegt</p>
               }
             </div>
@@ -353,22 +353,22 @@
           <div class="fin-hero__top">
             <div class="kpi fin-hero__main">
               <h2 id="exp-figure" class="kpi__label">Gesamtausgaben im {{ monthLabel() }}</h2>
-              <p class="kpi__value fin-hero__value">{{ eur(expenseNow()) }}</p>
+              <p class="kpi__value fin-hero__value">{{ eur(expenseBooked()) }}</p>
               <p class="kpi__hint fin-hero__sub" [class.is-good]="expenseDelta() && !expenseDelta()!.up" [class.is-bad]="expenseDelta()?.up">{{ expenseDelta()?.text ?? 'im ' + monthShort() }}</p>
             </div>
             <dl class="hero-stats">
               <div class="hero-stat kpi">
                 <dt class="kpi__label"><span class="hero-stat__dot hero-stat__dot--fixed" aria-hidden="true"></span>Fixkosten<app-term-hint term="Fixkosten" [text]="fixedHint" /></dt>
-                <dd><b class="kpi__value">{{ eur(sp.fixed) }}</b><small class="kpi__hint">{{ sp.recurringCount }} {{ sp.recurringCount === 1 ? 'fester Posten' : 'feste Posten' }} · {{ share(sp.fixed, expenseNow()) }} %</small></dd>
+                <dd><b class="kpi__value">{{ eur(sp.fixed) }}</b><small class="kpi__hint">{{ sp.recurringCount }} {{ sp.recurringCount === 1 ? 'fester Posten' : 'feste Posten' }} · {{ share(sp.fixed, expenseBooked()) }} %</small></dd>
               </div>
               <div class="hero-stat kpi">
                 <dt class="kpi__label"><span class="hero-stat__dot hero-stat__dot--variable" aria-hidden="true"></span>Variable Ausgaben</dt>
-                <dd><b class="kpi__value">{{ eur(sp.variable) }}</b><small class="kpi__hint">{{ share(sp.variable, expenseNow()) }} % der Ausgaben</small></dd>
+                <dd><b class="kpi__value">{{ eur(sp.variable) }}</b><small class="kpi__hint">{{ share(sp.variable, expenseBooked()) }} % der Ausgaben</small></dd>
               </div>
             </dl>
           </div>
-          @if (expenseNow() > 0) {
-            <span class="split-bar" aria-hidden="true"><span class="split-bar__fixed" [style.width.%]="share(sp.fixed, expenseNow())"></span></span>
+          @if (expenseBooked() > 0) {
+            <span class="split-bar" aria-hidden="true"><span class="split-bar__fixed" [style.width.%]="share(sp.fixed, expenseBooked())"></span></span>
           }
         </section>
 
@@ -430,7 +430,7 @@
             @if (recurringExpenses().length) {
               <p class="fixed-costs__sum">{{ eur(fixedMonthly()) }} <small>pro Monat</small></p>
               <p class="fixed-costs__year">
-                Aufs Jahr gerechnet <b>{{ eur(fixedMonthly() * 12) }}</b>@if (expenseNow() > 0) { · {{ share(sp.fixed, expenseNow()) }} % deiner Ausgaben im {{ monthShort() }}}
+                Aufs Jahr gerechnet <b>{{ eur(fixedMonthly() * 12) }}</b>@if (expenseBooked() > 0) { · {{ share(sp.fixed, expenseBooked()) }} % deiner Ausgaben im {{ monthShort() }}}
               </p>
             }
             <ul class="rows">
@@ -543,7 +543,7 @@
                   [attr.aria-valuetext]="spentShare() + ' Prozent des Monatsbudgets gebunden'"
                   ><span [style.width.%]="spentShare()"></span
                 ></span>
-                <p class="kpi__hint fin-hero__sub">{{ overBudget() ? 'Budget überschritten' : freeShare() + ' % verfügbar' }}@if (!overBudget() && perDay()) { · etwa <b>{{ eur(perDay()) }} pro Tag</b>}</p>
+                <p class="kpi__hint fin-hero__sub">{{ overBudget() ? 'Budget überschritten' : freeShare() + ' % verfügbar' }}@if (!overBudget() && perDay() && daysLeft() > 1) { · etwa <b>{{ eur(perDay()) }} pro Tag</b>}</p>
                 <dl class="breakdown" aria-label="So setzt sich der verfügbare Betrag zusammen">
                   <div><dt>Monatsbudget</dt><dd>{{ eur(budget.amount) }}</dd></div>
                   <div><dt>Bereits ausgegeben</dt><dd>− {{ eur(spentNow()) }}</dd></div>
@@ -709,9 +709,9 @@
           <ul class="goal-cards">
             @for (goal of goals(); track goal.id) {
               <li>
-                <button type="button" class="row-btn goal" (click)="open('goals', goal)" [attr.aria-label]="goal.title + ': ' + goalPercent(goal) + ' %, ' + eur(goal.current_amount) + ' von ' + eur(goal.target_amount) + ', Ziel ' + shortMonthYear(goal.target_date) + (goal.monthly_amount ? ', Sparrate ' + eur(goal.monthly_amount) + ' pro Monat' : '') + '. Bearbeiten'">
+                <button type="button" class="row-btn goal" (click)="open('goals', goal)">
                   <span class="tile tile--goal" aria-hidden="true"><app-icon [name]="goalIcon(goal.title)" /></span>
-                  <span class="goal__name"><b>{{ goal.title }}</b><small>{{ goalStatus[goal.status] }}{{ goal.status === 'ACTIVE' && goalOnTrack(goal) ? ' · im Plan' : '' }}</small></span>
+                  <span class="goal__name"><b>{{ goal.title }}</b><small>{{ goalStatus[goal.status] }}{{ goal.status === 'ACTIVE' && goalOnTrack(goal) ? ' · im Plan' : '' }}</small><app-link-hints [items]="goalLinks()[goal.id]" /></span>
                   <span class="goal__pct">{{ goalPercent(goal) }} %</span>
                   <span class="goal__progress"><span class="track"><span [style.width.%]="goalPercent(goal)"></span></span></span>
                   <span class="goal__amounts"><b>{{ eur(goal.current_amount) }}</b> von {{ eur(goal.target_amount) }}</span>
@@ -719,6 +719,7 @@
                     <span class="goal__date"><app-icon name="calendar" aria-hidden="true" />Ziel {{ shortMonthYear(goal.target_date) }}</span>
                     <span class="goal__rate plan">{{ goal.monthly_amount ? eur(goal.monthly_amount) + ' / Monat' : 'ohne Sparrate' }}<small class="goal__range">{{ plan(goal) }}</small></span>
                   </span>
+                  <span class="sr-only">. Bearbeiten</span>
                 </button>
               </li>
             } @empty {

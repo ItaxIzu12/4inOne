@@ -1,13 +1,14 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { BudgetCategory, Trip, TripBudgetCategory, TripExpense } from './reisen-api.service';
-import { BUDGET_META, budgetRows, formatMoney, percent, totalBudget, tripValue } from './reisen-logic';
+import { BUDGET_COLOR, BUDGET_META, budgetRows, formatMoney, percent, totalBudget, tripValue } from './reisen-logic';
 import { FxService } from '../../core/fx/fx.service';
 import { HomeCurrency } from '../../core/fx/home-currency';
 
 const RECENT = 6;
 
-/** Reise › Budget: eigenständig, ohne Finanzen. Gesamtbudget, ausgegeben, verbleibend — in der Reisewährung, darunter
+/** Reise › Budget (seit 31.10.2026: „Noch übrig“ als größte Zahl, darunter ein gestapelter Balken nach Kategorie
+ * mit Beschriftung, Ausgaben nach Tag gruppiert): eigenständig, ohne Finanzen. Gesamtbudget, ausgegeben, verbleibend — in der Reisewährung, darunter
  * ungefähr in der Heimatwährung (Richtkurs); geplant gegen ausgegeben je Kategorie; die Ausgaben in Originalwährung.
  * Ohne Gesamtbudget nie „0 € Budget / 100 % verbraucht“, sondern nur „Bisher ausgegeben“. */
 @Component({
@@ -30,6 +31,7 @@ export class TripBudget {
   readonly editCategory = output<BudgetCategory>();
 
   readonly meta = BUDGET_META;
+  readonly color = BUDGET_COLOR;
   readonly showAll = signal(false);
 
   readonly total = computed(() => totalBudget(this.trip(), this.planned()));
@@ -45,6 +47,31 @@ export class TripBudget {
   readonly blank = computed(() => !this.total() && !this.expenses().length);
   readonly sorted = computed(() => [...this.expenses()].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id));
   readonly shown = computed(() => (this.showAll() ? this.sorted() : this.sorted().slice(0, RECENT)));
+  /** Gestapelter Balken: Ausgaben je Kategorie als Anteil vom Budget (über Budget: vom Ausgegebenen). */
+  readonly stack = computed(() => {
+    const base = Math.max(this.total(), this.spent());
+    if (!base) return [];
+    return this.rows()
+      .filter((r) => r.spent > 0)
+      .map((r) => ({ category: r.category, label: r.label, spent: r.spent, width: (r.spent / base) * 100, color: BUDGET_COLOR[r.category] }));
+  });
+  readonly stackLabel = computed(() =>
+    this.stack().map((s) => `${s.label} ${this.money(s.spent)}`).join(', ') + (this.total() ? ` von ${this.money(this.total())}` : ''),
+  );
+  /** Ausgaben nach Tag (neueste zuerst) — innerhalb der angezeigten Auswahl. */
+  readonly days = computed(() => {
+    const groups: { date: string; label: string; items: TripExpense[] }[] = [];
+    for (const e of this.shown()) {
+      const last = groups.at(-1);
+      if (last?.date === e.date) last.items.push(e);
+      else groups.push({ date: e.date, label: this.dayLabel(e.date), items: [e] });
+    }
+    return groups;
+  });
+  dayLabel(iso: string): string {
+    const label = new Date(`${iso}T12:00`).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'long' });
+    return iso < this.trip().start_date ? `${label} · vor der Reise` : label;
+  }
   /** Vor der Reise gezahlt? Dann steht es dabei — Flüge und Hotels werden oft Monate vorher bezahlt. */
   readonly before = computed(() => this.trip().start_date);
 

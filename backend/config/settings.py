@@ -288,6 +288,9 @@ REST_FRAMEWORK = {
         # Haushaltsdaten über einen längeren Zeitraum, deshalb das strenge
         # Limit für Datenexporte (ARCHITEKTUR.md §3.9), pro Nutzer.
         'data_export': f"{env.int('RATE_LIMIT_DATA_EXPORT', default=2)}/min",
+        # Monats-/Jahresstand und Sparziel-Vorschau der privaten Finanzen (finanzen/throttling.py) — rechnen bis zu
+        # 12 Monate durch; großzügig fürs Blättern, gegen Dauerabfragen durch Bugs oder Skripte.
+        'finanzen_summary': f"{env.int('RATE_LIMIT_FINANZEN_SUMMARY', default=120)}/min",
         # Öffentliche Website (website/views.py): Seitenzählung gegen künstliches Hochzählen.
         'pageview': f"{env.int('RATE_LIMIT_PAGEVIEW', default=120)}/min",
     },

@@ -158,12 +158,18 @@ describe('Haushalt (Demo)', () => {
   });
 
   it('a one-off task can be completed and reopened from “Erledigt”', () => {
+    vi.useFakeTimers();
     const fixture = TestBed.createComponent(Haushalt);
     fixture.detectChanges();
     openTab(fixture, 'aufgaben');
     const compiled = fixture.nativeElement as HTMLElement;
 
     (compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren als erledigt markieren"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    // Erledigt-Moment: kurz abgehakt und durchgestrichen zu sehen, dann verschwindet die Zeile
+    expect(compiled.querySelector('app-aufgaben-tab .task.is-ticked')).not.toBeNull();
+    vi.advanceTimersByTime(600);
+    vi.useRealTimers();
     fixture.detectChanges();
     expect(compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren als erledigt markieren"]')).toBeNull();
 
@@ -241,7 +247,9 @@ describe('Haushalt (Demo)', () => {
     (compiled.querySelector('button[aria-label="Bananen, 1 kg abhaken"]') as HTMLButtonElement).click();
     (compiled.querySelector('button[aria-label="Milch, 2 l abhaken"]') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(text(compiled.querySelector('.checkout-bar__count'))).toBe('4 im Wagen');
+    expect(text(compiled.querySelector('.checkout-bar__count > span'))).toBe('4 im Wagen');
+    // Der Weg zu den Finanzen steht direkt in der Leiste
+    expect(text(compiled.querySelector('.checkout-bar__hint'))).toBe('wird zur Ausgabe in Finanzen');
 
     const tab = fixture.debugElement.query((el) => el.componentInstance instanceof EinkaufTab)
       .componentInstance as EinkaufTab;
@@ -269,7 +277,8 @@ describe('Haushalt (Demo)', () => {
     expect(compiled.querySelector('#ov-heading')).toBeNull();
     const first = compiled.querySelector('app-aufgaben-tab .task')!;
     expect(text(first.querySelector('.task__title'))).toBe('Pflanzen gießen');
-    expect(text(first.querySelector('.task__meta'))).toContain('Überfällig');
+    // Nach Tag gruppiert: „Überfällig“ steht als Gruppe darüber, nicht noch einmal in der Zeile
+    expect(text(compiled.querySelector('app-aufgaben-tab .group-head'))).toContain('Überfällig');
     expect(text(first.querySelector('.task__meta'))).toContain('Wohnzimmer');
     // Suche über Titel, Raum und Person
     const search = compiled.querySelector('app-aufgaben-tab input[type="search"]') as HTMLInputElement;
@@ -282,7 +291,8 @@ describe('Haushalt (Demo)', () => {
     search.value = 'ben'; // zuständige Person
     search.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    expect(Array.from(compiled.querySelectorAll('app-aufgaben-tab .task__meta')).every((m) => text(m).includes('Ben'))).toBe(true);
+    // Zuständig als Kürzel rechts (und als Text für Screenreader)
+    expect(Array.from(compiled.querySelectorAll('app-aufgaben-tab .task')).every((t) => text(t.querySelector('.who')) === 'BE')).toBe(true);
   });
 
   it('completing a recurring task moves it forward instead of removing it', () => {

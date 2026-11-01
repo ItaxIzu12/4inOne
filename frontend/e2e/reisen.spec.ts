@@ -54,7 +54,8 @@ for (const width of [390, 1440]) {
     await expect(page.locator('main h1')).toHaveText('Städtetrip Wien');
     await expect(page.locator('nav.tabs button')).toHaveText(['Übersicht', 'Planung', 'Packliste', 'Budget']);
     await expect(page.locator('app-trip-overview .facts')).toContainText('DUS');
-    await expect(page.locator('app-trip-overview .countdown')).toContainText('In 60 Tagen');
+    await expect(page.locator('app-trip-overview .pass__stub')).toHaveText('60 Tage bis zur Abreise');
+    await expect(page.locator('app-trip-overview .pass__route')).toContainText('DUS');
 
     await page.getByRole('button', { name: 'Reise bearbeiten' }).click();
     await page.locator('#trip-title').fill('Städtetrip Wien lang');
@@ -93,7 +94,7 @@ test('Datum: Ende vor Beginn wird am Feld erklärt; eine neue Reise beginnt frü
   await pickDate(page, page.getByLabel('Letzter Tag', { exact: true }), iso(2));
   await submit(page);
   await page.getByRole('button', { name: 'Ohne Vorschläge starten' }).click();
-  await expect(page.locator('app-trip-overview .countdown')).toBeVisible();
+  await expect(page.locator('app-trip-overview .pass')).toBeVisible();
 });
 
 test('Überschneidung wird erklärt; „Daten prüfen“ führt zurück, „Trotzdem speichern“ speichert', async ({ page }) => {
@@ -203,7 +204,7 @@ test('Planung: Aufgabe hinzufügen und erledigen — der Zähler folgt überall'
   await page.locator('app-trip-planning .row', { hasText: 'Hotel buchen' }).getByRole('checkbox').click();
   await expect(page.getByRole('button', { name: /Offen 4/ })).toBeVisible();
   await tab(page, 'Übersicht');
-  await expect(page.locator('app-trip-overview .tile-card').first()).toContainText('4 Aufgaben offen');
+  await expect(page.locator('app-trip-overview .pass__chip').first()).toHaveText('4 Aufgaben offen');
 
   // Mit Datum, Uhrzeit und Zuständigkeit über das Formular.
   await tab(page, 'Planung');
@@ -212,9 +213,9 @@ test('Planung: Aufgabe hinzufügen und erledigen — der Zähler folgt überall'
   await expect(page.locator('#task-item-title')).toHaveValue('Online Check-in Rückflug');
   await pickDate(page, page.getByLabel(/^Fällig am/), iso(13));
   await page.getByLabel(/^Wer kümmert sich\?/).click();
-  await page.getByRole('option', { name: 'Tom Schulz', exact: true }).click();
+  await page.getByRole('option', { name: 'Max', exact: true }).click();
   await submit(page);
-  await expect(page.locator('app-trip-planning .row', { hasText: 'Online Check-in Rückflug' })).toContainText('Tom Schulz');
+  await expect(page.locator('app-trip-planning .row', { hasText: 'Online Check-in Rückflug' })).toContainText('Max');
 });
 
 test('Packliste: Reisepass, Ladekabel, Jacke — zwei abgehakt ergibt 2 von 3', async ({ page }) => {
@@ -250,7 +251,8 @@ test('Budget: 700 € Budget, Hotel 280 € und Zug 140 € ergeben 420 € ausg
     await expect(page.locator('app-trip-budget .exp', { hasText: title })).toBeVisible();
   }
   await expect(page.locator('app-trip-budget .kpis dd')).toHaveText(['700 €', '420 €', '280 €']);
-  await expect(page.locator('app-trip-budget .exp', { hasText: 'Hotel' })).toContainText('vor der Reise');
+  // Ausgaben nach Tag gruppiert; vor dem ersten Reisetag steht es am Tageskopf
+  await expect(page.locator('app-trip-budget .exp-day').first()).toContainText('vor der Reise');
 });
 
 test('Reisebudget: leer speichern erklärt, was fehlt; „1.500“ wird 1.500 und bleibt sichtbar', async ({ page }) => {
@@ -286,7 +288,7 @@ test('Budget-Kategorie: Zeile antippen, Betrag ändern und Planung wieder entfer
   await page.locator('#plan-total').pressSequentially('1000');
   await page.locator('#plan-UNTERKUNFT').pressSequentially('300');
   await submit(page);
-  const row = page.getByRole('button', { name: /^Unterkunft: .*Planung bearbeiten$/ });
+  const row = page.getByRole('button', { name: /^Unterkunft .*Planung bearbeiten$/ });
   await expect(row).toContainText('von 300 CHF');
 
   await row.click();
@@ -320,7 +322,8 @@ test('Japan: Reisewährung aus dem Ziel, Ausgaben in Yen und Euro, ohne Budget n
   await page.locator('#expense-title').fill('Restaurant');
   await page.locator('#expense-amount').pressSequentially('8.500');
   await expect(dialog.locator('app-fx-hint')).toContainText('≈ 48,71 € in deiner Heimatwährung');
-  await choose(page, 'Kategorie', 'Essen');
+  await dialog.getByRole('group', { name: 'Kategorie' }).getByRole('button', { name: 'Essen' }).click();
+  await expect(dialog.getByRole('group', { name: 'Kategorie' }).getByRole('button', { name: 'Essen' })).toHaveAttribute('aria-pressed', 'true');
   await submit(page);
   await expect(dialog).toHaveCount(0);
   const budget = page.locator('app-trip-budget');
@@ -484,8 +487,8 @@ test('Teilnehmer: einladen und verwalten in der Planung, Hinweis zur Privatsphä
   // Einladung statt sofortiger Teilnahme: Lena ist erst dabei, wenn sie annimmt.
   await expect(page.locator('.participants-editor')).toContainText('Einladung gesendet. Lena ist dabei, sobald Lena annimmt.');
   await expect(page.locator('.participants-editor .row', { hasText: 'Lena' })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Tom Schulz entfernen' }).click();
-  await expect(page.locator('.participants-editor .row', { hasText: 'Tom Schulz' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Max entfernen' }).click();
+  await expect(page.locator('.participants-editor .row', { hasText: 'Max' })).toHaveCount(0);
 });
 
 // Echtes (angemeldetes) Konto ohne jede Reise: kein Fake-Trip, klarer Leerzustand.
@@ -513,8 +516,8 @@ test('eine fremde oder gelöschte Reise verrät nichts', async ({ page }) => {
   await expect(page.getByText('oder du hast keinen Zugriff darauf')).toBeVisible();
 });
 
-// Viele Reisen: Jetzt unterwegs + Als Nächstes als Karte, alles Weitere als kompakte Zeilen, Vergangen eingekürzt.
-test('viele Reisen bleiben übersichtlich: Karten nur für jetzt und als Nächstes, Rest als Zeilen', async ({ page }) => {
+// Viele Reisen: Jetzt unterwegs + Als Nächstes als Bordkarte, weitere kommende als Karten, Vergangen als Zeilen, eingekürzt.
+test('viele Reisen bleiben übersichtlich: Bordkarte nur für jetzt und als Nächstes, Rest als Karten und Zeilen', async ({ page }) => {
   let id = 1;
   const trip = (start: number, len: number, extra: Record<string, unknown> = {}) => ({
     id, title: `Reise ${id++}`, destination: 'Ziel', departure: '', start_date: iso(start), end_date: iso(start + len), notes: '',
@@ -533,8 +536,8 @@ test('viele Reisen bleiben übersichtlich: Karten nur für jetzt und als Nächst
 
   const list = page.locator('app-trip-list');
   await expect(list.getByRole('heading', { name: 'Jetzt unterwegs' })).toBeVisible();
-  await expect(list.locator('.trip')).toHaveCount(2); // unterwegs + als Nächstes
-  await expect(list.locator('.ahead__later .row')).toHaveCount(3);
+  await expect(list.locator('.pass')).toHaveCount(2); // unterwegs + als Nächstes
+  await expect(list.locator('.later-card:not(.later-card--new)')).toHaveCount(3);
   await expect(list.locator('#tl-past-list .row')).toHaveCount(3);
   await expect(list.locator('#tl-past-list')).not.toContainText('gepackt'); // vorbei: keine offenen Punkte mehr
   await list.getByRole('button', { name: 'Alle 5 vergangenen Reisen anzeigen' }).click();

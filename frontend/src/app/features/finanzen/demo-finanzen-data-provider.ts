@@ -46,10 +46,10 @@ function seedCategories(): CategoryDto[] {
 // member_count < 2 komplett weg, exakt wie das echte Backend
 // (finanzen/views.py OverviewView), und das Template rendert die Sektion
 // dann gar nicht erst.
-const DEMO_HOUSEHOLD_NAME = 'Anna';
-const DEMO_MEMBERS: HouseholdMemberDto[] = [{ id: 'demo-member-anna', name: 'Anna' }];
+const DEMO_HOUSEHOLD_NAME = 'Sophie';
+const DEMO_MEMBERS: HouseholdMemberDto[] = [{ id: 'demo-member-sophie', name: 'Sophie' }];
 
-// Analysen-Tab: das eine Einkommen des einen Mitglieds (Anna, die Demo-
+// Analysen-Tab: das eine Einkommen des einen Mitglieds (Sophie, die Demo-
 // Perspektive) — zugleich die Haushalts-Gesamtsumme.
 const DEMO_OWN_INCOME = 1800;
 const DEMO_BUFFER_INITIAL = 300;

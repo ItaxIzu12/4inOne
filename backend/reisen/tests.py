@@ -594,3 +594,28 @@ def test_sharing_one_trip_does_not_leak_access_to_the_owners_other_trips(client,
     client.force_authenticate(users[1])
     assert [t['id'] for t in client.get(BASE + 'trips/').data] == [shared_trip.pk]
     assert client.get(f'{BASE}trips/{private_trip.pk}/').status_code == 404
+
+
+def test_removing_a_participant_takes_away_access_and_personen_und_gruppen_updates(client, users):
+    """Entfernt die Besitzerin jemanden bei Reisen › Personen, sieht die Person die Reise sofort nicht mehr — und
+    „Personen & Gruppen“ (contacts/) zeigt die Reise bei ihr nicht mehr als geteilt, sondern wieder als einladbar."""
+    trip = make_trip(users[0], title='Italien', start_date=day(30), end_date=day(35))
+    contact = Contact.objects.create(owner=users[0], other=users[1])
+    Contact.objects.create(owner=users[1], other=users[0])
+    participant = share(client, trip.pk, contact.pk, 'VIEWER').data['id']
+    bob = APIClient()
+    bob.force_authenticate(users[1])
+
+    row = client.get('/api/v1/contacts/').data['contacts'][0]
+    assert {'kind': 'TRIP', 'id': trip.pk, 'title': 'Italien'} in row['shared']
+    assert bob.get(f'{BASE}trips/{trip.pk}/').status_code == 200
+
+    assert client.delete(f'{BASE}participants/{participant}/').status_code == 204
+
+    assert bob.get(f'{BASE}trips/{trip.pk}/').status_code == 404
+    assert trip.pk not in [t['id'] for t in bob.get(BASE + 'trips/').data]
+    row = client.get('/api/v1/contacts/').data['contacts'][0]
+    assert not any(a['kind'] == 'TRIP' and a['id'] == trip.pk for a in row['shared'])
+    assert {'kind': 'TRIP', 'id': trip.pk, 'title': 'Italien'} in row['can_add_to']
+    bobs_row = bob.get('/api/v1/contacts/').data['contacts'][0]
+    assert not any(a['kind'] == 'TRIP' for a in bobs_row['shared'])

@@ -1,6 +1,6 @@
 @if (enabled()) {
-  <section class="connections" [attr.aria-labelledby]="titleId" (keydown)="onKeydown($event)">
-    <h3 class="connections__title" [id]="titleId"><app-icon name="link" />Verknüpft mit</h3>
+  <section class="connections" [class.connections--card]="variant() === 'card'" [attr.aria-labelledby]="titleId" (keydown)="onKeydown($event)">
+    <h3 class="connections__title" [id]="titleId"><app-icon name="link" />{{ heading() }}</h3>
 
     @switch (status()) {
       @case ('loading') {
@@ -32,11 +32,10 @@
                   <button
                     type="button"
                     class="connection__remove"
-                    [attr.aria-label]="'Verbindung zu „' + row.other.title + '“ entfernen (der Eintrag selbst bleibt erhalten)'"
                     [disabled]="removingId() === row.item.id"
                     (click)="remove(row.item)"
                   >
-                    Verbindung entfernen
+                    Verbindung entfernen<span class="sr-only"> zu „{{ row.other.title }}“ (der Eintrag selbst bleibt erhalten)</span>
                   </button>
                 }
               </li>

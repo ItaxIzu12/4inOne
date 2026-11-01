@@ -50,8 +50,10 @@ describe('AppDatePicker', () => {
     const { el, monthTrigger, dateTrigger } = setup();
     expect(monthTrigger.textContent).toContain('September 2026');
     expect(dateTrigger.textContent).toContain('25.09.2026');
-    const name = el.querySelector(`#${dateTrigger.getAttribute('aria-labelledby')}`);
-    expect(name?.textContent?.trim()).toBe('Datum');
+    // Vorgelesen: Feldbeschriftung und sichtbarer Wert („Datum 25.09.2026“) — WCAG 2.5.3 „Label in Name“
+    const [labelId, textId] = dateTrigger.getAttribute('aria-labelledby')!.split(' ');
+    expect(el.querySelector(`#${labelId}`)?.textContent?.trim()).toBe('Datum');
+    expect(el.querySelector(`#${textId}`)?.textContent?.trim()).toBe('25.09.2026');
   });
 
   it('month picker: shows 12 months, marks the selected, picks a month as JJJJ-MM', async () => {

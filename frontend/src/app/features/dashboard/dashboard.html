@@ -6,7 +6,9 @@
     <header class="greeting">
       <div class="greeting__copy">
         <h1>{{ greeting }}, {{ name() }}!</h1>
-        <p class="greeting__day">{{ dayLine }}</p>
+        @if (dayLine; as line) {
+          <p class="greeting__day">{{ line }}</p>
+        }
       </div>
       <!-- Schnellerfassung: führt zum bestehenden Formular des Bereichs. Liste von Links (kein ARIA-Menü). -->
       <div class="quick" (keydown.escape)="closeQuick(true)">
@@ -116,8 +118,13 @@
         </section>
       }
 
-      <!-- Raster (27.10.2026): links der Tag als Zeitleiste, rechts Finanzen (die eine Zahl + Kurve), Demnächst und Für
-           dich. Am Handy in dieser Reihenfolge untereinander. -->
+      <!-- Vier Antworten (31.10.2026): je Bereich die eine Antwort in seiner Handschrift — Inhalt, keine Navigationskacheln -->
+      @if (!firstSteps()) {
+        <app-dash-answers [answers]="answers()" />
+      }
+
+      <!-- Raster (27.10.2026, erweitert 31.10.2026): links der Tag als Zeitleiste, rechts Finanzen (die eine Zahl + Kurve),
+           darunter Dein Fortschritt und die Idee für heute; unten Demnächst (Bordkarte) und Für dich. -->
       <div class="board">
         <section class="today plan" aria-labelledby="today-title">
           <header class="plan__head">
@@ -224,7 +231,11 @@
               <p class="money__value" [class.is-over]="m.over">{{ m.over ? '−' : '' }}{{ m.amount }}<span class="sr-only">{{ m.over ? ' über dem Budget' : ' übrig' }}</span></p>
               <p class="money__pace">
                 @if (m.perDay) {
-                  etwa <b>{{ m.perDay }} pro Tag</b> für {{ m.left === 1 ? 'den letzten Tag' : 'die restlichen ' + m.left + ' Tage' }}
+                  @if (m.left === 1) {
+                    heute ist der letzte Tag im {{ m.monthName }}
+                  } @else {
+                    etwa <b>{{ m.perDay }} pro Tag</b> für die restlichen {{ m.left }} Tage
+                  }
                 } @else if (m.over) {
                   Die Ausgaben liegen über dem Monatsbudget.
                 } @else {
@@ -271,22 +282,18 @@
           }
         </section>
 
-        <!-- Demnächst: die nächste Reise (Countdown, Packliste) und der Haushalt (nächste Frist, Einkauf) -->
+        <!-- Dein Fortschritt (Ringe aus gezählten Werten) und Idee für heute (freie Zeit + offene Aufgabe) -->
+        <app-dash-progress class="pulse" [rings]="rings()" [idea]="idea()" [organisationPath]="organisationPath()" />
+
+        <!-- Demnächst: die nächste Reise als Bordkarte (wie in Reisen) und der Haushalt (nächste Frist, Einkauf) -->
         <section class="soon" aria-labelledby="soon-title" [attr.aria-busy]="soonLoading() || null">
           <h2 id="soon-title">Demnächst</h2>
           @if (soonLoading()) {
             <div class="soon__card--skeleton" role="status" aria-label="Wird geladen"><span></span><span></span></div>
           } @else if (tripCard() || homeCard().deadline || homeCard().shopping) {
             <div class="soon__grid">
-              @if (tripCard(); as t) {
-                <a class="soon__tile travel" [routerLink]="travelPath()" [queryParams]="t.query">
-                  <span class="soon__top"><span class="row__icon" aria-hidden="true"><app-icon name="travel" /></span>Reisen<span class="soon__when">{{ t.dates }}</span></span>
-                  <strong class="soon__title">{{ t.title }}</strong>
-                  <span class="soon__meta">{{ t.when }}@if (t.tasks) { · {{ t.tasks }}}</span>
-                  @if (t.share !== null) {
-                    <span class="soon__progress"><span class="bar" aria-hidden="true"><span [style.width.%]="t.share"></span></span>{{ t.packing }}</span>
-                  }
-                </a>
+              @if (nextTrip(); as trip) {
+                <app-trip-pass class="soon__pass" [trip]="trip" (open)="openTrip($event)" />
               } @else {
                 <a class="soon__tile soon__tile--empty travel" [routerLink]="travelPath()">
                   <span class="soon__top"><span class="row__icon" aria-hidden="true"><app-icon name="travel" /></span>Reisen</span>

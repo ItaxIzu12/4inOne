@@ -93,6 +93,26 @@
     </div>
   }
 
+  <!-- Als Nächstes: die nächsten Fristen als Zeitleiste mit großem Datum — antippen zeigt den Eintrag -->
+  @if (nextUp().length) {
+    <section class="next" aria-labelledby="next-h">
+      <h2 id="next-h" class="next__title">Als Nächstes</h2>
+      <ol class="next__list">
+        @for (n of nextUp(); track n.entry.id + n.art) {
+          <li>
+            <button type="button" class="next__item" [class.is-soon]="n.days <= 14" (click)="select(n.entry)">
+              <span class="next__date" aria-hidden="true"><b>{{ dayNum(n.date) }}</b><small>{{ monthAbbr(n.date) }}</small></span>
+              <span class="next__text">
+                <span class="next__name" [attr.title]="n.entry.name"><app-icon [name]="nextIcon(n)" aria-hidden="true" /><span class="next__label">{{ n.entry.name }}</span></span>
+                <small>{{ n.label }} · {{ fromNow(n.date) }}<span class="sr-only"> (am {{ formatDate(n.date) }}). Anzeigen</span></small>
+              </span>
+            </button>
+          </li>
+        }
+      </ol>
+    </section>
+  }
+
   <div class="board">
     <!-- Liste -->
     <section class="card list-card" aria-labelledby="zuhause-heading">
@@ -142,7 +162,11 @@
       </div>
 
       <ul class="rows">
-        @for (c of visible(); track c.id) {
+        @for (g of listGroups(); track g.key) {
+        @if (g.label) {
+          <li class="room-head"><app-icon [name]="g.icon ?? (g.key === 'retired' ? 'archive' : 'household')" aria-hidden="true" />{{ g.label }}<span>{{ g.items.length }}</span></li>
+        }
+        @for (c of g.items; track c.id) {
           @let isSel = selected()?.id === c.id;
           <li class="row" [class.is-selected]="isSel" [class.is-retired]="c.status === 'RETIRED' || c.effective_status === 'ENDED'">
             <button type="button" class="row__main" [attr.aria-current]="isSel ? 'true' : null" (click)="select(c)">
@@ -194,6 +218,7 @@
             </button>
             <app-row-menu class="row__menu" [items]="rowMenu" [label]="'Aktionen für ' + c.name" (selected)="openEdit(c)" />
           </li>
+        }
         } @empty {
           <li class="empty">
             @if (query() || status()) {
@@ -418,6 +443,7 @@
   (closed)="closeForm()"
   (deleted)="deleteEditing()"
 >
+  <app-scope-note scope="shared">{{ folderAudience() }}</app-scope-note>
   <div class="field-row">
     <app-field label="Name">
       <input
@@ -512,6 +538,13 @@
       <p class="field-hint">Wartung und Garantieende erscheinen {{ upcomingDays }} Tage vorher unter „Heute“. Vergangene Daten sind erlaubt.</p>
     </fieldset>
   }
+  <!-- Fotos & PDF: Typenschild, Kassenbon, Vertragsseite (31.10.2026) -->
+  <app-attachment-field
+    class="att-household"
+    [attachments]="formAttachments()"
+    [load]="loadFile"
+    privacy="Alle Erwachsenen in deinem Haushalt sehen die Dateien."
+  />
   <app-field label="Notizen" [optional]="true">
     <textarea id="folder-notes" maxlength="1000" [value]="formNotes()" (input)="formNotes.set($any($event.target).value)"></textarea>
   </app-field>

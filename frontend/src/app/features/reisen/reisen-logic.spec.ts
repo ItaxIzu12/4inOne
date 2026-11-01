@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { PackingItem, Trip, TripTask } from './reisen-api.service';
 import {
+  passStub,
+  placeParts,
+  packingShare,
+  taskTimeline,
   tripValue,
   parseBudgetAmount,
   budgetRows,
@@ -169,5 +173,46 @@ describe('reisen-logic', () => {
     expect(parseBudgetAmount('abc')).toBeNull();
     expect(parseBudgetAmount('-5')).toBeNull();
     expect(parseBudgetAmount('1,2,3')).toBeNull();
+  });
+});
+
+describe('Bordkarte und Countdown-Linie (31.10.2026)', () => {
+  const trip = { start_date: '2026-11-12', end_date: '2026-11-14', status: 'CONFIRMED' as const };
+
+  it('placeParts: Ort und Zusatz', () => {
+    expect(placeParts('Berlin, Deutschland')).toEqual({ place: 'Berlin', region: 'Deutschland' });
+    expect(placeParts('DUS')).toEqual({ place: 'DUS', region: '' });
+    expect(placeParts('')).toEqual({ place: '', region: '' });
+  });
+
+  it('passStub: Tage bis zur Abreise, morgen, heute, unterwegs, vorbei', () => {
+    expect(passStub(trip, '2026-10-31')).toEqual({ big: '12', small: 'Tage bis zur Abreise' });
+    expect(passStub(trip, '2026-11-11')).toEqual({ big: '1', small: 'Tag bis zur Abreise' });
+    expect(passStub(trip, '2026-11-12')).toEqual({ big: '1', small: 'Tag von 3' });
+    expect(passStub(trip, '2026-11-13')).toEqual({ big: '2', small: 'Tag von 3' });
+    expect(passStub(trip, '2026-11-20')).toEqual({ big: '3', small: 'Tage unterwegs' });
+    expect(passStub({ ...trip, status: 'CANCELLED' }, '2026-10-31').small).toBe('Abgesagt');
+  });
+
+  it('packingShare: nur die Packliste, nie mit Aufgaben vermischt; ohne Packliste null', () => {
+    expect(packingShare(12, 24)).toEqual({ packed: 12, total: 24, pct: 50 });
+    expect(packingShare(0, 0)).toBeNull();
+  });
+
+  it('taskTimeline: Überfällig · Vor der Abreise · Unterwegs · Nach der Reise · Ohne Datum', () => {
+    let id = 0;
+    const task = (due: string | null, status: 'OPEN' | 'DONE' = 'OPEN') => ({ id: ++id, trip: 1, title: `T${id}`, due_date: due, status, note: '' });
+    const groups = taskTimeline(
+      [task(null), task('2026-11-20'), task('2026-11-13'), task('2026-11-05'), task('2026-10-20'), task('2026-10-20', 'DONE')],
+      trip,
+      '2026-10-31',
+    );
+    expect(groups.map((g) => [g.label, g.tasks.length])).toEqual([
+      ['Überfällig', 1],
+      ['Vor der Abreise', 2],
+      ['Unterwegs', 1],
+      ['Nach der Reise', 1],
+      ['Ohne Datum', 1],
+    ]);
   });
 });

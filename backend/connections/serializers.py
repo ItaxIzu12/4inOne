@@ -19,6 +19,27 @@ class ObjectQuerySerializer(serializers.Serializer):
     object_id = serializers.IntegerField(min_value=1, max_value=MAX_ID)
 
 
+class SummaryQuerySerializer(serializers.Serializer):
+    """?object_type=CALENDAR_EVENT&ids=1,2,3 — höchstens SUMMARY_MAX_IDS, jede ID wie überall 1 … 2⁶³−1."""
+
+    object_type = serializers.ChoiceField(choices=ObjectType.choices)
+    ids = serializers.CharField(max_length=4200)
+
+    def validate_ids(self, value):
+        from connections.services import SUMMARY_MAX_IDS
+
+        parts = [p for p in value.split(',') if p.strip()]
+        if not parts or len(parts) > SUMMARY_MAX_IDS:
+            raise serializers.ValidationError(f'Bitte 1 bis {SUMMARY_MAX_IDS} IDs angeben.')
+        ids = []
+        for part in parts:
+            part = part.strip()
+            if not part.isdigit() or not 1 <= int(part) <= MAX_ID:
+                raise serializers.ValidationError('Ungültige ID.')
+            ids.append(int(part))
+        return ids
+
+
 class CandidateQuerySerializer(ObjectQuerySerializer):
     target_type = serializers.ChoiceField(choices=ObjectType.choices)
     q = serializers.CharField(required=False, allow_blank=True, max_length=120, default='')

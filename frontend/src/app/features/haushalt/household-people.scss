@@ -1,0 +1,181 @@
+// Haushalt › Kopf: Avatare „wer ist dabei“ und Übersicht (01.11.2026). Tönungen wie Personen & Gruppen (familie.css).
+:host {
+  display: inline-flex;
+}
+.hp-stack,
+.hp-invite {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.hp-stack:hover {
+  background: var(--surface-hover);
+}
+.hp-invite {
+  padding: 0 14px;
+  border: 1px dashed var(--household-accent);
+  background: var(--household-soft);
+  color: var(--household-accent);
+}
+.hp-invite app-icon {
+  width: 16px;
+  height: 16px;
+}
+.hp-stack:focus-visible,
+.hp-invite:focus-visible,
+.hp-btn:focus-visible,
+.hp-link:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.hp-avatars {
+  display: flex;
+}
+.hp-avatars .hp-avatar + .hp-avatar {
+  margin-left: -8px;
+}
+.hp-avatar {
+  display: grid;
+  flex: 0 0 32px;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--surface-card);
+  border-radius: 50%;
+  background: var(--finance-soft);
+  color: var(--finance-accent);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+.hp-avatar[data-tone='1'] { background: var(--household-soft); color: var(--household-accent); }
+.hp-avatar[data-tone='2'] { background: var(--travel-soft); color: var(--travel-accent); }
+.hp-avatar[data-tone='3'] { background: var(--organization-soft); color: var(--organization-accent); }
+.hp-avatar[data-tone='4'] { background: var(--warning-soft); color: #8a5a00; }
+.hp-avatar--more {
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+}
+
+// ---------- Übersicht ----------
+.hp {
+  display: grid;
+  gap: 18px;
+}
+.hp h2 {
+  margin: 0;
+  padding-right: 44px;
+  font-size: var(--fs-title, 1.25rem);
+}
+.hp-members {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hp-members li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+.hp-members .hp-avatar {
+  width: 36px;
+  height: 36px;
+  border: 0;
+}
+.hp-members__name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+.hp-members__role {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.hp-rules {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.hp-rules section {
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.hp-rules h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: var(--fs-secondary);
+}
+.hp-rules h3 app-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--household-accent);
+}
+.hp-rules ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+}
+.hp-rules a {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.hp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.hp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--household-fill);
+  color: var(--household-on);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.hp-btn app-icon,
+.hp-link app-icon {
+  width: 16px;
+  height: 16px;
+}
+.hp-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+.hp-link:hover {
+  text-decoration: underline;
+}
+@media (max-width: 520px) {
+  .hp-rules {
+    grid-template-columns: 1fr;
+  }
+}

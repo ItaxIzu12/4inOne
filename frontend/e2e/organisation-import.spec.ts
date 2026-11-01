@@ -47,7 +47,7 @@ for (const width of [390, 1440]) {
   test(`calendar import with preview at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.route('http://localhost:8000/api/**', (route) => route.abort());
-    await page.goto('/demo/organisation');
+    await page.goto('/demo/organisation?tab=calendar');
     await page.getByRole('button', { name: 'Kalender importieren' }).click();
     const dialog = page.getByRole('dialog');
     await page.locator('#import-ics').setInputFiles({ name: 'kalender.ics', mimeType: 'text/calendar', buffer: Buffer.from(ics()) });
@@ -70,7 +70,7 @@ for (const width of [390, 1440]) {
 test('the imported events show in the calendar, and importing again finds them as duplicates', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.route('http://localhost:8000/api/**', (route) => route.abort());
-  await page.goto('/demo/organisation');
+  await page.goto('/demo/organisation?tab=calendar');
   await page.getByRole('button', { name: 'Kalender importieren' }).click();
   await page.locator('#import-ics').setInputFiles({ name: 'kalender.ics', mimeType: 'text/calendar', buffer: Buffer.from(ics()) });
   await page.getByRole('dialog').getByRole('button', { name: '4 importieren' }).click();
@@ -91,7 +91,7 @@ test('the imported events show in the calendar, and importing again finds them a
 
 test('a file that is not a calendar gets a clear message', async ({ page }) => {
   await page.route('http://localhost:8000/api/**', (route) => route.abort());
-  await page.goto('/demo/organisation');
+  await page.goto('/demo/organisation?tab=calendar');
   await page.getByRole('button', { name: 'Kalender importieren' }).click();
   await page.locator('#import-ics').setInputFiles({ name: 'liste.ics', mimeType: 'text/calendar', buffer: Buffer.from('Hallo') });
   await expect(page.getByText('Das ist keine Kalenderdatei (.ics).')).toBeVisible();

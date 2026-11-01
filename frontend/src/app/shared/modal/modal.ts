@@ -55,8 +55,10 @@ export class Modal {
       } else {
         // Nur ein Dialog, der wirklich offen war, gibt seine Sperre frei — geschlossene Dialoge auf derselben
         // Seite dürfen die Sperre eines anderen nicht aufheben.
-        if (this.wasOpen) this.previouslyFocused?.focus();
+        // Erst entsperren, dann den Fokus ohne Scrollen zurückgeben: Das auslösende Element war beim Öffnen sichtbar.
+        // Sonst scrollte der Browser beim Fokussieren unter gesperrtem `html` (sanftes Scrollen) teils ganz nach oben.
         this.scrollLock.set(false);
+        if (this.wasOpen) this.previouslyFocused?.focus({ preventScroll: true });
       }
       this.wasOpen = this.open();
     });

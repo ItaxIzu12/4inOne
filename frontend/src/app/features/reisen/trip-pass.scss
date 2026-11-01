@@ -1,0 +1,300 @@
+// Bordkarte (31.10.2026): die eine Fläche in der Reisefarbe — wie die Kopfkarten in Haushalt und Organisation.
+// Weißer Text ≥ 93 % (≥ 5,6:1 auf --travel-accent), Perforation zwischen Haupt- und Abrissteil, Einkerbungen in der
+// Seitenfarbe. Einblenden nur über Bewegung, nie über Transparenz.
+:host {
+  display: block;
+  // Layout richtet sich nach der Breite der Karte, nicht des Fensters (Tablet mit Seitenleiste ist schmal)
+  container-type: inline-size;
+  --pass: var(--travel-accent, #36608b);
+  --pass-deep: color-mix(in srgb, #000 24%, var(--pass));
+  --pass-text: color-mix(in srgb, #fff 93%, transparent);
+}
+.pass {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 22px var(--radius-sm) 22px 22px;
+  background: var(--pass);
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  // dezente Wegmarke: feine Linien wie auf einem Ticket, nur Form, keine Bildfläche
+  background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.035) 0 2px, transparent 2px 14px);
+}
+.pass--button {
+  cursor: pointer;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease;
+}
+.pass--button:hover {
+  box-shadow: 0 14px 30px rgb(23 37 35 / 0.16);
+  transform: translateY(-2px);
+}
+.pass:focus-visible,
+.pass__chip:focus-visible {
+  outline: 3px solid var(--brand-primary, #172523);
+  outline-offset: 3px;
+}
+.pass__main {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  padding: 24px 26px 22px;
+}
+.pass__kicker {
+  overflow: hidden;
+  color: var(--pass-text);
+  font-size: var(--fs-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pass__kicker b {
+  color: #fff;
+  font-weight: 700;
+}
+.pass__route {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  min-width: 0;
+}
+.pass__end {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.pass__end b {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pass__end small {
+  overflow: hidden;
+  color: var(--pass-text);
+  font-size: var(--fs-meta);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pass__end--to {
+  flex: 1 1 auto;
+}
+// Weg zwischen den Orten: gestrichelt, in der Mitte das Verkehrsmittel
+.pass__path {
+  display: flex;
+  flex: 0 1 140px;
+  align-items: center;
+  gap: 8px;
+  min-width: 44px;
+  margin-bottom: 18px;
+}
+.pass__path i {
+  flex: 1;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.7) 0 6px, transparent 6px 12px);
+}
+.pass__path app-icon {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+}
+// Trennpunkte stehen vor jedem Eintrag und werden links abgeschnitten — bricht die Zeile um, beginnt sie nie mit „·“
+.pass__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  margin-left: -18px;
+  clip-path: inset(0 0 0 18px);
+  color: var(--pass-text);
+  font-size: var(--fs-secondary);
+}
+.pass__facts span {
+  position: relative;
+  padding-left: 18px;
+}
+.pass__facts span::before {
+  position: absolute;
+  left: 7px;
+  content: '·';
+}
+.pass__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pass__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--pass-deep);
+  color: #fff;
+  font: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  white-space: nowrap;
+}
+button.pass__chip {
+  min-height: 36px;
+  cursor: pointer;
+}
+button.pass__chip:hover {
+  background: color-mix(in srgb, #000 34%, var(--pass));
+}
+.pass__chip app-icon {
+  width: 14px;
+  height: 14px;
+}
+.pass__chip.is-strong {
+  background: #fff;
+  color: #9b1c1c;
+}
+// Abrissteil hinter der Perforation, mit Einkerbungen oben und unten
+.pass__stub {
+  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 4px;
+  min-width: 150px;
+  padding: 22px 24px;
+  border-left: 2px dashed rgb(255 255 255 / 0.45);
+  text-align: center;
+}
+.pass__stub::before,
+.pass__stub::after {
+  position: absolute;
+  left: -13px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface-app, #f7f7f4);
+  content: '';
+}
+.pass__stub::before {
+  top: -12px;
+}
+.pass__stub::after {
+  bottom: -12px;
+}
+.pass__stub b {
+  font-family: var(--font-display);
+  font-size: clamp(44px, 6vw, 64px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+}
+.pass__stub small {
+  max-width: 120px;
+  color: var(--pass-text);
+  font-size: var(--fs-meta);
+  line-height: 1.3;
+}
+.pass.is-live .pass__stub small::before {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #7ee0a8;
+  content: '';
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pass__end b,
+  .pass__stub b {
+    animation: rise 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .pass__stub b {
+    animation-delay: 80ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pass--button,
+  .pass--button:hover {
+    transition: none;
+    transform: none;
+  }
+}
+// nur Bewegung, nie Transparenz — Text bleibt in jedem Moment kontrastfest
+@keyframes rise {
+  from { transform: translateY(10px); }
+}
+
+// Schmale Karte (Handy, Tablet mit Seitenleiste): Abrissteil wandert nach oben, Perforation waagerecht,
+// Abreiseort als kleine Zeile, Ziel groß darunter
+@container (max-width: 620px) {
+  .pass {
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 20px var(--radius-sm) 20px 20px;
+  }
+  .pass__main {
+    gap: 12px;
+    padding: 20px 18px 18px;
+  }
+  // Abreiseort als kleine Zeile mit Weg, das Ziel darunter groß — nichts wird abgeschnitten
+  .pass__route {
+    display: grid;
+    grid-template-columns: auto minmax(40px, 72px) minmax(0, 1fr);
+    align-items: center;
+    gap: 4px 10px;
+  }
+  .pass__route .pass__end:first-child b {
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  .pass__route .pass__end:first-child small {
+    display: none;
+  }
+  .pass__path {
+    margin-bottom: 0;
+  }
+  .pass__end--to {
+    grid-column: 1 / -1;
+  }
+  .pass__end--to b {
+    font-size: 36px;
+  }
+  .pass__stub {
+    grid-row: 1;
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: 10px;
+    min-width: 0;
+    padding: 16px 18px 14px;
+    border-bottom: 2px dashed rgb(255 255 255 / 0.45);
+    border-left: 0;
+    text-align: left;
+  }
+  .pass__stub::before,
+  .pass__stub::after {
+    top: auto;
+    bottom: -13px;
+  }
+  .pass__stub::before {
+    left: -12px;
+  }
+  .pass__stub::after {
+    right: -12px;
+    left: auto;
+  }
+  .pass__stub b {
+    font-size: 40px;
+  }
+  .pass__stub small {
+    max-width: none;
+  }
+}

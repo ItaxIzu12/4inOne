@@ -40,7 +40,9 @@ describe('AppTimePicker', () => {
   it('shows HH:MM (accepting HH:MM:SS from the API) and is named by the field label without "(optional)"', () => {
     const { el, trigger } = setup();
     expect(trigger.textContent).toContain('08:30 Uhr');
-    expect(el.querySelector(`#${trigger.getAttribute('aria-labelledby')}`)?.textContent).toContain('Uhrzeit');
+    const [labelId, textId] = trigger.getAttribute('aria-labelledby')!.split(' ');
+    expect(el.querySelector(`#${labelId}`)?.textContent).toContain('Uhrzeit');
+    expect(el.querySelector(`#${textId}`)?.textContent).toContain('08:30 Uhr'); // sichtbarer Wert gehört zum Namen
   });
 
   it('shows a placeholder for an empty or invalid value', () => {

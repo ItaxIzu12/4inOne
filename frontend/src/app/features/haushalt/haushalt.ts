@@ -1,4 +1,6 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { HouseholdPeopleButton } from './household-people';
+import { HouseholdPeople } from './household-people.service';
+import { Component, computed, inject, signal } from '@angular/core';
 import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppShell } from '../../layout/app-shell';
@@ -9,6 +11,7 @@ import { AufgabenTab, AufgabenView, AUFGABEN_VIEWS } from './aufgaben-tab';
 import { EinkaufTab } from './einkauf-tab';
 import { OrdnerTab, ZuhauseSection } from './ordner-tab';
 import { HaushaltCreate, HaushaltTabKey, UebersichtTab } from './uebersicht-tab';
+import { TaskRoom } from './haushalt-api.service';
 
 type HaushaltTab = HaushaltTabKey;
 // Haushalt V1 (docs/HAUSHALT_V1.md): genau diese vier Reiter.
@@ -39,7 +42,9 @@ const LEGACY_TABS: Record<string, { tab: HaushaltTab; section?: ZuhauseSection; 
 @Component({
   selector: 'app-haushalt',
   standalone: true,
-  imports: [MobileAction, AppShell, AppIcon, SaveFeedback, EinkaufTab, AufgabenTab, OrdnerTab, UebersichtTab],
+  imports: [MobileAction, AppShell, AppIcon, SaveFeedback, EinkaufTab, AufgabenTab, OrdnerTab, UebersichtTab, HouseholdPeopleButton],
+  // Wer ist im Haushalt: ein Stand für Kopf-Avatare und die Dialoge der Reiter
+  providers: [HouseholdPeople],
   templateUrl: './haushalt.html',
   styleUrl: './haushalt.scss',
 })
@@ -52,6 +57,8 @@ export class Haushalt {
   protected readonly activeTab = signal<HaushaltTab>('heute');
   protected readonly zuhauseSection = signal<ZuhauseSection>('geraete');
   protected readonly aufgabenView = signal<AufgabenView>('alle');
+  /** Aus „Heute“ › Räume: Aufgaben nur dieses Raums (leer = alle Räume). */
+  protected readonly aufgabenRoom = signal<TaskRoom | ''>('');
   /** Hauptaktion im Seitenkopf passend zum Reiter; „Heute“ hat keine. */
   protected readonly headAction = computed(() => {
     switch (this.activeTab()) {
@@ -66,9 +73,9 @@ export class Haushalt {
     }
   });
   protected readonly saveMessage = signal('');
+  protected readonly saveStamp = signal(0);
   protected readonly newTaskRequest = signal(0);
   private requestSeq = 0;
-  private saveTimer?: ReturnType<typeof setTimeout>;
 
   constructor() {
     const params = this.route.snapshot.queryParamMap;
@@ -86,7 +93,6 @@ export class Haushalt {
     if (section && SECTIONS.includes(section)) this.zuhauseSection.set(section);
     const view = params.get('ansicht') as AufgabenView | null;
     if (view && AUFGABEN_VIEWS.includes(view)) this.aufgabenView.set(view);
-    inject(DestroyRef).onDestroy(() => clearTimeout(this.saveTimer));
   }
 
   protected headActionClick(): void {
@@ -95,6 +101,7 @@ export class Haushalt {
 
   protected selectTab(tab: HaushaltTab): void {
     this.newTaskRequest.set(0);
+    if (tab !== 'aufgaben') this.aufgabenRoom.set(''); // Raumfilter gilt nur für den Weg aus „Heute“
     this.activeTab.set(tab);
     this.syncUrl();
   }
@@ -103,6 +110,13 @@ export class Haushalt {
   protected openZuhause(section: ZuhauseSection): void {
     this.zuhauseSection.set(section);
     this.selectTab('zuhause');
+  }
+
+  /** Raum-Karte in „Heute“: Aufgaben öffnen, gefiltert auf diesen Raum (alle offenen, nicht nur heute). */
+  protected openRoom(room: TaskRoom): void {
+    this.aufgabenRoom.set(room);
+    this.aufgabenView.set('alle');
+    this.selectTab('aufgaben');
   }
 
   /** Leerer Zustand in „Heute“: direkt das passende Formular öffnen. */
@@ -150,14 +164,13 @@ export class Haushalt {
     queueMicrotask(() => document.getElementById(`hh-tab-${next}`)?.focus());
   }
 
+  /** Dauer und Ausblenden übernimmt app-save-feedback selbst (pausiert bei Zeiger/Fokus). */
   protected showSaved(message: string): void {
-    clearTimeout(this.saveTimer);
     this.saveMessage.set(message);
-    this.saveTimer = setTimeout(() => this.saveMessage.set(''), 5000);
+    this.saveStamp.update((n) => n + 1); // gleiche Meldung zweimal → startet neu
   }
 
   protected dismissSaved(): void {
-    clearTimeout(this.saveTimer);
     this.saveMessage.set('');
   }
 }

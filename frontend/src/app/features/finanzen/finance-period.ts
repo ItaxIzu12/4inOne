@@ -10,6 +10,7 @@ import {
   PrivateFinanceApi,
   SavingsContributionDto,
   UNCATEGORISED_COLOR,
+  euros,
 } from './private-finance-api.service';
 import {
   FinancePeriod,
@@ -178,9 +179,10 @@ export class FinancePeriodView {
     const n = Number(value);
     return `${n.toLocaleString('de-DE', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}\u00a0€`; // „€“ nie allein in der nächsten Zeile
   }
-  /** Buchungen und Tagessummen immer mit Cent („−77,00 €“) — wie in der Transaktionsliste. */
+  /** Buchungen und Tagessummen immer mit Cent („−77,00 €“) — dieselbe Formatierung wie die Transaktionsliste
+   * (euros), nur mit geschütztem Leerzeichen, damit „€“ nie allein umbricht. */
   exact(value: number | string): string {
-    return `${Number(value).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u00a0€`;
+    return euros(Number(value).toFixed(2)).replace(' €', '\u00a0€');
   }
   categoryName(id: number | null): string {
     return this.categories().find((c) => c.id === id)?.name ?? 'Sonstiges';

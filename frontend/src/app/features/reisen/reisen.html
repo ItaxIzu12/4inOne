@@ -82,6 +82,7 @@
           @case ('uebersicht') {
             <app-trip-overview
               [trip]="trip"
+              [tasks]="tasks()"
               [packed]="packingPackedCount()"
               [packingTotal]="packing().length"
               [tasksOpen]="openTasks().length"
@@ -169,12 +170,26 @@
       <p class="small">Das kann gewollt sein – etwa bei einer Weiterreise oder einem Ausflug während einer längeren Reise.</p>
     </div>
   } @else {
-    <app-field label="Name der Reise" [error]="titleError()">
-      <input id="trip-title" formControlName="title" maxlength="120" required placeholder="z. B. Berlin Wochenende" />
-    </app-field>
+    <!-- Live-Bordkarte: zeigt beim Tippen, was entsteht (nur Vorschau, für Screenreader stehen dieselben Angaben in den Feldern) -->
+    @let pv = tripPreview();
+    <div class="ticket-preview" aria-hidden="true">
+      <span class="ticket-preview__route">
+        <b [class.is-empty]="!pv.from">{{ pv.from || 'Von' }}</b>
+        <span class="ticket-preview__path"><i></i><app-icon [name]="pv.icon" /><i></i></span>
+        <b [class.is-empty]="!pv.to">{{ pv.to || 'Wohin?' }}</b>
+      </span>
+      <small>{{ pv.facts }}</small>
+    </div>
+
+    <h3 class="form-step"><span aria-hidden="true">1</span>Wohin?</h3>
     <app-field label="Reiseziel" [error]="destinationError()">
       <input id="trip-destination" formControlName="destination" maxlength="160" required placeholder="z. B. Berlin" />
     </app-field>
+    <app-field label="Name der Reise" [error]="titleError()">
+      <input id="trip-title" formControlName="title" maxlength="120" required placeholder="z. B. Berlin Wochenende" />
+    </app-field>
+
+    <h3 class="form-step"><span aria-hidden="true">2</span>Wann?</h3>
     <div class="field-row">
       <app-field label="Erster Tag" [error]="startError()">
         <app-date-picker mode="date" formControlName="start_date" [min]="tripStartMin()" />
@@ -189,19 +204,28 @@
       </app-field>
     }
 
+    <h3 class="form-step"><span aria-hidden="true">3</span>Wie? <span class="muted">– optional</span></h3>
+    <app-field label="Abreiseort" [optional]="true" hint="z. B. Düsseldorf oder DUS">
+      <input id="trip-departure" formControlName="departure" maxlength="120" />
+    </app-field>
+    <div class="transport-field">
+      <span class="baggage-field__label" id="trip-transport-label">Verkehrsmittel</span>
+      <div class="transport-chips" role="group" aria-labelledby="trip-transport-label">
+        @for (o of transportChips; track o.value) {
+          <button type="button" class="transport-chip" [attr.aria-pressed]="tripTransport() === o.value" (click)="setTransport(o.value)">
+            <app-icon [name]="o.icon" aria-hidden="true" />{{ o.label }}
+          </button>
+        }
+      </div>
+    </div>
+
     <button type="button" class="more-toggle" [attr.aria-expanded]="tripMoreOpen()" aria-controls="trip-more" (click)="tripMoreOpen.set(!tripMoreOpen())">
       <app-icon [name]="tripMoreOpen() ? 'chevron-up' : 'chevron-down'" aria-hidden="true" />
       Weitere Angaben <span class="muted">– optional</span>
     </button>
     @if (tripMoreOpen()) {
       <div id="trip-more" class="more">
-        <app-field label="Abreiseort" [optional]="true" hint="z. B. Düsseldorf oder DUS">
-          <input id="trip-departure" formControlName="departure" maxlength="120" />
-        </app-field>
         <div class="field-row">
-          <app-field label="Transport" [optional]="true">
-            <app-select formControlName="transport_type" [options]="transportTypeOptions" />
-          </app-field>
           <app-field label="Transport-Notiz" [optional]="true" hint="z. B. Hin- und Rückfahrt gebucht">
             <input id="trip-transport-note" formControlName="transport_note" maxlength="160" />
           </app-field>
@@ -333,12 +357,20 @@
   </div>
   <app-fx-hint [amount]="expenseAmountValue()" [from]="expenseValue().currency" [to]="homeCurrency()" />
   <div class="field-row">
-    <app-field label="Kategorie">
-      <app-select formControlName="category" [options]="budgetCategoryOptions" />
-    </app-field>
     <app-field label="Bezahlt am" hint="Darf vor der Reise liegen.">
       <app-date-picker mode="date" formControlName="date" />
     </app-field>
+  </div>
+  <!-- Kategorie als Chips mit Symbol und Farbe — ein Tipp statt einer Auswahlliste -->
+  <div class="transport-field">
+    <span class="baggage-field__label" id="expense-category-label">Kategorie</span>
+    <div class="category-chips" role="group" aria-labelledby="expense-category-label">
+      @for (c of expenseCategoryChips; track c.value) {
+        <button type="button" class="category-chip" [style.--c]="c.color" [attr.aria-pressed]="expenseValue().category === c.value" (click)="expenseForm.controls.category.setValue(c.value)">
+          <app-icon [name]="c.icon" aria-hidden="true" />{{ c.label }}
+        </button>
+      }
+    </div>
   </div>
   <app-field label="Notiz" [optional]="true">
     <input id="expense-note" formControlName="note" maxlength="240" />
@@ -569,9 +601,9 @@
 
     <footer class="suggest__foot">
       @if (smartSetupEmpty()) {
-        <button type="button" class="primary" (click)="skipSmartSetup()">Schließen</button>
+        <button type="button" class="primary" (click)="skipSmartSetup()"><app-icon name="close" aria-hidden="true" />Schließen</button>
       } @else {
-        <button type="button" class="suggest__cancel" [disabled]="smartSetupSaving()" (click)="skipSmartSetup()">Abbrechen</button>
+        <button type="button" class="suggest__cancel" [disabled]="smartSetupSaving()" (click)="skipSmartSetup()"><app-icon name="close" aria-hidden="true" />Abbrechen</button>
         <button
           type="button"
           class="primary"
@@ -582,7 +614,7 @@
           @if (smartSetupSaving()) {
             <span class="save-spinner" aria-hidden="true"></span>Wird übernommen …
           } @else {
-            {{ smartSetupSubmitLabel() }}
+            <app-icon name="check" aria-hidden="true" />{{ smartSetupSubmitLabel() }}
           }
         </button>
       }

@@ -1,0 +1,172 @@
+// Reisen › Dialoge (31.10.2026): Reise anlegen/bearbeiten mit Live-Bordkarte und den Schritten „Wohin? · Wann? ·
+// Wie?“, Verkehrsmittel und Ausgaben-Kategorie als Chips. Dazu der Reisekopf am Handy. Eigene Datei, damit
+// reisen.scss im Budget bleibt.
+
+// ---------- Live-Bordkarte ----------
+.ticket-preview {
+  // bleibt beim Ausfüllen oben im Dialog stehen — man sieht immer, was entsteht
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: grid;
+  gap: 6px;
+  margin: 0 0 4px;
+  box-shadow: 0 6px 14px -8px rgb(23 37 35 / 0.35);
+  padding: 16px 18px;
+  border-radius: 18px var(--radius-sm) 18px 18px;
+  background: var(--travel-accent, #36608b);
+  color: #fff;
+}
+.ticket-preview__route {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.ticket-preview__route b {
+  overflow: hidden;
+  max-width: 45%;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ticket-preview__route b.is-empty {
+  color: color-mix(in srgb, #fff 80%, transparent);
+  font-weight: 600;
+}
+.ticket-preview__path {
+  display: flex;
+  flex: 1 1 60px;
+  align-items: center;
+  gap: 6px;
+  min-width: 40px;
+}
+.ticket-preview__path i {
+  flex: 1;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.7) 0 5px, transparent 5px 10px);
+}
+.ticket-preview__path app-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+}
+.ticket-preview small {
+  color: color-mix(in srgb, #fff 93%, transparent);
+  font-size: var(--fs-meta);
+}
+
+// ---------- Schritte ----------
+.form-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 -2px;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  font-weight: 700;
+}
+.form-step > span[aria-hidden] {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--travel-soft);
+  color: var(--accent-hover, #2b4f75);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+.form-step .muted {
+  font-size: var(--fs-secondary);
+  font-weight: 400;
+}
+
+// ---------- Chips: Verkehrsmittel und Kategorie ----------
+.transport-field {
+  display: grid;
+  gap: 8px;
+}
+.transport-chips,
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.transport-chip,
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default, #dde1da);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  cursor: pointer;
+  transition: border-color 150ms ease-out, background-color 150ms ease-out;
+}
+.transport-chip app-icon,
+.category-chip app-icon {
+  width: 17px;
+  height: 17px;
+  color: var(--travel-accent);
+}
+.transport-chip:hover,
+.category-chip:hover {
+  border-color: var(--border-strong, #b9c0b6);
+}
+.transport-chip[aria-pressed='true'] {
+  border-color: var(--travel-accent);
+  background: var(--travel-soft);
+  color: var(--accent-hover, #2b4f75);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--travel-accent);
+}
+.category-chip app-icon {
+  color: color-mix(in srgb, var(--c, #8a93a3) 80%, #172523);
+}
+.category-chip[aria-pressed='true'] {
+  border-color: var(--c, #8a93a3);
+  background: color-mix(in srgb, var(--c, #8a93a3) 12%, #fff);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--c, #8a93a3);
+}
+.transport-chip:focus-visible,
+.category-chip:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .transport-chip,
+  .category-chip {
+    transition: none;
+  }
+}
+@media (max-width: 420px) {
+  .ticket-preview__route b {
+    font-size: 20px;
+  }
+  .transport-chip,
+  .category-chip {
+    padding: 0 12px;
+  }
+}
+
+// ---------- Reisekopf am Handy ----------
+// Die Bordkarte trägt das Reisesymbol schon — im Kopf fällt es weg, damit der Titel nie mitten im Wort bricht.
+@media (max-width: 760px) {
+  .trip-heading .heading-icon {
+    display: none;
+  }
+  .trip-heading h1 {
+    overflow-wrap: break-word;
+  }
+}

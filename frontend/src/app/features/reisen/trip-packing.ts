@@ -5,7 +5,8 @@ import { PackingCategory, PackingItem } from './reisen-api.service';
 import { PACKING_META, PACKING_ORDER, PackingView, packingGroups, percent } from './reisen-logic';
 
 /** Reise › Packliste: Artikel eintippen und Enter (Kategorie optional), nach Kategorie gruppiert abhaken, Fortschritt
- * „12 von 24 gepackt“. Kein Inventarsystem. */
+ * „12 von 24 gepackt“. Seit 31.10.2026 oben Kategorie-Kacheln mit Ring (antippen springt zur Gruppe) und ein ruhiger
+ * Fertig-Moment, wenn alles gepackt ist. Kein Inventarsystem. */
 @Component({
   selector: 'app-trip-packing',
   imports: [AppIcon, AppSelect],
@@ -36,6 +37,28 @@ export class TripPacking {
   readonly packed = computed(() => this.items().filter((i) => i.is_packed).length);
   readonly pct = computed(() => percent(this.packed(), this.items().length));
   readonly groups = computed(() => packingGroups(this.items(), this.view()));
+  /** Kacheln oben: jede Kategorie mit Ring „2/4“ — immer über die ganze Kategorie, unabhängig von der Ansicht. */
+  readonly tiles = computed(() =>
+    packingGroups(this.items(), 'all').map((g) => ({ ...g, short: g.label.replace(/^Wichtige /, ''), pct: percent(g.packed, g.total) })),
+  );
+  readonly allPacked = computed(() => this.items().length > 0 && this.packed() === this.items().length);
+
+  /** Kachel antippen: Gruppe aufklappen (bei Bedarf „Alle“ zeigen) und dorthin springen. */
+  jump(category: PackingCategory): void {
+    if (!this.groups().some((g) => g.category === category)) this.view.set('all');
+    this.collapsed.update((set) => {
+      const next = new Set(set);
+      next.delete(category);
+      return next;
+    });
+    setTimeout(() => {
+      const target = document.getElementById('pk-sec-' + category);
+      if (!target) return;
+      const calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      target.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
+      target.querySelector<HTMLButtonElement>('.group__head')?.focus({ preventScroll: true });
+    });
+  }
 
   toggleGroup(category: PackingCategory) {
     this.collapsed.update((set) => {

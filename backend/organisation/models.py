@@ -68,6 +68,80 @@ class Recurrence(models.TextChoices):
     YEARLY = 'yearly', 'Jährlich'
 
 
+class CalendarColor(models.TextChoices):
+    """Farbe eines gemeinsamen Kalenders — eine feste Auswahl, keine freien Farbwerte."""
+    AMBER = 'amber', 'Bernstein'
+    BLUE = 'blue', 'Blau'
+    GREEN = 'green', 'Grün'
+    ROSE = 'rose', 'Rosé'
+    VIOLET = 'violet', 'Violett'
+    SLATE = 'slate', 'Schiefer'
+
+
+class SharedCalendar(models.Model):
+    """Ein gemeinsamer Kalender (31.10.2026), z. B. „Familie“ oder „WG“.
+
+    Regeln (organisation/calendars.py, docs/AUTH_AND_PERMISSIONS.md › Gemeinsame Kalender):
+    - Sehen: nur Mitglieder (CalendarMember). Private Termine (calendar=None) sieht nie jemand außer der Person,
+      die sie angelegt hat — auch nicht als „beschäftigt“.
+    - Mitglied wird man nur über eine angenommene Einladung (core/invitations.py, Scope CALENDAR).
+    - Wird der Kalender gelöscht, werden seine Termine wieder private Termine der Person, die sie angelegt hat
+      (on_delete=SET_NULL am Termin) — nichts geht verloren, nichts wird für andere sichtbar."""
+
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='owned_calendars')
+    name = models.CharField(max_length=60)
+    color = models.CharField(max_length=8, choices=CalendarColor.choices, default=CalendarColor.AMBER)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name', 'id']
+
+    def __str__(self) -> str:
+        return f'Kalender {self.pk}: {self.name}'
+
+
+class CalendarMember(models.Model):
+    class Role(models.TextChoices):
+        OWNER = 'OWNER', 'Besitzer:in'
+        EDITOR = 'EDITOR', 'Kann bearbeiten'
+        VIEWER = 'VIEWER', 'Kann ansehen'
+
+    calendar = models.ForeignKey(SharedCalendar, on_delete=models.CASCADE, related_name='members')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='calendar_memberships')
+    role = models.CharField(max_length=6, choices=Role.choices, default=Role.VIEWER)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['added_at', 'id']
+        constraints = [models.UniqueConstraint(fields=['calendar', 'user'], name='one_membership_per_calendar')]
+        indexes = [models.Index(fields=['user', 'calendar'])]
+
+
+class CalendarShare(models.Model):
+    """Freigabe des eigenen Kalenders für eine Person (wie Outlook, 31.10.2026).
+
+    Die Person sieht danach NUR die Termine, die `owner` ausdrücklich mit ihr teilt (EventShare) — private Termine
+    bleiben unsichtbar, auch nicht als „beschäftigt“. Entsteht ausschließlich über eine angenommene Einladung
+    (core/invitations.py, Scope MY_CALENDAR). Rolle: VIEWER sieht, EDITOR darf geteilte Termine auch ändern.
+    Endet die Freigabe, verschwinden alle geteilten Termine sofort (EventShare-Zeilen werden gelöscht)."""
+
+    class Role(models.TextChoices):
+        EDITOR = 'EDITOR', 'Kann bearbeiten'
+        VIEWER = 'VIEWER', 'Kann ansehen'
+
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='calendar_shares_given')
+    grantee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='calendar_shares_received')
+    role = models.CharField(max_length=6, choices=Role.choices, default=Role.VIEWER)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['owner', 'grantee'], name='one_calendar_share_per_pair'),
+            models.CheckConstraint(condition=~models.Q(owner=models.F('grantee')), name='calendar_share_not_self'),
+        ]
+
+
 class PersonalEvent(models.Model):
     """Privater Termin, getrennt vom alten gemeinsamen Haushaltskalender
     (CalendarEvent). Ganztägig: starts_at ist Mitternacht (Zeitzone der
@@ -82,13 +156,29 @@ class PersonalEvent(models.Model):
     category = models.CharField(max_length=12, choices=EventCategory.choices, default=EventCategory.OTHER)
     all_day = models.BooleanField(default=False)
     recurrence = models.CharField(max_length=8, choices=Recurrence.choices, blank=True, default='')
+    # Gemeinsamer Kalender oder None = privat (nur `owner`). `owner` bleibt immer die Person, die den Termin angelegt
+    # hat; wird der Kalender gelöscht, ist der Termin wieder ihr privater Termin.
+    calendar = models.ForeignKey(SharedCalendar, on_delete=models.SET_NULL, null=True, blank=True, related_name='events')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['starts_at', 'id']
-        indexes = [models.Index(fields=['owner', 'starts_at'])]
+        indexes = [models.Index(fields=['owner', 'starts_at']), models.Index(fields=['calendar', 'starts_at'])]
         constraints = [models.CheckConstraint(condition=models.Q(ends_at__isnull=True) | models.Q(ends_at__gte=models.F('starts_at')), name='personal_event_end_after_start')]
+
+
+class EventShare(models.Model):
+    """Ein Termin, den `event.owner` mit einer Person teilt, für die der eigene Kalender freigegeben ist.
+    Sichtbar nur, solange die Freigabe (CalendarShare owner → user) besteht — die Prüfung macht
+    organisation/calendars.py, nicht diese Zeile allein."""
+
+    event = models.ForeignKey(PersonalEvent, on_delete=models.CASCADE, related_name='shares')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='shared_events')
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['event', 'user'], name='one_share_per_event_and_user')]
+        indexes = [models.Index(fields=['user', 'event'])]
 
 
 class PersonalTask(models.Model):
@@ -178,6 +268,8 @@ class PersonalFile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     # „Zuletzt verwendet“: Öffnen oder Herunterladen rückt die Datei nach vorn.
     used_at = models.DateTimeField(auto_now_add=True)
+    # Anhang einer Notiz (31.10.2026). Notiz gelöscht → Datei gelöscht (Speicher räumt organisation/signals.py auf).
+    note = models.ForeignKey('PersonalNote', on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
 
     class Meta:
         ordering = ['-used_at', '-id']

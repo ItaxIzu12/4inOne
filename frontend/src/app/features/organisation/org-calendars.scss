@@ -1,0 +1,351 @@
+// Organisation › Gemeinsame Kalender (31.10.2026): Filterleiste über dem Kalender und Verwaltungs-Dialog.
+// Kalenderfarben als feste Auswahl; Text immer in dunkler Mischung (≥ 4,5:1), nie nur Farbe (Name steht dabei).
+:host {
+  display: block;
+}
+[data-color='green'] { --cal: #2e8b57; }
+[data-color='blue'] { --cal: #2f6fb5; }
+[data-color='amber'] { --cal: #b8741a; }
+[data-color='rose'] { --cal: #c4456f; }
+[data-color='violet'] { --cal: #7451b8; }
+[data-color='slate'] { --cal: #5b6b7f; }
+.cal-dot {
+  display: inline-block;
+  flex: 0 0 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cal, var(--text-secondary));
+}
+
+// ---------- Filterleiste ----------
+.cal-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.cal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.cal-chip app-icon {
+  width: 16px;
+  height: 16px;
+}
+.cal-chip:hover {
+  border-color: var(--border-strong);
+}
+.cal-chip[aria-pressed='true'] {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: #fff;
+}
+.cal-chip[aria-pressed='true'] .cal-dot {
+  box-shadow: 0 0 0 2px #fff;
+}
+// Für mich freigegebener Kalender einer Person: Initiale statt Farbpunkt
+.cal-avatar {
+  display: grid;
+  flex: 0 0 22px;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cal) 16%, #fff);
+  color: color-mix(in srgb, var(--cal) 70%, #172523);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+.cal-chip--manage {
+  border-style: dashed;
+}
+.cal-chip:focus-visible,
+.sc-btn:focus-visible,
+.sc-link:focus-visible,
+.sc-icon:focus-visible,
+.sc-select:focus-visible,
+.sc-input:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+// ---------- Dialog ----------
+// Flush-Modal: der Inhalt bringt Innenabstand und Scrollen selbst mit
+.sc {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 16px;
+  width: 100%;
+  min-height: 0;
+  padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.sc h2 {
+  margin: 0 0 8px;
+  font-size: var(--fs-section, 22px);
+}
+.sc h3 {
+  margin: 0;
+  font-size: var(--fs-body);
+}
+.sc__promise {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+  line-height: 1.5;
+}
+.sc__promise b {
+  color: var(--text-primary);
+}
+.sc__promise app-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--text-primary);
+}
+.sc__note,
+.sc__error {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-secondary);
+}
+.sc__note {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.sc__error {
+  background: var(--error-soft);
+  color: var(--error);
+}
+.sc-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--cal);
+  border-radius: var(--radius-lg);
+}
+.sc-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sc-card__role {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.sc-members {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sc-members li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.sc-avatar {
+  display: grid;
+  flex: 0 0 32px;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cal) 14%, #fff);
+  color: color-mix(in srgb, var(--cal) 70%, #172523);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+.sc-avatar app-icon {
+  width: 15px;
+  height: 15px;
+}
+.sc-members__name {
+  // Name bricht nie mitten im Wort; wird es eng, rutscht die Rollenauswahl in die nächste Zeile
+  flex: 1 1 6rem;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.sc-ctrl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.sc-members__role,
+.sc-muted {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.sc-muted {
+  margin: 0;
+  font-size: var(--fs-secondary);
+}
+.is-pending .sc-members__name {
+  color: var(--text-secondary);
+}
+.sc-select,
+.sc-input {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-secondary);
+}
+.sc-input {
+  width: 100%;
+}
+.sc-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.sc-icon:hover {
+  background: var(--surface-hover);
+}
+.sc-icon app-icon {
+  width: 16px;
+  height: 16px;
+}
+.sc-invite {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--surface-hover);
+}
+.sc-label {
+  margin: 4px 0 0;
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+}
+.sc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sc-btn {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--brand-primary);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sc-btn:disabled {
+  background: var(--border-strong);
+  cursor: default;
+}
+.sc-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.sc-link app-icon {
+  width: 15px;
+  height: 15px;
+}
+.sc-link--danger {
+  color: var(--error);
+}
+.sc-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.sc-new {
+  display: grid;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+@media (max-width: 560px) {
+  .sc {
+    padding: 18px 16px;
+  }
+  .cal-filter {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .cal-chip {
+    flex-shrink: 0;
+  }
+}
+
+// Zwischentitel vor den Gruppen-Kalendern
+.sc-section {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+// Nur Demo: Annehmen simulieren — als Demo-Aktion erkennbar (gestrichelt)
+.sc-link--demo {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 999px;
+  font-size: var(--fs-meta);
+}

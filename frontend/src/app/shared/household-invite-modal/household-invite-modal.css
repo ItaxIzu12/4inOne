@@ -100,3 +100,16 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Knöpfe mit Symbol wie in allen Dialogen (01.11.2026) */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-primary app-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}

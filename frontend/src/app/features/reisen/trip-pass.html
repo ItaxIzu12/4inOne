@@ -1,0 +1,45 @@
+@if (mode() === 'list') {
+  <button type="button" class="pass pass--button" [class.is-live]="phase() === 'ongoing'" (click)="open.emit(trip().id)">
+    <ng-container *ngTemplateOutlet="body" />
+  </button>
+} @else {
+  <section class="pass" [class.is-live]="phase() === 'ongoing'" aria-label="Bordkarte dieser Reise">
+    <ng-container *ngTemplateOutlet="body" />
+  </section>
+}
+
+<ng-template #body>
+  <span class="pass__main">
+    <span class="pass__kicker">
+      <b>{{ kicker() }}</b>@if (mode() === 'list') {<span> · {{ trip().title }}</span>}
+    </span>
+    <span class="pass__route">
+      @if (from().place) {
+        <span class="pass__end">
+          <b>{{ from().place }}</b>{{ ' ' }}<small>Abreise</small>
+        </span>
+        <span class="pass__path" aria-hidden="true"><i></i><app-icon [name]="icon()" /><i></i></span>
+      }
+      <span class="pass__end pass__end--to">
+        <b>{{ to().place }}</b>@if (toNote()) {{{ ' ' }}<small>{{ toNote() }}</small>}
+      </span>
+    </span>
+    <span class="pass__facts">
+      @for (f of facts(); track $index) {<span>{{ f }}</span>}
+    </span>
+    @if (chips().length) {
+      <span class="pass__chips">
+        @for (c of chips(); track c.tab) {
+          @if (mode() === 'detail') {
+            <button type="button" class="pass__chip" [class.is-strong]="c.strong" (click)="openTab.emit(c.tab)">{{ c.text }}<app-icon name="arrow" aria-hidden="true" /></button>
+          } @else {
+            <span class="pass__chip" [class.is-strong]="c.strong">{{ c.text }}</span>
+          }
+        }
+      </span>
+    }
+  </span>
+  <span class="pass__stub">
+    <b>{{ stub().big }}</b>{{ ' ' }}<small>{{ stub().small }}</small>
+  </span>
+</ng-template>

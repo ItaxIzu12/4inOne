@@ -1,22 +1,27 @@
 <app-shell>
   <main id="main-content" class="people-page" tabindex="-1">
-    <div class="people-top">
-      <header class="people-head">
+    <!-- „Dein Kreis“ (31.10.2026): wer dazugehört, was geteilt ist — und das Versprechen in einer Zeile -->
+    <header class="circle">
+      <div class="circle__copy">
+        <p class="circle__kicker">Dein Kreis</p>
         <h1>Personen &amp; Gruppen</h1>
-        <p class="people-head__lede">Du entscheidest, was du mit wem teilst.</p>
-        <p class="people-head__text">
-          Verbindungen geben keinen automatischen Zugriff auf deine Daten. Du legst für jede Person separat fest, was ihr
-          gemeinsam nutzt.
+        <p class="circle__facts">{{ circleFacts() }}</p>
+        <p class="circle__promise">
+          <app-icon name="shield" aria-hidden="true" /><span><b>Eine Verbindung teilt noch keine Daten.</b> Du entscheidest
+          für jede Person, was ihr gemeinsam nutzt – z. B. eine Reise oder einen Haushalt.</span>
         </p>
-      </header>
-      <aside class="people-promise" aria-label="Datenschutz">
-        <span class="people-promise__icon" aria-hidden="true"><app-icon name="shield" /></span>
-        <div>
-          <p class="people-promise__title">Eine Verbindung teilt noch keine Daten.</p>
-          <p>Du entscheidest später, was du mit einer Person teilst – z. B. eine Reise oder einen Haushalt.</p>
-        </div>
-      </aside>
-    </div>
+      </div>
+      @if (contacts().length) {
+        <ul class="circle__faces" aria-label="Deine Personen">
+          @for (c of contacts().slice(0, 5); track c.id) {
+            <li class="people-avatar" [attr.data-tone]="tone(c.name)" [attr.title]="c.name"><span aria-hidden="true">{{ initial(c.name) }}</span><span class="sr-only">{{ c.name }}</span></li>
+          }
+          @if (contacts().length > 5) {
+            <li class="people-avatar circle__more">+{{ contacts().length - 5 }}</li>
+          }
+        </ul>
+      }
+    </header>
 
     <div class="people-tabs" role="tablist" aria-label="Personen &amp; Gruppen" (keydown)="onTabKey($event)">
       @for (t of tabs; track t.key) {
@@ -178,11 +183,29 @@
                         </span>
                         <span class="people-shared">
                           @if (contact.shared.length) {
-                            @let first = contact.shared[0];
-                            <span class="people-area" [attr.data-kind]="first.kind" aria-hidden="true"><app-icon [name]="area[first.kind].icon" /></span>
-                            <span class="people-shared__text">
-                              <span>{{ area[first.kind].label }}</span>
-                              <span>{{ first.title }}@if (contact.shared.length > 1) { <span class="people-more">+{{ contact.shared.length - 1 }}</span> }</span>
+                            <!-- Alles Geteilte als Marken in der Bereichsfarbe — ganz lesbar statt abgeschnitten -->
+                            <span class="shared-chips">
+                              @let open = isExpanded(contact.id);
+                              @for (s of open ? contact.shared : contact.shared.slice(0, 3); track s.kind + s.id) {
+                                <span class="shared-chip" [attr.data-kind]="s.kind"><app-icon [name]="area[s.kind].icon" aria-hidden="true" /><span class="sr-only">{{ area[s.kind].label }}: </span>{{ s.title }}</span>
+                              }
+                              <!-- Offene Einladungen auch dann zeigen, wenn schon etwas geteilt ist -->
+                              @for (p of open ? contact.invited_to : contact.invited_to.slice(0, 2); track p.kind + p.id) {
+                                <span class="shared-chip shared-chip--pending"><app-icon name="clock" aria-hidden="true" />Eingeladen · {{ p.title }}</span>
+                                @if (demo) {
+                                  <button type="button" class="shared-chip shared-chip--demo" (click)="demoAccept(contact, p.invitation_id, p.title)">Demo: annehmen lassen<span class="sr-only"> ({{ contact.name }}, {{ p.title }})</span></button>
+                                }
+                              }
+                              <!-- Mehr als passt: aufklappen statt eine Zahl ohne Inhalt („+2“) zu zeigen -->
+                              @let hidden = Math.max(0, contact.shared.length - 3) + Math.max(0, contact.invited_to.length - 2);
+                              @if (hidden || open) {
+                                <button
+                                  type="button"
+                                  class="shared-chip shared-chip--more"
+                                  [attr.aria-expanded]="open"
+                                  (click)="toggleExpanded(contact.id)"
+                                >{{ open ? 'Weniger' : '+' + hidden + ' weitere' }}<span class="sr-only"> mit {{ contact.name }}</span></button>
+                              }
                             </span>
                           } @else if (contact.invited_to.length) {
                             @let pending = contact.invited_to[0];
@@ -191,6 +214,9 @@
                               <span>Eingeladen · ausstehend</span>
                               <span>{{ pending.title }}</span>
                             </span>
+                            @if (demo) {
+                              <button type="button" class="shared-chip shared-chip--demo" (click)="demoAccept(contact, pending.invitation_id, pending.title)">Demo: annehmen lassen<span class="sr-only"> ({{ contact.name }}, {{ pending.title }})</span></button>
+                            }
                           } @else {
                             <span class="people-chip">Noch nichts geteilt</span>
                           }

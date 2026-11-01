@@ -36,11 +36,20 @@ test('no second menu: overdue first, the next appointment on the stage, Demnäch
   expect(new Set(titles).size).toBe(titles.length);
   expect(await page.locator('.today-row').count()).toBeLessThanOrEqual(5);
 
-  // Demnächst: nächste Reise und nächste Frist, je mit Weg dorthin
-  const trip = page.locator('.soon__tile.travel');
+  // Vier Antworten (31.10.2026): je Bereich eine Antwort, Antippen öffnet den Bereich
+  const answers = page.locator('app-dash-answers a.answer');
+  await expect(answers).toHaveCount(4);
+  await expect(answers.nth(3)).toContainText('12 Tage');
+  await expect(answers.nth(3)).toHaveAttribute('href', /\/demo\/reisen\?trip=/);
+  await expect(page.locator('app-dash-progress')).toContainText('Dein Fortschritt');
+
+  // Demnächst: nächste Reise als Bordkarte (öffnet die Reise) und nächste Frist, je mit Weg dorthin
+  const trip = page.locator('.soon app-trip-pass .pass');
   await expect(trip).toContainText('Berlin');
-  await expect(trip).toContainText('in 12 Tagen');
-  await expect(trip).toHaveAttribute('href', /\/demo\/reisen\?trip=/);
+  await expect(trip).toContainText('12 Tage bis zur Abreise');
+  await trip.click();
+  await expect(page).toHaveURL(/\/demo\/reisen\?trip=1/);
+  await page.goBack();
   // Höchstens ein „Für dich“, eine Budget-Zahl
   await expect(page.locator('.for-you')).toHaveCount(1);
   await expect(page.locator('.budget')).toContainText('übrig');

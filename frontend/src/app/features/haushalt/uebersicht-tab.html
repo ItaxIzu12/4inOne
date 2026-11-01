@@ -20,6 +20,64 @@
     @if (actionError()) {
       <p class="field-error" [appErrorNotice]="actionError()">{{ actionError() }}</p>
     }
+    <!-- Dein Zuhause heute: die eine Zahl in der Haushaltsfarbe — was heute ansteht, wie lange es dauert, was schon geschafft ist -->
+    <section class="hero" aria-labelledby="hero-h">
+      <p class="hero__date">Dein Zuhause heute</p>
+      <h2 id="hero-h" class="hero__title">
+        @if (dueCount()) {
+          {{ dueCount() === 1 ? '1 Aufgabe' : dueCount() + ' Aufgaben' }} heute@if (minutes()) {<span class="hero__time"><span class="hero__sep"> · </span>{{ minutes() }}</span>}
+        } @else {
+          Heute ist nichts fällig
+        }
+      </h2>
+      @if (data.summary.overdue_tasks || doneTodayCount()) {
+        <ul class="hero__chips">
+          @if (data.summary.overdue_tasks) {
+            <li class="hero__chip hero__chip--late">{{ data.summary.overdue_tasks }} überfällig</li>
+          }
+          @if (doneTodayCount()) {
+            <li class="hero__chip"><app-icon name="check" aria-hidden="true" />{{ doneTodayCount() }} heute erledigt</li>
+          }
+        </ul>
+      }
+      @if (fair(); as f) {
+        <div class="hero__fair">
+          <p id="fair-h">Diesen Monat erledigt</p>
+          <!-- Jedes Feld trägt Name und Zahl — die Breite zeigt den Anteil (Abnahme 31.10.2026) -->
+          <ul class="hero__fairbar" aria-labelledby="fair-h">
+            @for (p of f.parts; track p.name) {
+              <li [style.flex-grow]="p.count" [attr.aria-label]="p.name + ': ' + p.count + ' erledigt'"><span aria-hidden="true">{{ p.name }} <b>{{ p.count }}</b></span></li>
+            }
+          </ul>
+        </div>
+      }
+    </section>
+
+    <!-- Räume: wo es gerade drängt — aus den Fälligkeiten der Aufgaben, Text statt nur Farbe -->
+    @if (rooms().length) {
+      <section class="rooms" aria-labelledby="rooms-h">
+        <h2 id="rooms-h" class="rooms__title">Nach Räumen <small>dringendste zuerst</small></h2>
+        <ul class="rooms__grid">
+          @for (r of rooms(); track r.room) {
+            <li>
+              <button
+                type="button"
+                class="room"
+                [class]="'room room--' + r.level"
+                (click)="openRoom.emit(r.room)"
+              >
+                <span class="room__icon" aria-hidden="true"><app-icon [name]="r.icon" /></span>
+                <span class="room__name">{{ r.label }}</span>
+                <span class="room__state">{{ r.text }}</span>
+                <!-- Statt eines Balkens ohne klare Bedeutung (Abnahme 31.10.2026): wie viel in diesem Raum offen ist -->
+                <span class="room__count">{{ r.open === 1 ? '1 offene Aufgabe' : r.open + ' offene Aufgaben' }}</span><span class="sr-only">. Aufgaben zeigen</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
     <div class="today">
       <!-- Heute fällig -->
       <section class="card today__tasks" aria-labelledby="due-heading">
@@ -30,22 +88,28 @@
           </h2>
           <button type="button" class="head-link" (click)="openTab.emit('aufgaben')">Alle Aufgaben <app-icon name="arrow" /></button>
         </div>
-        @if (data.summary.overdue_tasks) {
-          <p class="hint hint--warn">{{ data.summary.overdue_tasks === 1 ? '1 Aufgabe ist überfällig.' : data.summary.overdue_tasks + ' Aufgaben sind überfällig.' }}</p>
-        }
         <ul class="task-list">
           @for (task of data.today; track task.id) {
-            <li class="task">
+            <li class="task" [class.is-done]="justDone() === task.id">
               <button
                 type="button"
                 class="box"
                 [attr.aria-label]="task.title + ' als erledigt markieren'"
-                [disabled]="completing() === task.id"
+                [disabled]="completing() === task.id || justDone() === task.id"
                 (click)="complete(task)"
-              ></button>
+              >
+                @if (justDone() === task.id) {<app-icon name="check" aria-hidden="true" />}
+              </button>
               <span class="task__title">
-                {{ task.title }}
-                @if (repeatLabel(task); as repeat) {<small><app-icon name="repeat" aria-hidden="true" />{{ repeat }}</small>}
+                <span class="task__name">{{ task.title }}</span>
+                @if (roomLabel(task.room) || task.duration_minutes || repeatLabel(task)) {
+                  <small>
+                    @if (roomLabel(task.room); as r) {<span>{{ r }}</span>}
+                    @if (task.duration_minutes) {<span>{{ durationLabel(task.duration_minutes) }}</span>}
+                    @if (repeatLabel(task); as repeat) {<span><app-icon name="repeat" aria-hidden="true" />{{ repeat }}</span>}
+                  </small>
+                }
+                <app-link-hints [items]="links()[task.id]" />
               </span>
               <span class="tag" [class.tag--warn]="task.is_overdue">{{ dueChip(task) }}</span>
               @if (task.priority === 'hoch') {

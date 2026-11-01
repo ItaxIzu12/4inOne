@@ -25,6 +25,8 @@ const RELATION_LABEL: Record<Relation, string> = { FAMILY: 'Familie', FRIEND: 'F
 const AREA: Record<SharedArea['kind'], { label: string; icon: IconName }> = {
   HOUSEHOLD: { label: 'Haushalt', icon: 'household' },
   TRIP: { label: 'Reise', icon: 'travel' },
+  CALENDAR: { label: 'Kalender', icon: 'calendar' },
+  MY_CALENDAR: { label: 'Kalenderfreigabe', icon: 'calendar' },
 };
 /** So viele offene Einladungen zeigt die Übersicht, der Rest kommt über „Alle anzeigen“. */
 const INVITES_PREVIEW = 2;
@@ -49,7 +51,7 @@ interface SharedSpace extends SharedArea {
   standalone: true,
   imports: [ErrorNoticeDirective, AppShell, FormsModule, RouterLink, AppIcon],
   templateUrl: './familie.html',
-  styleUrl: './familie.css',
+  styleUrls: ['./familie.css', './familie-circle.scss'],
 })
 export class Familie {
   private readonly api = inject(ContactsApiService);
@@ -71,6 +73,20 @@ export class Familie {
   protected readonly notice = signal('');
   protected readonly error = signal('');
   protected readonly busy = signal<string | null>(null);
+  /** Personen, bei denen alle geteilten Bereiche aufgeklappt sind (sonst die ersten drei + „+N weitere“). */
+  private readonly expanded = signal<ReadonlySet<number>>(new Set());
+  protected readonly Math = Math;
+  protected isExpanded(id: number): boolean {
+    return this.expanded().has(id);
+  }
+  protected toggleExpanded(id: number): void {
+    this.expanded.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
   protected readonly confirmRemove = signal<number | null>(null);
   /** Offenes Zeilenmenü: `share-<id>` (Teilen …) oder `more-<id>` (…). */
   protected readonly menu = signal<string | null>(null);
@@ -122,6 +138,18 @@ export class Familie {
   protected readonly filtered = computed(() => {
     const q = this.query().trim().toLowerCase();
     return q ? this.contacts().filter((c) => `${c.name} ${c.email}`.toLowerCase().includes(q)) : this.contacts();
+  });
+  /** Kopf „Dein Kreis“: wer dazugehört und was geteilt ist — nur gezählte Werte. */
+  protected readonly circleFacts = computed(() => {
+    const people = this.contacts().length;
+    if (!people) return 'Noch niemand verbunden – lade eine Person ein.';
+    const family = this.contacts().filter((c) => c.relation === 'FAMILY').length;
+    const shared = this.spaces().length;
+    return [
+      people === 1 ? '1 Person' : `${people} Personen`,
+      family ? `davon ${family} Familie` : '',
+      shared ? (shared === 1 ? '1 geteilter Bereich' : `${shared} geteilte Bereiche`) : 'bisher kein geteilter Bereich',
+    ].filter(Boolean).join(' · ');
   });
   protected readonly family = computed(() => this.contacts().filter((c) => c.relation === 'FAMILY'));
   protected readonly friends = computed(() => this.contacts().filter((c) => c.relation === 'FRIEND'));
@@ -278,6 +306,16 @@ export class Familie {
         this.busy.set(null);
         this.notice.set('Das hat nicht geklappt. Bitte versuche es noch einmal.');
       },
+    });
+  }
+
+  /** Nur Demo: eine offene Einladung so behandeln, als hätte die Person angenommen. */
+  protected demoAccept(contact: ContactDto, invitationId: number, title: string): void {
+    const api = this.api as unknown as { demoAccept?: (c: number, i: number) => import('rxjs').Observable<void> };
+    if (!this.demo || !api.demoAccept) return;
+    api.demoAccept(contact.id, invitationId).subscribe(() => {
+      this.notice.set(`Demo: ${contact.name} hat angenommen – „${title}“ ist jetzt geteilt.`);
+      this.load();
     });
   }
 

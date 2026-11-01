@@ -1,0 +1,39 @@
+<app-modal [open]="!!day()" labelledBy="day-sheet-h" closeLabel="Schließen" (closed)="closed.emit()">
+  <div class="ds">
+    <header class="ds__head">
+      <span class="ds__icon" aria-hidden="true"><app-icon name="calendar" /></span>
+      <div>
+        <h2 id="day-sheet-h">{{ heading() }}</h2>
+        <p class="ds__count">{{ items().length === 1 ? '1 Termin' : items().length + ' Termine' }}</p>
+      </div>
+    </header>
+
+    <ul class="ds__list">
+      @for (e of items(); track e.id + e.starts_at) {
+        <li>
+          <button type="button" class="ds__row" (click)="openEvent.emit(e)">
+            <span class="ds__time">
+              @if (e.all_day) {<span class="allday">Ganztägig</span>} @else {<b>{{ startTime(e) }}</b>}
+              @if (!e.all_day && e.ends_at) {<small>bis {{ endTime(e) }}</small>}
+            </span>
+            <span class="ds__text">
+              <b><i class="dot" [class]="'dot cat-' + (e.category ?? 'sonstiges')" aria-hidden="true"></i>{{ e.title }}</b>
+              @if (e.calendar_name) {
+                <span class="cal-tag" [attr.data-color]="e.calendar_color">{{ e.calendar_name }}@if (e.created_by) { · von {{ e.created_by }}}</span>
+              } @else if (e.shared_by) {
+                <span class="cal-tag" data-color="slate">Kalender von {{ e.created_by }}</span>
+              } @else if (e.shared_with?.length) {
+                <span class="ds__shared"><app-icon name="people" aria-hidden="true" />geteilt</span>
+              }
+              @if (e.location) {<small><app-icon name="map-pin" aria-hidden="true" />{{ e.location }}</small>}
+              <span class="sr-only"> – {{ e.can_edit === false ? 'ansehen' : 'bearbeiten' }}</span>
+            </span>
+            <app-icon class="ds__chev" name="arrow" aria-hidden="true" />
+          </button>
+        </li>
+      }
+    </ul>
+
+    <button type="button" class="ds__add" (click)="add.emit(day()!)"><app-icon name="plus" aria-hidden="true" />Termin an diesem Tag</button>
+  </div>
+</app-modal>

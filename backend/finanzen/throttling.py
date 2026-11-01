@@ -40,3 +40,16 @@ class DataExportRateThrottle(LocalCacheThrottle):
     def get_cache_key(self, request, view):
         ident = request.user.pk if request.user.is_authenticated else self.get_ident(request)
         return self.cache_format % {'scope': self.scope, 'ident': ident}
+
+
+class FinanceSummaryRateThrottle(LocalCacheThrottle):
+    """Limit für die rechenintensiven Lese-Endpunkte der privaten Finanzen: Monatsstand (summary/, rechnet die
+    Sparraten-Warnung 12 Monate voraus), Jahresstand (summary/year/, bis zu 12 Monate) und die Sparziel-Vorschau.
+    Großzügig für normales Blättern; es soll nur verhindern, dass ein Frontend-Bug oder ein Skript mit gültiger
+    Sitzung den Server mit Dauerabfragen auslastet. Pro NUTZER."""
+
+    scope = 'finanzen_summary'
+
+    def get_cache_key(self, request, view):
+        ident = request.user.pk if request.user.is_authenticated else self.get_ident(request)
+        return self.cache_format % {'scope': self.scope, 'ident': ident}

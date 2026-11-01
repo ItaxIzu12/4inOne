@@ -11,6 +11,8 @@ from django.http import FileResponse
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.exceptions import NotFound, PermissionDenied
+from . import calendars
 from . import files as file_rules
 from . import services
 from .models import FileCategory, PersonalEvent, PersonalFile, PersonalNote, PersonalTask
@@ -54,6 +56,63 @@ class EventViewSet(OwnedViewSet):
 
     queryset = PersonalEvent.objects.all()
     serializer_class = PersonalEventSerializer
+
+    # ---- Gemeinsame Kalender (31.10.2026): sehen = eigene private + Kalender, in denen ich Mitglied bin ----
+    def get_queryset(self):
+        return calendars.visible_events(self.request.user).select_related('calendar', 'owner').prefetch_related('shares')
+
+    @staticmethod
+    def _rule(error: calendars.CalendarRuleError):
+        detail = {error.field: [error.message]} if error.field and error.status == 400 else error.message
+        if error.status == 404:
+            return NotFound(detail)
+        if error.status == 403:
+            return PermissionDenied(detail)
+        return ValidationError(detail)
+
+    def _target_calendar(self, serializer, default=None):
+        if 'calendar_id' not in serializer.validated_data:
+            return default
+        try:
+            return calendars.writable_calendar(self.request.user, serializer.validated_data.pop('calendar_id'))
+        except calendars.CalendarRuleError as error:
+            raise self._rule(error)
+
+    def _audience(self, serializer):
+        return serializer.validated_data.pop('shared_with', None)
+
+    def _apply_audience(self, event, audience):
+        if audience is None:
+            return
+        try:
+            calendars.set_audience(self.request.user, event, audience)
+        except calendars.CalendarRuleError as error:
+            raise self._rule(error)
+
+    def perform_create(self, serializer):
+        audience = self._audience(serializer)
+        with transaction.atomic():
+            event = serializer.save(owner=self.request.user, calendar=self._target_calendar(serializer))
+            self._apply_audience(event, audience)
+
+    def perform_update(self, serializer):
+        event = serializer.instance
+        if not calendars.can_edit_event(self.request.user, event):
+            raise PermissionDenied('Diesen Termin kannst du nur ansehen.')
+        audience = self._audience(serializer)
+        target = self._target_calendar(serializer, default=event.calendar)
+        try:
+            calendars.check_move(self.request.user, event, target)
+        except calendars.CalendarRuleError as error:
+            raise self._rule(error)
+        with transaction.atomic():
+            serializer.save(calendar=target)
+            self._apply_audience(event, audience)
+
+    def perform_destroy(self, instance):
+        if not calendars.can_edit_event(self.request.user, instance):
+            raise PermissionDenied('Diesen Termin kannst du nur ansehen.')
+        instance.delete()
 
     @action(detail=False, methods=['post'], url_path='import')
     def import_events(self, request):
@@ -153,6 +212,9 @@ class NoteViewSet(OwnedViewSet):
     queryset = PersonalNote.objects.all()
     serializer_class = PersonalNoteSerializer
 
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related('attachments')
+
 
 class FileViewSet(OwnedViewSet):
     """Private Dateien: Hochladen (multipart, Feld „file“), Metadaten ändern
@@ -166,25 +228,34 @@ class FileViewSet(OwnedViewSet):
 
     def create(self, request, *args, **kwargs):
         upload = request.FILES.get('file')
-        if upload is None:
-            raise ValidationError({'file': 'Bitte eine Datei auswählen.'})
-        if upload.size > file_rules.MAX_FILE_SIZE:
-            raise ValidationError({'file': 'Die Datei ist größer als 10 MB.'})
-        used = PersonalFile.objects.filter(owner=request.user).aggregate(total=Sum('size'))['total'] or 0
-        if used + upload.size > file_rules.QUOTA:
-            raise ValidationError({'file': 'Dein Speicherplatz (500 MB) reicht dafür nicht mehr.'})
-        head = upload.read(2048)
-        upload.seek(0)
-        content_type = file_rules.sniff(head, upload)
-        name = file_rules.clean_name(upload.name or '')
-        if content_type is None or not file_rules.matches_extension(name, content_type):
-            raise ValidationError({'file': 'Dieser Dateityp wird nicht unterstützt. Erlaubt sind PDF, Bilder (PNG, JPG, WebP, GIF), Text, Word und Excel.'})
+        if upload is not None and upload.size <= file_rules.MAX_FILE_SIZE:
+            used = PersonalFile.objects.filter(owner=request.user).aggregate(total=Sum('size'))['total'] or 0
+            if used + upload.size > file_rules.QUOTA:
+                raise ValidationError({'file': 'Dein Speicherplatz (500 MB) reicht dafür nicht mehr.'})
+        note_id = request.data.get('note')
+        try:
+            # Fotos ohne Standort- und Kameradaten neu speichern; was sich nicht als Bild lesen lässt, wird abgelehnt.
+            content_type, name, content = file_rules.prepare_upload(
+                upload, file_rules.NOTE_TYPES if note_id not in (None, '') else None
+            )
+        except file_rules.UploadRejected as error:
+            raise ValidationError({'file': str(error)})
         category = request.data.get('category') or (FileCategory.IMAGE if content_type.startswith('image/') else FileCategory.OTHER)
         if category not in FileCategory.values:
             raise ValidationError({'category': 'Unbekannte Kategorie.'})
         with transaction.atomic():
-            entry = PersonalFile(owner=request.user, name=name, content_type=content_type, size=upload.size, category=category)
-            entry.file.save('upload', upload, save=False)
+            note = None
+            if note_id not in (None, ''):
+                if not str(note_id).isdigit():
+                    raise NotFound()
+                # Sperre auf die Notiz: gleichzeitige Uploads überschreiten die Grenze nicht
+                note = PersonalNote.objects.select_for_update().filter(owner=request.user, pk=int(note_id)).first()
+                if note is None:
+                    raise NotFound()
+                if note.attachments.count() >= file_rules.MAX_NOTE_FILES:
+                    raise ValidationError({'file': f'An eine Notiz passen höchstens {file_rules.MAX_NOTE_FILES} Dateien.'})
+            entry = PersonalFile(owner=request.user, name=name, content_type=content_type, size=content.size, category=category, note=note)
+            entry.file.save('upload', content, save=False)
             entry.save()
         return Response(self.get_serializer(entry).data, status=201)
 

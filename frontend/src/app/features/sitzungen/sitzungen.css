@@ -18,23 +18,23 @@
   flex-shrink: 0;
   min-height: 44px;
   padding: 0 18px;
-  border: 1px solid #cfd8e8;
+  border: 1px solid var(--border-control);
   border-radius: 12px;
   background: #fff;
-  color: #142143;
+  color: var(--text-primary);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
 }
 .sessions-button:hover:not(:disabled) {
-  background: #f6f8fc;
+  background: var(--surface-hover);
 }
 .sessions-button:disabled {
   opacity: 0.6;
   cursor: default;
 }
 .sessions-button:focus-visible {
-  outline: 2px solid #164ed0;
+  outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
 .sessions-button--wide {
@@ -50,7 +50,7 @@
 .sessions-empty,
 .sessions-loading,
 .sessions-empty-note {
-  color: #56627a;
+  color: var(--text-secondary);
 }
 .sessions-empty {
   display: grid;
@@ -64,4 +64,10 @@
   .session-row .sessions-button {
     width: 100%;
   }
+}
+
+/* Geräte-Symbol vor jeder Sitzung (31.10.2026) */
+.session-row .settings-row__icon app-icon {
+  width: 20px;
+  height: 20px;
 }

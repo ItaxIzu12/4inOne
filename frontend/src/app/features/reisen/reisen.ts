@@ -42,8 +42,12 @@ import { TripBudget } from './trip-budget';
 import { TripPlanning } from './trip-planning';
 import { TripOverview, TripTab } from './trip-overview';
 import {
+  BUDGET_COLOR,
   BUDGET_META,
   BUDGET_ORDER,
+  TRANSPORT_LABELS,
+  placeParts,
+  transportIcon,
   PACKING_META,
   PACKING_ORDER,
   STATUS_LABELS,
@@ -98,7 +102,7 @@ const LEGACY_TABS: Record<string, TripTab> = { packlisten: 'packliste', erinneru
     MobileAction,
   ],
   templateUrl: './reisen.html',
-  styleUrl: './reisen.scss',
+  styleUrls: ['./reisen.scss', './trip-dialogs.scss'],
 })
 export class Reisen {
   private api = inject(ReisenApi);
@@ -472,6 +476,34 @@ export class Reisen {
     this.climateGuessed.set(!!guess);
   }
   readonly tripBaggage = computed(() => this.tripValue().baggage);
+  /** Verkehrsmittel als Chips (31.10.2026) — nochmal tippen hebt die Wahl auf. */
+  readonly transportChips = (['FLIGHT', 'TRAIN', 'CAR', 'BUS', 'OTHER'] as const).map((value) => ({
+    value,
+    label: TRANSPORT_LABELS[value],
+    icon: value === 'OTHER' ? ('more' as IconName) : transportIcon(value),
+  }));
+  readonly tripTransport = computed(() => this.tripValue().transport_type);
+  setTransport(value: string): void {
+    const control = this.tripForm.controls.transport_type;
+    control.setValue(control.value === value ? '' : value);
+  }
+  /** Live-Bordkarte im Dialog: Abreise → Ziel, Zeitraum, Verkehrsmittel — nur aus dem, was schon eingetragen ist. */
+  readonly tripPreview = computed(() => {
+    const v = this.tripValue();
+    const transport = v.transport_type as Trip['transport_type'];
+    const facts: string[] = [];
+    if (v.start_date && v.end_date && v.end_date >= v.start_date) facts.push(shortRange(v));
+    else facts.push('Zeitraum wählen');
+    if (transport) facts.push(TRANSPORT_LABELS[transport]);
+    return {
+      from: placeParts(v.departure).place,
+      to: placeParts(v.destination).place,
+      icon: transport ? transportIcon(transport) : ('travel' as IconName),
+      facts: facts.join(' · '),
+    };
+  });
+  /** Ausgaben-Kategorien als Chips mit Symbol und Farbe (wie im Budget). */
+  readonly expenseCategoryChips = BUDGET_ORDER.map((value) => ({ value, label: BUDGET_META[value].label, icon: BUDGET_META[value].icon, color: BUDGET_COLOR[value] }));
   toggleBaggage(value: BaggageType): void {
     const control = this.tripForm.controls.baggage;
     const order = this.baggageOptions.map((o) => o.value);

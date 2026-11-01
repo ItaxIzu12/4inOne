@@ -166,6 +166,74 @@
   width: 16px;
   height: 16px;
 }
+.group-by {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  margin: 10px 4px 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--surface-hover);
+}
+.group-by button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  cursor: pointer;
+}
+.group-by button[aria-pressed='true'] {
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(23 37 35 / 0.12);
+  color: var(--text);
+}
+.group-by button:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 1px;
+}
+// Gruppenkopf: Fälligkeit oder Projekt, rechts die Anzahl
+.group-h {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 18px 8px 4px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.group-h span {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.group-h.is-late {
+  color: #a12323;
+}
+.group-by + .group-h,
+.search + .group-h {
+  margin-top: 12px;
+}
+// Erledigt-Moment: Haken springt ein, die Zeile tritt zurück, dann wird gespeichert
+@media (prefers-reduced-motion: no-preference) {
+  .task.is-ticking .check__ring app-icon {
+    animation: tick 240ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .task.is-ticking {
+    animation: settle 240ms 240ms ease both;
+  }
+}
+@keyframes tick {
+  from { transform: scale(0.4); }
+}
+@keyframes settle {
+  to { opacity: 0.4; }
+}
 @media (max-width: 760px) {
   .list {
     padding: 4px;

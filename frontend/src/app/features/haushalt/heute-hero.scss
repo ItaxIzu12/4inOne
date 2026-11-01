@@ -1,0 +1,311 @@
+// Haushalt › Heute (31.10.2026): „Dein Zuhause, Raum für Raum“. Oben eine Kopfkarte in der Haushaltsfarbe — die
+// eine Zahl des Tages —, darunter die Räume mit ihrer Dringlichkeit, dann Heute fällig | Demnächst + Einkauf.
+// Geladen nach uebersicht-tab.scss (überschreibt dort Raster und Spalten).
+
+// ---------- Kopfkarte ----------
+.hero {
+  display: grid;
+  gap: 6px;
+  margin-bottom: var(--space-5);
+  padding: 26px 28px 24px;
+  border-radius: 20px var(--radius-sm) 20px 20px;
+  background: var(--household-accent, #ab445f);
+  color: #fff;
+}
+.hero__date {
+  margin: 0;
+  color: color-mix(in srgb, #fff 93%, transparent); // ≥ 4,5:1 auf der Haushaltsfarbe
+  font-size: var(--fs-secondary);
+}
+.hero__title {
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4.2vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+.hero__time {
+  color: color-mix(in srgb, #fff 93%, transparent);
+  font-weight: 600;
+}
+.hero__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.hero__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #000 22%, var(--household-accent, #ab445f));
+  color: #fff;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+}
+.hero__chip app-icon {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.5;
+}
+.hero__chip--late {
+  background: #fff;
+  color: #8f1f3c;
+}
+.hero__fair {
+  display: grid;
+  gap: 6px;
+  max-width: 420px;
+  margin-top: 12px;
+}
+.hero__fair p {
+  margin: 0;
+  color: color-mix(in srgb, #fff 93%, transparent);
+  font-size: var(--fs-meta);
+}
+.hero__fair b {
+  color: #fff;
+}
+.hero__fairbar {
+  display: flex;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+// Feld = Person: Name und Zahl im Feld, Breite nach Anteil; abwechselnd hell und dunkel (je ≥ 4,5:1)
+.hero__fairbar li {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  min-width: max-content;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: #fff;
+  color: #8f1f3c;
+  font-size: var(--fs-meta);
+  white-space: nowrap;
+}
+.hero__fairbar li:nth-child(2n) {
+  background: color-mix(in srgb, #000 28%, var(--household-accent, #ab445f));
+  color: #fff;
+}
+.hero__fairbar li b {
+  margin-left: 4px;
+  color: inherit;
+}
+
+// Breiter Rechner: Verteilung rechts neben der großen Zahl statt darunter (darunter, solange der Titel sonst bricht)
+@media (min-width: 1100px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 340px);
+    column-gap: 40px;
+  }
+  .hero > :not(.hero__fair) {
+    grid-column: 1;
+  }
+  .hero__fair {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+    margin-top: 0;
+  }
+}
+
+// ---------- Räume ----------
+.rooms {
+  margin-bottom: var(--space-5);
+}
+.rooms__title {
+  margin: 0 0 10px;
+  font-size: var(--fs-subsection);
+}
+.rooms__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+.room {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'icon'
+    'name'
+    'state'
+    'bar';
+  align-content: start;
+  justify-items: start;
+  row-gap: 2px;
+  width: 100%;
+  min-height: 124px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+.room:hover {
+  border-color: color-mix(in srgb, var(--household-accent, #ab445f) 45%, var(--border));
+  transform: translateY(-1px);
+}
+.room:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 2px;
+}
+.room__icon {
+  display: grid;
+  grid-area: icon;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--household-soft, #f6e8ec);
+  color: var(--household-accent, #ab445f);
+}
+.room__icon app-icon {
+  width: 20px;
+  height: 20px;
+}
+.room__name {
+  grid-area: name;
+  margin-top: 8px;
+  font-weight: 600;
+  hyphens: auto; // lange Raumnamen nur an Silbengrenzen trennen
+}
+.room__state {
+  grid-area: state;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.room--3 .room__state {
+  color: #8f1f3c;
+  font-weight: 600;
+}
+.rooms__title small {
+  margin-left: 8px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: 500;
+}
+// Wie viel im Raum offen ist — eine Zahl mit Wort statt eines mehrdeutigen Balkens
+.room__count {
+  grid-area: bar;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--surface-sunken, #eef0ec);
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.room--3 .room__count,
+.room--2 .room__count {
+  color: var(--text-primary);
+}
+
+// ---------- Zeilen am Rechner: Fälligkeit und Priorität so breit wie nötig ----------
+@media (min-width: 961px) {
+  .task {
+    grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  }
+}
+
+// ---------- Zeile: Raum · Dauer · Wiederholung ----------
+.task__name {
+  overflow-wrap: anywhere;
+}
+.task__title small {
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+.task__title small span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+// ---------- Erledigt-Moment: Kästchen füllt sich mit Haken, Titel wird durchgestrichen, Zeile blendet aus ----------
+.task.is-done .box {
+  border-color: var(--household-accent, #ab445f);
+  background: var(--household-accent, #ab445f);
+  opacity: 1;
+}
+.task.is-done .task__name {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .task.is-done .box {
+    animation: tick 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .task.is-done {
+    animation: fade-out 260ms 260ms ease both;
+  }
+  .hero__title {
+    animation: rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .room {
+    animation: rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .rooms__grid li:nth-child(2) .room { animation-delay: 40ms; }
+  .rooms__grid li:nth-child(3) .room { animation-delay: 80ms; }
+  .rooms__grid li:nth-child(4) .room { animation-delay: 120ms; }
+  .rooms__grid li:nth-child(5) .room { animation-delay: 160ms; }
+  .rooms__grid li:nth-child(6) .room { animation-delay: 200ms; }
+}
+@keyframes tick {
+  from { transform: scale(0.6); }
+}
+@keyframes fade-out {
+  to { opacity: 0.35; }
+}
+// nur Bewegung, keine Transparenz: Text ist in jedem Moment voll lesbar (Kontrast)
+@keyframes rise {
+  from { transform: translateY(8px); }
+}
+
+// ---------- Handy ----------
+// Bis Tablet-Breite steht die Zeit in einer eigenen Zeile — sonst beginnt die zweite Titelzeile mit „· ca. …“
+@media (max-width: 960px) {
+  .hero__time {
+    display: block;
+    font-size: 0.75em;
+  }
+  .hero__sep {
+    display: none;
+  }
+}
+@media (max-width: 560px) {
+  .hero {
+    padding: 20px 18px;
+    border-radius: 18px var(--radius-sm) 18px 18px;
+  }
+  .rooms__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .room {
+    min-height: 112px;
+    padding: 12px;
+  }
+  .room__icon {
+    width: 30px;
+    height: 30px;
+  }
+  .room__icon app-icon {
+    width: 17px;
+    height: 17px;
+  }
+}

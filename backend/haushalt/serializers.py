@@ -361,6 +361,8 @@ class FolderEntrySerializer(serializers.ModelSerializer):
     cancellation_deadline = serializers.SerializerMethodField()
     monthly_equivalent = serializers.SerializerMethodField()
     deadlines = serializers.SerializerMethodField()
+    # Fotos/PDF (31.10.2026): nur Metadaten; Inhalt über ordner/{id}/anhaenge/{anhang}/
+    attachments = serializers.SerializerMethodField()
 
     class Meta:
         model = FolderEntry
@@ -390,6 +392,7 @@ class FolderEntrySerializer(serializers.ModelSerializer):
             'model',
             'room',
             'deadlines',
+            'attachments',
             'created_at',
             'updated_at',
         ]
@@ -418,6 +421,22 @@ class FolderEntrySerializer(serializers.ModelSerializer):
         if not services.can_see_cost(instance, self._viewer()):
             validated_data.pop('cost', None)
         return super().update(instance, validated_data)
+
+    def get_attachments(self, obj) -> list[dict]:
+        viewer = self._viewer()
+        # Einmal je Antwort statt je Eintrag nachsehen (Liste)
+        cache = self.context.setdefault('_admin_of', {})
+        if obj.household_id not in cache:
+            cache[obj.household_id] = services.is_household_admin(obj.household_id, viewer)
+        admin = cache[obj.household_id]
+        return [
+            {
+                'id': a.id, 'name': a.name, 'content_type': a.content_type, 'size': a.size,
+                # Löschen: wer hochgeladen hat, und Haushalts-Admins (FolderEntryViewSet.attachment)
+                'can_delete': admin or (viewer is not None and a.uploaded_by_id == viewer.pk),
+            }
+            for a in obj.attachments.all()
+        ]
 
     def get_effective_status(self, obj) -> str:
         if obj.kind == FolderEntry.Kind.CONTRACT:

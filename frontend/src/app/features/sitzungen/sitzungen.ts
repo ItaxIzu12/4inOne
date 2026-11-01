@@ -1,16 +1,17 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { AuthService, LoginSession } from '../../core/auth/auth.service';
 import { AppShell } from '../../layout/app-shell';
+import { SettingsLayout } from '../einstellungen/settings-layout';
 import { describeDevice } from '../../shared/device/describe-device';
+import { AppIcon, IconName } from '../../shared/icons/app-icon';
 
 /** Einstellungen → Aktive Sitzungen: wo bin ich angemeldet, und einzelne Geräte (oder alle anderen) abmelden. */
 @Component({
   selector: 'app-sitzungen',
   standalone: true,
-  imports: [ErrorNoticeDirective, AppShell, RouterLink, DatePipe],
+  imports: [ErrorNoticeDirective, AppIcon, AppShell, SettingsLayout, DatePipe],
   templateUrl: './sitzungen.html',
   styleUrls: ['../einstellungen/einstellungen.css', '../profil/profil.css', './sitzungen.css'],
 })
@@ -23,6 +24,10 @@ export class Sitzungen {
   protected readonly notice = signal('');
   protected readonly others = computed(() => (this.sessions() ?? []).filter((s) => !s.current));
   protected readonly describe = describeDevice;
+  /** Handy oder Rechner — nur als Symbol, aus derselben Gerätekennung wie der Name. */
+  protected deviceIcon(device: string): IconName {
+    return /iphone|android|mobile|ipad/i.test(device ?? '') ? 'smartphone' : 'monitor';
+  }
 
   constructor() {
     this.load();

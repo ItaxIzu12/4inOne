@@ -1,3 +1,5 @@
+import { MONTH_ABBR } from '../form/date-utils';
+
 /**
  * Ausgabenverlauf eines Monats: aufsummierte Ausgaben je Tag bis heute, dazu das gleichmäßige Budget-Tempo.
  * Reine Rechnung aus echten Transaktionen (Typ „EXPENSE“) — nichts wird geschätzt oder fortgeschrieben.
@@ -83,7 +85,6 @@ export function eurRound(value: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
 }
 
-const MONTH_SHORT = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sep.', 'Okt.', 'Nov.', 'Dez.'];
 export function dayLabel(month: string, day: number): string {
-  return `${day}. ${MONTH_SHORT[Number(month.slice(5, 7)) - 1]}`;
+  return `${day}. ${MONTH_ABBR[Number(month.slice(5, 7)) - 1]}`;
 }

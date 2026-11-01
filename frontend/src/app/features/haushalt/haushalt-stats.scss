@@ -1,5 +1,5 @@
-// Kennzahlen-Leiste der Haushalt-Reiter (Übersicht, Routinen, Geräte): vier
-// Karten mit farbigem Symbolkreis, Zahl, Beschriftung und Hinweis.
+// Kennzahlen-Leiste der Haushalt-Reiter (Routinen, Zuhause). Seit 31.10.2026 als schlanke Filter-Chips (Abschnitt
+// unten überschreibt die früheren Karten): Zahl fett + Beschriftung in einer Zeile, ohne Symbol und Hinweis.
 .stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -141,4 +141,41 @@
   .stat {
     transition: border-color 160ms ease-out;
   }
+}
+
+// ---------- Kennzahlen als Filter-Chips (31.10.2026) ----------
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: var(--space-5);
+}
+.stat {
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+}
+.stat__icon,
+.stat__hint,
+.stat__chevron {
+  display: none;
+}
+.stat__body {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.stat__value {
+  font-size: var(--fs-body);
+}
+.stat__label {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+  font-weight: 400;
+}
+.stat--static {
+  cursor: default;
 }

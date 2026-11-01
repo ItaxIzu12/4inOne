@@ -209,6 +209,41 @@ export function filterTasks(tasks: PersonalTask[], view: TaskView, now: Date = n
   );
 }
 
+/** Gliederung der Aufgabenliste: nach Fälligkeit (Überfällig · Heute · Morgen · Nächste 7 Tage · Später · Ohne
+ * Datum) oder nach Projekt (ohne Projekt zuletzt). Leere Gruppen fallen weg; die Reihenfolge in einer Gruppe bleibt. */
+export type TaskGrouping = 'day' | 'project';
+export function groupTaskList(
+  tasks: readonly PersonalTask[],
+  by: TaskGrouping,
+  now: Date = new Date(),
+): { key: string; label: string; late: boolean; tasks: PersonalTask[] }[] {
+  const groups = new Map<string, { key: string; label: string; late: boolean; tasks: PersonalTask[] }>();
+  const add = (key: string, label: string, t: PersonalTask, late = false) => {
+    if (!groups.has(key)) groups.set(key, { key, label, late, tasks: [] });
+    groups.get(key)!.tasks.push(t);
+  };
+  if (by === 'project') {
+    for (const t of tasks) {
+      const name = t.project?.trim();
+      add(name ? `p:${name.toLocaleLowerCase('de')}` : 'none', name || 'Ohne Projekt', t);
+    }
+    return [...groups.values()].sort((a, b) => Number(a.key === 'none') - Number(b.key === 'none') || a.label.localeCompare(b.label, 'de'));
+  }
+  const order = ['late', 'today', 'tomorrow', 'week', 'later', 'none'];
+  for (const t of tasks) {
+    if (!t.due_date) add('none', 'Ohne Datum', t);
+    else {
+      const d = daysUntil(t.due_date, now);
+      if (d < 0 && t.status !== 'DONE') add('late', 'Überfällig', t, true);
+      else if (d <= 0) add('today', 'Heute', t);
+      else if (d === 1) add('tomorrow', 'Morgen', t);
+      else if (d <= 7) add('week', 'Nächste 7 Tage', t);
+      else add('later', 'Später', t);
+    }
+  }
+  return [...groups.values()].sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+}
+
 export const REPEAT_LABEL: Record<string, string> = {
   daily: 'Täglich',
   weekly: 'Wöchentlich',

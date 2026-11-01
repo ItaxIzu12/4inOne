@@ -65,9 +65,12 @@ for (const width of [390, 1440]) {
     await expect(view.locator('.list-title')).toContainText('Transaktionen');
     await expect(view.getByRole('heading', { name: 'Top-Ausgabenkategorien' })).toBeVisible();
 
-    // Benutzerdefiniert: falscher Zeitraum wird erklärt, kein Restbudget
+    // Benutzerdefiniert: kein Restbudget für einen frei gewählten Zeitraum. Am letzten Tag eines Monats ist der
+    // voreingestellte Zeitraum (1. bis heute) genau dieser Monat — dann gibt es zu Recht das Monatsbudget.
     await switcher.getByRole('button', { name: 'Benutzerdefiniert' }).click();
-    await expect(view.locator('.note')).toContainText('kein Restbudget');
+    const now = new Date();
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() === now.getDate();
+    if (!lastDayOfMonth) await expect(view.locator('.note')).toContainText('kein Restbudget');
     await expect(view.locator('.kpi__label')).toHaveText(['Ausgaben', 'Einnahmen', 'Gespart']);
     await expect(view.locator('.kpi').first()).toContainText(/\d{2}\.\d{2}\.\d{4} – \d{2}\.\d{2}\.\d{4}/);
 

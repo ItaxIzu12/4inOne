@@ -69,6 +69,36 @@ test('the settings page sits in the app shell with grouped settings and passes a
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 });
 
+// Einstellungen (31.10.2026): Seitennavigation am Rechner, Kontoschutz als ehrliche Liste aus echten Daten.
+test('the settings overview shows account protection from real data and a side navigation on desktop', async ({ page }) => {
+  await signedIn(page);
+  await page.route('**/api/v1/auth/mfa/status/', (r) => r.fulfill({ json: { enabled: false } }));
+  await page.route('**/api/v1/auth/sessions/', (r) =>
+    r.fulfill({ json: [
+      { id: 'a', device: 'Mozilla/5.0 (Macintosh) Safari', created_at: '2026-10-30T08:00:00Z', last_seen: '2026-10-31T09:00:00Z', current: true },
+      { id: 'b', device: 'Mozilla/5.0 (iPhone) Mobile Safari', created_at: '2026-10-20T08:00:00Z', last_seen: '2026-10-29T19:00:00Z', current: false },
+    ] }),
+  );
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/einstellungen');
+  const check = page.locator('.settings-check');
+  await expect(check.getByRole('heading', { name: 'Kontoschutz' })).toBeVisible();
+  await expect(check).toContainText('Zwei-Faktor ist aus');
+  await expect(check).toContainText('2 Geräte angemeldet');
+  await expect(check.getByRole('link', { name: 'Einrichten' })).toHaveAttribute('href', '/einstellungen/zwei-faktor');
+  const nav = page.getByRole('navigation', { name: 'Bereiche der Einstellungen' });
+  await expect(nav.getByRole('link', { name: 'Übersicht' })).toHaveAttribute('aria-current', 'page');
+  await nav.getByRole('link', { name: 'Geräte' }).click();
+  await expect(page).toHaveURL(/\/einstellungen\/sitzungen$/);
+  await expect(page.getByRole('heading', { name: 'Aktive Sitzungen', level: 1 })).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Geräte' })).toHaveAttribute('aria-current', 'page');
+  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()).violations).toEqual([]);
+  // Am Handy keine Leiste, dafür „‹ Einstellungen“
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(nav).toBeHidden();
+  await expect(page.getByRole('link', { name: 'Einstellungen', exact: true }).first()).toBeVisible();
+});
+
 test('the profile page changes the name and the menu follows; the email stays read-only', async ({ page }) => {
   await signedIn(page);
   let sent: unknown = null;

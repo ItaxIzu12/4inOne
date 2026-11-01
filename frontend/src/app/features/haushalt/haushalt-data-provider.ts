@@ -1,3 +1,4 @@
+import { AttachmentItem } from '../../shared/attachments/attachment-field';
 import { InjectionToken } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
@@ -58,6 +59,9 @@ export interface HaushaltDataProvider {
   updateFolderEntry(id: Id, input: FolderEntryInput): Observable<FolderEntryDto>;
   deleteFolderEntry(id: Id): Observable<void>;
   completeMaintenance(id: Id): Observable<FolderEntryDto>;
+  uploadFolderFile(entryId: Id, file: File): Observable<AttachmentItem>;
+  folderFileBlob(entryId: Id, fileId: number): Observable<Blob>;
+  removeFolderFile(entryId: Id, fileId: number): Observable<void>;
 }
 
 export const HAUSHALT_DATA_PROVIDER = new InjectionToken<HaushaltDataProvider>('HaushaltDataProvider');

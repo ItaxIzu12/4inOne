@@ -85,7 +85,10 @@ describe('ConnectionsSection', () => {
     expect(text()).toContain('Fällig 12.10.2030');
     expect(text()).toContain('+ Verknüpfen');
     expect(text()).not.toMatch(/source|target|TASK_FOR|Connection/i);
-    expect(el.querySelector('button[aria-label^="Verbindung zu „Modelle vergleichen“ entfernen"]')?.textContent?.trim()).toBe('Verbindung entfernen');
+    // Sichtbar „Verbindung entfernen“, vorgelesen mit dem Namen der anderen Seite (WCAG 2.5.3: sichtbarer Text vorn)
+    const removeButton = el.querySelector<HTMLButtonElement>('button.connection__remove')!;
+    expect(removeButton.getAttribute('aria-label')).toBeNull();
+    expect(removeButton.textContent?.replace(/\s+/g, ' ').trim()).toBe('Verbindung entfernen zu „Modelle vergleichen“ (der Eintrag selbst bleibt erhalten)');
   });
 
   it('links every connection to the page that opens the connected object', () => {
@@ -166,7 +169,7 @@ describe('ConnectionsSection', () => {
     flushList([dto(1, task())]); // Liste wird neu geladen
     expect(text()).toContain('Modelle vergleichen');
     expect(text()).not.toContain('Verknüpfung bestätigen');
-    expect(el.querySelector('.sr-only')?.textContent).toContain('Mit „Modelle vergleichen“ verknüpft.');
+    expect(el.querySelector('.sr-only[aria-live]')?.textContent).toContain('Mit „Modelle vergleichen“ verknüpft.');
   });
 
   it('explains a duplicate instead of failing silently', () => {
@@ -216,20 +219,20 @@ describe('ConnectionsSection', () => {
     const { el, text, flushList, fixture } = setup();
     flushList([dto(1, task()), dto(2, task({ id: 6, title: 'Angebot einholen' }))]);
 
-    (el.querySelector('button[aria-label^="Verbindung zu „Modelle vergleichen“ entfernen"]') as HTMLButtonElement).click();
+    (el.querySelector('button.connection__remove') as HTMLButtonElement).click();
     http.expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/connections/1/')).flush(null, { status: 204, statusText: 'No Content' });
     fixture.detectChanges();
 
     const titles = Array.from(el.querySelectorAll('.connection__title')).map((n) => n.textContent?.trim());
     expect(titles).toEqual(['Angebot einholen']);
-    expect(el.querySelector('.sr-only')?.textContent).toContain('Verbindung zu „Modelle vergleichen“ entfernt. Beide Einträge bleiben erhalten.');
+    expect(el.querySelector('.sr-only[aria-live]')?.textContent).toContain('Verbindung zu „Modelle vergleichen“ entfernt. Beide Einträge bleiben erhalten.');
     void text;
   });
 
   it('keeps the connection and shows an error when removing fails', () => {
     const { el, text, flushList, fixture } = setup();
     flushList([dto(1, task())]);
-    (el.querySelector('button[aria-label^="Verbindung zu"]') as HTMLButtonElement).click();
+    (el.querySelector('button.connection__remove') as HTMLButtonElement).click();
     http.expectOne((r) => r.method === 'DELETE').flush('x', { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
     expect(text()).toContain('Modelle vergleichen');
@@ -277,7 +280,7 @@ describe('ConnectionsSection', () => {
     flushList([dto(1, task()), { ...dto(2, task({ id: 6, title: 'Angebot einholen' })), can_delete: false }]);
     expect(text()).toContain('Angebot einholen');
     expect(el.querySelectorAll('.connection__remove').length).toBe(1);
-    expect(el.querySelector('button[aria-label^="Verbindung zu „Angebot einholen“"]')).toBeNull();
+    expect(Array.from(el.querySelectorAll('button.connection__remove')).some((b) => b.textContent?.includes('„Angebot einholen“'))).toBe(false);
   });
 
   it('asks the server whether this object may be linked and explains a 403 plainly', () => {
@@ -295,7 +298,7 @@ describe('ConnectionsSection', () => {
   it('explains a network error and a vanished object when linking or removing', () => {
     const { el, text, click, flushList, fixture } = setup();
     flushList([dto(1, task())]);
-    (el.querySelector('button[aria-label^="Verbindung zu"]') as HTMLButtonElement).click();
+    (el.querySelector('button.connection__remove') as HTMLButtonElement).click();
     http.expectOne((r) => r.method === 'DELETE').flush(null, { status: 404, statusText: 'Not Found' });
     fixture.detectChanges();
     expect(text()).toContain('Dieser Eintrag ist nicht mehr verfügbar.');
@@ -348,7 +351,7 @@ describe('ConnectionsSection', () => {
     flushList([dto(9, suggestion().other!)], []);
     expect(text()).not.toContain('Das könnte zusammengehören');
     expect(Array.from(el.querySelectorAll('.connection__title')).map((n) => n.textContent?.trim())).toEqual(['Waschmaschine']);
-    expect(el.querySelector('.sr-only')?.textContent).toContain('Mit „Waschmaschine“ verknüpft.');
+    expect(el.querySelector('.sr-only[aria-live]')?.textContent).toContain('Mit „Waschmaschine“ verknüpft.');
   });
 
   it('dismissing hides the suggestion without creating anything', () => {

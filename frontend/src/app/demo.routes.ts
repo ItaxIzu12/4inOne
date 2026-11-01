@@ -1,7 +1,11 @@
 import { Routes } from '@angular/router';
 import { DEMO_MODE } from './core/demo-context';
 import { ContactsApiService } from './core/contacts/contacts-api.service';
+import { HouseholdApiService } from './core/household/household-api.service';
+import { DemoHouseholdApiService } from './core/household/demo-household-api.service';
 import { DemoContactsApiService } from './core/contacts/demo-contacts-api.service';
+import { ConnectionsApi } from './shared/connections/connections-api.service';
+import { DemoConnectionsApi } from './shared/connections/demo-connections-api';
 import { DemoFxService, FxService } from './core/fx/fx.service';
 import { DemoHomeCurrency, HomeCurrency } from './core/fx/home-currency';
 import { DemoFinanzenDataProvider } from './features/finanzen/demo-finanzen-data-provider';
@@ -34,6 +38,9 @@ export const DEMO_ROUTES: Routes = [
       { provide: FxService, useClass: DemoFxService },
       { provide: HomeCurrency, useClass: DemoHomeCurrency },
       { provide: ContactsApiService, useClass: DemoContactsApiService },
+      { provide: HouseholdApiService, useClass: DemoHouseholdApiService },
+      // Verknüpfungen in der Demo: fester Beispielbestand, nur im Browser (31.10.2026)
+      { provide: ConnectionsApi, useClass: DemoConnectionsApi },
       FinanzenStateService,
     ],
     children: [

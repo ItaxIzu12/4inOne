@@ -1,3 +1,4 @@
+import { AttachmentItem } from '../../shared/attachments/attachment-field';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
@@ -109,5 +110,14 @@ export class RealHaushaltDataProvider implements HaushaltDataProvider {
   }
   completeMaintenance(id: Id): Observable<FolderEntryDto> {
     return this.api.completeMaintenance(id);
+  }
+  uploadFolderFile(entryId: Id, file: File): Observable<AttachmentItem> {
+    return this.api.uploadFolderFile(entryId, file);
+  }
+  folderFileBlob(entryId: Id, fileId: number): Observable<Blob> {
+    return this.api.folderFileBlob(entryId, fileId);
+  }
+  removeFolderFile(entryId: Id, fileId: number): Observable<void> {
+    return this.api.removeFolderFile(entryId, fileId);
   }
 }

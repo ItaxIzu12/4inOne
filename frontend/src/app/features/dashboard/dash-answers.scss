@@ -1,0 +1,164 @@
+// Startseite › Vier Antworten (31.10.2026). Je Bereich die Farbe als Band (4 px) und als Akzent der Zahl/Felder.
+:host {
+  display: block;
+}
+.answers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.answers > li {
+  display: flex;
+}
+.answer {
+  --a: var(--text-primary);
+  --a-soft: var(--surface-hover);
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  width: 100%;
+  min-height: 150px;
+  overflow: hidden;
+  padding: 20px 18px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease;
+}
+.answer::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: var(--a);
+  content: '';
+}
+.answer:hover {
+  box-shadow: 0 10px 24px rgb(23 37 35 / 0.08);
+  transform: translateY(-2px);
+}
+.answer:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 3px;
+}
+.area-finanzen { --a: var(--finance-accent); --a-soft: var(--finance-soft); }
+.area-haushalt { --a: var(--household-accent); --a-soft: var(--household-soft); }
+.area-organisation { --a: var(--organization-accent); --a-soft: var(--organization-soft); }
+.area-reisen { --a: var(--travel-accent); --a-soft: var(--travel-soft); }
+.answer__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+}
+.answer__top app-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--a);
+}
+.answer__top .answer__go {
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  color: var(--text-secondary);
+  transition: transform 180ms ease;
+}
+.answer:hover .answer__go {
+  transform: translateX(3px);
+}
+.answer__big {
+  color: var(--a);
+  font-family: var(--font-display);
+  font-size: clamp(26px, 2.4vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.answer.is-empty .answer__big {
+  color: var(--text-primary);
+}
+.answer__line {
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+  line-height: 1.4;
+}
+// Reisen: Packliste als feiner Balken — immer mit Beschriftung darüber
+.answer__bar-label {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.answer__bar {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--a-soft);
+}
+.answer__bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--a);
+}
+.answer--skeleton {
+  pointer-events: none;
+}
+.answer--skeleton i {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--surface-hover);
+}
+.answer--skeleton i:nth-child(2) {
+  width: 60%;
+  height: 28px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .answer {
+    animation: rise 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  li:nth-child(2) .answer { animation-delay: 50ms; }
+  li:nth-child(3) .answer { animation-delay: 100ms; }
+  li:nth-child(4) .answer { animation-delay: 150ms; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .answer,
+  .answer:hover,
+  .answer:hover .answer__go {
+    transition: none;
+    transform: none;
+  }
+}
+// nur Bewegung, nie Transparenz — Text bleibt kontrastfest
+@keyframes rise {
+  from { transform: translateY(10px); }
+}
+@media (max-width: 1100px) {
+  .answers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .answers {
+    gap: 10px;
+  }
+  .answer {
+    min-height: 132px;
+    padding: 16px 14px 14px;
+  }
+  .answer__big {
+    font-size: 24px;
+  }
+  .answer__line {
+    font-size: var(--fs-meta);
+  }
+}

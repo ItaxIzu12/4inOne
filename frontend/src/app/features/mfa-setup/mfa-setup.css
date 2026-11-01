@@ -11,10 +11,10 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border: 1px solid #e3e9f4;
+  border: 1px solid var(--border-subtle);
   border-radius: 14px;
   background: #fff;
-  color: #56627a;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 .mfa-steps__dot {
@@ -24,17 +24,17 @@
   height: 26px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: #eef2fa;
+  background: var(--surface-hover);
   font-size: 13px;
   font-weight: 700;
 }
 .mfa-steps .is-current {
-  border-color: #164ed0;
-  color: #142143;
+  border-color: var(--brand-primary);
+  color: var(--text-primary);
   font-weight: 600;
 }
 .mfa-steps .is-current .mfa-steps__dot {
-  background: #164ed0;
+  background: var(--brand-primary);
   color: #fff;
 }
 .mfa-steps .is-done .mfa-steps__dot {
@@ -47,7 +47,7 @@
   gap: 16px;
   justify-items: start;
   padding: 24px;
-  border: 1px solid #e3e9f4;
+  border: 1px solid var(--border-subtle);
   border-radius: 20px;
   background: #fff;
 }
@@ -63,15 +63,15 @@
   line-height: 1.55;
 }
 .mfa-muted {
-  color: #56627a;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 .mfa-badge {
   padding: 4px 12px;
   border-radius: 999px;
-  background: #eef2fa;
-  color: #3b4f7a;
-  font-size: 12px;
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  font-size: 13px;
   font-weight: 700;
 }
 .mfa-badge--ok {
@@ -92,7 +92,7 @@
   justify-items: center;
 }
 .mfa-qr img {
-  border: 1px solid #e3e9f4;
+  border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 8px;
   background: #fff;
@@ -105,7 +105,7 @@
 .mfa-secret {
   padding: 10px 14px;
   border-radius: 10px;
-  background: #f4f6fb;
+  background: var(--surface-sunken);
   font-size: 16px;
   letter-spacing: 0.08em;
   overflow-wrap: anywhere;
@@ -116,7 +116,7 @@
   gap: 10px;
   width: 100%;
   padding-top: 20px;
-  border-top: 1px solid #edf0f6;
+  border-top: 1px solid var(--border-subtle);
   justify-items: start;
 }
 .mfa-verify label {
@@ -126,7 +126,7 @@
   width: 220px;
   min-height: 56px;
   padding: 0 14px;
-  border: 1px solid #cfd8e8;
+  border: 1px solid var(--border-control);
   border-radius: 12px;
   font: inherit;
   font-size: 26px;
@@ -135,7 +135,7 @@
   font-variant-numeric: tabular-nums;
 }
 .mfa-code-input:focus-visible {
-  outline: 2px solid #164ed0;
+  outline: 2px solid var(--brand-primary);
   outline-offset: 1px;
 }
 
@@ -148,7 +148,7 @@
   padding: 16px;
   list-style: none;
   border-radius: 14px;
-  background: #f4f6fb;
+  background: var(--surface-sunken);
 }
 .mfa-codes code {
   font-size: 16px;
@@ -177,9 +177,9 @@
   justify-content: center;
   min-height: 48px;
   padding: 0 24px;
-  border: 1px solid #164ed0;
+  border: 1px solid var(--brand-primary);
   border-radius: 14px;
-  background: #164ed0;
+  background: var(--brand-primary);
   color: #fff;
   font: inherit;
   font-weight: 700;
@@ -188,8 +188,8 @@
 }
 .mfa-button--ghost {
   background: #fff;
-  color: #142143;
-  border-color: #cfd8e8;
+  color: var(--text-primary);
+  border-color: var(--border-control);
 }
 .mfa-button--small {
   min-height: 40px;
@@ -202,7 +202,7 @@
   pointer-events: none;
 }
 .mfa-button:focus-visible {
-  outline: 2px solid #164ed0;
+  outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
 

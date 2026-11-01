@@ -1,3 +1,5 @@
+import { HouseholdPeople } from './household-people.service';
+import { ScopeNote } from '../../shared/scope-note/scope-note';
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
 import { DecimalPipe } from '@angular/common';
@@ -40,6 +42,16 @@ const MODE_STORAGE_KEY = 'kompass.einkaufsmodus';
 // nach oben und ein schnelles zweites Tippen trifft den falschen Artikel.
 const SETTLE_MS = 900;
 
+const VIEW_STORAGE_KEY = '4io-einkauf-ansicht';
+/** Liste oder Kacheln — merkt sich der Browser (wie der Einkaufsmodus). */
+function readView(): 'liste' | 'kacheln' {
+  try {
+    return localStorage.getItem(VIEW_STORAGE_KEY) === 'kacheln' ? 'kacheln' : 'liste';
+  } catch {
+    return 'liste';
+  }
+}
+
 function readMode(): boolean {
   try {
     return localStorage.getItem(MODE_STORAGE_KEY) === '1';
@@ -67,13 +79,14 @@ function formatEuro(value: number): string {
 @Component({
   selector: 'app-einkauf-tab',
   standalone: true,
-  imports: [ErrorNoticeDirective, AmountInput, DecimalPipe, AppIcon, Field, Modal, ModalForm, AppSelect, RowMenu],
+  imports: [ErrorNoticeDirective, AmountInput, DecimalPipe, AppIcon, Field, Modal, ModalForm, AppSelect, RowMenu, ScopeNote],
   templateUrl: './einkauf-tab.html',
-  styleUrls: ['./haushalt-common.scss', './einkauf-tab.scss'],
+  styleUrls: ['./haushalt-common.scss', './einkauf-tab.scss', './einkauf-tiles.scss'],
 })
 export class EinkaufTab {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
   private readonly invite = inject(HouseholdInviteModalService);
+  protected readonly people = inject(HouseholdPeople, { optional: true });
   /** In der öffentlichen Demo gibt es niemanden einzuladen. */
   protected readonly isDemo = inject(Router).url.startsWith('/demo');
   readonly saved = output<string>();
@@ -86,6 +99,25 @@ export class EinkaufTab {
   protected readonly loadError = signal(false);
   protected readonly actionError = signal<string | null>(null);
   protected readonly shoppingMode = signal(readMode());
+  /**
+   * Kacheln (31.10.2026, Muster wie Bring!): offene Artikel als große Kacheln mit dem Symbol ihres Bereichs —
+   * antippen legt in den Wagen; darunter „Im Wagen“ (antippen = zurück) und „Oft gekauft“ als graue Kacheln zum
+   * Hinzufügen. Gleiche Daten und Aktionen wie die Liste, nur schneller mit dem Daumen.
+   */
+  protected readonly view = signal<'liste' | 'kacheln'>(readView());
+  protected readonly tiles = computed(() =>
+    this.items()
+      .filter((i) => !i.is_checked)
+      .map((item) => ({ item, look: SECTION_ICONS[item.section] ?? SECTION_ICONS.sonstiges })),
+  );
+  /** „Oft gekauft“ als Kacheln: nur, was nicht schon auf der Liste steht (auch nicht im Wagen). */
+  protected readonly suggestTiles = computed(() => {
+    const onList = new Set(this.items().map((i) => i.name.trim().toLocaleLowerCase('de')));
+    return (this.data()?.suggestions ?? []).filter((s) => !onList.has(s.name.trim().toLocaleLowerCase('de'))).slice(0, 8);
+  });
+  protected readonly cartTiles = computed(() =>
+    this.checkedItems().map((item) => ({ item, look: SECTION_ICONS[item.section] ?? SECTION_ICONS.sonstiges })),
+  );
 
   protected readonly newName = signal('');
   protected readonly newSection = signal<SectionKey | ''>('');
@@ -241,6 +273,15 @@ export class EinkaufTab {
     this.collapsed.set(new Set());
     this.currentId.set(list.id);
     this.loadList(list.id);
+  }
+
+  protected setView(view: 'liste' | 'kacheln'): void {
+    this.view.set(view);
+    try {
+      localStorage.setItem(VIEW_STORAGE_KEY, view);
+    } catch {
+      /* privater Modus: gilt dann nur bis zum Neuladen */
+    }
   }
 
   protected toggleMode(): void {

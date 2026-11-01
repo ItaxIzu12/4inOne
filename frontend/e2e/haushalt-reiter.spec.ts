@@ -187,3 +187,112 @@ test('an empty household shows “Dein Zuhause im Blick” with ways to start', 
   await expect(page.locator('#hh-tab-zuhause')).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('heading', { name: 'Neuer Vertrag' })).toBeVisible();
 });
+
+// „Dein Zuhause, Raum für Raum“: Kopfkarte mit der Zahl des Tages, Räume nach Dringlichkeit, Raum → Aufgaben gefiltert
+for (const width of [390, 1440]) {
+  test(`Heute: hero, rooms and the done moment at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.route('http://localhost:8000/api/**', (route) => route.abort());
+    await page.goto('/demo/haushalt');
+    const hero = page.locator('.hero');
+    await expect(hero.getByRole('heading', { level: 2 })).toHaveText(/^\s*\d+ Aufgaben? heute/);
+    // Verteilung nur bei mehreren Personen — die Demo hat zwei
+    await expect(hero.locator('.hero__fair')).toContainText('Diesen Monat erledigt');
+    const rooms = page.locator('.rooms .room');
+    expect(await rooms.count()).toBeGreaterThan(0);
+    // Dringlichkeit in Worten, nicht nur über Farbe — und dringendste zuerst
+    // Vorgelesen wird der sichtbare Text (WCAG 2.5.3): Raum, Dringlichkeit in Worten, Anzahl
+    await expect(rooms.first()).toContainText(/überfällig|heute/);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'));
+    expect((await new AxeBuilder({ page }).include('app-uebersicht-tab').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+
+    // Abhaken: Haken und Durchstreichen, danach zählt die Kopfkarte „heute erledigt“
+    const first = page.locator('app-uebersicht-tab .task').first();
+    const title = (await first.locator('.task__name').innerText()).trim();
+    await first.locator('.box').click();
+    await expect(first).toHaveClass(/is-done/);
+    await expect(hero.locator('.hero__chip', { hasText: 'heute erledigt' })).toBeVisible();
+    await expect(page.locator('app-uebersicht-tab .task__name', { hasText: title })).toHaveCount(0);
+
+    // Raum antippen → Aufgaben nur dieses Raums, „Alle Räume zeigen“ hebt den Filter auf
+    const roomCard = rooms.first();
+    const roomName = (await roomCard.locator('.room__name').innerText()).trim();
+    await roomCard.click();
+    await expect(page.locator('#hh-tab-aufgaben')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('.room-filter')).toContainText(roomName);
+    const filtered = await page.locator('app-aufgaben-tab .task').count();
+    await page.getByRole('button', { name: 'Alle Räume zeigen' }).click();
+    await expect(page.locator('.room-filter')).toHaveCount(0);
+    expect(await page.locator('app-aufgaben-tab .task').count()).toBeGreaterThanOrEqual(filtered);
+  });
+}
+
+// Einkaufen › Kacheln: antippen legt in den Wagen, „Oft gekauft“ fügt hinzu, die Ansicht bleibt gemerkt
+for (const width of [390, 1440]) {
+  test(`shopping tiles: tap into the cart, add from “Oft gekauft”, view remembered at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.route('http://localhost:8000/api/**', (route) => route.abort());
+    await page.goto('/demo/haushalt?tab=einkaufen');
+    const view = page.getByRole('group', { name: 'Ansicht der Einkaufsliste' });
+    await view.getByRole('button', { name: 'Kacheln' }).click();
+    await expect(view.getByRole('button', { name: 'Kacheln' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.items')).toHaveCount(0);
+
+    const open = page.locator('.tiles').first().locator('.tile');
+    const before = await open.count();
+    const name = (await open.first().locator('.tile__name').innerText()).trim();
+    await open.first().click();
+    await expect(open).toHaveCount(before - 1);
+    await expect(page.locator('.tiles--cart .tile__name', { hasText: name })).toBeVisible();
+    // Der Weg zu den Finanzen steht in der Leiste
+    await expect(page.locator('.checkout-bar')).toContainText('wird zur Ausgabe in Finanzen');
+
+    // Vorschläge zeigen nichts, was schon auf der Liste steht; antippen setzt auf die Liste
+    const suggest = page.locator('.tiles--suggest .tile');
+    if (await suggest.count()) {
+      const sugName = (await suggest.first().locator('.tile__name').innerText()).trim();
+      const onList = (await page.locator('.tiles').first().locator('.tile__name').allInnerTexts()).map((t) => t.trim());
+      expect(onList).not.toContain(sugName);
+      await suggest.first().click();
+      await expect(page.locator('.tiles').first().locator('.tile__name', { hasText: sugName })).toBeVisible();
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect((await new AxeBuilder({ page }).include('.current').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+
+    await page.reload();
+    await expect(page.getByRole('group', { name: 'Ansicht der Einkaufsliste' }).getByRole('button', { name: 'Kacheln' })).toHaveAttribute('aria-pressed', 'true');
+  });
+}
+
+// Zuhause: „Als Nächstes“ mit großem Datum, Kennzahlen als Filter-Chips, Geräte nach Raum (Außer Betrieb zuletzt)
+for (const width of [390, 1440]) {
+  test(`Zuhause: next deadlines, filter chips and devices by room at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.route('http://localhost:8000/api/**', (route) => route.abort());
+    await page.goto('/demo/haushalt?tab=zuhause&bereich=geraete');
+    const next = page.locator('.next__item');
+    await expect(next.first()).toBeVisible();
+    expect(await next.count()).toBeLessThanOrEqual(4);
+    await expect(next.first()).toContainText(/(Wartung|Garantie endet).*\(am \d\d\.\d\d\.\d{4}\)/);
+    // Antippen wählt den Eintrag aus
+    const name = (await next.nth(1).locator('.next__label').innerText()).trim();
+    await next.nth(1).click();
+    if (width >= 761) await expect(page.locator('#zuhause-detail-heading')).toHaveText(name);
+    else await expect(page.locator('.detail.is-open #zuhause-detail-heading')).toHaveText(name);
+    await page.keyboard.press('Escape');
+
+    const heads = page.locator('.room-head');
+    await expect(heads.first()).toContainText('Küche');
+    await expect(heads.last()).toContainText('Außer Betrieb');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'));
+    expect((await new AxeBuilder({ page }).include('app-ordner-tab').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+
+    // Verträge: Kündigungsfristen in der Zeitleiste, lange Namen gekürzt statt übergelaufen
+    await page.goto('/demo/haushalt?tab=zuhause&bereich=vertraege');
+    await expect(page.locator('.next__item').first()).toContainText(/Kündigen bis/);
+    const overflow = await page.locator('.next__item').evaluateAll((items) => items.some((i) => i.scrollWidth > i.clientWidth + 1));
+    expect(overflow).toBe(false);
+  });
+}

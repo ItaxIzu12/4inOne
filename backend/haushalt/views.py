@@ -1,11 +1,14 @@
 from datetime import date, timedelta
 from decimal import Decimal
 
-from django.db.models import Count, F, Prefetch, Q
+from django.db import transaction
+from django.db.models import Count, F, Prefetch, Q, Sum
+from django.http import FileResponse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,7 +16,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from core.permissions import HouseholdScopedPermission
 from haushalt import services
-from haushalt.models import FolderEntry, Section, ShoppingItem, ShoppingList, Task, TaskCompletion
+from haushalt.models import FolderAttachment, FolderEntry, Section, ShoppingItem, ShoppingList, Task, TaskCompletion
 from haushalt.serializers import (
     CompleteShoppingSerializer,
     FolderEntrySerializer,
@@ -506,9 +509,12 @@ class FolderEntryViewSet(_WriteThrottleMixin, ModelViewSet):
     household_field = 'household'
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
     def get_queryset(self):
         return (
             FolderEntry.objects.select_related('household')
+            .prefetch_related('attachments')
             .filter(household=active_household(self.request.user))
             .order_by('kind', 'name')
         )
@@ -518,6 +524,54 @@ class FolderEntryViewSet(_WriteThrottleMixin, ModelViewSet):
         if FolderEntry.objects.filter(household=household).count() >= services.MAX_FOLDER_ENTRIES:
             raise ValidationError(f'Maximal {services.MAX_FOLDER_ENTRIES} Einträge im Haushaltsordner.')
         serializer.save(household=household, created_by=self.request.user)
+
+    # ----- Fotos & PDF (31.10.2026) -----
+
+    @action(detail=True, methods=['post'], url_path='anhaenge')
+    def add_attachment(self, request, pk=None):
+        """Foto oder PDF anhängen: wer den Eintrag sieht und bearbeiten darf (Mitglied, kein Kind-Konto)."""
+        from organisation import files as file_rules
+
+        entry = self.get_object()
+        upload = request.FILES.get('file')
+        try:
+            content_type, name, content = file_rules.prepare_upload(upload, file_rules.NOTE_TYPES)
+        except file_rules.UploadRejected as error:
+            raise ValidationError({'file': str(error)})
+        with transaction.atomic():
+            # Sperre auf den Eintrag: gleichzeitige Uploads überschreiten die Grenzen nicht
+            entry = FolderEntry.objects.select_for_update().get(pk=entry.pk)
+            if entry.attachments.count() >= services.MAX_FOLDER_ATTACHMENTS:
+                raise ValidationError({'file': f'An einen Eintrag passen höchstens {services.MAX_FOLDER_ATTACHMENTS} Dateien.'})
+            used = FolderAttachment.objects.filter(entry__household_id=entry.household_id).aggregate(total=Sum('size'))['total'] or 0
+            if used + content.size > services.FOLDER_FILES_QUOTA:
+                raise ValidationError({'file': 'Der Speicherplatz des Haushalts (500 MB) reicht dafür nicht mehr.'})
+            attachment = FolderAttachment(entry=entry, uploaded_by=request.user, name=name, content_type=content_type, size=content.size)
+            attachment.file.save('upload', content, save=False)
+            attachment.save()
+        return Response(
+            {'id': attachment.id, 'name': attachment.name, 'content_type': attachment.content_type, 'size': attachment.size, 'can_delete': True},
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=['get', 'delete'], url_path=r'anhaenge/(?P<attachment_id>[0-9]+)')
+    def attachment(self, request, pk=None, attachment_id=None):
+        """Inhalt ansehen (Mitglieder) oder löschen (hochladende Person oder Haushalts-Admin)."""
+        entry = self.get_object()
+        attachment = entry.attachments.filter(pk=attachment_id).first()
+        if attachment is None:
+            raise NotFound()
+        if request.method == 'DELETE':
+            if attachment.uploaded_by_id != request.user.pk and not services.is_household_admin(entry.household_id, request.user):
+                raise PermissionDenied('Dieses Bild kann nur die Person löschen, die es hochgeladen hat, oder ein Admin.')
+            attachment.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        inline = attachment.content_type in {'application/pdf', 'image/png', 'image/jpeg', 'image/webp'} and request.query_params.get('download') != '1'
+        response = FileResponse(attachment.file.open('rb'), content_type=attachment.content_type, as_attachment=not inline, filename=attachment.name)
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['Content-Security-Policy'] = "sandbox; default-src 'none'; img-src 'self'; style-src 'unsafe-inline'"
+        response['Cache-Control'] = 'no-store'
+        return response
 
     @action(detail=True, methods=['post'], url_path='wartung-erledigt')
     def maintenance_done(self, request, pk=None):

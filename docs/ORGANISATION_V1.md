@@ -96,3 +96,19 @@ aus Tests — keine neuen Reiter oder Funktionen, bis alle vier Kernbereiche get
 Organisation nutzt das globale Design System (docs/DESIGN_SYSTEM.md); Bereichsfarbe ist das Token
 `--organization-accent`. Reiter (Kalender · Aufgaben · Notizen), Untertitel und Hauptaktionen unverändert. Aufgaben-
 Kästchen wie im Haushalt (abgerundetes Quadrat statt Kreis).
+
+## Gemeinsame Kalender (31.10.2026)
+
+Termine können privat bleiben („Nur ich“) oder in einem gemeinsamen Kalender stehen (z. B. „Familie“). Mitglieder
+kommen über Einladungen aus „Dein Kreis“ (Rolle „Kann bearbeiten“ oder „Kann ansehen“). Private Termine sieht niemand
+sonst — auch nicht als „beschäftigt“. Regeln und Tests: `docs/AUTH_AND_PERMISSIONS.md › Gemeinsame Kalender`.
+Aufgaben und Notizen bleiben privat.
+
+**Kalenderfreigabe wie Outlook:** Unter „Kalender teilen“ gibst du deinen eigenen Kalender für Personen frei (Rolle
+„Kann ansehen“ oder „Kann bearbeiten“, wirkt nach dem Annehmen). Neue Termine sind privat; im Termin-Dialog wählst du
+unter „Wer sieht den Termin?“ „Nur ich“, einen gemeinsamen Kalender und/oder einzelne Personen mit Freigabe. Für dich
+freigegebene Kalender erscheinen als Filter „Kalender von …“ und lassen sich wieder entfernen.
+
+**Tagesblatt:** Ein Klick auf einen Tag (Monat, Woche, Tagesstreifen) zeigt dessen Termine; von dort öffnest du einen
+Termin oder legst mit „Termin an diesem Tag“ weitere an — nach dem Speichern kehrst du zum Tagesblatt zurück. Leere
+Tage öffnen direkt „Termin hinzufügen“. In der Woche legt die freie Fläche einer Spalte („+“) einen Termin an.

@@ -1,0 +1,56 @@
+@if (people.loaded() && people.members().length) {
+  @if (alone()) {
+    @if (people.canInvite() && !demo) {
+      <button type="button" class="hp-invite" (click)="inviteSomeone()"><app-icon name="user-plus" aria-hidden="true" />Person einladen</button>
+    }
+  } @else {
+    <button type="button" class="hp-stack" (click)="open.set(true)">
+      <span class="hp-avatars" aria-hidden="true">
+        @for (m of shown(); track m.id) {
+          <span class="hp-avatar" [attr.data-tone]="($index % 5) + 1">{{ initial(m.name) }}</span>
+        }
+        @if (more()) {<span class="hp-avatar hp-avatar--more">+{{ more() }}</span>}
+      </span>
+      <span class="sr-only">{{ label() }}</span>
+    </button>
+  }
+}
+
+<app-modal [open]="open()" labelledBy="hp-h" closeLabel="Schließen" (closed)="open.set(false)">
+  <div class="hp">
+    <h2 id="hp-h">Wer ist dabei?</h2>
+    <ul class="hp-members">
+      @for (m of people.members(); track m.id) {
+        <li>
+          <span class="hp-avatar" [attr.data-tone]="($index % 5) + 1" aria-hidden="true">{{ initial(m.name) }}</span>
+          <span class="hp-members__name">{{ m.name }}@if (m.is_self) { (du)}</span>
+          <span class="hp-members__role">{{ m.role_label }}</span>
+        </li>
+      }
+    </ul>
+
+    <div class="hp-rules">
+      <section aria-labelledby="hp-all">
+        <h3 id="hp-all"><app-icon name="people" aria-hidden="true" />Sehen alle im Haushalt</h3>
+        <ul>
+          <li>Aufgaben und Einkaufslisten</li>
+          <li>Geräte und Verträge – ohne Kind-Konten</li>
+        </ul>
+      </section>
+      <section aria-labelledby="hp-me">
+        <h3 id="hp-me"><app-icon name="lock" aria-hidden="true" />Nur du</h3>
+        <ul>
+          <li>Beträge bei Verträgen, die du einträgst</li>
+          <li>Persönliche Termine, Aufgaben und Notizen in <a routerLink="../organisation" (click)="open.set(false)">Organisation</a></li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="hp-actions">
+      @if (people.canInvite() && !demo) {
+        <button type="button" class="hp-btn" (click)="inviteSomeone()"><app-icon name="user-plus" aria-hidden="true" />Person einladen</button>
+      }
+      <a class="hp-link" routerLink="../familie" (click)="open.set(false)">Verwalten in Personen &amp; Gruppen<app-icon name="arrow" aria-hidden="true" /></a>
+    </div>
+  </div>
+</app-modal>

@@ -9,16 +9,17 @@ import { DestroyRef, effect, inject } from '@angular/core';
  * wenn der letzte zu ist. Die Scrollposition bleibt dabei unverändert.
  */
 let locks = 0;
-let saved: { html: string; body: string; overscroll: string } | null = null;
+let saved: { html: string; overscroll: string } | null = null;
 
 export function lockScroll(): void {
   if (typeof document === 'undefined') return;
   if (locks++ > 0) return;
   const html = document.documentElement;
-  saved = { html: html.style.overflow, body: document.body.style.overflow, overscroll: html.style.overscrollBehavior };
+  saved = { html: html.style.overflow, overscroll: html.style.overscrollBehavior };
+  // Nur `html` sperren: `body` hat height: 100 % — mit overflow: hidden dort schnitte der Browser die Seite auf
+  // Bildschirmhöhe ab und setzte die Scrollposition auf 0 (lange Seiten sprangen beim Öffnen eines Dialogs nach oben).
   html.style.overflow = 'hidden';
   html.style.overscrollBehavior = 'none';
-  document.body.style.overflow = 'hidden';
 }
 
 export function unlockScroll(): void {
@@ -27,7 +28,6 @@ export function unlockScroll(): void {
   const html = document.documentElement;
   html.style.overflow = saved?.html ?? '';
   html.style.overscrollBehavior = saved?.overscroll ?? '';
-  document.body.style.overflow = saved?.body ?? '';
   saved = null;
 }
 

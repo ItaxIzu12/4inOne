@@ -188,6 +188,40 @@ def get_connections_for_object(user, object_type: str, object_id: int) -> list[d
     return result
 
 
+SUMMARY_MAX_IDS = 200
+
+
+def get_connection_summary(user, object_type: str, object_ids) -> dict[int, list[dict]]:
+    """Für Listen („✈ Berlin Wochenende“ am Termin): je sichtbarem Objekt die sichtbaren Gegenstücke.
+
+    Nur lesend und nur mit denselben Regeln wie get_connections_for_object: Eine Verbindung erscheint, wenn der
+    Nutzer BEIDE Seiten sehen darf. Unsichtbare oder fremde IDs fehlen einfach in der Antwort — nicht von
+    „nicht vorhanden“ zu unterscheiden, kein Zähler. Eine Abfrage für die Verbindungen, danach eine je Objekttyp."""
+    ids = set(object_ids)
+    if not ids or object_type not in KINDS:
+        return {}
+    connections = list(
+        Connection.objects.filter(
+            Q(source_type=object_type, source_id__in=ids) | Q(target_type=object_type, target_id__in=ids)
+        ).order_by('created_at', 'pk')
+    )
+    refs = set()
+    for connection in connections:
+        refs.add((connection.source_type, connection.source_id))
+        refs.add((connection.target_type, connection.target_id))
+    objects = _resolve(user, refs)
+    result: dict[int, list[dict]] = {}
+    for connection in connections:
+        source = (connection.source_type, connection.source_id)
+        target = (connection.target_type, connection.target_id)
+        if source not in objects or target not in objects:
+            continue
+        for focus, other in ((source, target), (target, source)):
+            if focus[0] == object_type and focus[1] in ids:
+                result.setdefault(focus[1], []).append(KINDS[other[0]].summary(objects[other]))
+    return result
+
+
 def _visible_connection(user, connection_id: int) -> tuple[Connection, dict]:
     connection = Connection.objects.filter(pk=connection_id).first()
     visible = _visible_connections(user, [connection]) if connection else []

@@ -20,7 +20,7 @@
       (input)="formTitle.set($any($event.target).value)"
     />
   </app-field>
-  <app-scope-note scope="shared">Für den ganzen Haushalt – alle Mitglieder sehen diese Aufgabe.</app-scope-note>
+  <app-scope-note scope="shared">{{ people?.audience() || 'Für den ganzen Haushalt – alle Mitglieder sehen diese Aufgabe.' }}</app-scope-note>
 <fieldset class="form-section"><legend>Planung und weitere Angaben</legend>
   <app-field label="Beschreibung" [optional]="true">
     <input

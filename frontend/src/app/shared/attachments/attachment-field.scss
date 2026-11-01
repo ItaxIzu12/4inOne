@@ -1,0 +1,161 @@
+// Fotos & PDF in Dialogen (Notiz, Gerät, Vertrag; 31.10.2026): Kacheln 96 px, Auswahl als gestrichelte Schaltfläche,
+// Hinweis mit Schloss. Bereichsfarbe über --att-accent/--att-soft/--att-on (Standard Organisation; der Haushalt setzt
+// seine eigene Farbe, siehe haushalt/ordner-tab.scss).
+:host {
+  --att-accent: var(--organization-accent);
+  --att-soft: var(--organization-soft);
+  --att-on: var(--organization-on);
+}
+.na {
+  display: grid;
+  gap: 10px;
+}
+.na__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.na__label {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+}
+.na__label span {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+.na__add {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px dashed var(--att-accent);
+  border-radius: 999px;
+  background: var(--att-soft);
+  color: var(--att-accent);
+  font-size: var(--fs-secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+.na__add app-icon {
+  width: 16px;
+  height: 16px;
+}
+.na__add:focus-within {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.na__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.na__tile {
+  position: relative;
+}
+.na__open {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.na__thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 12px);
+}
+.na__pdf {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  background: var(--surface-recessed);
+  color: var(--text-secondary);
+}
+.na__pdf app-icon {
+  width: 24px;
+  height: 24px;
+}
+.na__pdf b {
+  font-size: var(--fs-meta);
+}
+.na__name {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.na__open:focus-visible,
+.na__remove:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.na__remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-default);
+  border-radius: 50%;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+// Größere Trefferfläche als das sichtbare Rund (44 px)
+.na__remove::after {
+  position: absolute;
+  inset: -6px;
+  content: '';
+}
+.na__remove app-icon {
+  width: 14px;
+  height: 14px;
+}
+.na__badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--att-accent);
+  color: var(--att-on);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+.na__error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-secondary);
+}
+.na__hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.na__hint app-icon {
+  width: 14px;
+  height: 14px;
+}

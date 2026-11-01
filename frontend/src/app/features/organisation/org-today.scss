@@ -1,0 +1,421 @@
+// Organisation › Heute (31.10.2026): Kopfkarte in der Organisationsfarbe (die eine Bereichsfläche wie im Haushalt),
+// Tageslinie mit freier Zeit, daneben Aufgaben für heute und die angeheftete Notiz.
+
+// ---------- Kopfkarte ----------
+.day-hero {
+  display: grid;
+  gap: 6px;
+  margin-bottom: var(--space-5);
+  padding: 26px 28px 24px;
+  border-radius: 20px var(--radius-sm) 20px 20px;
+  background: var(--organization-accent, #85561a);
+  color: #fff;
+}
+.day-hero__date {
+  margin: 0;
+  color: color-mix(in srgb, #fff 93%, transparent);
+  font-size: var(--fs-secondary);
+}
+.day-hero__title {
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4.2vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+.day-hero__next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 4px 0 0;
+  color: color-mix(in srgb, #fff 93%, transparent);
+  font-size: var(--fs-body);
+}
+.day-hero__next b {
+  color: #fff;
+}
+.day-hero__next app-icon {
+  width: 18px;
+  height: 18px;
+}
+.day-hero__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.day-hero__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #000 22%, var(--organization-accent, #85561a));
+  color: #fff;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+}
+.day-hero__chip app-icon {
+  width: 15px;
+  height: 15px;
+}
+.day-hero__chip--late {
+  background: #fff;
+  color: #8f1f3c;
+}
+
+// ---------- Raster ----------
+.day-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+.day-side {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+.head-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.head-link app-icon {
+  width: 15px;
+  height: 15px;
+}
+.head-link:hover {
+  color: var(--organization-accent);
+}
+.card-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-head h2 app-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--organization-accent);
+}
+.count {
+  min-width: 24px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--organization-soft);
+  color: var(--organization-accent);
+  font-size: var(--fs-meta);
+  text-align: center;
+}
+
+// ---------- Ganztägig ----------
+.all-day {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.all-day__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cat) 14%, #fff);
+  color: color-mix(in srgb, var(--cat) 60%, #1a1d2b);
+  font: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  cursor: pointer;
+}
+.all-day__chip app-icon {
+  width: 15px;
+  height: 15px;
+}
+
+// ---------- Tageslinie ----------
+.line {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+// feine Schiene links neben den Uhrzeiten
+.line::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 54px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--surface-sunken, #eef0ec);
+}
+.line__row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: stretch;
+  column-gap: 22px;
+}
+.line__time {
+  padding-top: 10px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.line__event {
+  display: grid;
+  gap: 2px;
+  min-height: 56px;
+  padding: 10px 14px;
+  border: 0;
+  border-left: 4px solid var(--cat);
+  border-radius: 4px var(--radius-md) var(--radius-md) 4px;
+  background: color-mix(in srgb, var(--cat) 10%, #fff);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease;
+}
+.line__event:hover {
+  transform: translateX(2px);
+}
+.line__event b {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.line__event small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.line__event.is-past {
+  background: var(--surface-sunken, #f1f3ef);
+  border-left-color: var(--border-strong, #c9d0c8);
+}
+.line__event.is-past b {
+  color: var(--text-secondary);
+}
+.line__event.is-now {
+  box-shadow: 0 0 0 2px var(--cat);
+}
+.line__now {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--cat);
+  color: #fff;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+}
+// Freie Zeit: gestrichelt, ruhig — antippen trägt dort einen Termin ein
+.line__free {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px dashed var(--border-strong, #c9d0c8);
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  cursor: pointer;
+}
+.line__free app-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--organization-accent);
+}
+.line__free:hover {
+  border-color: var(--organization-accent);
+  color: var(--text);
+}
+.line__event:focus-visible,
+.line__free:focus-visible,
+.all-day__chip:focus-visible,
+.head-link:focus-visible,
+.day-task__main:focus-visible,
+.note-mini__body:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 2px;
+}
+.line__empty {
+  padding: 12px 0 4px 66px;
+}
+
+// ---------- Aufgaben heute ----------
+.day-tasks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.day-task {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 56px;
+}
+.day-task + .day-task {
+  border-top: 1px solid var(--surface-sunken, #eef0ec);
+}
+.box {
+  position: relative;
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+}
+.box::before {
+  position: absolute;
+  inset: 11px;
+  border: 1.6px solid #8592a6;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  content: '';
+}
+.box:hover:not(:disabled)::before {
+  border-color: var(--organization-accent);
+}
+.box app-icon {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  stroke-width: 3;
+}
+.day-task__main {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.day-task__title {
+  overflow-wrap: anywhere;
+}
+.day-task__main small {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.day-tasks__empty {
+  padding: 8px 0;
+}
+// Erledigt-Moment
+.day-task.is-done .box::before {
+  border-color: var(--organization-accent);
+  background: var(--organization-accent);
+}
+.day-task.is-done .day-task__title {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+// ---------- Angeheftete Notiz ----------
+.note-mini__body {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--organization-soft, #f5ecdf);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.note-mini__body span {
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .day-task.is-done .box app-icon {
+    animation: tick 240ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .day-task.is-done {
+    animation: fade-out 240ms 240ms ease both;
+  }
+  .day-hero__title,
+  .line__row {
+    animation: rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .line__row:nth-child(2) { animation-delay: 40ms; }
+  .line__row:nth-child(3) { animation-delay: 80ms; }
+  .line__row:nth-child(4) { animation-delay: 120ms; }
+  .line__row:nth-child(5) { animation-delay: 160ms; }
+  .line__row:nth-child(n + 6) { animation-delay: 200ms; }
+}
+@keyframes tick {
+  from { transform: scale(0.4); }
+}
+@keyframes fade-out {
+  to { opacity: 0.35; }
+}
+// nur Bewegung, nie Transparenz — Text bleibt in jedem Moment kontrastfest
+@keyframes rise {
+  from { transform: translateY(8px); }
+}
+
+@media (max-width: 960px) {
+  .day-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .day-hero {
+    padding: 20px 18px;
+    border-radius: 18px var(--radius-sm) 18px 18px;
+  }
+  .line::before {
+    left: 46px;
+  }
+  .line__row {
+    grid-template-columns: 38px minmax(0, 1fr);
+    column-gap: 16px;
+  }
+  .line__empty {
+    padding-left: 54px;
+  }
+}

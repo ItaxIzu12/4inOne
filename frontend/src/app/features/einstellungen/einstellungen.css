@@ -1,73 +1,179 @@
-/* Einstellungen im App-Rahmen (Seitenleiste, Kopfzeile). Ruhig: weiße Karten, feine Linien, eine Spalte. */
+/* Einstellungen (31.10.2026): Tokens wie die Bereiche — Tinte statt Blau, weiße Karten, Radius 16–20.
+   Die Hülle (Navigation links, Titel) liegt in settings-layout. Profil, Zwei-Faktor und Sitzungen nutzen diese
+   Datei mit (Listen, Abschnitte, Knöpfe). */
 .settings-page {
-  max-width: 680px;
+  max-width: var(--content-max-width, 1240px);
   margin: 0 auto;
-  padding: 32px 20px 56px;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
-.settings-page__head h1 {
-  margin: 0;
-  font-size: 30px;
-}
-.settings-page__head p {
-  margin: 6px 0 0;
-  color: #56627a;
+  padding: 32px var(--content-padding-x, 24px) 56px;
 }
 
+/* ---------- Profilkarte ---------- */
 .settings-profile {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
-  border: 1px solid #e3e9f4;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid var(--border-subtle);
   border-radius: 20px;
-  background: #fff;
+  background: var(--surface-card);
 }
 .settings-profile__avatar {
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: linear-gradient(145deg, #d2f3e2, #daf0fc);
+  background: var(--brand-primary);
+  color: #fff;
+  font-family: var(--font-display);
   font-size: 22px;
-  color: #315b46;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 .settings-profile__text {
   display: grid;
+  flex: 1;
+  gap: 1px;
   min-width: 0;
 }
 .settings-profile__text strong {
-  font-size: 18px;
+  font-size: 19px;
 }
 .settings-profile__text span {
   overflow: hidden;
+  color: var(--text-secondary);
   text-overflow: ellipsis;
-  color: #56627a;
+}
+.settings-profile__meta {
+  font-size: var(--fs-meta);
+}
+.settings-profile__edit {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+.settings-profile__edit:hover {
+  background: var(--surface-hover);
 }
 
+/* ---------- Kontoschutz ---------- */
+.settings-check {
+  padding: 20px 22px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--surface-card);
+}
+.settings-check h2 {
+  margin: 0 0 8px;
+  font-size: var(--fs-subsection);
+}
+.settings-check ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.settings-check__row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+}
+.settings-check__row + .settings-check__row {
+  border-top: 1px solid var(--border-subtle);
+}
+.settings-check__mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+.settings-check__mark app-icon {
+  width: 16px;
+  height: 16px;
+}
+.is-ok .settings-check__mark {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.is-todo .settings-check__mark {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.is-wait .settings-check__mark {
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+}
+.settings-check__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.settings-check__text span {
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.settings-check__text span:empty {
+  display: none;
+}
+.settings-check__go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.is-todo .settings-check__go {
+  padding: 0 14px;
+  border-radius: 12px;
+  background: var(--brand-primary);
+  color: #fff;
+  text-decoration: none;
+}
+.settings-check__go app-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------- Gruppen und Zeilen ---------- */
+.settings-group {
+  scroll-margin-top: 24px;
+}
 .settings-group__title {
   margin: 0 0 10px 4px;
-  font-size: 12px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #56627a;
 }
 .settings-list {
-  list-style: none;
+  overflow: hidden;
   margin: 0;
   padding: 0;
-  border: 1px solid #e3e9f4;
+  border: 1px solid var(--border-subtle);
   border-radius: 20px;
-  background: #fff;
-  overflow: hidden;
+  background: var(--surface-card);
+  list-style: none;
 }
 .settings-list li + li {
-  border-top: 1px solid #edf0f6;
+  border-top: 1px solid var(--border-subtle);
 }
 .settings-row {
   display: flex;
@@ -75,15 +181,11 @@
   gap: 14px;
   min-height: 64px;
   padding: 12px 18px;
-  color: #142143;
+  color: var(--text-primary);
   text-decoration: none;
 }
 a.settings-row:hover {
-  background: #f6f8fc;
-}
-a.settings-row:focus-visible {
-  outline: 2px solid #164ed0;
-  outline-offset: -2px;
+  background: var(--surface-hover);
 }
 .settings-row__icon {
   display: grid;
@@ -92,8 +194,8 @@ a.settings-row:focus-visible {
   height: 38px;
   flex-shrink: 0;
   border-radius: 11px;
-  background: #eef2fa;
-  color: #3b4f7a;
+  background: var(--surface-hover);
+  color: var(--text-primary);
 }
 .settings-row__icon .kompass-icon {
   width: 20px;
@@ -109,59 +211,81 @@ a.settings-row:focus-visible {
   font-weight: 600;
 }
 .settings-row__hint {
+  color: var(--text-secondary);
   font-size: 13px;
-  color: #56627a;
 }
 .settings-row__chevron {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  color: #56627a;
+  color: var(--text-secondary);
 }
 .settings-row__badge {
   flex-shrink: 0;
   padding: 4px 10px;
   border-radius: 999px;
-  background: #eef2fa;
-  font-size: 12px;
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  font-size: 13px;
   font-weight: 600;
-  color: #3b4f7a;
 }
-
 .settings-logout {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   min-height: 52px;
-  border: 1px solid #d7deec;
+  border: 1px solid var(--border-default);
   border-radius: 16px;
-  background: #fff;
-  color: #142143;
+  background: var(--surface-card);
+  color: var(--text-primary);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
 }
 .settings-logout:hover {
-  background: #f6f8fc;
-}
-.settings-logout:focus-visible {
-  outline: 2px solid #164ed0;
-  outline-offset: 2px;
+  background: var(--surface-hover);
 }
 .settings-logout .kompass-icon {
   width: 20px;
   height: 20px;
+}
+a.settings-row:focus-visible,
+.settings-logout:focus-visible,
+.settings-profile__edit:focus-visible,
+.settings-check__go:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 @media (max-width: 760px) {
   .settings-page {
     padding-top: 12px;
   }
-  .settings-page__head h1 {
-    font-size: 26px;
-  }
   .settings-row {
     padding: 12px 14px;
+  }
+  .settings-profile {
+    flex-wrap: wrap;
+    padding: 18px;
+  }
+  .settings-profile__avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 18px;
+  }
+  .settings-profile__edit {
+    width: 100%;
+    justify-content: center;
+  }
+  .settings-check {
+    padding: 16px;
+  }
+  .settings-check__row {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+  .settings-check__go {
+    grid-column: 2;
+    justify-self: start;
   }
 }

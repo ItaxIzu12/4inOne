@@ -26,6 +26,8 @@ interface Cell {
  * Tasten im geöffneten Kalender: Pfeile bewegen, Bild ↑/↓ wechselt den Monat bzw. das Jahr (mit Umschalt: Jahr),
  * Pos1/Ende springen an Wochen-/Zeilenrand, Enter oder Leertaste wählt, Esc schließt.
  */
+let pickerTextId = 0;
+
 @Component({
   selector: 'app-date-picker',
   standalone: true,
@@ -63,6 +65,11 @@ export class AppDatePicker implements ControlValueAccessor, AfterViewInit {
 
   protected readonly labelledBy = signal<string | null>(null);
   protected readonly ariaLabel = signal<string | null>(null);
+  /** Der sichtbare Wert gehört zum vorgelesenen Namen („Datum, 31.10.2026“) — WCAG 2.5.3 „Label in Name“. */
+  protected readonly textId = `dp-text-${++pickerTextId}`;
+  protected placeholderText(): string {
+    return this.placeholder() || (this.mode() === 'month' ? 'Monat wählen' : 'Datum wählen');
+  }
   protected readonly open = signal(false);
   private readonly formDisabled = signal(false);
   protected readonly disabled = computed(() => this.formDisabled() || this.disabledInput());

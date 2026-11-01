@@ -1,0 +1,170 @@
+// Haushalt › Zuhause (31.10.2026): statt vier großer Zahlenkacheln eine schlanke Zeile aus Filter-Chips, darüber
+// „Als Nächstes“ — die nächsten Fristen mit großem Datum — und in der Geräteliste Überschriften je Raum.
+// Geladen nach haushalt-stats.scss und ordner-tab.scss (nur dieser Reiter; Routinen behalten ihre Kacheln).
+
+// ---------- Als Nächstes ----------
+.next {
+  margin-bottom: var(--space-5);
+}
+.next__title {
+  margin: 0 0 10px;
+  font-size: var(--fs-subsection);
+}
+.next__list {
+  display: grid;
+  // feste Spalten statt auto-fill: nie 3 + 1 (eine Karte allein in der zweiten Reihe)
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.next__item {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 76px;
+  padding: 12px 14px 12px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+.next__item:hover {
+  border-color: color-mix(in srgb, var(--household-accent, #ab445f) 45%, var(--border));
+  transform: translateY(-1px);
+}
+.next__item:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 2px;
+}
+// Datum als Kalenderblatt: Tag groß, Monat klein — bald fällig in der Haushaltsfarbe
+.next__date {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  height: 56px;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  line-height: 1;
+}
+.next__date b {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.next__date small {
+  margin-top: 3px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.next__item.is-soon .next__date {
+  background: var(--household-accent, #ab445f);
+  color: #fff;
+}
+.next__item.is-soon .next__date small {
+  color: color-mix(in srgb, #fff 90%, transparent);
+}
+.next__text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.next__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 600;
+}
+// Lange Namen („Haftpflichtversicherung“) mit „…“ — der volle Name steht im Knopf (Screenreader) und als Tooltip
+.next__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.next__name app-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--household-accent, #ab445f);
+}
+.next__text small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+
+@media (min-width: 1100px) {
+  .next__list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+// ---------- Geräte nach Raum ----------
+.room-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 2px;
+  padding: 0 4px;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+.room-head app-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--household-accent, #ab445f);
+}
+.room-head span {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+// Gerätenamen nur an Silbengrenzen trennen, nie mitten im Wort
+.row__name b {
+  overflow-wrap: normal;
+}
+
+@media (max-width: 560px) {
+  // Zeile am Handy: Name volle Breite, Status und nächste Frist darunter — keine Trennung mitten im Gerätenamen
+  .row__main {
+    grid-template-columns: 40px minmax(0, 1fr) 16px;
+    grid-template-areas:
+      'thumb name chev'
+      'thumb state chev';
+    row-gap: 6px;
+  }
+  .row__main > .thumb {
+    grid-area: thumb;
+    align-self: start;
+  }
+  .row__main > .row__name {
+    grid-area: name;
+  }
+  .row__main > .row__state {
+    display: flex;
+    flex-wrap: wrap;
+    grid-area: state;
+    align-items: center;
+    gap: 4px 10px;
+  }
+  .row__main > .row__chevron {
+    grid-area: chev;
+  }
+  .next__list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .next__item {
+    min-height: 68px;
+  }
+}

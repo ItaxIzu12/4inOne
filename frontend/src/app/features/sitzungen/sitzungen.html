@@ -1,10 +1,6 @@
 <app-shell>
   <main id="main-content" class="settings-page" tabindex="-1">
-    <a class="settings-back" routerLink="/einstellungen">‹ Einstellungen</a>
-    <header class="settings-page__head">
-      <h1>Aktive Sitzungen</h1>
-      <p>Hier siehst du, wo du angemeldet bist. Kennst du ein Gerät nicht, melde es ab.</p>
-    </header>
+    <app-settings-layout active="geraete" heading="Aktive Sitzungen" lead="Hier siehst du, wo du angemeldet bist. Kennst du ein Gerät nicht, melde es ab.">
 
     @if (notice()) {
       <p class="sessions-notice" role="status">{{ notice() }}</p>
@@ -21,6 +17,7 @@
       <ul class="settings-list" aria-label="Angemeldete Geräte">
         @for (session of sessions(); track session.id) {
           <li class="session-row">
+            <span class="settings-row__icon" aria-hidden="true"><app-icon [name]="deviceIcon(session.device)" /></span>
             <span class="settings-row__text">
               <span class="settings-row__label">
                 {{ describe(session.device) }}
@@ -57,5 +54,6 @@
         <p class="sessions-empty-note">Du bist nur auf diesem Gerät angemeldet.</p>
       }
     }
+    </app-settings-layout>
   </main>
 </app-shell>

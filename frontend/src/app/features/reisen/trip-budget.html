@@ -31,14 +31,24 @@
           @if (approx(spent()); as a) { <dd class="approx num">{{ a }}</dd> }
         </div>
         <div>
-          <dt>{{ left() < 0 ? 'Über Budget' : 'Verbleibend' }}</dt>
+          <dt>{{ left() < 0 ? 'Über Budget' : 'Noch übrig' }}</dt>
           <dd class="num" [class.late]="left() < 0">{{ money(left() < 0 ? -left() : left()) }}</dd>
           @if (approx(left() < 0 ? -left() : left()); as a) { <dd class="approx num">{{ a }}</dd> }
         </div>
       </dl>
-      <span class="bar" [class.bar--over]="spent() > total()" role="progressbar" aria-label="Reisebudget verbraucht" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="barWidth(spentPct())">
-        <span [style.width.%]="barWidth(spentPct())"></span>
+      <!-- Gestapelt nach Kategorie, immer mit Beschriftung darunter (Farbe ist nie die einzige Angabe) -->
+      <span class="stack" [class.is-over]="spent() > total()" role="img" [attr.aria-label]="'Ausgegeben: ' + stackLabel()">
+        @for (s of stack(); track s.category) {
+          <i [style.width.%]="s.width" [style.background]="s.color"></i>
+        }
       </span>
+      @if (stack().length) {
+        <ul class="legend" aria-hidden="true">
+          @for (s of stack(); track s.category) {
+            <li><i [style.background]="s.color"></i>{{ s.label }} <b class="num">{{ money(s.spent) }}</b></li>
+          }
+        </ul>
+      }
       <p class="muted calc">{{ money(total()) }} − {{ money(spent()) }} ausgegeben = {{ left() < 0 ? '−' : '' }}{{ money(left() < 0 ? -left() : left()) }}</p>
     } @else {
       <dl class="kpis kpis--single">
@@ -67,20 +77,20 @@
               type="button"
               class="cat"
               [disabled]="!canEdit()"
-              [attr.aria-label]="r.label + ': ' + money(r.spent) + ' ausgegeben' + (r.planned ? ' von ' + money(r.planned) : ', nicht geplant') + (canEdit() ? ' – Planung bearbeiten' : '')"
               (click)="editCategory.emit(r.category)"
             >
-            <span class="cat__name"><app-icon [name]="r.icon" aria-hidden="true" /><b>{{ r.label }}</b></span>
+            <span class="cat__name" [style.--c]="color[r.category]"><app-icon [name]="r.icon" aria-hidden="true" /><b>{{ r.label }}</b></span>
             <span class="cat__nums num">
               {{ money(r.spent) }}@if (r.planned) { <span class="muted"> von {{ money(r.planned) }}</span> }
               @if (r.planned && approx(r.planned); as a) { <small class="cat__home">{{ a }} geplant</small> }
             </span>
             @if (r.planned) {
-              <span class="bar" [class.bar--over]="r.over" aria-hidden="true"><span [style.width.%]="barWidth(r.pct)"></span></span>
+              <span class="bar" [class.bar--over]="r.over" [style.--c]="color[r.category]" aria-hidden="true"><span [style.width.%]="barWidth(r.pct)"></span></span>
               <small class="cat__left" [class.late]="r.remaining < 0">{{ r.remaining < 0 ? money(-r.remaining) + ' darüber' : money(r.remaining) + ' übrig' }}</small>
             } @else {
               <small class="cat__left">nicht geplant</small>
             }
+            @if (canEdit()) {<span class="sr-only"> – Planung bearbeiten</span>}
             </button>
           </li>
         }
@@ -96,30 +106,33 @@
       }
     </div>
     @if (shown().length) {
-      <ul class="exp">
-        @for (e of shown(); track e.id) {
-          @let m = meta[e.category || 'SONSTIGES'];
-          <li>
-            <button
-              type="button"
-              class="exp__row"
-              [disabled]="!canEdit()"
-              [attr.aria-label]="e.title + ', ' + m.label + ', ' + original(e) + (homeValue(e) ? ' (' + homeValue(e).replace('≈', 'ungefähr') + ')' : '') + ', ' + shortDate(e.date) + (canEdit() ? ' – bearbeiten' : '')"
-              (click)="editExpense.emit(e)"
-            >
-              <app-icon class="exp__icon" [name]="m.icon" aria-hidden="true" />
-              <span class="exp__title">
-                <b>{{ e.title }}</b>
-                <small>{{ shortDate(e.date) }} · {{ m.label }}@if (e.date < before()) { · vor der Reise }</small>
-              </span>
-              <span class="exp__amount num">
-                {{ original(e) }}
-                @if (homeValue(e); as h) { <small>{{ h }}</small> }
-              </span>
-            </button>
-          </li>
-        }
-      </ul>
+      @for (day of days(); track day.date) {
+        <h3 class="exp-day">{{ day.label }}</h3>
+        <ul class="exp">
+          @for (e of day.items; track e.id) {
+            @let m = meta[e.category || 'SONSTIGES'];
+            <li>
+              <button
+                type="button"
+                class="exp__row"
+                [disabled]="!canEdit()"
+                (click)="editExpense.emit(e)"
+              >
+                <span class="exp__icon" [style.--c]="color[e.category || 'SONSTIGES']" aria-hidden="true"><app-icon [name]="m.icon" /></span>
+                <span class="exp__title">
+                  <b>{{ e.title }}</b>
+                  <small>{{ m.label }}@if (e.note) { · {{ e.note }} }</small>
+                </span>
+                <span class="exp__amount num">
+                  {{ original(e) }}
+                  @if (homeValue(e); as h) { <small>{{ h }}</small> }
+                </span>
+                <span class="sr-only">, bezahlt am {{ shortDate(e.date) }}@if (canEdit()) { – bearbeiten}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
       @if (sorted().length > shown().length || showAll()) {
         <button type="button" class="link more" (click)="showAll.set(!showAll())">{{ showAll() ? 'Weniger anzeigen' : 'Alle ' + sorted().length + ' Ausgaben anzeigen' }}</button>
       }

@@ -80,10 +80,14 @@ export function filterDevices(devices: FolderEntryDto[], query: string, status: 
 /** Icon eines Geräts nach Name oder Kategorie. */
 export function deviceIcon(entry: { name: string; category?: string }): IconName {
   const text = `${entry.name} ${entry.category ?? ''}`.toLocaleLowerCase('de');
-  if (/wasch/.test(text)) return 'washer';
   if (/spül/.test(text)) return 'dishwasher';
+  if (/wasch|trockner/.test(text)) return 'washer';
   if (/kühl|gefrier/.test(text)) return 'fridge';
   if (/sauger|staub/.test(text)) return 'vacuum';
+  if (/heiz|therme|boiler|warmwasser/.test(text)) return 'heater';
+  if (/ofen|herd|mikrowelle/.test(text)) return 'oven';
+  if (/kaffee|espresso/.test(text)) return 'coffee';
   if (/handy|telefon|smartphone|tablet/.test(text)) return 'smartphone';
-  return 'household';
+  if (/werkzeug|bohr|rasenmäher|mäher/.test(text)) return 'toolbox';
+  return 'device';
 }

@@ -32,6 +32,22 @@
 .modal-panel--flush {
   padding: 0;
 }
+/* Langer Inhalt scrollt hier (vorher: abgeschnitten, ließ sich gar nicht scrollen). Negativer Rand + Innenabstand,
+   damit Fokusringe am Rand nicht abgeschnitten werden. Flush-Dialoge (Formulare) steuern ihr Scrollen selbst. */
+.modal-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  margin: -4px;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.modal-panel--flush .modal-scroll {
+  margin: 0;
+  padding: 0;
+}
 
 .modal-close {
   position: absolute;

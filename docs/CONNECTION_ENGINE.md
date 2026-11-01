@@ -215,6 +215,30 @@ Code: `backend/connections/link_suggestions.py`, API `/api/v1/connections/link-s
 - **Getrennt davon** bleiben die älteren Reise-Hinweise (`suggestions.py`: Sparziel anlegen, Aufgabe verschieben/
   übergeben) — bewusst ausgelöste Aktionen, keine Verknüpfungs-Vorschläge.
 
+## Sichtbar machen (31.10.2026)
+
+Keine neuen Arten, Paare oder Regeln — die bestehenden Verknüpfungen erscheinen jetzt auf den Hauptansichten statt nur
+in den Bearbeiten-Dialogen.
+
+- **Sammel-Endpunkt (nur lesend):** `GET /api/v1/connections/summary/?object_type=CALENDAR_EVENT&ids=1,2,3` →
+  `{"1": [{type, id, title, subtitle, domain}, …]}`. `services.get_connection_summary`: dieselbe Regel wie die Liste
+  je Objekt (beide Seiten sichtbar, sonst taucht die Verbindung nicht auf); fremde/unbekannte IDs fehlen einfach —
+  nicht von „nicht vorhanden“ zu unterscheiden, kein Zähler. 1 … 200 IDs (`SUMMARY_MAX_IDS`), jede 1 … 2⁶³−1, sonst
+  400. Eine Abfrage für die Verbindungen plus eine je Objekttyp, unabhängig von der Anzahl. `Cache-Control: no-store`,
+  nur eingeloggt; Lesen ist wie die übrigen GETs nicht gedrosselt. Tests: `connections/tests/test_connection_summary.py`
+  (sichtbare Gegenstücke, private Seite der Mitreisenden bleibt verborgen, Fremde → leer, entzogener Reisezugriff
+  blendet sofort aus, ungültige Abfragen → 400, anonym abgelehnt, feste Abfragezahl).
+- **Frontend:** `shared/connections/link-hints.ts` — `connectionHints(type, ids)` (ein Abruf je Liste, Fehler bleiben
+  still) und `<app-link-hints>` (Marken in Bereichsfarbe mit Symbol, nicht klickbar, „verknüpft mit …“ für
+  Screenreader, höchstens 2 + „+n“). Eingesetzt in Organisation (Heute: Tageslinie und Aufgaben; Kalender-Agenda;
+  Aufgaben), Haushalt (Heute fällig; Aufgaben) und Finanzen (Sparziel-Karten).
+- **Reise › Übersicht:** Karte „Gehört zu dieser Reise“ = `<app-connections variant="card" heading="…">` — dieselbe
+  Komponente wie im Dialog (Liste, Vorschläge mit Begründung, „+ Verknüpfen“, „Verbindung entfernen“).
+- **Demo:** `DemoConnectionsApi` (nur unter `/demo`, im Browser): Berlin-Reise ↔ Termin „Museumsinsel-Führung“ und ↔
+  Haushaltsaufgabe „Pflanzen gießen“, Sparziel „Badmintonschuhe“ ↔ Aufgabe „Badmintonschuhe vergleichen“, Vorschlag
+  Reise ↔ „Bahn-Tickets ausdrucken“. Paare spiegeln `ALLOWED_PAIRS`. Links aus „Verknüpft mit“ führen in der Demo nach
+  `/demo/…`.
+
 ## Later: Automations
 
 Automations may act on connected objects only when the behavior is transparent, permission-safe and user-controlled.

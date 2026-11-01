@@ -2,6 +2,7 @@ import { ErrorNoticeDirective } from '../error-notice/error-notice';
 import { Component, computed, effect, ElementRef, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { DEMO_MODE } from '../../core/demo-context';
 import { AppIcon, IconName } from '../icons/app-icon';
 import {
   ConnectedObject,
@@ -95,19 +96,25 @@ export class ConnectionsSection {
 
   readonly objectType = input.required<ConnectionObjectType>();
   readonly objectId = input<number | string | null>(null);
+  /** Überschrift — im Dialog „Verknüpft mit“, als Karte z. B. „Gehört zu dieser Reise“. */
+  readonly heading = input('Verknüpft mit');
+  /** `card`: eigenständige Karte auf einer Seite (weiß, mit Rand) statt grauer Abschnitt im Dialog. */
+  readonly variant = input<'section' | 'card'>('section');
+  /** In der Demo führen Links in die Demo-Seiten, nicht zur Anmeldung. */
+  private readonly demo = inject(DEMO_MODE);
 
   protected readonly kind = KIND;
   private readonly numericId = computed(() => {
     const id = this.objectId();
     return typeof id === 'number' && Number.isInteger(id) && id > 0 ? id : null;
   });
-  protected readonly enabled = computed(() => this.auth.isAuthenticated() && this.numericId() !== null);
+  protected readonly enabled = computed(() => (this.demo || this.auth.isAuthenticated()) && this.numericId() !== null);
 
   protected readonly status = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly items = signal<ConnectionDto[]>([]);
   /** Zeilen mit fertigem Link — Objekte, die sich pro Änderungszyklus nicht neu erzeugen (sonst NG0100). */
   protected readonly rows = computed(() =>
-    this.items().flatMap((item) => (item.other ? [{ item, other: item.other, link: linkFor(item.other) }] : [])),
+    this.items().flatMap((item) => (item.other ? [{ item, other: item.other, link: this.linkTo(item.other) }] : [])),
   );
   /** Vorschläge „Das könnte zusammengehören“ — höchstens drei, vom Server ausgewählt und begründet. */
   protected readonly suggestions = signal<LinkSuggestionDto[]>([]);
@@ -149,6 +156,12 @@ export class ConnectionsSection {
         if (enabled && id !== null) this.load(type, id);
       });
     });
+  }
+
+  /** Wie linkFor, in der Demo mit /demo davor. */
+  protected linkTo(object: ConnectedObject): { path: string[]; query: Record<string, string | number> } {
+    const link = linkFor(object);
+    return this.demo ? { ...link, path: ['/demo' + (link.path[0] === '/' ? '' : link.path[0])] } : link;
   }
 
   protected typeOf(object: ConnectedObject) {

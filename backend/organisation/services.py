@@ -24,17 +24,19 @@ def zone(tz_name: str) -> ZoneInfo:
 
 
 def events_between(user, start: date, end: date, tz: ZoneInfo) -> list[dict]:
-    """Alle Termine, die den Bereich [start, end] (Tage, einschließlich) berühren —
-    wiederkehrende einmal pro Vorkommen. Jeder Eintrag: (event, occ_start, occ_end)."""
+    """Alle für `user` sichtbaren Termine (eigene private + gemeinsame Kalender, organisation/calendars.py), die den
+    Bereich [start, end] (Tage, einschließlich) berühren — wiederkehrende einmal pro Vorkommen.
+    Jeder Eintrag: (event, occ_start, occ_end)."""
+    from organisation.calendars import visible_events
+
     lower = datetime.combine(start, time.min, tzinfo=tz)
     upper = datetime.combine(end + timedelta(days=1), time.min, tzinfo=tz)
     rows = []
-    single = PersonalEvent.objects.filter(owner=user, recurrence='', starts_at__lt=upper).filter(
-        Q(starts_at__gte=lower) | Q(ends_at__gte=lower)
-    )
+    visible = visible_events(user).select_related('calendar', 'owner').prefetch_related('shares')
+    single = visible.filter(recurrence='', starts_at__lt=upper).filter(Q(starts_at__gte=lower) | Q(ends_at__gte=lower))
     for event in single:
         rows.append((event, event.starts_at, event.ends_at))
-    for event in PersonalEvent.objects.filter(owner=user, starts_at__lt=upper).exclude(recurrence=''):
+    for event in visible.filter(starts_at__lt=upper).exclude(recurrence=''):
         days, months = SIMPLE[event.recurrence]
         first = event.starts_at.astimezone(tz)
         length = (event.ends_at - event.starts_at) if event.ends_at else None

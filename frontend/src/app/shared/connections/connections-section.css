@@ -8,6 +8,17 @@
   border-radius: 16px;
   background: var(--canvas, #f4f5fa);
 }
+/* Als eigene Karte auf einer Seite (Reise › Übersicht „Gehört zu dieser Reise“) — 31.10.2026 */
+.connections--card {
+  padding: 20px 22px;
+  border: 1px solid var(--border-subtle, #e6e9e3);
+  border-radius: var(--radius-lg, 16px);
+  background: var(--surface-card, #fff);
+}
+.connections--card .connections__title {
+  margin-bottom: 12px;
+  font-size: var(--fs-subsection, 18px);
+}
 .connections__title {
   display: flex;
   align-items: center;

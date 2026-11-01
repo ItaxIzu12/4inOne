@@ -48,6 +48,9 @@ ESTIMATE_TRIP_WINDOW = 10
 MAX_OPEN_ITEMS = 200
 MAX_OPEN_TASKS = 200
 MAX_FOLDER_ENTRIES = 200
+# Fotos/PDF je Gerät oder Vertrag und Speicher je Haushalt (31.10.2026)
+MAX_FOLDER_ATTACHMENTS = 10
+FOLDER_FILES_QUOTA = 500 * 1024 * 1024
 MAX_SHOPPING_LISTS = 20
 # „Demnächst“ im Haushalt: Wartung, Garantieende und Kündigungsfrist in den
 # nächsten 30 Tagen — die eine Definition für Übersicht, Geräte und Verträge.
@@ -558,6 +561,14 @@ def can_see_cost(entry: FolderEntry, user) -> bool:
         return entry.created_by_id == user.pk
     return HouseholdMembership.objects.filter(
         household_id=entry.household_id, user=user, role=HouseholdMembership.Role.ADMIN
+    ).exists()
+
+
+def is_household_admin(household_id: int, user) -> bool:
+    if user is None or not user.is_authenticated:
+        return False
+    return HouseholdMembership.objects.filter(
+        household_id=household_id, user=user, role=HouseholdMembership.Role.ADMIN
     ).exists()
 
 

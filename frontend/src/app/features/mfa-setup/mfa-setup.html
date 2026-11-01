@@ -1,10 +1,6 @@
 <app-shell>
   <main id="main-content" class="settings-page" tabindex="-1">
-    <a class="settings-back" routerLink="/einstellungen">‹ Einstellungen</a>
-    <header class="settings-page__head">
-      <h1>Zwei-Faktor-Authentifizierung</h1>
-      <p>Ein zweiter Schritt bei der Anmeldung schützt dein Konto, auch wenn jemand dein Passwort kennt.</p>
-    </header>
+    <app-settings-layout active="sicherheit" heading="Zwei-Faktor-Authentifizierung" lead="Ein zweiter Schritt bei der Anmeldung schützt dein Konto, auch wenn jemand dein Passwort kennt.">
 
     @if (stepIndex() >= 0) {
       <ol class="mfa-steps" aria-label="Fortschritt der Einrichtung">
@@ -126,5 +122,6 @@
         </section>
       }
     }
+    </app-settings-layout>
   </main>
 </app-shell>

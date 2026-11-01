@@ -21,35 +21,51 @@
     <input type="search" placeholder="Aufgaben durchsuchen …" autocomplete="off" [value]="search()" (input)="search.set($any($event.target).value)" />
   </label>
 
-  <ul class="tasks">
-    @for (t of visible(); track t.id) {
-      @let m = meta(t);
-      <li class="task" [class.is-done]="t.status === 'DONE'">
-        <button
-          type="button"
-          class="check"
-          [class.is-done]="t.status === 'DONE'"
-          [attr.aria-label]="t.status === 'DONE' ? t.title + ' wieder öffnen' : t.title + ' erledigen'"
-          [disabled]="busy()"
-          (click)="toggleTask.emit(t)"
-        >
-          <span class="check__ring"><app-icon name="check" /></span>
-        </button>
-        <button type="button" class="task__main" (click)="openTask.emit(t)">
-          <span class="task__title">{{ t.title }}</span>
-          @if (m.due || m.parts.length) {
-            <small class="task__meta">
-              @if (m.due) {
-                <span [class.late]="m.late">{{ m.late ? 'Überfällig · ' : '' }}{{ m.due }}</span>
-              }
-              @for (p of m.parts; track p) {
-                <span [class.is-high]="p === 'Hoch'">{{ p }}</span>
-              }
-            </small>
-          }
-        </button>
-      </li>
-    } @empty {
+  @if (hasProjects() && (view() === 'all' || view() === 'recurring') && visible().length) {
+    <div class="group-by" role="group" aria-label="Aufgaben gliedern">
+      <button type="button" [attr.aria-pressed]="grouping() === 'day'" (click)="setGrouping('day')">Nach Tag</button>
+      <button type="button" [attr.aria-pressed]="grouping() === 'project'" (click)="setGrouping('project')">Nach Projekt</button>
+    </div>
+  }
+
+  @for (g of groups(); track g.key) {
+    @if (g.label) {
+      <h3 class="group-h" [class.is-late]="g.late">{{ g.label }} <span>{{ g.tasks.length }}</span></h3>
+    }
+    <ul class="tasks">
+      @for (t of g.tasks; track t.id) {
+        @let m = meta(t, g.key);
+        @let ticking = justDone() === t.id;
+        <li class="task" [class.is-done]="t.status === 'DONE' || ticking" [class.is-ticking]="ticking">
+          <button
+            type="button"
+            class="check"
+            [class.is-done]="t.status === 'DONE' || ticking"
+            [attr.aria-label]="t.status === 'DONE' ? t.title + ' wieder öffnen' : t.title + ' erledigen'"
+            [disabled]="busy() || ticking"
+            (click)="toggle(t)"
+          >
+            <span class="check__ring"><app-icon name="check" /></span>
+          </button>
+          <button type="button" class="task__main" (click)="openTask.emit(t)">
+            <span class="task__title">{{ t.title }}</span>
+            @if (m.due || m.parts.length) {
+              <small class="task__meta">
+                @if (m.due) {
+                  <span [class.late]="m.late">{{ m.late && g.key !== 'late' ? 'Überfällig · ' : '' }}{{ m.due }}</span>
+                }
+                @for (p of m.parts; track p) {
+                  <span [class.is-high]="p === 'Hoch'">{{ p }}</span>
+                }
+              </small>
+            }
+            <app-link-hints [items]="links()[t.id]" />
+          </button>
+        </li>
+      }
+    </ul>
+  } @empty {
+    <ul class="tasks">
       <li class="empty">
         @if (emptyText(); as text) {
           <p class="muted">{{ text }}</p>
@@ -59,6 +75,6 @@
           <button type="button" class="link-btn" (click)="addTask.emit()"><app-icon name="plus" />Aufgabe hinzufügen</button>
         }
       </li>
-    }
-  </ul>
+    </ul>
+  }
 </section>

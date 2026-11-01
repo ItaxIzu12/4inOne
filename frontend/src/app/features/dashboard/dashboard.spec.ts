@@ -90,7 +90,9 @@ describe('Dashboard', () => {
     f.detectChanges();
     const card = (f.nativeElement as HTMLElement).querySelector('.money')!;
     expect(card.querySelector('.money__value')!.textContent).toContain('300,00 €');
-    expect(card.querySelector('.money__pace')!.textContent).toMatch(/etwa .* pro Tag/);
+    // Am letzten Tag des Monats sagt ein Tagessatz nichts (er wäre der ganze Rest) — dann steht das stattdessen da.
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() === now.getDate();
+    expect(card.querySelector('.money__pace')!.textContent).toMatch(lastDay ? /letzte Tag im/ : /etwa .* pro Tag/);
     const curve = f.componentInstance.money()!.curve!;
     expect(curve.series[0]).toBe(500); // nur Ausgaben, Einnahmen zählen nicht
     expect(card.querySelector('app-spend-curve [role="img"]')!.getAttribute('aria-label')).toContain('Ausgaben im');
@@ -124,12 +126,12 @@ describe('Dashboard', () => {
     ]);
     f.detectChanges();
     expect(f.componentInstance.nextTrip()?.title).toBe('Wien entdecken');
-    // „Demnächst“ zeigt die nächste Reise mit Stand der Vorbereitung; Details stehen in Reisen.
-    const travel = f.nativeElement.querySelector('.soon .travel').textContent;
+    // „Demnächst“ zeigt die nächste Reise als Bordkarte (wie in Reisen) mit Stand der Vorbereitung.
+    const travel = f.nativeElement.querySelector('.soon app-trip-pass').textContent;
     expect(travel).toContain('Wien');
-    expect(travel).toMatch(/in \d+ Tagen/);
+    expect(travel).toMatch(/\d+ Tage bis zur Abreise/);
     expect(travel).toContain('1 Aufgabe offen');
-    expect(travel).toContain('2 / 4 gepackt');
+    expect(travel).toContain('2/4 gepackt');
   });
   it('trip dates: same month „1.–3. Feb.“, across months both dates; never crashes on odd data', () => {
     const f = TestBed.createComponent(Dashboard);

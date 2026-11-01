@@ -2,17 +2,21 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { Trip } from './reisen-api.service';
-import { STATUS_LABELS, STATUS_TONE, formatMoney, groupTrips, localDay, shortRange, tripPhase, whenText } from './reisen-logic';
+import { STATUS_LABELS, STATUS_TONE, groupTrips, localDay, packingShare, placeParts, shortRange, tripPhase, whenText } from './reisen-logic';
+import { TripPass } from './trip-pass';
 
-/** Meine Reisen, auch mit vielen Reisen übersichtlich: „Jetzt unterwegs“ und „Als Nächstes“ als volle Karte
- * (Zeitraum, Countdown, Aufgaben, Packliste, Budget), alle weiteren kommenden und die vergangenen Reisen als kompakte
- * Zeilen; Vergangen zunächst nur die letzten {@link PAST_PREVIEW}, Abgesagt eingeklappt. Ohne Coverbild. */
+const MONTH_ABBR = ['JAN', 'FEB', 'MÄR', 'APR', 'MAI', 'JUN', 'JUL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEZ'];
+
+/** Meine Reisen („Von hier nach dort“, 31.10.2026): die laufende bzw. nächste Reise als Bordkarte in der Reisefarbe,
+ * alle weiteren kommenden als Karten mit Kalenderblatt, Countdown und Vorbereitung, daneben „Neue Reise“. Vergangene
+ * als kompakte Zeilen (zunächst die letzten {@link PAST_PREVIEW}), Abgesagt eingeklappt. Ohne Coverbild — es gibt
+ * keine echten Bilder je Reise, und ein Stockfoto würde etwas vortäuschen. */
 /** So viele vergangene Reisen sind zunächst sichtbar; der Rest kommt über „Alle anzeigen“. */
 const PAST_PREVIEW = 3;
 
 @Component({
   selector: 'app-trip-list',
-  imports: [AppIcon, NgTemplateOutlet],
+  imports: [AppIcon, NgTemplateOutlet, TripPass],
   templateUrl: './trip-list.html',
   styleUrls: ['./trip-common.scss', './trip-list.scss'],
 })
@@ -38,6 +42,18 @@ export class TripList {
   readonly pastShown = computed(() => (this.pastOpen() ? this.groups().past : this.groups().past.slice(0, PAST_PREVIEW)));
   readonly pastHidden = computed(() => this.groups().past.length - this.pastShown().length);
 
+  /** Kalenderblatt: Monat (Kürzel) und Tag des ersten Reisetags. */
+  leaf(trip: Trip): { month: string; day: number } {
+    const [, m, d] = trip.start_date.split('-').map(Number);
+    return { month: MONTH_ABBR[m - 1], day: d };
+  }
+  place(trip: Trip): string {
+    return placeParts(trip.destination).place || trip.destination;
+  }
+  /** Packliste der Karte — getrennt von den Aufgaben (die stehen als Text daneben). */
+  packing(trip: Trip) {
+    return packingShare(trip.packing_packed, trip.packing_total);
+  }
   statusClass(trip: Trip): string {
     return `status status--${this.tone[trip.status]}`;
   }
@@ -52,27 +68,5 @@ export class TripList {
   }
   isOngoing(trip: Trip): boolean {
     return tripPhase(trip, this.today) === 'ongoing';
-  }
-  money(value: string | number, trip: Trip): string {
-    return formatMoney(value, trip.currency, true);
-  }
-  packText(trip: Trip): string {
-    return trip.packing_total ? `${trip.packing_packed} / ${trip.packing_total} gepackt` : 'Keine Packliste';
-  }
-  tasksText(trip: Trip): string {
-    return trip.tasks_open === 0 ? (trip.tasks_total ? 'Alles erledigt' : 'Keine Aufgaben') : trip.tasks_open === 1 ? '1 Aufgabe offen' : `${trip.tasks_open} Aufgaben offen`;
-  }
-  /** Kurzform für die kompakte Zeile: nur, was noch zu tun ist. */
-  openText(trip: Trip): string {
-    if (this.isPast(trip)) return ''; // vorbei: offene Punkte sind nur noch Rauschen
-    const parts: string[] = [];
-    if (trip.tasks_open) parts.push(trip.tasks_open === 1 ? '1 Aufgabe offen' : `${trip.tasks_open} Aufgaben offen`);
-    if (trip.packing_total && trip.packing_packed < trip.packing_total) parts.push(`${trip.packing_packed}/${trip.packing_total} gepackt`);
-    return parts.join(' · ');
-  }
-  /** Für Screenreader eine vollständige Zeile statt vieler Einzelteile. */
-  label(trip: Trip): string {
-    const budget = trip.budget_amount ? `, Budget ${this.money(trip.budget_spent, trip)} von ${this.money(trip.budget_amount, trip)}` : '';
-    return `${trip.title}, ${this.range(trip)}, ${this.when(trip)}, ${this.tasksText(trip)}, ${this.packText(trip)}${budget}`;
   }
 }

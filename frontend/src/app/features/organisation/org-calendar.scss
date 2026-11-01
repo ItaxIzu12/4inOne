@@ -182,8 +182,41 @@
   background: none;
   color: var(--text-muted);
 }
-.cell__dot {
+.cell__dots {
   display: none;
+  gap: 3px;
+  justify-content: center;
+  min-height: 6px;
+}
+.cell__dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cat);
+}
+
+// ---------- Legende: nur Kategorien, die im Zeitraum vorkommen ----------
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--line);
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cat);
 }
 
 // ---------- Woche ----------
@@ -193,8 +226,8 @@
   border-right: 1px solid var(--line);
 }
 .week__col {
-  display: grid;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
   min-width: 0;
   min-height: 320px;
@@ -243,14 +276,48 @@
   background: var(--accent);
   color: #fff;
 }
+// Rest der Spalte: neuer Termin — ruhig, erst bei Zeiger/Fokus sichtbar betont
+.week__add {
+  display: grid;
+  flex: 1 1 44px;
+  justify-items: center;
+  align-items: start;
+  min-height: 44px;
+  padding-top: 12px;
+  border: 1px dashed transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.week__add app-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.45;
+}
+.week__add:hover,
+.week__add:focus-visible {
+  border-color: var(--organization-accent);
+  background: var(--organization-soft);
+  color: var(--organization-accent);
+}
+.week__add:hover app-icon,
+.week__add:focus-visible app-icon {
+  opacity: 1;
+}
+.week__add:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
+}
 .week__ev {
   display: grid;
   gap: 1px;
   min-width: 0;
   padding: 6px 8px;
   border: 0;
-  border-radius: var(--radius-sm);
-  background: var(--surface-hover);
+  border-left: 3px solid var(--cat);
+  border-radius: 3px var(--radius-sm) var(--radius-sm) 3px;
+  background: color-mix(in srgb, var(--cat) 10%, #fff);
   color: var(--text);
   font: inherit;
   text-align: left;
@@ -315,6 +382,11 @@
 .agenda__time b {
   font-size: var(--fs-body);
   font-weight: 600;
+}
+// „Ganztägig“ ist keine Uhrzeit — normal gesetzt, nicht fett
+.agenda__time .allday {
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
 }
 .agenda__time small {
   color: var(--text-muted);
@@ -471,12 +543,8 @@
   .cell__events {
     display: none;
   }
-  .cell__dot {
-    display: block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
+  .cell__dots {
+    display: flex;
   }
   // Woche: Tagesstreifen statt sieben Spalten.
   .week {
@@ -502,23 +570,16 @@
     font: inherit;
     cursor: pointer;
   }
-  .strip__dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-  }
-  .strip__dot.is-on {
-    background: var(--accent);
-  }
+
   .agenda {
     padding: 14px 12px;
   }
   .agenda__row {
-    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-columns: 64px minmax(0, 1fr);
     gap: 10px;
   }
-  .agenda__row {
-    grid-template-columns: 64px minmax(0, 1fr);
+  .legend {
+    padding: 8px 12px;
   }
 }
 @media (prefers-reduced-motion: no-preference) {

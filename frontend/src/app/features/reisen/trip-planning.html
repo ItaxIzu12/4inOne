@@ -38,32 +38,32 @@
         }
       </div>
     } @else {
-      <ul class="rows">
-        @for (task of shown(); track task.id) {
-          @let d = due(task);
-          <li class="row" [class.is-done]="task.status === 'DONE'">
-            <label class="row__check">
-              <input type="checkbox" [checked]="task.status === 'DONE'" [disabled]="!canEdit()" (change)="toggleTask.emit(task)" />
-              <span class="row__text">
-                <b>{{ task.title }}</b>
-                <small>
-                  <span [class.late]="d.urgent && task.status === 'OPEN'">{{ d.text }}</span>
-                  @if (task.assignee_name) {
-                    <span class="row__who"> · {{ task.assignee_name }}</span>
-                  }
-                </small>
-              </span>
-            </label>
-            @if (canEdit()) {
-              <button type="button" class="icon-btn" [attr.aria-label]="task.title + ' bearbeiten'" (click)="editTask.emit(task)"><app-icon name="edit" /></button>
+      @if (timeline(); as groups) {
+        @for (g of groups; track g.key) {
+          @if (departBefore() === g.key) {
+            <ng-container *ngTemplateOutlet="depart" />
+          }
+          <h3 class="tl-head" [class.is-late]="g.key === 'late'">{{ g.label }} <span class="num">{{ g.tasks.length }}</span></h3>
+          <ul class="rows tl-rows" [class.is-late]="g.key === 'late'">
+            @for (task of g.tasks; track task.id) {
+              <ng-container *ngTemplateOutlet="row; context: { $implicit: task, group: g.key }" />
             }
-          </li>
+          </ul>
         } @empty {
-          <li class="row row--empty muted">
-            {{ view() === 'done' ? 'Noch nichts erledigt.' : view() === 'mine' ? 'Dir ist keine offene Aufgabe zugewiesen.' : 'Alles erledigt.' }}
-          </li>
+          <p class="row--empty muted">{{ view() === 'mine' ? 'Dir ist keine offene Aufgabe zugewiesen.' : 'Alles erledigt.' }}</p>
         }
-      </ul>
+        @if (departBefore() === 'end') {
+          <ng-container *ngTemplateOutlet="depart" />
+        }
+      } @else {
+        <ul class="rows">
+          @for (task of shown(); track task.id) {
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: task }" />
+          } @empty {
+            <li class="row row--empty muted">Noch nichts erledigt.</li>
+          }
+        </ul>
+      }
     }
   </section>
 
@@ -117,3 +117,34 @@
     </section>
   </div>
 </div>
+
+<!-- Abreise als Marke auf der Linie -->
+<ng-template #depart>
+  <p class="tl-depart">
+    <span class="tl-depart__icon" aria-hidden="true"><app-icon [name]="departIcon()" /></span>
+    <span><b>Abreise</b> · {{ departLabel() }}@if (trip().departure) { · ab {{ trip().departure }} }</span>
+  </p>
+</ng-template>
+
+<ng-template #row let-task let-group="group">
+  @let d = due(task, group);
+  <li class="row" [class.is-done]="task.status === 'DONE'">
+    <label class="row__check">
+      <input type="checkbox" [checked]="task.status === 'DONE'" [disabled]="!canEdit()" (change)="toggleTask.emit(task)" />
+      <span class="row__text">
+        <b>{{ task.title }}</b>
+        @if (d.text || task.assignee_name) {
+          <small>
+            @if (d.text) {<span [class.late]="d.urgent && task.status === 'OPEN'">{{ d.text }}</span>}
+            @if (task.assignee_name) {
+              <span class="row__who">{{ d.text ? ' · ' : '' }}{{ task.assignee_name }}</span>
+            }
+          </small>
+        }
+      </span>
+    </label>
+    @if (canEdit()) {
+      <button type="button" class="icon-btn" [attr.aria-label]="task.title + ' bearbeiten'" (click)="editTask.emit(task)"><app-icon name="edit" /></button>
+    }
+  </li>
+</ng-template>

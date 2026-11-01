@@ -8,61 +8,6 @@
   padding: var(--space-4) var(--content-padding-x) var(--space-8);
 }
 
-/* Kopf: Titel links, Datenschutz-Versprechen rechts */
-.people-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 500px);
-  gap: var(--space-6);
-  align-items: start;
-}
-.people-head h1 {
-  margin: 0;
-  font-size: var(--fs-page);
-  font-weight: var(--fw-bold);
-  line-height: 1.2;
-  letter-spacing: -0.025em;
-}
-.people-head__lede {
-  margin: var(--space-1) 0 0;
-  font-size: var(--fs-subsection);
-  color: var(--text-primary);
-}
-.people-head__text {
-  margin: var(--space-2) 0 0;
-  max-width: 60ch;
-  color: var(--text-secondary);
-  font-size: var(--fs-body);
-  line-height: 1.5;
-}
-.people-promise {
-  display: flex;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  border-radius: var(--radius-lg);
-  background: var(--success-soft);
-  color: var(--text-primary);
-}
-.people-promise p {
-  margin: 0;
-  font-size: var(--fs-secondary);
-  line-height: 1.5;
-}
-.people-promise__title {
-  margin-bottom: var(--space-1) !important;
-  font-size: var(--fs-body) !important;
-  font-weight: var(--fw-semibold);
-  color: var(--success);
-}
-.people-promise__icon {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--surface-card);
-  color: var(--success);
-}
 
 /* Reiter: umrandete Felder mit Symbol */
 .people-tabs {
@@ -285,7 +230,8 @@
 /* Personenliste mit Haarlinien */
 .people-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1.1fr) minmax(0, 1fr) auto;
+  /* Geteiltes bekommt mehr Platz als der Name — die Marken sollen ganz lesbar sein (31.10.2026) */
+  grid-template-columns: auto minmax(0, 0.8fr) minmax(0, 1.4fr) auto;
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-3) 0;
@@ -352,6 +298,7 @@
   background: var(--surface-sunken);
   color: var(--text-secondary);
   font-size: var(--fs-meta);
+  white-space: nowrap;
 }
 .people-actions {
   display: flex;
@@ -709,7 +656,6 @@
   .people-page {
     padding-inline: 20px;
   }
-  .people-top,
   .people-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -719,16 +665,6 @@
   .people-page {
     gap: var(--space-4);
     padding: 14px var(--content-padding-x) 26px;
-  }
-  .people-head__lede {
-    font-size: var(--fs-body);
-  }
-  .people-promise {
-    padding: var(--space-4);
-  }
-  .people-promise__icon {
-    width: 40px;
-    height: 40px;
   }
   .people-tabs {
     flex-wrap: nowrap;

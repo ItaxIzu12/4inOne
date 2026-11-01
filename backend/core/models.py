@@ -86,6 +86,9 @@ class Invitation(models.Model):
     class Scope(models.TextChoices):
         HOUSEHOLD = 'HOUSEHOLD', 'Haushalt'
         TRIP = 'TRIP', 'Reise'
+        CALENDAR = 'CALENDAR', 'Kalender'
+        # Freigabe des eigenen Kalenders (scope_id = Konto der freigebenden Person)
+        MY_CALENDAR = 'MY_CALENDAR', 'Kalenderfreigabe'
 
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Offen'

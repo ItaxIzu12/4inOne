@@ -2,6 +2,9 @@
 
 export const MONTH_NAMES = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 export const MONTH_SHORT = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+/** Monatskurzform in Datumsangaben im Text (Duden: „März“, „Mai“, „Juni“, „Juli“ ohne Punkt) — eine Liste für die ganze App.
+ * MONTH_SHORT (ohne Punkt, drei Buchstaben) bleibt für Diagrammachsen. */
+export const MONTH_ABBR = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
 export const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
 const pad = (n: number, width = 2) => String(n).padStart(width, '0');

@@ -146,6 +146,12 @@ h2 {
   width: 18px;
   height: 18px;
 }
+/* Fußknöpfe mit Symbol (01.11.2026): gleiche Größe wie der Lade-Kreis, damit beim Speichern nichts springt */
+.mf-btn app-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
 .mf-btn:focus-visible,
 .mf-link:focus-visible {
   outline: 2px solid var(--accent);

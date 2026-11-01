@@ -1,3 +1,4 @@
+import { AttachmentItem } from '../../shared/attachments/attachment-field';
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -308,6 +309,8 @@ export interface FolderEntryDto {
   model: string;
   room: TaskRoom;
   deadlines: DeadlineDto[];
+  /** Fotos/PDF (31.10.2026): Typenschild, Kassenbon, Vertragsseite. `can_delete` = hochgeladen von mir oder ich bin Admin. */
+  attachments?: AttachmentItem[];
   created_at?: string;
   updated_at?: string;
 }
@@ -465,6 +468,19 @@ export class HaushaltApiService {
 
   deleteFolderEntry(id: Id): Observable<void> {
     return this.http.delete<void>(`${this.base}/ordner/${id}/`);
+  }
+
+  /** Foto oder PDF an Gerät/Vertrag hängen — der Server prüft den Typ am Inhalt und entfernt Fotodaten. */
+  uploadFolderFile(entryId: Id, file: File): Observable<AttachmentItem> {
+    const body = new FormData();
+    body.append('file', file, file.name);
+    return this.http.post<AttachmentItem>(`${this.base}/ordner/${entryId}/anhaenge/`, body);
+  }
+  folderFileBlob(entryId: Id, fileId: number): Observable<Blob> {
+    return this.http.get(`${this.base}/ordner/${entryId}/anhaenge/${fileId}/`, { responseType: 'blob' });
+  }
+  removeFolderFile(entryId: Id, fileId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/ordner/${entryId}/anhaenge/${fileId}/`);
   }
 
   completeMaintenance(id: Id): Observable<FolderEntryDto> {

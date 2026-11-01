@@ -517,3 +517,11 @@
     background: var(--hover);
   }
 }
+
+// Demnächst: die Bordkarte der nächsten Reise über die ganze Breite (31.10.2026)
+.soon__pass {
+  grid-column: 1 / -1;
+}
+.soon__grid:has(.soon__pass) {
+  grid-template-columns: minmax(0, 1fr);
+}

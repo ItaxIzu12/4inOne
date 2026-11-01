@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.db import models
 from django.db.models.functions import Lower
@@ -318,3 +320,33 @@ class FolderEntry(models.Model):
 
     def __str__(self) -> str:
         return f'{self.get_kind_display()}: {self.name}'
+
+
+def folder_file_path(instance, filename):
+    # Zufälliger Speichername je Haushalt; der Originalname wird nie als Pfad verwendet.
+    return f'haushalt/{instance.entry.household_id}/{uuid.uuid4().hex}'
+
+
+def _private_storage():
+    from organisation.models import private_storage
+
+    return private_storage()
+
+
+class FolderAttachment(models.Model):
+    """Foto oder PDF zu einem Gerät oder Vertrag (31.10.2026): Typenschild, Kassenbon, Vertragsseite.
+
+    Sichtbar für alle erwachsenen Haushaltsmitglieder wie der Eintrag selbst (Kind-Konten haben keinen Zugriff auf den
+    Ordner). Anhängen darf, wer den Eintrag bearbeiten darf; löschen nur, wer hochgeladen hat, und Haushalts-Admins.
+    Prüfung, Neukodierung ohne Fotodaten und Grenzen: organisation/files.py."""
+
+    entry = models.ForeignKey(FolderEntry, on_delete=models.CASCADE, related_name='attachments')
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    file = models.FileField(storage=_private_storage, upload_to=folder_file_path, max_length=200)
+    name = models.CharField(max_length=160)
+    content_type = models.CharField(max_length=100)
+    size = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['id']
