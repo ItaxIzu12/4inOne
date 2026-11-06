@@ -1,0 +1,53 @@
+<section class="al" [attr.aria-labelledby]="headingId">
+  <h3 class="al__head" [id]="headingId"><app-icon name="link" aria-hidden="true" />Mit anderen Bereichen verbinden <span>(optional)</span></h3>
+
+  @if (loadError()) {
+    <p class="al__error" role="alert">Die Verbindungen konnten nicht geladen werden. Speichern geht trotzdem; die Schalter wirken dann beim nächsten Mal.</p>
+  }
+
+  <ul class="al__list">
+    @for (row of rows(); track row.kind) {
+      <li class="al__row" [class.is-on]="row.wish.on">
+        <label class="al__switch">
+          <span class="al__text">
+            <b>{{ label[row.kind] }}</b>
+            @if (row.preview && (row.wish.on || !row.problem)) {
+              <small class="al__preview"><app-icon name="arrow" aria-hidden="true" />{{ row.preview }}</small>
+            }
+            @if (row.problem) {
+              <small class="al__problem"><app-icon name="info" aria-hidden="true" />{{ row.problem }}</small>
+            }
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            class="al__toggle"
+            [checked]="row.wish.on"
+            [disabled]="!row.available"
+            (change)="toggle(row.kind, $any($event.target).checked)"
+          />
+        </label>
+
+        @if (row.wish.on && row.linked) {
+          <p class="al__status">
+            @if (row.wish.paused) {
+              <span class="al__badge al__badge--paused">Pausiert</span><span>erscheint gerade nicht</span>
+              <button type="button" class="al__link" (click)="setPaused(row.kind, false)">Fortsetzen</button>
+            } @else {
+              <span class="al__badge">Aktiv</span>
+              <button type="button" class="al__link" (click)="setPaused(row.kind, true)">Pausieren</button>
+              <a class="al__link" [routerLink]="row.target.path" [queryParams]="row.target.query">{{ row.target.label }}<app-icon name="arrow" aria-hidden="true" /></a>
+            }
+          </p>
+        }
+        @switch (row.change) {
+          @case ('create') {<p class="al__pending">Wird beim Speichern eingeschaltet.</p>}
+          @case ('unlink') {<p class="al__pending al__pending--warn">Wird beim Speichern aufgehoben. {{ sourceLabel() }} und echte Buchungen, Termine und Aufgaben bleiben.</p>}
+          @case ('pause') {<p class="al__pending">Wird beim Speichern pausiert.</p>}
+          @case ('resume') {<p class="al__pending">Wird beim Speichern fortgesetzt.</p>}
+        }
+      </li>
+    }
+  </ul>
+  <p class="al__note"><app-icon name="lock" aria-hidden="true" />Verbinden heißt: 4inOne zeigt es dort an. Es wird nichts gebucht, kopiert oder gelöscht — und niemand bekommt dadurch Zugriff.</p>
+</section>

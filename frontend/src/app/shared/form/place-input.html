@@ -1,0 +1,58 @@
+<div class="place">
+  <app-icon class="place__icon" [name]="kind() === 'lodging' ? 'bed' : 'map-pin'" aria-hidden="true" />
+  <input
+    #field
+    type="text"
+    role="combobox"
+    autocomplete="off"
+    aria-autocomplete="list"
+    [attr.id]="inputId()"
+    [attr.aria-labelledby]="labelledBy()"
+    [attr.aria-expanded]="open()"
+    [attr.aria-controls]="listId"
+    [attr.aria-activedescendant]="open() && active() >= 0 ? optionId(active()) : null"
+    [attr.maxlength]="maxLength()"
+    [placeholder]="placeholder()"
+    [value]="value()"
+    [disabled]="disabled()"
+    (focus)="onFocus()"
+    (input)="onInput($event)"
+    (blur)="onBlur()"
+    (keydown)="onKeydown($event)"
+  />
+  @if (loading()) {<span class="place__spinner" aria-hidden="true"></span>}
+</div>
+<span class="sr-only" aria-live="polite">{{ status() }}</span>
+
+<div #panel popover="manual" class="place__panel" (mousedown)="keepFocus($event)" (click)="keepFocus($event)">
+  @if (open()) {
+    <div role="listbox" class="place__list" [id]="listId" aria-label="Ortsvorschläge">
+      @if (ownOptions().length) {
+        <div role="group" class="place__group" [attr.aria-labelledby]="listId + '-own'">
+          <div class="place__head" role="presentation" [id]="listId + '-own'">{{ kind() === 'lodging' ? 'Deine Unterkünfte' : 'Deine Orte' }}</div>
+          @for (o of ownOptions(); track o.value; let i = $index) {
+            <div role="option" class="place__option" [id]="optionId(i)" [class.is-active]="i === active()" [attr.aria-selected]="i === active()" (click)="choose(o)" (mousemove)="active.set(i)">
+              <app-icon class="place__kind" name="clock" aria-hidden="true" />
+              <span class="place__text"><b>{{ o.name }}</b></span>
+            </div>
+          }
+        </div>
+      }
+      @if (placeOptions().length) {
+        @let offset = ownOptions().length;
+        <div role="group" class="place__group" [attr.aria-labelledby]="listId + '-places'">
+          <div class="place__head" role="presentation" [id]="listId + '-places'">{{ kind() === 'lodging' ? 'Unterkünfte' : 'Orte' }}</div>
+          @for (o of placeOptions(); track o.value; let i = $index) {
+            <div role="option" class="place__option" [id]="optionId(offset + i)" [class.is-active]="offset + i === active()" [attr.aria-selected]="offset + i === active()" (click)="choose(o)" (mousemove)="active.set(offset + i)">
+              <app-icon class="place__kind" [name]="kind() === 'lodging' ? 'bed' : 'map-pin'" aria-hidden="true" />
+              <span class="place__text"><b>{{ o.name }}</b>@if (o.detail) {<small>{{ o.detail }}</small>}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+    @if (placeOptions().length && !demo) {
+      <p class="place__credit">Kartendaten © OpenStreetMap-Mitwirkende</p>
+    }
+  }
+</div>

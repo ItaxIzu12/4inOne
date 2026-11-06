@@ -230,6 +230,25 @@ Code: `haushalt/models.py` `FolderAttachment`, `FolderEntryViewSet.add_attachmen
 - **Löschen**: nur die hochladende Person oder Haushalts-Admins (sonst 403); die Antwort meldet das je Datei als
   `can_delete`. Eintrag gelöscht → Dateien gelöscht (Signal räumt den Speicher nach dem Commit auf).
 
+## Ortsvorschläge (01.11.2026)
+
+Code: `core/places.py`, `core/place_views.py` (`GET /api/v1/places/?q=`), Tests `core/test_places.py`.
+- Nur angemeldet; „eigene Orte“ ausschließlich aus eigenen Terminen und Reisen, an denen man beteiligt ist.
+- Nach außen (Photon, `PLACES_PROVIDER_URL`) geht nur der bereinigte Suchtext (max. 100 Zeichen) über den Server —
+  keine IP, kein Cookie, kein Konto. Ab 3 Zeichen, 24 h Cache, `RATE_LIMIT_PLACES` je Person. Leer = abgeschaltet.
+- `kind=lodging` (nur Unterkünfte, eigene = Unterkünfte eigener/geteilter Reisen) und `near` (Reiseziel, ebenfalls nur
+  Text der Person) werden geprüft bzw. gekürzt; unbekannte `kind` → normale Ortssuche.
+
+## Connection Engine V2 — abgeleitete Verbindungen (01.11.2026)
+
+Code `connections/auto_links.py`, Tests `connections/tests/test_auto_links.py` (QA-10/11).
+- Eine Verbindung gehört genau einer Person und zeigt Abgeleitetes nur in DEREN Bereichen. Sie gibt nie Zugang.
+- Anlegen/Lesen: Quelle muss für die Person sichtbar sein (dieselbe Regel wie die Domain-API; Kind-Konten keine
+  Verträge/Geräte). Vertragsbetrag planen nur, wer ihn eingetragen hat (`can_see_cost`, sonst 403).
+- Ändern/Aufheben nur eigene Verbindungen; ist die Quelle nicht mehr sichtbar (Haushalt verlassen, aus Reise entfernt),
+  verschwindet alles Abgeleitete sofort und die Verbindung antwortet 404.
+- Protokoll `AutoLinkEvent` ohne Inhalte (keine Titel, Beträge, Daten).
+
 ## Demo permissions
 
 Demo data belongs to the demo environment, not to arbitrary logged-in users.

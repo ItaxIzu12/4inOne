@@ -491,7 +491,7 @@
                   <button class="row-btn transaction" [class.is-planned]="row.planned" (click)="openRow(row)">
                     <span class="tile" aria-hidden="true" [style.--cat]="categoryColor(row.category)"><app-icon [name]="categoryIcon(categoryName(row.category))" /></span>
                     <span class="row-text transaction-copy"
-                      ><b>{{ rowTitle(row) }}</b><small>{{ categoryName(row.category) }}{{ row.recurring ? ' • monatlich' : '' }}@if (row.planned) { • <span class="planned-tag"><app-icon name="clock" aria-hidden="true" />Geplant</span>}</small></span
+                      ><b>{{ rowTitle(row) }}</b><small>{{ categoryName(row.category) }}{{ row.recurring ? ' • monatlich' : '' }}@if (row.plannedItem?.kind === 'CONTRACT') { • <span class="planned-tag"><app-icon name="household" aria-hidden="true" />aus Haushalt › Vertrag</span>}@if (row.planned) { • <span class="planned-tag"><app-icon name="clock" aria-hidden="true" />Geplant</span>}</small></span
                     ><strong [class.negative]="row.type === 'EXPENSE' && !row.planned" [class.planned-amount]="row.planned" [class.positive]="row.type === 'INCOME'">{{ row.type === 'EXPENSE' ? '−' : '+' }}{{ money(row.amount) }}</strong>
                   </button>
                 </li>
@@ -804,7 +804,7 @@
   @if (editor() === 'transactions') {
     @if (plannedSource(); as source) {
       <p class="planned-note" role="note">
-        <app-icon name="clock" aria-hidden="true" />Geplante wiederkehrende Ausgabe „{{ source.title }}“. Speichern erfasst sie als
+        <app-icon name="clock" aria-hidden="true" />{{ source.kind === 'CONTRACT' ? 'Geplante Vertragskosten' : 'Geplante wiederkehrende Ausgabe' }} „{{ source.title }}“. Speichern erfasst sie als
         Transaktion am {{ source.date | date: 'dd.MM.yyyy' }} — danach zählt sie als ausgegeben statt geplant.
       </p>
     }
@@ -1021,6 +1021,9 @@
         <input id="goal-rate" inputmode="decimal" formControlName="rate" />
       </app-field>
     </fieldset>
+  }
+  @if (editor() === 'goals') {
+    <app-auto-links sourceType="SAVINGS_GOAL" [sourceId]="editId() ?? null" [previews]="goalAutoPreview()" sourceLabel="Das Sparziel" />
   }
   @if (editor() === 'goals' && editId()) {
     <app-connections objectType="SAVINGS_GOAL" [objectId]="editId()!" />

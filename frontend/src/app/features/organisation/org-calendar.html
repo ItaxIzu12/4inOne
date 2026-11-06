@@ -137,7 +137,7 @@
                           @if (e.recurrence) {<span><app-icon name="repeat" aria-hidden="true" />{{ repeatHint(e) }}</span>}
                         </small>
                       }
-                      <span class="sr-only"> – bearbeiten</span>
+                      <span class="sr-only">{{ e.derived ? ' – Quelle öffnen' : ' – bearbeiten' }}</span>
                     </span>
                   </button>
                 </li>

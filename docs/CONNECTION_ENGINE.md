@@ -239,6 +239,13 @@ in den Bearbeiten-Dialogen.
   Reise ↔ „Bahn-Tickets ausdrucken“. Paare spiegeln `ALLOWED_PAIRS`. Links aus „Verknüpft mit“ führen in der Demo nach
   `/demo/…`.
 
+## V2 — abgeleitete Verbindungen (01.11.2026)
+
+Siehe `CONNECTION_ENGINE_V2_AUDIT.md` (Architektur, Regeln, API), `CONNECTION_ENGINE_V2_TEST_REPORT.md` (QA-01 … QA-14).
+Kurz: `connections/auto_links.py` + `AutoLink`/`AutoLinkEvent`. Eine Quelle (Vertrag, Gerät, Reise, Sparziel, Haushalt),
+Anzeige in Finanzen („Geplant“) und Organisation (Kalender, Aufgaben) wird bei jedem Lesen berechnet — keine Kopien,
+keine Buchungen, keine Zahlungen. V1-Verbindungen bleiben unverändert.
+
 ## Later: Automations
 
 Automations may act on connected objects only when the behavior is transparent, permission-safe and user-controlled.

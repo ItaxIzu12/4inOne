@@ -76,7 +76,8 @@ export interface SavingsGoal {
 export interface PlannedItem {
   /** TRANSACTION: echte Transaktion mit Datum nach heute (id gesetzt). RECURRING: aus einer wiederkehrenden
    * Ausgabe berechnet, noch keine Transaktion (source_id = die zuletzt gebuchte). */
-  kind: 'TRANSACTION' | 'RECURRING';
+  /** CONTRACT: Vertragskosten aus dem Haushalt (Connection Engine V2), nur berechnet — source_id = Vertrag. */
+  kind: 'TRANSACTION' | 'RECURRING' | 'CONTRACT';
   /** Zuordnung wie im Backend: Notiz (klein, ohne Ränder) | Kategorie-ID. */
   key: string;
   id: number | null;

@@ -481,6 +481,7 @@ DETAIL_VIEW_COVERAGE = {
     # Gemeinsame Kalender (31.10.2026): fremd = 404, Mitglied ohne Besitz = 403, Rollen, Austreten/Entfernen/Löschen
     'CalendarDetailView': 'organisation/test_shared_calendars.py (foreign ids, only the owner manages)',
     'CalendarMemberView': 'organisation/test_shared_calendars.py (leaving/removing, roles)',
+    'AutoLinkDetailView': 'connections/tests/test_auto_links.py (QA-10/11: only own links, revoked source → 404)',
     'ShareGivenView': 'organisation/test_calendar_shares.py (only own shares, role change, ending)',
     'ShareReceivedView': 'organisation/test_calendar_shares.py (only shares made for me)',
 }

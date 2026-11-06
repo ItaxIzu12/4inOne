@@ -284,6 +284,10 @@ REST_FRAMEWORK = {
         # hintereinander abgehakt werden.
         'connections_write': f"{env.int('RATE_LIMIT_CONNECTIONS_WRITE', default=60)}/min",
         'haushalt_write': f"{env.int('RATE_LIMIT_HAUSHALT_WRITE', default=120)}/min",
+        # Ortssuche beim Tippen (core/places.py) — je Person; Photon ist ein Gemeinschaftsdienst.
+        'places': f"{env.int('RATE_LIMIT_PLACES', default=60)}/min",
+        # Beta-Rückmeldungen (core/feedback_views.py), je Person.
+        'beta_feedback': f"{env.int('RATE_LIMIT_BETA_FEEDBACK', default=20)}/hour",
         # Berichte (CSV/PDF, finanzen/views.py) — enthalten vollständige
         # Haushaltsdaten über einen längeren Zeitraum, deshalb das strenge
         # Limit für Datenexporte (ARCHITEKTUR.md §3.9), pro Nutzer.
@@ -374,6 +378,9 @@ AXES_VERBOSE = False
 # Mechanismus) statt über eine selbstgebaute Redis-Lösung — weniger
 # Angriffsfläche/Komplexität für den MVP, siehe ARCHITEKTUR.md §2.1.
 REDIS_URL = env('REDIS_URL', default='redis://localhost:6379/0')
+# Ortsvorschläge (core/places.py): Photon (komoot, OpenStreetMap). Leer = nur eigene Orte, nichts geht nach außen.
+PLACES_PROVIDER_URL = env('PLACES_PROVIDER_URL', default='https://photon.komoot.io/api/')
+
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
@@ -402,6 +409,11 @@ CACHES = {
 
 # Wechselkurse von der EZB laden (core/fx.py). In Tests aus (conftest.py) — dort gibt es nie Netzwerkzugriffe.
 FX_FETCH_ENABLED = env.bool('FX_FETCH_ENABLED', default=True)
+
+# Beta-Test (Entwicklungsplan Phase 5): „Feedback geben“ im Kontomenü. Aus = Knopf unsichtbar, Senden 404.
+BETA_FEEDBACK_ENABLED = env.bool('BETA_FEEDBACK_ENABLED', default=False)
+# Rückmeldungen werden danach von `cleanup_expired` gelöscht (Datenschutz: nur für die Auswertung der Beta).
+BETA_FEEDBACK_RETENTION_DAYS = env.int('BETA_FEEDBACK_RETENTION_DAYS', default=180)
 
 # Admin-Panel NICHT unter dem Standardpfad /admin/ (ARCHITEKTUR.md §3.4:
 # Standardziel automatisierter Scanner). Pfad kommt aus der Umgebung,

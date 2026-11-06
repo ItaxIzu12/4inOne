@@ -1,3 +1,5 @@
+import { AutoLinks } from '../../shared/connections/auto-links';
+import { contractFinance, contractReminder, deviceMaintenance } from '../../shared/connections/auto-link-rules';
 import { HouseholdPeople } from './household-people.service';
 import { ScopeNote } from '../../shared/scope-note/scope-note';
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
@@ -28,6 +30,7 @@ import {
   nextDeviceDeadline,
 } from './geraete-logic';
 import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
+import { addMonthsIso } from './haushalt-logic';
 import { RowMenu, RowMenuItem } from './row-menu';
 import { normalizeMoneyInput } from '../../shared/currency/money-input';
 import {
@@ -41,6 +44,8 @@ import {
   contractState,
   contractStats,
   costLabel,
+  leadLabel,
+  moneyLabel,
   euro,
   filterContracts,
   formatDate,
@@ -59,6 +64,18 @@ const CONTRACT_SORTS: ContractSort[] = ['frist', 'kosten', 'name'];
 
 /** Bereich in „Zuhause“: Geräte oder Verträge. */
 export type ZuhauseSection = 'geraete' | 'vertraege';
+
+const LEAD_OPTIONS: SelectOption[] = [
+  { value: '14', label: '14 Tage vorher' },
+  { value: '7', label: '7 Tage vorher' },
+  { value: '30', label: '30 Tage vorher' },
+  { value: '0', label: 'Nur am Fristtag' },
+];
+
+const NOTICE_UNIT_OPTIONS: SelectOption[] = [
+  { value: 'MONTHS', label: 'Monate' },
+  { value: 'DAYS', label: 'Tage' },
+];
 
 const BILLING_OPTIONS: SelectOption[] = (Object.keys(BILLING_LABEL) as BillingCycle[]).map((value) => ({
   value,
@@ -90,7 +107,7 @@ const DEVICE_STATUS_FORM: SelectOption[] = [
 @Component({
   selector: 'app-ordner-tab',
   standalone: true,
-  imports: [ErrorNoticeDirective, DecimalPipe, AppIcon, AppSelect, Field, ModalForm, AppDatePicker, RowMenu, ConnectionsSection, AttachmentField, ScopeNote],
+  imports: [ErrorNoticeDirective, DecimalPipe, AppIcon, AppSelect, Field, ModalForm, AppDatePicker, RowMenu, ConnectionsSection, AttachmentField, ScopeNote, AutoLinks],
   templateUrl: './ordner-tab.html',
   styleUrls: ['./haushalt-common.scss', './haushalt-stats.scss', './ordner-tab.scss', './zuhause-tab.scss'],
 })
@@ -165,6 +182,8 @@ export class OrdnerTab {
   protected readonly nextDeviceDeadline = nextDeviceDeadline;
   protected readonly deadlineSoon = deadlineSoon;
   protected readonly costLabel = costLabel;
+  protected readonly leadLabel = leadLabel;
+  protected readonly moneyLabel = moneyLabel;
   protected readonly billingLabel = BILLING_LABEL;
   protected readonly euro = euro;
   protected readonly monthly = monthly;
@@ -191,6 +210,9 @@ export class OrdnerTab {
   protected readonly formStart = signal('');
   protected readonly formEnd = signal('');
   protected readonly formNotice = signal('');
+  /** Einheit der Kündigungsfrist: Monate kalendarisch („1 Monat zum Vertragsende“) oder Tage. */
+  protected readonly formNoticeUnit = signal<'DAYS' | 'MONTHS'>('MONTHS');
+  protected readonly noticeUnitOptions = NOTICE_UNIT_OPTIONS;
   protected readonly formAutoRenewal = signal(false);
   protected readonly formContractNumber = signal('');
   protected readonly formModel = signal('');
@@ -198,12 +220,21 @@ export class OrdnerTab {
   protected readonly formWarranty = signal('');
   protected readonly formMaintenance = signal('');
   protected readonly formInterval = signal('');
+  /** Letzte Wartung: mit Intervall ergibt sie „Nächste Wartung“ (wie „Wartung erledigt“). */
+  protected readonly formLastMaintenance = signal('');
+  protected readonly formSerial = signal('');
+  /** Kündigungshinweis vorab (Tage; '0' = nur am Fristtag). */
+  protected readonly formLead = signal('14');
+  protected readonly leadOptions = LEAD_OPTIONS;
+  /** Angekündigte Preisänderung: neuer Preis ab Datum. */
+  protected readonly formNextCost = signal('');
+  protected readonly formNextFrom = signal('');
   protected readonly formError = signal<string | null>(null);
   protected readonly formSaving = signal(false);
   protected readonly formStatusOptions = computed(() => (this.formKind() === 'vertrag' ? CONTRACT_STATUS_FORM : DEVICE_STATUS_FORM));
   /** Vorschau des letzten Kündigungstags im Formular. */
   protected readonly formDeadline = computed(() =>
-    cancellationDeadline(this.formEnd() || null, this.optionalInt(this.formNotice(), true)),
+    cancellationDeadline(this.formEnd() || null, ...this.noticeFields()),
   );
   private lastRequest = 0;
 
@@ -216,15 +247,15 @@ export class OrdnerTab {
         untracked(() => this.openNew());
       }
     });
-    // Vertragsnummer nur für den gewählten Vertrag nachladen (nie in der Liste).
+    // Vertrags- bzw. Seriennummer nur für den gewählten Eintrag nachladen (nie in der Liste).
     effect(() => {
       const entry = this.selected();
-      if (!entry || entry.kind !== 'vertrag') return;
+      if (!entry) return;
       const id = entry.id;
       untracked(() => {
         if (this.contractNumber()?.id === id) return;
         this.provider.getFolderEntry(id).subscribe({
-          next: (detail) => this.contractNumber.set({ id, value: detail.contract_number ?? '' }),
+          next: (detail) => this.contractNumber.set({ id, value: detail.contract_number ?? detail.serial_number ?? '' }),
           error: () => this.contractNumber.set({ id, value: '' }),
         });
       });
@@ -346,6 +377,28 @@ export class OrdnerTab {
     return this.formKind() === 'vertrag' && !this.formCostHidden() ? `${base} Den Betrag siehst nur du.` : base;
   });
 
+  // Connection Engine V2 (01.11.2026): Vorschau aus den aktuellen Formularwerten — zeigt vor dem Speichern, was wo erscheint
+  private readonly autoLinkBox = viewChild(AutoLinks);
+  protected readonly autoPreviews = computed(() => {
+    if (this.formKind() === 'geraet') {
+      return { DEVICE_MAINTENANCE: deviceMaintenance(this.formName().trim(), this.formMaintenance() || null, this.formStatus()) };
+    }
+    const facts = {
+      name: this.formName().trim(),
+      cost: this.formCostHidden() ? null : normalizeMoneyInput(this.formCost()) || null,
+      billing_cycle: this.formBilling(),
+      start_date: this.formStart() || null,
+      end_date: this.formEnd() || null,
+      ...this.noticeInput(),
+      status: this.formStatus(),
+      cost_visible: !this.formCostHidden(),
+      next_cost: normalizeMoneyInput(this.formNextCost()) || null,
+      next_cost_from: this.formNextFrom() || null,
+      reminder_lead_days: Number(this.formLead()),
+    };
+    return { CONTRACT_FINANCE: contractFinance(facts), CONTRACT_REMINDER: contractReminder(facts) };
+  });
+
   // Fotos & PDF (31.10.2026): beim Anlegen und Bearbeiten; wirkt beim Speichern
   protected readonly formAttachments = signal<AttachmentItem[]>([]);
   private readonly attachmentBox = viewChild(AttachmentField);
@@ -355,6 +408,7 @@ export class OrdnerTab {
     this.editingId.set(null);
     this.formAttachments.set([]);
     this.attachmentBox()?.reset();
+    this.autoLinkBox()?.reset();
     this.formCostHidden.set(false);
     this.fillForm({ kind: this.kind(), name: '', ...EMPTY_ENTRY });
   }
@@ -363,13 +417,21 @@ export class OrdnerTab {
     this.editingId.set(entry.id);
     this.formAttachments.set(entry.attachments ?? []);
     this.attachmentBox()?.reset();
+    this.autoLinkBox()?.reset();
     this.formCostHidden.set(entry.cost_visible === false);
     const number = this.contractNumber()?.id === entry.id ? this.contractNumber()!.value : '';
-    this.fillForm({ ...entry, contract_number: number });
+    this.fillForm(entry.kind === 'vertrag' ? { ...entry, contract_number: number } : { ...entry, contract_number: '', serial_number: number });
     if (entry.kind === 'vertrag' && this.contractNumber()?.id !== entry.id) {
       // Vertragsnummer aus der Detailantwort nachtragen.
       this.provider.getFolderEntry(entry.id).subscribe({
         next: (detail) => this.formContractNumber.set(detail.contract_number ?? ''),
+        error: () => undefined,
+      });
+    }
+    if (entry.kind === 'geraet' && this.contractNumber()?.id !== entry.id) {
+      // Seriennummer steht wie die Vertragsnummer nur in der Detailantwort.
+      this.provider.getFolderEntry(entry.id).subscribe({
+        next: (detail) => this.formSerial.set(detail.serial_number ?? ''),
         error: () => undefined,
       });
     }
@@ -386,7 +448,8 @@ export class OrdnerTab {
     this.formBilling.set(entry.billing_cycle ?? 'MONTHLY');
     this.formStart.set(entry.start_date ?? '');
     this.formEnd.set(entry.end_date ?? '');
-    this.formNotice.set(entry.notice_period_days?.toString() ?? '');
+    this.formNotice.set((entry.notice_period_months ?? entry.notice_period_days)?.toString() ?? '');
+    this.formNoticeUnit.set(entry.notice_period_months || !entry.notice_period_days ? 'MONTHS' : 'DAYS');
     this.formAutoRenewal.set(!!entry.auto_renewal);
     this.formContractNumber.set(entry.contract_number ?? '');
     this.formModel.set(entry.model ?? '');
@@ -394,6 +457,11 @@ export class OrdnerTab {
     this.formWarranty.set(entry.warranty_end_date ?? '');
     this.formMaintenance.set(entry.maintenance_due_date ?? '');
     this.formInterval.set(entry.maintenance_interval_months?.toString() ?? '');
+    this.formLastMaintenance.set(entry.last_maintenance ?? '');
+    this.formSerial.set(entry.serial_number ?? '');
+    this.formLead.set(String(entry.reminder_lead_days ?? 14));
+    this.formNextCost.set(entry.next_cost ? entry.next_cost.replace('.', ',') : '');
+    this.formNextFrom.set(entry.next_cost_from ?? '');
     this.formError.set(null);
     this.formOpen.set(true);
   }
@@ -408,6 +476,25 @@ export class OrdnerTab {
     const normalized = normalizeMoneyInput(value) ?? 'x';
     if (!/^\d{1,5}(\.\d{1,2})?$/.test(normalized) || Number(normalized) <= 0) return undefined;
     return Number(normalized).toFixed(2);
+  }
+
+  /** [Tage, Monate] aus Zahl und Einheit — gesetzt ist höchstens eins von beiden. */
+  private noticeFields(): [number | null, number | null] {
+    const value = this.optionalInt(this.formNotice(), this.formNoticeUnit() === 'DAYS');
+    return this.formNoticeUnit() === 'MONTHS' ? [null, value] : [value, null];
+  }
+
+  private noticeInput(): { notice_period_days: number | null; notice_period_months: number | null } {
+    const [days, months] = this.noticeFields();
+    return { notice_period_days: days, notice_period_months: months };
+  }
+
+  /** Letzte Wartung oder Intervall geändert → nächste Wartung = letzte + Intervall (bleibt danach von Hand änderbar). */
+  protected setMaintenanceBasis(last: string, interval: string): void {
+    this.formLastMaintenance.set(last);
+    this.formInterval.set(interval);
+    const months = this.optionalInt(interval);
+    if (last && months && months <= 120) this.formMaintenance.set(addMonthsIso(last, months));
   }
 
   /** Ganze Zahl ≥ 1 (oder ≥ 0 mit allowZero); leer oder ungültig → null. */
@@ -432,8 +519,21 @@ export class OrdnerTab {
       return;
     }
     const notice = this.formNotice().trim();
-    if (isContract && notice && !/^\d+$/.test(notice)) {
-      this.formError.set('Die Kündigungsfrist bitte in ganzen Tagen angeben (0 oder mehr).');
+    if (isContract && notice && this.formNoticeUnit() === 'DAYS' && !(/^\d+$/.test(notice) && Number(notice) <= 1095)) {
+      this.formError.set('Die Kündigungsfrist bitte in ganzen Tagen angeben (0 bis 1095).');
+      return;
+    }
+    if (isContract && notice && this.formNoticeUnit() === 'MONTHS' && !(this.optionalInt(notice) && Number(notice) <= 36)) {
+      this.formError.set('Die Kündigungsfrist bitte in ganzen Monaten angeben (1 bis 36).');
+      return;
+    }
+    const nextCost = isContract && !this.formCostHidden() ? this.parseCost(this.formNextCost()) : null;
+    if (nextCost === undefined) {
+      this.formError.set('Bitte den neuen Preis als Betrag größer als 0 eingeben, z. B. 34,99.');
+      return;
+    }
+    if (isContract && !this.formCostHidden() && !nextCost !== !this.formNextFrom()) {
+      this.formError.set('Für eine Preisänderung bitte neuen Preis und „gilt ab“ zusammen angeben.');
       return;
     }
     if (isContract && this.formStart() && this.formEnd() && this.formEnd() < this.formStart()) {
@@ -456,24 +556,31 @@ export class OrdnerTab {
       billing_cycle: this.formBilling(),
       start_date: isContract ? this.formStart() || null : null,
       end_date: isContract ? this.formEnd() || null : null,
-      notice_period_days: isContract && notice ? Number(notice) : null,
+      ...(isContract && notice ? this.noticeInput() : { notice_period_days: null, notice_period_months: null }),
       auto_renewal: isContract && this.formAutoRenewal(),
       contract_number: isContract ? this.formContractNumber().trim() : '',
+      reminder_lead_days: Number(this.formLead()),
+      next_cost: isContract ? nextCost : null,
+      next_cost_from: isContract && nextCost ? this.formNextFrom() : null,
+      serial_number: isContract ? '' : this.formSerial().trim(),
       purchase_date: isContract ? null : this.formPurchase() || null,
       warranty_end_date: isContract ? null : this.formWarranty() || null,
       maintenance_interval_months: isContract ? null : this.optionalInt(interval),
       maintenance_due_date: isContract ? null : this.formMaintenance() || null,
-      last_maintenance: null,
+      last_maintenance: isContract ? null : this.formLastMaintenance() || null,
       model: isContract ? '' : this.formModel().trim(),
       room: '',
     };
-    if (this.formCostHidden()) delete input.cost;
+    if (this.formCostHidden()) {
+      delete input.cost;
+      delete input.next_cost;
+      delete input.next_cost_from;
+    }
     const id = this.editingId();
     if (id !== null) {
-      // Beim Bearbeiten Raum und letzte Wartung nicht überschreiben.
+      // Beim Bearbeiten den Raum nicht überschreiben.
       const current = (this.entries() ?? []).find((e) => e.id === id);
       input.room = current?.room ?? '';
-      input.last_maintenance = current?.last_maintenance ?? null;
     }
     this.formSaving.set(true);
     this.formError.set(null);
@@ -486,11 +593,14 @@ export class OrdnerTab {
           saved = stored;
           this.editingId.set(stored.id); // erneuter Versuch ändert denselben Eintrag statt einen zweiten anzulegen
           const box = this.attachmentBox();
-          return box
-            ? box
-                .commit((file) => this.provider.uploadFolderFile(stored.id, file), (fileId) => this.provider.removeFolderFile(stored.id, fileId))
-                .pipe(map(() => stored))
-            : of(stored);
+          const links = this.autoLinkBox();
+          return (box
+            ? box.commit((file) => this.provider.uploadFolderFile(stored.id, file), (fileId) => this.provider.removeFolderFile(stored.id, fileId))
+            : of(undefined)
+          ).pipe(
+            switchMap(() => (links ? links.commit(stored.id) : of(undefined))),
+            map(() => stored),
+          );
         }),
       )
       .subscribe({
@@ -561,7 +671,12 @@ const EMPTY_ENTRY: Omit<FolderEntryInput, 'kind' | 'name'> = {
   start_date: null,
   end_date: null,
   notice_period_days: null,
+  notice_period_months: null,
   auto_renewal: false,
+  reminder_lead_days: 14,
+  next_cost: null,
+  next_cost_from: null,
+  serial_number: '',
   contract_number: '',
   purchase_date: null,
   warranty_end_date: null,

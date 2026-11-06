@@ -325,3 +325,53 @@ class IdempotencyRecord(models.Model):
         constraints = [models.UniqueConstraint(fields=['user', 'scope', 'key'], name='unique_idempotency_key')]
         indexes = [models.Index(fields=['user', 'created_at'], name='core_idem_user_created_idx')]
 
+
+
+class BetaFeedback(models.Model):
+    """Rückmeldung einer Testperson im Beta-Test (Entwicklungsplan Phase 5, docs/beta/).
+
+    Datensparsam: keine Kopie von Fachdaten, nur die Antworten und die Seite (Pfad ohne Query). Sichtbar nur für
+    Betreiber über `python manage.py beta_feedback_report` (pseudonymisiert); gelöscht mit dem Konto und nach
+    BETA_FEEDBACK_RETENTION_DAYS durch `cleanup_expired`."""
+
+    class Area(models.TextChoices):
+        FINANZEN = 'FINANZEN', 'Finanzen'
+        HAUSHALT = 'HAUSHALT', 'Haushalt'
+        ORGANISATION = 'ORGANISATION', 'Organisation'
+        REISEN = 'REISEN', 'Reisen'
+        CONNECTIONS = 'CONNECTIONS', 'Verbindungen zwischen Bereichen'
+        GENERAL = 'GENERAL', 'Allgemein'
+
+    class Task(models.TextChoices):
+        # Die fünf Aufgaben aus dem Entwicklungsplan, Abschnitt 6
+        CONTRACT_LINK = 'T1', 'Vertrag anlegen und mit Finanzen und Organisation verbinden'
+        CHANGE = 'T2', 'Eine Änderung vornehmen und die Folgen prüfen'
+        TRIP = 'T3', 'Reise mit Budget und Kalender verbinden'
+        PAUSE = 'T4', 'Eine Verbindung pausieren oder aufheben'
+        BENEFIT = 'T5', 'Den Vorteil von 4inOne erklären'
+
+    class Answer(models.TextChoices):
+        YES = 'YES', 'Ja'
+        NO = 'NO', 'Nein'
+        UNSURE = 'UNSURE', 'Weiß nicht'
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    area = models.CharField(max_length=12, choices=Area.choices, default=Area.GENERAL)
+    task = models.CharField(max_length=2, choices=Task.choices, blank=True, default='')
+    # 1 = gar nicht … 5 = sehr; leer = keine Angabe
+    understood = models.PositiveSmallIntegerField(null=True, blank=True)
+    in_control = models.PositiveSmallIntegerField(null=True, blank=True)
+    saves_time = models.CharField(max_length=6, choices=Answer.choices, blank=True, default='')
+    would_continue = models.CharField(max_length=6, choices=Answer.choices, blank=True, default='')
+    message = models.TextField(max_length=2000, blank=True, default='')
+    page = models.CharField(max_length=200, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+        constraints = [
+            models.CheckConstraint(condition=models.Q(understood__gte=1, understood__lte=5) | models.Q(understood__isnull=True),
+                                   name='beta_feedback_understood_1_5'),
+            models.CheckConstraint(condition=models.Q(in_control__gte=1, in_control__lte=5) | models.Q(in_control__isnull=True),
+                                   name='beta_feedback_in_control_1_5'),
+        ]

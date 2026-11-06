@@ -1,0 +1,128 @@
+/* Ort-Feld mit Vorschlägen (01.11.2026). Das Eingabefeld selbst sieht aus wie jedes andere (form-controls.css),
+   nur mit Ort-Symbol links; die Liste wie app-select (Top Layer, wird von Dialogen nicht abgeschnitten). */
+:host {
+  display: block;
+  min-width: 0;
+}
+.place {
+  position: relative;
+}
+.place__icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  width: 18px;
+  height: 18px;
+  color: var(--text-secondary);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+/* gezielter als die globale Regel in form-controls.css (sonst überschreibt sie den Abstand fürs Symbol) */
+.place input[type='text'][role='combobox'] {
+  width: 100%;
+  padding-left: 38px;
+}
+.place__spinner {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  border: 2px solid var(--border-strong, #b9c0ce);
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: place-spin 0.8s linear infinite;
+}
+@keyframes place-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .place__spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+.place__panel {
+  overscroll-behavior: contain;
+  position: fixed;
+  inset: auto;
+  max-width: min(520px, calc(100vw - 16px));
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  border: 1px solid var(--border, #dfe4ed);
+  border-radius: var(--radius-md);
+  background: var(--surface, #fff);
+  color: var(--text);
+  box-shadow: 0 16px 40px -12px rgb(41 55 78 / 0.35), 0 2px 6px rgb(41 55 78 / 0.08);
+}
+.place__list {
+  display: grid;
+  gap: 6px;
+}
+.place__group {
+  display: grid;
+  gap: 2px;
+}
+.place__head {
+  padding: 6px 10px 2px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta, 13px);
+  font-weight: 700;
+}
+.place__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.place__option.is-active {
+  background: var(--accent-soft, #e9e5f6);
+}
+.place__kind {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+.place__text {
+  display: grid;
+  min-width: 0;
+}
+.place__text b {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.place__text small {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta, 13px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Pflichtangabe der OpenStreetMap-Lizenz (ODbL), sobald Treffer von dort stammen */
+.place__credit {
+  margin: 6px 10px 2px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta, 13px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .place__panel:popover-open {
+    animation: place-in 0.12s ease-out;
+  }
+}
+@keyframes place-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}

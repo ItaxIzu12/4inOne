@@ -68,6 +68,8 @@ Termin-Dialog: „Ganztägig“ als Schalter-Zeile; „Ganztägig“ in Listen n
 Haushalt: Avatare im Kopf → „Wer ist dabei?“; Dialoge nennen, wer den Eintrag sieht.
 Rückmeldungen: helle Karte mit Symbol, × und Zeitleiste; oben in der Mitte (Handy volle Breite); ~5 s, pausiert unter dem Zeiger.
 Dialog-Knöpfe immer mit Symbol: × Abbrechen, ✓ Speichern, Papierkorb Löschen.
+Ort-Felder schlagen Orte vor (eigene + OpenStreetMap über den Server); Freitext bleibt möglich.
+Verbindungen V2: „Mit anderen Bereichen verbinden“ mit Schalter, Vorschau und Status in den Dialogen; abgeleitete Einträge mit Herkunftsmarke.
 Tagesblatt: Tag mit Terminen anklicken → Liste des Tages + „Termin an diesem Tag“, nach dem Speichern zurück; leere Tage direkt neu; Woche mit „+“-Fläche je Spalte.
 Kopfzeile ohne Suche, deckend. Tableiste und Seitenleiste: aktiver Eintrag als Farbfeld.
 
@@ -106,3 +108,7 @@ Akzent Evergreen `#17694F`. Bereiche gedeckt (`#17694F`, `#AB445F` (Fläche und 
 Bereiche Weiß, Verknüpfen Deep Forest, Privatsphäre Sage, Fragen Weiß, Abschluss Deep Forest, Fuß Porcelain.
 Schrift bleibt Schibsted Grotesk; Website-Überschriften 650. Landing-H1 bis 60 px, am Handy fließend 27–32 px (immer 4 Zeilen). Hover nur auf Klickbarem, nur am Rechner und bei Tastatur-Fokus gleich: Pfeil rückt 4 px vor, Tab-Fläche gleitet, Vorschau gestrichelt. Scroll-Einblenden nur für H2 und Bild je Abschnitt (12 px, scroll-gebunden, CSS `view()`), nie Fließtext oder Hero. Karten 20–28 px, Schatten sehr zurückhaltend.
 
+
+Formulare: Zahl + Einheit (z. B. Kündigungsfrist „3 · Monate“) als zwei gleich breite Felder in einer Zeile, auch am Handy; Einheit als `app-select`, unten bündig (02.11.2026).
+Abgeleitete Felder (z. B. „Nächste Wartung“ aus letzter Wartung + Intervall) werden live vorausgefüllt, bleiben änderbar und tragen einen Hinweis, woher der Wert kommt (02.11.2026).
+Bewertungsfragen (z. B. Beta-Feedback): 44-px-Umschalter mit `aria-pressed` statt Sterne oder Schieberegler; gewählt = Tinte gefüllt, erneut antippen = abwählen (04.11.2026).

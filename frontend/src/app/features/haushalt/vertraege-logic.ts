@@ -40,22 +40,30 @@ export function contractState(entry: { effective_status: string }): ContractView
 }
 
 /** Letzter Kündigungstag: Vertragsende minus Kündigungsfrist in Tagen (31.12.2026 − 30 = 01.12.2026). */
-export function cancellationDeadline(endDate: string | null, noticeDays: number | null): string | null {
+export function cancellationDeadline(endDate: string | null, noticeDays: number | null, noticeMonths: number | null = null): string | null {
   if (!endDate) return null;
-  const [y, m, d] = endDate.split('-').map(Number);
+  const [y, m, d] = endDate.slice(0, 10).split('-').map(Number);
+  if (noticeMonths) {
+    // Monate kalendarisch wie backend services.cancellation_deadline: (Ende + 1 Tag) − n Monate − 1 Tag,
+    // der Tag auf das Monatsende begrenzt (31.12. − 1 Monat = 30.11., 30.06. − 3 Monate = 31.03.).
+    const after = new Date(y, m - 1, d + 1);
+    const target = new Date(after.getFullYear(), after.getMonth() - noticeMonths, 1);
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    return isoDate(new Date(target.getFullYear(), target.getMonth(), Math.min(after.getDate(), lastDay) - 1));
+  }
   return isoDate(new Date(y, m - 1, d - (noticeDays ?? 0)));
 }
 
 /** Wirksamer Status wie backend services.contract_status. */
 export function computeContractStatus(
-  entry: { status: string; end_date: string | null; notice_period_days: number | null; auto_renewal: boolean },
+  entry: { status: string; end_date: string | null; notice_period_days: number | null; notice_period_months?: number | null; auto_renewal: boolean },
   today: Date = new Date(),
 ): ContractStatus {
   const now = isoDate(today);
   if (entry.status === 'ENDED') return 'ENDED';
   if (entry.end_date && entry.end_date < now && !(entry.auto_renewal && entry.status === 'ACTIVE')) return 'ENDED';
   if (entry.status === 'CANCELLED') return 'CANCELLED';
-  const deadline = cancellationDeadline(entry.end_date, entry.notice_period_days);
+  const deadline = cancellationDeadline(entry.end_date, entry.notice_period_days, entry.notice_period_months ?? null);
   if (deadline) {
     const days = daysUntil(deadline, today);
     if (days >= 0 && days <= UPCOMING_DAYS) return 'EXPIRING';
@@ -88,6 +96,17 @@ const BILLING_SUFFIX: Record<BillingCycle, string> = {
 /** „39,99 € / Monat“, „120,00 € / Jahr“, „49,00 € einmalig“ — oder ''. */
 export function costLabel(entry: { cost: string | null; billing_cycle: BillingCycle }): string {
   return entry.cost ? euro(Number(entry.cost)) + BILLING_SUFFIX[entry.billing_cycle] : '';
+}
+
+/** „34,99 €“ — angekündigter Preis ohne Zeitraum. */
+export function moneyLabel(amount: string): string {
+  return euro(Number(amount));
+}
+
+/** „Erinnerung 14 Tage vorher“ / „Erinnerung am Fristtag“. */
+export function leadLabel(days: number | null | undefined): string {
+  const lead = days ?? 14;
+  return lead ? `Erinnerung ${lead} Tage vorher` : 'Erinnerung am Fristtag';
 }
 
 export function monthly(entry: { monthly_equivalent: string | null }): number {
@@ -171,7 +190,8 @@ export function euro(value: number): string {
 }
 
 /** „30 Tage“ / „1 Tag“ / „keine“. */
-export function noticeLabel(days: number | null): string {
+export function noticeLabel(days: number | null, months: number | null = null): string {
+  if (months) return months === 1 ? '1 Monat' : `${months} Monate`;
   if (!days) return 'keine';
   return days === 1 ? '1 Tag' : `${days} Tage`;
 }

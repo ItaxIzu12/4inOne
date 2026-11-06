@@ -1,13 +1,15 @@
+import { AutoLinks } from '../../shared/connections/auto-links';
+import { savingsReminder } from '../../shared/connections/auto-link-rules';
 import { SubmissionKey } from '../../shared/idempotency';
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { isInCalendarWeek } from '../../shared/dates/calendar-week';
 import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { AmountInput } from '../../shared/directives/amount-input';
-import { afterNextRender, Injector, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { afterNextRender, Injector, Component, DestroyRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
@@ -155,7 +157,7 @@ function payloadAmount(payload: object): string {
 @Component({
   selector: 'app-private-finance',
   standalone: true,
-  imports: [Modal, NgTemplateOutlet, MobileAction, ErrorNoticeDirective, AmountInput, ReactiveFormsModule, DatePipe, AppShell, AppIcon, ConnectionsSection, LinkHints, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview, BudgetYearCard, CategoryManager, FinancePeriodView, FinanceImportDialog, SpendCurveChart, TermHint],
+  imports: [Modal, NgTemplateOutlet, MobileAction, ErrorNoticeDirective, AmountInput, ReactiveFormsModule, DatePipe, AppShell, AppIcon, ConnectionsSection, LinkHints, Field, ModalForm, SaveFeedback, AppSelect, AppDatePicker, BudgetYearOverview, BudgetYearCard, CategoryManager, FinancePeriodView, FinanceImportDialog, SpendCurveChart, TermHint, AutoLinks],
   templateUrl: './private-finance.html',
   // Abschnitte zuerst, damit die Handy-Regeln in private-finance.scss sie überschreiben; der Kopf der Übersicht zuletzt.
   styleUrls: ['./finance-sections.scss', './private-finance.scss', './finance-hero.scss', './finance-guide.scss'],
@@ -319,6 +321,13 @@ export class PrivateFinance {
   readonly formError = signal('');
   readonly editor = signal<Resource | null>(null);
   readonly editId = signal<number | undefined>(undefined);
+  /** Connection Engine V2: Zieldatum/Endmonat im Kalender (CON-10) — Vorschau aus den Formularwerten. */
+  private readonly autoLinkBox = viewChild(AutoLinks);
+  private readonly goalFormValue = signal({ title: '', scope: 'single', end: '', target: null as string | null });
+  readonly goalAutoPreview = computed(() => {
+    const v = this.goalFormValue();
+    return { SAVINGS_REMINDER: savingsReminder(v.title.trim(), v.target, v.scope === 'until' && v.end ? v.end : null) };
+  });
   readonly typeFilter = signal('ALL');
   readonly money = euros;
   readonly goalStatus = { ACTIVE: 'Aktiv', COMPLETED: 'Erreicht', PAUSED: 'Pausiert' };
@@ -546,7 +555,8 @@ export class PrivateFinance {
     if (!row.plannedItem) return this.open('transactions', row);
     const item = row.plannedItem;
     this.open('transactions');
-    this.form.patchValue({ amount: formatMoneyInput(String(item.amount)), type: 'EXPENSE', category: String(item.category ?? ''), date: item.date, note: item.title, recurring: true });
+    // Vertrag: einmalig buchen (der Vertrag plant weiter) — „monatlich“ würde eine zweite Planung erzeugen und doppelt zählen
+    this.form.patchValue({ amount: formatMoneyInput(String(item.amount)), type: 'EXPENSE', category: String(item.category ?? ''), date: item.date, note: item.title, recurring: item.kind === 'RECURRING' });
     this.plannedSource.set(item);
   }
   rowTitle(row: FinanceTransaction): string {
@@ -671,10 +681,12 @@ export class PrivateFinance {
       .filter((t) => t.date.startsWith(this.month()))
       .map((t) => (t.type === 'EXPENSE' && t.date > today ? { ...t, planned: true } : t));
     const virtual: ListRow[] = this.plannedItems()
-      .filter((i) => i.kind === 'RECURRING')
-      .map((i) => ({
-        id: -(i.source_id ?? 0), amount: i.amount, type: 'EXPENSE', category: i.category as number, date: i.date,
-        note: i.title, currency: 'EUR', recurring: true, planned: true, plannedItem: i,
+      .filter((i) => i.kind === 'RECURRING' || i.kind === 'CONTRACT')
+      .map((i, n) => ({
+        // Verträge: eigener ID-Bereich, damit sie nie mit wiederkehrenden Zeilen zusammenfallen
+        id: i.kind === 'CONTRACT' ? -1_000_000 - n : -(i.source_id ?? 0), amount: i.amount, type: 'EXPENSE',
+        category: i.category as number, date: i.date, note: i.title, currency: 'EUR', recurring: i.kind === 'RECURRING',
+        planned: true, plannedItem: i,
       }));
     // Reihenfolge der echten Zeilen bleibt wie von der API (neueste zuerst); geplante wiederkehrende werden nach
     // Datum dazwischen eingefügt.
@@ -850,6 +862,9 @@ export class PrivateFinance {
     this.load();
     // Ändert sich etwas im Dialog, gilt die Warnung nicht mehr.
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroy)).subscribe(() => {
+      const raw = this.form.getRawValue();
+      const target = this.editor() === 'goals' ? (this.goals().find((g) => g.id === this.editId())?.target_date ?? null) : null;
+      this.goalFormValue.set({ title: raw.title, scope: raw.plan_scope, end: raw.plan_end, target });
       this.overrun.set(null);
       this.goalWarning.set(null);
     });
@@ -1043,6 +1058,7 @@ export class PrivateFinance {
     this.overrun.set(null);
     this.goalWarning.set(null);
     this.editId.set(item?.id);
+    this.autoLinkBox()?.reset();
     this.formError.set('');
     if (item) {
       if ('type' in item) this.form.patchValue({ ...item, amount: de(item.amount), category: String(item.category), recurring: !!item.recurring });
@@ -1252,7 +1268,15 @@ export class PrivateFinance {
     const creating = !this.editId();
     this.api
       .save(resource, payload, this.editId(), creating ? this.submission.for({ resource, payload }) : undefined)
-      .pipe(takeUntilDestroyed(this.destroy))
+      .pipe(
+        // Sparziel: Verbindungen erst nach dem Speichern (ein neues Ziel braucht zuerst seine ID)
+        switchMap((saved) => {
+          const links = resource === 'goals' ? this.autoLinkBox() : undefined;
+          const id = (saved as { id?: number } | null)?.id;
+          return links && id ? links.commit(id).pipe(map(() => saved)) : of(saved);
+        }),
+        takeUntilDestroyed(this.destroy),
+      )
       .subscribe({
         next: () => {
           this.saving.set(false);

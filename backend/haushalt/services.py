@@ -535,11 +535,38 @@ def month_load(household: Household) -> list[dict]:
 
 
 def cancellation_deadline(entry: FolderEntry) -> date | None:
-    """Letzter Tag, an dem ein Vertrag noch fristgerecht gekündigt werden kann:
-    Vertragsende minus Kündigungsfrist in Tagen (31.12.2026 − 30 = 01.12.2026)."""
+    """Letzter Tag, an dem ein Vertrag noch fristgerecht gekündigt werden kann.
+
+    In Tagen: Vertragsende minus Frist (31.12.2026 − 30 Tage = 01.12.2026).
+    In Monaten kalendarisch: die volle Frist muss vor dem Vertragsende liegen, also
+    (Ende + 1 Tag) − n Monate − 1 Tag: 31.12. − 1 Monat = 30.11., 30.06. − 3 Monate = 31.03.,
+    15.12. − 1 Monat = 15.11."""
     if entry.kind != FolderEntry.Kind.CONTRACT or entry.end_date is None:
         return None
+    if entry.notice_period_months:
+        return add_months(entry.end_date + timedelta(days=1), -entry.notice_period_months) - timedelta(days=1)
     return entry.end_date - timedelta(days=entry.notice_period_days or 0)
+
+
+def has_notice_period(entry: FolderEntry) -> bool:
+    return bool(entry.notice_period_days or entry.notice_period_months)
+
+
+REMINDER_LEAD_CHOICES = (0, 7, 14, 30)
+
+
+def reminder_lead_day(entry: FolderEntry, deadline: date | None) -> date | None:
+    """Tag des Vorab-Hinweises vor der Kündigungsfrist (None ohne Frist oder ohne Vorlauf)."""
+    if deadline is None or not entry.reminder_lead_days:
+        return None
+    return deadline - timedelta(days=entry.reminder_lead_days)
+
+
+def cost_on(entry: FolderEntry, day: date) -> Decimal | None:
+    """Preis, der an `day` gilt: ab `next_cost_from` der angekündigte neue Preis, davor der bisherige."""
+    if entry.next_cost is not None and entry.next_cost_from is not None and day >= entry.next_cost_from:
+        return entry.next_cost
+    return entry.cost
 
 
 # Kosten pro Abrechnungszeitraum → Monatsanteil (nur zur Anzeige im Haushalt,
@@ -574,9 +601,10 @@ def is_household_admin(household_id: int, user) -> bool:
 
 def monthly_equivalent(entry: FolderEntry) -> Decimal | None:
     months = _MONTHS_PER_CYCLE.get(entry.billing_cycle)
-    if entry.kind != FolderEntry.Kind.CONTRACT or entry.cost is None or months is None:
+    cost = cost_on(entry, timezone.localdate())
+    if entry.kind != FolderEntry.Kind.CONTRACT or cost is None or months is None:
         return None
-    return (entry.cost / months).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return (cost / months).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
 
 def contract_status(entry: FolderEntry, today: date | None = None) -> str:
@@ -609,7 +637,7 @@ def folder_deadlines(entry: FolderEntry, today: date | None = None) -> list[dict
             return deadlines
         day = cancellation_deadline(entry)
         if day is not None:
-            label = 'Kündigen bis' if entry.notice_period_days else 'Vertrag endet'
+            label = 'Kündigen bis' if has_notice_period(entry) else 'Vertrag endet'
             deadlines.append({'art': 'kuendigung', 'datum': day, 'titel': f'{label}: {entry.name}'})
     else:
         if entry.status == FolderEntry.Status.RETIRED:

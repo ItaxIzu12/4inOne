@@ -5,6 +5,8 @@ import { IsActiveMatchOptions, NavigationEnd, Router, RouterLink, RouterLinkActi
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
 import { BackToTop } from '../shared/back-to-top/back-to-top';
+import { BetaFeedbackDialog } from '../shared/beta-feedback/beta-feedback-dialog';
+import { BetaFeedbackInfo, BetaFeedbackService } from '../shared/beta-feedback/beta-feedback.service';
 import { Brand } from '../shared/brand/brand';
 import { AppIcon, IconName } from '../shared/icons/app-icon';
 import { IconInfo } from '../shared/icons/icon-info';
@@ -17,7 +19,7 @@ import { NotificationBell } from '../shared/notification-bell/notification-bell'
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [ErrorNoticeDirective, RouterLink, RouterLinkActive, BackToTop, Brand, AppIcon, NotificationBell, IconInfo, IconLegal, IconLogout, IconProfile, IconSettings, IconTwoFactor],
+  imports: [ErrorNoticeDirective, RouterLink, RouterLinkActive, BackToTop, BetaFeedbackDialog, Brand, AppIcon, NotificationBell, IconInfo, IconLegal, IconLogout, IconProfile, IconSettings, IconTwoFactor],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })
@@ -124,9 +126,37 @@ export class AppShell {
   private readonly injector = inject(Injector);
   readonly logoutError = signal('');
   readonly busy = signal(false);
+  // Beta-Test (Entwicklungsplan Phase 5): „Feedback geben“ nur angemeldet, nicht in der Vorschau, und nur wenn der
+  // Server es eingeschaltet hat — einmal beim ersten Öffnen des Menüs nachgefragt.
+  private readonly betaApi = inject(BetaFeedbackService);
+  readonly betaInfo = signal<BetaFeedbackInfo | null>(null);
+  private betaAsked = false;
+  readonly feedbackOpen = signal(false);
+  private readonly feedbackDialog = viewChild(BetaFeedbackDialog);
+  /** Bereich der aktuellen Seite als Vorauswahl im Feedback. */
+  readonly feedbackArea = computed(() => {
+    const path = (this.currentUrl()?.urlAfterRedirects ?? this.router.url).split('?')[0];
+    const area = (['finanzen', 'haushalt', 'organisation', 'reisen'] as const).find((a) => path.startsWith(`/${a}`));
+    return area ? area.toUpperCase() : 'GENERAL';
+  });
+  private askBeta() {
+    if (this.betaAsked || !this.auth.isAuthenticated() || this.isDemoRoute()) return;
+    this.betaAsked = true;
+    this.betaApi.info().subscribe({ next: (info) => this.betaInfo.set(info), error: () => (this.betaAsked = false) });
+  }
+  openFeedback() {
+    this.closeMenu();
+    this.feedbackDialog()?.reset();
+    this.feedbackOpen.set(true);
+  }
+  closeFeedback() {
+    this.feedbackOpen.set(false);
+    this.trigger()?.nativeElement.focus();
+  }
   toggleMenu() {
     if (this.menuOpen()) return this.closeMenu(true);
     this.logoutError.set('');
+    this.askBeta();
     this.menuOpen.set(true);
     // erst nach dem Rendern ist der Menüpunkt da
     afterNextRender(() => this.menuItems()[0]?.focus(), { injector: this.injector });

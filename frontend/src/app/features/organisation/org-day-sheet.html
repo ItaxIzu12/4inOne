@@ -26,7 +26,7 @@
                 <span class="ds__shared"><app-icon name="people" aria-hidden="true" />geteilt</span>
               }
               @if (e.location) {<small><app-icon name="map-pin" aria-hidden="true" />{{ e.location }}</small>}
-              <span class="sr-only"> – {{ e.can_edit === false ? 'ansehen' : 'bearbeiten' }}</span>
+              <span class="sr-only"> – {{ e.derived ? 'Quelle öffnen' : e.can_edit === false ? 'ansehen' : 'bearbeiten' }}</span>
             </span>
             <app-icon class="ds__chev" name="arrow" aria-hidden="true" />
           </button>

@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -22,6 +24,8 @@ describe('AppShell', () => {
           { path: '**', component: Host },
         ]),
         { provide: AuthService, useValue: auth },
+        provideHttpClient(),
+        provideHttpClientTesting(),
       ],
     });
     const router = TestBed.inject(Router);
@@ -68,5 +72,50 @@ describe('AppShell', () => {
     const el = fixture.nativeElement as HTMLElement;
 
     expect(el.querySelector('.demo-banner')).toBeNull();
+  });
+
+  describe('Beta-Feedback im Kontomenü', () => {
+    const openMenu = (fixture: Awaited<ReturnType<typeof renderAt>>) => {
+      (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.profile-button')!.click();
+      fixture.detectChanges();
+    };
+    const items = (fixture: Awaited<ReturnType<typeof renderAt>>) =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.account-menu [role=menuitem]')).map((i) => i.textContent?.trim());
+
+    it('shows "Feedback geben" only when the server has switched the beta on, and asks only once', async () => {
+      const auth = new FakeAuthService();
+      auth.isAuthenticated.set(true);
+      const fixture = await renderAt('/haushalt', auth);
+      const http = TestBed.inject(HttpTestingController);
+      openMenu(fixture);
+      http.expectOne('http://localhost:8000/api/v1/feedback/').flush({ enabled: true, areas: [], tasks: [] });
+      fixture.detectChanges();
+      expect(items(fixture)).toContain('Feedback geben Beta');
+      openMenu(fixture); // schließen
+      openMenu(fixture); // wieder öffnen: keine zweite Anfrage
+      http.expectNone('http://localhost:8000/api/v1/feedback/');
+    });
+
+    it('stays hidden when switched off, in the demo and without an account', async () => {
+      const auth = new FakeAuthService();
+      auth.isAuthenticated.set(true);
+      let fixture = await renderAt('/finanzen', auth);
+      let http = TestBed.inject(HttpTestingController);
+      openMenu(fixture);
+      http.expectOne('http://localhost:8000/api/v1/feedback/').flush({ enabled: false, areas: [], tasks: [] });
+      fixture.detectChanges();
+      expect(items(fixture).join()).not.toContain('Feedback');
+
+      fixture = await renderAt('/demo/finanzen', auth);
+      http = TestBed.inject(HttpTestingController);
+      openMenu(fixture);
+      http.expectNone('http://localhost:8000/api/v1/feedback/');
+      expect(items(fixture).join()).not.toContain('Feedback');
+
+      fixture = await renderAt('/finanzen', new FakeAuthService());
+      http = TestBed.inject(HttpTestingController);
+      openMenu(fixture);
+      http.expectNone('http://localhost:8000/api/v1/feedback/');
+    });
   });
 });

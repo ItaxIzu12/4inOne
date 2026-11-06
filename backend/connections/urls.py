@@ -1,6 +1,10 @@
 from django.urls import path
 
 from connections.views import (
+    AutoCalendarView,
+    AutoHouseholdTasksView,
+    AutoLinkDetailView,
+    AutoLinkListCreateView,
     ConnectionCandidatesView,
     ConnectionDetailView,
     ConnectionListCreateView,
@@ -31,5 +35,10 @@ urlpatterns = [
     path('suggestions/dismiss/', SuggestionDismissView.as_view(), name='connection-suggestions-dismiss'),
     path('reisen/<int:trip_id>/erinnerungen/', TripRemindersView.as_view(), name='trip-reminders'),
     path('reisen/<int:trip_id>/sparziel/', TripSavingsView.as_view(), name='trip-savings'),
+    # Connection Engine V2: abgeleitete Verbindungen (connections/auto_links.py)
+    path('auto/', AutoLinkListCreateView.as_view(), name='auto-links'),
+    path('auto/calendar/', AutoCalendarView.as_view(), name='auto-links-calendar'),
+    path('auto/household-tasks/', AutoHouseholdTasksView.as_view(), name='auto-links-household-tasks'),
+    path('auto/<int:pk>/', AutoLinkDetailView.as_view(), name='auto-link-detail'),
     path('<int:pk>/', ConnectionDetailView.as_view(), name='connection-detail'),
 ]

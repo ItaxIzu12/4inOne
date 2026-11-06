@@ -1,3 +1,8 @@
+import { OrgHouseholdTasks } from './org-household-tasks';
+import { AutoLinksApi, DerivedCalendarItem } from '../../shared/connections/auto-links-api.service';
+import { linkFor } from '../../shared/connections/connections-section';
+import { DEMO_MODE } from '../../core/demo-context';
+import { PlaceInput } from '../../shared/form/place-input';
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -78,7 +83,7 @@ function apiFieldError(error: unknown, field: string): string {
   standalone: true,
   imports: [
     MobileAction, ErrorNoticeDirective, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, ReactiveFormsModule,
-    AppSelect, AppDatePicker, AppTimePicker, OrgCalendar, OrgCalendars, OrgDaySheet, AttachmentField, OrgTasks, OrgNotes, OrgToday, ScopeNote, OrgImportDialog, SaveFeedback,
+    AppSelect, AppDatePicker, AppTimePicker, OrgCalendar, OrgCalendars, OrgDaySheet, AttachmentField, PlaceInput, OrgHouseholdTasks, OrgTasks, OrgNotes, OrgToday, ScopeNote, OrgImportDialog, SaveFeedback,
   ],
   templateUrl: './organisation.html',
   styleUrl: './organisation.scss',
@@ -119,9 +124,15 @@ export class Organisation {
   /** Kalenderfreigaben wie Outlook: für wen meiner freigegeben ist, wer seinen für mich freigegeben hat. */
   readonly shares = signal<CalendarShares | null>(null);
   /** Kalender-Ansicht nach Filter: alle, nur meine, ein gemeinsamer Kalender oder der Kalender einer Person. */
+  /** Connection Engine V2: abgeleitete Einträge (Kündigungsfrist, Wartung, Reise, Sparziel) — nur lesbar. */
+  private readonly autoLinks = inject(AutoLinksApi);
+  private readonly demo = inject(DEMO_MODE);
+  readonly derivedEvents = signal<PersonalEvent[]>([]);
   readonly visibleEvents = computed(() => {
     const filter = this.calendarFilter();
-    const list = this.events();
+    const own = this.events();
+    // Abgeleitetes gehört zu „Alle“ und „Nur meine“ (es stammt aus meinen Verbindungen), nicht zu fremden Kalendern
+    const list = filter === 'all' || filter === 'mine' ? [...own, ...this.derivedEvents()] : own;
     if (filter === 'all') return list;
     if (filter === 'mine') return list.filter((e) => !e.calendar && !e.shared_by);
     if (typeof filter === 'string') return list.filter((e) => !e.calendar && e.shared_by === Number(filter.slice(1)));
@@ -284,6 +295,12 @@ export class Organisation {
   }
   loadEvents(range: DayRange) {
     this.range = range;
+    this.autoLinks.calendar(range.start, range.end).pipe(takeUntilDestroyed(this.destroy)).subscribe({
+      next: (items) => {
+        if (this.range === range) this.derivedEvents.set(items.map((item, i) => derivedEvent(item, i)));
+      },
+      error: () => this.derivedEvents.set([]),
+    });
     this.eventsLoading.set(this.events().length === 0);
     this.eventsError.set('');
     this.api
@@ -440,6 +457,12 @@ export class Organisation {
     this.returnToDay = null;
   }
   open(kind: 'event' | 'task', item?: PersonalEvent | PersonalTask, day?: string) {
+    // Abgeleiteter Eintrag: zur Quelle (Vertrag, Gerät, Reise, Sparziel) — dort wird er geändert, nicht hier
+    if (item && 'derived' in item && item.derived) {
+      const link = linkFor({ type: item.derived.source_type, id: item.derived.source_id } as Parameters<typeof linkFor>[0]);
+      void this.router.navigate(this.demo ? ['/demo' + link.path[0]] : link.path, { queryParams: link.query });
+      return;
+    }
     this.dateLocked.set(false);
     this.form.reset({
       title: '', description: '', date: day ?? localDay(new Date()), all_day: false, start_time: '09:00', end_date: '',
@@ -743,4 +766,23 @@ export class Organisation {
         },
       });
   }
+}
+
+const DERIVED_LABEL: Record<string, string> = {
+  CONTRACT_REMINDER: 'Aus Haushalt › Vertrag',
+  DEVICE_MAINTENANCE: 'Aus Haushalt › Gerät',
+  TRIP_CALENDAR: 'Aus Reisen',
+  SAVINGS_REMINDER: 'Aus Finanzen › Sparziel',
+};
+
+/** Abgeleiteter Kalendereintrag → Anzeigeform eines Termins (ganztägig, nur lesbar, mit Herkunft als Marke). */
+function derivedEvent(item: DerivedCalendarItem, index: number): PersonalEvent {
+  const start = new Date(`${item.date}T00:00`);
+  const end = item.end_date && item.end_date !== item.date ? new Date(`${item.end_date}T00:00`) : null;
+  return {
+    id: -1 - index, title: item.title, starts_at: start.toISOString(), ends_at: end ? end.toISOString() : null, all_day: true,
+    recurrence: '', location: '', description: '', category: 'sonstiges', calendar: null,
+    calendar_name: DERIVED_LABEL[item.kind] ?? 'Verbunden', calendar_color: 'slate', created_by: '', can_edit: false,
+    derived: { kind: item.kind, source_type: item.source_type, source_id: item.source_id, domain: item.domain },
+  };
 }

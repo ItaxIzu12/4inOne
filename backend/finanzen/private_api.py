@@ -507,7 +507,14 @@ def planned_expenses(user, start, end, rows) -> list[dict]:
          'title': t.description.strip(), 'category': t.category_id, 'amount': t.amount, 'date': t.datum}
         for t in rows.filter(type='EXPENSE', datum__gt=today).only('description', 'category_id', 'amount', 'datum')
     ]
-    items = dated + recurring_planned(user, start, end, rows)
+    from connections.auto_links import contract_planned
+
+    # Verträge aus dem Haushalt, wenn verbunden (Connection Engine V2, CON-01) — nur berechnet, nie gebucht.
+    # Ein verbundener Vertrag ist die Quelle: er ersetzt eine gleichnamige wiederkehrende Planung (sonst doppelt).
+    contracts = contract_planned(user, start, end, rows)
+    covered = {item['title'].strip().casefold() for item in contracts}
+    recurring = [item for item in recurring_planned(user, start, end, rows) if item['title'].strip().casefold() not in covered]
+    items = dated + recurring + contracts
     items.sort(key=lambda i: (i['date'], i['title'].lower(), i['id'] or 0))
     return items
 

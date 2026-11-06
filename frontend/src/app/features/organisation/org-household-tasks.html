@@ -1,0 +1,40 @@
+@if (householdId() !== null) {
+  <section class="card hh" aria-labelledby="hh-tasks-h">
+    <div class="hh__head">
+      <label class="hh__switch">
+        <span class="hh__text">
+          <b id="hh-tasks-h"><app-icon name="household" aria-hidden="true" />Aus dem Haushalt</b>
+          <small>{{ on() ? 'Offene Haushaltsaufgaben für dich — abhaken erledigt sie auch im Haushalt.' : paused() ? 'Pausiert — Haushaltsaufgaben erscheinen gerade nicht hier.' : 'Haushaltsaufgaben hier zeigen? ' + preview }}</small>
+        </span>
+        <input type="checkbox" role="switch" class="hh__toggle" [checked]="on()" [disabled]="busy()" (change)="toggle($any($event.target).checked)" />
+      </label>
+    </div>
+
+    @if (error()) {
+      <p class="hh__error" role="alert">{{ error() }}</p>
+    }
+
+    @if (on()) {
+      @if (tasks().length) {
+        <ul class="hh__list">
+          @for (t of tasks(); track t.id) {
+            @let ticked = done().includes(t.id);
+            <li class="hh__task" [class.is-done]="ticked">
+              <button type="button" class="check" [class.is-done]="ticked" [disabled]="busy() || ticked" (click)="complete(t)">
+                <span class="check__ring"><app-icon name="check" aria-hidden="true" /></span>
+                <span class="sr-only">{{ t.title }} erledigen</span>
+              </button>
+              <span class="hh__title">
+                <b>{{ t.title }}</b>
+                <small>{{ dueLabel(t) }}{{ t.assigned_to_me ? ' · dir zugewiesen' : ' · für alle' }}</small>
+              </span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="muted hh__empty">Im Haushalt ist gerade nichts für dich offen.</p>
+      }
+      <a class="hh__more" [routerLink]="haushaltLink()" [queryParams]="{ tab: 'aufgaben' }">Alle Haushaltsaufgaben<app-icon name="arrow" aria-hidden="true" /></a>
+    }
+  </section>
+}

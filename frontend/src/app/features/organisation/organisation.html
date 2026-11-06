@@ -75,6 +75,8 @@
         @if (loading()) {
           <p class="state" role="status">Aufgaben werden geladen …</p>
         } @else {
+          <!-- Connection Engine V2 (CON-03): Haushaltsaufgaben — derselbe Datensatz, Abhaken gilt auch im Haushalt -->
+          <app-org-household-tasks />
           <app-org-tasks
             [tasks]="tasks()"
             [busy]="saving()"
@@ -186,7 +188,7 @@
       </app-field>
     </div>
     <app-field label="Ort" [optional]="true">
-      <input id="event-location" formControlName="location" maxlength="240" />
+      <app-place-input inputId="event-location" formControlName="location" [maxLength]="240" placeholder="z. B. Praxis Dr. Weber oder Adresse" />
     </app-field>
   } @else {
     <app-scope-note scope="private">Nur für dich sichtbar – nicht für andere im Haushalt.</app-scope-note>

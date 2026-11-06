@@ -122,6 +122,7 @@ const BLANK: Omit<FolderEntryInput, 'kind' | 'name'> = {
   start_date: null,
   end_date: null,
   notice_period_days: null,
+  notice_period_months: null,
   auto_renewal: false,
   contract_number: '',
   purchase_date: null,
@@ -228,7 +229,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
   private folder: StoredEntry[] = [
     contract('demo-folder-1', 'Hausratversicherung', 'Beispiel-Versicherung', {
       category: 'Versicherung', cost: '65.00', billing_cycle: 'MONTHLY', start_date: addMonthsIso(todayIso(), -20),
-      end_date: addMonthsIso(todayIso(), 5), notice_period_days: 90, auto_renewal: true, contract_number: 'HR-2024-118',
+      end_date: addMonthsIso(todayIso(), 5), notice_period_months: 3, auto_renewal: true, contract_number: 'HR-2024-118',
     }),
     contract('demo-folder-9', 'Strom', 'Stadtwerke Beispielstadt', {
       category: 'Energie', cost: '84.00', start_date: addMonthsIso(todayIso(), -10), end_date: addDaysIso(48),
@@ -236,6 +237,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     }),
     contract('demo-folder-10', 'Internet & Telefon', 'Beispiel-Telekom', {
       category: 'Internet', cost: '39.99', end_date: addMonthsIso(todayIso(), 9), notice_period_days: 90, auto_renewal: true,
+      next_cost: '34.99', next_cost_from: addMonthsIso(todayIso().slice(0, 8) + '01', 3),
     }),
     contract('demo-folder-11', 'Handyvertrag Sophie', 'Beispiel-Mobil', {
       category: 'Mobilfunk', cost: '17.99', end_date: addMonthsIso(todayIso(), 14), notice_period_days: 30,
@@ -243,11 +245,11 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
     contract('demo-folder-12', 'Streaming', 'Beispiel-Stream', { category: 'Abo', cost: '13.99' }),
     contract('demo-folder-13', 'Haftpflichtversicherung', 'Beispiel-Versicherung', {
       category: 'Versicherung', cost: '78.00', billing_cycle: 'YEARLY', end_date: addMonthsIso(todayIso(), 7),
-      notice_period_days: 90, auto_renewal: true,
+      notice_period_months: 3, auto_renewal: true,
     }),
     device('demo-folder-2', 'Heizung', 'Vaillant', 'ecoTEC plus', 'flur', {
       category: 'Heizung', notes: 'Wartungsfirma: Beispiel GmbH', purchase_date: addMonthsIso(todayIso(), -50),
-      maintenance_interval_months: 12, maintenance_due_date: addDaysIso(21), last_maintenance: addDaysIso(21 - 365),
+      maintenance_interval_months: 12, maintenance_due_date: addDaysIso(21), last_maintenance: addDaysIso(21 - 365), serial_number: 'DEMO-VA-48213',
     }),
     device('demo-folder-3', 'Waschmaschine', 'Bosch', 'Serie 6 (WGG244Z0CH)', 'bad', {
       category: 'Haushaltsgerät', purchase_date: addMonthsIso(todayIso(), -14), warranty_end_date: addMonthsIso(todayIso(), 10),
@@ -657,7 +659,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
 
   createFolderEntry(input: FolderEntryInput): Observable<FolderEntryDto> {
     const now = new Date().toISOString();
-    const stored: StoredEntry = { ...input, id: `demo-folder-new-${this.nextId++}`, created_at: now, updated_at: now };
+    const stored: StoredEntry = applyDuePrice({ ...input, id: `demo-folder-new-${this.nextId++}`, created_at: now, updated_at: now });
     this.folder.push(stored);
     return of(this.folderEntry(stored));
   }
@@ -665,7 +667,7 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
   updateFolderEntry(id: Id, input: FolderEntryInput): Observable<FolderEntryDto> {
     const index = this.folder.findIndex((e) => e.id === id);
     if (index === -1) return throwError(() => new Error('Demo-Eintrag nicht gefunden.'));
-    this.folder[index] = { ...this.folder[index], ...input, id, updated_at: new Date().toISOString() };
+    this.folder[index] = applyDuePrice({ ...this.folder[index], ...input, id, updated_at: new Date().toISOString() });
     return of(this.folderEntry(this.folder[index]));
   }
 
@@ -715,16 +717,17 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
   /** Eintrag mit abgeleiteten Feldern (Status, Kündigungstag, Monatsanteil, Fristen) — dieselben Regeln wie
    * backend haushalt/services.py und FolderEntrySerializer. Die Vertragsnummer nur in der Detailansicht. */
   private folderEntry(input: StoredEntry, detail = true): FolderEntryDto {
+    input = applyDuePrice({ ...input });
     const isContract = input.kind === 'vertrag';
-    const deadline = isContract ? cancellationDeadline(input.end_date, input.notice_period_days) : null;
+    const deadline = isContract ? cancellationDeadline(input.end_date, input.notice_period_days, input.notice_period_months ?? null) : null;
     const effective = isContract ? computeContractStatus(input) : input.status;
     const maintenance =
       !isContract && input.maintenance_interval_months && !input.maintenance_due_date
-        ? addMonthsIso(input.purchase_date ?? todayIso(), input.maintenance_interval_months)
+        ? addMonthsIso(input.last_maintenance ?? input.purchase_date ?? todayIso(), input.maintenance_interval_months)
         : input.maintenance_due_date;
     const deadlines: FolderEntryDto['deadlines'] = [];
     if (isContract && deadline && effective !== 'CANCELLED' && effective !== 'ENDED') {
-      const label = input.notice_period_days ? 'Kündigen bis' : 'Vertrag endet';
+      const label = input.notice_period_days || input.notice_period_months ? 'Kündigen bis' : 'Vertrag endet';
       deadlines.push({ art: 'kuendigung', datum: deadline, titel: `${label}: ${input.name}` });
     }
     if (!isContract && input.status !== 'RETIRED') {
@@ -745,8 +748,18 @@ export class DemoHaushaltDataProvider implements HaushaltDataProvider {
       attachments: [...(this.files.get(input.id) ?? [])],
     };
     if (!isContract || !detail) delete entry.contract_number;
+    if (isContract || !detail) delete entry.serial_number;
+    if (isContract) entry.reminder_lead_days = input.reminder_lead_days ?? 14;
     return entry;
   }
+}
+
+/** Wie backend FolderEntrySerializer: ist der Tag einer angekündigten Preisänderung erreicht, gilt der neue Preis. */
+function applyDuePrice<T extends { cost?: string | null; next_cost?: string | null; next_cost_from?: string | null }>(entry: T): T {
+  if (entry.next_cost && entry.next_cost_from && entry.next_cost_from <= todayIso()) {
+    return { ...entry, cost: entry.next_cost, next_cost: null, next_cost_from: null };
+  }
+  return entry;
 }
 
 /** Nächster Termin vom bisherigen Fälligkeitsdatum aus (wie backend services.next_due_date): Di 06.10 → Di 13.10. */

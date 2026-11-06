@@ -404,6 +404,15 @@ input:focus-visible {
   text-decoration: none;
   cursor: pointer;
 }
+.beta-mark {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #ecefea;
+  color: #52615b;
+  font-size: 12px;
+  font-weight: 600;
+}
 .account-group a:hover,
 .account-group button:hover:not(:disabled) {
   background: #f1f3ef;

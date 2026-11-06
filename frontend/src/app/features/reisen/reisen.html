@@ -183,7 +183,7 @@
 
     <h3 class="form-step"><span aria-hidden="true">1</span>Wohin?</h3>
     <app-field label="Reiseziel" [error]="destinationError()">
-      <input id="trip-destination" formControlName="destination" maxlength="160" required placeholder="z. B. Berlin" />
+      <app-place-input inputId="trip-destination" formControlName="destination" [maxLength]="160" [full]="false" placeholder="z. B. Berlin" />
     </app-field>
     <app-field label="Name der Reise" [error]="titleError()">
       <input id="trip-title" formControlName="title" maxlength="120" required placeholder="z. B. Berlin Wochenende" />
@@ -206,7 +206,7 @@
 
     <h3 class="form-step"><span aria-hidden="true">3</span>Wie? <span class="muted">– optional</span></h3>
     <app-field label="Abreiseort" [optional]="true" hint="z. B. Düsseldorf oder DUS">
-      <input id="trip-departure" formControlName="departure" maxlength="120" />
+      <app-place-input inputId="trip-departure" formControlName="departure" [maxLength]="120" [full]="false" placeholder="z. B. Düsseldorf" />
     </app-field>
     <div class="transport-field">
       <span class="baggage-field__label" id="trip-transport-label">Verkehrsmittel</span>
@@ -232,7 +232,16 @@
         </div>
         <div class="field-row">
           <app-field label="Unterkunft" [optional]="true" hint="z. B. Hotel Central">
-            <input id="trip-accommodation" formControlName="accommodation" maxlength="160" />
+            <app-place-input
+              inputId="trip-accommodation"
+              formControlName="accommodation"
+              kind="lodging"
+              [maxLength]="160"
+              [full]="false"
+              [near]="tripDestination()"
+              placeholder="Hotel, Pension, Ferienwohnung …"
+              (picked)="accommodationPicked($event)"
+            />
           </app-field>
           <app-field label="Lage" [optional]="true" hint="z. B. Berlin Mitte">
             <input id="trip-accommodation-area" formControlName="accommodation_area" maxlength="120" />
@@ -264,6 +273,7 @@
         </app-field>
       </div>
     }
+    <app-auto-links sourceType="TRIP" [sourceId]="editTripId() ?? null" [previews]="tripAutoPreview()" sourceLabel="Die Reise" />
     @if (editTripId()) {
       <app-connections objectType="TRIP" [objectId]="editTripId()!" />
     }

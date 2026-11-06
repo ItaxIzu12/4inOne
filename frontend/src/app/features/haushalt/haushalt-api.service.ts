@@ -297,10 +297,19 @@ export interface FolderEntryDto {
   start_date: string | null;
   end_date: string | null;
   notice_period_days: number | null;
+  /** Frist in Monaten (kalendarisch); gesetzt ist höchstens eins von beiden. */
+  notice_period_months?: number | null;
   cancellation_deadline: string | null;
   auto_renewal: boolean;
   /** Sensibel: nur in der Detailantwort (getFolderEntry), nie in Listen. */
   contract_number?: string;
+  /** Kündigungshinweis so viele Tage vor der Frist (0/7/14/30; 0 = nur am Fristtag). */
+  reminder_lead_days?: number;
+  /** Angekündigter Preis ab `next_cost_from` — privat wie `cost`. */
+  next_cost?: string | null;
+  next_cost_from?: string | null;
+  /** Gerät, sensibel: nur in der Detailantwort. */
+  serial_number?: string;
   purchase_date: string | null;
   warranty_end_date: string | null;
   maintenance_interval_months: number | null;
@@ -328,8 +337,15 @@ export interface FolderEntryInput {
   start_date: string | null;
   end_date: string | null;
   notice_period_days: number | null;
+  /** Frist in Monaten (kalendarisch); gesetzt ist höchstens eins von beiden. */
+  notice_period_months?: number | null;
   auto_renewal: boolean;
   contract_number: string;
+  reminder_lead_days?: number;
+  /** Weglassen = unverändert (wie `cost`). */
+  next_cost?: string | null;
+  next_cost_from?: string | null;
+  serial_number?: string;
   purchase_date: string | null;
   warranty_end_date: string | null;
   maintenance_interval_months: number | null;

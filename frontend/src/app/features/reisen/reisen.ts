@@ -1,10 +1,14 @@
+import { AutoLinks } from '../../shared/connections/auto-links';
+import { tripCalendar } from '../../shared/connections/auto-link-rules';
+import { PlaceHit } from '../../core/places/places.service';
+import { PlaceInput } from '../../shared/form/place-input';
 import { SubmissionKey } from '../../shared/idempotency';
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
-import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, forkJoin } from 'rxjs';
+import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
@@ -93,6 +97,8 @@ const LEGACY_TABS: Record<string, TripTab> = { packlisten: 'packliste', erinneru
     AppSelect,
     AppDatePicker,
     AppTimePicker,
+    PlaceInput,
+    AutoLinks,
     ConnectionsSection,
     TripList,
     TripOverview,
@@ -248,6 +254,19 @@ export class Reisen {
     return v.start_date && v.end_date < v.start_date ? 'Das Ende darf nicht vor dem Beginn liegen.' : '';
   });
   private readonly tripValue = signal(this.tripForm.getRawValue());
+  /** Connection Engine V2: Reisezeitraum im Kalender (CON-07) — Vorschau aus den Formularwerten. */
+  private readonly autoLinkBox = viewChild(AutoLinks);
+  readonly tripAutoPreview = computed(() => {
+    const v = this.tripValue();
+    return { TRIP_CALENDAR: tripCalendar(v.title.trim(), v.start_date || null, v.end_date || null, v.status) };
+  });
+  /** Reiseziel — richtet die Unterkunft-Suche aus („Hotel Central“ in Berlin). */
+  readonly tripDestination = computed(() => this.tripValue().destination);
+  /** Unterkunft aus der Suche gewählt: Lage übernehmen, wenn dort noch nichts steht. */
+  accommodationPicked(hit: PlaceHit) {
+    const area = this.tripForm.controls.accommodation_area;
+    if (hit.area && !area.value.trim()) area.setValue(hit.area.slice(0, 120));
+  }
 
   // ---------- Inhalte der geöffneten Reise ----------
   readonly packing = signal<PackingItem[]>([]);
@@ -534,6 +553,7 @@ export class Reisen {
     this.tripTouched.set(false);
     this.tripMoreOpen.set(false);
     this.editTripId.set(trip?.id);
+    this.autoLinkBox()?.reset();
     this.tripFormError.set('');
     this.tripOverlaps.set([]);
     this.tripEditor.set(true);
@@ -608,7 +628,14 @@ export class Reisen {
         },
         this.editTripId(),
       )
-      .pipe(takeUntilDestroyed(this.destroy))
+      .pipe(
+        // Verbindungen erst nach der Reise (eine neue Reise braucht zuerst ihre ID)
+        switchMap((saved) => {
+          const links = this.autoLinkBox();
+          return links ? links.commit(saved.id).pipe(map(() => saved)) : of(saved);
+        }),
+        takeUntilDestroyed(this.destroy),
+      )
       .subscribe({
         next: (saved) => {
           this.tripSaving.set(false);

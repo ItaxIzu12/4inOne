@@ -1,10 +1,14 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { demoNow, freezeDemoDay } from './helpers';
+
+// Beträge „heute“ hängen am Datum (Demo bucht Fixkosten an festen Monatstagen) → fester Demo-Tag.
+test.beforeEach(async ({ page }) => freezeDemoDay(page));
 
 // Kontoauszug-Import in der Demo: Datei wählen → Vorschau → importieren. Die Datei ist wie ein Sparkassen-Export
 // aufgebaut (Vorspann, Semikolon, Windows-1252 mit Umlauten).
 function iso(offset: number) {
-  const d = new Date();
+  const d = demoNow();
   d.setDate(d.getDate() + offset);
   return d;
 }

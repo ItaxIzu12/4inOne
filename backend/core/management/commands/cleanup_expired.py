@@ -22,7 +22,7 @@ class Command(BaseCommand):
         from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
         from core.idempotency import LIFETIME as IDEMPOTENCY_LIFETIME
-        from core.models import ContactInvite, IdempotencyRecord, Notification, PasswordResetToken, UserSession
+        from core.models import BetaFeedback, ContactInvite, IdempotencyRecord, Notification, PasswordResetToken, UserSession
 
         now = timezone.now()
         refresh_lifetime = settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME']
@@ -36,6 +36,9 @@ class Command(BaseCommand):
             'gelesene Benachrichtigungen älter als 90 Tage': Notification.objects.filter(read_at__lt=now - timedelta(days=90)),
             'abgelaufene Kontakt-Einladungen älter als 30 Tage': ContactInvite.objects.filter(
                 accepted_at__isnull=True, expires_at__lt=now - timedelta(days=30)
+            ),
+            'Beta-Rückmeldungen nach Ablauf der Aufbewahrung': BetaFeedback.objects.filter(
+                created_at__lt=now - timedelta(days=settings.BETA_FEEDBACK_RETENTION_DAYS)
             ),
         }
         with transaction.atomic():

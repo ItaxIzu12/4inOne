@@ -1,0 +1,188 @@
+// „Mit anderen Bereichen verbinden“ (Connection Engine V2, 01.11.2026): Zeilen mit Schalter, Vorschau darunter.
+:host {
+  display: block;
+}
+.al {
+  display: grid;
+  gap: 10px;
+}
+.al__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--fs-secondary);
+  font-weight: 700;
+}
+.al__head span {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+.al__head app-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+.al__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.al__row {
+  display: grid;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.al__row.is-on {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border-subtle));
+}
+.al__switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.al__text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.al__text b {
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+}
+.al__preview,
+.al__problem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  line-height: 1.4;
+}
+.al__problem {
+  color: #8a5a00;
+}
+.al__preview app-icon,
+.al__problem app-icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+}
+// Schalter: echtes Kontrollkästchen mit role=switch; Spur ≥ 3:1 Kontrast
+.al__toggle {
+  position: relative;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border-radius: 999px;
+  background: #7d8796;
+  appearance: none;
+  cursor: pointer;
+}
+.al__toggle::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
+  content: '';
+}
+.al__toggle:checked {
+  background: var(--accent);
+}
+.al__toggle:checked::after {
+  transform: translateX(18px);
+}
+.al__toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.al__toggle:focus-visible,
+.al__link:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.al__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.al__badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--success-soft, #e9f6ef);
+  color: var(--success, #1e7a4d);
+  font-weight: 700;
+}
+.al__badge--paused {
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+}
+.al__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.al__link app-icon {
+  width: 14px;
+  height: 14px;
+}
+.al__pending {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.al__pending--warn {
+  color: #8a5a00;
+}
+.al__note,
+.al__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.al__error {
+  color: var(--danger);
+}
+.al__note app-icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .al__toggle,
+  .al__toggle::after {
+    transition: background-color 150ms ease-out, transform 150ms ease-out;
+  }
+}

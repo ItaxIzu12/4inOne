@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { pickDate } from './helpers';
+import { pickDate, demoNow, freezeDemoDay } from './helpers';
+
+// Beträge „heute“ hängen am Datum (Demo bucht Fixkosten an festen Monatstagen) → fester Demo-Tag.
+test.beforeEach(async ({ page }) => freezeDemoDay(page));
 
 /** Finanzen › Übersicht: Zeitraum-Umschalter Heute · Woche · Monat · Benutzerdefiniert (Demo-Daten). */
 for (const width of [390, 1440]) {
@@ -68,7 +71,7 @@ for (const width of [390, 1440]) {
     // Benutzerdefiniert: kein Restbudget für einen frei gewählten Zeitraum. Am letzten Tag eines Monats ist der
     // voreingestellte Zeitraum (1. bis heute) genau dieser Monat — dann gibt es zu Recht das Monatsbudget.
     await switcher.getByRole('button', { name: 'Benutzerdefiniert' }).click();
-    const now = new Date();
+    const now = demoNow();
     const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() === now.getDate();
     if (!lastDayOfMonth) await expect(view.locator('.note')).toContainText('kein Restbudget');
     await expect(view.locator('.kpi__label')).toHaveText(['Ausgaben', 'Einnahmen', 'Gespart']);
@@ -109,7 +112,7 @@ test('another day never says "Heute": labels carry the date, and the month in vi
 
   // einen Tag zurück — die Zahlen gehören zum gewählten Tag, nicht zu heute
   await nav.getByRole('button', { name: 'Vorheriger Tag' }).click();
-  const d = new Date();
+  const d = demoNow();
   d.setDate(d.getDate() - 1);
   const label = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
   const content = view.locator('.kpis, .empty');
@@ -119,18 +122,18 @@ test('another day never says "Heute": labels carry the date, and the month in vi
   if (await view.locator('.kpi').count()) {
     // Hat der Vortag keine Bewegungen (je nach Datum in den Demodaten), gibt es keine Kennzahlen — dann gilt der Leerzustand unten.
     await expect(view.locator('.kpi__hint').first()).not.toHaveText('heute');
-    await expect(view.locator('.kpi').nth(1)).toContainText(`Ausgaben`);
-    await expect(view.locator('.kpi').nth(1)).toContainText(`am ${label}`);
+    await expect(view.locator('.kpi').first()).toContainText(`Ausgaben`);
+    await expect(view.locator('.kpi').first()).toContainText(`am ${label}`);
     await expect(view.locator('.list-title')).toHaveText(`Transaktionen am ${label}`);
   } else {
     await expect(view.locator('.empty')).toContainText(`Am ${label} gab es keine Finanzbewegungen.`);
   }
 
   // in den Vormonat: „Monat im Blick“ sagt nicht mehr „diesen Monat“
-  const target = new Date();
+  const target = demoNow();
   target.setDate(0); // letzter Tag des Vormonats
   const iso = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}-${String(target.getDate()).padStart(2, '0')}`;
-  const steps = Math.round((new Date(new Date().toDateString()).getTime() - new Date(target.toDateString()).getTime()) / 86_400_000) - 1;
+  const steps = Math.round((new Date(demoNow().toDateString()).getTime() - new Date(target.toDateString()).getTime()) / 86_400_000) - 1;
   for (let i = 0; i < steps; i++) await nav.getByRole('button', { name: 'Vorheriger Tag' }).click();
   const monthName = target.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
   await expect(page.locator('#finance-day')).toContainText(`${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(0, 4)}`);
@@ -147,7 +150,7 @@ test('custom period: Bis before Von is refused, the future shows only booked ite
   // Die Datumsauswahl steht unter dem Zeitraum-Umschalter, für jeden Zeitraum an derselben Stelle.
   const nav = page.locator('.date-row');
   const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  const now = new Date();
+  const now = demoNow();
   const first = new Date(now.getFullYear(), now.getMonth(), 1);
   const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
@@ -226,7 +229,7 @@ test('day, week and month share one date: zooming keeps you where you are', asyn
   await nav.getByRole('button', { name: 'Nächster Monat' }).click();
   await nav.getByRole('button', { name: 'Nächster Monat' }).click();
   const target = await page.evaluate(() => {
-    const d = new Date();
+    const d = new Date(); // im Browser: eingefrorene Demo-Uhr
     const m = new Date(d.getFullYear(), d.getMonth() + 2, 1);
     return { day: `01.${String(m.getMonth() + 1).padStart(2, '0')}.${m.getFullYear()}`, month: m.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' }) };
   });

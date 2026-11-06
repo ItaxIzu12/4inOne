@@ -1,0 +1,80 @@
+// Beta-Feedback: Fragen als 44-px-Umschalter (aria-pressed), ruhig in Tinte; aktiv = Tinte gefüllt.
+.bf-intro,
+.bf-privacy {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.bf-privacy {
+  margin: 12px 0 0;
+}
+.bf-privacy a {
+  color: var(--text);
+}
+.bf-scale {
+  margin: 16px 0 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.bf-scale legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.bf-scale legend .muted {
+  display: block;
+  margin-top: 2px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.bf-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bf-option {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border-control);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.bf-option--wide {
+  padding: 0 16px;
+}
+.bf-option:hover {
+  border-color: var(--text-secondary);
+}
+.bf-option[aria-pressed='true'] {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: var(--surface);
+}
+.bf-option:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+app-field {
+  margin-top: 16px;
+}
+.bf-thanks p {
+  margin: 0 0 8px;
+}
+.bf-thanks .muted {
+  color: var(--text-secondary);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bf-option {
+    transition: none;
+  }
+}

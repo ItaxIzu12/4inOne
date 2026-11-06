@@ -44,6 +44,11 @@
   align-self: end;
   min-height: 44px;
 }
+// Kündigungsfrist: Zahl + Einheit (Monate/Tage) nebeneinander, auch am Handy; die Einheit bündig mit dem Feld.
+.field-row.notice-field {
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+}
 // ---------- Raster ----------
 // Das Raster richtet sich nach der Breite dieses Bereichs. Nur am Rechner: am Handy ist das Detail ein festes Blatt
 // von unten, das ein Container einsperren würde (Popups liegen im Top-Layer und sind nicht betroffen).

@@ -1,0 +1,129 @@
+// Organisation › Aufgaben › „Aus dem Haushalt“ (Connection Engine V2): Karte mit Schalter, darunter die Aufgaben.
+:host {
+  display: block;
+  margin-bottom: 16px;
+}
+.hh {
+  display: grid;
+  gap: 10px;
+}
+.hh__switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.hh__text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.hh__text b {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-body);
+}
+.hh__text b app-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--household-accent);
+}
+.hh__text small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  line-height: 1.4;
+}
+.hh__toggle {
+  position: relative;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border-radius: 999px;
+  background: #7d8796;
+  appearance: none;
+  cursor: pointer;
+}
+.hh__toggle::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
+  content: '';
+}
+.hh__toggle:checked {
+  background: var(--household-fill);
+}
+.hh__toggle:checked::after {
+  transform: translateX(18px);
+}
+.hh__toggle:focus-visible,
+.hh__more:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.hh__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border-subtle);
+}
+.hh__task {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.hh__task.is-done .hh__title b {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+.hh__title {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 0;
+}
+.hh__title b {
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+.hh__title small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.hh__empty {
+  margin: 0;
+}
+.hh__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  min-height: 44px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.hh__more app-icon {
+  width: 14px;
+  height: 14px;
+}
+.hh__error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-secondary);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hh__toggle,
+  .hh__toggle::after {
+    transition: background-color 150ms ease-out, transform 150ms ease-out;
+  }
+}

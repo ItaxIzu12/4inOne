@@ -304,9 +304,18 @@ class FolderEntry(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     notice_period_days = models.PositiveSmallIntegerField(null=True, blank=True)
+    # Frist in Monaten („1 Monat zum Vertragsende“) — kalendarisch gerechnet, nicht als 30 Tage. Gesetzt ist höchstens
+    # eins von beiden (serializers.FolderEntrySerializer.validate).
+    notice_period_months = models.PositiveSmallIntegerField(null=True, blank=True)
     auto_renewal = models.BooleanField(default=False)
     # Sensibel: nur in der Detailansicht (serializers.FolderEntrySerializer).
     contract_number = models.CharField(max_length=60, blank=True, default='')
+    # Kündigungserinnerung zusätzlich so viele Tage vor der Frist (0 = nur am Fristtag; erlaubt 0/7/14/30).
+    reminder_lead_days = models.PositiveSmallIntegerField(default=14)
+    # Angekündigte Preisänderung: ab `next_cost_from` gilt `next_cost` (privat wie `cost`). Ist der Tag erreicht, wird
+    # der neue Preis beim nächsten Speichern übernommen; bis dahin rechnet services.cost_on mit dem passenden Preis.
+    next_cost = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    next_cost_from = models.DateField(null=True, blank=True)
 
     # --- Gerät ---
     purchase_date = models.DateField(null=True, blank=True)
@@ -316,6 +325,8 @@ class FolderEntry(models.Model):
     last_maintenance = models.DateField(null=True, blank=True)
     # Modell und Raum nur zum Erkennen und Filtern.
     model = models.CharField(max_length=120, blank=True, default='')
+    # Sensibel wie die Vertragsnummer: nur in der Detailansicht (serializers.FolderEntrySerializer).
+    serial_number = models.CharField(max_length=60, blank=True, default='')
     room = models.CharField(max_length=20, choices=Room.choices, blank=True, default='')
 
     def __str__(self) -> str:

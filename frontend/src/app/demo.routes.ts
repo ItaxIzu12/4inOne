@@ -1,3 +1,7 @@
+import { AutoLinksApi } from './shared/connections/auto-links-api.service';
+import { DemoAutoLinksApi } from './shared/connections/demo-auto-links-api';
+import { PlacesService } from './core/places/places.service';
+import { DemoPlacesService } from './core/places/demo-places.service';
 import { Routes } from '@angular/router';
 import { DEMO_MODE } from './core/demo-context';
 import { ContactsApiService } from './core/contacts/contacts-api.service';
@@ -39,8 +43,12 @@ export const DEMO_ROUTES: Routes = [
       { provide: HomeCurrency, useClass: DemoHomeCurrency },
       { provide: ContactsApiService, useClass: DemoContactsApiService },
       { provide: HouseholdApiService, useClass: DemoHouseholdApiService },
+      // Ortsvorschläge in der Demo ohne externen Dienst (Beispielorte)
+      { provide: PlacesService, useClass: DemoPlacesService },
       // Verknüpfungen in der Demo: fester Beispielbestand, nur im Browser (31.10.2026)
       { provide: ConnectionsApi, useClass: DemoConnectionsApi },
+      // Connection Engine V2 in der Demo: abgeleitete Verbindungen aus den Demo-Daten (nur im Browser)
+      { provide: AutoLinksApi, useClass: DemoAutoLinksApi },
       FinanzenStateService,
     ],
     children: [

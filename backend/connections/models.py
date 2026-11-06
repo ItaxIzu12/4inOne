@@ -98,3 +98,69 @@ class SuggestionDismissal(models.Model):
 
     def __str__(self) -> str:
         return f'{self.user_id}: {self.key}'
+
+
+# --------------------------------------------------------------------------- Connection Engine V2 (01.11.2026)
+
+
+class AutoKind(models.TextChoices):
+    """Abgeleitete Verbindungen (docs/CONNECTION_ENGINE_V2_AUDIT.md). Jede hat genau EINE Quelle; was in Finanzen
+    oder Organisation erscheint, wird bei jedem Lesen aus der Quelle berechnet — es entsteht keine Kopie."""
+
+    CONTRACT_FINANCE = 'CONTRACT_FINANCE', 'Vertrag in Finanzen planen'            # CON-01
+    CONTRACT_REMINDER = 'CONTRACT_REMINDER', 'Kündigungserinnerung'                # CON-02
+    HOUSEHOLD_TASKS = 'HOUSEHOLD_TASKS', 'Haushaltsaufgaben in Organisation'       # CON-03
+    DEVICE_MAINTENANCE = 'DEVICE_MAINTENANCE', 'Wartungserinnerung'                # CON-04
+    TRIP_CALENDAR = 'TRIP_CALENDAR', 'Reisezeitraum im Kalender'                   # CON-07
+    SAVINGS_REMINDER = 'SAVINGS_REMINDER', 'Sparziel-Erinnerung'                   # CON-10
+
+
+class AutoStatus(models.TextChoices):
+    ACTIVE = 'ACTIVE', 'Aktiv'
+    PAUSED = 'PAUSED', 'Pausiert'
+
+
+class AutoLink(models.Model):
+    """„Zeige diese Quelle auch dort.“ Gehört genau einer Person (owner): die abgeleiteten Einträge erscheinen nur in
+    IHREN privaten Bereichen. Gibt nie Zugang — beim Lesen wird die Quelle jedes Mal gegen ihre eigene Regel
+    geprüft (auto_links.py). Pausiert = nichts erscheint, die Einstellung bleibt."""
+
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='auto_links')
+    kind = models.CharField(max_length=20, choices=AutoKind.choices)
+    source_id = models.PositiveBigIntegerField()
+    status = models.CharField(max_length=6, choices=AutoStatus.choices, default=AutoStatus.ACTIVE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['id']
+        indexes = [models.Index(fields=['owner', 'kind', 'status'])]
+        constraints = [
+            # Idempotenz und Gleichzeitigkeit: je Person, Art und Quelle höchstens eine Zeile
+            models.UniqueConstraint(fields=['owner', 'kind', 'source_id'], name='unique_auto_link'),
+            models.CheckConstraint(condition=Q(kind__in=AutoKind.values), name='auto_link_kind_valid'),
+            models.CheckConstraint(condition=Q(status__in=AutoStatus.values), name='auto_link_status_valid'),
+        ]
+
+
+class AutoAction(models.TextChoices):
+    CREATE = 'CREATE', 'Angelegt'
+    PAUSE = 'PAUSE', 'Pausiert'
+    RESUME = 'RESUME', 'Fortgesetzt'
+    UNLINK = 'UNLINK', 'Aufgehoben'
+    SOURCE_GONE = 'SOURCE_GONE', 'Quelle gelöscht'
+
+
+class AutoLinkEvent(models.Model):
+    """Protokoll (AUDIT): wer hat wann was an einer abgeleiteten Verbindung getan. Bewusst OHNE Inhalte — keine
+    Titel, Beträge oder Daten, nur Art, Quelle (ID) und Aktion. Bleibt nach dem Aufheben erhalten."""
+
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    kind = models.CharField(max_length=20, choices=AutoKind.choices)
+    source_id = models.PositiveBigIntegerField()
+    action = models.CharField(max_length=12, choices=AutoAction.choices)
+    at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-at', '-id']
+        indexes = [models.Index(fields=['owner', 'at'])]

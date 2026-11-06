@@ -24,3 +24,35 @@ def _remove_connections(kind_key: str):
 
 for _key, _kind in KINDS.items():
     post_delete.connect(_remove_connections(_key), sender=_kind.model, weak=False, dispatch_uid=f'connections-{_key}')
+
+
+# Connection Engine V2: abgeleitete Verbindungen hängen an ihrer Quelle — wird sie gelöscht, verschwinden sie (mit
+# Protokolleintrag „Quelle gelöscht“). Echte Buchungen, Termine und Aufgaben sind davon nie betroffen.
+def _remove_auto_links(kinds, only_kind=None):
+    def handler(sender, instance, **kwargs):
+        if only_kind is not None and getattr(instance, 'kind', None) != only_kind:
+            return
+        from connections import auto_links
+
+        auto_links.remove_for_source(kinds, instance.pk)
+
+    return handler
+
+
+def _connect_auto_link_cleanup():
+    from core.models import Household
+    from finanzen.models import SavingsGoal
+    from haushalt.models import FolderEntry
+    from reisen.models import Trip
+    from connections.models import AutoKind
+
+    post_delete.connect(_remove_auto_links([AutoKind.CONTRACT_FINANCE, AutoKind.CONTRACT_REMINDER], FolderEntry.Kind.CONTRACT),
+                        sender=FolderEntry, weak=False, dispatch_uid='auto-links-contract')
+    post_delete.connect(_remove_auto_links([AutoKind.DEVICE_MAINTENANCE], FolderEntry.Kind.DEVICE),
+                        sender=FolderEntry, weak=False, dispatch_uid='auto-links-device')
+    post_delete.connect(_remove_auto_links([AutoKind.TRIP_CALENDAR]), sender=Trip, weak=False, dispatch_uid='auto-links-trip')
+    post_delete.connect(_remove_auto_links([AutoKind.SAVINGS_REMINDER]), sender=SavingsGoal, weak=False, dispatch_uid='auto-links-goal')
+    post_delete.connect(_remove_auto_links([AutoKind.HOUSEHOLD_TASKS]), sender=Household, weak=False, dispatch_uid='auto-links-household')
+
+
+_connect_auto_link_cleanup()

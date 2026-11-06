@@ -1,0 +1,67 @@
+<app-modal-form
+  title="Feedback geben"
+  icon="send"
+  [open]="open()"
+  [saving]="saving()"
+  [error]="error()"
+  [submitLabel]="sent() ? 'Schließen' : saving() ? 'Wird gesendet …' : 'Senden'"
+  [submitIcon]="sent() ? 'close' : 'send'"
+  [cancelLabel]="sent() ? '' : 'Abbrechen'"
+  (submitted)="submit()"
+  (closed)="closed.emit()"
+>
+  @if (sent()) {
+    <div class="bf-thanks" role="status">
+      <p><b>Danke!</b> Deine Rückmeldung ist angekommen.</p>
+      <p class="muted">Sie hilft, 4inOne verständlicher zu machen. Du kannst jederzeit weitere schicken.</p>
+    </div>
+  } @else {
+    <p class="bf-intro">Alles ist freiwillig – beantworte, was dir einfällt. Bitte keine Passwörter, Konto- oder Vertragsnummern eintragen.</p>
+    <div class="field-row">
+      <app-field label="Bereich">
+        <app-select [options]="areaOptions()" [value]="chosenArea()" (valueChange)="chosenArea.set($event)" />
+      </app-field>
+      <app-field label="Aufgabe aus dem Test" [optional]="true">
+        <app-select [options]="taskOptions()" [value]="task()" (valueChange)="task.set($event)" />
+      </app-field>
+    </div>
+
+    <fieldset class="bf-scale">
+      <legend>Wie verständlich war, was passiert? <span class="muted">1 = gar nicht · 5 = sehr</span></legend>
+      <div class="bf-options">
+        @for (n of scale; track n) {
+          <button type="button" class="bf-option" [attr.aria-pressed]="understood() === n" (click)="toggle(understood, n, null)">{{ n }}</button>
+        }
+      </div>
+    </fieldset>
+    <fieldset class="bf-scale">
+      <legend>Hattest du das Gefühl, die Kontrolle zu behalten? <span class="muted">1 = gar nicht · 5 = ganz</span></legend>
+      <div class="bf-options">
+        @for (n of scale; track n) {
+          <button type="button" class="bf-option" [attr.aria-pressed]="inControl() === n" (click)="toggle(inControl, n, null)">{{ n }}</button>
+        }
+      </div>
+    </fieldset>
+    <fieldset class="bf-scale">
+      <legend>Spart dir das Zeit gegenüber bisher?</legend>
+      <div class="bf-options">
+        @for (a of answers; track a.value) {
+          <button type="button" class="bf-option bf-option--wide" [attr.aria-pressed]="savesTime() === a.value" (click)="toggle(savesTime, a.value, '')">{{ a.label }}</button>
+        }
+      </div>
+    </fieldset>
+    <fieldset class="bf-scale">
+      <legend>Würdest du 4inOne nach dem Test weiter nutzen?</legend>
+      <div class="bf-options">
+        @for (a of answers; track a.value) {
+          <button type="button" class="bf-option bf-option--wide" [attr.aria-pressed]="wouldContinue() === a.value" (click)="toggle(wouldContinue, a.value, '')">{{ a.label }}</button>
+        }
+      </div>
+    </fieldset>
+
+    <app-field label="Was ist dir aufgefallen?" [optional]="true" [hint]="message().length > 1800 ? 'Noch ' + (2000 - message().length) + ' Zeichen.' : 'Was war unklar, was hat gefehlt, was war gut?'">
+      <textarea id="beta-message" maxlength="2000" rows="4" [value]="message()" (input)="message.set($any($event.target).value)"></textarea>
+    </app-field>
+    <p class="bf-privacy muted">Gespeichert werden deine Antworten, dein Konto und die Seite, auf der du gerade bist – nur für die Auswertung des Tests. Mehr unter <a href="/datenschutz#beta">Datenschutz</a>.</p>
+  }
+</app-modal-form>

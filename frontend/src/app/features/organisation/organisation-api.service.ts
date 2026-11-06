@@ -32,8 +32,11 @@ export interface PersonalEvent {
   shared_with?: number[];
   /** Für mich freigegeben: wessen Kalender (Konto-ID). null = eigener Termin oder gemeinsamer Kalender. */
   shared_by?: number | null;
+  /** Abgeleitet (Connection Engine V2): kein eigener Termin, sondern aus Vertrag/Gerät/Reise/Sparziel berechnet —
+   * nur lesbar, Klick öffnet die Quelle. */
+  derived?: { kind: string; source_type: string; source_id: number; domain: string };
 }
-export type EventInput = Omit<PersonalEvent, 'id' | 'series_starts_at' | 'calendar_name' | 'calendar_color' | 'created_by' | 'can_edit' | 'shared_by'>;
+export type EventInput = Omit<PersonalEvent, 'id' | 'series_starts_at' | 'calendar_name' | 'calendar_color' | 'created_by' | 'can_edit' | 'shared_by' | 'derived'>;
 
 // ---------- Gemeinsame Kalender (31.10.2026, backend/organisation/calendars.py) ----------
 export type CalendarColor = 'amber' | 'blue' | 'green' | 'rose' | 'violet' | 'slate';

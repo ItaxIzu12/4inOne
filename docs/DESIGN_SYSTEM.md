@@ -105,6 +105,11 @@ Abstand — nie nur über Farbe.
   (`demoTripsFor`, `demoInvite`, `demoAccept`) — Entfernen/Einladen bei Reisen und in Personen & Gruppen zeigen
   denselben Stand (solange nicht neu geladen wird). Im echten System rechnet `contacts/` ohnehin aus der Datenbank.
 - Personen & Gruppen: `.shared-chip--more` ist ein Knopf (`toggleExpanded`, `aria-expanded`) statt einer Zahl.
+- Connection Engine V2: `shared/connections/auto-links.*` (`app-auto-links`; Eingaben `sourceType`, `sourceId`, `previews`,
+  `sourceLabel`; `commit(sourceId)`, `reset()`; `.al__row`, `.al__toggle` = Kontrollkästchen `role=switch`, Spur `#7d8796`,
+  an `--accent`), Regeln für Vorschau und Demo `auto-link-rules.ts`, Demo `demo-auto-links-api.ts`.
+  `features/organisation/org-household-tasks.*` (`app-org-household-tasks`, `.hh__*`, Schalter an `--household-fill`).
+  Abgeleitete Kalendereinträge = `PersonalEvent` mit `derived` (negative ID, `calendar_color: slate`, nur lesbar).
 - `shared/save-feedback` (01.11.2026): `.toast[data-tone]` (`success|warning|error`, sonst aus dem Text: `feedbackTone`),
   Dauer `feedbackDuration` (5–9 s), Pause bei `mouseenter`/`focusin`, Eingaben `message`, `tone`, `stamp` (gleiche Meldung
   neu starten), Ausgabe `dismissed`. Seiten setzen keinen eigenen Timer mehr. Live-Region `role=status` bleibt im DOM.
@@ -114,6 +119,15 @@ Abstand — nie nur über Farbe.
   „…importieren“ → upload, „Vorschau“ → arrow, „Schließen“ → close, sonst check; `cancelIconName`: „prüfen/zurück“ →
   arrow-left, sonst close). Eigene Fußzeilen (Profil › Konto löschen, Reisen › Vorschläge, Person einladen) nutzen
   dieselben Symbole, 16 px.
+- `shared/form/place-input.*` (`app-place-input`, ControlValueAccessor): Combobox nach WAI-ARIA (`role=combobox`,
+  `aria-expanded`, `aria-activedescendant`, Listbox mit Gruppen „Deine Orte“/„Orte“, Live-Region „3 Vorschläge“);
+  Pfeiltasten, Enter übernimmt (schickt das Formular nicht ab), Escape schließt nur die Liste. Eingaben `inputId`,
+  `maxLength`, `placeholder`, `full`. Quelle `core/places/places.service.ts` → `GET /api/v1/places/?q=`
+  (backend `core/places.py`: eigene Orte + Photon über den Server, 300 ms Pause, ab 3 Zeichen, 24 h Cache,
+  60/min je Person); Demo `core/places/demo-places.service.ts` (Beispielorte, nichts nach außen).
+  Unterkunft: `kind="lodging"` (Photon `osm_tag=tourism:hotel|hostel|guest_house|apartment|motel|chalet|camp_site|
+  alpine_hut`, eigene = frühere Unterkünfte), `[near]` = Reiseziel (an den Suchtext gehängt), `(picked)` liefert den
+  Treffer mit `area` (Stadtteil/Ort) → `reisen.ts accommodationPicked` füllt „Lage“, wenn leer.
 - Fokus: global `:focus-visible { outline: 3px solid var(--brand-primary); outline-offset: 2px }` — verändert nie die
   Form des Elements; Komponenten passen ihn an, entfernen ihn nie ersatzlos.
 - Hover: leichte Flächen-/Linienänderung; Press: 1 px bzw. `--surface-pressed`; Bewegung 120–200 ms
@@ -1261,3 +1275,18 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   `DEMO_MODE`; offene Einladungen neben Geteiltem: `.shared-chip--pending` (gestrichelt).
 - Datums-/Uhrzeitauswahl: `aria-labelledby` = Beschriftung + Wert-Span (`dp-text-n`/`tp-text-n`), bei Teil-Feldern
   `aria-label` „Feld – Teil, Wert“.
+- Kündigungsfrist im Vertragsdialog (02.11.2026, `haushalt/ordner-tab.*`): `.field-row.notice-field` (immer 2 Spalten,
+  `align-items: end`) mit `app-field` „Kündigungsfrist“ und `app-select` (Einheit, `aria-labelledby` auf versteckten
+  Text „Einheit der Kündigungsfrist“, `.sr-only`); `.notice-renewal` (min. 44 px) für „Verlängert sich automatisch“.
+  Logik: `vertraege-logic.cancellationDeadline(end, days, months)` und `noticeLabel(days, months)`, dieselbe Regel wie
+  backend `haushalt/services.cancellation_deadline`.
+- Vertrag/Gerät-Felder (02.11.2026, `haushalt/ordner-tab.*`): Signale `formNextCost`/`formNextFrom`, `formLead`
+  (`LEAD_OPTIONS`), `formLastMaintenance`/`formSerial`; `setMaintenanceBasis(last, interval)` setzt „Nächste Wartung“ =
+  `addMonthsIso(last, interval)`. Anzeige `leadLabel`, `moneyLabel` (`vertraege-logic.ts`). Regeln gespiegelt in
+  `shared/connections/auto-link-rules.ts`: `costOn(c, day)`, `contractLeadDay(c, day)`; Demo `applyDuePrice` und
+  Kalender-Eintrag `contract-lead:{id}`. „Erinnern“ steht mit der Checkbox in einer `.field-row` (`.check-field`).
+- Beta-Feedback (04.11.2026): `shared/beta-feedback/beta-feedback-dialog.*` (`app-beta-feedback-dialog`, Eingaben `open`,
+  `areas`, `tasks`, `area`; `reset()` beim Öffnen), Dienst `beta-feedback.service.ts` (GET Schalter/Listen, POST
+  senden; kein Lesen). Umschalter `.bf-option` (44 px, `aria-pressed`, `--border-control`, gewählt `--brand-primary`),
+  Fragen als `fieldset.bf-scale` mit `legend`. Kontomenü: `AppShell.betaInfo` (einmal beim ersten Öffnen),
+  `.beta-mark`. `app-modal-form`: leeres `cancelLabel` blendet „Abbrechen“ aus.

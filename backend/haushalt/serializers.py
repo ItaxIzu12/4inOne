@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from core.models import HouseholdMembership
+from core.recurrence import add_months
 from finanzen.models import Category
 from haushalt import services
 from haushalt.models import FolderEntry, ItemMemory, Section, ShoppingItem, ShoppingList, Task
@@ -381,15 +382,20 @@ class FolderEntrySerializer(serializers.ModelSerializer):
             'start_date',
             'end_date',
             'notice_period_days',
+            'notice_period_months',
             'cancellation_deadline',
             'auto_renewal',
             'contract_number',
+            'reminder_lead_days',
+            'next_cost',
+            'next_cost_from',
             'purchase_date',
             'warranty_end_date',
             'maintenance_interval_months',
             'maintenance_due_date',
             'last_maintenance',
             'model',
+            'serial_number',
             'room',
             'deadlines',
             'attachments',
@@ -407,19 +413,28 @@ class FolderEntrySerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         view = self.context.get('view')
-        if instance.kind != FolderEntry.Kind.CONTRACT or getattr(view, 'action', None) not in self.DETAIL_ACTIONS:
+        detail = getattr(view, 'action', None) in self.DETAIL_ACTIONS
+        if instance.kind != FolderEntry.Kind.CONTRACT or not detail:
             data.pop('contract_number', None)
+        if instance.kind != FolderEntry.Kind.DEVICE or not detail:
+            data.pop('serial_number', None)
+        # Ist der Tag einer angekündigten Preisänderung erreicht, gilt der neue Preis (gespeichert beim nächsten Sichern).
+        if instance.next_cost_from is not None and instance.next_cost_from <= timezone.localdate():
+            data['cost'] = data['next_cost']
+            data['next_cost'] = data['next_cost_from'] = None
         # Beträge sind privat (services.can_see_cost): Mitglieder sehen den Vertrag, aber nicht, was er kostet.
         data['cost_visible'] = services.can_see_cost(instance, self._viewer())
         if not data['cost_visible']:
             data['cost'] = None
             data['monthly_equivalent'] = None
+            data['next_cost'] = data['next_cost_from'] = None
         return data
 
     def update(self, instance, validated_data):
         # Wer den Betrag nicht sehen darf, kann ihn auch nicht überschreiben (er bleibt unverändert).
         if not services.can_see_cost(instance, self._viewer()):
-            validated_data.pop('cost', None)
+            for field in ('cost', 'next_cost', 'next_cost_from'):
+                validated_data.pop(field, None)
         return super().update(instance, validated_data)
 
     def get_attachments(self, obj) -> list[dict]:
@@ -469,6 +484,19 @@ class FolderEntrySerializer(serializers.ModelSerializer):
     def validate_contract_number(self, value):
         return value.strip()
 
+    def validate_serial_number(self, value):
+        return value.strip()
+
+    def validate_reminder_lead_days(self, value):
+        if value not in services.REMINDER_LEAD_CHOICES:
+            raise serializers.ValidationError('Die Erinnerung geht am Fristtag oder 7, 14 bzw. 30 Tage vorher.')
+        return value
+
+    def validate_next_cost(self, value):
+        if value is not None and not Decimal('0') < value <= MAX_COST:
+            raise serializers.ValidationError('Der neue Preis muss größer als 0 und höchstens 99.999,99 € sein.')
+        return value
+
     def validate_cost(self, value):
         if value is not None and not Decimal('0') < value <= MAX_COST:
             raise serializers.ValidationError('Die Kosten müssen größer als 0 und höchstens 99.999,99 € sein.')
@@ -477,6 +505,11 @@ class FolderEntrySerializer(serializers.ModelSerializer):
     def validate_notice_period_days(self, value):
         if value is not None and value > 1095:
             raise serializers.ValidationError('Die Kündigungsfrist darf höchstens 1095 Tage (3 Jahre) betragen.')
+        return value
+
+    def validate_notice_period_months(self, value):
+        if value is not None and not 1 <= value <= 36:
+            raise serializers.ValidationError('Die Kündigungsfrist in Monaten muss zwischen 1 und 36 liegen.')
         return value
 
     def validate_model(self, value):
@@ -503,7 +536,8 @@ class FolderEntrySerializer(serializers.ModelSerializer):
         # Felder der jeweils anderen Art werden verworfen, statt stillschweigend
         # gespeichert zu werden (ein Gerät hat keine Kündigungsfrist).
         contract_fields = (
-            'cost', 'billing_cycle', 'start_date', 'end_date', 'notice_period_days', 'auto_renewal', 'contract_number'
+            'cost', 'billing_cycle', 'start_date', 'end_date', 'notice_period_days', 'notice_period_months', 'auto_renewal',
+            'contract_number', 'reminder_lead_days', 'next_cost', 'next_cost_from',
         )
         device_fields = (
             'purchase_date',
@@ -512,6 +546,7 @@ class FolderEntrySerializer(serializers.ModelSerializer):
             'maintenance_due_date',
             'last_maintenance',
             'model',
+            'serial_number',
             'room',
         )
         foreign = device_fields if kind == FolderEntry.Kind.CONTRACT else contract_fields
@@ -524,12 +559,46 @@ class FolderEntrySerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'status': 'Dieser Status passt nicht zur Art des Eintrags.'})
 
         if kind == FolderEntry.Kind.CONTRACT:
+            # Frist entweder in Tagen oder in Monaten: wird eine Einheit gesetzt, entfällt die andere.
+            if attrs.get('notice_period_months') and attrs.get('notice_period_days'):
+                raise serializers.ValidationError(
+                    {'notice_period_months': 'Die Kündigungsfrist bitte entweder in Tagen oder in Monaten angeben.'}
+                )
+            if attrs.get('notice_period_months'):
+                attrs['notice_period_days'] = None
+            elif attrs.get('notice_period_days'):
+                attrs['notice_period_months'] = None
+            # Preisänderung: Betrag und „gilt ab“ nur zusammen; ein Tag heute oder früher gilt sofort.
+            if 'next_cost' in attrs or 'next_cost_from' in attrs:
+                next_cost, next_from = current('next_cost'), current('next_cost_from')
+                if (next_cost is None) != (next_from is None):
+                    field = 'next_cost_from' if next_from is None else 'next_cost'
+                    raise serializers.ValidationError({field: 'Neuer Preis und „gilt ab“ gehören zusammen.'})
+                if next_from is not None and next_from <= timezone.localdate():
+                    attrs['cost'], attrs['next_cost'], attrs['next_cost_from'] = next_cost, None, None
+            elif self.instance is not None and self.instance.next_cost_from is not None \
+                    and self.instance.next_cost_from <= timezone.localdate():
+                # Tag der Preisänderung ist erreicht: beim Speichern den neuen Preis übernehmen (wie angezeigt).
+                attrs.setdefault('cost', self.instance.next_cost)
+                attrs['next_cost'] = attrs['next_cost_from'] = None
             start, end = current('start_date'), current('end_date')
             if start and end and end < start:
                 raise serializers.ValidationError({'end_date': 'Das Vertragsende darf nicht vor dem Beginn liegen.'})
         if kind == FolderEntry.Kind.DEVICE:
             interval = current('maintenance_interval_months')
-            if interval and current('maintenance_due_date') is None:
+            last = current('last_maintenance')
+            changed = self.instance is None or any(
+                field in attrs and attrs[field] != getattr(self.instance, field)
+                for field in ('last_maintenance', 'maintenance_interval_months')
+            )
+            due_set = 'maintenance_due_date' in attrs and (
+                self.instance is None and attrs['maintenance_due_date'] is not None
+                or self.instance is not None and attrs['maintenance_due_date'] != self.instance.maintenance_due_date
+            )
+            if interval and last and changed and not due_set:
+                # Wie „Wartung erledigt“: nächste Wartung = letzte + Intervall (auch wenn das schon vorbei ist).
+                attrs['maintenance_due_date'] = add_months(last, interval)
+            elif interval and current('maintenance_due_date') is None:
                 # Ohne Angabe: erste Wartung ein Intervall nach Kauf (oder heute).
                 base = current('purchase_date')
                 attrs['maintenance_due_date'] = services.first_maintenance(base or timezone.localdate(), interval)

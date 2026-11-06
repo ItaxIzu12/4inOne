@@ -1,3 +1,6 @@
+import { Injector, inject } from '@angular/core';
+import { AutoLinksApi } from '../../shared/connections/auto-links-api.service';
+import { ContractFacts, contractFinance, contractPaymentDays, costOn } from '../../shared/connections/auto-link-rules';
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { plannedItems } from './finance-tabs';
@@ -108,6 +111,27 @@ function monthRows(monthsAgo: number): Row[] {
  * Sparziele nur in dieser einen In-Memory-Instanz (kein providedIn:'root'). */
 @Injectable()
 export class DemoPrivateFinanceApi {
+  // Connection Engine V2 (CON-01): Verträge aus dem Haushalt, wenn verbunden — wie backend contract_planned
+  // Ohne Angular-Kontext (z. B. Unit-Tests mit `new`) gibt es keine Verbindungen — dann einfach keine Vertragskosten
+  private readonly injector: Injector | null = (() => {
+    try {
+      return inject(Injector);
+    } catch {
+      return null;
+    }
+  })();
+  private contractPlanned(month: string, rows: { note: string; type: string }[], today: string) {
+    if (month < today.slice(0, 7)) return [];
+    const links = this.injector?.get(AutoLinksApi, null) as unknown as { activeContractFinance?: () => ContractFacts[] } | null;
+    const booked = new Set(rows.filter((t) => t.type === 'EXPENSE').map((t) => (t.note ?? '').trim().toLocaleLowerCase('de')));
+    return (links?.activeContractFinance?.() ?? [])
+      .filter((c) => !contractFinance(c).problem && !booked.has(c.name.trim().toLocaleLowerCase('de')))
+      .flatMap((c) => contractPaymentDays(c, month).map((date) => ({
+        kind: 'CONTRACT' as const, key: `contract:${c.name}`, id: null, source_id: null, title: c.name.trim(),
+        category: null, amount: costOn(c, date) ?? '0', date,
+      })));
+  }
+
   private nextId = 1000;
   private categoryList: FinanceCategory[] = CATEGORIES.map((c) => ({ ...c }));
   private txs: FinanceTransaction[] = [5, 4, 3, 2, 1, 0]
@@ -347,7 +371,13 @@ export class DemoPrivateFinanceApi {
       .reduce((sum, c) => sum + Number(c.amount), 0);
     const covering = this.goalList.filter((g) => g.status !== 'PAUSED' && goalCovers(g, month));
     const today = new Date().toLocaleDateString('sv-SE');
-    const planned = plannedItems(this.txs, month, today);
+    // Ein verbundener Vertrag ersetzt eine gleichnamige wiederkehrende Planung (wie im Backend) — nie doppelt
+    const contracts = this.contractPlanned(month, rows, today);
+    const covered = new Set(contracts.map((c) => c.title.trim().toLocaleLowerCase('de')));
+    const planned = [
+      ...plannedItems(this.txs, month, today).filter((p) => p.kind !== 'RECURRING' || !covered.has(p.title.trim().toLocaleLowerCase('de'))),
+      ...contracts,
+    ];
     const plannedTotal = planned.reduce((sum, p) => sum + Number(p.amount), 0);
     // Ausgegeben = bis heute gebucht; zukünftig datierte Transaktionen stecken in „geplant“ (nie doppelt).
     const spent = expense - planned.filter((p) => p.kind === 'TRANSACTION').reduce((sum, p) => sum + Number(p.amount), 0);

@@ -366,7 +366,14 @@ test('week view: an empty day opens "Termin hinzufügen" directly, the free colu
   const heads = page.locator('.week__head');
   const cols = page.locator('.week__col');
   let empty = -1;
-  for (let i = 0; i < 7; i++) if (!(await cols.nth(i).locator('.week__ev').count())) { empty = i; break; }
+  // Die Demo-Termine hängen am heutigen Datum; ist jeder Tag dieser Woche belegt, in den nächsten Wochen suchen.
+  for (let week = 0; week < 4 && empty < 0; week++) {
+    if (week) {
+      await page.getByRole('button', { name: 'Nächste Woche' }).click();
+      await expect(cols).toHaveCount(7);
+    }
+    for (let i = 0; i < 7; i++) if (!(await cols.nth(i).locator('.week__ev').count())) { empty = i; break; }
+  }
   expect(empty).toBeGreaterThanOrEqual(0);
   await heads.nth(empty).click();
   await expect(page.getByRole('dialog').getByRole('heading', { name: 'Termin hinzufügen' })).toBeVisible();

@@ -7,6 +7,7 @@ import {
   costLabel,
   filterContracts,
   monthlyEquivalent,
+  leadLabel,
   noticeLabel,
   sortContracts,
 } from './vertraege-logic';
@@ -27,6 +28,13 @@ describe('Verträge: Regeln wie im Backend', () => {
     expect(cancellationDeadline('2026-03-31', 31)).toBe('2026-02-28');
     expect(cancellationDeadline('2026-12-31', null)).toBe('2026-12-31');
     expect(cancellationDeadline(null, 30)).toBeNull();
+    // Monate kalendarisch, dieselben Fälle wie backend test_qa2_04c
+    expect(cancellationDeadline('2027-12-31', null, 1)).toBe('2027-11-30');
+    expect(cancellationDeadline('2027-06-30', null, 3)).toBe('2027-03-31');
+    expect(cancellationDeadline('2027-12-15', null, 1)).toBe('2027-11-15');
+    expect(cancellationDeadline('2027-02-28', null, 1)).toBe('2027-01-31');
+    expect(cancellationDeadline('2028-03-31', null, 1)).toBe('2028-02-29');
+    expect(cancellationDeadline('2027-12-31', null, 12)).toBe('2026-12-31');
   });
 
   it('derives the effective status', () => {
@@ -46,6 +54,10 @@ describe('Verträge: Regeln wie im Backend', () => {
     expect(costLabel({ cost: '78.00', billing_cycle: 'YEARLY' })).toBe('78,00\u00a0€ / Jahr');
     expect(noticeLabel(30)).toBe('30 Tage');
     expect(noticeLabel(null)).toBe('keine');
+    expect(noticeLabel(null, 1)).toBe('1 Monat');
+    expect(noticeLabel(null, 3)).toBe('3 Monate');
+    expect(leadLabel(undefined)).toBe('Erinnerung 14 Tage vorher');
+    expect(leadLabel(0)).toBe('Erinnerung am Fristtag');
   });
 
   it('labels contracts by their effective status', () => {

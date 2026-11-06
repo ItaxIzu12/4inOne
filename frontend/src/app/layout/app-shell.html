@@ -96,6 +96,11 @@
                   <a role="menuitem" routerLink="/datenschutz" (click)="closeMenu()"><icon-legal />Datenschutz</a>
                   <a role="menuitem" routerLink="/barrierefreiheit" (click)="closeMenu()"><icon-info />Barrierefreiheit</a>
                 </div>
+                @if (betaInfo()?.enabled && !isDemoRoute()) {
+                  <div class="account-group" role="none">
+                    <button type="button" role="menuitem" (click)="openFeedback()"><app-icon name="send" />Feedback geben <span class="beta-mark">Beta</span></button>
+                  </div>
+                }
                 <div class="account-group" role="none">
                   <button type="button" role="menuitem" [disabled]="busy()" (click)="logout()">
                     <icon-logout />{{ busy() ? 'Wird abgemeldet …' : 'Abmelden' }}
@@ -116,6 +121,15 @@
         </div>
       </div>
     </header>
+    @if (betaInfo()?.enabled) {
+      <app-beta-feedback-dialog
+        [open]="feedbackOpen()"
+        [areas]="betaInfo()!.areas"
+        [tasks]="betaInfo()!.tasks"
+        [area]="feedbackArea()"
+        (closed)="closeFeedback()"
+      />
+    }
     <ng-content />
   </div>
 </div>

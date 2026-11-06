@@ -16,6 +16,12 @@ for (const width of [360, 390, 430, 768, 1440]) {
     await expect(breakdown).toContainText('Bereits ausgegeben');
     await expect(breakdown).toContainText('Verfügbar');
     const plannedLink = breakdown.getByRole('button', { name: /geplante Ausgaben im .* anzeigen/ });
+    // erst auf den nächsten Monat warten — sonst liest der Test noch das Label des laufenden Monats
+    const next = new Date();
+    next.setDate(1);
+    next.setMonth(next.getMonth() + 1);
+    const nextMonth = next.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+    await expect(plannedLink).toHaveAttribute('aria-label', new RegExp(`im ${nextMonth} anzeigen`));
     const label = (await plannedLink.getAttribute('aria-label'))!;
     const total = label.split(' geplante')[0];
     // Kategorie-Budgets: ausgegeben · geplant · Budget — in Worten, kein horizontales Überlaufen

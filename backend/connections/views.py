@@ -184,3 +184,100 @@ class TripSavingsView(ConnectionsView):
 
     def get(self, request, trip_id):
         return Response(trip_overview.savings(request.user, trip_id))
+
+
+# --------------------------------------------------------------------------- Connection Engine V2 (abgeleitet)
+
+
+class _AutoView(ConnectionsView):
+    def handle_exception(self, exc):
+        from connections.auto_links import AutoLinkError
+
+        if isinstance(exc, AutoLinkError):
+            return Response({'detail': exc.message}, status=exc.status)
+        return super().handle_exception(exc)
+
+    @staticmethod
+    def _id(raw) -> int:
+        from connections.auto_links import AutoLinkError
+
+        try:
+            value = int(str(raw))
+        except (TypeError, ValueError):
+            raise AutoLinkError('Ungültige ID.', 400)
+        if not 1 <= value <= MAX_ID:
+            raise AutoLinkError('Ungültige ID.', 400)
+        return value
+
+
+class AutoLinkListCreateView(_AutoView):
+    """GET ?source_type=CONTRACT&source_id=5 — welche Verbindungen die Quelle anbietet, mit Status und Vorschau.
+    POST {kind, source_id} — anlegen (idempotent: zweimal ist einmal; 201 neu, 200 schon vorhanden)."""
+
+    def get(self, request):
+        from connections import auto_links
+
+        source_type = str(request.query_params.get('source_type', ''))
+        return Response(auto_links.states_for(request.user, source_type, self._id(request.query_params.get('source_id'))))
+
+    def post(self, request):
+        from connections import auto_links
+
+        body = request.data if isinstance(request.data, dict) else {}
+        kind = str(body.get('kind', ''))
+        link, created = auto_links.create(request.user, kind, self._id(body.get('source_id')))
+        source = auto_links.visible_source(request.user, link.kind, link.source_id)
+        state = auto_links.link_state(request.user, link, link.kind, source)
+        return Response(state, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
+class AutoLinkDetailView(_AutoView):
+    """PATCH {status: ACTIVE|PAUSED} · DELETE = aufheben (Quelle und alles Echte bleiben)."""
+
+    def patch(self, request, pk):
+        from connections import auto_links
+
+        body = request.data if isinstance(request.data, dict) else {}
+        link = auto_links.set_status(request.user, pk, str(body.get('status', '')))
+        source = auto_links.visible_source(request.user, link.kind, link.source_id)
+        return Response(auto_links.link_state(request.user, link, link.kind, source))
+
+    def delete(self, request, pk):
+        from connections import auto_links
+
+        auto_links.unlink(request.user, pk)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AutoCalendarView(_AutoView):
+    """GET ?start=JJJJ-MM-TT&end=JJJJ-MM-TT (höchstens 400 Tage) — abgeleitete Kalendereinträge für Organisation."""
+
+    def get(self, request):
+        from datetime import date
+
+        from connections import auto_links
+
+        try:
+            start = date.fromisoformat(str(request.query_params.get('start')))
+            end = date.fromisoformat(str(request.query_params.get('end')))
+        except ValueError:
+            raise auto_links.AutoLinkError('Ungültiger Zeitraum.', 400)
+        if end < start or (end - start).days > 400:
+            raise auto_links.AutoLinkError('Ungültiger Zeitraum.', 400)
+        return Response(auto_links.calendar_items(request.user, start, end))
+
+
+class AutoHouseholdTasksView(_AutoView):
+    """GET — offene Haushaltsaufgaben für Organisation (CON-03), nur wenn verbunden; erledigt wird über die
+    Haushalt-API (derselbe Datensatz). Liefert außerdem die Haushalt-ID für den Schalter."""
+
+    def get(self, request):
+        from connections import auto_links
+
+        household = auto_links._household_of(request.user)
+        tasks = [
+            {'id': t.pk, 'title': t.title, 'due_date': t.due_date.isoformat() if t.due_date else None,
+             'room': t.room, 'assigned_to_me': t.assigned_to_id == request.user.pk}
+            for t in auto_links.household_tasks(request.user)[:100]
+        ]
+        return Response({'household_id': household.pk if household else None, 'tasks': tasks})

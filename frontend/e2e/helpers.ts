@@ -2,6 +2,14 @@ import { expect, Locator, Page } from '@playwright/test';
 
 /** Bedienung der eigenen Auswahlfelder (Dropdown, Monat, Datum, Uhrzeit) — sie ersetzen die Browserfelder. */
 
+/** Fester Demo-Tag für Tests mit Beträgen „heute“: Mittwoch, 14.10.2026, 10:00 — an diesem Tag fällt keine monatliche
+ * Demo-Buchung, und der Monat hat schon Bewegungen. Browser (`freezeDemoDay`) und Test (`demoNow`) rechnen damit. */
+export const DEMO_NOW = new Date(2026, 9, 14, 10, 0);
+export const demoNow = () => new Date(DEMO_NOW);
+export async function freezeDemoDay(page: Page) {
+  await page.clock.setFixedTime(DEMO_NOW);
+}
+
 export const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
 /** Wählt einen Eintrag im Dropdown (Combobox) mit dem gegebenen Feldnamen. */

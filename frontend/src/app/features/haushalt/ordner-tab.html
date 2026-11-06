@@ -313,7 +313,10 @@
                 </div>
                 <div class="fact">
                   <dt><app-icon name="finance" aria-hidden="true" />Kosten</dt>
-                  <dd>{{ costLabel(c) || '—' }}</dd>
+                  <dd>
+                    {{ costLabel(c) || '—' }}
+                    @if (c.next_cost && c.next_cost_from) {<small>ab {{ formatDate(c.next_cost_from) }}: {{ moneyLabel(c.next_cost) }}</small>}
+                  </dd>
                 </div>
                 <div class="fact">
                   <dt><app-icon name="calendar" aria-hidden="true" />Laufzeit</dt>
@@ -324,7 +327,10 @@
                 </div>
                 <div class="fact">
                   <dt><app-icon name="clock" aria-hidden="true" />Kündigungsfrist</dt>
-                  <dd>{{ noticeLabel(c.notice_period_days) }}</dd>
+                  <dd>
+                    {{ noticeLabel(c.notice_period_days, c.notice_period_months ?? null) }}
+                    @if (c.cancellation_deadline) {<small>{{ leadLabel(c.reminder_lead_days) }}</small>}
+                  </dd>
                 </div>
                 <div class="fact">
                   <dt><app-icon name="calendar-check" aria-hidden="true" />Kündbar bis</dt>
@@ -355,6 +361,10 @@
                   <dd>{{ c.provider || '—' }}{{ c.model ? ' · ' + c.model : '' }}</dd>
                 </div>
                 <div class="fact">
+                  <dt><app-icon name="tag" aria-hidden="true" />Seriennummer</dt>
+                  <dd>{{ contractNumber()?.id === c.id ? contractNumber()!.value || '—' : '…' }}</dd>
+                </div>
+                <div class="fact">
                   <dt><app-icon name="calendar" aria-hidden="true" />Gekauft am</dt>
                   <dd>{{ c.purchase_date ? formatDate(c.purchase_date) : '—' }}</dd>
                 </div>
@@ -378,6 +388,7 @@
                     } @else {
                       —
                     }
+                    @if (c.last_maintenance) {<small>zuletzt am {{ formatDate(c.last_maintenance) }}</small>}
                   </dd>
                 </div>
                 @if (c.updated_at) {
@@ -482,7 +493,7 @@
         @if (formCostHidden()) {
           <p class="cost-private">Den Betrag sieht und ändert nur, wer den Vertrag angelegt hat.</p>
         } @else {
-          <app-field label="Kosten" [optional]="true" hint="Nur für dich sichtbar – wird nicht in Finanzen gebucht.">
+          <app-field label="Kosten" [optional]="true" hint="Nur für dich sichtbar und nie gebucht – unten kannst du ihn in Finanzen als geplant anzeigen.">
             <input id="folder-cost" type="text" inputmode="decimal" maxlength="10" placeholder="z. B. 39,99" [value]="formCost()" (input)="formCost.set($any($event.target).value)" />
           </app-field>
         }
@@ -490,6 +501,17 @@
           <app-select [options]="billingOptions" [value]="formBilling()" (valueChange)="formBilling.set($any($event))" />
         </app-field>
       </div>
+      @if (!formCostHidden()) {
+        <div class="field-row">
+          <app-field label="Neuer Preis" [optional]="true">
+            <input id="folder-next-cost" type="text" inputmode="decimal" maxlength="10" placeholder="z. B. 34,99" [value]="formNextCost()" (input)="formNextCost.set($any($event.target).value)" />
+          </app-field>
+          <app-field label="gilt ab" [optional]="true">
+            <app-date-picker mode="date" [clearable]="true" [value]="formNextFrom()" (valueChange)="formNextFrom.set($event)" />
+          </app-field>
+        </div>
+        <p class="field-hint">Preis ändert sich? Bis zu diesem Tag plant Finanzen den bisherigen Preis, danach den neuen.</p>
+      }
       <div class="field-row">
         <app-field label="Beginn" [optional]="true">
           <app-date-picker mode="date" [clearable]="true" [value]="formStart()" (valueChange)="formStart.set($event)" />
@@ -498,27 +520,41 @@
           <app-date-picker mode="date" [clearable]="true" [value]="formEnd()" (valueChange)="formEnd.set($event)" />
         </app-field>
       </div>
+      <div class="field-row notice-field">
+        <app-field label="Kündigungsfrist" [optional]="true">
+          <input id="folder-notice" type="number" inputmode="numeric" [attr.min]="formNoticeUnit() === 'MONTHS' ? 1 : 0" [attr.max]="formNoticeUnit() === 'MONTHS' ? 36 : 1095" [placeholder]="formNoticeUnit() === 'MONTHS' ? 'z. B. 1' : 'z. B. 30'" [value]="formNotice()" (input)="formNotice.set($any($event.target).value)" />
+        </app-field>
+        <div>
+          <span id="folder-notice-unit-l" class="sr-only">Einheit der Kündigungsfrist</span>
+          <app-select ariaLabelledby="folder-notice-unit-l" [options]="noticeUnitOptions" [value]="formNoticeUnit()" (valueChange)="formNoticeUnit.set($any($event))" />
+        </div>
+      </div>
+      @if (formDeadline(); as deadline) {
+        <p class="field-hint">Letzter Kündigungstag: <b>{{ formatDate(deadline) }}</b> – erscheint rechtzeitig unter „Heute“.</p>
+      }
       <div class="field-row">
-        <app-field label="Kündigungsfrist (Tage)" [optional]="true">
-          <input id="folder-notice" type="number" inputmode="numeric" min="0" max="1095" placeholder="z. B. 30" [value]="formNotice()" (input)="formNotice.set($any($event.target).value)" />
+        <app-field label="Erinnern">
+          <app-select [options]="leadOptions" [value]="formLead()" (valueChange)="formLead.set($any($event))" />
         </app-field>
         <label class="checkbox check-field">
           <input type="checkbox" [checked]="formAutoRenewal()" (change)="formAutoRenewal.set($any($event.target).checked)" />
           Verlängert sich automatisch
         </label>
       </div>
-      @if (formDeadline(); as deadline) {
-        <p class="field-hint">Letzter Kündigungstag: <b>{{ formatDate(deadline) }}</b> – erscheint rechtzeitig unter „Heute“.</p>
-      }
       <app-field label="Vertragsnummer" [optional]="true" hint="Nur in der Detailansicht sichtbar.">
         <input id="folder-number" type="text" maxlength="60" autocomplete="off" [value]="formContractNumber()" (input)="formContractNumber.set($any($event.target).value)" />
       </app-field>
     </fieldset>
   } @else {
     <fieldset class="form-section"><legend>Gerät und Fristen</legend>
-      <app-field label="Modell" [optional]="true">
-        <input id="folder-model" type="text" maxlength="120" [value]="formModel()" (input)="formModel.set($any($event.target).value)" />
-      </app-field>
+      <div class="field-row">
+        <app-field label="Modell" [optional]="true">
+          <input id="folder-model" type="text" maxlength="120" [value]="formModel()" (input)="formModel.set($any($event.target).value)" />
+        </app-field>
+        <app-field label="Seriennummer" [optional]="true" hint="Nur in der Detailansicht sichtbar.">
+          <input id="folder-serial" type="text" maxlength="60" autocomplete="off" [value]="formSerial()" (input)="formSerial.set($any($event.target).value)" />
+        </app-field>
+      </div>
       <div class="field-row">
         <app-field label="Gekauft am" [optional]="true">
           <app-date-picker mode="date" [clearable]="true" [value]="formPurchase()" (valueChange)="formPurchase.set($event)" />
@@ -528,13 +564,16 @@
         </app-field>
       </div>
       <div class="field-row">
-        <app-field label="Nächste Wartung" [optional]="true">
-          <app-date-picker mode="date" [clearable]="true" [value]="formMaintenance()" (valueChange)="formMaintenance.set($event)" />
+        <app-field label="Letzte Wartung" [optional]="true">
+          <app-date-picker mode="date" [clearable]="true" [value]="formLastMaintenance()" (valueChange)="setMaintenanceBasis($event, formInterval())" />
         </app-field>
         <app-field label="Wartung alle (Monate)" [optional]="true">
-          <input id="folder-interval" type="number" inputmode="numeric" min="1" max="120" placeholder="z. B. 12" [value]="formInterval()" (input)="formInterval.set($any($event.target).value)" />
+          <input id="folder-interval" type="number" inputmode="numeric" min="1" max="120" placeholder="z. B. 12" [value]="formInterval()" (input)="setMaintenanceBasis(formLastMaintenance(), $any($event.target).value)" />
         </app-field>
       </div>
+      <app-field label="Nächste Wartung" [optional]="true" [hint]="formLastMaintenance() && formInterval() ? 'Aus letzter Wartung und Intervall berechnet – bei Bedarf ändern.' : ''">
+        <app-date-picker mode="date" [clearable]="true" [value]="formMaintenance()" (valueChange)="formMaintenance.set($event)" />
+      </app-field>
       <p class="field-hint">Wartung und Garantieende erscheinen {{ upcomingDays }} Tage vorher unter „Heute“. Vergangene Daten sind erlaubt.</p>
     </fieldset>
   }
@@ -544,6 +583,13 @@
     [attachments]="formAttachments()"
     [load]="loadFile"
     privacy="Alle Erwachsenen in deinem Haushalt sehen die Dateien."
+  />
+  <!-- Connection Engine V2: Finanzen/Organisation — mit Vorschau, wirkt beim Speichern -->
+  <app-auto-links
+    [sourceType]="formKind() === 'vertrag' ? 'CONTRACT' : 'DEVICE'"
+    [sourceId]="editingId()"
+    [previews]="autoPreviews()"
+    [sourceLabel]="formKind() === 'vertrag' ? 'Der Vertrag' : 'Das Gerät'"
   />
   <app-field label="Notizen" [optional]="true">
     <textarea id="folder-notes" maxlength="1000" [value]="formNotes()" (input)="formNotes.set($any($event.target).value)"></textarea>

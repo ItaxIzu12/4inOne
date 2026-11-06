@@ -32,9 +32,12 @@
             </button>
           }
           <span class="modal-form__spacer"></span>
-          <button type="button" class="mf-btn mf-btn--soft" [disabled]="saving()" (click)="closed.emit()">
-            <app-icon [name]="cancelIconName()" aria-hidden="true" />{{ cancelLabel() }}
-          </button>
+          <!-- Leeres cancelLabel = kein Abbrechen (z. B. Dank nach dem Senden, dort schließt der Hauptknopf) -->
+          @if (cancelLabel()) {
+            <button type="button" class="mf-btn mf-btn--soft" [disabled]="saving()" (click)="closed.emit()">
+              <app-icon [name]="cancelIconName()" aria-hidden="true" />{{ cancelLabel() }}
+            </button>
+          }
           <!-- Leeres submitLabel = nur ansehen (z. B. Termin eines gemeinsamen Kalenders ohne Schreibrecht) -->
           @if (submitLabel()) {
             <button type="submit" class="mf-btn mf-btn--primary" [disabled]="saving()" [attr.aria-busy]="saving()">
