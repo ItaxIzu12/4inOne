@@ -3,4 +3,5 @@
 // dieselbe Adresse der Seite im Backend in CORS_ALLOWED_ORIGINS/CSRF_TRUSTED_ORIGINS erlauben.
 export const environment = {
   apiOrigin: '',
+  demoOnly: false,
 };

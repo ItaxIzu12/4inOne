@@ -1,0 +1,259 @@
+<app-modal-form
+  icon="finance"
+  [formGroup]="form"
+  [title]="editorTitle()"
+  [open]="editor() !== null"
+  [saving]="saving()"
+  [error]="formError()"
+  [deleteLabel]="editId() ? 'Eintrag löschen' : ''"
+  [submitLabel]="overrun() ? 'Trotzdem buchen' : goalWarning() ? 'Trotzdem speichern' : 'Speichern'"
+  (submitted)="save()"
+  (closed)="close()"
+  (deleted)="remove()"
+>
+  <div modalWarning>
+    @if (overrun(); as over) {
+      <p class="overrun-note" role="alert">
+        <strong>Diese Ausgabe überschreitet dein Monatsbudget um {{ money(over.over) }}.</strong>
+        Verfügbar sind {{ money(over.available) }}. Du kannst sie trotzdem buchen oder den Betrag
+        ändern.
+      </p>
+    }
+    @if (goalWarning(); as sentences) {
+      <div class="overrun-note" role="alert">
+        <strong>Bitte prüfe die Finanzierung deines Sparziels.</strong>
+        @for (sentence of sentences; track sentence) {
+          <span class="block">{{ sentence }}</span>
+        }
+        <span class="block">Du kannst trotzdem speichern oder die Beträge anpassen.</span>
+      </div>
+    }
+  </div>
+  @if (editor() === 'transactions') {
+    @if (plannedSource(); as source) {
+      <p class="planned-note" role="note">
+        <app-icon name="clock" aria-hidden="true" />{{ source.kind === 'CONTRACT' ? 'Geplante Vertragskosten' : 'Geplante wiederkehrende Ausgabe' }} „{{ source.title }}“. Speichern erfasst sie als
+        Transaktion am {{ source.date | date: 'dd.MM.yyyy' }} — danach zählt sie als ausgegeben statt geplant.
+      </p>
+    }
+    <!-- Schnellerfassung: Art per Umschalter, Betrag hat sofort den Fokus (Zahlentastatur am Handy), Kategorie als
+         Chips — die häufigsten zuerst. Datum ist heute vorbelegt. -->
+    <div class="kind-toggle" role="group" aria-label="Typ">
+      @for (t of typeOptions; track t.value) {
+        <button
+          type="button"
+          [attr.aria-pressed]="form.controls.type.value === t.value"
+          [class.is-income]="t.value === 'INCOME'"
+          (click)="form.controls.type.setValue(t.value)"
+        >{{ t.label }}</button>
+      }
+    </div>
+    <app-field label="Betrag in EUR">
+      <input
+        id="booking-amount"
+        class="amount-input"
+        [class.is-income]="form.controls.type.value === 'INCOME'"
+        required
+        inputmode="decimal"
+        autocomplete="off"
+        placeholder="0,00"
+        formControlName="amount"
+        aria-required="true"
+        [attr.data-autofocus]="editId() ? null : ''"
+      />
+    </app-field>
+    @if (categories().length) {
+      <div class="cat-field">
+        <span class="cat-field__label" id="booking-category-label">Kategorie</span>
+        <div class="cat-chips" role="group" aria-labelledby="booking-category-label">
+          @for (c of categoryChips(); track c.value) {
+            <button
+              type="button"
+              class="cat-chip"
+              [attr.aria-pressed]="form.controls.category.value === c.value"
+              (click)="form.controls.category.setValue(c.value)"
+            ><i class="dot" [style.background]="c.color" aria-hidden="true"></i>{{ c.label }}</button>
+          }
+        </div>
+      </div>
+      @if (quickCategory() === null) {
+        <button type="button" id="booking-new-category" class="quick-cat__toggle" (click)="startQuickCategory()">
+          <app-icon name="plus" />Neue Kategorie
+        </button>
+      } @else {
+        <div class="quick-cat" role="group" aria-label="Neue Kategorie anlegen">
+          <label for="quick-category">Name der neuen Kategorie</label>
+          <div class="quick-cat__row">
+            <input
+              id="quick-category"
+              autocomplete="off"
+              placeholder="z. B. Haustier"
+              [attr.maxlength]="maxCategoryName"
+              [value]="quickCategory()"
+              [attr.aria-invalid]="quickCategoryError() ? 'true' : null"
+              [attr.aria-describedby]="quickCategoryError() ? 'quick-category-error' : null"
+              (input)="quickCategory.set($any($event.target).value); quickCategoryError.set('')"
+              (keydown.enter)="$event.preventDefault(); createQuickCategory()"
+              (keydown.escape)="$event.stopPropagation(); cancelQuickCategory()"
+            />
+            <button type="button" class="soft" [disabled]="saving()" (click)="createQuickCategory()">Anlegen</button>
+            <button type="button" class="quick-cat__cancel" aria-label="Neue Kategorie abbrechen" (click)="cancelQuickCategory()">
+              <app-icon name="close" />
+            </button>
+          </div>
+          @if (quickCategoryError()) {
+            <p id="quick-category-error" class="quick-cat__error">{{ quickCategoryError() }}</p>
+          }
+        </div>
+      }
+    } @else {
+      <p>Lege die sieben vorgeschlagenen Kategorien für deine privaten Transaktionen an.</p>
+      <button type="button" class="secondary" (click)="setup()" [disabled]="saving()">
+        Standardkategorien anlegen
+      </button>
+    }
+    <app-field label="Datum">
+      <app-date-picker mode="date" formControlName="date" />
+      @if (form.value.type === 'EXPENSE' && (form.value.date ?? '') > todayDay) {
+        <p class="field-hint">Diese Ausgabe gilt bis zu ihrem Datum als geplant und zählt dann als ausgegeben.</p>
+      }
+    </app-field>
+    <app-field label="Notiz" [optional]="true">
+      <input id="booking-note" formControlName="note" maxlength="255" />
+    </app-field>
+    <label class="checkbox-row">
+      <input type="checkbox" formControlName="recurring" />
+      <span>Kommt jeden Monat wieder<small>{{ form.value.type === 'INCOME'
+        ? 'z. B. dein Gehalt – erscheint dann unter „Wiederkehrende Einnahmen“. Es wird nichts automatisch gebucht.'
+        : 'z. B. Miete oder ein Abo – wird ab dem nächsten Monat jeden Monat als geplante Ausgabe im Budget berücksichtigt. Eine neue Transaktion wird dabei nicht angelegt.' }}</small></span>
+    </label>
+  } @else if (editor() === 'budgets') {
+    <!-- Beim Ändern ist der Startmonat gesperrt (sonst verschiebt man das Budget aus seinem Monat); anderer Zeitraum = neues Budget. -->
+    <app-field
+      label="Startmonat"
+      [hint]="editId() ? 'Ab diesem Monat gilt das Budget. Er lässt sich nicht ändern – für einen anderen Zeitraum lege unten ein neues Budget an.' : ''"
+    >
+      <app-date-picker mode="month" formControlName="month" [disabled]="!!editId()" />
+    </app-field>
+    <app-field
+      label="Gilt für"
+      hint="Ein später beginnendes Budget ersetzt dieses ab seinem Startmonat."
+    >
+      <app-select formControlName="scope" [options]="scopeOptions" />
+    </app-field>
+    @if (form.controls.scope.value === 'until') {
+      <app-field label="Bis einschließlich">
+        <app-date-picker
+          mode="month"
+          formControlName="end_month"
+          [min]="form.controls.month.value"
+        />
+      </app-field>
+    }
+    <app-field
+      label="Monatsbudget in EUR"
+      hint="Dein Gesamtbetrag für Ausgaben und Sparziele. Einnahmen erhöhen ihn nicht automatisch."
+    >
+      <input
+        id="budget-amount"
+        required
+        inputmode="decimal"
+        formControlName="amount"
+        aria-required="true"
+      />
+    </app-field>
+    @if (budgetOverrideNote(); as note) {
+      <p class="overrun-note" role="status">{{ note }}</p>
+    }
+    @if (budgetImpactNote(); as impact) {
+      <p class="impact-note" role="note"><app-icon name="info" aria-hidden="true" />{{ impact }}</p>
+    }
+    @if (editId()) {
+      <button type="button" class="text-button" (click)="open('budgets')">
+        Stattdessen ab {{ monthLabel() }} ein neues Budget anlegen
+      </button>
+    }
+  } @else {
+    <fieldset class="form-section">
+      <legend>Dein Sparziel</legend>
+      <app-field label="Titel">
+        <input
+          id="goal-title"
+          required
+          formControlName="title"
+          maxlength="120"
+          aria-required="true"
+        />
+      </app-field>
+      <div class="field-row">
+        <app-field
+          label="Zielbetrag in EUR"
+          [error]="formError() &amp;&amp; !amount(form.controls.target_amount.value) ? 'Bitte einen Zielbetrag größer als 0 angeben.' : ''"
+        >
+          <input
+            id="goal-target"
+            required
+            inputmode="decimal"
+            formControlName="target_amount"
+            aria-required="true"
+          />
+        </app-field>
+        <app-field
+          label="Bereits gespart in EUR"
+          [error]="formError() &amp;&amp; (amount(form.controls.current_amount.value, true) === null || Number(form.controls.current_amount.value.replace(',', '.')) > Number(form.controls.target_amount.value.replace(',', '.'))) ? 'Bitte einen Betrag zwischen 0 und deinem Zielbetrag angeben.' : ''"
+          hint="Höchstens der Zielbetrag. Dieser Betrag wird im Zeitraum des Sparziels vom Restbudget abgezogen."
+        >
+          <input
+            id="goal-current"
+            required
+            inputmode="decimal"
+            formControlName="current_amount"
+            aria-required="true"
+          />
+        </app-field>
+      </div>
+    </fieldset>
+    <fieldset class="form-section">
+      <legend>Zeitraum und Status</legend>
+      <app-field label="Status">
+        <app-select formControlName="status" [options]="statusOptions" />
+      </app-field>
+      <div class="field-row">
+        <app-field label="Ab Monat">
+          <app-date-picker mode="month" formControlName="plan_start" />
+        </app-field>
+        <app-field
+          label="Gilt für"
+          hint="Ohne Auswahl gilt ein Sparziel nur für diesen einen Monat."
+        >
+          <app-select formControlName="plan_scope" [options]="scopeOptions" />
+        </app-field>
+      </div>
+      @if (form.controls.plan_scope.value === 'until') {
+        <app-field label="Bis einschließlich">
+          <app-date-picker
+            mode="month"
+            formControlName="plan_end"
+            [min]="form.controls.plan_start.value"
+          />
+        </app-field>
+      }
+    </fieldset>
+    <fieldset class="form-section">
+      <legend>Optional: monatliche Sparrate</legend>
+      <app-field
+        label="Sparrate pro Monat"
+        [optional]="true"
+        hint="Wird im Restbudget des gewählten Zeitraums berücksichtigt, bis das Ziel erreicht ist. Bereits gespartes Geld und Sparrate werden nicht doppelt abgezogen."
+      >
+        <input id="goal-rate" inputmode="decimal" formControlName="rate" />
+      </app-field>
+    </fieldset>
+  }
+  @if (editor() === 'goals') {
+    <app-auto-links sourceType="SAVINGS_GOAL" [sourceId]="editId() ?? null" [previews]="goalAutoPreview()" sourceLabel="Das Sparziel" />
+  }
+  @if (editor() === 'goals' && editId()) {
+    <app-connections objectType="SAVINGS_GOAL" [objectId]="editId()!" />
+  }
+</app-modal-form>

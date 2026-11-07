@@ -80,8 +80,8 @@ for (const width of [390, 1440]) {
     // Zurück zum Monat: Budgetansicht wie bisher — mit denselben Begriffen
     await switcher.getByRole('button', { name: 'Monat' }).click();
     await expect(page.locator('#finance-month')).toBeVisible();
-    await expect(page.locator('.finance-page > .kpis')).toContainText('Noch verfügbar im');
-    await expect(page.locator('.finance-page > .kpis .hero-stat .kpi__label')).toContainText(['Einnahmen', 'Ausgaben', 'Gespart']);
+    await expect(page.locator('app-finance-overview-tab > .kpis')).toContainText('Noch verfügbar im');
+    await expect(page.locator('app-finance-overview-tab > .kpis .hero-stat .kpi__label')).toContainText(['Einnahmen', 'Ausgaben', 'Gespart']);
     await expect(page.locator('#tx-h')).toContainText('Transaktionen');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });

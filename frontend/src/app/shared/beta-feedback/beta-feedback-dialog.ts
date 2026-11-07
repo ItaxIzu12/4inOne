@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Field } from '../form/field';
 import { ModalForm } from '../form/modal-form';
 import { AppSelect, SelectOption } from '../form/select';
@@ -19,7 +20,7 @@ const ANSWERS: { value: BetaAnswer; label: string }[] = [
 @Component({
   selector: 'app-beta-feedback-dialog',
   standalone: true,
-  imports: [AppSelect, Field, ModalForm],
+  imports: [AppSelect, Field, ModalForm, RouterLink],
   templateUrl: './beta-feedback-dialog.html',
   styleUrl: './beta-feedback-dialog.scss',
 })

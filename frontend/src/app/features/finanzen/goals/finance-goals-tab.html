@@ -1,0 +1,84 @@
+<app-finance-date-nav />
+<section class="kpis fin-hero" aria-labelledby="goals-figure">
+  <div class="fin-hero__top">
+    <div class="kpi fin-hero__main">
+      <h2 id="goals-figure" class="kpi__label">Gespart im {{ monthLabel() }}</h2>
+      <p class="kpi__value fin-hero__value">{{ eur(savedNow()) }}</p>
+      <p class="kpi__hint fin-hero__sub" [class.is-good]="savedDelta()?.up">{{ savedDelta()?.text ?? 'für deine Sparziele' }}</p>
+    </div>
+    <dl class="hero-stats">
+      <div class="hero-stat kpi">
+        <dt class="kpi__label"><span class="hero-stat__dot hero-stat__dot--goal" aria-hidden="true"></span>Aktive Sparziele</dt>
+        <dd><b class="kpi__value">{{ activeGoals().length }}</b><small class="kpi__hint">{{ goalsOnTrack() }} im Plan@if (goalsNearlyDone()) { · {{ goalsNearlyDone() }} fast erreicht}</small></dd>
+      </div>
+      <div class="hero-stat kpi">
+        <dt class="kpi__label"><span class="hero-stat__dot hero-stat__dot--saved" aria-hidden="true"></span>Geplante Sparrate</dt>
+        <dd><b class="kpi__value">{{ eur(plannedRate()) }} <small>/ Monat</small></b><small class="kpi__hint">für {{ activeGoals().length }} {{ activeGoals().length === 1 ? 'Ziel' : 'Ziele' }}</small></dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<section class="card goals-table goals-board" aria-labelledby="goals-h">
+  <div class="card-head">
+    <h2 id="goals-h">Deine Sparziele</h2>
+  </div>
+  <ul class="goal-cards">
+    @for (goal of goals(); track goal.id) {
+      <li>
+        <button type="button" class="row-btn goal" (click)="open('goals', goal)">
+          <span class="tile tile--goal" aria-hidden="true"><app-icon [name]="goalIcon(goal.title)" /></span>
+          <span class="goal__name"><b>{{ goal.title }}</b><small>{{ goalStatus[goal.status] }}{{ goal.status === 'ACTIVE' && goalOnTrack(goal) ? ' · im Plan' : '' }}</small><app-link-hints [items]="goalLinks()[goal.id]" /></span>
+          <span class="goal__pct">{{ goalPercent(goal) }} %</span>
+          <span class="goal__progress"><span class="track"><span [style.width.%]="goalPercent(goal)"></span></span></span>
+          <span class="goal__amounts"><b>{{ eur(goal.current_amount) }}</b> von {{ eur(goal.target_amount) }}</span>
+          <span class="goal__foot">
+            <span class="goal__date"><app-icon name="calendar" aria-hidden="true" />Ziel {{ shortMonthYear(goal.target_date) }}</span>
+            <span class="goal__rate plan">{{ goal.monthly_amount ? eur(goal.monthly_amount) + ' / Monat' : 'ohne Sparrate' }}<small class="goal__range">{{ plan(goal) }}</small></span>
+          </span>
+          <span class="sr-only">. Bearbeiten</span>
+        </button>
+      </li>
+    } @empty {
+      <li class="empty text-align-center">
+        <h3>Für diesen Monat gibt es noch kein Sparziel</h3>
+        <p>Zum Beispiel eine Reise, ein Notgroschen oder eine neue Waschmaschine. Ein Ziel gilt nur für die Monate, die du dafür wählst. Lege es oben über „Sparziel“ an.</p>
+      </li>
+    }
+  </ul>
+</section>
+
+<div class="grid grid--half">
+  <section class="card" aria-labelledby="contrib-h">
+    <div class="card-head">
+      <h2 id="contrib-h">Letzte Einzahlungen</h2>
+    </div>
+    <ul class="rows">
+      @for (c of contributions().slice(0, 5); track c.id) {
+        <li class="contrib">
+          <span class="tile tile--goal" aria-hidden="true"><app-icon [name]="goalIcon(c.goal_title)" /></span>
+          <span class="row-text"><b>{{ c.goal_title }}</b><small>{{ dayLabel(c.date) }} • {{ Number(c.amount) < 0 ? 'Entnahme' : 'Einzahlung' }}</small></span>
+          <strong [class.positive]="Number(c.amount) > 0" [class.negative]="Number(c.amount) < 0">{{ Number(c.amount) > 0 ? '+' : '' }}{{ money(c.amount) }}</strong>
+        </li>
+      } @empty {
+        <li class="muted">Noch keine Einzahlungen. Erhöhe bei einem Sparziel „Bereits gespart“, dann erscheint es hier.</li>
+      }
+    </ul>
+  </section>
+
+  <section class="card hints" aria-labelledby="goal-hints-h">
+    <div class="card-head">
+      <h2 id="goal-hints-h">Gut zu wissen</h2>
+    </div>
+    <ul class="rows">
+      @for (h of goalHints(); track h.key) {
+        <li class="hint" [class]="'hint hint--' + h.tone">
+          <span class="hint__icon" aria-hidden="true"><app-icon [name]="h.icon" /></span>
+          <span class="row-text"><b>{{ h.title }}</b><small>{{ h.text }}</small></span>
+        </li>
+      } @empty {
+        <li class="muted">Hier erscheint ein Hinweis, sobald ein Ziel fast erreicht ist oder noch lange läuft.</li>
+      }
+    </ul>
+  </section>
+</div>

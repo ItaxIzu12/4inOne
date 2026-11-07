@@ -112,9 +112,11 @@
               } @else {
                 <!-- Vorschau (Demo-Konto „Sophie“, siehe name()-Fallback oben): kein zweiter Registrieren-Weg im Menü,
                      die Startseite bietet „Konto erstellen“ schon prominent an. -->
-                <div class="account-group" role="none">
-                  <a role="menuitem" routerLink="/login" (click)="closeMenu()"><icon-profile />Anmelden</a>
-                </div>
+                @if (!demoOnly) {
+                  <div class="account-group" role="none">
+                    <a role="menuitem" routerLink="/login" (click)="closeMenu()"><icon-profile />Anmelden</a>
+                  </div>
+                }
               }
             </div>
           }

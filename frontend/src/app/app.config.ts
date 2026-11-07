@@ -11,6 +11,7 @@ import { accessLostInterceptor } from './core/access/access-lost.interceptor';
 import { AuthService } from './core/auth/auth.service';
 import { PageViews } from './core/analytics/page-views';
 import { SeoTitleStrategy } from './core/seo/seo-title-strategy';
+import { DEMO_ONLY } from './core/demo-only';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,7 +26,8 @@ export const appConfig: ApplicationConfig = {
     // Cookielose Besucherzählung der öffentlichen Seiten (core/analytics/page-views.ts)
     // Beim Vorrendern (Build ohne Browser) wird nichts gezählt und keine Anmeldung geprüft
     provideAppInitializer(() => {
-      if (isPlatformBrowser(inject(PLATFORM_ID))) inject(PageViews).start();
+      // Testversion nur mit Demo (GitHub Pages): kein Backend, also auch keine Zählung
+      if (isPlatformBrowser(inject(PLATFORM_ID)) && !DEMO_ONLY) inject(PageViews).start();
     }),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor, accessLostInterceptor])),
     // Ohne diesen Initializer geht das Access-Token (nur im Speicher,
@@ -36,7 +38,7 @@ export const appConfig: ApplicationConfig = {
     // Scheitert der Versuch (kein/abgelaufenes Cookie), einfach normal als
     // "nicht angemeldet" weitermachen statt den App-Start zu blockieren.
     provideAppInitializer(() => {
-      if (!isPlatformBrowser(inject(PLATFORM_ID))) return;
+      if (!isPlatformBrowser(inject(PLATFORM_ID)) || DEMO_ONLY) return;
       const auth = inject(AuthService);
       const doc = inject(DOCUMENT);
       // Kein gültiges Refresh-Cookie: auch den Hinweis für den Webserver entfernen (forceLogout)

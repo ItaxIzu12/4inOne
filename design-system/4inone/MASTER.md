@@ -112,3 +112,6 @@ Schrift bleibt Schibsted Grotesk; Website-Überschriften 650. Landing-H1 bis 60 
 Formulare: Zahl + Einheit (z. B. Kündigungsfrist „3 · Monate“) als zwei gleich breite Felder in einer Zeile, auch am Handy; Einheit als `app-select`, unten bündig (02.11.2026).
 Abgeleitete Felder (z. B. „Nächste Wartung“ aus letzter Wartung + Intervall) werden live vorausgefüllt, bleiben änderbar und tragen einen Hinweis, woher der Wert kommt (02.11.2026).
 Bewertungsfragen (z. B. Beta-Feedback): 44-px-Umschalter mit `aria-pressed` statt Sterne oder Schieberegler; gewählt = Tinte gefüllt, erneut antippen = abwählen (04.11.2026).
+Testversion GitHub Pages (06.11.2026): identische Optik, nur ohne Wege zu Anmeldung/Registrierung; wird vor dem Livegang entfernt.
+Finanzen-Code je Reiter in eigenen Ordnern (06.11.2026); gemeinsame Finanz-Bausteine in `finanzen/shared/finance-*.scss`, Reihenfolge der Stil-Dateien ist Teil des Systems.
+Finanzen-Dialog als eigene Komponente `finanzen/editor/` (07.11.2026), Stil-Reihenfolge wie der Rahmen.

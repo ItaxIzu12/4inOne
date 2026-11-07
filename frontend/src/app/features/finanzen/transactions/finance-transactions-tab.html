@@ -1,0 +1,195 @@
+<div class="tx-toolbar">
+<div class="tx-bar">
+  <div class="tx-switch seg" role="group" aria-label="Transaktionen anzeigen">
+    @for (k of txKinds; track k.key) {
+      <button type="button" [id]="'fin-kind-' + k.key" [attr.aria-pressed]="txKind() === k.key" (click)="selectKind(k.key)">{{ k.label }}</button>
+    }
+  </div>
+</div>
+<app-finance-date-nav class="in-toolbar" />
+</div>
+@if (section() === 'all') {
+  <!-- Alle: Ausgaben als große Zahl, Einnahmen und Gespart daneben; darunter die vollständige Liste -->
+  <section class="kpis fin-hero" aria-labelledby="tx-figure">
+    <div class="fin-hero__top">
+      <div class="kpi fin-hero__main">
+        <h2 id="tx-figure" class="kpi__label">Ausgaben im {{ monthLabel() }}</h2>
+        <!-- Bis heute gebucht (wie „Bereits ausgegeben“); künftig datierte Ausgaben stehen unter „Geplant“ -->
+        <p class="kpi__value fin-hero__value">{{ eur(spentNow()) }}</p>
+        <p class="kpi__hint fin-hero__sub">{{ expenseDelta()?.text ?? 'bis heute gebucht' }}</p>
+      </div>
+      <dl class="hero-stats">
+        <div class="hero-stat kpi">
+          <dt class="kpi__label"><span class="hero-stat__dot hero-stat__dot--income" aria-hidden="true"></span>Einnahmen</dt>
+          <dd><b class="kpi__value">{{ eur(incomeNow()) }}</b><small class="kpi__hint">im {{ monthShort() }}</small></dd>
+        </div>
+        <div class="hero-stat kpi">
+          <dt class="kpi__label"><span class="hero-stat__dot hero-stat__dot--saved" aria-hidden="true"></span>Gespart</dt>
+          <dd><b class="kpi__value">{{ eur(savedNow()) }}</b><small class="kpi__hint">für Sparziele, keine Ausgabe</small></dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+}
+<!-- ============================== Ausgaben ============================== -->
+@if (section() === 'expenses') {
+  @let sp = split();
+  <!-- Ausgaben: Gesamt als große Zahl, darunter das Verhältnis fest / variabel als ein geteilter Balken -->
+  <section class="kpis fin-hero" aria-labelledby="exp-figure">
+    <div class="fin-hero__top">
+      <div class="kpi fin-hero__main">
+        <h2 id="exp-figure" class="kpi__label">Gesamtausgaben im {{ monthLabel() }}</h2>
+        <p class="kpi__value fin-hero__value">{{ eur(expenseBooked()) }}</p>
+        <p class="kpi__hint fin-hero__sub" [class.is-good]="expenseDelta() && !expenseDelta()!.up" [class.is-bad]="expenseDelta()?.up">{{ expenseDelta()?.text ?? 'im ' + monthShort() }}</p>
+      </div>
+      <dl class="hero-stats">
+        <div class="hero-stat kpi">
+          <dt class="kpi__label"><span class="hero-stat__dot hero-stat__dot--fixed" aria-hidden="true"></span>Fixkosten<app-term-hint term="Fixkosten" [text]="fixedHint" /></dt>
+          <dd><b class="kpi__value">{{ eur(sp.fixed) }}</b><small class="kpi__hint">{{ sp.recurringCount }} {{ sp.recurringCount === 1 ? 'fester Posten' : 'feste Posten' }} · {{ share(sp.fixed, expenseBooked()) }} %</small></dd>
+        </div>
+        <div class="hero-stat kpi">
+          <dt class="kpi__label"><span class="hero-stat__dot hero-stat__dot--variable" aria-hidden="true"></span>Variable Ausgaben</dt>
+          <dd><b class="kpi__value">{{ eur(sp.variable) }}</b><small class="kpi__hint">{{ share(sp.variable, expenseBooked()) }} % der Ausgaben</small></dd>
+        </div>
+      </dl>
+    </div>
+    @if (expenseBooked() > 0) {
+      <span class="split-bar" aria-hidden="true"><span class="split-bar__fixed" [style.width.%]="share(sp.fixed, expenseBooked())"></span></span>
+    }
+  </section>
+  <div class="grid grid--half">
+    <section class="card" aria-labelledby="cat-h">
+      <div class="card-head">
+        <h2 id="cat-h">Ausgaben nach Kategorien</h2>
+      </div>
+      @if (expenseSlices().length) {
+        <div class="donut-wrap">
+          <svg class="donut" viewBox="0 0 42 42" role="img" [attr.aria-label]="'Ausgaben nach Kategorien im ' + monthLabel()">
+            <circle class="donut__bg" cx="21" cy="21" r="15.9155" />
+            @for (seg of expenseDonut(); track seg.key) {
+              <circle class="donut__seg" cx="21" cy="21" r="15.9155" [attr.stroke]="seg.color" [attr.stroke-dasharray]="seg.dash" [attr.stroke-dashoffset]="seg.offset" />
+            }
+          </svg>
+        </div>
+        <ul class="legend-list">
+          @for (seg of expenseSlices(); track seg.key) {
+            <li><i class="dot" [style.background]="seg.color"></i><span>{{ seg.label }}</span><b>{{ eur(seg.amount) }}</b><small>{{ Math.round(seg.share) }} %</small></li>
+          }
+        </ul>
+      } @else {
+        <p class="muted">In diesem Monat gibt es noch keine Ausgaben.</p>
+      }
+    </section>
+    <section class="card" aria-labelledby="cmp-exp-h">
+      <div class="card-head">
+        <h2 id="cmp-exp-h">Die letzten sechs Monate</h2>
+      </div>
+      <!-- Betrag und Vergleich zum Vormonat stehen schon in der Kopfkarte — hier nur der Verlauf -->
+      @let mx = expenseMonthsAxis();
+      <div class="chart chart--months" role="img" [attr.aria-label]="'Ausgaben der letzten sechs Monate'">
+        <div class="chart__ticks" aria-hidden="true">
+          @for (t of mx.ticks; track $index) {
+            <span>{{ eur(t) }}</span>
+          }
+        </div>
+        <div class="chart__plot">
+          @for (m of expenseMonths(); track m.month) {
+            <div class="chart__group">
+              <div class="chart__bars"><span class="bar bar--month" [class.is-current]="m.current" [style.height.%]="barHeight(m.value, mx.top)"></span></div>
+              <span class="chart__label" [class.is-current]="m.current">{{ m.label }}<small>{{ m.year }}</small></span>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="grid">
+    <!-- Fixkosten: was jeden Monat sicher weggeht — mit der Jahressumme als Aha-Moment -->
+    <section class="card fixed-costs" aria-labelledby="rec-exp-h">
+      <div class="card-head">
+        <h2 id="rec-exp-h">Fixkosten<app-term-hint term="Fixkosten" [text]="fixedHint" /></h2>
+      </div>
+      @if (recurringExpenses().length) {
+        <p class="fixed-costs__sum">{{ eur(fixedMonthly()) }} <small>pro Monat</small></p>
+        <p class="fixed-costs__year">
+          Aufs Jahr gerechnet <b>{{ eur(fixedMonthly() * 12) }}</b>@if (expenseBooked() > 0) { · {{ share(sp.fixed, expenseBooked()) }} % deiner Ausgaben im {{ monthShort() }}}
+        </p>
+      }
+      <ul class="rows">
+        @for (item of recurringExpenses(); track item.key) {
+          <li>
+            <button type="button" class="row-btn" (click)="open('transactions', item.last)">
+              <span class="tile" aria-hidden="true" [style.--cat]="categoryColor(item.category)"><app-icon [name]="categoryIcon(categoryName(item.category))" /></span>
+              <span class="row-text"><b>{{ item.title }}</b><small>@switch (fixedStatus(item)) { @case ('planned') { Noch offen · im Budget eingeplant } @case ('booked') { <span class="fixed-booked"><app-icon name="check" aria-hidden="true" />Gebucht</span> } @default { Nächste: {{ dayLabel(item.next) }} } }</small></span>
+              <strong>{{ money(item.amount.toFixed(2)) }}</strong>
+              <app-icon class="chev" name="arrow" aria-hidden="true" />
+            </button>
+          </li>
+        } @empty {
+          <li class="muted">Markiere eine Ausgabe als „Kommt jeden Monat wieder“, dann erscheint sie hier und wird jeden Monat als geplante Ausgabe im Budget berücksichtigt.</li>
+        }
+      </ul>
+    </section>
+  </div>
+}
+<!-- Vollständige Liste: Alle, Ausgaben oder Einnahmen -->
+<section class="card all-rows" id="all-rows" aria-labelledby="all-rows-h" tabindex="-1">
+  <div class="card-head all-rows__head">
+    <h2 id="all-rows-h">{{ section() === 'planned' ? 'Geplante Ausgaben' : section() === 'expenses' ? 'Alle Ausgaben' : section() === 'income' ? 'Alle Einnahmen' : 'Alle Transaktionen' }} im {{ monthLabel() }}@if (section() === 'planned' && matchingPlannedTotal() > 0) {<span class="all-rows__total"> · {{ eur(matchingPlannedTotal()) }}</span>}</h2>
+    <!-- Nebenaktion: gehört zur Liste, nicht in die Steuerleiste (am Handy sonst vier Bedienzeilen vor dem Inhalt) -->
+    <button type="button" class="link tx-import" (click)="importOpen.set(true)"><app-icon name="upload" aria-hidden="true" />Kontoauszug importieren</button>
+  </div>
+  @if (section() === 'planned') {
+    <p class="section-note">{{ plannedHint }}</p>
+  }
+  <!-- Filter und Suche nur, wenn es etwas zu filtern gibt (oder gerade gefiltert wird) -->
+  @if (rowGroups().length || categoryFilter() || transactionSearch()) {
+  <div class="transaction-controls">
+    <label class="filter"
+      ><span id="finance-category-filter-label" class="sr-only">Kategorie</span>
+      <app-select ariaLabelledby="finance-category-filter-label" [options]="categoryFilterOptions()" [(value)]="categoryFilter" />
+    </label>
+    <label class="transaction-search">
+      <span class="sr-only">Transaktionen durchsuchen</span>
+      <app-icon name="search" />
+      <input type="search" placeholder="Transaktion suchen …" [value]="transactionSearch()" (input)="transactionSearch.set($any($event.target).value)" />
+    </label>
+    @if (categoryFilter() || transactionSearch()) {
+      <button type="button" class="link" (click)="categoryFilter.set(''); transactionSearch.set('')"><app-icon name="repeat" />Filter zurücksetzen</button>
+    }
+  </div>
+  }
+  @for (g of rowGroups(); track g.date) {
+    <h3 class="day-head">
+      <span>{{ g.label }}</span>
+      <span class="day-head__sum">@if (g.booked) {{{ g.total < 0 ? '−' : '+' }}{{ money((g.total < 0 ? -g.total : g.total).toFixed(2)) }}} @else {geplant}</span>
+    </h3>
+    <ul class="rows">
+      @for (row of g.rows; track row.id) {
+        <li>
+          <button class="row-btn transaction" [class.is-planned]="row.planned" (click)="openRow(row)">
+            <span class="tile" aria-hidden="true" [style.--cat]="categoryColor(row.category)"><app-icon [name]="categoryIcon(categoryName(row.category))" /></span>
+            <span class="row-text transaction-copy"
+              ><b>{{ rowTitle(row) }}</b><small>{{ categoryName(row.category) }}{{ row.recurring ? ' • monatlich' : '' }}@if (row.plannedItem?.kind === 'CONTRACT') { • <span class="planned-tag"><app-icon name="household" aria-hidden="true" />aus Haushalt › Vertrag</span>}@if (row.planned) { • <span class="planned-tag"><app-icon name="clock" aria-hidden="true" />Geplant</span>}</small></span
+            ><strong [class.negative]="row.type === 'EXPENSE' && !row.planned" [class.planned-amount]="row.planned" [class.positive]="row.type === 'INCOME'">{{ row.type === 'EXPENSE' ? '−' : '+' }}{{ money(row.amount) }}</strong>
+          </button>
+        </li>
+      }
+    </ul>
+  } @empty {
+    <ul class="rows">
+      @if (transactionSearch().trim() || categoryFilter()) {
+        <li class="empty">Keine Transaktion gefunden. Prüfe die Schreibweise, die Kategorie oder den Filter.</li>
+      } @else if (section() === 'planned') {
+        <li class="empty">Für {{ monthLabel() }} ist nichts geplant.</li>
+      } @else {
+        <li class="empty">Für diesen Monat gibt es noch keine {{ section() === 'expenses' ? 'Ausgaben' : section() === 'income' ? 'Einnahmen' : 'Transaktionen' }}.</li>
+      }
+    </ul>
+  }
+  @if (moreRowsCount(); as more) {
+    <button type="button" class="show-more" (click)="showMoreRows()">
+      {{ more === 1 ? '1 weitere Transaktion anzeigen' : more + ' weitere Transaktionen anzeigen' }}
+    </button>
+  }
+</section>

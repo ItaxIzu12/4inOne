@@ -16,6 +16,7 @@ import { IconProfile } from '../shared/icons/icon-profile';
 import { IconSettings } from '../shared/icons/icon-settings';
 import { IconTwoFactor } from '../shared/icons/icon-two-factor';
 import { NotificationBell } from '../shared/notification-bell/notification-bell';
+import { DEMO_ONLY } from '../core/demo-only';
 @Component({
   selector: 'app-shell',
   standalone: true,
@@ -24,6 +25,8 @@ import { NotificationBell } from '../shared/notification-bell/notification-bell'
   styleUrl: './app-shell.scss',
 })
 export class AppShell {
+  /** Testversion nur mit Demo (GitHub Pages): keine Wege zu Anmeldung/Registrierung. */
+  protected readonly demoOnly = DEMO_ONLY;
   /** Auf der Startseite filtert die Suche live (dashboardQuery); überall sonst führt Enter dorthin. */
   /** Genau ein aktiver Navigationspunkt: Start nur auf der Startseite selbst, ein Bereich auch auf seinen Unterseiten
    * (?tab=…, ?trip=…) — Query-Parameter zählen dabei nie mit. */

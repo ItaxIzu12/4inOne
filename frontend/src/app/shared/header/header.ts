@@ -10,6 +10,7 @@ import { IconOrganisation } from '../icons/icon-organisation';
 import { IconMenu } from '../icons/icon-menu';
 import { IconClose } from '../icons/icon-close';
 import { Brand } from '../brand/brand';
+import { DEMO_ONLY } from '../../core/demo-only';
 
 /**
  * Ein Header für die gesamte App — Marketing-Seiten UND Dashboard/
@@ -38,6 +39,8 @@ import { Brand } from '../brand/brand';
   styleUrl: './header.css',
 })
 export class Header {
+  /** Testversion nur mit Demo (GitHub Pages): keine Wege zu Anmeldung/Registrierung. */
+  protected readonly demoOnly = DEMO_ONLY;
   protected readonly auth = inject(AuthService);
   private readonly scroll = inject(ScrollService);
   private readonly router = inject(Router);

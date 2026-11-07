@@ -1,0 +1,229 @@
+// Gemeinsame Bausteine der Finanzen, Teil 2: neuere Ergänzungen, die den Finanz-Look (shared/_fin-look.scss) und
+// Teil 1 gezielt überschreiben — deshalb NACH _fin-look.scss geladen.
+// ---------- Listen: Ausgaben in Tinte ----------
+// in allen Listen der Finanzen (Kontoauszug-Logik): Minus in Tinte, Plus in Grün
+.rows strong.negative {
+  color: var(--text-primary);
+}
+.all-rows .rows + .day-head {
+  margin-top: 22px;
+}
+.fin-hero--budget .fin-hero__top {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 32px 48px;
+}
+.fin-hero--budget .kpi.fin-hero__plan {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 0 48px 0 0;
+  border: 0;
+  border-right: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: none;
+}
+.fin-hero__plan .fin-hero__value {
+  font-size: clamp(1.75rem, 1.3rem + 1.4vw, 2.25rem);
+}
+.fin-hero--budget .budget-bar {
+  height: 8px;
+  margin: 14px 0 4px;
+}
+.fin-hero--budget .breakdown {
+  margin-top: 16px;
+}
+// ---------- Sparziele als Karten (der Abschnitt selbst ist keine Karte — keine Karten in Karten) ----------
+.card.goals-board {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.goals-board .card-head {
+  margin-bottom: 12px;
+}
+.goal-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); // zwei Spalten: vier Ziele ergeben ein ruhiges 2 × 2
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.goal-cards > li {
+  display: grid;
+}
+.goal-cards .goal {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'icon name pct'
+    'bar bar bar'
+    'amounts amounts amounts'
+    'foot foot foot';
+  align-items: center;
+  gap: 10px 12px;
+  width: 100%;
+  min-height: 0;
+  padding: 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  text-align: left;
+}
+.goal-cards .goal .tile {
+  grid-area: icon;
+}
+.goal-cards .goal__name {
+  grid-area: name;
+  display: grid;
+  min-width: 0;
+}
+.goal-cards .goal__name b {
+  overflow: hidden;
+  font-size: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.goal-cards .goal__name small {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.goal-cards .goal__pct {
+  grid-area: pct;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.goal-cards .goal__progress {
+  grid-area: bar;
+  display: block;
+}
+.goal-cards .goal__progress .track {
+  display: block;
+  width: 100%;
+  height: 8px;
+}
+.goal-cards .goal__amounts {
+  grid-area: amounts;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.goal-cards .goal__foot {
+  grid-area: foot;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+.goal-cards .goal__date app-icon {
+  width: 14px;
+  height: 14px;
+}
+.goal-cards .empty {
+  grid-column: 1 / -1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .goal-cards .goal:hover {
+    border-color: var(--border-strong, #cfd5cd);
+    background: #fff;
+  }
+}
+
+// ---------- Breiten ----------
+@media (max-width: 900px) {
+  .fin-hero--budget .fin-hero__top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .fin-hero--budget .kpi.fin-hero__plan {
+    padding: 0 0 20px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+}
+.start__check {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-pressed, #ecefea);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+.start__check app-icon {
+  width: 16px;
+  height: 16px;
+}
+.start__go {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+.review__facts app-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--finance-accent);
+}
+.review__facts li.is-over app-icon {
+  color: var(--fin-red);
+}
+// ---------- „Wie entsteht diese Zahl?“ (Übersicht) und Erklärsatz über Listen ----------
+.calc {
+  margin-top: 10px;
+}
+.calc .breakdown {
+  max-width: 420px;
+  margin-top: 4px;
+}
+// Budget-Dialog: was beim Löschen erhalten bleibt — leiser Hinweis, kleiner als die Feldbeschriftungen
+.impact-note {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  line-height: 1.45;
+}
+.impact-note app-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+
+// Kategorie-Budgets am Handy: jede Zeile gleich gebaut — Name und „… verfügbar“ immer in einer Zeile (Name kürzt
+// notfalls mit …), der Pfeil entfällt (die ganze Zeile ist der Knopf), damit die Beträge nicht umbrechen.
+@media (max-width: 520px) {
+  .budget-row > .chev {
+    display: none;
+  }
+}
+.fixed-booked app-icon {
+  width: 14px;
+  height: 14px;
+}
+
+// Reiter auf Tablet-Breite (761–1000 px): ohne Symbole, damit alle vier Reiter in die Zeile passen
+// (sonst wurde „Sparziele“ abgeschnitten und die Leiste scrollte unsichtbar seitlich)
+@media (min-width: 761px) and (max-width: 1000px) {
+  .tabs button app-icon {
+    display: none;
+  }
+}
+
+// Handy: Hinweise unter Kennzahlen nicht unter 13 px (private-finance.scss setzt sie dort auf --fs-caption)
+@media (max-width: 760px) {
+  .kpi__hint {
+    font-size: var(--fs-meta);
+  }
+}

@@ -1,6 +1,6 @@
 # Smart Scan V1 — Umsetzungsplan (Entwicklungsplan Phase 6)
 
-**Stand:** 04.11.2026 · **Status: vorbereitet, nicht begonnen.** Beginn erst, wenn das Qualitäts-Gate
+**Stand:** 04.11.2026 · **Status: vorbereitet, nicht begonnen — auf Wunsch zurückgestellt (06.11.2026), bis du die App selbst gründlich getestet hast.** Beginn erst, wenn das Qualitäts-Gate
 (`docs/RELEASE_READINESS.md`) erfüllt und die Beta (Phase 5, `docs/beta/`) ausgewertet ist.
 **Freigegebene Technik (Nutzerentscheidung 04.11.2026):** `pypdf` (PDF-Text), Tesseract + `pytesseract` (OCR, Deutsch),
 Ollama mit lokalem Vision-Modell — alles lokal, nichts an externe Dienste. Installation erst beim Start der Phase.

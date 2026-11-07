@@ -1,8 +1,8 @@
 import { ErrorNoticeDirective } from '../error-notice/error-notice';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { CategoryApiService } from '../../features/finanzen/category-api.service';
-import { FinanzenStateService } from '../../features/finanzen/finanzen-state.service';
+import { CategoryApiService } from '../../features/finanzen/data/category-api.service';
+import { FinanzenStateService } from '../../features/finanzen/data/finanzen-state.service';
 import { HouseholdInviteModalService } from '../../core/household/household-invite-modal.service';
 import { OnboardingApiService } from '../../core/onboarding/onboarding-api.service';
 import { Modal } from '../modal/modal';

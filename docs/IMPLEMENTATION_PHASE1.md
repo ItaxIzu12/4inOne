@@ -114,7 +114,7 @@ Fachmodullogik implementiert.
 - `frontend/src/app/features/dashboard/dashboard.scss`
 - `frontend/src/app/features/dashboard/dashboard.spec.ts`
 - `frontend/src/app/features/dashboard/dashboard.ts`
-- `frontend/src/app/features/finanzen/finanzen-state.service.spec.ts`
+- `frontend/src/app/features/finanzen/data/finanzen-state.service.spec.ts`
 - `frontend/src/app/features/login/login.html`
 - `frontend/src/app/features/login/login.scss`
 - `frontend/src/app/features/login/login.spec.ts`

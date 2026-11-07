@@ -333,7 +333,9 @@ test('month view: clicking a day with events opens the day sheet, from there mor
   // Tagesblatt: in der Demo liegt in 3 Tagen der „Behördentermin“
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('Behördentermin');
-  await expect(dialog).toContainText('1 Termin');
+  // Anzahl je nach Wochentag (montags kommt das wöchentliche „Teammeeting“ dazu)
+  await expect(dialog.locator('.ds__count')).toHaveText(/^\d+ Termine?$/);
+  const before = parseInt((await dialog.locator('.ds__count').innerText()).trim(), 10);
   await dialog.getByRole('button', { name: 'Termin an diesem Tag' }).click();
   await expect(dialog.getByRole('heading', { name: 'Termin hinzufügen' })).toBeVisible();
   const date = dialog.getByLabel('Datum', { exact: true });
@@ -344,8 +346,8 @@ test('month view: clicking a day with events opens the day sheet, from there mor
 
   await dialog.locator('#entry-title').fill('Elternabend');
   await dialog.getByRole('button', { name: 'Speichern' }).click();
-  // Zurück im Tagesblatt — jetzt mit beiden Terminen, bereit für den nächsten
-  await expect(dialog).toContainText('2 Termine');
+  // Zurück im Tagesblatt — jetzt mit einem Termin mehr, bereit für den nächsten
+  await expect(dialog.locator('.ds__count')).toHaveText(`${before + 1} Termine`);
   await expect(dialog).toContainText('Elternabend');
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);

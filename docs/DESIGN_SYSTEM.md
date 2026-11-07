@@ -319,10 +319,10 @@ Abstand — nie nur über Farbe.
   „Letzte Transaktionen“ nach Tagen gruppiert („Heute“, „Gestern“, sonst „Samstag, 24. Oktober“, mit Tagessumme),
   Ausgaben in Tinte, Einnahmen grün. „Budgets“, „Sparziele“ und „Gut zu wissen“ (statt „Intelligente Hinweise“, ohne
   Glühbirne und ohne „Weiter so!“) rechts. Klassen `.kpis/.kpi/.kpi--danger` bleiben am Kopf (Tests, Meldungen).
-  Stile in `finance-hero.scss` (Stil-Budget je Datei).
+  Stile seit 06.11.2026 in `finanzen/overview/finance-overview-tab.scss` (siehe „Finanzen › Ordnerstruktur“).
   **Ganzer Finanzen-Bereich (27.10.2026, zweiter Schritt):** eine Formsprache für alle Ansichten, gemeinsame Teile in
-  `finanzen/_fin-look.scss` (per `@use` in `finance-hero.scss` und `finance-period.scss`, weil beide Komponenten ihre
-  Stile kapseln). **Steuerzeile:** Segment-Umschalter `.seg` (Sage-Spur `--surface-pressed`, Radius 12, gewähltes Feld
+  `finanzen/shared/_fin-look.scss` (in den Reitern als Stil-Datei, in `overview/finance-period.scss` per `@use`, weil alle
+  Komponenten ihre Stile kapseln). **Steuerzeile:** Segment-Umschalter `.seg` (Sage-Spur `--surface-pressed`, Radius 12, gewähltes Feld
   weiß mit feinem Schatten, 40 px hoch; Handy volle Breite, gleich breite Felder) links, Datumsauswahl rechts in
   derselben Zeile; unter 900 px darunter. Gilt für Zeitraum (Tag · Woche · Monat · Benutzerdefiniert) und Art
   (Alle · Ausgaben · Einnahmen · Geplant). Die Bereichs-Reiter bleiben wie in allen Bereichen. **Kopfkarte**
@@ -378,9 +378,9 @@ Abstand — nie nur über Farbe.
   oben) speichert den Monat in `localStorage` (`4io-finanzen-rueckblick-ausgeblendet`). (5) Transaktionen › Ausgaben:
   `section.fixed-costs` ersetzt „Wiederkehrende Ausgaben“ (Überschrift-ID `rec-exp-h` bleibt): „Fixkosten“ mit
   (i), Summe pro Monat groß (Display, `<small>pro Monat</small>`), darunter „Aufs Jahr gerechnet …“ fett und Anteil an
-  den Ausgaben des Monats, dann die wiederkehrenden Posten als Zeilen mit Kachel. Styles: `finanzen/finance-guide.scss`
-  (Start, Rückblick, Fixkosten, Rechnung, Erklärsatz; ausgelagert wegen des 12-kB-Style-Budgets je Datei).
-  **„Dein Jahr“ im Budgets-Reiter (29.10.2026):** `finanzen/budget-year-card.{ts,html,scss}` ersetzt die Zeile
+  den Ausgaben des Monats, dann die wiederkehrenden Posten als Zeilen mit Kachel. Styles: seit 06.11.2026 je Reiter
+  (`overview/` Start und Rückblick, `transactions/` Fixkosten, gemeinsame Teile in `shared/finance-blocks*.scss`).
+  **„Dein Jahr“ im Budgets-Reiter (29.10.2026):** `finanzen/budgets/budget-year-card.{ts,html,scss}` ersetzt die Zeile
   „Jahresplanung · Jahresübersicht ansehen“ (die bleibt nur als Rückfall, solange `summary/year/` lädt oder fehlt). Karte
   weiß, Rand `--border-subtle`, Radius 16, Abstand oben 24; Raster `1fr auto`. Kopf: H2 „Dein Jahr {Jahr}“ (Display
   22/20 px), rechts Textknopf „Budgets je Monat“ (Stift) → bestehender Dialog (`app-budget-year`, Titel jetzt „Budgets je
@@ -1290,3 +1290,20 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   senden; kein Lesen). Umschalter `.bf-option` (44 px, `aria-pressed`, `--border-control`, gewählt `--brand-primary`),
   Fragen als `fieldset.bf-scale` mit `legend`. Kontomenü: `AppShell.betaInfo` (einmal beim ersten Öffnen),
   `.beta-mark`. `app-modal-form`: leeres `cancelLabel` blendet „Abbrechen“ aus.
+- Testversion GitHub Pages (06.11.2026): `core/demo-only.ts` (`DEMO_ONLY` aus `environment.pages.ts`); Komponenten
+  blenden Wege zu Anmeldung/Registrierung mit `@if (!demoOnly)` aus. Schriftpfad `/fonts/…` setzt
+  `scripts/build-pages.mjs` auf den Unterordner. Vor dem Livegang entfernen (`docs/GITHUB_PAGES_DEMO.md`).
+- Finanzen › Ordnerstruktur (06.11.2026, Umbau ohne Änderung an Optik und Verhalten — pixelgleich geprüft):
+  `features/finanzen/` = Rahmen `private-finance.*` (Kopf, Reiter, Monatsladen, Formular-Zustand, Import, Meldungen); der
+  gemeinsame Dialog Transaktion/Budget/Sparziel ist seit 07.11.2026 `editor/finance-editor.*` (Formular-Ansicht,
+  Warnungen, neue Kategorie, Verbindungen, Speichern/Löschen; `open()` bleibt im Rahmen und setzt über
+  `resetLinks()` den Verbindungs-Baustein zurück) + `finance-context.ts` (Token `FINANCE_CONTEXT`, Typen `FinanceTab`/`ListRow`/…).
+  Reiter als eigene Komponenten: `overview/finance-overview-tab.*` (mit `finance-period.*`, `finance-periods.ts`),
+  `transactions/finance-transactions-tab.*` (mit Kontoauszug-Import), `budgets/finance-budgets-tab.*` (mit
+  `budget-year-card`, `budget-timeline`, `category-manager`), `goals/finance-goals-tab.*`; Datumsauswahl
+  `shared/finance-date-nav.*` (`display: contents`, Varianten `in-period`/`in-toolbar`). Daten in `data/` (APIs, Demo,
+  Datenquellen, Zustand), Berechnungen in `shared/finance-tabs.ts`/`finance-overview.ts`. Stile je Komponente in fester
+  Reihenfolge: `shared/finance-charts.scss` → `shared/finance-blocks.scss` → `shared/_fin-look.scss` →
+  `shared/finance-blocks-late.scss` → eigene Datei (so bleibt die Kaskade wie vorher; jede Datei unter 12 kB). Die
+  Reiter lesen Zustand und Aktionen über `inject(FINANCE_CONTEXT)` (Signale, keine Kopien). Typografie des Seiten-
+  Layouts (`.domain-page small` …) gilt in den Reitern über `:host-context(.domain-page)`.

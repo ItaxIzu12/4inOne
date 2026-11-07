@@ -1,11 +1,36 @@
 # ============================================================
 # Secrets — NIEMALS committen (ARCHITEKTUR.md §3.4)
 # ============================================================
+# Umgebungsdateien in jedem Ordner (SECRET_KEY, Passwörter, Admin-Pfad, Datenbank-URL …).
+# Nur die Vorlage ohne Werte darf ins Repository.
 .env
-.env.local
-.env.*.local
+.env.*
+*.env
+!.env.example
+# Schlüssel und Zertifikate
 *.pem
 *.key
+*.p12
+*.pfx
+*.crt
+*.csr
+*.keystore
+*.jks
+*.ppk
+id_rsa*
+id_ed25519*
+id_ecdsa*
+*.gpg
+*.age
+# Zugangsdaten von Werkzeugen und Diensten
+.npmrc
+.netrc
+.pypirc
+credentials*.json
+service-account*.json
+*-credentials.json
+*.secret
+secrets/
 
 # ============================================================
 # Backend (Django/Python)
@@ -18,6 +43,11 @@ backend/db.sqlite3
 backend/staticfiles/
 backend/media/
 *.log
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
 
 # ============================================================
 # Frontend (Angular/Node)
@@ -36,3 +66,40 @@ backend/private_media/
 
 # Arbeitsdateien des Design-Skills (Screenshots, Richtungsblatt)
 .taste-skill/
+
+# ============================================================
+# Persönliche und echte Daten — NIEMALS committen
+# ============================================================
+# Datenbanken, Sicherungen und Exporte (enthalten Konten, Finanzen, Verträge …)
+*.sqlite3
+*.sqlite3-journal
+*.sqlite
+*.db
+*.dump
+*.sql
+*.sql.gz
+*.bak
+backups/
+# Hochgeladene Dateien der Nutzer (Fotos, PDFs, Anhänge) und temporäre Scans — in jedem Ordner
+media/
+private_media/
+scan-tmp/
+# Netzwerk-Mitschnitte (enthalten Cookies und Tokens)
+*.har
+# Testläufe: Screenshots, Videos, Traces können Testdaten zeigen
+test-results/
+playwright-report/
+blob-report/
+shots-*/
+# Auswertungen des Beta-Tests (Freitexte der Testpersonen, docs/beta/README.md)
+beta-feedback*.md
+beta-nutzung*.md
+
+# ============================================================
+# Lokale Werkzeug-Einstellungen
+# ============================================================
+# Arbeitskopien von Claude Code (vollständige Kopien des Projekts) und persönliche Einstellungen
+.claude/worktrees/
+.claude/settings.local.json
+CLAUDE.local.md
+

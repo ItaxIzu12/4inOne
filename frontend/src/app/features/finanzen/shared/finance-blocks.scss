@@ -1,0 +1,635 @@
+// Gemeinsame Bausteine der Finanzen, Teil 1 (Karten, Kacheln, Zeilen, Kennzahlen, Diagramme, Listen, Handy-Regeln):
+// geladen von Rahmen und Reitern VOR shared/_fin-look.scss. Enthält auch einzelne Regeln nur eines Reiters, wenn eine
+// spätere gemeinsame Regel sie überschreibt — so bleibt die Reihenfolge der Kaskade wie vor der Aufteilung.
+.wallet {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.wallet app-icon {
+  width: 34px;
+  height: 34px;
+}
+// Titel und Untertitel: Rollen aus dem gemeinsamen Seitenkopf (shared/styles/domain-layout.scss).
+h2 {
+  margin: 0;
+  font-size: var(--fs-subsection);
+  line-height: 1.3;
+}
+h3 {
+  margin: 0;
+  font-size: var(--fs-subsection);
+}
+.primary,
+.secondary,
+.text-button,
+.soft {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--control-height);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: var(--fs-button);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: background-color var(--motion-fast) ease-out, border-color var(--motion-fast) ease-out;
+}
+.primary {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+.primary:hover {
+  background: var(--accent-hover);
+}
+.primary:active,
+.secondary:active {
+  transform: translateY(1px);
+}
+.secondary:hover {
+  border-color: #9fcbb3;
+}
+.secondary {
+  border: 1px solid #c9e3d4;
+  background: #eef8f2;
+  color: #225f43;
+}
+.soft {
+  min-height: var(--control-height);
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+.primary app-icon,
+.secondary app-icon,
+.soft app-icon {
+  width: 18px;
+  height: 18px;
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--control-height);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 500;
+  cursor: pointer;
+}
+.link app-icon {
+  width: 16px;
+  height: 16px;
+}
+// Reiter wie im Entwurf: ruhige Leiste, aktiver Reiter grün unterstrichen.
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin: 22px 0 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  margin-bottom: -1px;
+  padding: 0 14px;
+  border: 0;
+  border-bottom: 2.5px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+.tabs button app-icon {
+  width: 18px;
+  height: 18px;
+}
+.month-step {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: #3d5248;
+  cursor: pointer;
+}
+.month-step app-icon {
+  width: 18px;
+  height: 18px;
+}
+.budget-empty {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+}
+.budget-empty p {
+  flex: 1;
+  margin: 0;
+  font-size: var(--fs-body);
+}
+.small {
+  font-size: var(--fs-meta);
+}
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-secondary);
+  line-height: 1.5;
+}
+.empty {
+  padding: 30px 10px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.empty p {
+  margin: 10px 0 14px;
+}
+.is-good {
+  color: #1a7a43 !important;
+}
+.is-bad {
+  color: var(--fin-red) !important;
+}
+.negative {
+  color: var(--fin-red);
+}
+.positive {
+  color: #1a7a43;
+}
+.card {
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: #fff;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.grid {
+  display: grid;
+  gap: 20px;
+  align-items: start;
+  margin-top: 20px;
+}
+.grid--chart {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+}
+.grid--chart.grid--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+.grid--half {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.track {
+  display: flex; /* ausgegeben + geplant nebeneinander */
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+.track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #34a065;
+}
+.track--warn > span {
+  background: #f2b43c;
+}
+.track--over > span {
+  background: #ee6b6b;
+}
+.track--muted > span {
+  background: #8fd0a8;
+}
+.track > span {
+  flex: none;
+}
+// Geplanter Anteil: dieselbe Farbe, heller — erkennbar, aber nie stärker als echte Ausgaben.
+.track > span.track__planned {
+  border-radius: 0 999px 999px 0;
+  opacity: 0.4;
+}
+.tile {
+  --cat: var(--accent);
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--cat) 13%, #fff);
+  color: var(--cat);
+}
+.tile app-icon {
+  width: 21px;
+  height: 21px;
+}
+.tile--green {
+  --cat: var(--finance-accent);
+}
+.tile--goal {
+  --cat: #b5384f;
+}
+.chev {
+  width: 16px;
+  height: 16px;
+  color: #8a93a3;
+}
+// ---------- Kennzahlen ----------
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+// Mit Aufschlüsselung braucht die Rest-Karte Platz: auf Tablets (Seitenleiste + schmaler Inhalt) untereinander.
+@media (max-width: 1100px) {
+  .kpis.kpis--budget {
+    grid-template-columns: minmax(0, 1fr); /* stärker als die allgemeinen .kpis-Regeln weiter unten */
+  }
+}
+.kpi {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: #fff;
+}
+.kpi__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.kpi__icon app-icon {
+  width: 24px;
+  height: 24px;
+}
+.kpi__label {
+  color: #3d4a5c;
+  font-size: var(--fs-secondary);
+}
+.kpi__value {
+  font-size: var(--fs-metric);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+.kpi__value small {
+  font-size: var(--fs-subsection);
+}
+.kpi__hint {
+  color: var(--text-muted);
+  font-size: var(--fs-meta);
+}
+.kpi--danger .kpi__value {
+  color: var(--fin-red);
+}
+.budget-bar {
+  display: block;
+  height: 8px;
+  margin: 8px 0 4px;
+  border-radius: 999px;
+  background: #e8edea;
+  overflow: hidden;
+}
+.budget-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #34a065;
+}
+.budget-bar.is-over > span {
+  background: var(--fin-red);
+}
+.kpi--left .kpi__body {
+  flex: 1;
+}
+// ---------- Listen ----------
+.rows {
+  display: grid;
+  // minmax(0, 1fr): sonst wächst die Spalte auf die breiteste Zeile und ragt auf 320 px heraus.
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rows > li + li {
+  border-top: 1px solid var(--line);
+}
+.row-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.row-btn:hover {
+  background: #f8faf9;
+}
+.row-text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+.row-text b {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+.row-text small,
+.goal-mini small,
+.sources small {
+  color: var(--text-muted);
+  font-size: var(--fs-meta);
+}
+.row-btn > strong {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rows > .muted {
+  padding: 12px 4px;
+}
+.limit {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  grid-template-areas: 'icon name nums' 'icon track nums';
+  align-items: center;
+  gap: 4px 12px;
+}
+.limit__icon app-icon {
+  width: 22px;
+  height: 22px;
+}
+.limit .track {
+  grid-area: track;
+}
+.limit__nums {
+  display: grid;
+  grid-area: nums;
+  font-size: var(--fs-secondary);
+  text-align: right;
+}
+.limit__nums small {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+.pct {
+  min-width: 44px;
+  color: var(--accent);
+  font-weight: 600;
+  text-align: right;
+}
+.hints h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.hints h2 app-icon {
+  width: 20px;
+  height: 20px;
+  color: #e3a008;
+}
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 6px 4px;
+}
+.hint__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.hint__icon app-icon {
+  width: 18px;
+  height: 18px;
+}
+.hint--warn .hint__icon {
+  background: var(--fin-red-soft);
+  color: var(--fin-red);
+}
+.hint--info .hint__icon {
+  background: var(--fin-amber-soft);
+  color: var(--fin-amber);
+}
+.vs__bars .track {
+  grid-column: 1 / -1;
+}
+// Vollständige Liste
+.all-rows {
+  margin-top: 20px;
+  scroll-margin-top: calc(var(--shell-header-height, 72px) + 12px);
+}
+.transaction-search app-icon {
+  width: 18px;
+  height: 18px;
+}
+// Formular-Ergänzungen
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: var(--fs-secondary);
+  cursor: pointer;
+}
+.checkbox-row input {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  accent-color: var(--accent);
+}
+.checkbox-row small {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: var(--fs-meta);
+}
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+// ---------- Responsiv ----------
+@media (max-width: 1280px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .goal {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 1100px) {
+  .grid--chart,
+  .grid--half {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+// Aus shared/styles/domain-layout.scss (Mixin layout, im Rahmen eingebunden): kleine Texte unter .domain-page — in den
+// Reitern über :host-context, weil .domain-page im Rahmen liegt.
+:host-context(.domain-page) .caption,
+:host-context(.domain-page) .muted,
+:host-context(.domain-page) .field-hint,
+:host-context(.domain-page) .small,
+:host-context(.domain-page) .row__subtitle,
+:host-context(.domain-page) small {
+  font-size: 14px;
+  line-height: 1.5;
+}
+@media (max-width: 760px) {
+  .tabs button app-icon {
+    display: none;
+  }
+  .kpis,
+  .kpis--three {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+  .kpis--three > .kpi:first-child {
+    grid-column: 1 / -1;
+  }
+  .kpi {
+    gap: 10px;
+    padding: 14px 12px;
+  }
+  .kpi__value {
+    font-size: var(--fs-section);
+  }
+  .kpi__label,
+  .kpi__hint {
+    font-size: var(--fs-caption);
+  }
+  .card {
+    padding: 16px;
+  }
+  .grid {
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .card-head {
+    flex-wrap: wrap;
+  }
+  // Sparziel auf dem Handy: Kopf mit Symbol und Pfeil, darunter Fortschritt, Beträge und Termin.
+  .goal {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto 16px;
+    grid-template-areas:
+      'icon name name chev'
+      'bar bar bar bar'
+      'amounts amounts date date';
+    gap: 8px 12px;
+  }
+  .goal .tile {
+    grid-area: icon;
+  }
+  .goal__name {
+    grid-area: name;
+  }
+  .goal__progress {
+    grid-area: bar;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+  }
+  .goal__amounts {
+    grid-area: amounts;
+    font-size: var(--fs-meta);
+  }
+  .goal .chev {
+    grid-area: chev;
+  }
+  .budget-empty {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .row-btn,
+  .tabs button,
+  .month-step {
+    transition: background-color 150ms ease-out, color 150ms ease-out;
+  }
+}
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: #fff;
+  color: #2c3a4e;
+  font: inherit;
+  font-size: var(--fs-secondary);
+  cursor: pointer;
+}
+.cat-chip:hover {
+  border-color: #b9cdc4;
+}
+.cat-chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #14532f;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.cat-chip .dot {
+  flex: 0 0 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}

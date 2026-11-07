@@ -1,7 +1,7 @@
 import { IconName } from '../../shared/icons/app-icon';
 import { HaushaltOverviewDto } from '../haushalt/haushalt-api.service';
 import { room } from '../haushalt/aufgaben-logic';
-import { FinanceSummary } from '../finanzen/private-finance-api.service';
+import { FinanceSummary } from '../finanzen/data/private-finance-api.service';
 import { PersonalEvent, TodayItem } from '../organisation/organisation-api.service';
 import { DAY_END_MIN, clock, dayLine, nextUp, span } from '../organisation/org-day-logic';
 import { localDay as orgLocalDay } from '../organisation/organisation-logic';

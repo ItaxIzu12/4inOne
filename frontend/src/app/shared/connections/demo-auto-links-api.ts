@@ -2,7 +2,7 @@ import { Injectable, Injector, inject } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { HAUSHALT_DATA_PROVIDER } from '../../features/haushalt/haushalt-data-provider';
 import { FolderEntryDto } from '../../features/haushalt/haushalt-api.service';
-import { PrivateFinanceApi } from '../../features/finanzen/private-finance-api.service';
+import { PrivateFinanceApi } from '../../features/finanzen/data/private-finance-api.service';
 import { ReisenApi } from '../../features/reisen/reisen-api.service';
 import {
   AutoPreview,

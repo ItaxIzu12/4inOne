@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Brand } from '../brand/brand';
 import { TileFooter } from '../tile-footer/tile-footer';
+import { DEMO_ONLY } from '../../core/demo-only';
 
 /**
  * Rahmen der öffentlichen Unterseiten (Rechtsseiten, Kontakt, Danke, 404) im Stil der Startseite: schlichte Kopfzeile
@@ -15,4 +16,7 @@ import { TileFooter } from '../tile-footer/tile-footer';
   templateUrl: './public-shell.html',
   styleUrl: './public-shell.scss',
 })
-export class PublicShell {}
+export class PublicShell {
+  /** Testversion nur mit Demo (GitHub Pages): kein „Anmelden“. */
+  protected readonly demoOnly = DEMO_ONLY;
+}

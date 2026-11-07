@@ -2,10 +2,11 @@ import { inject } from '@angular/core';
 import { AuthService } from './core/auth/auth.service';
 import { Router, Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { DEMO_ONLY } from './core/demo-only';
 // Public landing and authenticated dashboard share /; session initialization runs before matching.
 // Demo (demo.routes.ts) und angemeldete App (app-area.routes.ts) werden erst beim Öffnen geladen — nicht im
 // Startpaket. Demo-Provider gelten nur unter /demo, unabhängig von der Anmeldung.
-export const routes: Routes = [
+const ALL_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
@@ -172,3 +173,26 @@ export const routes: Routes = [
     data: { shell: 'bare', hideHeader: true, notFound: true },
   },
 ];
+
+// Testversion für GitHub Pages (environment.pages.ts): nur Landingpage, Demo und Rechtsseiten. Anmeldung und App gibt
+// es dort nicht (kein Backend) — ihre Adressen führen zur passenden Stelle der Demo, alles Übrige zur 404-Seite.
+const DEMO_ONLY_KEPT = new Set(['', 'demo', 'impressum', 'datenschutz', 'nutzungsbedingungen', 'barrierefreiheit', '**']);
+const DEMO_ONLY_REDIRECTS: Routes = [
+  ...['finanzen', 'haushalt', 'organisation', 'reisen', 'familie'].map((area) => ({
+    path: area,
+    redirectTo: ({ queryParams }: { queryParams: Record<string, string> }) =>
+      inject(Router).createUrlTree(['/demo', area], { queryParams }),
+  })),
+  ...['app', 'login', 'registrieren', 'passwort-vergessen', 'passwort-zuruecksetzen', 'email-bestaetigen', 'einladung', 'einstellungen', 'onboarding'].map(
+    (path) => ({ path, children: [{ path: '**', redirectTo: '/demo' }], pathMatch: 'prefix' as const }),
+  ),
+];
+
+export const routes: Routes = DEMO_ONLY
+  ? [
+      ...ALL_ROUTES.filter((r) => DEMO_ONLY_KEPT.has(r.path ?? '') && !(r.path === '' && r.loadChildren)).slice(0, -1),
+      ...DEMO_ONLY_REDIRECTS,
+      ALL_ROUTES[ALL_ROUTES.length - 1],
+    ]
+  : ALL_ROUTES;
+

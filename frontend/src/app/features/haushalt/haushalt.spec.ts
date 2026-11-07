@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { DemoPrivateFinanceApi } from '../finanzen/demo-private-finance-api';
-import { PrivateFinanceApi } from '../finanzen/private-finance-api.service';
+import { DemoPrivateFinanceApi } from '../finanzen/data/demo-private-finance-api';
+import { PrivateFinanceApi } from '../finanzen/data/private-finance-api.service';
 import { DemoHaushaltDataProvider } from './demo-haushalt-data-provider';
 import { AufgabenTab } from './aufgaben-tab';
 import { EinkaufTab } from './einkauf-tab';

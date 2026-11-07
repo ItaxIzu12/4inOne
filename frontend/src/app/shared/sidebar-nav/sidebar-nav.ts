@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { FinanzenStateService } from '../../features/finanzen/finanzen-state.service';
+import { FinanzenStateService } from '../../features/finanzen/data/finanzen-state.service';
 import { IconFinanzen } from '../icons/icon-finanzen';
 import { IconHaushalt } from '../icons/icon-haushalt';
 import { IconOrganisation } from '../icons/icon-organisation';

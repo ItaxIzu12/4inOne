@@ -5,6 +5,7 @@ import { AreaTone } from '../../shared/area-deck/area-deck';
 import { Brand } from '../../shared/brand/brand';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
 import { TileFooter } from '../../shared/tile-footer/tile-footer';
+import { DEMO_ONLY } from '../../core/demo-only';
 
 /** Ein Bereich der App, so wie er auf der Startseite gezeigt wird. Bild und Werte stammen aus der echten Demo. */
 interface Area {
@@ -89,6 +90,8 @@ const DECIDED: Record<Decision, string> = {
   styleUrls: ['./landing.scss', './landing-sections.scss', './landing-play.scss', './landing-end.scss'],
 })
 export class Landing {
+  /** Testversion nur mit Demo (GitHub Pages): keine Wege zu Anmeldung/Registrierung. */
+  protected readonly demoOnly = DEMO_ONLY;
   readonly areas: Area[] = [
     {
       key: 'finanzen',

@@ -3,7 +3,9 @@
   <div class="head__inner">
     <a routerLink="/" class="head__brand" aria-label="4inOne – Startseite"><app-brand /></a>
     <div class="head__actions">
-      <a routerLink="/login" class="head__link">Anmelden</a>
+      @if (!demoOnly) {
+        <a routerLink="/login" class="head__link">Anmelden</a>
+      }
       <a routerLink="/demo" class="head__cta">Demo ansehen</a>
     </div>
   </div>

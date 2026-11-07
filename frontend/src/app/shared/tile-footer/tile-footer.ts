@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Brand } from '../brand/brand';
 import { IconName } from '../icons/app-icon';
 import { AreaTone } from '../area-deck/area-deck';
+import { DEMO_ONLY } from '../../core/demo-only';
 
 interface FooterArea {
   tone: AreaTone;
@@ -26,6 +27,8 @@ interface FooterArea {
   styleUrl: './tile-footer.scss',
 })
 export class TileFooter {
+  /** Testversion nur mit Demo (GitHub Pages): keine Wege zu Anmeldung/Registrierung. */
+  protected readonly demoOnly = DEMO_ONLY;
   readonly variant = input<'full' | 'compact'>('compact');
   /** Wohin die Bereichskacheln führen (Standard: die Demo, damit Besucher ohne Konto etwas sehen). */
   readonly areaBase = input('/demo');

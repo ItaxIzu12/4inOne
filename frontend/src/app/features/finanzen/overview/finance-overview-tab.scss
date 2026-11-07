@@ -1,0 +1,255 @@
+// Finanzen › Übersicht (overview/finance-overview-tab).
+.stack {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.limits {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.limit__icon {
+  grid-area: icon;
+  color: #3d4a5c;
+}
+.limit__name {
+  grid-area: name;
+  font-weight: 600;
+}
+.goal-mini__main {
+  display: grid;
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+}
+.goal-mini__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+@media (max-width: 760px) {
+  .kpi__icon {
+    flex-basis: 38px;
+    width: 38px;
+    height: 38px;
+  }
+  .goal-mini__top {
+    flex-wrap: wrap;
+    gap: 0 8px;
+  }
+  .goal-mini__top small {
+    white-space: nowrap;
+  }
+}
+// Seitenbezogene Teile der Übersicht (27.10.2026); die gemeinsamen Formen (Kopfkarte, Werte, Tagesüberschrift,
+// Segment-Umschalter) stehen in shared/_fin-look.scss.
+
+// ---------- Steuerzeile: Umschalter links, Datum rechts (Handy: untereinander, volle Breite) ----------
+app-finance-period {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+// ---------- Übersicht ----------
+.fin-hero__curve {
+  --curve-height: 200px;
+}
+@media (max-width: 760px) {
+  .fin-hero__curve {
+    --curve-height: 150px;
+  }
+}
+// Was neuen und wiederkehrenden Nutzern die Zahlen erklärt (29.10.2026): Erste Schritte (neues Konto) und
+// Monatsrückblick (1.–7. des Monats).
+
+// ---------- Erste Schritte (neues Konto) ----------
+.start {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 24px;
+  padding: 24px 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: #fff;
+}
+.start__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+.start__head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.start__head p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.start__intro {
+  margin: 4px 0 12px;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.start__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.start__list li {
+  display: grid;
+  border-top: 1px solid var(--border-subtle);
+}
+.start__item {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 12px 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.is-done .start__check {
+  background: var(--finance-accent);
+  color: #fff;
+}
+.start__copy {
+  display: grid;
+  gap: 2px;
+}
+.start__copy strong {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+.is-done .start__copy strong {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+.start__copy small {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.start__opt {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-pressed, #ecefea);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+.start__alt {
+  justify-self: start;
+  margin: -6px 0 10px 32px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .start__item:hover {
+    background: var(--surface-hover, #f1f3ef);
+  }
+}
+// ---------- Monatsrückblick (1.–7. des Monats) ----------
+.review {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding: 24px 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: #fff;
+}
+.review__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.review h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.review__hide {
+  flex: none;
+  margin-right: -14px;
+}
+.review__lead {
+  margin: 0 0 8px;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.review__label {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+.review__top,
+.review__facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.review__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+.review__row b {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.review__bar {
+  display: block;
+  height: 6px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-pressed, #ecefea);
+}
+.review__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+.review__facts {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+.review__facts li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+.calc summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--finance-accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}

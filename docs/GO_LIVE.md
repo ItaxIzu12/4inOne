@@ -5,6 +5,9 @@ Die Einrichtung des Servers Schritt für Schritt (von null): [`deploy/ANLEITUNG.
 
 ## Muss vor dem Livegang erledigt sein
 
+0. **Testversion auf GitHub Pages entfernen** (06.11.2026, nur zum Testen mit Freunden): Workflow, Pages-Build und
+   `DEMO_ONLY` ausbauen und die Seite abschalten — Liste in [`GITHUB_PAGES_DEMO.md`](GITHUB_PAGES_DEMO.md#vor-dem-livegang-entfernen).
+
 1. **Impressum, Datenschutzerklärung, Nutzungsbedingungen** — derzeit Platzhalter (`frontend/src/app/features/
    impressum|datenschutz|nutzungsbedingungen`). Impressum mit Name, Anschrift, E-Mail (§ 5 DDG). Die
    Datenschutzerklärung muss u. a. nennen:

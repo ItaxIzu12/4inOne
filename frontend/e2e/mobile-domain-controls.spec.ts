@@ -22,7 +22,7 @@ for (const width of [320, 360, 390]) {
       if (domain === 'finanzen') {
         // Die Kennzahlen beginnen unter dem Kopf (mit der Monatsauswahl), nie darüber oder darin
         const card = await page.locator('.domain-sticky').boundingBox();
-        const kpis = await page.locator('.finance-page > .kpis').boundingBox();
+        const kpis = await page.locator('app-finance-overview-tab > .kpis').boundingBox();
         expect(kpis!.y).toBeGreaterThanOrEqual(card!.y + card!.height);
       }
       await page.goto(`/demo/${domain}?tab=${tab}`);

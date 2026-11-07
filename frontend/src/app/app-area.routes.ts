@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 import { onboardingGuard } from './core/onboarding/onboarding.guard';
-import { FINANZEN_DATA_PROVIDER } from './features/finanzen/finanzen-data-provider';
-import { FinanzenStateService } from './features/finanzen/finanzen-state.service';
-import { RealFinanzenDataProvider } from './features/finanzen/real-finanzen-data-provider';
+import { FINANZEN_DATA_PROVIDER } from './features/finanzen/data/finanzen-data-provider';
+import { FinanzenStateService } from './features/finanzen/data/finanzen-state.service';
+import { RealFinanzenDataProvider } from './features/finanzen/data/real-finanzen-data-provider';
 import { HAUSHALT_DATA_PROVIDER } from './features/haushalt/haushalt-data-provider';
 import { RealHaushaltDataProvider } from './features/haushalt/real-haushalt-data-provider';
 

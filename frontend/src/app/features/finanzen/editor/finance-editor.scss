@@ -1,0 +1,157 @@
+// Finanzen › Dialog „Transaktion / Budget / Sparziel“ (editor/finance-editor). Gemeinsame Bausteine kommen aus
+// shared/finance-*.scss; Farben und Variablen erbt der Dialog vom :host des Rahmens (private-finance.scss).
+
+// Finanzen › Rahmen: Kopf, Reiterleiste, Hinweise über den Reitern und der gemeinsame Dialog (Transaktion,
+// Budget, Sparziel). Farben und Variablen stehen auf :host und gelten durch Vererbung auch in den Reitern.
+// ---------- Diagramme ----------
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: var(--fs-meta);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+// Neue Kategorie direkt im Buchungsformular.
+.quick-cat__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 6px;
+  min-height: var(--control-height);
+  margin-top: -6px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--accent-hover);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.quick-cat__row {
+  display: flex;
+  gap: 8px;
+}
+
+.quick-cat__error {
+  margin: 0;
+  color: #8f2a3d;
+  font-size: var(--fs-meta);
+}
+
+.text-button {
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  color: #216648;
+}
+
+// ---------- Allgemeine Bausteine ----------
+.overrun-note {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--fin-red-soft);
+  color: #8f2a3d;
+  font-size: var(--fs-secondary);
+  line-height: 1.45;
+}
+
+.overrun-note {
+  margin: 10px 0 0;
+}
+
+.block {
+  display: block;
+}
+
+// ---------- Buchungsformular: Schnellerfassung ----------
+// Ausgabe/Einnahme als Umschalter (ein Tipp), großer Betrag, Kategorien als Chips.
+.kind-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: #f1f4f3;
+}
+
+.kind-toggle button {
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: #3e4a5c;
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kind-toggle button[aria-pressed='true'] {
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(22 46 41 / 12%);
+  color: var(--fin-red);
+}
+
+.kind-toggle button.is-income[aria-pressed='true'] {
+  color: var(--accent);
+}
+
+.amount-input {
+  font-size: 24px !important;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+}
+
+.cat-field {
+  display: grid;
+  gap: 8px;
+}
+
+.cat-field__label {
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+}
+
+.cat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.kind-toggle button:focus-visible,
+.cat-chip:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+// ---------- Dialog „Transaktion“: der Betrag als Mittelpunkt (wie in Banking-Apps), Einnahme grün ----------
+.amount-input {
+  min-height: 64px !important;
+  font-family: var(--font-display) !important;
+  font-size: 34px !important;
+  letter-spacing: -0.03em !important;
+  font-weight: 700 !important;
+}
+
+.amount-input.is-income {
+  color: var(--finance-accent);
+}
+
+.amount-input::placeholder {
+  color: color-mix(in srgb, var(--text-secondary) 55%, #fff);
+}

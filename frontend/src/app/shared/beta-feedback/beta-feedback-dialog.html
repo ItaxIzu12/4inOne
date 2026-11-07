@@ -62,6 +62,6 @@
     <app-field label="Was ist dir aufgefallen?" [optional]="true" [hint]="message().length > 1800 ? 'Noch ' + (2000 - message().length) + ' Zeichen.' : 'Was war unklar, was hat gefehlt, was war gut?'">
       <textarea id="beta-message" maxlength="2000" rows="4" [value]="message()" (input)="message.set($any($event.target).value)"></textarea>
     </app-field>
-    <p class="bf-privacy muted">Gespeichert werden deine Antworten, dein Konto und die Seite, auf der du gerade bist – nur für die Auswertung des Tests. Mehr unter <a href="/datenschutz#beta">Datenschutz</a>.</p>
+    <p class="bf-privacy muted">Gespeichert werden deine Antworten, dein Konto und die Seite, auf der du gerade bist – nur für die Auswertung des Tests. Mehr unter <a routerLink="/datenschutz" fragment="beta">Datenschutz</a>.</p>
   }
 </app-modal-form>

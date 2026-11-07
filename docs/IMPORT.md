@@ -17,7 +17,7 @@ Oberfläche: gemeinsame Komponente `shared/import-dialog` (Darstellung), Lesen u
 ## Finanzen – Kontoauszug (CSV)
 
 - Einstieg: Transaktionen → „Kontoauszug importieren“ (leise Nebenaktion neben Alle/Ausgaben/Einnahmen).
-- Leser `features/finanzen/finance-import.ts`: Trenner `;` `,` Tab; Werte in Anführungszeichen; Vorspann-Zeilen
+- Leser `features/finanzen/transactions/finance-import.ts`: Trenner `;` `,` Tab; Werte in Anführungszeichen; Vorspann-Zeilen
   vor der Kopfzeile; Spalten Buchungstag/Datum/Valuta, Betrag/Umsatz oder Soll/Haben, Empfänger + Verwendungszweck
   (zusammengefasst zum Text), optional Kategorie; Beträge „-1.234,56“, „12.50“, „(45,00)“, „45,00-“; Daten
   „09.10.2026“, „9.10.26“, „2026-10-09“; UTF-8 oder Windows-1252. Höchstens 1.000 Buchungen, 2 MB.

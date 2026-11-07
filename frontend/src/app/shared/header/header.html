@@ -36,7 +36,7 @@
         <a class="profile-link" routerLink="/einstellungen" aria-label="Einstellungen">
           <span class="profile-avatar" aria-hidden="true">{{ initials() }}</span>
         </a>
-      } @else {
+      } @else if (!demoOnly) {
         <a class="login-button" routerLink="/login">Anmelden</a>
       }
 
@@ -93,7 +93,7 @@
           <span class="profile-avatar" aria-hidden="true">{{ initials() }}</span>
           Einstellungen
         </a>
-      } @else {
+      } @else if (!demoOnly) {
         <a class="mobile-menu__login" routerLink="/login" (click)="closeMenu()">Anmelden</a>
       }
     </nav>

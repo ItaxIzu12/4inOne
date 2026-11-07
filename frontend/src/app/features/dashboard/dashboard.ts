@@ -9,7 +9,7 @@ import {
   SavingsGoal,
   euros,
   financeMonth,
-} from '../finanzen/private-finance-api.service';
+} from '../finanzen/data/private-finance-api.service';
 import { SpendCurveChart } from '../../shared/spend-curve/spend-curve';
 import { daysLeft, eurRound, spendCurve, spendingBudget } from '../../shared/spend-curve/spend-curve-data';
 import { HaushaltOverviewDto } from '../haushalt/haushalt-api.service';

@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, signal, viewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { BetaFeedbackDialog } from './beta-feedback-dialog';
 
 const URL = 'http://localhost:8000/api/v1/feedback/';
@@ -22,7 +23,7 @@ describe('BetaFeedbackDialog', () => {
   let http: HttpTestingController;
 
   function setup() {
-    TestBed.configureTestingModule({ imports: [Host], providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({ imports: [Host], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
     http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(Host);
     fixture.detectChanges();

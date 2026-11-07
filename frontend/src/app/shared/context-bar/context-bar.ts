@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { FinanzenStateService } from '../../features/finanzen/finanzen-state.service';
+import { FinanzenStateService } from '../../features/finanzen/data/finanzen-state.service';
 import { Brand } from '../brand/brand';
 @Component({
   selector: 'app-context-bar',

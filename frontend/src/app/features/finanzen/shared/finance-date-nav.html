@@ -1,0 +1,60 @@
+<div class="date-row">
+  <!-- „Aktueller Monat/Woche/Tag“ links neben der Auswahl (am Rechner); am Handy in eigener Zeile darunter, damit die
+       Auswahl nicht springt, wenn der Knopf erscheint -->
+  @if (jumpLabel(); as label) {
+    <button type="button" class="to-today" (click)="jumpToCurrent()"><app-icon name="calendar" aria-hidden="true" />{{ label }}</button>
+  }
+  <div class="period-bar">
+    @switch (navMode()) {
+      @case ('day') {
+        <div class="month-switch">
+          <button type="button" class="month-step" aria-label="Vorheriger Tag" (click)="stepPeriod(-1)"><app-icon name="chevron-left" /></button>
+          <label for="finance-day" class="month-pick"
+            ><span class="sr-only">Tag</span>
+            <app-date-picker appearance="inline" mode="date" inputId="finance-day" [value]="periodDay()" (valueChange)="setDay($event)" />
+          </label>
+          <button type="button" class="month-step" aria-label="Nächster Tag" (click)="stepPeriod(1)"><app-icon name="arrow" /></button>
+        </div>
+      }
+      @case ('week') {
+        <div class="month-switch">
+          <button type="button" class="month-step" aria-label="Vorherige Woche" (click)="stepPeriod(-1)"><app-icon name="chevron-left" /></button>
+          <span class="month-pick week-label" aria-live="polite">{{ weekLabel() }}</span>
+          <button type="button" class="month-step" aria-label="Nächste Woche" (click)="stepPeriod(1)"><app-icon name="arrow" /></button>
+        </div>
+      }
+      @case ('custom') {
+        <div class="month-switch range-switch" role="group" aria-label="Eigener Zeitraum">
+          <label for="finance-from" class="month-pick range-pick" [class.is-invalid]="rangeIssue()?.field === 'from'"
+            ><span class="sr-only">Von</span>
+            <app-date-picker appearance="inline" mode="date" inputId="finance-from" [value]="periodRange().from"
+              [invalid]="rangeIssue()?.field === 'from'"
+              [ariaDescribedby]="rangeIssue()?.field === 'from' ? 'finance-range-error' : null" (valueChange)="setRangeFrom($event)" />
+          </label>
+          <span class="range-arrow" aria-hidden="true">→</span>
+          <label for="finance-to" class="month-pick range-pick" [class.is-invalid]="rangeIssue()?.field === 'to'"
+            ><span class="sr-only">Bis</span>
+            <app-date-picker appearance="inline" mode="date" inputId="finance-to" [value]="periodRange().to"
+              [invalid]="rangeIssue()?.field === 'to'"
+              [ariaDescribedby]="rangeIssue()?.field === 'to' ? 'finance-range-error' : null" (valueChange)="setRangeTo($event)" />
+          </label>
+        </div>
+      }
+      @default {
+        <div class="month-switch">
+          <button type="button" class="month-step" aria-label="Vorheriger Monat" (click)="stepMonth(-1)"><app-icon name="chevron-left" /></button>
+          <label for="finance-month" class="month-pick"
+            ><span class="sr-only">Monat</span>
+            <app-date-picker appearance="inline" mode="month" inputId="finance-month" [value]="month()" (valueChange)="setMonth($event)" />
+          </label>
+          <button type="button" class="month-step" aria-label="Nächster Monat" (click)="stepMonth(1)"><app-icon name="arrow" /></button>
+        </div>
+      }
+    }
+  </div>
+</div>
+@if (rangeIssue(); as issue) {
+  <p class="range-error" id="finance-range-error" role="alert">
+    <app-icon name="info" aria-hidden="true" />{{ issue.message }}
+  </p>
+}

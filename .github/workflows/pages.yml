@@ -1,0 +1,49 @@
+# Testversion (nur Demo, ohne Backend) auf GitHub Pages — zum Testen mit Freunden. Vor dem Livegang entfernen
+# (docs/GITHUB_PAGES_DEMO.md). Startet nur von Hand (Actions › „Demo auf GitHub Pages“ › Run workflow), damit nicht
+# jeder Push sofort öffentlich wird.
+name: Demo auf GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      # Unterordner = Name des Repositorys (https://<name>.github.io/<repo>/)
+      - run: npm run build:pages
+        env:
+          PAGES_BASE: /${{ github.event.repository.name }}/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist/frontend/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,336 @@
+// Gemeinsame Bausteine der Finanzen, Teil 0: Diagramme (Balken, Ring), Kategorie-Budgets, Aufschlüsselung, Sparziel-
+// Tabellen, Datumszeilen-Grundformen. Zuerst geladen (vor finance-blocks.scss), wie früher finance-sections.scss.
+.dot {
+  display: inline-block;
+  flex: 0 0 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.dot--income,
+.bar--income {
+  background: #2f9a5d;
+}
+.dot--expense,
+.bar--expense {
+  background: #f4a99a;
+}
+.dot--saved,
+.bar--saved {
+  background: #6aa7ea;
+}
+.chart__label {
+  display: grid;
+  padding-top: 6px;
+  color: #3d4a5c;
+  font-size: var(--fs-caption);
+  text-align: center;
+}
+.chart__label small {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+.legend-list small {
+  color: var(--text-muted);
+  text-align: right;
+}
+// Kategorie-Budget kompakt (jede Breite): Name + verfügbar, Balken, darunter ausgegeben · geplant · Budget und der
+// Status in Worten. Keine Tabellenspalten mehr — die passten in die halbe Kartenbreite nicht mehr.
+.budget-row {
+  align-items: flex-start;
+}
+.budget-row > .tile {
+  margin-top: 2px;
+}
+.budget-row > .chev {
+  align-self: center;
+}
+.rows > .status {
+  border-top: 0;
+}
+.status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+}
+.status--over small {
+  color: #9b2335;
+}
+.status__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+}
+.status__icon app-icon {
+  width: 18px;
+  height: 18px;
+}
+// Aufschlüsselung des verfügbaren Betrags: Budget → ausgegeben → geplant → Sparbeiträge → verfügbar.
+// Kompakte Zahlenliste statt weiterer Karten; „Geplant“ öffnet die geplanten Transaktionen (ein Klick).
+.breakdown {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.breakdown > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 28px;
+}
+.breakdown dt {
+  display: flex;
+  flex-wrap: wrap; /* schmale Karte (Tablet, zwei Karten nebeneinander): „4 Ausgaben“ darf umbrechen */
+  align-items: baseline;
+  min-width: 0;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+}
+.breakdown dt small {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+.breakdown dd {
+  margin: 0;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.breakdown__total {
+  margin-top: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+.breakdown__total dt,
+.breakdown__total dd {
+  color: var(--text-primary);
+  font-weight: var(--fw-semibold);
+}
+.breakdown__link {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  text-align: left;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-hover);
+  font: inherit;
+  font-weight: var(--fw-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.breakdown__link small {
+  color: var(--text-secondary);
+  font-weight: var(--fw-regular);
+  text-decoration: none;
+}
+.planned-tag app-icon {
+  width: 13px;
+  height: 13px;
+}
+.planned-amount {
+  color: var(--text-secondary);
+  font-weight: var(--fw-semibold);
+}
+.planned-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  line-height: 1.45;
+}
+.planned-note app-icon {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: var(--text-secondary);
+}
+// Monat ohne Budget: keine künstlichen 0-€-Werte, nur der Einstieg.
+.budget-empty {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.budget-empty h2 {
+  margin: 0 0 4px;
+  font-size: var(--fs-subsection);
+}
+// Jahresplanung: eine Zeile statt der dauerhaften 12-Monats-Liste.
+.year-plan {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+  padding: 16px 4px 0;
+  border-top: 1px solid var(--line);
+}
+.year-plan h2 {
+  margin: 0;
+  font-size: var(--fs-body);
+}
+.year-plan .muted {
+  margin: 2px 0 0;
+}
+@media (max-width: 760px) {
+  .budget-empty {
+    flex-wrap: wrap;
+  }
+  .budget-empty .primary {
+    width: 100%;
+    justify-content: center;
+  }
+  .year-plan .link {
+    padding-left: 54px;
+  }
+}
+// Sparziele (Tabelle)
+.goals-table {
+  margin-top: 20px;
+}
+.goal__name {
+  display: grid;
+  flex: 1.2;
+  gap: 2px;
+  min-width: 0;
+}
+.goal__name small {
+  color: var(--text-muted);
+  font-size: var(--fs-meta);
+}
+.goal__progress {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+}
+.goal__progress small {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+.goal__amounts {
+  flex: 0 0 140px;
+  font-size: var(--fs-secondary);
+}
+.goal__date app-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+}
+.text-align-center {
+  text-align: center;
+}
+.quick-cat__toggle app-icon {
+  width: 16px;
+  height: 16px;
+}
+.quick-cat {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+}
+.quick-cat label {
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+}
+.quick-cat input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: #fff;
+  font: inherit;
+}
+.quick-cat .soft {
+  min-height: 44px;
+  background: #fff;
+}
+.quick-cat__cancel {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: #4b5568;
+  cursor: pointer;
+}
+.quick-cat__cancel app-icon {
+  width: 18px;
+  height: 18px;
+}
+.tx-import app-icon {
+  width: 16px;
+  height: 16px;
+}
+.tx-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: #fff;
+}
+.tx-switch button {
+  min-height: var(--control-height);
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: #3d4a5c;
+  font: inherit;
+  font-size: var(--fs-secondary);
+  cursor: pointer;
+}
+.tx-switch [aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+@media (max-width: 760px) {
+  .tx-switch {
+    display: flex;
+    margin-bottom: 12px;
+  }
+  .tx-switch button {
+    flex: 1;
+    padding: 0 6px;
+  }
+}
+.range-pick.is-invalid app-date-picker {
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 2px #d6334f;
+}
+.to-today app-icon {
+  width: 16px;
+  height: 16px;
+}
+.range-error app-icon {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+}

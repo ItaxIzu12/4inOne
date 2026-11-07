@@ -10,7 +10,9 @@
       <a href="#fragen">Fragen</a>
     </nav>
     <div class="head__actions">
-      <a routerLink="/login" class="link">Anmelden</a>
+      @if (!demoOnly) {
+        <a routerLink="/login" class="link">Anmelden</a>
+      }
       <a routerLink="/demo" class="btn btn--ink btn--small">Demo ansehen</a>
     </div>
   </div>
@@ -430,7 +432,9 @@
       <p>In der Demo siehst du alle vier Bereiche mit Beispieldaten, ohne Konto. Gespeichert wird dabei nichts.</p>
       <div class="closer__actions">
         <a routerLink="/demo" class="btn btn--light btn--go">Demo ausprobieren<app-icon name="arrow" aria-hidden="true" /></a>
-        <a routerLink="/registrieren" class="btn btn--ghost">Konto erstellen</a>
+        @if (!demoOnly) {
+          <a routerLink="/registrieren" class="btn btn--ghost">Konto erstellen</a>
+        }
       </div>
     </div>
   </section>

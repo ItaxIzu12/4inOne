@@ -20,8 +20,10 @@
           <p class="tf__head">Produkt</p>
           <a routerLink="/demo">Demo ansehen</a>
           <a routerLink="/" fragment="verknuepfen">So funktioniert’s</a>
-          <a routerLink="/login">Anmelden</a>
-          <a routerLink="/registrieren">Konto erstellen</a>
+          @if (!demoOnly) {
+            <a routerLink="/login">Anmelden</a>
+            <a routerLink="/registrieren">Konto erstellen</a>
+          }
         </nav>
       }
       <nav class="tf__col" aria-label="Rechtliches">
