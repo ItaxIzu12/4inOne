@@ -55,6 +55,12 @@
       "skillPath": "landing-page-conversion-audit/SKILL.md",
       "computedHash": "9f7689539e9e0e7a9fabdfff306749ac4fbdae8bb156ab46b19261944c9d3bd5"
     },
+    "taste-design": {
+      "source": "google-labs-code/stitch-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/stitch-utilities/skills/taste-design/SKILL.md",
+      "computedHash": "1891625787d6f0f3bc45d4a9437c187277af66c219e3ec799b1b4e67822b6146"
+    },
     "ui-ux-pro-max": {
       "source": "nextlevelbuilder/ui-ux-pro-max-skill",
       "sourceType": "github",

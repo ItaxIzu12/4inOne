@@ -1,11 +1,11 @@
-# Offline-KI-Labor für 4inOne — Streamlit + Ollama + YOLO auf dem MacBook Air
+# Prüfstand für 4inOne — Offline-KI mit Streamlit + Ollama + YOLO auf dem MacBook Air
 
 **Stand:** 07.11.2026 · **Gerät:** MacBook Air M4 · **Zweck:** Nachschlage- und Arbeitsdokument zum Abspeichern. Ein eigenständiges Versuchslabor
 (Streamlit-App) auf deinem MacBook Air, um offline KI-Spezialisten für 4inOne auszuprobieren, zu messen und erst dann
 zu entscheiden, was davon in 4inOne kommt.
 
 > **Wichtig vorab**
-> - Dieses Labor ist **getrennt von der 4inOne-App**. Smart Scan und alle KI-Phasen in 4inOne bleiben zurückgestellt,
+> - Der Prüfstand (früher „KI-Labor“) ist **getrennt von der 4inOne-App**. Smart Scan und alle KI-Phasen in 4inOne bleiben zurückgestellt,
 >   bis du die App selbst gründlich getestet hast (deine Entscheidung vom 06.11.2026).
 > - Alle Befehle unten sind **Vorschläge zum Selbst-Ausführen**. Sie laden Software und Modelle (teils mehrere GB) aus
 >   dem Internet — danach läuft alles offline.
@@ -44,7 +44,7 @@ Prüfen: Apple-Menü › „Über diesen Mac“.
 ### Dein Gerät: MacBook Air mit M4
 
 Das MacBook Air mit M4 hat mindestens **16 GB** gemeinsamen Arbeitsspeicher; 24 oder 32 GB gab es als Option.
-Deine Größe siehst du unter Apple-Menü › „Über diesen Mac“ › „Speicher“. Für das Labor heißt das:
+Deine Größe siehst du unter Apple-Menü › „Über diesen Mac“ › „Speicher“. Für den Prüfstand heißt das:
 
 | Aufgabe | 16 GB (Grundausstattung M4) | 24 / 32 GB |
 |---|---|---|
@@ -79,12 +79,12 @@ Deine Größe siehst du unter Apple-Menü › „Über diesen Mac“ › „Spei
 | Werkzeug | Aufgabe | Läuft offline? | Lizenz (wichtig für später!) |
 |---|---|---|---|
 | **Ollama** | Sprach- und Bild-Sprachmodelle lokal ausführen, per HTTP-Schnittstelle (`http://localhost:11434`) | ✅ nach dem Herunterladen | MIT (Ollama selbst); **jedes Modell hat eigene Lizenz** (z. B. Llama-Lizenz, Apache-2.0 bei vielen Qwen-Modellen, Gemma-Bedingungen) — vor kommerzieller Nutzung prüfen |
-| **YOLO (Ultralytics)** | Objekte im Bild finden und einrahmen; eigenes Training | ✅ | **AGPL-3.0** — für ein kommerzielles SaaS wie 4inOne heißt das: entweder eigenen Code offenlegen oder **Enterprise-Lizenz** kaufen. Für dein privates Labor unproblematisch. |
+| **YOLO (Ultralytics)** | Objekte im Bild finden und einrahmen; eigenes Training | ✅ | **AGPL-3.0** — für ein kommerzielles SaaS wie 4inOne heißt das: entweder eigenen Code offenlegen oder **Enterprise-Lizenz** kaufen. Für deinen privaten Prüfstand unproblematisch. |
 | **OCR** (Tesseract, alternativ Apple Vision) | Text aus Bildern lesen | ✅ | Tesseract: Apache-2.0 |
 | **pypdf** | Text aus PDFs mit Textebene lesen (ohne OCR) | ✅ | BSD |
 | **Pydantic** | Antworten des Modells gegen ein festes Schema prüfen | ✅ | MIT |
 | **MLX / mlx-lm** | Feintuning kleiner Sprachmodelle auf Apple Silicon (LoRA) | ✅ | MIT (Modelllizenz beachten) |
-| **Streamlit** | Oberfläche deines Labors | ✅ | Apache-2.0 |
+| **Streamlit** | Oberfläche deines Prüfstands | ✅ | Apache-2.0 |
 | **Label Studio** (lokal) | Bilder/Texte beschriften für Training | ✅ lokal installiert | Apache-2.0 (Community) |
 
 **Grundregel für 4inOne (aus dem Entwicklungsplan):** Zahlen, Summen, Fristen und Rechte berechnet **immer der
@@ -117,7 +117,7 @@ Jeder Spezialist hat **eine** Aufgabe, ein **festes Ausgabeformat** und **eigene
 
 ---
 
-## 5. Aufbau des Labors
+## 5. Aufbau des Prüfstands
 
 ```
 ki-labor/                      ← eigener Ordner, NICHT im 4inOne-Repository
@@ -461,9 +461,9 @@ Zusätzlich messen: Dauer pro Dokument (Sekunden), RAM-Verbrauch (Aktivitätsanz
 
 ---
 
-## 11. Vom Labor zu 4inOne — später, nach deiner Freigabe
+## 11. Vom Prüfstand zu 4inOne — später, nach deiner Freigabe
 
-Der Plan dafür steht bereits in `docs/SMART_SCAN_V1_PLAN.md` (zurückgestellt). Wenn das Labor gute Messwerte liefert:
+Der Plan dafür steht bereits in `docs/SMART_SCAN_V1_PLAN.md` (zurückgestellt). Wenn der Prüfstand gute Messwerte liefert:
 
 1. Spezialisten mit den besten Werten auswählen (Messbericht aus Abschnitt 9).
 2. In 4inOne als Django-Dienst einbauen: Upload → Job → Vorschlag → **bestehender Dialog** zum Prüfen → Speichern über
@@ -478,7 +478,7 @@ Der Plan dafür steht bereits in `docs/SMART_SCAN_V1_PLAN.md` (zurückgestellt).
 
 | Woche | Ziel | Fertig, wenn … |
 |---|---|---|
-| 1 | Labor einrichten, Ollama + Streamlit, Spezialist 4 (Kategorien) nur mit Prompt | 100 Buchungstexte gemessen |
+| 1 | Prüfstand einrichten, Ollama + Streamlit, Spezialist 4 (Kategorien) nur mit Prompt | 100 Buchungstexte gemessen |
 | 2 | Spezialist 1 (Vertrag) mit pypdf/OCR + Belegprüfung | 10 Testverträge gemessen, „falsch“ bei Fristen = 0 |
 | 3 | YOLO für Typenschilder: 100–300 Fotos beschriften, trainieren | erkennt Typenschild auf neuen Fotos zuverlässig |
 | 4 | Spezialist 2 (Typenschild) komplett, Verwechslungen markiert | 10 Testfotos gemessen |
