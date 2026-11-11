@@ -4,19 +4,18 @@ Regeln:
 - Die Farbe folgt der Kategorie, nie ihrer Position in einer Liste. Die
   Übersicht sortiert nach Betrag; eine Farbe nach Position würde bei jeder
   neuen Ausgabe umspringen.
-- Die Farbe folgt der Bedeutung: „Reisen“ trägt genau das Blau des Bereichs
-  Reisen, „Wohnen“ den Rosaton des Bereichs Haushalt (maßgeblich ist der
-  letzte Block .travel/.household in frontend/src/app/layout/app-shell.scss).
-  Wohnen ist dabei eine Stufe dunkler als das Navigations-Rosa #eb4b92: in
-  voller Helligkeit ist es für Menschen mit Rot-Grün-Schwäche nicht von Grün
-  und bei normalem Sehen kaum von Orange zu unterscheiden. Gleicher Farbton,
-  andere Stufe — so wie es der dataviz-Skill vorsieht („snap to the nearest
-  passing step“).
+- Die Farbe folgt der Bedeutung: „Reisen“ trägt die Füllfarbe des Bereichs
+  Reisen (--travel-fill), „Wohnen“ das Rosa des Bereichs Haushalt
+  (--household-accent) – maßgeblich sind die Design-Tokens in
+  frontend/src/styles.css. Für Reisen bewusst die Füll- statt der
+  Akzentfarbe: Das dunklere Akzentblau #36608b läge bei Rot-Grün-Schwäche
+  zu nah am Mobilität-Indigo (ΔE 7,9 < 8).
 - Nur diese sieben Farben. Sie sind mit dem Palette-Prüfer des dataviz-Skills
   berechnet, nicht geschätzt, und zwar für ALLE Paare, weil die Liste sich
   umsortiert und jede Kategorie neben jeder anderen stehen kann:
-    normales Sehen   ΔE ≥ 15,6 (Grenze 15)
-    Rot-Grün-Schwäche ΔE ≥ 9,0 (Ziel 8)
+    normales Sehen   ΔE2000 ≥ 17,7 (Grenze 15)
+    Rot-Grün-Schwäche ΔE2000 ≥ 8,9 (Ziel 8; Deuteranopie/Protanopie nach Machado 2009)
+  Nachgerechnet am 11.11.2026, als die Bereichsfarben auf Tokens umgestellt wurden.
   Gelb und Aqua liegen auf Weiß unter 3:1 — zulässig, weil der Name immer
   direkt neben der Farbe steht (Farbe ist nie die einzige Information).
 - Rot kommt nicht vor: Es steht in der App für negative Beträge.
@@ -24,12 +23,12 @@ Regeln:
   das neutrale Grau von „Sonstiges“, wie „Andere“ in einem Diagramm.
 """
 
-WOHNEN = '#c2336f'        # Rosa = Bereich Haushalt (dunklere Stufe von #eb4b92)
+WOHNEN = '#ab445f'        # Rosa = Bereich Haushalt (--household-accent)
 LEBENSMITTEL = '#eb6834'  # Orange
 MOBILITAET = '#4a3aa7'    # Indigo (bewusst nicht Organisation-Lila)
 FREIZEIT = '#dca800'      # Gelb
 GESUNDHEIT = '#1baf7a'    # Aqua-Grün
-REISEN = '#2e8aef'        # Blau = Bereich Reisen (identisch)
+REISEN = '#3d6b9a'        # Blau = Bereich Reisen (--travel-fill)
 NEUTRAL = '#8a93a3'       # Grau für Sonstiges und Unbekanntes
 
 CATEGORY_PALETTE = [WOHNEN, LEBENSMITTEL, MOBILITAET, FREIZEIT, GESUNDHEIT, REISEN, NEUTRAL]

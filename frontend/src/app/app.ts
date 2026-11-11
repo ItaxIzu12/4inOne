@@ -1,4 +1,5 @@
 import { ErrorNotice } from './shared/error-notice/error-notice';
+import { ReloadNotice } from './shared/reload-notice/reload-notice';
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
@@ -11,7 +12,7 @@ import { HouseholdInviteModal } from './shared/household-invite-modal/household-
 
 @Component({
   selector: 'app-root',
-  imports: [ErrorNotice, RouterOutlet, Header, Footer, BackToTop, BottomNav, HouseholdInviteModal],
+  imports: [ErrorNotice, ReloadNotice, RouterOutlet, Header, Footer, BackToTop, BottomNav, HouseholdInviteModal],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

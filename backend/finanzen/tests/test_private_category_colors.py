@@ -19,7 +19,7 @@ from finanzen.models import Category
 
 pytestmark = pytest.mark.django_db
 BASE = '/api/v1/finanzen/private/'
-APP_SHELL = Path(__file__).resolve().parents[3] / 'frontend/src/app/layout/app-shell.scss'
+STYLES = Path(__file__).resolve().parents[3] / 'frontend/src/styles.css'
 
 
 @pytest.fixture
@@ -66,15 +66,15 @@ def _hue(hex_color):
 
 
 def test_travel_and_home_match_the_area_colors_of_the_app():
-    """Reisen = genau das Blau des Bereichs Reisen, Wohnen = derselbe Farbton
-    wie der Bereich Haushalt (eine dunklere Stufe). Geprüft gegen die Werte,
-    die in der App wirklich gelten: bei doppelten Regeln der letzte Block."""
-    scss = APP_SHELL.read_text()
-    area = {}
-    for m in re.finditer(r'^\.(travel|household)\s*\{\s*color:\s*(#[0-9a-fA-F]{6})', scss, re.M):
-        area[m.group(1)] = m.group(2).lower()  # späterer Block überschreibt
-    assert area['travel'] == cc.REISEN
-    assert abs(_hue(area['household']) - _hue(cc.WOHNEN)) < 6
+    """Reisen = die Füllfarbe des Bereichs Reisen, Wohnen = derselbe Farbton wie
+    der Bereich Haushalt. Geprüft gegen die Design-Tokens, die in der App
+    wirklich gelten (frontend/src/styles.css, bei doppelten Werten der letzte)."""
+    css = STYLES.read_text()
+    tokens = {}
+    for m in re.finditer(r'--(travel-fill|household-accent):\s*(#[0-9a-fA-F]{6})', css):
+        tokens[m.group(1)] = m.group(2).lower()  # späterer Wert überschreibt
+    assert tokens['travel-fill'] == cc.REISEN
+    assert abs(_hue(tokens['household-accent']) - _hue(cc.WOHNEN)) < 6
 
 
 @pytest.mark.parametrize('name,color', [
@@ -124,13 +124,16 @@ def test_summary_marks_uncategorised_expenses_like_sonstiges(client_user):
 
 
 def test_migration_recolors_existing_categories_by_meaning():
-    migration = import_module('finanzen.migrations.0019_category_colors_by_meaning')
+    """0019 färbt nach Bedeutung, 0023 zieht Reisen/Wohnen auf die Bereichs-Tokens nach."""
+    first = import_module('finanzen.migrations.0019_category_colors_by_meaning')
+    tokens = import_module('finanzen.migrations.0023_category_colors_area_tokens')
     user = get_user_model().objects.create_user(username='mig')
     reisen = Category.objects.create(owner=user, name='Reisen', color='#1f5c41')
     eigene = Category.objects.create(owner=user, name='Haustier', color='#3a8a63')
     household_cat = Category.objects.create(household=user_household(), name='Reisen', color='#164c49')
 
-    migration.recolor(django_apps, None)
+    first.recolor(django_apps, None)
+    tokens.recolor(django_apps, None)
 
     reisen.refresh_from_db(); eigene.refresh_from_db(); household_cat.refresh_from_db()
     assert reisen.color == cc.REISEN
@@ -138,12 +141,34 @@ def test_migration_recolors_existing_categories_by_meaning():
     assert household_cat.color == '#164c49'  # Haushalts-Kategorien bleiben unberührt
 
 
-def test_migration_keeps_the_same_mapping_as_the_live_code():
-    """Die Migration kopiert die Zuordnung absichtlich. Solange beide existieren,
-    müssen sie übereinstimmen."""
-    migration = import_module('finanzen.migrations.0019_category_colors_by_meaning')
+def test_migrations_together_keep_the_same_mapping_as_the_live_code():
+    """Die Migrationen kopieren die Zuordnung absichtlich. 0019 gefolgt von 0023
+    muss genau die Farben des laufenden Codes ergeben."""
+    first = import_module('finanzen.migrations.0019_category_colors_by_meaning')
+    tokens = import_module('finanzen.migrations.0023_category_colors_area_tokens')
     for name in ['Reisen', 'Wohnen', 'Lebensmittel', 'Mobilität', 'Freizeit', 'Gesundheit', 'Sonstiges', 'Kino', 'xyz']:
-        assert migration.color_for_name(name) == cc.color_for_name(name)
+        color = first.color_for_name(name)
+        assert tokens.CHANGES.get(color, color) == cc.color_for_name(name)
+
+
+def test_token_migration_only_touches_old_automatic_colors_and_is_reversible():
+    tokens = import_module('finanzen.migrations.0023_category_colors_area_tokens')
+    user = get_user_model().objects.create_user(username='mig2')
+    alt_reisen = Category.objects.create(owner=user, name='Urlaub', color='#2E8AEF')  # Großschreibung egal
+    alt_wohnen = Category.objects.create(owner=user, name='Miete', color='#c2336f')
+    eigene_farbe = Category.objects.create(owner=user, name='Reisekasse', color='#123456')
+    household_cat = Category.objects.create(household=user_household(), name='Wohnen', color='#c2336f')
+
+    tokens.recolor(django_apps, None)
+    for c in (alt_reisen, alt_wohnen, eigene_farbe, household_cat):
+        c.refresh_from_db()
+    assert (alt_reisen.color, alt_wohnen.color) == ('#3d6b9a', '#ab445f')
+    assert eigene_farbe.color == '#123456'
+    assert household_cat.color == '#c2336f'
+
+    tokens.restore(django_apps, None)
+    alt_reisen.refresh_from_db(); alt_wohnen.refresh_from_db()
+    assert (alt_reisen.color, alt_wohnen.color) == ('#2e8aef', '#c2336f')
 
 
 def user_household():

@@ -113,6 +113,12 @@ Abstand — nie nur über Farbe.
 - `shared/save-feedback` (01.11.2026): `.toast[data-tone]` (`success|warning|error`, sonst aus dem Text: `feedbackTone`),
   Dauer `feedbackDuration` (5–9 s), Pause bei `mouseenter`/`focusin`, Eingaben `message`, `tone`, `stamp` (gleiche Meldung
   neu starten), Ausgabe `dismissed`. Seiten setzen keinen eigenen Timer mehr. Live-Region `role=status` bleibt im DOM.
+- `shared/reload-notice` (11.11.2026, `app-reload-notice` in `app.html`): Hinweis, wenn ein Bereich nicht nachgeladen
+  werden konnte (Funkloch, neue Version). Logik `core/navigation/chunk-load-recovery.ts` über
+  `withNavigationErrorHandler`: erster Fehler → Zielseite einmal neu laden (höchstens alle 10 s, Marke
+  `4io_chunk_reload_at` im Sitzungsspeicher), zweiter → Karte „Diese Seite konnte nicht geladen werden.“ mit
+  „Neu laden“ (Tinte, 44 px) und × (44 px). Gleiche Karte und Position wie `app-save-feedback` (oben mittig,
+  `--radius-lg`, `--border-subtle`, `--shadow-overlay`), bleibt aber stehen, bis man handelt; `role=alert`.
 - Demo-Abgleich Kalender: `demo-contacts-api` liest „Kalender: …“ und Kalenderfreigaben aus `demo-organisation-api`
   (`demoLinksFor`, `demoInviteArea`, `demoAcceptNow`).
 - `shared/form/modal-form`: `submitIcon`/`cancelIcon` (optional); ohne Angabe passend zum Text (`submitIconName`:

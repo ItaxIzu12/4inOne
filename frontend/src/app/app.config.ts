@@ -2,7 +2,7 @@ import { ApplicationConfig, DOCUMENT, PLATFORM_ID, inject, provideAppInitializer
 import { isPlatformBrowser } from '@angular/common';
 import { provideClientHydration, withNoIncrementalHydration } from '@angular/platform-browser';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { provideRouter, TitleStrategy, withInMemoryScrolling } from '@angular/router';
+import { provideRouter, TitleStrategy, withInMemoryScrolling, withNavigationErrorHandler } from '@angular/router';
 import { catchError, firstValueFrom, of } from 'rxjs';
 
 import { routes } from './app.routes';
@@ -12,6 +12,7 @@ import { AuthService } from './core/auth/auth.service';
 import { PageViews } from './core/analytics/page-views';
 import { SeoTitleStrategy } from './core/seo/seo-title-strategy';
 import { DEMO_ONLY } from './core/demo-only';
+import { ChunkLoadRecovery } from './core/navigation/chunk-load-recovery';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,7 +21,13 @@ export const appConfig: ApplicationConfig = {
     // egal wie tief gescrollt war) landet oben auf der neuen Seite statt an
     // der zuletzt gescrollten Position. anchorScrolling erlaubt weiterhin
     // #anchor-Links innerhalb einer Seite.
-    provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' })),
+    // Bereich ließ sich nicht nachladen (Funkloch, neue Version): einmal neu laden statt leerer Seite
+    // (core/navigation/chunk-load-recovery.ts).
+    provideRouter(
+      routes,
+      withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' }),
+      withNavigationErrorHandler((error) => inject(ChunkLoadRecovery).handle(error)),
+    ),
     // Seitentitel und Meta-Beschreibung je Route (data.description)
     { provide: TitleStrategy, useClass: SeoTitleStrategy },
     // Cookielose Besucherzählung der öffentlichen Seiten (core/analytics/page-views.ts)

@@ -297,7 +297,8 @@ export class Organisation {
     this.range = range;
     this.autoLinks.calendar(range.start, range.end).pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (items) => {
-        if (this.range === range) this.derivedEvents.set(items.map((item, i) => derivedEvent(item, i)));
+        // Einträge ohne gültiges Datum überspringen statt die ganze Liste abzubrechen (toISOString wirft sonst)
+        if (this.range === range) this.derivedEvents.set(items.flatMap((item, i) => derivedEvent(item, i) ?? []));
       },
       error: () => this.derivedEvents.set([]),
     });
@@ -775,10 +776,13 @@ const DERIVED_LABEL: Record<string, string> = {
   SAVINGS_REMINDER: 'Aus Finanzen › Sparziel',
 };
 
-/** Abgeleiteter Kalendereintrag → Anzeigeform eines Termins (ganztägig, nur lesbar, mit Herkunft als Marke). */
-function derivedEvent(item: DerivedCalendarItem, index: number): PersonalEvent {
+/** Abgeleiteter Kalendereintrag → Anzeigeform eines Termins (ganztägig, nur lesbar, mit Herkunft als Marke).
+ *  null, wenn das Datum fehlt oder ungültig ist; ein ungültiges Enddatum fällt weg (eintägig). */
+function derivedEvent(item: DerivedCalendarItem, index: number): PersonalEvent | null {
   const start = new Date(`${item.date}T00:00`);
-  const end = item.end_date && item.end_date !== item.date ? new Date(`${item.end_date}T00:00`) : null;
+  if (Number.isNaN(start.getTime())) return null;
+  const endDate = item.end_date && item.end_date !== item.date ? new Date(`${item.end_date}T00:00`) : null;
+  const end = endDate && !Number.isNaN(endDate.getTime()) ? endDate : null;
   return {
     id: -1 - index, title: item.title, starts_at: start.toISOString(), ends_at: end ? end.toISOString() : null, all_day: true,
     recurrence: '', location: '', description: '', category: 'sonstiges', calendar: null,
