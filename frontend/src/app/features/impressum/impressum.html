@@ -1,16 +1,40 @@
-<app-legal-page title="Impressum">
-  <section>
-    <h2>Angaben zum Anbieter</h2>
-    <p class="placeholder">[Platzhalter — Name, Anschrift und Kontaktdaten des Anbieters folgen hier gemäß § 5 DDG.]</p>
-  </section>
+<app-legal-page title="Impressum" [demo]="demo">
+  @if (demo) {
+    <section>
+      <h2>Über diese Testversion</h2>
+      <p>
+        4inOne ist ein privates Projekt in Entwicklung, nicht kommerziell. Diese Seite zeigt nur eine Demo mit erfundenen
+        Beispieldaten: Es gibt keine Konten, keine Anmeldung und nichts zu kaufen.
+      </p>
+    </section>
 
-  <section>
-    <h2>Kontakt</h2>
-    <p class="placeholder">[Platzhalter — Kontaktmöglichkeit folgt hier.]</p>
-  </section>
+    <section>
+      <h2>Kontakt</h2>
+      <p>
+        Fragen und Rückmeldungen am liebsten direkt an die Person, die dir den Link geschickt hat – oder öffentlich über
+        <a [href]="feedbackUrl" target="_blank" rel="noopener noreferrer">GitHub (Rückmeldungen zu 4inOne)</a>.
+      </p>
+      <p>Beiträge dort sind für alle sichtbar. Bitte keine persönlichen Daten hineinschreiben.</p>
+    </section>
 
-  <section>
-    <h2>Verantwortlich für den Inhalt</h2>
-    <p class="placeholder">[Platzhalter — verantwortliche Person nach § 55 Abs. 2 RStV folgt hier.]</p>
-  </section>
+    <section>
+      <h2>Vor dem Start</h2>
+      <p>Bevor 4inOne mit Konten öffnet, steht hier das vollständige Impressum nach § 5 DDG.</p>
+    </section>
+  } @else {
+    <section>
+      <h2>Angaben zum Anbieter</h2>
+      <p class="placeholder">[Platzhalter — Name, Anschrift und Kontaktdaten des Anbieters folgen hier gemäß § 5 DDG.]</p>
+    </section>
+
+    <section>
+      <h2>Kontakt</h2>
+      <p class="placeholder">[Platzhalter — Kontaktmöglichkeit folgt hier.]</p>
+    </section>
+
+    <section>
+      <h2>Verantwortlich für den Inhalt</h2>
+      <p class="placeholder">[Platzhalter — verantwortliche Person nach § 18 Abs. 2 MStV folgt hier.]</p>
+    </section>
+  }
 </app-legal-page>

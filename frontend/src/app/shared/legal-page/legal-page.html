@@ -11,15 +11,29 @@
     <article class="legal-page">
       <h1>{{ title() }}</h1>
 
-      <div class="legal-warning">
-        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 9v4M12 17h.01" />
-          <path d="M10.3 3.9 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
-        </svg>
-        <p>
-          <strong>Platzhaltertext</strong> — noch nicht rechtsverbindlich. Er wird vor dem Start rechtlich geprüft und ersetzt.
-        </p>
-      </div>
+      @if (demo()) {
+        <!-- Testversion (GitHub Pages): die Texte gelten für die Demo ohne Konto, nicht für die spätere App -->
+        <div class="legal-warning legal-warning--demo">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 11v5M12 8h.01" />
+          </svg>
+          <p>
+            <strong>Gilt für die Testversion</strong> — die Demo mit Beispieldaten, ohne Konto. Bevor 4inOne mit Konten
+            startet, steht hier ein eigener, geprüfter Text.
+          </p>
+        </div>
+      } @else {
+        <div class="legal-warning">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 9v4M12 17h.01" />
+            <path d="M10.3 3.9 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+          </svg>
+          <p>
+            <strong>Platzhaltertext</strong> — noch nicht rechtsverbindlich. Er wird vor dem Start rechtlich geprüft und ersetzt.
+          </p>
+        </div>
+      }
 
       <div class="legal-page__content">
         <ng-content />

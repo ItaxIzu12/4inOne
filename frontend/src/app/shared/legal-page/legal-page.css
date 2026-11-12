@@ -93,6 +93,13 @@
 .legal-warning strong {
   font-weight: 700;
 }
+/* Testversion: neutrale Info statt Warnung – die Texte gelten, nur eben für die Demo */
+.legal-warning--demo {
+  background: var(--ground-2);
+}
+.legal-warning--demo svg {
+  color: var(--ink-soft);
+}
 
 .legal-page__content {
   display: flex;

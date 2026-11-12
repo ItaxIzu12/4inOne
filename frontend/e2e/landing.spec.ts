@@ -203,7 +203,22 @@ test('landing: nothing waits on motion; the product picture is visible at once, 
     await expect(page.locator(sel).first()).toHaveCSS('opacity', '1');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.reload();
-  expect(await page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running').length)).toBe(0);
+  // Namen statt Anzahl: schlägt es fehl, steht direkt da, was sich bewegt
+  // Gemeint ist Bewegung: reine Farbwechsel (Hintergrund, Schrift, Rand) beim Laden sind kein Bewegungsreiz
+  const running = await page.evaluate(() =>
+    document
+      .getAnimations()
+      .filter((a) => a.playState === 'running')
+      .filter((a) => !(a instanceof CSSTransition && /color|shadow/.test(a.transitionProperty)))
+      // „Bewegung reduzieren“ setzt Übergänge global auf 0,01 ms – Safari meldet die kurz als laufend, sichtbar ist nichts
+      .filter((a) => Number(a.effect?.getComputedTiming().duration ?? 0) >= 1)
+      .map((a) => {
+        const target = (a.effect as KeyframeEffect | null)?.target as Element | null;
+        const name = a instanceof CSSTransition ? a.transitionProperty : a instanceof CSSAnimation ? a.animationName : a.id;
+        return `${name} @ ${target?.tagName.toLowerCase()}.${target?.classList[0] ?? ''}`;
+      }),
+  );
+  expect(running).toEqual([]);
   await expect(page.locator('.stage__desk')).toBeVisible();
 });
 
@@ -244,6 +259,8 @@ test('landing: visitors link two entries themselves and see the line, the count 
   await expect(play.getByRole('button', { name: 'Ein Gerät' })).toHaveAttribute('aria-pressed', 'true');
   await expect(play.locator('.suggestions')).toContainText('Das Sparziel nennt das Gerät beim Namen.');
   await expect(play.locator('.sug--skipped')).toContainText('Neue Spülmaschine');
+  // Farbwechsel der Auswahlknöpfe erst ausklingen lassen – sonst misst axe eine Zwischenfarbe (fiel in WebKit auf)
+  await page.waitForFunction(() => document.getAnimations().every((a) => !(a instanceof CSSTransition) || a.playState !== 'running'));
   expect((await new AxeBuilder({ page }).include('#verknuepfen').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 });
 

@@ -22,6 +22,7 @@ describe('ChunkLoadRecovery', () => {
   let assign: ReturnType<typeof vi.fn>;
   let storage: Map<string, string>;
   let recovery: ChunkLoadRecovery;
+  let listeners: Map<string, () => void>;
 
   const chunkError = (url = '/demo/finanzen') =>
     new NavigationError(1, url, new TypeError('Failed to fetch dynamically imported module: /chunk-X.js'));
@@ -29,8 +30,10 @@ describe('ChunkLoadRecovery', () => {
   beforeEach(() => {
     assign = vi.fn();
     storage = new Map();
+    listeners = new Map();
     const fakeWindow = {
       location: { assign },
+      addEventListener: (type: string, fn: () => void) => listeners.set(type, fn),
       sessionStorage: { getItem: (k: string) => storage.get(k) ?? null, setItem: (k: string, v: string) => storage.set(k, v) },
     };
     TestBed.configureTestingModule({
@@ -46,6 +49,17 @@ describe('ChunkLoadRecovery', () => {
     recovery.handle(chunkError());
     expect(assign).toHaveBeenCalledWith('/4inOne/demo/finanzen');
     expect(recovery.failedUrl()).toBeNull();
+  });
+
+  it('kapert das Verlassen der Seite nicht: Abbruch beim Wegnavigieren ist kein Funkloch (Safari)', () => {
+    listeners.get('beforeunload')?.();
+    recovery.handle(chunkError());
+    expect(assign).not.toHaveBeenCalled();
+    expect(recovery.failedUrl()).toBeNull();
+    // aus dem Seiten-Cache zurück: wieder normal
+    listeners.get('pageshow')?.();
+    recovery.handle(chunkError());
+    expect(assign).toHaveBeenCalledWith('/4inOne/demo/finanzen');
   });
 
   it('zeigt beim zweiten Fehler kurz danach den Hinweis statt einer Neulade-Schleife', () => {

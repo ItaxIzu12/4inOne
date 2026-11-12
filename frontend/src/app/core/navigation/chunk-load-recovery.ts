@@ -25,9 +25,21 @@ export class ChunkLoadRecovery {
   private readonly location = inject(Location);
   /** Adresse, die nicht geladen werden konnte. Solange gesetzt, zeigt app-reload-notice den Hinweis. */
   readonly failedUrl = signal<string | null>(null);
+  /** Die Seite wird gerade verlassen (Link nach außen, Neuladen, Adresse getippt). Safari bricht dann laufende
+   * Nachlade-Vorgänge mit „Importing a module script failed“ ab – das ist kein Funkloch, und ein Neuladen der alten
+   * Adresse würde den Weg der Person kapern. */
+  private leaving = false;
+
+  constructor() {
+    const win = this.doc.defaultView;
+    win?.addEventListener?.('beforeunload', () => (this.leaving = true));
+    win?.addEventListener?.('pagehide', () => (this.leaving = true));
+    // Zurück aus dem Seiten-Cache (bfcache) oder Verlassen abgebrochen: wieder normal reagieren
+    win?.addEventListener?.('pageshow', () => (this.leaving = false));
+  }
 
   handle(event: NavigationError): void {
-    if (!isChunkLoadError(event.error)) return;
+    if (!isChunkLoadError(event.error) || this.leaving) return;
     const target = this.location.prepareExternalUrl(event.url);
     const win = this.doc.defaultView;
     if (win && this.mayReloadAutomatically(win)) {

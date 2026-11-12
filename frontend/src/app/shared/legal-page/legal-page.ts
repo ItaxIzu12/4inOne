@@ -1,6 +1,7 @@
 import { Component, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { PublicShell } from '../public-shell/public-shell';
+import { DEMO_ONLY } from '../../core/demo-only';
 
 /**
  * Gemeinsames Grundgerüst für alle vier Rechtsseiten (Impressum,
@@ -20,6 +21,8 @@ import { PublicShell } from '../public-shell/public-shell';
 })
 export class LegalPage {
   readonly title = input.required<string>();
+  /** Testversion (GitHub Pages): Hinweis „Gilt für die Testversion“ statt „Platzhaltertext“. Seiten reichen ihn durch. */
+  readonly demo = input(DEMO_ONLY);
   /** Die vier Rechtsseiten — Navigation daneben, damit man nicht über den Fuß springen muss. */
   readonly pages = [
     { path: '/impressum', label: 'Impressum' },

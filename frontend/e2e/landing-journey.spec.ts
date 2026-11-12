@@ -164,6 +164,8 @@ for (const [label, width, height] of [['Handy', 390, 844], ['Rechner', 1440, 900
         await page.goto(href);
         await expect(page.getByRole('heading', { level: 1 }), href).toBeVisible();
         await expect(page.getByText('Diese Seite gibt es nicht.'), href).toHaveCount(0);
+        // erst weiter, wenn nichts mehr nachlädt – Safari meldet sonst abgebrochene Nachlade-Vorgänge als Fehler
+        await page.waitForLoadState('networkidle');
       }
       // Keine externen Links, die ohne Schutz ein neues Fenster öffnen
       await page.goto('/');
@@ -214,7 +216,9 @@ for (const width of [320, 640, 768, 1024]) {
   });
 }
 
-test('nur mit der Tastatur: vom Seitenanfang über die Probe in die Demo', async ({ page }) => {
+test('nur mit der Tastatur: vom Seitenanfang über die Probe in die Demo', async ({ page, isMobile }) => {
+  // Am iPhone gibt es keine Tab-Taste; Safari springt per Tab ohnehin nur zwischen Formularfeldern
+  test.skip(isMobile, 'Tastatur-Weg nur am Rechner');
   await visitor(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -290,7 +294,8 @@ test('öffentliche Seiten kommen fertig gerendert, ohne Inline-Skript und ohne p
 });
 
 // Hover am Rechner (nur Zugabe, nie Pflicht): Vorschau der Verbindung, wandernde Tab-Markierung, Pfeil im Hauptknopf.
-test('am Rechner zeigt Überfahren, was passieren würde — ohne etwas zu entscheiden', async ({ page }) => {
+test('am Rechner zeigt Überfahren, was passieren würde — ohne etwas zu entscheiden', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'Touch-Geräte haben kein Überfahren');
   await visitor(page);
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/');

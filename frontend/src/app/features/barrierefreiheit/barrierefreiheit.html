@@ -1,16 +1,50 @@
-<app-legal-page title="Barrierefreiheitserklärung">
-  <section>
-    <h2>Geltungsbereich</h2>
-    <p class="placeholder">[Platzhalter — Geltungsbereich dieser Erklärung folgt hier.]</p>
-  </section>
+<app-legal-page title="Barrierefreiheitserklärung" [demo]="demo">
+  @if (demo) {
+    <section>
+      <h2>Ziel</h2>
+      <p>
+        4inOne soll für alle gut nutzbar sein – mit Tastatur, mit Bildschirmleser, am Handy und mit vergrößerter Schrift.
+        Maßstab ist WCAG 2.2 auf Stufe AA.
+      </p>
+    </section>
 
-  <section>
-    <h2>Stand der Vereinbarkeit</h2>
-    <p class="placeholder">[Platzhalter — Ergebnis eines WCAG-2.1-AA-Audits (EN 301 549) folgt hier.]</p>
-  </section>
+    <section>
+      <h2>Was schon geprüft wird</h2>
+      <ul>
+        <li>Automatische Prüfungen mit axe in den Browser-Tests der App, bei jeder Änderung.</li>
+        <li>Bedienung per Tastatur mit sichtbarem Fokus, Beschriftungen für Knöpfe ohne Text.</li>
+        <li>Große Tippflächen am Handy und weniger Bewegung, wenn du das im System eingestellt hast.</li>
+      </ul>
+    </section>
 
-  <section>
-    <h2>Feedback und Kontakt</h2>
-    <p class="placeholder">[Platzhalter — Kontaktmöglichkeit für Barrierefreiheits-Feedback folgt hier.]</p>
-  </section>
+    <section>
+      <h2>Was noch fehlt</h2>
+      <ul>
+        <li>Ein Test mit echten Bildschirmlesern (VoiceOver, TalkBack) durch Menschen, die sie täglich nutzen.</li>
+        <li>Ein unabhängiger Prüfbericht.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Feedback und Kontakt</h2>
+      <p>
+        Stößt du auf eine Hürde? Sag es der Person, die dir den Link geschickt hat, oder schreib über <a [href]="feedbackUrl" target="_blank" rel="noopener noreferrer">GitHub (Rückmeldungen zu 4inOne)</a>.
+      </p>
+    </section>
+  } @else {
+    <section>
+      <h2>Geltungsbereich</h2>
+      <p class="placeholder">[Platzhalter — Geltungsbereich dieser Erklärung folgt hier.]</p>
+    </section>
+
+    <section>
+      <h2>Stand der Vereinbarkeit</h2>
+      <p class="placeholder">[Platzhalter — Ergebnis eines WCAG-2.1-AA-Audits (EN 301 549) folgt hier.]</p>
+    </section>
+
+    <section>
+      <h2>Feedback und Kontakt</h2>
+      <p class="placeholder">[Platzhalter — Kontaktmöglichkeit für Barrierefreiheits-Feedback folgt hier.]</p>
+    </section>
+  }
 </app-legal-page>

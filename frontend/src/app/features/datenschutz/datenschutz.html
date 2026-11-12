@@ -1,39 +1,93 @@
-<app-legal-page title="Datenschutzerklärung">
-  <section>
-    <h2>Verantwortliche Stelle</h2>
-    <p class="placeholder">[Platzhalter — Name und Kontaktdaten der verantwortlichen Stelle folgen hier.]</p>
-  </section>
+<app-legal-page title="Datenschutzerklärung" [demo]="demo">
+  @if (demo) {
+    <section>
+      <h2>Kurz gesagt</h2>
+      <p>
+        Die Demo braucht keine Anmeldung und schickt nichts von dem, was du eingibst, an einen Server. Was du anlegst oder
+        änderst, ändert nur die Beispieldaten in deinem Browser – nach dem Neuladen ist alles wieder wie vorher.
+      </p>
+    </section>
 
-  <section>
-    <h2>Verarbeitete Daten</h2>
-    <p class="placeholder">[Platzhalter — Übersicht über verarbeitete Daten, Zwecke und Rechtsgrundlagen folgt hier, sobald Registrierung und Login live sind.]</p>
-  </section>
+    <section>
+      <h2>Hosting bei GitHub Pages</h2>
+      <p>
+        Die Seite liegt bei GitHub Pages (GitHub, Inc., USA, ein Unternehmen von Microsoft). Beim Aufruf verarbeitet GitHub
+        technisch nötige Daten, vor allem deine IP-Adresse, zum Beispiel in Server-Protokollen für die Sicherheit. Auf
+        diese Daten hat 4inOne keinen Zugriff. Mehr dazu in der
+        <a [href]="githubPrivacyUrl" target="_blank" rel="noopener noreferrer">Datenschutzerklärung von GitHub</a>.
+      </p>
+    </section>
 
-  <section>
-    <h2>Ortsvorschläge</h2>
-    <p class="placeholder">
-      [Platzhalter — Fakten für den finalen Text: Beim Tippen in ein Ort-Feld (Termine, Reiseziel, Abreiseort) schlägt
-      4inOne zuerst Orte vor, die du selbst schon eingetragen hast; diese verlassen 4inOne nicht. Ab 3 Zeichen sendet
-      der 4inOne-Server nur den eingegebenen Suchtext an den Dienst „Photon“ der komoot GmbH (Kartendaten von
-      OpenStreetMap). Der Dienst erhält weder deine IP-Adresse noch Name, E-Mail-Adresse oder Konto. Suchergebnisse
-      werden bis zu 24 Stunden zwischengespeichert. Die Funktion lässt sich serverseitig abschalten.]
-    </p>
-  </section>
+    <section>
+      <h2>Was dein Browser speichert</h2>
+      <ul>
+        <li>Keine Cookies, kein Tracking, keine Analyse-Dienste.</li>
+        <li>Keine fremden Schriften oder Dienste: Alle Dateien kommen von GitHub Pages.</li>
+        <li>
+          Ein paar Ansichtseinstellungen merkt sich dein Browser lokal, etwa Liste oder Kacheln in der Einkaufsliste,
+          die Gruppierung der Aufgaben und ausgeblendete Hinweise in Finanzen. Sie werden nicht übertragen; du löschst
+          sie mit den Website-Daten in deinem Browser.
+        </li>
+        <li>
+          Nach einem Ladefehler setzt die Seite kurz einen technischen Merker, damit sie höchstens einmal von selbst neu
+          lädt. Er verschwindet, wenn du den Tab schließt.
+        </li>
+      </ul>
+    </section>
 
-  <section id="beta">
-    <h2>Rückmeldungen im Beta-Test</h2>
-    <p class="placeholder">
-      [Platzhalter — Fakten für den finalen Text: Während eines Beta-Tests kann die Funktion „Feedback geben“ im
-      Kontomenü eingeschaltet sein. Gespeichert werden nur die Antworten im Formular (Bereich, Aufgabe, Bewertungen,
-      Freitext), dein Konto und der Pfad der Seite, auf der du warst (ohne Adresszusätze). Die Angaben sind freiwillig
-      und dienen nur der Auswertung des Tests; ausgewertet wird pseudonymisiert (P1, P2 …), Testpersonen sehen keine
-      fremden Rückmeldungen. Gelöscht werden sie mit deinem Konto, spätestens nach 180 Tagen. Kein Weitergeben an
-      Dritte, keine Analyse-Dienste.]
-    </p>
-  </section>
+    <section>
+      <h2>Kontakt und deine Rechte</h2>
+      <p>
+        Fragen zum Datenschutz an die Person, die dir den Link geschickt hat, oder über <a [href]="feedbackUrl" target="_blank" rel="noopener noreferrer">GitHub (Rückmeldungen zu 4inOne)</a>. Für die
+        Server-Protokolle ist GitHub zuständig; dort kannst du Auskunft, Berichtigung und Löschung verlangen. Außerdem
+        darfst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren.
+      </p>
+    </section>
 
-  <section>
-    <h2>Deine Rechte</h2>
-    <p class="placeholder">[Platzhalter — Betroffenenrechte (Auskunft, Berichtigung, Löschung, Einschränkung) folgen hier.]</p>
-  </section>
+    <section>
+      <h2>Später, mit Konten</h2>
+      <p>
+        Für die App mit Konten folgt eine eigene Datenschutzerklärung – mit allem, was dann gespeichert wird, zum Beispiel
+        Konto, Einträge, Ortsvorschläge und Rückmeldungen im Beta-Test.
+      </p>
+    </section>
+  } @else {
+    <section>
+      <h2>Verantwortliche Stelle</h2>
+      <p class="placeholder">[Platzhalter — Name und Kontaktdaten der verantwortlichen Stelle folgen hier.]</p>
+    </section>
+
+    <section>
+      <h2>Verarbeitete Daten</h2>
+      <p class="placeholder">[Platzhalter — Übersicht über verarbeitete Daten, Zwecke und Rechtsgrundlagen folgt hier, sobald Registrierung und Login live sind.]</p>
+    </section>
+
+    <section>
+      <h2>Ortsvorschläge</h2>
+      <p class="placeholder">
+        [Platzhalter — Fakten für den finalen Text: Beim Tippen in ein Ort-Feld (Termine, Reiseziel, Abreiseort) schlägt
+        4inOne zuerst Orte vor, die du selbst schon eingetragen hast; diese verlassen 4inOne nicht. Ab 3 Zeichen sendet
+        der 4inOne-Server nur den eingegebenen Suchtext an den Dienst „Photon“ der komoot GmbH (Kartendaten von
+        OpenStreetMap). Der Dienst erhält weder deine IP-Adresse noch Name, E-Mail-Adresse oder Konto. Suchergebnisse
+        werden bis zu 24 Stunden zwischengespeichert. Die Funktion lässt sich serverseitig abschalten.]
+      </p>
+    </section>
+
+    <section id="beta">
+      <h2>Rückmeldungen im Beta-Test</h2>
+      <p class="placeholder">
+        [Platzhalter — Fakten für den finalen Text: Während eines Beta-Tests kann die Funktion „Feedback geben“ im
+        Kontomenü eingeschaltet sein. Gespeichert werden nur die Antworten im Formular (Bereich, Aufgabe, Bewertungen,
+        Freitext), dein Konto und der Pfad der Seite, auf der du warst (ohne Adresszusätze). Die Angaben sind freiwillig
+        und dienen nur der Auswertung des Tests; ausgewertet wird pseudonymisiert (P1, P2 …), Testpersonen sehen keine
+        fremden Rückmeldungen. Gelöscht werden sie mit deinem Konto, spätestens nach 180 Tagen. Kein Weitergeben an
+        Dritte, keine Analyse-Dienste.]
+      </p>
+    </section>
+
+    <section>
+      <h2>Deine Rechte</h2>
+      <p class="placeholder">[Platzhalter — Betroffenenrechte (Auskunft, Berichtigung, Löschung, Einschränkung) folgen hier.]</p>
+    </section>
+  }
 </app-legal-page>

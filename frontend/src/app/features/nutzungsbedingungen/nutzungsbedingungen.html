@@ -1,16 +1,55 @@
-<app-legal-page title="Nutzungsbedingungen">
-  <section>
-    <h2>Geltungsbereich</h2>
-    <p class="placeholder">[Platzhalter — Geltungsbereich der Nutzungsbedingungen folgt hier.]</p>
-  </section>
+<app-legal-page title="Nutzungsbedingungen" [demo]="demo">
+  @if (demo) {
+    <section>
+      <h2>Testversion, kostenlos und ohne Gewähr</h2>
+      <p>
+        Die Demo darfst du kostenlos ausprobieren und weitergeben. Sie ist eine Testversion: Funktionen können sich
+        ändern, fehlen oder Fehler haben, und die Seite kann jederzeit offline gehen.
+      </p>
+    </section>
 
-  <section>
-    <h2>Nutzungsrechte und Pflichten</h2>
-    <p class="placeholder">[Platzhalter — Rechte und Pflichten bei der Nutzung von Kompass folgen hier.]</p>
-  </section>
+    <section>
+      <h2>Beispieldaten</h2>
+      <p>
+        Alle Personen, Beträge, Termine und Reisen sind erfunden. Ähnlichkeiten mit echten Menschen sind Zufall. Die
+        Zahlen sind keine Finanz-, Steuer- oder Rechtsberatung.
+      </p>
+    </section>
 
-  <section>
-    <h2>Copyright</h2>
-    <p class="placeholder">[Platzhalter — Urheberrechtshinweise folgen hier.]</p>
-  </section>
+    <section>
+      <h2>Rechte</h2>
+      <p>
+        Name, Gestaltung, Texte und Code von 4inOne gehören dem Projekt. Dass der Code auf GitHub öffentlich lesbar ist,
+        erlaubt noch nicht, ihn weiterzuverwenden.
+      </p>
+    </section>
+
+    <section>
+      <h2>Später, mit Konten</h2>
+      <p>Für die App mit Konten gelten eigene Nutzungsbedingungen. Sie stehen hier vor dem Start.</p>
+    </section>
+
+    <section>
+      <h2>Kontakt</h2>
+      <p>
+        Fragen an die Person, die dir den Link geschickt hat, oder über
+        <a [href]="feedbackUrl" target="_blank" rel="noopener noreferrer">GitHub (Rückmeldungen zu 4inOne)</a>.
+      </p>
+    </section>
+  } @else {
+    <section>
+      <h2>Geltungsbereich</h2>
+      <p class="placeholder">[Platzhalter — Geltungsbereich der Nutzungsbedingungen folgt hier.]</p>
+    </section>
+
+    <section>
+      <h2>Nutzungsrechte und Pflichten</h2>
+      <p class="placeholder">[Platzhalter — Rechte und Pflichten bei der Nutzung von 4inOne folgen hier.]</p>
+    </section>
+
+    <section>
+      <h2>Copyright</h2>
+      <p class="placeholder">[Platzhalter — Urheberrechtshinweise folgen hier.]</p>
+    </section>
+  }
 </app-legal-page>

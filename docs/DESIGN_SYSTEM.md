@@ -254,6 +254,10 @@ Abstand — nie nur über Farbe.
   68 ch, Links Evergreen, Platzhalter-Hinweis in Ocker-Tönung (Radius 20, ohne Emoji); ≤ 900 px Navigation als
   wischbare Pillen über dem Blatt (aktuelle Seite in Forest). Kopf der Unterseiten mit feiner Linie wie die Startseite.
   axe (2.2 AA + Best Practice) ohne Befund auf /, den vier Rechtsseiten und 404, 1440 und 390 px.
+  Testversion (11.11.2026): `LegalPage` hat den Eingang `demo` (Standard `DEMO_ONLY`); im Pages-Build zeigen die vier
+  Seiten Demo-Texte (`@if (demo)`), der Hinweis wird zu `.legal-warning--demo` („Gilt für die Testversion“, Sage
+  `--ground-2`, Info-Kreis in `--ink-soft`). Kontakt-Links aus `shared/legal-page/demo-contact.ts`. Platzhalter der
+  App-Fassung unverändert (dort „§ 18 Abs. 2 MStV“ statt veraltet „§ 55 RStV“, „Kompass“ → „4inOne“).
 - **„Soft Editorial“ – neue Farbidentität für App und Website (22.10.2026, Nutzerwahl):** Neutral
   Porcelain `#F7F7F4`, Weiß, Sage `#ECEFEA`, Deep Forest `#172523` (Text, Knöpfe, dunkle Bänder), Linien `#DDE1DA`,
   Sekundärtext `#4F5D59`, Feldrand `#879189`; Akzent Evergreen `#17694F` (Links/Fortschritt, nicht Knöpfe). Bereichs-

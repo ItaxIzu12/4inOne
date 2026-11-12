@@ -185,3 +185,45 @@ Laut `docs/BETA_TEST_PLAN.md` vor der ersten Einladung außerdem: Mailversand, K
 - Doku: `DESIGN.md`, `docs/DESIGN_SYSTEM.md`, `docs/audits/AUDIT_2026-11-11_GESAMT.md`, dieser Bericht
 
 Nichts committet, nichts gepusht, nichts veröffentlicht.
+
+---
+
+## 9. Nachtrag (11.11.2026, abends): Demo-Rechtstexte und Testlücken
+
+Anlass: Kritische Prüfung der veröffentlichten Demo (`/ui-taste`) und die Frage, ob alle Testfälle abgedeckt sind.
+
+**Rechtsseiten der Testversion.** Im GitHub-Pages-Build zeigen Impressum, Datenschutz, Nutzungsbedingungen und
+Barrierefreiheit jetzt echte Kurztexte statt Platzhaltern. Sie beschreiben, was die Demo wirklich tut (keine Cookies,
+keine fremden Dienste, nur Ansichtseinstellungen im Browser, Hosting bei GitHub mit IP-Protokollen) und nennen als
+Kontakt nur die öffentlichen GitHub-Issues. In der App mit Konten bleiben die Platzhalter, bis ein geprüfter Text
+vorliegt. Korrigiert: „§ 55 RStV“ → „§ 18 Abs. 2 MStV“, „Kompass“ → „4inOne“. Keine Rechtsberatung: Vor einem Betrieb
+mit echten Nutzerdaten sollte jemand mit Rechtskenntnis drüberschauen.
+
+**Safari/iPhone.** Neues Playwright-Projekt `mobile-safari` (WebKit, iPhone 15) für Startseite, Rechtsseiten, Demo
+und Handy-Bedienung. Gefunden und behoben:
+- Echter Fehler: Verließ man die Seite, während ein Bereich nachlud, meldete Safari einen Ladefehler, und
+  `ChunkLoadRecovery` lud daraufhin die alte Seite neu, kaperte also den Weg der Person. Jetzt wird beim Verlassen
+  (`beforeunload`/`pagehide`) nichts mehr neu geladen; Test ergänzt.
+- Tests, die nur am Rechner Sinn haben (Tab-Taste, Überfahren), laufen am iPhone nicht mehr; Demo-Tests öffnen
+  Bereiche über die sichtbare Navigation statt über die Karten; axe misst erst nach dem Farbübergang.
+
+**CI.** `.github/workflows/tests.yml` läuft bei jedem Push und Pull Request: Backend (check, fehlende Migrationen,
+pytest, pip-audit), Frontend (Vitest, Build, Pages-Build), Browser (Chromium komplett + iPhone/Safari) und Full-Stack.
+Kostenlos, solange das Repository öffentlich ist. Lokal unter CI-Bedingungen (ohne `.env`) nachgestellt.
+
+**Full-Stack.** `playwright.fullstack.config.ts` + `e2e-fullstack/kernablauf.spec.ts`: echte Oberfläche gegen echtes
+Django mit frischer Test-Datenbank unter `frontend/test-results/` (nie `backend/db.sqlite3`). Ablauf: zwei Konten
+registrieren, Aufgabe speichern (201), nach dem Neuladen noch da, zweite Person sieht sie nicht, API antwortet für die
+fremde ID mit 404, ohne Anmeldung 401 und Weiterleitung zur Anmeldung. Bestanden.
+
+**Ergebnisse dieses Nachtrags:** Frontend-Unit 76 Dateien / 493 Tests grün; Browser-Tests Chromium 356 +
+iPhone/Safari 66 grün (2 bewusst übersprungen: Tab-Taste, Überfahren), Safari-Teil mehrfach wiederholt; Full-Stack 1/1
+grün; Backend unter CI-Bedingungen ohne `.env` 1124/1125 (der eine liest `frontend/src/styles.css`, das in der reinen
+Backend-Kopie fehlte; in der CI ist das ganze Repository da). `backend/db.sqlite3` von den Tests unberührt (zuletzt
+geändert durch die Migration 0023 um 22:14).
+
+**Nicht erledigt, bewusst:**
+- Dunkelmodus: keine Testlücke, sondern ein Design-Projekt. Über 1 100 Farbwerte stehen direkt in Komponenten; erst
+  auf Tokens umstellen, dann Bereich für Bereich dunkle Werte festlegen und prüfen. Braucht eine eigene Freigabe.
+- Echte Geräte: WebKit im Test ersetzt kein iPhone. Einmal selbst am iPhone (Safari) und an einem Android-Gerät
+  durchklicken: Startseite → Demo → alle vier Bereiche → Rechtsseiten.

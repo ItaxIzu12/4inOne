@@ -1,0 +1,112 @@
+# Alle automatischen Tests bei jedem Push und Pull Request auf main: Backend (pytest), Frontend (Vitest, Build) und
+# Browser-Tests (Playwright: Chromium komplett, iPhone/Safari für Startseite, Rechtsseiten und Demo).
+# Kostenlos, solange das Repository öffentlich ist. Die Demo (pages.yml) bleibt ein eigener, manueller Schritt.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # Nur für den Testlauf – kein echtes Geheimnis, jede Ausführung bekommt eine frische Test-Datenbank.
+      # DEBUG=True wie lokal: mit False leitet Django jede Testanfrage auf HTTPS um (SECURE_SSL_REDIRECT).
+      SECRET_KEY: ci-only-not-a-secret
+      DEBUG: 'True'
+      FX_FETCH_ENABLED: 'False'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - run: python manage.py check
+      - run: python manage.py makemigrations --check --dry-run
+      - run: python -m pytest -q -p no:cacheprovider
+      - run: pip-audit -r requirements.txt
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx ng test --watch=false
+      - run: npx ng build
+      - run: npm run build:pages
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright test --reporter=line
+        env:
+          CI: 'true'
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-ergebnisse
+          path: frontend/test-results/
+          retention-days: 7
+
+  fullstack:
+    # Echte Oberfläche gegen echtes Django (frische SQLite-Testdatenbank): Konto, Aufgabe, Neuladen, Fremdzugriff
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r ../backend/requirements.txt
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test -c playwright.fullstack.config.ts --reporter=line
+        env:
+          CI: 'true'
+          PYTHON: python
