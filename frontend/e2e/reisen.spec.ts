@@ -460,6 +460,8 @@ test('Ausgabe: Fehler erst nach „Ausgabe speichern“, live korrigiert; Abbrec
 });
 
 test('alle Ansichten passen bei 360, 390, 430, Tablet und Desktop ohne Querscrollen und sind barrierearm', async ({ page }) => {
+  // 5 Ansichten × 5 Breiten mit axe: allein ~21 s, im vollen Lauf mit zwei Browsern knapp über 30 s
+  test.setTimeout(90_000);
   await page.route('http://localhost:8000/api/**', (r) => r.abort());
   const paths = ['', '?trip=1', '?trip=1&tab=planung', '?trip=1&tab=packliste', '?trip=1&tab=budget'];
   for (const width of [360, 390, 430, 820, 1440]) {
