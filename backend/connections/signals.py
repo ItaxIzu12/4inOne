@@ -50,7 +50,7 @@ def _connect_auto_link_cleanup():
                         sender=FolderEntry, weak=False, dispatch_uid='auto-links-contract')
     post_delete.connect(_remove_auto_links([AutoKind.DEVICE_MAINTENANCE], FolderEntry.Kind.DEVICE),
                         sender=FolderEntry, weak=False, dispatch_uid='auto-links-device')
-    post_delete.connect(_remove_auto_links([AutoKind.TRIP_CALENDAR]), sender=Trip, weak=False, dispatch_uid='auto-links-trip')
+    post_delete.connect(_remove_auto_links([AutoKind.TRIP_CALENDAR, AutoKind.TRIP_ITINERARY]), sender=Trip, weak=False, dispatch_uid='auto-links-trip')
     post_delete.connect(_remove_auto_links([AutoKind.SAVINGS_REMINDER]), sender=SavingsGoal, weak=False, dispatch_uid='auto-links-goal')
     post_delete.connect(_remove_auto_links([AutoKind.HOUSEHOLD_TASKS]), sender=Household, weak=False, dispatch_uid='auto-links-household')
 

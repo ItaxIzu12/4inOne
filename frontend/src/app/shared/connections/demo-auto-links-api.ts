@@ -4,6 +4,13 @@ import { HAUSHALT_DATA_PROVIDER } from '../../features/haushalt/haushalt-data-pr
 import { FolderEntryDto } from '../../features/haushalt/haushalt-api.service';
 import { PrivateFinanceApi } from '../../features/finanzen/data/private-finance-api.service';
 import { ReisenApi } from '../../features/reisen/reisen-api.service';
+import { TRANSPORT_LABELS } from '../../features/reisen/reisen-logic';
+
+/** Reiseart wie im Backend (reisen.models.Trip.TravelType) – für „Städtereise · Zug“ am Reisebalken. */
+const TRAVEL_TYPE_LABEL: Record<string, string> = {
+  CITY_TRIP: 'Städtereise', BEACH: 'Strandurlaub', BUSINESS: 'Geschäftsreise', ROAD_TRIP: 'Roadtrip',
+  ACTIVE: 'Aktivurlaub', WINTER: 'Wintersport', FAMILY: 'Familienreise', GENERAL: 'Allgemein',
+};
 import {
   AutoPreview,
   ContractFacts,
@@ -17,6 +24,7 @@ import {
   savingsReminder,
   savingsReminderDay,
   tripCalendar,
+  tripItinerary,
 } from './auto-link-rules';
 import { AutoKind, AutoLinkState, AutoSourceType, AutoStatus, DerivedCalendarItem, LinkedHouseholdTask } from './auto-links-api.service';
 
@@ -30,7 +38,7 @@ interface DemoLink {
 const KINDS_FOR: Record<AutoSourceType, AutoKind[]> = {
   CONTRACT: ['CONTRACT_FINANCE', 'CONTRACT_REMINDER'],
   DEVICE: ['DEVICE_MAINTENANCE'],
-  TRIP: ['TRIP_CALENDAR'],
+  TRIP: ['TRIP_CALENDAR', 'TRIP_ITINERARY'],
   SAVINGS_GOAL: ['SAVINGS_REMINDER'],
   HOUSEHOLD: ['HOUSEHOLD_TASKS'],
 };
@@ -39,6 +47,7 @@ const LABEL: Record<AutoKind, string> = {
   CONTRACT_REMINDER: 'Kündigungserinnerung',
   DEVICE_MAINTENANCE: 'Wartungserinnerung',
   TRIP_CALENDAR: 'Reisezeitraum im Kalender',
+  TRIP_ITINERARY: 'Tagesablauf im Kalender',
   SAVINGS_REMINDER: 'Sparziel-Erinnerung',
   HOUSEHOLD_TASKS: 'Haushaltsaufgaben in Organisation',
 };
@@ -60,6 +69,7 @@ export class DemoAutoLinksApi {
     { id: 2, kind: 'CONTRACT_REMINDER', source: 'demo-folder-10', status: 'ACTIVE' },
     { id: 3, kind: 'DEVICE_MAINTENANCE', source: 'demo-folder-2', status: 'ACTIVE' },
     { id: 4, kind: 'TRIP_CALENDAR', source: '1', status: 'ACTIVE' },
+    { id: 5, kind: 'TRIP_ITINERARY', source: '1', status: 'ACTIVE' },
   ];
 
   // ---------- Quellen aus den anderen Demo-Bereichen (synchron: Demo-Observables liefern sofort) ----------
@@ -73,6 +83,9 @@ export class DemoAutoLinksApi {
   }
   private trips() {
     return this.sync(this.injector.get(ReisenApi).trips(), []);
+  }
+  private tripEvents(tripId: number) {
+    return this.sync(this.injector.get(ReisenApi).events(tripId), []);
   }
   private goals() {
     const d = new Date();
@@ -100,6 +113,10 @@ export class DemoAutoLinksApi {
       case 'TRIP_CALENDAR': {
         const t = this.trips().find((x) => String(x.id) === source);
         return t ? tripCalendar(t.title, t.start_date, t.end_date, t.status) : null;
+      }
+      case 'TRIP_ITINERARY': {
+        const t = this.trips().find((x) => String(x.id) === source);
+        return t ? tripItinerary(t.status, this.tripEvents(t.id).length) : null;
       }
       case 'SAVINGS_REMINDER': {
         const g = this.goals().find((x) => String(x.id) === source);
@@ -163,7 +180,17 @@ export class DemoAutoLinksApi {
     }
     for (const t of this.trips()) {
       if (active('TRIP_CALENDAR').includes(String(t.id)) && t.status !== 'CANCELLED' && t.start_date <= end && t.end_date >= start) {
-        items.push(this.item(`trip:${t.id}`, 'TRIP_CALENDAR', t.title, t.start_date, t.end_date, 'TRIP', t.id, 'reisen'));
+        const kindOfTrip = [t.travel_type ? TRAVEL_TYPE_LABEL[t.travel_type] : '', t.transport_type ? TRANSPORT_LABELS[t.transport_type] : ''].filter(Boolean).join(' · ');
+        items.push({ ...this.item(`trip:${t.id}`, 'TRIP_CALENDAR', t.title, t.start_date, t.end_date, 'TRIP', t.id, 'reisen'), location: t.destination, context: kindOfTrip });
+      }
+      // Tagesablauf: nur, was es gibt – Programmpunkte mit Uhrzeit
+      if (active('TRIP_ITINERARY').includes(String(t.id)) && t.status !== 'CANCELLED') {
+        for (const e of this.tripEvents(t.id)) {
+          const begins = new Date(e.starts_at);
+          const day = `${begins.getFullYear()}-${String(begins.getMonth() + 1).padStart(2, '0')}-${String(begins.getDate()).padStart(2, '0')}`;
+          if (!inRange(day)) continue;
+          items.push({ ...this.item(`trip-event:${e.id}`, 'TRIP_ITINERARY', e.title, day, null, 'TRIP', t.id, 'reisen'), all_day: false, starts_at: e.starts_at, ends_at: e.ends_at, location: e.location, context: t.title });
+        }
       }
     }
     for (const g of this.goals()) {

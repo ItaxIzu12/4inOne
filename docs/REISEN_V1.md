@@ -216,3 +216,19 @@ wo gebucht wurde. Alles wird selbst eingetragen; weiterhin keine Buchungs-, Flug
   zurück) und eine Frist 4 Tage vor der Abreise.
 - Tests: Backend (Art/Notiz, Rechte, Frist-Regeln), Unit (`itinerary`, `eventTime`, `cancellationInfo`, Reiter),
   Browser (Ablauf, Bearbeiten, Frist; alle Ansichten in 5 Breiten ohne Querscrollen, axe).
+
+## Reise im Kalender automatisch, Tagesablauf im Kalender (13.11.2026, Migration `connections/0005_auto_kind_trip_itinerary`)
+
+- **Neue Reise:** „Reisezeitraum im Kalender zeigen“ und **„Tagesablauf im Kalender zeigen“** sind im Dialog schon
+  eingeschaltet („Wird beim Speichern eingeschaltet“) und lassen sich vor dem Speichern abschalten. Bestehende Reisen
+  zeigen weiter ihren gespeicherten Stand (`app-auto-links` Eingang `defaultOn`).
+- **Tagesablauf im Kalender** (`AutoKind.TRIP_ITINERARY`, abgeleitet wie alle Verbindungen, keine Kopie): die
+  Programmpunkte aus „Ablauf“ mit Uhrzeit, Marke „Aus Reisen › Ablauf“, Reisefarbe; Klick öffnet `?trip=…&tab=ablauf`.
+  Ohne Programmpunkte erscheint nichts. Abgesagte Reisen: nichts.
+- **Keine Dopplung:** Ein Programmpunkt, der als eigener Termin mit gleichem Titel am gleichen Tag schon mit der Reise
+  verknüpft ist, erscheint nicht zusätzlich.
+- **Privatsphäre:** Wie jede Verbindung gehört sie einer Person und erscheint nur in deren eigenem Kalender; Rechte
+  der Reise werden bei jedem Lesen geprüft (aus der Reise entfernt → sofort weg). Mitreisende verbinden selbst.
+- **Speichern robust:** Scheitern nur die Verbindungen, bleibt die neue Reise gespeichert und es erscheint ein Hinweis
+  (vorher: „Reise konnte nicht gespeichert werden“ → zweiter Versuch hätte sie doppelt angelegt).
+- Budget › Ausgabe: Dialog mit „Abbrechen“ und „Speichern“ wie alle Dialoge (vorher „Ausgabe speichern“, brach um).

@@ -375,3 +375,99 @@ def test_a_linked_contract_replaces_a_recurring_booking_with_the_same_name_never
     _link(anna, 'CONTRACT_FINANCE', contract)
     after = [i for i in _client(anna).get(SUMMARY, {'month': _month(nxt)}).data['planned_items'] if i['title'] == 'Strom']
     assert [(i['kind'], i['amount']) for i in after] == [('CONTRACT', '84.00')]
+
+
+# --------------------------------------------------------------------------- Tagesablauf im Kalender (13.11.2026)
+
+
+def _at(day: date, hhmm: str):
+    from datetime import datetime
+
+    h, m = map(int, hhmm.split(':'))
+    return timezone.make_aware(datetime(day.year, day.month, day.day, h, m))
+
+
+def test_trip_itinerary_shows_program_points_with_time_only_when_linked_and_only_existing_ones(w):
+    from reisen.models import TripEvent
+
+    anna, today = w['anna'], timezone.localdate()
+    start = today + timedelta(days=10)
+    trip = Trip.objects.create(owner=anna, title='Berlin', destination='Berlin', start_date=start, end_date=start + timedelta(days=2))
+    # verbunden, aber noch ohne Programmpunkte: im Kalender nichts, die Vorschau sagt, was kommt
+    state = _link(anna, 'TRIP_ITINERARY', trip.pk)
+    assert 'sobald du welche einträgst' in state['preview']
+    assert [i for i in _calendar(anna, today, today + timedelta(days=30)) if i['kind'] == 'TRIP_ITINERARY'] == []
+
+    TripEvent.objects.create(trip=trip, title='ICE nach Berlin', kind='TRANSPORT', starts_at=_at(start, '08:12'), ends_at=_at(start, '12:31'))
+    TripEvent.objects.create(trip=trip, title='Check-in', kind='STAY', starts_at=_at(start, '15:00'))
+    items = [i for i in _calendar(anna, today, today + timedelta(days=30)) if i['kind'] == 'TRIP_ITINERARY']
+    assert sorted(i['title'] for i in items) == ['Check-in', 'ICE nach Berlin']
+    ice = next(i for i in items if i['title'] == 'ICE nach Berlin')
+    assert ice['all_day'] is False and ice['date'] == start.isoformat() and ice['source_id'] == trip.pk
+    assert ice['starts_at'].startswith(start.isoformat()) and ice['ends_at']
+    check_in = next(i for i in items if i['title'] == 'Check-in')
+    assert check_in['ends_at'] is None
+    # Man sieht, zu welcher Reise der Punkt gehört; der Reisebalken sagt, was für eine Reise es ist
+    assert ice['context'] == 'Berlin'
+
+    states = _client(anna).get(AUTO, {'source_type': 'TRIP', 'source_id': trip.pk}).data
+    assert [s['kind'] for s in states] == ['TRIP_CALENDAR', 'TRIP_ITINERARY']
+    assert states[1]['preview'].startswith('Organisation › Kalender: 2 Programmpunkte mit Uhrzeit')
+
+    # Zeitraum der Abfrage zählt
+    assert [i for i in _calendar(anna, start + timedelta(days=1), start + timedelta(days=5)) if i['kind'] == 'TRIP_ITINERARY'] == []
+    # abgesagt: nichts
+    Trip.objects.filter(pk=trip.pk).update(status='CANCELLED')
+    assert [i for i in _calendar(anna, today, today + timedelta(days=30)) if i['kind'] == 'TRIP_ITINERARY'] == []
+
+
+def test_trip_itinerary_skips_points_that_already_exist_as_linked_own_calendar_events(w):
+    from connections.models import Connection, ObjectType
+    from reisen.models import TripEvent
+
+    anna, today = w['anna'], timezone.localdate()
+    start = today + timedelta(days=10)
+    trip = Trip.objects.create(owner=anna, title='Berlin', destination='Berlin', start_date=start, end_date=start + timedelta(days=2))
+    TripEvent.objects.create(trip=trip, title='Museumsinsel-Führung', starts_at=_at(start, '11:00'))
+    TripEvent.objects.create(trip=trip, title='Abendessen', kind='FOOD', starts_at=_at(start, '19:30'))
+    own = PersonalEvent.objects.create(owner=anna, title='Museumsinsel-Führung', starts_at=_at(start, '11:00'))
+    Connection.objects.create(source_type=ObjectType.CALENDAR_EVENT, source_id=own.pk, target_type=ObjectType.TRIP, target_id=trip.pk, created_by=anna)
+    _link(anna, 'TRIP_ITINERARY', trip.pk)
+    titles = [i['title'] for i in _calendar(anna, today, today + timedelta(days=30)) if i['kind'] == 'TRIP_ITINERARY']
+    assert titles == ['Abendessen']  # die Führung steht schon als eigener, verknüpfter Termin im Kalender
+
+
+def test_trip_itinerary_is_private_to_the_link_owner_and_follows_trip_access(w):
+    from reisen.models import TripEvent
+
+    anna, ben, dora, today = w['anna'], w['ben'], w['dora'], timezone.localdate()
+    start = today + timedelta(days=10)
+    trip = Trip.objects.create(owner=anna, title='Rom', destination='Rom', start_date=start, end_date=start + timedelta(days=1))
+    TripEvent.objects.create(trip=trip, title='Kolosseum', starts_at=_at(start, '10:00'))
+    _link(anna, 'TRIP_ITINERARY', trip.pk)
+    # Wer nicht mitreist, kann nichts verbinden und sieht nichts
+    _link(dora, 'TRIP_ITINERARY', trip.pk, expect=404)
+    assert _calendar(dora, today, today + timedelta(days=30)) == []
+    # Mitreisende sehen den Ablauf erst, wenn sie ihn selbst verbinden – und nicht mehr, sobald sie entfernt werden
+    participant = TripParticipant.objects.create(trip=trip, user=ben, role='VIEWER')
+    assert _calendar(ben, today, today + timedelta(days=30)) == []
+    _link(ben, 'TRIP_ITINERARY', trip.pk)
+    assert [i['title'] for i in _calendar(ben, today, today + timedelta(days=30))] == ['Kolosseum']
+    participant.delete()
+    assert _calendar(ben, today, today + timedelta(days=30)) == []
+    # Reise gelöscht: Verbindungen weg
+    trip.delete()
+    assert not AutoLink.objects.filter(kind='TRIP_ITINERARY').exists()
+
+
+def test_trip_span_says_what_kind_of_trip_it_is_and_where_it_goes(w):
+    anna, today = w['anna'], timezone.localdate()
+    trip = Trip.objects.create(owner=anna, title='Berlin Wochenende', destination='Berlin, Deutschland', travel_type='CITY_TRIP',
+                               transport_type='TRAIN', start_date=today + timedelta(days=10), end_date=today + timedelta(days=12))
+    _link(anna, 'TRIP_CALENDAR', trip.pk)
+    span = next(i for i in _calendar(anna, today, today + timedelta(days=30)) if i['kind'] == 'TRIP_CALENDAR')
+    assert (span['title'], span['context'], span['location']) == ('Berlin Wochenende', 'Städtereise · Zug', 'Berlin, Deutschland')
+    # ohne Reiseart und Verkehrsmittel: kein erfundener Zusatz
+    Trip.objects.filter(pk=trip.pk).update(travel_type='', transport_type='')
+    span = next(i for i in _calendar(anna, today, today + timedelta(days=30)) if i['kind'] == 'TRIP_CALENDAR')
+    assert span['context'] == ''

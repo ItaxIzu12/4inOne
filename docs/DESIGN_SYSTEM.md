@@ -258,6 +258,10 @@ Abstand — nie nur über Farbe.
   Seiten Demo-Texte (`@if (demo)`), der Hinweis wird zu `.legal-warning--demo` („Gilt für die Testversion“, Sage
   `--ground-2`, Info-Kreis in `--ink-soft`). Kontakt-Links aus `shared/legal-page/demo-contact.ts`. Platzhalter der
   App-Fassung unverändert (dort „§ 18 Abs. 2 MStV“ statt veraltet „§ 55 RStV“, „Kompass“ → „4inOne“).
+- **Tagesablauf im Kalender (13.11.2026):** `AutoKind` `TRIP_ITINERARY` (Backend `connections/auto_links.py`,
+  `DerivedItem` mit `starts_at/ends_at`, `all_day: false`); Frontend `derivedEvent()` baut daraus Termine mit Uhrzeit,
+  `DERIVED_LABEL` „Aus Reisen › Ablauf“, `.is-trip` auch für diese Art. `app-auto-links` neu mit Eingang `defaultOn`
+  (nur bei neuer Quelle). `app-modal-form` Ausgaben ohne eigenes `submitLabel`.
 - **Organisation › mehrtägige Termine (13.11.2026):** `spanPart(e, day)` (`organisation-logic.ts`) liefert Anfang/Mitte/
   Ende; `.ev--span/--start/--mid/--end` (Monat, Rand-Überstand −7 px), `.ev--label` mit `--span` (Tage bis Sonntag/Ende),
   `.ev--quiet` für Fortsetzungen, `.week__ev--span…` (Woche), `.cell__bar` (Monat ≤ 760 px), `.is-trip` setzt `--cat`

@@ -285,7 +285,7 @@
         </app-field>
       </div>
     }
-    <app-auto-links sourceType="TRIP" [sourceId]="editTripId() ?? null" [previews]="tripAutoPreview()" sourceLabel="Die Reise" />
+    <app-auto-links sourceType="TRIP" [sourceId]="editTripId() ?? null" [previews]="tripAutoPreview()" [defaultOn]="['TRIP_CALENDAR', 'TRIP_ITINERARY']" sourceLabel="Die Reise" />
     @if (editTripId()) {
       <app-connections objectType="TRIP" [objectId]="editTripId()!" />
     }
@@ -401,7 +401,6 @@
   icon="coins"
   [formGroup]="expenseForm"
   [title]="editExpenseId() ? 'Ausgabe bearbeiten' : 'Ausgabe hinzufügen'"
-  submitLabel="Ausgabe speichern"
   [open]="expenseEditor()"
   [saving]="expenseSaving()"
   [error]="expenseFormError()"

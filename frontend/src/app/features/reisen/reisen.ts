@@ -1,5 +1,5 @@
 import { AutoLinks } from '../../shared/connections/auto-links';
-import { tripCalendar } from '../../shared/connections/auto-link-rules';
+import { tripCalendar, tripItinerary } from '../../shared/connections/auto-link-rules';
 import { PlaceHit } from '../../core/places/places.service';
 import { PlaceInput } from '../../shared/form/place-input';
 import { SubmissionKey } from '../../shared/idempotency';
@@ -8,7 +8,7 @@ import { AmountInput } from '../../shared/directives/amount-input';
 import { Component, DestroyRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
@@ -267,7 +267,10 @@ export class Reisen {
   private readonly autoLinkBox = viewChild(AutoLinks);
   readonly tripAutoPreview = computed(() => {
     const v = this.tripValue();
-    return { TRIP_CALENDAR: tripCalendar(v.title.trim(), v.start_date || null, v.end_date || null, v.status) };
+    return {
+      TRIP_CALENDAR: tripCalendar(v.title.trim(), v.start_date || null, v.end_date || null, v.status),
+      TRIP_ITINERARY: tripItinerary(v.status, this.editTripId() && this.editTripId() === this.selectedTripId() ? this.events().length : 0),
+    };
   });
   /** Reiseziel — richtet die Unterkunft-Suche aus („Hotel Central“ in Berlin). */
   readonly tripDestination = computed(() => this.tripValue().destination);
@@ -356,7 +359,7 @@ export class Reisen {
     category: ['SONSTIGES'],
     note: ['', Validators.maxLength(240)],
   });
-  /** Fehler am Feld — erst nach „Ausgabe speichern“, danach live (siehe Field). */
+  /** Fehler am Feld — erst nach „Speichern“, danach live (siehe Field). */
   readonly expenseAmountError = signal('');
   readonly expenseValue = signal(this.expenseForm.getRawValue());
   readonly expenseAmountValue = computed(() => parseBudgetAmount(this.expenseValue().amount) || null);
@@ -666,7 +669,17 @@ export class Reisen {
         // Verbindungen erst nach der Reise (eine neue Reise braucht zuerst ihre ID)
         switchMap((saved) => {
           const links = this.autoLinkBox();
-          return links ? links.commit(saved.id).pipe(map(() => saved)) : of(saved);
+          // Die Reise ist gespeichert – scheitern nur die Verbindungen, darf das nicht wie ein Speicherfehler aussehen
+          // (sonst legt ein zweiter Versuch die Reise doppelt an)
+          return links
+            ? links.commit(saved.id).pipe(
+                map(() => saved),
+                catchError(() => {
+                  this.actionError.set('Die Reise ist gespeichert. Die Anzeige im Kalender ließ sich nicht einrichten – öffne „Bearbeiten“ und speichere noch einmal.');
+                  return of(saved);
+                }),
+              )
+            : of(saved);
         }),
         takeUntilDestroyed(this.destroy),
       )

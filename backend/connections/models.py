@@ -112,6 +112,7 @@ class AutoKind(models.TextChoices):
     HOUSEHOLD_TASKS = 'HOUSEHOLD_TASKS', 'Haushaltsaufgaben in Organisation'       # CON-03
     DEVICE_MAINTENANCE = 'DEVICE_MAINTENANCE', 'Wartungserinnerung'                # CON-04
     TRIP_CALENDAR = 'TRIP_CALENDAR', 'Reisezeitraum im Kalender'                   # CON-07
+    TRIP_ITINERARY = 'TRIP_ITINERARY', 'Tagesablauf im Kalender'                   # Programmpunkte mit Uhrzeit
     SAVINGS_REMINDER = 'SAVINGS_REMINDER', 'Sparziel-Erinnerung'                   # CON-10
 
 

@@ -1,4 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
+import { AutoLinksApi } from '../../shared/connections/auto-links-api.service';
+import { DemoAutoLinksApi } from '../../shared/connections/demo-auto-links-api';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
@@ -22,7 +24,14 @@ describe('Reisen V1 (Demo)', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Reisen],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: ReisenApi, useClass: DemoReisenApi }],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: ReisenApi, useClass: DemoReisenApi },
+        // Neue Reisen legen Zeitraum und Tagesablauf im Kalender gleich mit an – im Test mit der Demo-Logik
+        { provide: AutoLinksApi, useClass: DemoAutoLinksApi },
+      ],
     }).compileComponents();
   });
 
@@ -232,6 +241,11 @@ describe('Reisen V1 (Demo)', () => {
     await settle(fixture);
     expect(fixture.componentInstance.packing()).toEqual([]);
     expect(fixture.componentInstance.trips().some((t) => t.title === 'Wien' && t.status === 'PLANNED')).toBe(true);
+    // Automatisch im Kalender: Zeitraum und Tagesablauf sind bei einer neuen Reise gleich verbunden
+    const wien = fixture.componentInstance.trips().find((t) => t.title === 'Wien')!;
+    let kinds: string[] = [];
+    TestBed.inject(AutoLinksApi).states('TRIP', wien.id).subscribe((states) => (kinds = states.filter((st) => st.link_id && st.status === 'ACTIVE').map((st) => st.kind)));
+    expect(kinds).toEqual(['TRIP_CALENDAR', 'TRIP_ITINERARY']);
   });
 
   it('an overlap is explained, "Daten prüfen" returns to the form, "Trotzdem speichern" saves', async () => {

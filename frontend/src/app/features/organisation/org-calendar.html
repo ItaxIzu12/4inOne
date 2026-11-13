@@ -50,11 +50,11 @@
                 @let part = span(e, d.key);
                 <span
                   class="ev"
-                  [class]="'ev cat-' + (e.category ?? 'sonstiges') + (e.derived?.kind === 'TRIP_CALENDAR' ? ' is-trip' : '') + (part ? ' ev--span ev--' + part : '')"
+                  [class]="'ev cat-' + (e.category ?? 'sonstiges') + (isTrip(e) ? ' is-trip' : '') + (part ? ' ev--span ev--' + part : '')"
                   [class.ev--quiet]="!spanLabel(e, d.key)"
                   [class.ev--label]="!!part && spanLabel(e, d.key)"
                   [style.--span]="part && spanLabel(e, d.key) ? spanDays(e, d.key) : null"
-                ><span class="ev__text">{{ e.title }}</span></span>
+                ><span class="ev__text">@if (isTrip(e)) {<app-icon class="ev__icon" name="travel" aria-hidden="true" />}{{ e.title }}</span></span>
               }
               @if (d.events.length > 2) {
                 <span class="ev ev--more">+{{ d.events.length - 2 }} weitere</span>
@@ -86,10 +86,12 @@
               @let wpart = span(e, d.day);
               <button
                 type="button"
-                [class]="'week__ev cat-' + (e.category ?? 'sonstiges') + (e.derived?.kind === 'TRIP_CALENDAR' ? ' is-trip' : '') + (wpart ? ' week__ev--span week__ev--' + wpart : '')"
+                [class]="'week__ev cat-' + (e.category ?? 'sonstiges') + (isTrip(e) ? ' is-trip' : '') + (wpart ? ' week__ev--span week__ev--' + wpart : '')"
+                [attr.title]="e.derived ? e.title + ' – ' + e.calendar_name : null"
                 (click)="openEvent.emit(e)"
               >
-                <small>{{ timeRange(e) }}</small><b>{{ e.title }}</b>
+                <small>{{ timeRange(e) }}</small><b>@if (isTrip(e)) {<app-icon class="ev__icon" name="travel" aria-hidden="true" />}{{ e.title }}</b>
+                @if (isTrip(e) && e.calendar_name && (wpart === 'start' || !wpart)) {<small class="week__ctx">{{ e.calendar_name }}</small>}
               </button>
             }
             <!-- Freie Fläche der Spalte: neuer Termin an diesem Tag -->

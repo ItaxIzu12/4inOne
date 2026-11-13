@@ -36,6 +36,7 @@ SOURCE_TYPE = {
     AutoKind.CONTRACT_REMINDER: ObjectType.CONTRACT,
     AutoKind.DEVICE_MAINTENANCE: ObjectType.DEVICE,
     AutoKind.TRIP_CALENDAR: ObjectType.TRIP,
+    AutoKind.TRIP_ITINERARY: ObjectType.TRIP,
     AutoKind.SAVINGS_REMINDER: ObjectType.SAVINGS_GOAL,
     AutoKind.HOUSEHOLD_TASKS: 'HOUSEHOLD',
 }
@@ -43,7 +44,7 @@ SOURCE_TYPE = {
 KINDS_FOR_SOURCE = {
     ObjectType.CONTRACT: [AutoKind.CONTRACT_FINANCE, AutoKind.CONTRACT_REMINDER],
     ObjectType.DEVICE: [AutoKind.DEVICE_MAINTENANCE],
-    ObjectType.TRIP: [AutoKind.TRIP_CALENDAR],
+    ObjectType.TRIP: [AutoKind.TRIP_CALENDAR, AutoKind.TRIP_ITINERARY],
     ObjectType.SAVINGS_GOAL: [AutoKind.SAVINGS_REMINDER],
     'HOUSEHOLD': [AutoKind.HOUSEHOLD_TASKS],
 }
@@ -216,6 +217,18 @@ def describe(user, kind: str, source) -> tuple[str, str]:
         if problem:
             return '', problem
         return f'Organisation › Kalender: {source.title} vom {_de(source.start_date)} bis {_de(source.end_date)} (ganztägig).', ''
+    if kind == AutoKind.TRIP_ITINERARY:
+        problem = trip_problem(source)
+        if problem:
+            return '', problem
+        first = source.tripevents.order_by('starts_at', 'id').first()
+        if first is None:
+            return 'Organisation › Kalender: die Programmpunkte aus „Ablauf“ mit Uhrzeit – sobald du welche einträgst.', ''
+        count = source.tripevents.count()
+        when = timezone.localtime(first.starts_at)
+        points = '1 Programmpunkt' if count == 1 else f'{count} Programmpunkte'
+        return (f'Organisation › Kalender: {points} mit Uhrzeit, z. B. „{first.title}“ am {_de(when.date())} um '
+                f'{when:%H:%M}.', '')
     if kind == AutoKind.SAVINGS_REMINDER:
         day, problem = savings_day(source)
         if not day:
@@ -357,11 +370,44 @@ class DerivedItem:
     source_type: str
     source_id: int
     domain: str
+    # Mit Uhrzeit (Programmpunkte einer Reise); sonst ganztägig
+    starts_at: object = None
+    ends_at: object = None
+    # Damit man im Kalender sieht, worum es geht: Ort und Zusammenhang (z. B. „Städtereise · Zug“ oder der Reisename)
+    location: str = ''
+    context: str = ''
 
     def as_dict(self) -> dict:
         return {'key': self.key, 'kind': self.kind, 'title': self.title, 'date': self.date.isoformat(),
-                'end_date': self.end_date.isoformat() if self.end_date else None, 'all_day': True,
+                'end_date': self.end_date.isoformat() if self.end_date else None, 'all_day': self.starts_at is None,
+                'starts_at': self.starts_at.isoformat() if self.starts_at else None,
+                'ends_at': self.ends_at.isoformat() if self.ends_at else None,
+                'location': self.location, 'context': self.context,
                 'source_type': self.source_type, 'source_id': self.source_id, 'domain': self.domain}
+
+
+def _linked_event_keys(user, trip_ids) -> set[tuple[int, str, date]]:
+    """(Reise, Titel, Tag) der eigenen Termine, die mit einer dieser Reisen verknüpft sind – dieselben Programmpunkte
+    erscheinen dann nicht ein zweites Mal im Kalender."""
+    from django.db.models import Q
+
+    from connections.models import Connection
+    from organisation.models import PersonalEvent
+
+    pairs: dict[int, set[int]] = {}
+    rows = Connection.objects.filter(
+        Q(source_type=ObjectType.TRIP, source_id__in=trip_ids, target_type=ObjectType.CALENDAR_EVENT)
+        | Q(target_type=ObjectType.TRIP, target_id__in=trip_ids, source_type=ObjectType.CALENDAR_EVENT)
+    ).values_list('source_type', 'source_id', 'target_id')
+    for source_type, source_id, target_id in rows:
+        trip_id, event_id = (source_id, target_id) if source_type == ObjectType.TRIP else (target_id, source_id)
+        pairs.setdefault(event_id, set()).add(trip_id)
+    keys = set()
+    for event in PersonalEvent.objects.filter(owner=user, pk__in=pairs):
+        day = timezone.localtime(event.starts_at).date()
+        for trip_id in pairs[event.pk]:
+            keys.add((trip_id, event.title.strip().casefold(), day))
+    return keys
 
 
 def calendar_items(user, start: date, end: date) -> list[dict]:
@@ -385,7 +431,25 @@ def calendar_items(user, start: date, end: date) -> list[dict]:
     trips = _visible_sources(user, AutoKind.TRIP_CALENDAR, set(_active(user, AutoKind.TRIP_CALENDAR)))
     for trip in trips.values():
         if not trip_problem(trip) and trip.start_date <= end and trip.end_date >= start:
-            items.append(DerivedItem(f'trip:{trip.pk}', AutoKind.TRIP_CALENDAR, trip.title, trip.start_date, trip.end_date, ObjectType.TRIP, trip.pk, 'reisen'))
+            kind_of_trip = ' · '.join(x for x in (trip.get_travel_type_display() if trip.travel_type else '',
+                                                  trip.get_transport_type_display() if trip.transport_type else '') if x)
+            items.append(DerivedItem(f'trip:{trip.pk}', AutoKind.TRIP_CALENDAR, trip.title, trip.start_date, trip.end_date, ObjectType.TRIP, trip.pk, 'reisen',
+                                     location=trip.destination, context=kind_of_trip))
+    itinerary = {pk: t for pk, t in _visible_sources(user, AutoKind.TRIP_ITINERARY, set(_active(user, AutoKind.TRIP_ITINERARY))).items()
+                 if not trip_problem(t)}
+    if itinerary:
+        from reisen.models import TripEvent
+
+        linked = _linked_event_keys(user, list(itinerary))
+        for event in TripEvent.objects.filter(trip_id__in=itinerary).order_by('starts_at', 'id'):
+            begins = timezone.localtime(event.starts_at)
+            if not start <= begins.date() <= end:
+                continue
+            if (event.trip_id, event.title.strip().casefold(), begins.date()) in linked:
+                continue
+            items.append(DerivedItem(f'trip-event:{event.pk}', AutoKind.TRIP_ITINERARY, event.title, begins.date(), None,
+                                     ObjectType.TRIP, event.trip_id, 'reisen', event.starts_at, event.ends_at,
+                                     location=event.location, context=itinerary[event.trip_id].title))
     goals = _visible_sources(user, AutoKind.SAVINGS_REMINDER, set(_active(user, AutoKind.SAVINGS_REMINDER)))
     for goal in goals.values():
         day, _ = savings_day(goal)

@@ -11,7 +11,7 @@ let uid = 0;
 const KINDS_FOR: Record<AutoSourceType, AutoKind[]> = {
   CONTRACT: ['CONTRACT_FINANCE', 'CONTRACT_REMINDER'],
   DEVICE: ['DEVICE_MAINTENANCE'],
-  TRIP: ['TRIP_CALENDAR'],
+  TRIP: ['TRIP_CALENDAR', 'TRIP_ITINERARY'],
   SAVINGS_GOAL: ['SAVINGS_REMINDER'],
   HOUSEHOLD: ['HOUSEHOLD_TASKS'],
 };
@@ -21,6 +21,7 @@ const TARGET: Record<AutoKind, { label: string; path: string; query: Record<stri
   CONTRACT_REMINDER: { label: 'Im Kalender ansehen', path: '/organisation', query: { tab: 'calendar' } },
   DEVICE_MAINTENANCE: { label: 'Im Kalender ansehen', path: '/organisation', query: { tab: 'calendar' } },
   TRIP_CALENDAR: { label: 'Im Kalender ansehen', path: '/organisation', query: { tab: 'calendar' } },
+  TRIP_ITINERARY: { label: 'Im Kalender ansehen', path: '/organisation', query: { tab: 'calendar' } },
   SAVINGS_REMINDER: { label: 'Im Kalender ansehen', path: '/organisation', query: { tab: 'calendar' } },
   HOUSEHOLD_TASKS: { label: 'Aufgaben ansehen', path: '/organisation', query: { tab: 'tasks' } },
 };
@@ -55,6 +56,9 @@ export class AutoLinks {
   readonly previews = input<Partial<Record<AutoKind, AutoPreview>>>({});
   /** Was die Quelle heißt — für den Hinweis beim Aufheben („Der Vertrag bleibt.“). */
   readonly sourceLabel = input('Der Eintrag');
+  /** Bei einem NEUEN Eintrag schon eingeschaltet (z. B. Reise: Zeitraum und Tagesablauf im Kalender) – abschaltbar,
+   *  gespeichert wird erst mit der Quelle. Bestehende Einträge zeigen immer den gespeicherten Stand. */
+  readonly defaultOn = input<AutoKind[]>([]);
 
   protected readonly server = signal<AutoLinkState[]>([]);
   protected readonly wishes = signal<Partial<Record<AutoKind, Wish>>>({});
@@ -70,7 +74,9 @@ export class AutoLinks {
       const preview = live?.preview ?? state?.preview ?? '';
       const problem = live?.problem ?? state?.problem ?? '';
       const linked = !!state?.link_id;
-      const wish = this.wishes()[kind] ?? { on: linked, paused: state?.status === 'PAUSED' };
+      const id = this.sourceId();
+      const isNew = id === null || id === undefined || id === '';
+      const wish = this.wishes()[kind] ?? { on: linked || (isNew && this.defaultOn().includes(kind)), paused: state?.status === 'PAUSED' };
       const target = TARGET[kind];
       return {
         kind,

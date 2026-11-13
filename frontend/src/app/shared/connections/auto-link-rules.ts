@@ -141,11 +141,19 @@ export const HOUSEHOLD_TASKS_PREVIEW: AutoPreview = {
 };
 
 /** Was die Schalter sagen (Alltagssprache statt technischer Namen). */
+/** Tagesablauf: Programmpunkte erscheinen nur, wenn es welche gibt – ohne sie bleibt der Kalender leer. */
+export function tripItinerary(status: string, eventCount: number): AutoPreview {
+  if (status === 'CANCELLED') return { preview: '', problem: 'Die Reise ist abgesagt.' };
+  if (!eventCount) return { preview: 'Organisation › Kalender: die Programmpunkte aus „Ablauf“ mit Uhrzeit – sobald du welche einträgst.', problem: '' };
+  return { preview: `Organisation › Kalender: ${eventCount === 1 ? '1 Programmpunkt' : eventCount + ' Programmpunkte'} mit Uhrzeit.`, problem: '' };
+}
+
 export const AUTO_LABEL: Record<AutoKind, string> = {
   CONTRACT_FINANCE: 'In Finanzen als geplante Kosten zeigen',
   CONTRACT_REMINDER: 'Kündigungserinnerung im Kalender',
   DEVICE_MAINTENANCE: 'Wartungserinnerung im Kalender',
   TRIP_CALENDAR: 'Reisezeitraum im Kalender zeigen',
+  TRIP_ITINERARY: 'Tagesablauf im Kalender zeigen',
   SAVINGS_REMINDER: 'Im Kalender daran erinnern',
   HOUSEHOLD_TASKS: 'Haushaltsaufgaben hier zeigen',
 };

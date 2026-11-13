@@ -216,6 +216,10 @@ export class OrgCalendar {
     this.selectedDay.set(this.todayKey);
   }
 
+  /** Gehört zu einer Reise (Zeitraum oder Programm) – Reisefarbe und Reise-Symbol. */
+  protected isTrip(e: PersonalEvent): boolean {
+    return e.derived?.kind === 'TRIP_CALENDAR' || e.derived?.kind === 'TRIP_ITINERARY';
+  }
   /** Mehrtägig: Anfang, Mitte oder Ende des Balkens an diesem Tag (null = eintägig). */
   protected span(e: PersonalEvent, day: string): SpanPart | null {
     return spanPart(e, day);
@@ -242,7 +246,7 @@ export class OrgCalendar {
   protected spanBar(events: PersonalEvent[], day: string): { part: SpanPart; category: string; trip: boolean } | null {
     for (const e of events) {
       const part = spanPart(e, day);
-      if (part) return { part, category: e.category ?? 'sonstiges', trip: e.derived?.kind === 'TRIP_CALENDAR' };
+      if (part) return { part, category: e.category ?? 'sonstiges', trip: this.isTrip(e) };
     }
     return null;
   }

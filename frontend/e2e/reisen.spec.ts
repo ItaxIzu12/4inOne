@@ -437,7 +437,7 @@ test('Kurs nicht verfügbar: Betrag bleibt erfassbar, kein geratener Wert', asyn
   await expect(dialog.locator('app-fx-hint')).not.toContainText('≈');
 });
 
-test('Ausgabe: Fehler erst nach „Ausgabe speichern“, live korrigiert; Abbrechen prüft nichts', async ({ page }) => {
+test('Ausgabe: Fehler erst nach „Speichern“, live korrigiert; Abbrechen prüft nichts', async ({ page }) => {
   await openDemo(page, '/demo/reisen?trip=3&tab=budget');
   const open = () => page.locator('app-trip-budget').getByRole('button', { name: 'Ausgabe hinzufügen' }).click();
   await open();
@@ -450,7 +450,7 @@ test('Ausgabe: Fehler erst nach „Ausgabe speichern“, live korrigiert; Abbrec
   await expect(dialog).toHaveCount(0);
 
   await open();
-  await dialog.getByRole('button', { name: 'Ausgabe speichern' }).click();
+  await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(dialog.locator('.field__error')).toHaveText(['Bitte Beschreibung angeben.', 'Bitte gib einen Betrag ein.']);
   await expect(page.locator('#expense-title')).toBeFocused();
   await page.locator('#expense-amount').pressSequentially('12');

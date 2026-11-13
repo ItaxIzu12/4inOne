@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../core/api.config';
 
 /** Connection Engine V2 (backend connections/auto_links.py): abgeleitete Verbindungen — eine Quelle, kein Kopieren. */
-export type AutoKind = 'CONTRACT_FINANCE' | 'CONTRACT_REMINDER' | 'DEVICE_MAINTENANCE' | 'TRIP_CALENDAR' | 'SAVINGS_REMINDER' | 'HOUSEHOLD_TASKS';
+export type AutoKind = 'CONTRACT_FINANCE' | 'CONTRACT_REMINDER' | 'DEVICE_MAINTENANCE' | 'TRIP_CALENDAR' | 'TRIP_ITINERARY' | 'SAVINGS_REMINDER' | 'HOUSEHOLD_TASKS';
 export type AutoSourceType = 'CONTRACT' | 'DEVICE' | 'TRIP' | 'SAVINGS_GOAL' | 'HOUSEHOLD';
 export type AutoStatus = 'ACTIVE' | 'PAUSED';
 
@@ -27,7 +27,14 @@ export interface DerivedCalendarItem {
   title: string;
   date: string;
   end_date: string | null;
-  all_day: true;
+  /** false bei Programmpunkten einer Reise (TRIP_ITINERARY) – dann mit Uhrzeit */
+  all_day: boolean;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  /** Ort (Reiseziel bzw. Ort des Programmpunkts) */
+  location?: string;
+  /** Zusammenhang: beim Reisezeitraum „Städtereise · Zug“, beim Programmpunkt der Name der Reise */
+  context?: string;
   source_type: AutoSourceType;
   source_id: number;
   domain: 'haushalt' | 'reisen' | 'finanzen';

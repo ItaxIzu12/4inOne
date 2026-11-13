@@ -461,7 +461,9 @@ export class Organisation {
     // Abgeleiteter Eintrag: zur Quelle (Vertrag, Gerät, Reise, Sparziel) — dort wird er geändert, nicht hier
     if (item && 'derived' in item && item.derived) {
       const link = linkFor({ type: item.derived.source_type, id: item.derived.source_id } as Parameters<typeof linkFor>[0]);
-      void this.router.navigate(this.demo ? ['/demo' + link.path[0]] : link.path, { queryParams: link.query });
+      // Programmpunkt einer Reise: direkt in den Reiter „Ablauf“
+      const query = item.derived.kind === 'TRIP_ITINERARY' ? { ...link.query, tab: 'ablauf' } : link.query;
+      void this.router.navigate(this.demo ? ['/demo' + link.path[0]] : link.path, { queryParams: query });
       return;
     }
     this.dateLocked.set(false);
@@ -773,20 +775,41 @@ const DERIVED_LABEL: Record<string, string> = {
   CONTRACT_REMINDER: 'Aus Haushalt › Vertrag',
   DEVICE_MAINTENANCE: 'Aus Haushalt › Gerät',
   TRIP_CALENDAR: 'Aus Reisen',
+  TRIP_ITINERARY: 'Aus Reisen › Ablauf',
   SAVINGS_REMINDER: 'Aus Finanzen › Sparziel',
 };
+
+/** Marke am Eintrag: woher er kommt – bei Reisen auch, WELCHE Reise bzw. was für eine („Reise · Städtereise · Zug“,
+ *  „Reise „Berlin Wochenende“ · Ablauf“). */
+function derivedLabel(item: DerivedCalendarItem): string {
+  if (item.kind === 'TRIP_CALENDAR') return item.context ? `Reise · ${item.context}` : 'Aus Reisen';
+  if (item.kind === 'TRIP_ITINERARY') return item.context ? `Reise „${item.context}“ · Ablauf` : 'Aus Reisen › Ablauf';
+  return DERIVED_LABEL[item.kind] ?? 'Verbunden';
+}
 
 /** Abgeleiteter Kalendereintrag → Anzeigeform eines Termins (ganztägig, nur lesbar, mit Herkunft als Marke).
  *  null, wenn das Datum fehlt oder ungültig ist; ein ungültiges Enddatum fällt weg (eintägig). */
 function derivedEvent(item: DerivedCalendarItem, index: number): PersonalEvent | null {
+  // Programmpunkte einer Reise kommen mit Uhrzeit (TRIP_ITINERARY), alles andere ist ganztägig
+  if (!item.all_day && item.starts_at) {
+    const begins = new Date(item.starts_at);
+    if (Number.isNaN(begins.getTime())) return null;
+    const until = item.ends_at ? new Date(item.ends_at) : null;
+    return {
+      id: -1 - index, title: item.title, starts_at: begins.toISOString(), ends_at: until && !Number.isNaN(until.getTime()) ? until.toISOString() : null,
+      all_day: false, recurrence: '', location: item.location ?? '', description: '', category: 'sonstiges', calendar: null,
+      calendar_name: derivedLabel(item), calendar_color: 'slate', created_by: '', can_edit: false,
+      derived: { kind: item.kind, source_type: item.source_type, source_id: item.source_id, domain: item.domain },
+    };
+  }
   const start = new Date(`${item.date}T00:00`);
   if (Number.isNaN(start.getTime())) return null;
   const endDate = item.end_date && item.end_date !== item.date ? new Date(`${item.end_date}T00:00`) : null;
   const end = endDate && !Number.isNaN(endDate.getTime()) ? endDate : null;
   return {
     id: -1 - index, title: item.title, starts_at: start.toISOString(), ends_at: end ? end.toISOString() : null, all_day: true,
-    recurrence: '', location: '', description: '', category: 'sonstiges', calendar: null,
-    calendar_name: DERIVED_LABEL[item.kind] ?? 'Verbunden', calendar_color: 'slate', created_by: '', can_edit: false,
+    recurrence: '', location: item.location ?? '', description: '', category: 'sonstiges', calendar: null,
+    calendar_name: derivedLabel(item), calendar_color: 'slate', created_by: '', can_edit: false,
     derived: { kind: item.kind, source_type: item.source_type, source_id: item.source_id, domain: item.domain },
   };
 }
