@@ -42,7 +42,9 @@ def w():
     anna, ben, clara, dora = _user('anna'), _user('ben'), _user('clara'), _user('dora')
     _contacts(anna, ben)
     _contacts(anna, clara)
-    soon = timezone.now() + timedelta(minutes=30)
+    # in 30 Minuten – aber nie über Mitternacht hinaus (sonst fehlt der Termin nach 23:30 in „Heute“)
+    end_of_today = timezone.localtime().replace(hour=23, minute=59, second=0, microsecond=0)
+    soon = min(timezone.now() + timedelta(minutes=30), end_of_today)
     return {'anna': anna, 'ben': ben, 'clara': clara, 'dora': dora, 'soon': soon}
 
 

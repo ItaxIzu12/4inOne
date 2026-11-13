@@ -148,7 +148,10 @@
           }
         }
       </div>
-      <p class="cal-choice__hint" aria-live="polite">{{ calendarHint() }}</p>
+      <!-- Ohne Erklärtext unter den Chips (Nutzerwunsch 13.11.2026) – nur, warum sie gesperrt sind, wird gesagt -->
+      @if (calendarLocked()) {
+        <p class="cal-choice__hint">{{ calendarHint() }}</p>
+      }
       @if (!writableCalendars().length && !sharePeople().length) {
         <p class="cal-choice__hint">Mit „Kalender teilen“ über dem Kalender gibst du ihn für Personen aus deinem Kreis frei – dann kannst du einzelne Termine mit ihnen teilen.</p>
       }
@@ -160,7 +163,7 @@
       <app-field label="Datum" [error]="dateError()" [hint]="dateLocked() ? 'Im Kalender gewählt' : ''">
         <app-date-picker mode="date" formControlName="date" [disabled]="dateLocked()" />
       </app-field>
-      <app-field label="Endet am" [optional]="true" hint="Nur bei Terminen über mehrere Tage." [error]="endDateError()">
+      <app-field label="Endet am" [optional]="true" [error]="endDateError()">
         <app-date-picker mode="date" formControlName="end_date" [clearable]="true" />
       </app-field>
     </div>

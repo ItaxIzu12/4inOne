@@ -272,11 +272,16 @@ export class Reisen {
   // Ortsvorschläge beim Tippen (Reiseziel, Abreiseort, Unterkunft) sind in Reisen vorerst aus (Nutzerwunsch
   // 13.11.2026) – app-place-input bleibt im Projekt und kommt später wieder dazu.
   /** Stornofrist nach dem ersten Reisetag ist ein Tippfehler (das Backend prüft dasselbe). */
+  /** Gespeicherte Frist beim Öffnen – eine inzwischen abgelaufene darf unverändert stehen bleiben. */
+  private readonly cancelSaved = signal('');
+  /** Frühester wählbarer Tag: heute (eine schon abgelaufene Frist hilft niemandem). */
+  readonly cancellationMin = computed(() => this.tripToday());
   readonly cancellationError = computed(() => {
     const v = this.tripValue();
-    return v.free_cancellation_until && v.start_date && v.free_cancellation_until > v.start_date
-      ? 'Die Frist muss vor oder am ersten Reisetag liegen.'
-      : '';
+    const until = v.free_cancellation_until;
+    if (!until) return '';
+    if (until < this.tripToday() && until !== this.cancelSaved()) return 'Die Frist darf nicht vor heute liegen.';
+    return v.start_date && until > v.start_date ? 'Die Frist muss vor oder am ersten Reisetag liegen.' : '';
   });
 
   // ---------- Inhalte der geöffneten Reise ----------
@@ -565,6 +570,7 @@ export class Reisen {
   }
   openTripEditor(trip?: Trip): void {
     this.tripToday.set(todayIso());
+    this.cancelSaved.set(trip?.free_cancellation_until ?? '');
     this.settingTripForm = true;
     this.tripForm.reset({
       title: trip?.title ?? '',
@@ -610,7 +616,7 @@ export class Reisen {
     this.tripForm.markAllAsTouched();
     this.tripTouched.set(true);
     const v = this.tripForm.getRawValue();
-    if (this.titleError() || this.destinationError() || this.startError() || this.endError()) {
+    if (this.titleError() || this.destinationError() || this.startError() || this.endError() || this.cancellationError()) {
       this.tripFormError.set('');
       return;
     }

@@ -383,3 +383,21 @@ test('week view: an empty day opens "Termin hinzufügen" directly, the free colu
   await page.locator('.week__add').first().click();
   await expect(page.getByRole('dialog').getByRole('heading', { name: 'Termin hinzufügen' })).toBeVisible();
 });
+
+test('Kalender: ein mehrtägiger Termin ist ein Balken – ein Klick auf einen mittleren Tag öffnet genau diesen Tag', async ({ page }) => {
+  await page.route('http://localhost:8000/api/**', (r) => r.abort());
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/demo/organisation?tab=calendar');
+  await page.getByRole('button', { name: 'Monat', exact: true }).click();
+  const spans = page.locator('.month .cell:not(.is-outside) .ev--span');
+  await expect(spans.first()).toBeVisible();
+  // die Demo-Reise (Berlin) läuft über drei Tage
+  const days = await spans.evaluateAll((els) => els.map((e) => e.closest('.cell')!.querySelector('.cell__num')!.textContent!.trim()));
+  expect(days.length).toBeGreaterThanOrEqual(3);
+  const middle = page.locator('.month .cell:not(.is-outside)').filter({ has: page.locator('.ev--mid') }).first();
+  const number = (await middle.locator('.cell__num').textContent())!.trim();
+  await middle.scrollIntoViewIfNeeded();
+  const box = (await middle.locator('.ev--mid').boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await expect(page.locator('#day-sheet-h')).toContainText(`${number}.`);
+});

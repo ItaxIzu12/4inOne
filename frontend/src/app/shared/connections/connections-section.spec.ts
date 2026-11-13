@@ -139,6 +139,36 @@ describe('ConnectionsSection', () => {
     expect(el.querySelector('.connections')).toBeNull();
   });
 
+  it('shows only what fits; the rest stays reachable via search (no „Badmintonschuhe“ for a trip)', () => {
+    vi.useFakeTimers();
+    try {
+      const { click, flushList, fixture, el } = setup();
+      flushList([]);
+      click('+ Verknüpfen');
+      http.expectOne((r) => r.url.endsWith('/options/')).flush([{ type: 'TASK', label: 'Aufgabe', domain: 'organisation', relation_type: 'TASK_FOR' }]);
+      fixture.detectChanges();
+      click('Aufgabe');
+      http.expectOne((r) => r.url.endsWith('/candidates/')).flush([
+        task({ id: 1, title: 'Waschmaschinen vergleichen', fits: true }),
+        task({ id: 2, title: 'Badmintonschuhe kaufen', fits: false }),
+      ]);
+      fixture.detectChanges();
+      const titles = () => Array.from(el.querySelectorAll('.wizard__choices .connection__title')).map((n) => n.textContent?.trim());
+      expect(titles()).toEqual(['Waschmaschinen vergleichen']);
+      expect(el.textContent).toContain('Ein weiterer Eintrag passt nicht erkennbar dazu – über die Suche findest du ihn trotzdem.');
+      const search = el.querySelector('input[type="search"]') as HTMLInputElement;
+      expect(search).not.toBeNull(); // Suche immer da, sobald etwas ausgeblendet ist
+      search.value = 'Badminton';
+      search.dispatchEvent(new Event('input'));
+      vi.advanceTimersByTime(300);
+      http.expectOne((r) => r.url.endsWith('/candidates/') && r.params.get('q') === 'Badminton').flush([task({ id: 2, title: 'Badmintonschuhe kaufen', fits: false })]);
+      fixture.detectChanges();
+      expect(titles()).toEqual(['Badmintonschuhe kaufen']); // gesucht = bewusst gewollt
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('creates a connection in three steps and refreshes the list', () => {
     const { text, click, flushList, fixture, el } = setup();
     flushList([]);

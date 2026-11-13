@@ -428,3 +428,35 @@ def test_management_command_reports_and_supports_dry_run(a):
     real = StringIO()
     call_command('prune_connections', stdout=real)
     assert '1 verwaiste Verbindung(en) entfernt' in real.getvalue() and Connection.objects.count() == 0
+
+
+# --------------------------------------------------------------------------- Auswahl nach Sinn (13.11.2026)
+
+
+def test_candidates_put_fitting_entries_first_and_mark_unrelated_ones(a):
+    from datetime import datetime
+
+    from reisen.models import Trip
+
+    today = timezone.localdate()
+    start = today + timedelta(days=12)
+    trip = Trip.objects.create(owner=a, title='Berlin Wochenende', destination='Berlin, Deutschland', start_date=start, end_date=start + timedelta(days=2))
+    badminton = goal(a, title='Badmintonschuhe', target='150.00', current='80.00')
+    kasse = goal(a, title='Reisekasse Berlin', target='700.00', current='300.00')
+    urlaub = goal(a, title='Urlaubskasse', target='500.00', current='0.00')
+    response = _client(a).get(URL + 'candidates/', {'object_type': 'TRIP', 'object_id': trip.pk, 'target_type': 'SAVINGS_GOAL'})
+    assert response.status_code == 200
+    fits = {row['title']: row['fits'] for row in response.data}
+    assert fits == {'Badmintonschuhe': False, 'Reisekasse Berlin': True, 'Urlaubskasse': True}
+    assert response.data[-1]['title'] == 'Badmintonschuhe'  # Unpassendes zuletzt
+    assert {badminton.pk, kasse.pk, urlaub.pk} == {row['id'] for row in response.data}
+
+    # Termine: während der Reise passt, Wochen davor nicht
+    during = PersonalEvent.objects.create(owner=a, title='Museumsinsel-Führung', starts_at=timezone.make_aware(datetime.combine(start + timedelta(days=1), datetime.min.time().replace(hour=11))))
+    later = PersonalEvent.objects.create(owner=a, title='Zahnarzt', starts_at=timezone.make_aware(datetime.combine(today + timedelta(days=60), datetime.min.time().replace(hour=9))))
+    rows = _client(a).get(URL + 'candidates/', {'object_type': 'TRIP', 'object_id': trip.pk, 'target_type': 'CALENDAR_EVENT'}).data
+    assert {r['id']: r['fits'] for r in rows} == {during.pk: True, later.pk: False}
+
+    # andersherum: vom Sparziel aus ist die Reise nur „passend“, wenn es dazugehört
+    rows = _client(a).get(URL + 'candidates/', {'object_type': 'SAVINGS_GOAL', 'object_id': badminton.pk, 'target_type': 'TRIP'}).data
+    assert [r['fits'] for r in rows] == [False]

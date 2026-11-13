@@ -144,7 +144,7 @@
                 <button type="button" class="c-link" (click)="loadCandidates()">Erneut versuchen</button>
               } @else {
                 <ul class="wizard__choices">
-                  @for (candidate of candidates(); track candidate.id) {
+                  @for (candidate of shownCandidates(); track candidate.id) {
                     <li>
                       <button type="button" class="choice choice--stacked" (click)="pickObject(candidate)">
                         <span class="connection__title">{{ candidate.title }}</span>
@@ -155,12 +155,20 @@
                     <li class="connections__note">
                       @if (query()) {
                         Nichts gefunden für „{{ query() }}“.
+                      } @else if (hiddenCandidates()) {
+                        Nichts, was erkennbar dazu passt.
                       } @else {
                         Es gibt nichts, was sich noch verknüpfen ließe.
                       }
                     </li>
                   }
                 </ul>
+                @if (hiddenCandidates(); as hidden) {
+                  <p class="connections__note">
+                    {{ hidden === 1 ? 'Ein weiterer Eintrag passt' : hidden + ' weitere Einträge passen' }} nicht erkennbar dazu – über die
+                    Suche findest du {{ hidden === 1 ? 'ihn' : 'sie' }} trotzdem.
+                  </p>
+                }
               }
               <div class="wizard__actions">
                 <button type="button" class="c-btn c-btn--soft" (click)="back()">Zurück</button>

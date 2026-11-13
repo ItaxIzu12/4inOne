@@ -23,6 +23,8 @@ export interface ConnectedObject {
   title: string;
   subtitle: string;
   domain: ConnectionDomain;
+  /** Nur in der Auswahl (candidates): passt erkennbar zum Objekt (Reisebezug, gleiches Stichwort, Datum in der Reise) */
+  fits?: boolean;
 }
 
 export interface ConnectionDto {

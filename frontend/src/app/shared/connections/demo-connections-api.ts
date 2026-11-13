@@ -33,6 +33,23 @@ const obj = (type: keyof typeof DOMAIN, id: number | string, title: string, subt
  * („Bahn-Tickets ausdrucken“). Alles nur in dieser Instanz im Browser; nichts wird gespeichert oder gesendet.
  * Haushaltsaufgaben haben in der Demo Text-IDs („demo-task-1“) — die Schlüssel sind deshalb immer Text.
  */
+/** Wie backend connections/relevance.py, vereinfacht für den kleinen Demo-Bestand: gleiches Stichwort, Reisebezug,
+ *  und bei Reisen Termine/Aufgaben in der Reisezeit sowie Haushaltsaufgaben, die zuhause weiterlaufen. */
+const STOP = new Set(['reise', 'wochenende', 'kaufen', 'vergleichen', 'fällig', 'familie', 'freizeit', 'morgen']);
+const TRAVEL = /\b(hotel|unterkunft|flug|zug|bahn|ticket|tickets|koffer|packen|reisepass|urlaub|reisekasse|check-?in|anreise|abreise)\b/i;
+function keywords(text: string): Set<string> {
+  return new Set((text.toLocaleLowerCase('de').match(/[\p{L}\d]{4,}/gu) ?? []).filter((w) => !STOP.has(w)));
+}
+function demoFits(a: ConnectedObject, b: ConnectedObject): boolean {
+  const ka = keywords(`${a.title} ${a.subtitle}`);
+  if ([...keywords(`${b.title} ${b.subtitle}`)].some((w) => ka.has(w))) return true;
+  const trip = a.type === 'TRIP' ? a : b.type === 'TRIP' ? b : null;
+  if (!trip) return false;
+  const other = trip === a ? b : a;
+  if (other.type === 'HOUSEHOLD_TASK') return /täglich|wöchentlich|alle/i.test(other.subtitle);
+  return TRAVEL.test(other.title);
+}
+
 @Injectable()
 export class DemoConnectionsApi {
   private nextId = 100;
@@ -43,7 +60,11 @@ export class DemoConnectionsApi {
     obj('TASK', 9, 'Bahn-Tickets ausdrucken', `fällig ${day(BERLIN - 2)}`),
     obj('TASK', 3, 'Geschenk kaufen', 'Familie'),
     obj('CALENDAR_EVENT', 4, 'Mittagessen mit Lena', 'morgen, 12:30'),
+    // dieselben Sparziele wie in der Finanzen-Demo (demo-private-finance-api.ts)
+    obj('SAVINGS_GOAL', 1, 'Japan', '1.800 von 3.000 €'),
+    obj('SAVINGS_GOAL', 2, 'Notgroschen', '1.200 von 2.000 €'),
     obj('SAVINGS_GOAL', 3, 'Badmintonschuhe', '80 von 150 €'),
+    obj('SAVINGS_GOAL', 4, 'Wohnung', '12.000 von 30.000 €'),
     obj('TASK', 8, 'Badmintonschuhe vergleichen', 'Freizeit'),
   ];
   private links: { id: number; a: ConnectedObject; b: ConnectedObject; relation: [string, string] }[] = [
@@ -108,7 +129,13 @@ export class DemoConnectionsApi {
   candidates(type: ConnectionObjectType, id: number, targetType: ConnectionObjectType, query = ''): Observable<ConnectedObject[]> {
     const q = query.trim().toLocaleLowerCase('de');
     const taken = this.links.flatMap((l) => (this.same(l.a, type, id) ? [l.b] : this.same(l.b, type, id) ? [l.a] : []));
-    return of(this.catalog.filter((o) => o.type === targetType && !taken.includes(o) && (!q || o.title.toLocaleLowerCase('de').includes(q))));
+    const anchor = this.find(type, id);
+    return of(
+      this.catalog
+        .filter((o) => o.type === targetType && !taken.includes(o) && (!q || o.title.toLocaleLowerCase('de').includes(q)))
+        .map((o) => ({ ...o, fits: !!anchor && demoFits(anchor, o) }))
+        .sort((x, y) => Number(y.fits) - Number(x.fits)),
+    );
   }
   create(type: ConnectionObjectType, id: number, otherType: ConnectionObjectType, otherId: number): Observable<ConnectionDto> {
     const a = this.find(type, id);

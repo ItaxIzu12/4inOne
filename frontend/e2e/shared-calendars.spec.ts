@@ -35,9 +35,11 @@ for (const width of [390, 1440]) {
     const dialog = page.getByRole('dialog');
     const where = dialog.getByRole('group', { name: 'Wer sieht den Termin?' });
     await expect(where.getByRole('button', { name: 'Familie' })).toHaveAttribute('aria-pressed', 'true');
-    await expect(dialog).toContainText('Max sieht diesen Termin');
+    // ohne Erklärtext unter den Chips – die gedrückte Auswahl sagt, wer den Termin sieht
+    await expect(dialog).not.toContainText('sieht diesen Termin');
     await where.getByRole('button', { name: 'Nur ich' }).click();
-    await expect(dialog).toContainText('Privat – nur du siehst diesen Termin.');
+    await expect(where.getByRole('button', { name: 'Nur ich' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(where.getByRole('button', { name: 'Familie' })).toHaveAttribute('aria-pressed', 'false');
     await where.getByRole('button', { name: 'Familie' }).click();
     await dialog.locator('#entry-title').fill('Kino mit allen');
     await dialog.getByRole('button', { name: 'Speichern' }).click();
@@ -82,7 +84,7 @@ test('calendar sharing like Outlook: private by default, share one event, see so
   await expect(who.getByRole('button', { name: 'Nur ich' })).toHaveAttribute('aria-pressed', 'true');
   await who.getByRole('button', { name: 'Max' }).click();
   await expect(who.getByRole('button', { name: 'Nur ich' })).toHaveAttribute('aria-pressed', 'false');
-  await expect(dialog).toContainText('Max sieht diesen Termin – deine anderen Termine bleiben privat.');
+  await expect(who.getByRole('button', { name: 'Max' })).toHaveAttribute('aria-pressed', 'true');
   await dialog.locator('#entry-title').fill('Kino mit Max');
   await dialog.getByRole('button', { name: 'Speichern' }).click();
   await expect(dialog).toHaveCount(0);

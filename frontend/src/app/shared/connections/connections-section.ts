@@ -136,7 +136,17 @@ export class ConnectionsSection {
   protected readonly query = signal('');
   protected readonly chosen = signal<ConnectedObject | null>(null);
   protected readonly saving = signal(false);
-  protected readonly showSearch = computed(() => (this.candidates()?.length ?? 0) >= SEARCH_FROM || this.query() !== '');
+  /** Ohne Suche nur, was erkennbar dazu passt (13.11.2026) – sonst bot eine Reise z. B. „Badmintonschuhe“ an.
+   *  Mit Suche alles Gefundene (Passendes zuerst): verknüpfen darf man weiterhin alles, was erlaubt ist. */
+  protected readonly shownCandidates = computed(() => {
+    const rows = this.candidates() ?? [];
+    return this.query() ? rows : rows.filter((r) => r.fits !== false);
+  });
+  /** So viele Einträge sind wegen „passt nicht erkennbar“ ausgeblendet. */
+  protected readonly hiddenCandidates = computed(() => (this.query() ? 0 : (this.candidates() ?? []).filter((r) => r.fits === false).length));
+  protected readonly showSearch = computed(
+    () => (this.candidates()?.length ?? 0) >= SEARCH_FROM || this.query() !== '' || this.hiddenCandidates() > 0,
+  );
 
   private readonly addButton = viewChild<ElementRef<HTMLButtonElement>>('addButton');
   private readonly stepHeading = viewChild<ElementRef<HTMLElement>>('stepHeading');

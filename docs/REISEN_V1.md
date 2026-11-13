@@ -241,8 +241,9 @@ wo gebucht wurde. Alles wird selbst eingetragen; weiterhin keine Buchungs-, Flug
 ## Stornofrist sichtbar und als Erinnerung (13.11.2026)
 
 - Reise-Dialog: eigener Schritt **„4 Unterkunft – optional“** mit Unterkunft, Lage und **„Kostenlos stornierbar bis“**
-  (vorher unter „Weitere Angaben“ versteckt). Das Datum geht höchstens bis zum ersten Reisetag (Kalender sperrt
-  spätere Tage, Fehlermeldung am Feld, Backend prüft dasselbe).
+  (vorher unter „Weitere Angaben“ versteckt). Wählbar ist heute bis zum ersten Reisetag (Kalender sperrt die Tage
+  davor und danach, Fehlermeldung am Feld, Backend prüft dasselbe). Eine gespeicherte, inzwischen abgelaufene Frist
+  darf beim Bearbeiten unverändert stehen bleiben – nur ein neues Datum vor heute wird abgelehnt.
 - **Erinnerung im Kalender:** mit „Reisezeitraum im Kalender“ (bei neuen Reisen automatisch an) am Tag der Frist
   „Letzter Tag: Hotel Central kostenlos stornieren“ (ganztägig, Reise-Symbol, Marke „Reise · <Reisename>“), solange
   der Tag noch kommt; abgesagte/abgeschlossene Reisen nicht. Dazu weiter die Marke auf der Bordkarte (14 Tage vorher).

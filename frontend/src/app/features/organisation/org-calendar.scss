@@ -216,6 +216,8 @@
 }
 .ev--label .ev__text {
   display: block;
+  // reicht nur optisch in die Nachbartage – Klicks gehen an den Tag darunter (sonst sprang man immer zum ersten Tag)
+  pointer-events: none;
   overflow: hidden;
   width: calc(var(--span, 1) * 100% + (var(--span, 1) - 1) * 13px);
   text-overflow: ellipsis;
@@ -246,6 +248,7 @@
 }
 .week__ev--start > b {
   width: calc(var(--span, 1) * 100% + (var(--span, 1) - 1) * 13px);
+  pointer-events: none;
 }
 .week__ev--mid .ev__icon,
 .week__ev--end .ev__icon {

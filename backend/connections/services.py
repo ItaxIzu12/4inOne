@@ -317,7 +317,7 @@ def candidates_for(user, object_type: str, object_id: int, target_type: str, que
     diesem Objekt verbunden sind (Schritt 2). Gefiltert wird hier im Backend."""
     if canonical_pair(object_type, target_type) is None:
         raise ConnectionRuleError('Diese beiden Arten lassen sich nicht verknüpfen.')
-    _require_connectable(user, object_type, object_id)
+    anchor = _require_connectable(user, object_type, object_id)
     kind = KINDS[target_type]
     queryset = kind.editable_for(user)
     if query:
@@ -331,7 +331,14 @@ def candidates_for(user, object_type: str, object_id: int, target_type: str, que
         )
         if other[0] == target_type:
             already.add(other[1])
-    return [kind.summary(obj) for obj in queryset.exclude(pk__in=already).order_by('-pk')[:CANDIDATE_LIMIT]]
+    from connections.relevance import fits
+
+    rows = []
+    for obj in queryset.exclude(pk__in=already).order_by('-pk')[:CANDIDATE_LIMIT]:
+        rows.append({**kind.summary(obj), 'fits': fits(object_type, anchor, target_type, obj)})
+    # Passendes zuerst (13.11.2026) – die Auswahl zeigt ohne Suche nur das; alles andere findet man über die Suche
+    rows.sort(key=lambda row: not row['fits'])
+    return rows
 
 
 def find_orphans() -> list[int]:

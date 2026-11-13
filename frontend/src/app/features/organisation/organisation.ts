@@ -160,20 +160,10 @@ export class Organisation {
   });
   /** Den Kalender eines fremden Termins ändert nur, wer ihn eingetragen hat (Server-Regel). */
   readonly calendarLocked = computed(() => !!this.editId() && this.foreignEvent());
-  private readonly calendarValue = signal('');
-  readonly calendarHint = computed(() => {
-    if (this.calendarLocked()) return `Eingetragen von ${this.editingEvent()?.created_by} – wer den Termin sieht, bestimmt nur diese Person.`;
-    const id = Number(this.calendarValue());
-    const calendar = this.calendars().find((c) => c.id === id);
-    const chosen = new Set(this.audience());
-    const names = [
-      ...(calendar?.members.filter((m) => !m.is_self).map((m) => m.name) ?? []),
-      ...this.sharePeople().filter((p) => chosen.has(p.user_id)).map((p) => p.name),
-    ].filter((name, i, all) => all.indexOf(name) === i);
-    if (!calendar && !names.length) return 'Privat – nur du siehst diesen Termin.';
-    if (!names.length) return `Noch niemand außer dir in „${calendar!.name}“.`;
-    return `${names.join(', ')} ${names.length === 1 ? 'sieht' : 'sehen'} diesen Termin – deine anderen Termine bleiben privat.`;
-  });
+  /** Nur bei gesperrter Auswahl (fremder Termin): warum man nicht ändern kann. Sonst kein Text unter den Chips. */
+  readonly calendarHint = computed(() =>
+    this.calendarLocked() ? `Eingetragen von ${this.editingEvent()?.created_by} – wer den Termin sieht, bestimmt nur diese Person.` : '',
+  );
   loadCalendars() {
     this.api.calendars().pipe(takeUntilDestroyed(this.destroy)).subscribe({
       next: (list) => {
@@ -260,7 +250,6 @@ export class Organisation {
     this.load(true);
     this.loadCalendars();
     if (this.tab() === 'today') this.loadToday();
-    this.form.controls.calendar.valueChanges.pipe(takeUntilDestroyed(this.destroy)).subscribe((v) => this.calendarValue.set(v));
     // Wechsel auf ein anderes Objekt derselben Seite (z. B. Aufgabe → verknüpfter Termin)
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(() => {
       if (this.loaded) this.openFromQuery();
@@ -474,7 +463,6 @@ export class Organisation {
       // Neuer Termin: im gerade gefilterten gemeinsamen Kalender, wenn ich dort schreiben darf — sonst privat
       calendar: typeof this.calendarFilter() === 'number' && this.writableCalendars().some((c) => c.id === this.calendarFilter()) ? String(this.calendarFilter()) : '',
     });
-    this.calendarValue.set(this.form.controls.calendar.value);
     this.audience.set(item && 'starts_at' in item ? [...(item.shared_with ?? [])] : []);
     this.editingEvent.set(item && 'starts_at' in item ? item : null);
     this.editor.set(kind);

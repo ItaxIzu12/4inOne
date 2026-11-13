@@ -258,6 +258,10 @@ Abstand — nie nur über Farbe.
   Seiten Demo-Texte (`@if (demo)`), der Hinweis wird zu `.legal-warning--demo` („Gilt für die Testversion“, Sage
   `--ground-2`, Info-Kreis in `--ink-soft`). Kontakt-Links aus `shared/legal-page/demo-contact.ts`. Platzhalter der
   App-Fassung unverändert (dort „§ 18 Abs. 2 MStV“ statt veraltet „§ 55 RStV“, „Kompass“ → „4inOne“).
+- **Verknüpfen nach Sinn (13.11.2026):** `connections/relevance.py` (`fits()` je Arten-Paar: gleiches Stichwort,
+  Reisebezug, Datum in/kurz vor der Reise, Haushaltsaufgaben, die zuhause weiterlaufen); `candidates_for` liefert
+  `fits` und sortiert Passendes zuerst. `app-connections`: `shownCandidates()`/`hiddenCandidates()`. Demo-Bestand mit
+  allen vier Demo-Sparzielen, `demoFits()`. Organisation `calendarHint()` nur noch bei gesperrter Auswahl; `.ev--label .ev__text` und `.week__ev--start > b` mit `pointer-events: none`.
 - **Stornofrist sichtbar (13.11.2026):** Reise-Dialog `form-step` 4 „Unterkunft“, Datumsfeld mit `[max]` = erster
   Reisetag und `cancellationError()`; `TripOverview` Ausgabe `editTrip`; abgeleiteter Eintrag `trip-cancel:<id>`
   (Art `TRIP_CALENDAR`). `PlaceInput` in `reisen.ts` nicht mehr importiert (vorerst).

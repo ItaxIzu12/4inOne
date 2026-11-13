@@ -462,4 +462,22 @@ describe('Reisen V1 (Demo)', () => {
       'Abendessen im Lindenhof',
     ]);
   });
+
+  it('Stornofrist: kein Tag vor heute wählbar – eine gespeicherte, abgelaufene Frist darf beim Bearbeiten stehen bleiben', async () => {
+    const { fixture } = await open('/?trip=1');
+    const c = fixture.componentInstance;
+    c.openTripEditor();
+    c.tripForm.patchValue({ title: 'Wien', destination: 'Wien', start_date: isoDateOffset(30), end_date: isoDateOffset(32), free_cancellation_until: isoDateOffset(-1) });
+    expect(c.cancellationMin()).toBe(isoDateOffset(0));
+    expect(c.cancellationError()).toBe('Die Frist darf nicht vor heute liegen.');
+    c.tripForm.patchValue({ free_cancellation_until: isoDateOffset(0) });
+    expect(c.cancellationError()).toBe('');
+
+    // bestehende Reise mit inzwischen abgelaufener Frist: unverändert ok, ein anderer vergangener Tag nicht
+    const expired = { ...c.trips().find((t) => t.id === 1)!, free_cancellation_until: isoDateOffset(-2) };
+    c.openTripEditor(expired);
+    expect(c.cancellationError()).toBe('');
+    c.tripForm.patchValue({ free_cancellation_until: isoDateOffset(-3) });
+    expect(c.cancellationError()).toBe('Die Frist darf nicht vor heute liegen.');
+  });
 });

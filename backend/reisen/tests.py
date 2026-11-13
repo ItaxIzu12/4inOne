@@ -682,3 +682,21 @@ def test_free_cancellation_deadline_is_optional_and_not_after_the_first_day(clie
     # leeren geht immer
     cleared = client.patch(f'{BASE}trips/{trip_id}/', {'free_cancellation_until': None}, format='json')
     assert cleared.status_code == 200 and cleared.data['free_cancellation_until'] is None
+
+
+def test_free_cancellation_deadline_cannot_be_set_to_a_past_day_but_an_expired_one_may_stay(client, users):
+    response = client.post(BASE + 'trips/', {
+        'title': 'Berlin', 'destination': 'Berlin', 'start_date': day(20), 'end_date': day(22), 'free_cancellation_until': day(-1),
+    }, format='json')
+    assert response.status_code == 400 and 'free_cancellation_until' in response.data
+    # heute ist erlaubt
+    trip = client.post(BASE + 'trips/', {
+        'title': 'Berlin', 'destination': 'Berlin', 'start_date': day(20), 'end_date': day(22), 'free_cancellation_until': day(0),
+    }, format='json').data
+    # Frist ist inzwischen abgelaufen (in der Datenbank gestellt): andere Änderungen speichern trotzdem
+    Trip.objects.filter(pk=trip['id']).update(free_cancellation_until=day(-3))
+    assert client.patch(f"{BASE}trips/{trip['id']}/", {'title': 'Berlin Wochenende', 'free_cancellation_until': day(-3)}, format='json').status_code == 200
+    assert client.patch(f"{BASE}trips/{trip['id']}/", {'notes': 'Tickets ausgedruckt'}, format='json').status_code == 200
+    # auf einen anderen vergangenen Tag ändern geht nicht
+    late = client.patch(f"{BASE}trips/{trip['id']}/", {'free_cancellation_until': day(-2)}, format='json')
+    assert late.status_code == 400 and 'free_cancellation_until' in late.data

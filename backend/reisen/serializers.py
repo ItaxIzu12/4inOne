@@ -111,6 +111,11 @@ class TripSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'end_date': 'Das Ende darf nicht vor dem Beginn liegen.'})
         # Kostenlos stornieren geht nur bis zur Anreise – eine spätere Frist wäre ein Tippfehler
         cancel = attrs.get('free_cancellation_until', getattr(self.instance, 'free_cancellation_until', None))
+        # Eine neue Frist vor heute hilft niemandem (keine Erinnerung mehr) – eine gespeicherte, inzwischen abgelaufene
+        # bleibt beim Bearbeiten stehen, solange man sie nicht ändert
+        changed = 'free_cancellation_until' in attrs and attrs['free_cancellation_until'] != getattr(self.instance, 'free_cancellation_until', None)
+        if cancel and changed and cancel < timezone.localdate():
+            raise serializers.ValidationError({'free_cancellation_until': 'Die Frist darf nicht vor heute liegen.'})
         if cancel and start and cancel > start:
             raise serializers.ValidationError(
                 {'free_cancellation_until': 'Die Frist muss vor oder am ersten Reisetag liegen.'}

@@ -245,7 +245,7 @@
       [error]="cancellationError()"
       hint="Steht in der Buchungsbestätigung. 4inOne erinnert dich im Kalender und auf der Bordkarte."
     >
-      <app-date-picker mode="date" formControlName="free_cancellation_until" [clearable]="true" [max]="tripForm.controls.start_date.value" />
+      <app-date-picker mode="date" formControlName="free_cancellation_until" [clearable]="true" [min]="cancellationMin()" [max]="tripForm.controls.start_date.value" />
     </app-field>
 
     <button type="button" class="more-toggle" [attr.aria-expanded]="tripMoreOpen()" aria-controls="trip-more" (click)="tripMoreOpen.set(!tripMoreOpen())">
