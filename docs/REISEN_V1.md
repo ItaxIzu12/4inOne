@@ -237,3 +237,17 @@ wo gebucht wurde. Alles wird selbst eingetragen; weiterhin keine Buchungs-, Flug
   Programm trägt den Reisenamen („Reise „Berlin Wochenende“ · Ablauf“) und seinen Ort. Backend liefert dafür
   `location` und `context` in den abgeleiteten Kalendereinträgen. Ohne Reiseart/Verkehrsmittel kein Zusatz.
 - Reiter „Ablauf“: Knopf „Programm“, Dialog „Programm hinzufügen/bearbeiten“, „Programm löschen“.
+
+## Stornofrist sichtbar und als Erinnerung (13.11.2026)
+
+- Reise-Dialog: eigener Schritt **„4 Unterkunft – optional“** mit Unterkunft, Lage und **„Kostenlos stornierbar bis“**
+  (vorher unter „Weitere Angaben“ versteckt). Das Datum geht höchstens bis zum ersten Reisetag (Kalender sperrt
+  spätere Tage, Fehlermeldung am Feld, Backend prüft dasselbe).
+- **Erinnerung im Kalender:** mit „Reisezeitraum im Kalender“ (bei neuen Reisen automatisch an) am Tag der Frist
+  „Letzter Tag: Hotel Central kostenlos stornieren“ (ganztägig, Reise-Symbol, Marke „Reise · <Reisename>“), solange
+  der Tag noch kommt; abgesagte/abgeschlossene Reisen nicht. Dazu weiter die Marke auf der Bordkarte (14 Tage vorher).
+- Übersicht › Reisedetails: Unterkunft ohne Frist → „Stornierung · Noch nicht eingetragen · Eintragen“ (öffnet den
+  Reise-Dialog, nur Besitzer:in).
+- **Ortsvorschläge beim Tippen** (Reiseziel, Abreiseort, Unterkunft) in Reisen vorerst aus – einfache Textfelder;
+  `app-place-input` bleibt im Projekt, die zugehörigen Tests sind übersprungen und kommen mit der Funktion zurück.
+- Später (nicht gebaut): Buchungsbestätigung hochladen, die Angaben werden ausgelesen (wie trip.com / Prüfstand).

@@ -43,7 +43,6 @@ for (const width of [390, 1440]) {
     await openDemo(page);
 
     await createTrip(page, 'Städtetrip Wien', 'Wien', iso(60), iso(63));
-    await page.getByRole('button', { name: /Weitere Angaben/ }).click();
     await page.locator('#trip-departure').fill('DUS');
     await page.locator('#trip-accommodation').fill('Hotel Sacher');
     await submit(page);
@@ -611,4 +610,23 @@ test('Ablauf: Tage mit Programmpunkten, Bearbeiten speichert; die Stornofrist st
   await expect(page.locator('app-modal-form [role="dialog"]')).toHaveCount(0);
   await expect(days.first()).toContainText('Zimmer 412');
   await axe(page);
+});
+
+test('Stornofrist: beim Anlegen sichtbar (ohne „Weitere Angaben“), ohne Frist ein Hinweis zum Eintragen, keine Ortsvorschläge', async ({ page }) => {
+  await openDemo(page);
+  await page.locator('.page-heading .primary:visible, app-mobile-action button:visible').first().click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { name: /Unterkunft/ })).toBeVisible();
+  await expect(dialog.getByText('Kostenlos stornierbar bis')).toBeVisible();
+  // Schnellsuche beim Tippen ist in Reisen vorerst aus
+  await dialog.locator('#trip-destination').fill('Bar');
+  await expect(page.getByRole('listbox')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+
+  // Reise mit Unterkunft, aber ohne Frist: „Noch nicht eingetragen · Eintragen“ öffnet den Dialog
+  await page.goto('/demo/reisen?trip=2');
+  const row = page.locator('.facts div', { hasText: 'Stornierung' });
+  await expect(row).toContainText('Noch nicht eingetragen');
+  await row.getByRole('button', { name: 'Eintragen' }).click();
+  await expect(page.getByRole('dialog').getByRole('heading', { name: 'Reise bearbeiten' })).toBeVisible();
 });

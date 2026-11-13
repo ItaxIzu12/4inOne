@@ -1,7 +1,5 @@
 import { AutoLinks } from '../../shared/connections/auto-links';
 import { tripCalendar, tripItinerary } from '../../shared/connections/auto-link-rules';
-import { PlaceHit } from '../../core/places/places.service';
-import { PlaceInput } from '../../shared/form/place-input';
 import { SubmissionKey } from '../../shared/idempotency';
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AmountInput } from '../../shared/directives/amount-input';
@@ -104,7 +102,6 @@ const LEGACY_TABS: Record<string, TripTab> = { packlisten: 'packliste', erinneru
     AppSelect,
     AppDatePicker,
     AppTimePicker,
-    PlaceInput,
     AutoLinks,
     ConnectionsSection,
     TripList,
@@ -268,17 +265,19 @@ export class Reisen {
   readonly tripAutoPreview = computed(() => {
     const v = this.tripValue();
     return {
-      TRIP_CALENDAR: tripCalendar(v.title.trim(), v.start_date || null, v.end_date || null, v.status),
+      TRIP_CALENDAR: tripCalendar(v.title.trim(), v.start_date || null, v.end_date || null, v.status, v.free_cancellation_until || null),
       TRIP_ITINERARY: tripItinerary(v.status, this.editTripId() && this.editTripId() === this.selectedTripId() ? this.events().length : 0),
     };
   });
-  /** Reiseziel — richtet die Unterkunft-Suche aus („Hotel Central“ in Berlin). */
-  readonly tripDestination = computed(() => this.tripValue().destination);
-  /** Unterkunft aus der Suche gewählt: Lage übernehmen, wenn dort noch nichts steht. */
-  accommodationPicked(hit: PlaceHit) {
-    const area = this.tripForm.controls.accommodation_area;
-    if (hit.area && !area.value.trim()) area.setValue(hit.area.slice(0, 120));
-  }
+  // Ortsvorschläge beim Tippen (Reiseziel, Abreiseort, Unterkunft) sind in Reisen vorerst aus (Nutzerwunsch
+  // 13.11.2026) – app-place-input bleibt im Projekt und kommt später wieder dazu.
+  /** Stornofrist nach dem ersten Reisetag ist ein Tippfehler (das Backend prüft dasselbe). */
+  readonly cancellationError = computed(() => {
+    const v = this.tripValue();
+    return v.free_cancellation_until && v.start_date && v.free_cancellation_until > v.start_date
+      ? 'Die Frist muss vor oder am ersten Reisetag liegen.'
+      : '';
+  });
 
   // ---------- Inhalte der geöffneten Reise ----------
   readonly packing = signal<PackingItem[]>([]);

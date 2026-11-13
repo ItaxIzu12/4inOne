@@ -48,7 +48,8 @@ for (const width of [390, 1440]) {
   });
 }
 
-test('trip destination takes only the place name', async ({ page }) => {
+// Ortsvorschläge in Reisen sind vorerst ausgeschaltet (Nutzerwunsch 13.11.2026) – die Tests kommen mit der Funktion zurück
+test.skip('trip destination takes only the place name', async ({ page }) => {
   await page.goto('/demo/reisen');
   await page.getByRole('button', { name: /Reise erstellen|Neue Reise/ }).first().click();
   const ziel = page.getByRole('dialog').getByRole('combobox', { name: /Reiseziel/ });
@@ -57,7 +58,7 @@ test('trip destination takes only the place name', async ({ page }) => {
   await expect(ziel).toHaveValue('Zermatt');
 });
 
-test('accommodation searches lodgings near the destination and fills in the area', async ({ page }) => {
+test.skip('accommodation searches lodgings near the destination and fills in the area', async ({ page }) => {
   await page.goto('/demo/reisen');
   await page.getByRole('button', { name: /Reise erstellen|Neue Reise/ }).first().click();
   const dialog = page.getByRole('dialog');

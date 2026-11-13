@@ -258,6 +258,9 @@ Abstand — nie nur über Farbe.
   Seiten Demo-Texte (`@if (demo)`), der Hinweis wird zu `.legal-warning--demo` („Gilt für die Testversion“, Sage
   `--ground-2`, Info-Kreis in `--ink-soft`). Kontakt-Links aus `shared/legal-page/demo-contact.ts`. Platzhalter der
   App-Fassung unverändert (dort „§ 18 Abs. 2 MStV“ statt veraltet „§ 55 RStV“, „Kompass“ → „4inOne“).
+- **Stornofrist sichtbar (13.11.2026):** Reise-Dialog `form-step` 4 „Unterkunft“, Datumsfeld mit `[max]` = erster
+  Reisetag und `cancellationError()`; `TripOverview` Ausgabe `editTrip`; abgeleiteter Eintrag `trip-cancel:<id>`
+  (Art `TRIP_CALENDAR`). `PlaceInput` in `reisen.ts` nicht mehr importiert (vorerst).
 - **Reise im Kalender erkennbar (13.11.2026):** `DerivedCalendarItem.location/context`; `derivedLabel()` in
   `organisation.ts`; `isTrip()` + `.ev__icon` (Monat/Woche), Woche `.week__ev--start` mit `--span` und `z-index: 2`.
 - **Tagesablauf im Kalender (13.11.2026):** `AutoKind` `TRIP_ITINERARY` (Backend `connections/auto_links.py`,

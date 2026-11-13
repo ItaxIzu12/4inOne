@@ -471,3 +471,20 @@ def test_trip_span_says_what_kind_of_trip_it_is_and_where_it_goes(w):
     Trip.objects.filter(pk=trip.pk).update(travel_type='', transport_type='')
     span = next(i for i in _calendar(anna, today, today + timedelta(days=30)) if i['kind'] == 'TRIP_CALENDAR')
     assert span['context'] == ''
+
+
+def test_free_cancellation_deadline_appears_as_reminder_until_it_has_passed(w):
+    anna, today = w['anna'], timezone.localdate()
+    trip = Trip.objects.create(owner=anna, title='Berlin Wochenende', destination='Berlin', accommodation='Hotel Central',
+                               start_date=today + timedelta(days=10), end_date=today + timedelta(days=12),
+                               free_cancellation_until=today + timedelta(days=4))
+    state = _link(anna, 'TRIP_CALENDAR', trip.pk)
+    assert 'kostenlos stornieren' in state['preview']
+    reminder = [i for i in _calendar(anna, today, today + timedelta(days=30)) if i['key'] == f'trip-cancel:{trip.pk}']
+    assert [(r['title'], r['date'], r['all_day'], r['context']) for r in reminder] == [
+        ('Letzter Tag: Hotel Central kostenlos stornieren', (today + timedelta(days=4)).isoformat(), True, 'Berlin Wochenende')]
+    # vorbei, abgesagt oder ohne Verbindung: keine Erinnerung
+    Trip.objects.filter(pk=trip.pk).update(free_cancellation_until=today - timedelta(days=1))
+    assert not [i for i in _calendar(anna, today - timedelta(days=5), today + timedelta(days=30)) if i['key'].startswith('trip-cancel')]
+    Trip.objects.filter(pk=trip.pk).update(free_cancellation_until=today + timedelta(days=4), status='CANCELLED')
+    assert not [i for i in _calendar(anna, today, today + timedelta(days=30)) if i['key'].startswith('trip-cancel')]

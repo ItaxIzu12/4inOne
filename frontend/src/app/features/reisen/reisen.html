@@ -91,6 +91,7 @@
               [budgetTotal]="budgetTotal()"
               [canEdit]="canEdit()"
               (openTab)="selectTab($event)"
+              (editTrip)="openTripEditor(trip)"
             />
           }
           @case ('ablauf') {
@@ -192,7 +193,7 @@
 
     <h3 class="form-step"><span aria-hidden="true">1</span>Wohin?</h3>
     <app-field label="Reiseziel" [error]="destinationError()">
-      <app-place-input inputId="trip-destination" formControlName="destination" [maxLength]="160" [full]="false" placeholder="z. B. Berlin" />
+      <input id="trip-destination" formControlName="destination" maxlength="160" required placeholder="z. B. Berlin" autocomplete="off" />
     </app-field>
     <app-field label="Name der Reise" [error]="titleError()">
       <input id="trip-title" formControlName="title" maxlength="120" required placeholder="z. B. Berlin Wochenende" />
@@ -215,7 +216,7 @@
 
     <h3 class="form-step"><span aria-hidden="true">3</span>Wie? <span class="muted">– optional</span></h3>
     <app-field label="Abreiseort" [optional]="true" hint="z. B. Düsseldorf oder DUS">
-      <app-place-input inputId="trip-departure" formControlName="departure" [maxLength]="120" [full]="false" placeholder="z. B. Düsseldorf" />
+      <input id="trip-departure" formControlName="departure" maxlength="120" placeholder="z. B. Düsseldorf" autocomplete="off" />
     </app-field>
     <div class="transport-field">
       <span class="baggage-field__label" id="trip-transport-label">Verkehrsmittel</span>
@@ -228,6 +229,25 @@
       </div>
     </div>
 
+    <!-- Unterkunft und Stornofrist sichtbar (13.11.2026): vorher unter „Weitere Angaben“ versteckt, die Frist wurde nicht gefunden -->
+    <h3 class="form-step"><span aria-hidden="true">4</span>Unterkunft <span class="muted">– optional</span></h3>
+    <div class="field-row">
+      <app-field label="Unterkunft" [optional]="true" hint="z. B. Hotel Central">
+        <input id="trip-accommodation" formControlName="accommodation" maxlength="160" placeholder="Hotel, Pension, Ferienwohnung …" autocomplete="off" />
+      </app-field>
+      <app-field label="Lage" [optional]="true" hint="z. B. Berlin Mitte">
+        <input id="trip-accommodation-area" formControlName="accommodation_area" maxlength="120" />
+      </app-field>
+    </div>
+    <app-field
+      label="Kostenlos stornierbar bis"
+      [optional]="true"
+      [error]="cancellationError()"
+      hint="Steht in der Buchungsbestätigung. 4inOne erinnert dich im Kalender und auf der Bordkarte."
+    >
+      <app-date-picker mode="date" formControlName="free_cancellation_until" [clearable]="true" [max]="tripForm.controls.start_date.value" />
+    </app-field>
+
     <button type="button" class="more-toggle" [attr.aria-expanded]="tripMoreOpen()" aria-controls="trip-more" (click)="tripMoreOpen.set(!tripMoreOpen())">
       <app-icon [name]="tripMoreOpen() ? 'chevron-up' : 'chevron-down'" aria-hidden="true" />
       Weitere Angaben <span class="muted">– optional</span>
@@ -239,26 +259,6 @@
             <input id="trip-transport-note" formControlName="transport_note" maxlength="160" />
           </app-field>
         </div>
-        <div class="field-row">
-          <app-field label="Unterkunft" [optional]="true" hint="z. B. Hotel Central">
-            <app-place-input
-              inputId="trip-accommodation"
-              formControlName="accommodation"
-              kind="lodging"
-              [maxLength]="160"
-              [full]="false"
-              [near]="tripDestination()"
-              placeholder="Hotel, Pension, Ferienwohnung …"
-              (picked)="accommodationPicked($event)"
-            />
-          </app-field>
-          <app-field label="Lage" [optional]="true" hint="z. B. Berlin Mitte">
-            <input id="trip-accommodation-area" formControlName="accommodation_area" maxlength="120" />
-          </app-field>
-        </div>
-        <app-field label="Kostenlos stornierbar bis" [optional]="true" hint="Steht in der Buchungsbestätigung – höchstens der erste Reisetag.">
-          <app-date-picker mode="date" formControlName="free_cancellation_until" [clearable]="true" />
-        </app-field>
         <div class="field-row">
           <app-field label="Reiseart" [optional]="true" hint="Für passende Vorschläge">
             <app-select formControlName="travel_type" [options]="travelTypeOptions" />

@@ -34,6 +34,8 @@ export class TripOverview {
   readonly budgetTotal = input(0);
   readonly canEdit = input(true);
   readonly openTab = output<TripTab>();
+  /** Reise-Dialog öffnen (z. B. um die Stornofrist einzutragen). */
+  readonly editTrip = output<void>();
 
   readonly today = localDay(new Date());
   readonly transportLabels = TRANSPORT_LABELS;

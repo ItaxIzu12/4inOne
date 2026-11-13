@@ -112,7 +112,7 @@ export class DemoAutoLinksApi {
       }
       case 'TRIP_CALENDAR': {
         const t = this.trips().find((x) => String(x.id) === source);
-        return t ? tripCalendar(t.title, t.start_date, t.end_date, t.status) : null;
+        return t ? tripCalendar(t.title, t.start_date, t.end_date, t.status, t.free_cancellation_until ?? null) : null;
       }
       case 'TRIP_ITINERARY': {
         const t = this.trips().find((x) => String(x.id) === source);
@@ -182,6 +182,13 @@ export class DemoAutoLinksApi {
       if (active('TRIP_CALENDAR').includes(String(t.id)) && t.status !== 'CANCELLED' && t.start_date <= end && t.end_date >= start) {
         const kindOfTrip = [t.travel_type ? TRAVEL_TYPE_LABEL[t.travel_type] : '', t.transport_type ? TRANSPORT_LABELS[t.transport_type] : ''].filter(Boolean).join(' · ');
         items.push({ ...this.item(`trip:${t.id}`, 'TRIP_CALENDAR', t.title, t.start_date, t.end_date, 'TRIP', t.id, 'reisen'), location: t.destination, context: kindOfTrip });
+      }
+      // Erinnerung an die kostenlose Stornierung (wie das Backend: nur, solange der Tag noch kommt)
+      const cancel = t.free_cancellation_until;
+      const today = new Date();
+      const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      if (active('TRIP_CALENDAR').includes(String(t.id)) && t.status !== 'CANCELLED' && t.status !== 'DONE' && cancel && cancel >= todayIso && inRange(cancel)) {
+        items.push({ ...this.item(`trip-cancel:${t.id}`, 'TRIP_CALENDAR', `Letzter Tag: ${t.accommodation.trim() || t.title} kostenlos stornieren`, cancel, null, 'TRIP', t.id, 'reisen'), context: t.title });
       }
       // Tagesablauf: nur, was es gibt – Programmpunkte mit Uhrzeit
       if (active('TRIP_ITINERARY').includes(String(t.id)) && t.status !== 'CANCELLED') {

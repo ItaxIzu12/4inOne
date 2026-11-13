@@ -118,10 +118,11 @@ export function deviceMaintenance(name: string, dueDate: string | null, status: 
   return { preview: `Organisation › Kalender: „Wartung: ${name || 'Gerät'}“ am ${deDate(dueDate)}.`, problem: '' };
 }
 
-export function tripCalendar(title: string, start: string | null, end: string | null, status: string): AutoPreview {
+export function tripCalendar(title: string, start: string | null, end: string | null, status: string, cancelUntil: string | null = null): AutoPreview {
   if (status === 'CANCELLED') return { preview: '', problem: 'Die Reise ist abgesagt.' };
   if (!start || !end) return { preview: '', problem: 'Wähle zuerst den Zeitraum der Reise.' };
-  return { preview: `Organisation › Kalender: ${title || 'Reise'} vom ${deDate(start)} bis ${deDate(end)} (ganztägig).`, problem: '' };
+  const reminder = cancelUntil ? ` Dazu die Erinnerung „kostenlos stornieren“ am ${deDate(cancelUntil)}.` : '';
+  return { preview: `Organisation › Kalender: ${title || 'Reise'} vom ${deDate(start)} bis ${deDate(end)} (ganztägig).${reminder}`, problem: '' };
 }
 
 /** Zieldatum, sonst der Endmonat des Sparzeitraums ('JJJJ-MM'); offen → kein Termin. */

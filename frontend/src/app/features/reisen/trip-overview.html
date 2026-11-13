@@ -118,6 +118,15 @@
           }
         </dd>
       </div>
+    } @else if (t.accommodation && !t.free_cancellation_until && canEdit() && t.my_role === 'OWNER' && t.status !== 'CANCELLED' && t.status !== 'DONE') {
+      <!-- Unterkunft ohne Frist: sagen, wo man sie einträgt – sonst findet man das Feld nicht -->
+      <div>
+        <dt><app-icon name="calendar" aria-hidden="true" />Stornierung</dt>
+        <dd>
+          <span class="muted">Noch nicht eingetragen</span>
+          <button type="button" class="link" (click)="editTrip.emit()">Eintragen</button>
+        </dd>
+      </div>
     }
     @if (t.notes) {
       <div class="facts__note"><dt><app-icon name="file-text" aria-hidden="true" />Notiz</dt><dd>{{ t.notes }}</dd></div>

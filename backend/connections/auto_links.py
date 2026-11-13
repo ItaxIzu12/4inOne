@@ -216,7 +216,9 @@ def describe(user, kind: str, source) -> tuple[str, str]:
         problem = trip_problem(source)
         if problem:
             return '', problem
-        return f'Organisation › Kalender: {source.title} vom {_de(source.start_date)} bis {_de(source.end_date)} (ganztägig).', ''
+        cancel = getattr(source, 'free_cancellation_until', None)
+        reminder = f' Dazu die Erinnerung „kostenlos stornieren“ am {_de(cancel)}.' if cancel else ''
+        return f'Organisation › Kalender: {source.title} vom {_de(source.start_date)} bis {_de(source.end_date)} (ganztägig).{reminder}', ''
     if kind == AutoKind.TRIP_ITINERARY:
         problem = trip_problem(source)
         if problem:
@@ -435,6 +437,13 @@ def calendar_items(user, start: date, end: date) -> list[dict]:
                                                   trip.get_transport_type_display() if trip.transport_type else '') if x)
             items.append(DerivedItem(f'trip:{trip.pk}', AutoKind.TRIP_CALENDAR, trip.title, trip.start_date, trip.end_date, ObjectType.TRIP, trip.pk, 'reisen',
                                      location=trip.destination, context=kind_of_trip))
+        # Erinnerung an die kostenlose Stornierung: am letzten Tag, solange er noch kommt (vorbei = nichts mehr zu tun)
+        cancel = getattr(trip, 'free_cancellation_until', None)
+        if (not trip_problem(trip) and trip.status != 'DONE' and cancel and cancel >= timezone.localdate()
+                and start <= cancel <= end):
+            what = trip.accommodation.strip() or trip.title
+            items.append(DerivedItem(f'trip-cancel:{trip.pk}', AutoKind.TRIP_CALENDAR, f'Letzter Tag: {what} kostenlos stornieren',
+                                     cancel, None, ObjectType.TRIP, trip.pk, 'reisen', context=trip.title))
     itinerary = {pk: t for pk, t in _visible_sources(user, AutoKind.TRIP_ITINERARY, set(_active(user, AutoKind.TRIP_ITINERARY))).items()
                  if not trip_problem(t)}
     if itinerary:
