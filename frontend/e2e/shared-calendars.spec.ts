@@ -25,7 +25,8 @@ for (const width of [390, 1440]) {
     await expect(agenda.locator('.cal-tag').first()).toContainText('Familie');
     await expect(agenda).toContainText('von Max');
     await filter.getByRole('button', { name: 'Nur meine' }).click();
-    await expect(agenda.locator('.cal-tag')).toHaveCount(0);
+    // keine Marke eines geteilten Kalenders – eigene Einträge aus anderen Bereichen („Reise · …“, grau) dürfen bleiben
+    await expect(agenda.locator('.cal-tag:not([data-color="slate"])')).toHaveCount(0);
     await filter.getByRole('button', { name: 'Familie' }).click();
     await expect(agenda.locator('.cal-tag').first()).toBeVisible();
     await expect(agenda.locator('.agenda__row:not(:has(.cal-tag))')).toHaveCount(0); // nur Familie

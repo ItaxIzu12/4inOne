@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 // Verknüpfungen sichtbar (31.10.2026): Reise › „Gehört zu dieser Reise“ und kleine Hinweise in den anderen Bereichen.
-// In der Demo mit festem Beispielbestand (shared/connections/demo-connections-api.ts) — ohne Backend.
+// In der Demo mit dem Bestand aus den Demo-Bereichen (shared/connections/demo-connections-api.ts, seit 14.11.2026) — ohne Backend.
 
 test.beforeEach(async ({ page }) => {
   await page.route('http://localhost:8000/api/**', (route) => route.abort());
@@ -39,4 +39,26 @@ test('Hinweise in Haushalt und Finanzen: wohin ein Eintrag gehört', async ({ pa
   await page.goto('/demo/finanzen?tab=goals');
   await expect(page.locator('.goal', { hasText: 'Badmintonschuhe' }).locator('app-link-hints')).toContainText('Badmintonschuhe vergleichen');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('auch Haushaltsaufgaben und Geräte zeigen ihre Verknüpfungen in der Demo; ein Gerät bietet nur Sparziele an', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // Haushaltsaufgabe „Pflanzen gießen“ gehört zur Berlin-Reise – auch von dieser Seite aus sichtbar
+  await page.goto('/demo/haushalt?tab=aufgaben');
+  await page.getByText('Pflanzen gießen', { exact: true }).first().click();
+  const taskLinks = page.getByRole('dialog').locator('app-connections');
+  await expect(taskLinks.locator('li.connection .connection__title')).toHaveText(['Berlin Wochenende']);
+  await page.keyboard.press('Escape');
+
+  // Gerät: Verknüpfen bietet genau die Art aus dem Backend (Sparziel); keins der Demo-Sparziele passt zur Waschmaschine
+  await page.goto('/demo/haushalt?tab=zuhause&bereich=geraete');
+  await page.getByRole('button', { name: /^Waschmaschine/ }).first().click();
+  const dialog = page.getByRole('dialog');
+  if (!(await dialog.count())) await page.getByRole('button', { name: 'Bearbeiten' }).last().click();
+  const deviceLinks = page.getByRole('dialog').locator('app-connections');
+  await deviceLinks.getByRole('button', { name: /^\+? ?Verknüpfen$/ }).click();
+  await expect(deviceLinks.locator('.wizard .choice')).toHaveText(['Sparziel']);
+  await deviceLinks.getByRole('button', { name: 'Sparziel' }).click();
+  await expect(deviceLinks).toContainText('Nichts, was erkennbar dazu passt.');
+  await expect(deviceLinks).toContainText('4 weitere Einträge passen nicht erkennbar dazu');
 });

@@ -104,9 +104,12 @@ export class ConnectionsSection {
   private readonly demo = inject(DEMO_MODE);
 
   protected readonly kind = KIND;
+  /** Die Kennung für die API: mit Konto nur positive Zahlen (wie das Backend). In der Demo haben Haushaltsaufgaben,
+   *  Geräte und Verträge Text-Kennungen („demo-task-1“) – dort gelten auch die, sonst fehlten dort die Verknüpfungen. */
   private readonly numericId = computed(() => {
     const id = this.objectId();
-    return typeof id === 'number' && Number.isInteger(id) && id > 0 ? id : null;
+    if (typeof id === 'number' && Number.isInteger(id) && id > 0) return id;
+    return this.demo && typeof id === 'string' && id.trim() ? (id as unknown as number) : null;
   });
   protected readonly enabled = computed(() => (this.demo || this.auth.isAuthenticated()) && this.numericId() !== null);
 

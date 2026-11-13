@@ -246,6 +246,25 @@ Kurz: `connections/auto_links.py` + `AutoLink`/`AutoLinkEvent`. Eine Quelle (Ver
 Anzeige in Finanzen („Geplant“) und Organisation (Kalender, Aufgaben) wird bei jedem Lesen berechnet — keine Kopien,
 keine Buchungen, keine Zahlungen. V1-Verbindungen bleiben unverändert.
 
+## Auswahl nach Sinn, Demo aus echten Daten, Testmatrix (13./14.11.2026)
+
+- **Auswahl beim manuellen Verknüpfen:** `connections/relevance.py` bewertet je Arten-Paar, ob ein Eintrag erkennbar
+  passt (gleiches Stichwort, Reise-/Vertragswort, Datum in oder kurz vor der Reise, Haushaltsaufgaben, die zuhause
+  weiterlaufen). `candidates` liefert `fits`, Passendes zuerst; ohne Suche zeigt die Oberfläche nur Passendes, der Rest
+  bleibt über die Suche erreichbar. Grenze: Wörter zählen nur als ganzes Wort bzw. als Wortanfang ab 5 Buchstaben –
+  „Stromtarif“ enthält für die Regel kein „Tarif“.
+- **Demo = Backend:** `frontend/src/app/shared/connections/demo-connections-api.ts` baut den Bestand live aus den
+  Demo-Bereichen (Reisen, Termine, Aufgaben, Sparziele, Haushaltsaufgaben, Geräte, Verträge), kennt alle 9 Paare und
+  nutzt `connection-relevance.ts` (Spiegel von `relevance.py`). Gelöschte Demo-Einträge nehmen ihre Verknüpfungen mit,
+  neue sind sofort verknüpfbar. In der Demo zeigen jetzt auch Haushaltsaufgaben, Geräte und Verträge (Text-IDs) ihren
+  Abschnitt „Verknüpft mit“.
+- **Tests:** `tests/test_matrix.py` – jedes erlaubte Paar (anlegen auch „falsch herum“, beidseitig sichtbar, kein
+  Duplikat, Auswahl mit `fits`, Fremde 404, Quelle gelöscht → nur die Verknüpfung weg) und jede automatische Verbindung
+  (erscheint, Pause blendet aus, Fortsetzen zeigt wieder, Fremde 404, Quelle gelöscht → Verbindung weg); eine neue Art
+  ohne Eintrag in der Matrix lässt den Test scheitern. `tests/test_demo_mirror.py` liest den Demo-Code und prüft Paare,
+  Bezeichnungen, Wortlisten und Fristen gegen das Backend. `tests/test_relevance.py` und
+  `connection-relevance.spec.ts` prüfen dieselben Fälle.
+
 ## Later: Automations
 
 Automations may act on connected objects only when the behavior is transparent, permission-safe and user-controlled.

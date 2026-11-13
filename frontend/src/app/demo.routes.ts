@@ -2,6 +2,7 @@ import { AutoLinksApi } from './shared/connections/auto-links-api.service';
 import { DemoAutoLinksApi } from './shared/connections/demo-auto-links-api';
 import { PlacesService } from './core/places/places.service';
 import { DemoPlacesService } from './core/places/demo-places.service';
+import { Provider } from '@angular/core';
 import { Routes } from '@angular/router';
 import { DEMO_MODE } from './core/demo-context';
 import { ContactsApiService } from './core/contacts/contacts-api.service';
@@ -24,6 +25,27 @@ import { OrganisationApi } from './features/organisation/organisation-api.servic
 import { DemoReisenApi } from './features/reisen/demo-reisen-api';
 import { ReisenApi } from './features/reisen/reisen-api.service';
 
+/** Alle Demo-Dienste (nur unter /demo) – auch für Tests, die die Demo als Ganzes prüfen. */
+export const DEMO_PROVIDERS: Provider[] = [
+  { provide: DEMO_MODE, useValue: true },
+  { provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider },
+  { provide: HAUSHALT_DATA_PROVIDER, useClass: DemoHaushaltDataProvider },
+  { provide: PrivateFinanceApi, useClass: DemoPrivateFinanceApi },
+  { provide: OrganisationApi, useClass: DemoOrganisationApi },
+  { provide: ReisenApi, useClass: DemoReisenApi },
+  { provide: FxService, useClass: DemoFxService },
+  { provide: HomeCurrency, useClass: DemoHomeCurrency },
+  { provide: ContactsApiService, useClass: DemoContactsApiService },
+  { provide: HouseholdApiService, useClass: DemoHouseholdApiService },
+  // Ortsvorschläge in der Demo ohne externen Dienst (Beispielorte)
+  { provide: PlacesService, useClass: DemoPlacesService },
+  // Verknüpfungen in der Demo: Bestand live aus den Demo-Bereichen, nur im Browser (14.11.2026)
+  { provide: ConnectionsApi, useClass: DemoConnectionsApi },
+  // Connection Engine V2 in der Demo: abgeleitete Verbindungen aus den Demo-Daten (nur im Browser)
+  { provide: AutoLinksApi, useClass: DemoAutoLinksApi },
+  FinanzenStateService,
+];
+
 /**
  * Die Demo unter /demo — eigene Datei, damit Demo-Daten und Bereichs-Dienste erst beim Öffnen der Demo geladen
  * werden und nicht im Startpaket jedes Besuchers der Landingpage landen. Die Demo-Provider gelten nur hier, unabhängig
@@ -32,25 +54,7 @@ import { ReisenApi } from './features/reisen/reisen-api.service';
 export const DEMO_ROUTES: Routes = [
   {
     path: '',
-    providers: [
-      { provide: DEMO_MODE, useValue: true },
-      { provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider },
-      { provide: HAUSHALT_DATA_PROVIDER, useClass: DemoHaushaltDataProvider },
-      { provide: PrivateFinanceApi, useClass: DemoPrivateFinanceApi },
-      { provide: OrganisationApi, useClass: DemoOrganisationApi },
-      { provide: ReisenApi, useClass: DemoReisenApi },
-      { provide: FxService, useClass: DemoFxService },
-      { provide: HomeCurrency, useClass: DemoHomeCurrency },
-      { provide: ContactsApiService, useClass: DemoContactsApiService },
-      { provide: HouseholdApiService, useClass: DemoHouseholdApiService },
-      // Ortsvorschläge in der Demo ohne externen Dienst (Beispielorte)
-      { provide: PlacesService, useClass: DemoPlacesService },
-      // Verknüpfungen in der Demo: fester Beispielbestand, nur im Browser (31.10.2026)
-      { provide: ConnectionsApi, useClass: DemoConnectionsApi },
-      // Connection Engine V2 in der Demo: abgeleitete Verbindungen aus den Demo-Daten (nur im Browser)
-      { provide: AutoLinksApi, useClass: DemoAutoLinksApi },
-      FinanzenStateService,
-    ],
+    providers: DEMO_PROVIDERS,
     children: [
       {
         path: '',

@@ -258,6 +258,9 @@ Abstand — nie nur über Farbe.
   Seiten Demo-Texte (`@if (demo)`), der Hinweis wird zu `.legal-warning--demo` („Gilt für die Testversion“, Sage
   `--ground-2`, Info-Kreis in `--ink-soft`). Kontakt-Links aus `shared/legal-page/demo-contact.ts`. Platzhalter der
   App-Fassung unverändert (dort „§ 18 Abs. 2 MStV“ statt veraltet „§ 55 RStV“, „Kompass“ → „4inOne“).
+- **Demo-Verknüpfungen aus echten Daten (14.11.2026):** `DemoConnectionsApi` liest die Demo-Bereiche über den
+  Injector, alle 9 Paare (`DEMO_PAIRS`), Regel `connection-relevance.ts`. `DEMO_PROVIDERS` in `demo.routes.ts` (auch für
+  Tests). `app-connections` nimmt in der Demo auch Text-Kennungen an. Keine optische Änderung.
 - **Verknüpfen nach Sinn (13.11.2026):** `connections/relevance.py` (`fits()` je Arten-Paar: gleiches Stichwort,
   Reisebezug, Datum in/kurz vor der Reise, Haushaltsaufgaben, die zuhause weiterlaufen); `candidates_for` liefert
   `fits` und sortiert Passendes zuerst. `app-connections`: `shownCandidates()`/`hiddenCandidates()`. Demo-Bestand mit
