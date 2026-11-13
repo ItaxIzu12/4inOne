@@ -258,6 +258,11 @@ Abstand — nie nur über Farbe.
   Seiten Demo-Texte (`@if (demo)`), der Hinweis wird zu `.legal-warning--demo` („Gilt für die Testversion“, Sage
   `--ground-2`, Info-Kreis in `--ink-soft`). Kontakt-Links aus `shared/legal-page/demo-contact.ts`. Platzhalter der
   App-Fassung unverändert (dort „§ 18 Abs. 2 MStV“ statt veraltet „§ 55 RStV“, „Kompass“ → „4inOne“).
+- **Reisen › Ablauf und Stornofrist (12.11.2026):** neuer Reiter `ablauf` (`trip-itinerary.ts/.html/.scss`, Logik
+  `itinerary()`, `eventTime()`, `eventIcon()`, `cancellationInfo()` in `reisen-logic.ts`). Raster Tag | Einträge
+  (`minmax(130px,170px) 1fr`), Eintrag `7.5rem 36px 1fr auto`; ≤ 640 px Datum über den Einträgen, Uhrzeit über dem
+  Titel. Dialog „Programmpunkt“ mit Art-Chips (`.category-chip`, `--c: var(--travel-accent)`). Fünf Reiter passen am
+  Handy (375 px) ohne Scrollen. Bordkarte: Marken-Typ `tab: null` = reine Info (Span statt Knopf), `track c.text`.
 - **„Soft Editorial“ – neue Farbidentität für App und Website (22.10.2026, Nutzerwahl):** Neutral
   Porcelain `#F7F7F4`, Weiß, Sage `#ECEFEA`, Deep Forest `#172523` (Text, Knöpfe, dunkle Bänder), Linien `#DDE1DA`,
   Sekundärtext `#4F5D59`, Feldrand `#879189`; Akzent Evergreen `#17694F` (Links/Fortschritt, nicht Knöpfe). Bereichs-

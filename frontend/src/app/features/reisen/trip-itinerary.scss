@@ -1,0 +1,178 @@
+// Reise › Ablauf (12.11.2026): Tage als Abschnitte – links Datum und „Tag 2“, rechts die Programmpunkte nach
+// Uhrzeit. Eine Farbe (Reisen); die Art unterscheidet nur das Symbol, damit der Tag ruhig bleibt.
+.itinerary {
+  max-width: 920px;
+}
+.it-count {
+  margin-top: 4px;
+  max-width: 60ch;
+}
+.days {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.day {
+  display: grid;
+  grid-template-columns: minmax(130px, 170px) minmax(0, 1fr);
+  gap: 4px 20px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.day:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+.day__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding-top: 10px;
+}
+.day__label {
+  font-size: var(--fs-body);
+  font-weight: 700;
+}
+.day__sub {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.is-edge .day__label {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.day__today {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--travel-accent);
+  color: #fff;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+.is-today {
+  margin-inline: -12px;
+  padding-inline: 12px;
+  border-radius: var(--radius-md);
+  background: var(--travel-soft);
+}
+.day__empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-height: 44px;
+}
+.day__empty .link {
+  min-height: 44px;
+}
+
+.events {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.event {
+  display: grid;
+  grid-template-columns: 7.5rem 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  border-top: 1px solid var(--line);
+}
+.event:first-child {
+  border-top: 0;
+}
+.event__time {
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.event__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--travel-soft);
+  color: var(--travel-accent);
+}
+.is-today .event__icon {
+  background: #fff;
+}
+.event__icon app-icon {
+  width: 18px;
+  height: 18px;
+}
+.event__text {
+  display: grid;
+  min-width: 0;
+}
+.event__text b {
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.event__text small {
+  overflow-wrap: anywhere;
+}
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.icon-btn:hover {
+  background: var(--surface-hover);
+}
+.icon-btn app-icon {
+  width: 18px;
+  height: 18px;
+}
+
+// Handy: Datum über den Einträgen, Uhrzeit über dem Titel – nichts wird gequetscht
+@media (max-width: 640px) {
+  .day {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .day__head {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    padding-top: 0;
+  }
+  .event {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    grid-template-areas:
+      'icon time edit'
+      'icon text edit';
+    gap: 0 12px;
+    padding: 10px 0;
+  }
+  .event__icon {
+    grid-area: icon;
+  }
+  .event__time {
+    grid-area: time;
+    font-size: var(--fs-meta);
+  }
+  .event__text {
+    grid-area: text;
+  }
+  .icon-btn {
+    grid-area: edit;
+  }
+}

@@ -93,6 +93,15 @@
               (openTab)="selectTab($event)"
             />
           }
+          @case ('ablauf') {
+            <app-trip-itinerary
+              [trip]="trip"
+              [events]="events()"
+              [canEdit]="canEdit()"
+              (add)="openEventEditor(undefined, $event)"
+              (edit)="openEventEditor($event)"
+            />
+          }
           @case ('planung') {
             <app-trip-planning
               [trip]="trip"
@@ -247,6 +256,9 @@
             <input id="trip-accommodation-area" formControlName="accommodation_area" maxlength="120" />
           </app-field>
         </div>
+        <app-field label="Kostenlos stornierbar bis" [optional]="true" hint="Steht in der Buchungsbestätigung – höchstens der erste Reisetag.">
+          <app-date-picker mode="date" formControlName="free_cancellation_until" [clearable]="true" />
+        </app-field>
         <div class="field-row">
           <app-field label="Reiseart" [optional]="true" hint="Für passende Vorschläge">
             <app-select formControlName="travel_type" [options]="travelTypeOptions" />
@@ -338,6 +350,50 @@
   }
   <app-field label="Notiz" [optional]="true">
     <input id="task-item-note" formControlName="note" maxlength="240" />
+  </app-field>
+</app-modal-form>
+
+<app-modal-form
+  icon="calendar"
+  [formGroup]="eventForm"
+  [title]="editEventId() ? 'Programmpunkt bearbeiten' : 'Programmpunkt hinzufügen'"
+  [open]="eventEditor()"
+  [saving]="eventSaving()"
+  [error]="eventFormError()"
+  [deleteLabel]="editEventId() ? 'Programmpunkt löschen' : ''"
+  (submitted)="saveEventForm()"
+  (closed)="closeEventEditor()"
+  (deleted)="removeEventFromEditor()"
+>
+  <app-field label="Titel">
+    <input id="event-title" formControlName="title" maxlength="120" required placeholder="z. B. ICE nach Berlin, Check-in, Führung" data-autofocus />
+  </app-field>
+  <div class="transport-field">
+    <span class="baggage-field__label" id="event-kind-label">Art</span>
+    <div class="category-chips" role="group" aria-labelledby="event-kind-label">
+      @for (k of eventKinds; track k.value) {
+        <button type="button" class="category-chip" style="--c: var(--travel-accent)" [attr.aria-pressed]="eventKind() === k.value" (click)="setEventKind(k.value)">
+          <app-icon [name]="eventKindIcon(k.value)" aria-hidden="true" />{{ k.label }}
+        </button>
+      }
+    </div>
+  </div>
+  <app-field label="Tag">
+    <app-date-picker mode="date" formControlName="date" />
+  </app-field>
+  <div class="field-row">
+    <app-field label="Beginn">
+      <app-time-picker formControlName="start" />
+    </app-field>
+    <app-field label="Ende" [optional]="true" hint="Über Mitternacht? Dann am nächsten Tag.">
+      <app-time-picker formControlName="end" [clearable]="true" />
+    </app-field>
+  </div>
+  <app-field label="Ort" [optional]="true" hint="z. B. Düsseldorf Hbf, Museumsinsel">
+    <input id="event-location" formControlName="location" maxlength="240" />
+  </app-field>
+  <app-field label="Notiz" [optional]="true" hint="z. B. Buchungsnummer, Gleis, Sitzplatz">
+    <input id="event-note" formControlName="note" maxlength="240" />
   </app-field>
 </app-modal-form>
 

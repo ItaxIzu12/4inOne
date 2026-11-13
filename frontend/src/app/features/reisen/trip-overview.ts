@@ -2,10 +2,10 @@ import { Component, computed, input, output } from '@angular/core';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
 import { Trip, TripTask } from './reisen-api.service';
-import { TRANSPORT_LABELS, dueLabel, filterTasks, formatMoney, initials, localDay, nights, peopleLabel, percent, transportIcon, tripDays, tripPhase } from './reisen-logic';
+import { TRANSPORT_LABELS, cancellationInfo, dueLabel, filterTasks, formatMoney, initials, localDay, nights, peopleLabel, percent, transportIcon, tripDays, tripPhase } from './reisen-logic';
 import { TripPass } from './trip-pass';
 
-export type TripTab = 'uebersicht' | 'planung' | 'packliste' | 'budget';
+export type TripTab = 'uebersicht' | 'ablauf' | 'planung' | 'packliste' | 'budget';
 
 /** So viele offene Aufgaben zeigt „Bis zur Abreise“; der Rest steht in der Planung. */
 const NEXT_TASKS = 4;
@@ -68,8 +68,9 @@ export class TripOverview {
   );
   readonly hasDetails = computed(() => {
     const t = this.trip();
-    return !!(t.departure || t.accommodation || t.transport_type || t.transport_note || t.notes);
+    return !!(t.departure || t.accommodation || t.transport_type || t.transport_note || t.notes || t.free_cancellation_until);
   });
+  readonly cancellation = computed(() => cancellationInfo(this.trip(), this.today));
 
   money(value: number): string {
     return formatMoney(value, this.trip().currency, true);

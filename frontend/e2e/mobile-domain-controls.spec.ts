@@ -73,7 +73,7 @@ for (const width of [320, 360, 390]) {
   });
 }
 
-// Reisen V1: Meine Reisen hat keine Reiter, nur „Reise erstellen“ (am Handy unten); in einer Reise vier Reiter in einer
+// Reisen V1: Meine Reisen hat keine Reiter, nur „Reise erstellen“ (am Handy unten); in einer Reise fünf Reiter in einer
 // Zeile, „Bearbeiten“ bleibt im Kopf erreichbar und es gibt keinen schwebenden Knopf.
 for (const width of [320, 360, 390]) {
   test(`Reisen: mobile actions at ${width}px`, async ({ page }) => {
@@ -87,7 +87,7 @@ for (const width of [320, 360, 390]) {
 
     await page.goto('/demo/reisen?trip=1&tab=budget');
     const tabs = page.locator('nav.tabs button');
-    await expect(tabs).toHaveCount(4);
+    await expect(tabs).toHaveCount(5);
     const tops = await tabs.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().top));
     expect(new Set(tops).size).toBe(1);
     await expect(tabs.filter({ hasText: 'Budget' })).toHaveAttribute('aria-current');

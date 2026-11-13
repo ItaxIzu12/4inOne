@@ -35,6 +35,8 @@ import {
   ReisenApi,
   Trip,
   TripBudgetCategory,
+  TripEvent,
+  TripEventKind,
   TripExpense,
   TripParticipant,
   TripTask,
@@ -45,10 +47,14 @@ import { TripPacking } from './trip-packing';
 import { TripBudget } from './trip-budget';
 import { TripPlanning } from './trip-planning';
 import { TripOverview, TripTab } from './trip-overview';
+import { TripItinerary } from './trip-itinerary';
 import {
   BUDGET_COLOR,
   BUDGET_META,
   BUDGET_ORDER,
+  EVENT_KIND_META,
+  EVENT_KIND_ORDER,
+  eventIcon,
   TRANSPORT_LABELS,
   placeParts,
   transportIcon,
@@ -74,6 +80,7 @@ export type { TripTab } from './trip-overview';
 /** Innerhalb einer Reise genau vier Reiter (docs/REISEN_V1.md). */
 const TABS: { key: TripTab; label: string; icon: IconName }[] = [
   { key: 'uebersicht', label: 'Übersicht', icon: 'home' },
+  { key: 'ablauf', label: 'Ablauf', icon: 'calendar' },
   { key: 'planung', label: 'Planung', icon: 'check-circle' },
   { key: 'packliste', label: 'Packliste', icon: 'luggage' },
   { key: 'budget', label: 'Budget', icon: 'coins' },
@@ -102,6 +109,7 @@ const LEGACY_TABS: Record<string, TripTab> = { packlisten: 'packliste', erinneru
     ConnectionsSection,
     TripList,
     TripOverview,
+    TripItinerary,
     TripPlanning,
     TripPacking,
     TripBudget,
@@ -226,6 +234,7 @@ export class Reisen {
     accommodation: ['', Validators.maxLength(160)],
     accommodation_area: ['', Validators.maxLength(120)],
     transport_note: ['', Validators.maxLength(160)],
+    free_cancellation_until: [''],
     notes: ['', Validators.maxLength(5000)],
   });
   readonly tripTouched = signal(false);
@@ -271,6 +280,7 @@ export class Reisen {
   // ---------- Inhalte der geöffneten Reise ----------
   readonly packing = signal<PackingItem[]>([]);
   readonly tasks = signal<TripTask[]>([]);
+  readonly events = signal<TripEvent[]>([]);
   readonly expenses = signal<TripExpense[]>([]);
   readonly budgetCategories = signal<TripBudgetCategory[]>([]);
   readonly detailLoading = signal(false);
@@ -312,6 +322,26 @@ export class Reisen {
     { value: '', label: 'Niemand bestimmtes' },
     ...(this.selectedTrip()?.participants ?? []).map((p) => ({ value: String(p.user), label: p.is_self ? `${p.display_name} (Du)` : p.display_name })),
   ]);
+
+  // ---------- Tagesablauf: Formular (12.11.2026) ----------
+  readonly eventEditor = signal(false);
+  readonly editEventId = signal<number | undefined>(undefined);
+  readonly eventSaving = signal(false);
+  readonly eventFormError = signal('');
+  readonly eventForm = this.fb.nonNullable.group({
+    title: ['', [Validators.required, Validators.maxLength(120)]],
+    kind: ['ACTIVITY' as TripEventKind],
+    date: [''],
+    start: [''],
+    end: [''],
+    location: ['', Validators.maxLength(240)],
+    note: ['', Validators.maxLength(240)],
+  });
+  readonly eventKinds = EVENT_KIND_ORDER.map((value) => ({ value, ...EVENT_KIND_META[value] }));
+  readonly eventKind = signal<TripEventKind>('ACTIVITY');
+  eventKindIcon(kind: TripEventKind): IconName {
+    return eventIcon(kind, this.selectedTrip()?.transport_type ?? '');
+  }
 
   // ---------- Ausgaben: Formular ----------
   readonly expenseEditor = signal(false);
@@ -440,6 +470,7 @@ export class Reisen {
     forkJoin({
       packing: this.api.packingItems(tripId),
       tasks: this.api.tasks(tripId),
+      events: this.api.events(tripId),
       expenses: this.api.expenses(tripId),
       budgetCategories: this.api.budgetCategories(tripId),
     })
@@ -449,6 +480,7 @@ export class Reisen {
           if (this.detailFor !== tripId) return;
           this.packing.set(r.packing);
           this.tasks.set(r.tasks);
+          this.events.set(r.events);
           this.expenses.set(r.expenses);
           this.budgetCategories.set(r.budgetCategories);
           this.detailLoading.set(false);
@@ -546,6 +578,7 @@ export class Reisen {
       accommodation: trip?.accommodation ?? '',
       accommodation_area: trip?.accommodation_area ?? '',
       transport_note: trip?.transport_note ?? '',
+      free_cancellation_until: trip?.free_cancellation_until ?? '',
       notes: trip?.notes ?? '',
     });
     this.settingTripForm = false;
@@ -622,6 +655,7 @@ export class Reisen {
           accommodation: v.accommodation.trim(),
           accommodation_area: v.accommodation_area.trim(),
           transport_note: v.transport_note.trim(),
+          free_cancellation_until: v.free_cancellation_until || null,
           notes: v.notes,
           // Neue Reise: die Landeswährung, wenn das Ziel eindeutig ein Land nennt („Tokio, Japan“ → JPY).
           ...(wasCreate ? { currency: currencyForDestination(v.destination)?.code ?? this.homeCurrency() as Trip['currency'] } : {}),
@@ -1152,6 +1186,107 @@ export class Reisen {
         error: () => {
           this.tasks.update((items) => items.map((i) => (i.id === item.id ? { ...i, status: item.status } : i)));
           this.actionError.set(`„${item.title}“ konnte nicht gespeichert werden.`);
+        },
+      });
+  }
+
+  // ---------- Tagesablauf ----------
+  /** Neuer Programmpunkt am gewählten Tag (sonst heute, wenn man unterwegs ist, sonst am ersten Reisetag). */
+  openEventEditor(item?: TripEvent, day = ''): void {
+    const trip = this.selectedTrip();
+    const today = localDay(new Date());
+    const during = !!trip && trip.start_date <= today && today <= trip.end_date;
+    const start = item ? new Date(item.starts_at) : null;
+    const end = item?.ends_at ? new Date(item.ends_at) : null;
+    const hhmm = (d: Date | null) => (d ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : '');
+    this.eventForm.reset({
+      title: item?.title ?? '',
+      kind: item?.kind ?? 'ACTIVITY',
+      date: start ? localDay(start) : day || (during ? today : (trip?.start_date ?? today)),
+      start: hhmm(start),
+      end: hhmm(end),
+      location: item?.location ?? '',
+      note: item?.note ?? '',
+    });
+    this.eventKind.set(item?.kind ?? 'ACTIVITY');
+    this.editEventId.set(item?.id);
+    this.eventFormError.set('');
+    this.eventEditor.set(true);
+  }
+  closeEventEditor(): void {
+    if (!this.eventSaving()) this.eventEditor.set(false);
+  }
+  setEventKind(kind: TripEventKind): void {
+    this.eventKind.set(kind);
+    this.eventForm.controls.kind.setValue(kind);
+  }
+  saveEventForm(): void {
+    if (this.eventSaving()) return;
+    this.eventForm.markAllAsTouched();
+    const v = this.eventForm.getRawValue();
+    const tripId = this.selectedTripId();
+    if (!v.title.trim() || !tripId) {
+      this.eventFormError.set('Bitte gib einen Titel ein (maximal 120 Zeichen).');
+      return;
+    }
+    if (!v.date || !v.start) {
+      this.eventFormError.set('Bitte wähle Tag und Uhrzeit.');
+      return;
+    }
+    const startsAt = new Date(`${v.date}T${v.start}`);
+    let endsAt: Date | null = null;
+    if (v.end) {
+      endsAt = new Date(`${v.date}T${v.end}`);
+      // Endet es früher als es beginnt, geht es über Mitternacht (Nachtzug, Flug) – dann am nächsten Tag
+      if (endsAt < startsAt) endsAt.setDate(endsAt.getDate() + 1);
+    }
+    const id = this.editEventId();
+    this.eventSaving.set(true);
+    this.eventFormError.set('');
+    this.api
+      .saveEvent(
+        {
+          trip: tripId,
+          title: v.title.trim(),
+          kind: v.kind,
+          starts_at: startsAt.toISOString(),
+          ends_at: endsAt ? endsAt.toISOString() : null,
+          location: v.location.trim(),
+          note: v.note.trim(),
+        },
+        id,
+      )
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (saved) => {
+          this.eventSaving.set(false);
+          this.eventEditor.set(false);
+          this.events.update((items) => (id ? items.map((i) => (i.id === id ? saved : i)) : [...items, saved]));
+          this.refreshTrips();
+        },
+        error: () => {
+          this.eventSaving.set(false);
+          this.eventFormError.set('Der Programmpunkt konnte nicht gespeichert werden. Bitte versuche es erneut.');
+        },
+      });
+  }
+  removeEventFromEditor(): void {
+    const id = this.editEventId();
+    if (!id || this.eventSaving()) return;
+    this.eventSaving.set(true);
+    this.api
+      .removeEvent(id)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: () => {
+          this.eventSaving.set(false);
+          this.eventEditor.set(false);
+          this.events.update((items) => items.filter((i) => i.id !== id));
+          this.refreshTrips();
+        },
+        error: () => {
+          this.eventSaving.set(false);
+          this.eventFormError.set('Der Programmpunkt konnte nicht gelöscht werden. Bitte versuche es erneut.');
         },
       });
   }

@@ -38,6 +38,8 @@ export interface Trip {
   accommodation: string;
   accommodation_area: string;
   transport_note: string;
+  /** Bis wann die Unterkunft kostenlos storniert werden kann („YYYY-MM-DD“), sonst null. Höchstens der erste Reisetag. */
+  free_cancellation_until?: string | null;
   created_at: string;
   updated_at: string;
   packing_total: number;
@@ -93,13 +95,20 @@ export interface TripTask {
   assignee?: number | null;
   assignee_name?: string;
 }
+/** Art eines Programmpunkts – bestimmt Symbol und Farbe im Tagesablauf. */
+export type TripEventKind = 'TRANSPORT' | 'STAY' | 'ACTIVITY' | 'FOOD' | 'OTHER';
+/** Ein Punkt im Tagesablauf (Zugfahrt, Check-in, Führung) – selbst eingetragen, keine Buchungs-APIs. */
 export interface TripEvent {
   id: number;
   trip: number;
   title: string;
+  kind: TripEventKind;
+  /** ISO-Zeitpunkt mit Zeitzone */
   starts_at: string;
   ends_at: string | null;
   location: string;
+  /** z. B. Buchungsnummer, Gleis, Sitzplatz */
+  note: string;
 }
 /** Eine Reiseausgabe: Originalbetrag in Originalwährung = die tatsächliche Zahlung. Die Umrechnungen rechnet das
  * Backend beim Speichern (Schnappschuss) — leer, wenn damals kein Kurs verfügbar war. */

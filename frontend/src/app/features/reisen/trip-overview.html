@@ -107,6 +107,18 @@
     @if (t.accommodation) {
       <div><dt><app-icon name="bed" aria-hidden="true" />Unterkunft</dt><dd>{{ t.accommodation }}{{ t.accommodation_area ? ' · ' + t.accommodation_area : '' }}</dd></div>
     }
+    @if (cancellation(); as c) {
+      <div>
+        <dt><app-icon name="calendar" aria-hidden="true" />Stornierung</dt>
+        <dd [class.late]="c.soon && c.days <= 3">
+          @if (c.passed) {
+            Kostenlose Stornierung bis {{ c.date }} – abgelaufen
+          } @else {
+            Kostenlos bis {{ c.date }} · {{ c.status }}
+          }
+        </dd>
+      </div>
+    }
     @if (t.notes) {
       <div class="facts__note"><dt><app-icon name="file-text" aria-hidden="true" />Notiz</dt><dd>{{ t.notes }}</dd></div>
     }

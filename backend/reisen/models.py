@@ -93,6 +93,9 @@ class Trip(models.Model):
     accommodation = models.CharField(max_length=160, blank=True, default='')
     accommodation_area = models.CharField(max_length=120, blank=True, default='')
     transport_note = models.CharField(max_length=160, blank=True, default='')
+    # Bis wann sich die Unterkunft kostenlos stornieren lässt (steht in der Buchungsbestätigung). Nur ein Datum, keine
+    # Buchungsdaten von außen; das Frontend zeigt die Frist in der Übersicht und auf der Bordkarte.
+    free_cancellation_until = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -171,7 +174,20 @@ class TripTask(TripScopedModel):
 
 
 class TripEvent(TripScopedModel):
+    """Ein Punkt im Tagesablauf einer Reise (Zugfahrt, Check-in, Führung, Restaurant). Nur Uhrzeit und Ort, keine
+    Buchungs-APIs: die Angaben trägt man selbst aus der Bestätigung ein."""
+
+    class Kind(models.TextChoices):
+        TRANSPORT = 'TRANSPORT', 'Unterwegs'
+        STAY = 'STAY', 'Unterkunft'
+        ACTIVITY = 'ACTIVITY', 'Programm'
+        FOOD = 'FOOD', 'Essen'
+        OTHER = 'OTHER', 'Sonstiges'
+
     title = models.CharField(max_length=120)
+    kind = models.CharField(max_length=9, choices=Kind.choices, default=Kind.ACTIVITY)
+    # z. B. Buchungsnummer, Gleis, Sitzplatz, Treffpunkt
+    note = models.CharField(max_length=240, blank=True, default='')
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField(null=True, blank=True)
     location = models.CharField(max_length=240, blank=True)

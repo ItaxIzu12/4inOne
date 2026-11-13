@@ -24,10 +24,10 @@ Teilnehmer-Dialog, Demo-API.
 ```
 Reisen
 └── Meine Reisen (Bevorstehend · Vergangen · Abgesagt, eingeklappt)
-    └── [Reise]  Übersicht · Planung · Packliste · Budget
+    └── [Reise]  Übersicht · Ablauf · Planung · Packliste · Budget
 ```
 
-- Adresse: `/reisen` = Meine Reisen, `/reisen?trip=<id>&tab=planung|packliste|budget`. Zurück-Taste funktioniert.
+- Adresse: `/reisen` = Meine Reisen, `/reisen?trip=<id>&tab=ablauf|planung|packliste|budget`. Zurück-Taste funktioniert.
 - Alte Links: `?tab=packlisten` → Packliste, `?tab=erinnerungen` → Planung, `?trip=<id>` (Dashboard, Verknüpfungen) bleibt.
 - **Entfernt** (UI): globale Reiter Übersicht/Reisen/Packlisten/Budget/Erinnerungen, Reise-Umschalter, Prozent-
   „Reisebereitschaft“, bereichsübergreifende Vorschläge (`trip-plan`) und Haushalts-Konflikthinweise im Reisebereich.
@@ -194,3 +194,25 @@ den eigenen Kontakten, Rolle Betrachter oder Bearbeiter — Besitzer:in nie per 
 Teilnehmer, wenn sie annimmt; offene Einladungen stehen im Dialog mit „Zurückziehen“. `POST /reisen/participants/`
 antwortet 405; Rollen ändern und Entfernen bleiben wie bisher.
 
+
+## Tagesablauf und Stornofrist (12.11.2026, Migration `reisen/0013_trip_event_kind_cancellation`)
+
+Anlass: Vergleich mit Booking.com, CHECK24, TripIt und Wanderlog – 4inOne ist die Zentrale *nach* der Buchung, egal
+wo gebucht wurde. Alles wird selbst eingetragen; weiterhin keine Buchungs-, Flug- oder Wetter-APIs.
+
+- **Reiter „Ablauf“** (`trip-itinerary.ts`): jeder Reisetag als Abschnitt („Di., 24. Nov.“ · „Tag 1 · Anreise“ … „Tag 3 ·
+  Rückreise“), auch ohne Einträge („Noch nichts geplant · Hinzufügen“ für genau diesen Tag); heute hervorgehoben.
+  Einträge davor/danach gesammelt unter „Vor der Reise“ / „Nach der Reise“. Kopf: „3 von 3 Tagen geplant“.
+- **Programmpunkt** = vorhandenes `TripEvent` (bisher ohne Oberfläche), neu mit `kind` (Unterwegs · Unterkunft ·
+  Programm · Essen · Sonstiges, Standard Programm) und `note` (Buchungsnummer, Gleis, Platz; 240 Zeichen). Dialog:
+  Titel, Art als Chips, Tag, Beginn, Ende (optional; früher als der Beginn = über Mitternacht, dann am nächsten Tag),
+  Ort, Notiz. Rechte wie alle Reiseinhalte: Betrachter lesen, Besitzer/Bearbeiter schreiben, Fremde sehen nichts.
+- **Kostenlos stornierbar bis** (`Trip.free_cancellation_until`, optional): im Reise-Dialog unter der Unterkunft;
+  höchstens der erste Reisetag (Backend prüft, auch wenn die Reise nach vorn verschoben wird). Anzeige: Reisedetails
+  „Stornierung · Kostenlos bis Fr., 20. Nov. · noch 8 Tage“ (abgelaufen wird gesagt) und – in den letzten 14 Tagen –
+  als erste Marke auf der Bordkarte (auch auf der Startseite unter „Demnächst“), in den letzten 3 Tagen hervorgehoben.
+  Abgesagte und abgeschlossene Reisen zeigen keine Frist.
+- Demo: Berlin hat einen vollständigen Ablauf (ICE hin, Check-in, Abendessen · Reichstagskuppel · Check-out, ICE
+  zurück) und eine Frist 4 Tage vor der Abreise.
+- Tests: Backend (Art/Notiz, Rechte, Frist-Regeln), Unit (`itinerary`, `eventTime`, `cancellationInfo`, Reiter),
+  Browser (Ablauf, Bearbeiten, Frist; alle Ansichten in 5 Breiten ohne Querscrollen, axe).

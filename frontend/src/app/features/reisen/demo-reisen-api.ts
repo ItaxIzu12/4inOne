@@ -50,6 +50,7 @@ const BLANK: Omit<TripBase, 'id' | 'title' | 'start_date' | 'end_date'> = {
   accommodation: '',
   accommodation_area: '',
   transport_note: '',
+  free_cancellation_until: null,
   created_at: at(-5, '09:00'),
   updated_at: at(-5, '09:00'),
 };
@@ -96,6 +97,7 @@ export class DemoReisenApi {
       accommodation: 'Hotel Central',
       accommodation_area: 'Berlin Mitte',
       transport_note: 'Hin- und Rückfahrt gebucht',
+      free_cancellation_until: dateOnly(BERLIN - 4),
     },
     {
       ...BLANK,
@@ -180,7 +182,13 @@ export class DemoReisenApi {
     { id: 7, trip: 4, title: 'Flug buchen', due_date: dateOnly(-100), due_time: null, status: 'DONE', note: '', assignee: null, assignee_name: '' },
   ];
   private eventList: TripEvent[] = [
-    { id: 1, trip: 1, title: 'Museumsbesuch', starts_at: at(BERLIN + 1, '11:00'), ends_at: at(BERLIN + 1, '13:00'), location: 'Museumsinsel' },
+    // Tagesablauf Berlin: Hinfahrt, Check-in, Abendessen · Reichstagskuppel · Check-out, Rückfahrt
+    { id: 1, trip: 1, title: 'ICE nach Berlin', kind: 'TRANSPORT', starts_at: at(BERLIN, '08:12'), ends_at: at(BERLIN, '12:31'), location: 'Düsseldorf Hbf', note: 'Wagen 7, Platz 54' },
+    { id: 2, trip: 1, title: 'Check-in Hotel Central', kind: 'STAY', starts_at: at(BERLIN, '15:00'), ends_at: null, location: 'Berlin Mitte', note: 'Buchungsnummer 2934 1187' },
+    { id: 3, trip: 1, title: 'Abendessen im Lindenhof', kind: 'FOOD', starts_at: at(BERLIN, '19:30'), ends_at: null, location: 'Prenzlauer Berg', note: 'Tisch für 2 reserviert' },
+    { id: 4, trip: 1, title: 'Reichstagskuppel', kind: 'ACTIVITY', starts_at: at(BERLIN + 1, '14:30'), ends_at: at(BERLIN + 1, '15:30'), location: 'Platz der Republik', note: 'Ausweis mitnehmen' },
+    { id: 5, trip: 1, title: 'Check-out', kind: 'STAY', starts_at: at(BERLIN + 2, '11:00'), ends_at: null, location: 'Hotel Central', note: '' },
+    { id: 6, trip: 1, title: 'ICE nach Düsseldorf', kind: 'TRANSPORT', starts_at: at(BERLIN + 2, '16:29'), ends_at: at(BERLIN + 2, '20:50'), location: 'Berlin Hbf', note: 'Wagen 3, Platz 21' },
   ];
   private expenseList: TripExpense[] = [
     { id: 1, trip: 1, title: 'Hotelanzahlung', amount: '200.00', date: dateOnly(-6), category: 'UNTERKUNFT', currency: 'EUR', amount_trip: '200.00', home_currency: 'EUR', amount_home: '200.00' },
@@ -347,7 +355,7 @@ export class DemoReisenApi {
       this.eventList[index] = { ...this.eventList[index], ...data };
       return of(this.eventList[index]);
     }
-    const created: TripEvent = { id: this.nextId++, trip: 0, title: '', starts_at: new Date().toISOString(), ends_at: null, location: '', ...data };
+    const created: TripEvent = { id: this.nextId++, trip: 0, title: '', kind: 'ACTIVITY', starts_at: new Date().toISOString(), ends_at: null, location: '', note: '', ...data };
     this.eventList.push(created);
     return of(created);
   }

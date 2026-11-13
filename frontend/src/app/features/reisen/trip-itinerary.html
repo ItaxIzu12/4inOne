@@ -1,0 +1,64 @@
+<section class="card itinerary" aria-labelledby="it-title">
+  <div class="card-head">
+    <div>
+      <h2 id="it-title" class="card-title"><app-icon name="calendar" aria-hidden="true" />Tagesablauf</h2>
+      <p class="muted it-count">
+        @if (events().length) {
+          {{ planned() }} von {{ tripDayCount() }} {{ tripDayCount() === 1 ? 'Tag' : 'Tagen' }} geplant
+        } @else {
+          Zugfahrt, Check-in, Führung – mit Uhrzeit, Ort und Buchungsnummer. Unterwegs hast du alles auf einen Blick.
+        }
+      </p>
+    </div>
+    @if (canEdit()) {
+      <button type="button" class="primary" (click)="add.emit('')"><app-icon name="plus" aria-hidden="true" />Programmpunkt</button>
+    }
+  </div>
+
+  <ol class="days">
+    @for (day of days(); track day.key) {
+      <li class="day" [class.is-today]="day.today" [class.is-edge]="!day.tripDay">
+        <div class="day__head">
+          <h3 class="day__label">{{ day.label }}</h3>
+          @if (day.today) {
+            <span class="day__today">Heute</span>
+          }
+          @if (day.sub) {
+            <span class="day__sub">{{ day.sub }}</span>
+          }
+        </div>
+        @if (day.events.length) {
+          <ul class="events">
+            @for (event of day.events; track event.id) {
+              <li class="event" [class]="'event--' + event.kind.toLowerCase()">
+                <span class="event__time">{{ time(event) }}</span>
+                <span class="event__icon" aria-hidden="true"><app-icon [name]="icon(event)" /></span>
+                <span class="event__text">
+                  <b>{{ event.title }}</b>
+                  <small>
+                    <span class="sr-only">{{ kindMeta[event.kind].label }}</span>
+                    @if (meta(event); as m) { {{ m }} }
+                  </small>
+                </span>
+                @if (canEdit()) {
+                  <button type="button" class="icon-btn" [attr.aria-label]="event.title + ' bearbeiten'" (click)="edit.emit(event)">
+                    <app-icon name="edit" />
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="day__empty muted">
+            Noch nichts geplant
+            @if (canEdit()) {
+              <button type="button" class="link" [attr.aria-label]="'Programmpunkt am ' + day.label + ' hinzufügen'" (click)="add.emit(day.key)">
+                Hinzufügen
+              </button>
+            }
+          </p>
+        }
+      </li>
+    }
+  </ol>
+</section>

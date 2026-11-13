@@ -3,7 +3,7 @@ import { Component, computed, input, output } from '@angular/core';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { Trip } from './reisen-api.service';
 import type { TripTab } from './trip-overview';
-import { TRANSPORT_LABELS, formatMoney, localDay, passStub, peopleLabel, placeParts, shortRange, transportIcon, tripPhase } from './reisen-logic';
+import { TRANSPORT_LABELS, cancellationInfo, formatMoney, localDay, passStub, peopleLabel, placeParts, shortRange, transportIcon, tripPhase } from './reisen-logic';
 
 /**
  * Reisen › Bordkarte („Von hier nach dort“, 31.10.2026): die eine Fläche in der Reisefarbe. Links Abreiseort → Ziel
@@ -74,7 +74,11 @@ export class TripPass {
   /** Die Marken: offene Aufgaben, Packliste, Budget — nur, was es gibt. */
   protected readonly chips = computed(() => {
     const c = this.counts();
-    const chips: { tab: TripTab; text: string; strong: boolean }[] = [];
+    const chips: { tab: TripTab | null; text: string; strong: boolean }[] = [];
+    // Kostenlose Stornierung läuft in den nächsten 14 Tagen ab: zuerst, weil eine verpasste Frist Geld kostet.
+    // Reine Info-Marke (kein Reiter dahinter); in den letzten 3 Tagen hervorgehoben.
+    const cancel = cancellationInfo(this.trip(), this.today);
+    if (cancel?.soon) chips.push({ tab: null, text: `Kostenlos stornierbar bis ${cancel.date}`, strong: cancel.days <= 3 });
     if (c.tasksTotal) chips.push({ tab: 'planung', text: c.tasksOpen ? (c.tasksOpen === 1 ? '1 Aufgabe offen' : `${c.tasksOpen} Aufgaben offen`) : 'Aufgaben erledigt', strong: false });
     if (c.packingTotal) chips.push({ tab: 'packliste', text: c.packed === c.packingTotal ? 'Alles gepackt' : `${c.packed}/${c.packingTotal} gepackt`, strong: false });
     if (c.budget) {

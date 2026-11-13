@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { PackingItem, Trip, TripTask } from './reisen-api.service';
+import { PackingItem, Trip, TripEvent, TripTask } from './reisen-api.service';
 import {
+  cancellationInfo,
+  eventIcon,
+  eventTime,
+  itinerary,
   passStub,
   placeParts,
   packingShare,
@@ -214,5 +218,62 @@ describe('Bordkarte und Countdown-Linie (31.10.2026)', () => {
       ['Nach der Reise', 1],
       ['Ohne Datum', 1],
     ]);
+  });
+});
+
+// ---------- Tagesablauf und Stornofrist (12.11.2026) ----------
+function ev(id: number, local: string, extra: Partial<TripEvent> = {}): TripEvent {
+  // lokale Zeit wie im Formular → ISO mit Zeitzone, wie sie vom Server kommt
+  return { id, trip: 1, title: `Punkt ${id}`, kind: 'ACTIVITY', starts_at: new Date(local).toISOString(), ends_at: null, location: '', note: '', ...extra };
+}
+
+describe('itinerary', () => {
+  it('zeigt jeden Reisetag (auch leere), sortiert nach Uhrzeit, und sammelt vorher/nachher', () => {
+    const days = itinerary(trip({}), [
+      ev(1, '2026-03-15T15:00'),
+      ev(2, '2026-03-15T09:00'),
+      ev(3, '2026-03-10T18:00'),
+      ev(4, '2026-03-20T10:00'),
+    ], '2026-03-15');
+    expect(days.map((d) => [d.key, d.sub, d.events.map((e) => e.id)])).toEqual([
+      ['vorher', '', [3]],
+      ['2026-03-14', 'Tag 1 · Anreise', []],
+      ['2026-03-15', 'Tag 2', [2, 1]],
+      ['2026-03-16', 'Tag 3 · Rückreise', []],
+      ['nachher', '', [4]],
+    ]);
+    expect(days.find((d) => d.today)?.key).toBe('2026-03-15');
+  });
+
+  it('eine eintägige Reise hat weder Anreise noch Rückreise; ohne Einträge außerhalb keine Zusatzabschnitte', () => {
+    const days = itinerary(trip({ start_date: '2026-03-14', end_date: '2026-03-14' }), [], '2026-01-01');
+    expect(days.map((d) => d.sub)).toEqual(['Tag 1']);
+  });
+});
+
+describe('eventTime und eventIcon', () => {
+  it('zeigt Beginn, Spanne oder Ende am nächsten Tag', () => {
+    expect(eventTime(ev(1, '2026-03-14T15:00'))).toBe('15:00');
+    expect(eventTime({ starts_at: new Date('2026-03-14T08:12').toISOString(), ends_at: new Date('2026-03-14T12:31').toISOString() })).toBe('08:12 – 12:31');
+    expect(eventTime({ starts_at: new Date('2026-03-14T22:00').toISOString(), ends_at: new Date('2026-03-15T06:30').toISOString() })).toMatch(/^22:00 – .*15\. März, 06:30$/);
+  });
+  it('„Unterwegs“ nimmt das Verkehrsmittel der Reise', () => {
+    expect(eventIcon('TRANSPORT', 'TRAIN')).toBe('train');
+    expect(eventIcon('TRANSPORT', '')).toBe('train');
+    expect(eventIcon('STAY', 'FLIGHT')).toBe('bed');
+  });
+});
+
+describe('cancellationInfo', () => {
+  it('rechnet die Tage bis zur Frist und markiert die letzten 14 Tage', () => {
+    expect(cancellationInfo(trip({ free_cancellation_until: '2026-03-10' }), '2026-03-02')).toMatchObject({ days: 8, status: 'noch 8 Tage', soon: true, passed: false });
+    expect(cancellationInfo(trip({ free_cancellation_until: '2026-03-10' }), '2026-03-10')).toMatchObject({ days: 0, status: 'heute letzter Tag', soon: true });
+    expect(cancellationInfo(trip({ free_cancellation_until: '2026-03-10' }), '2026-02-01')).toMatchObject({ soon: false, passed: false });
+    expect(cancellationInfo(trip({ free_cancellation_until: '2026-03-10' }), '2026-03-12')).toMatchObject({ status: 'abgelaufen', soon: false, passed: true });
+  });
+  it('ohne Frist oder bei abgesagten und abgeschlossenen Reisen: nichts', () => {
+    expect(cancellationInfo(trip({}), '2026-03-02')).toBeNull();
+    expect(cancellationInfo(trip({ free_cancellation_until: '2026-03-10', status: 'CANCELLED' }), '2026-03-02')).toBeNull();
+    expect(cancellationInfo(trip({ free_cancellation_until: '2026-03-10', status: 'DONE' }), '2026-03-02')).toBeNull();
   });
 });

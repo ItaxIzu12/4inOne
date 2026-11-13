@@ -619,3 +619,66 @@ def test_removing_a_participant_takes_away_access_and_personen_und_gruppen_updat
     assert {'kind': 'TRIP', 'id': trip.pk, 'title': 'Italien'} in row['can_add_to']
     bobs_row = bob.get('/api/v1/contacts/').data['contacts'][0]
     assert not any(a['kind'] == 'TRIP' for a in bobs_row['shared'])
+
+
+# ---------- Tagesablauf und Stornofrist (12.11.2026) ----------
+
+
+def test_itinerary_event_keeps_kind_and_note_and_defaults_to_programm(client, users):
+    trip = make_trip(users[0], title='Berlin Wochenende')
+    response = client.post(BASE + 'events/', {
+        'trip': trip.pk, 'title': 'ICE 1023 nach Berlin', 'kind': 'TRANSPORT',
+        'starts_at': '2026-10-10T08:12:00+02:00', 'ends_at': '2026-10-10T12:30:00+02:00',
+        'location': 'Düsseldorf Hbf', 'note': 'Wagen 7, Platz 54',
+    }, format='json')
+    assert response.status_code == 201
+    assert response.data['kind'] == 'TRANSPORT' and response.data['note'] == 'Wagen 7, Platz 54'
+    plain = client.post(BASE + 'events/', {'trip': trip.pk, 'title': 'Führung', 'starts_at': '2026-10-11T11:00:00+02:00'}, format='json')
+    assert plain.data['kind'] == 'ACTIVITY' and plain.data['note'] == ''
+    assert client.post(BASE + 'events/', {
+        'trip': trip.pk, 'title': 'x', 'kind': 'SPACESHIP', 'starts_at': '2026-10-11T11:00:00+02:00',
+    }, format='json').status_code == 400
+    assert client.post(BASE + 'events/', {
+        'trip': trip.pk, 'title': 'x', 'note': 'n' * 241, 'starts_at': '2026-10-11T11:00:00+02:00',
+    }, format='json').status_code == 400
+    # In der Reihenfolge des Tages, über ?trip= nur diese Reise
+    titles = [e['title'] for e in client.get(f'{BASE}events/?trip={trip.pk}').data]
+    assert titles == ['ICE 1023 nach Berlin', 'Führung']
+
+
+def test_viewer_sees_the_itinerary_but_cannot_change_it_and_strangers_see_nothing(client, users):
+    trip = make_trip(users[0], title='Familienreise')
+    event = TripEvent.objects.create(trip=trip, title='Check-in', kind='STAY', starts_at='2026-10-10T15:00:00Z')
+    Contact.objects.create(owner=users[0], other=users[1])
+    share(client, trip.pk, Contact.objects.get(owner=users[0], other=users[1]).pk, 'VIEWER')
+
+    viewer = APIClient()
+    viewer.force_authenticate(users[1])
+    assert [e['title'] for e in viewer.get(f'{BASE}events/?trip={trip.pk}').data] == ['Check-in']
+    assert viewer.patch(f'{BASE}events/{event.pk}/', {'title': 'x'}, format='json').status_code == 403
+    assert viewer.post(BASE + 'events/', {'trip': trip.pk, 'title': 'x', 'starts_at': '2026-10-10T16:00:00Z'}, format='json').status_code == 400
+    assert viewer.delete(f'{BASE}events/{event.pk}/').status_code == 403
+
+    stranger = APIClient()
+    stranger.force_authenticate(get_user_model().objects.create_user(username='carla', password='test-secret-234'))
+    assert stranger.get(f'{BASE}events/?trip={trip.pk}').data == []
+    assert stranger.get(f'{BASE}events/{event.pk}/').status_code == 404
+
+
+def test_free_cancellation_deadline_is_optional_and_not_after_the_first_day(client, users):
+    response = client.post(BASE + 'trips/', {
+        'title': 'Berlin', 'destination': 'Berlin', 'start_date': day(20), 'end_date': day(22),
+        'free_cancellation_until': day(15),
+    }, format='json')
+    assert response.status_code == 201
+    assert response.data['free_cancellation_until'] == day(15)
+    trip_id = response.data['id']
+    # am ersten Reisetag noch erlaubt, danach nicht
+    assert client.patch(f'{BASE}trips/{trip_id}/', {'free_cancellation_until': day(20)}, format='json').status_code == 200
+    late = client.patch(f'{BASE}trips/{trip_id}/', {'free_cancellation_until': day(21)}, format='json')
+    assert late.status_code == 400 and 'free_cancellation_until' in late.data
+    # Reise nach vorn verschieben, ohne die Frist anzupassen, fällt auf statt still zu passen
+    assert client.patch(f'{BASE}trips/{trip_id}/', {'start_date': day(18)}, format='json').status_code == 400
+    # leeren geht immer
+    cleared = client.patch(f'{BASE}trips/{trip_id}/', {'free_cancellation_until': None}, format='json')
+    assert cleared.status_code == 200 and cleared.data['free_cancellation_until'] is None

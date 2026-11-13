@@ -135,12 +135,12 @@ describe('Reisen V1 (Demo)', () => {
 
   // ---------- Reise öffnen ----------
 
-  it('opening a trip shows exactly four tabs and the overview with concrete numbers', async () => {
+  it('opening a trip shows exactly five tabs and the overview with concrete numbers', async () => {
     const { fixture, root } = await open();
     root.querySelector<HTMLButtonElement>('app-trip-list .pass')!.click();
     const page = await settle(fixture);
     expect(text(page.querySelector('h1'))).toBe('Berlin Wochenende');
-    expect(Array.from(page.querySelectorAll('.tabs button')).map(text)).toEqual(['Übersicht', 'Planung', 'Packliste', 'Budget']);
+    expect(Array.from(page.querySelectorAll('.tabs button')).map(text)).toEqual(['Übersicht', 'Ablauf', 'Planung', 'Packliste', 'Budget']);
     const pass = page.querySelector('app-trip-overview .pass')!;
     expect(text(pass.querySelector('.pass__stub'))).toBe('12 Tage bis zur Abreise');
     expect(Array.from(pass.querySelectorAll('button.pass__chip')).map(text)).toEqual(['4 Aufgaben offen', '12/24 gepackt', '280 € übrig']);
@@ -170,7 +170,7 @@ describe('Reisen V1 (Demo)', () => {
     const { fixture, root } = await open('/?trip=1');
     root.querySelector('.tabs')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     let page = await settle(fixture);
-    expect(page.querySelector('.tabs button[aria-current]')?.id).toBe('reisen-tab-planung');
+    expect(page.querySelector('.tabs button[aria-current]')?.id).toBe('reisen-tab-ablauf');
     page.querySelector('.tabs')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
     page = await settle(fixture);
     expect(page.querySelector('.tabs button[aria-current]')?.id).toBe('reisen-tab-uebersicht');
@@ -418,5 +418,34 @@ describe('Reisen V1 (Demo)', () => {
     fixture.componentInstance.selectTab('packliste');
     page = await settle(fixture);
     expect(page.querySelector('#packing-quick')).toBeNull();
+  });
+
+  it('Ablauf: jeder Reisetag mit seinen Programmpunkten nach Uhrzeit, ein neuer Punkt landet am richtigen Tag', async () => {
+    const { fixture } = await open('/?trip=1&tab=ablauf');
+    let page = await settle(fixture);
+    const days = Array.from(page.querySelectorAll('.day:not(.is-edge)'));
+    expect(days.length).toBe(3); // Berlin: drei Reisetage
+    expect(text(days[0])).toContain('Tag 1 · Anreise');
+    expect(Array.from(days[0].querySelectorAll('.event b')).map(text)).toEqual(['ICE nach Berlin', 'Check-in Hotel Central', 'Abendessen im Lindenhof']);
+    expect(text(days[0])).toContain('08:12 – 12:31');
+    expect(text(days[0])).toContain('Wagen 7, Platz 54');
+    expect(text(days[2])).toContain('Tag 3 · Rückreise');
+
+    button(page, 'Programmpunkt').click();
+    page = await settle(fixture);
+    const dialog = page.querySelector('[role="dialog"]') as HTMLElement;
+    expect(dialog).not.toBeNull();
+    const title = dialog.querySelector('#event-title') as HTMLInputElement;
+    title.value = 'Currywurst am Kudamm';
+    title.dispatchEvent(new Event('input'));
+    fixture.componentInstance.eventForm.patchValue({ start: '13:00', kind: 'FOOD' });
+    fixture.componentInstance.saveEventForm();
+    page = await settle(fixture);
+    expect(Array.from(page.querySelectorAll('.day:not(.is-edge)')[0].querySelectorAll('.event b')).map(text)).toEqual([
+      'ICE nach Berlin',
+      'Currywurst am Kudamm',
+      'Check-in Hotel Central',
+      'Abendessen im Lindenhof',
+    ]);
   });
 });

@@ -95,7 +95,7 @@ class TripSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'destination', 'departure', 'start_date', 'end_date', 'notes', 'status',
             'travel_type', 'transport_type', 'baggage', 'climate', 'budget_amount', 'currency',
-            'accommodation', 'accommodation_area', 'transport_note',
+            'accommodation', 'accommodation_area', 'transport_note', 'free_cancellation_until',
             'created_at', 'updated_at',
             'packing_total', 'packing_packed', 'tasks_open', 'tasks_total', 'events_count', 'budget_spent',
             'participants', 'my_role',
@@ -109,6 +109,12 @@ class TripSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'start_date': 'Der erste Reisetag darf nicht vor heute liegen.'})
         if start and end and end < start:
             raise serializers.ValidationError({'end_date': 'Das Ende darf nicht vor dem Beginn liegen.'})
+        # Kostenlos stornieren geht nur bis zur Anreise – eine spätere Frist wäre ein Tippfehler
+        cancel = attrs.get('free_cancellation_until', getattr(self.instance, 'free_cancellation_until', None))
+        if cancel and start and cancel > start:
+            raise serializers.ValidationError(
+                {'free_cancellation_until': 'Die Frist muss vor oder am ersten Reisetag liegen.'}
+            )
         # Reisen V1: eine Reise braucht ein Ziel. Ältere Reisen ohne Ziel bleiben bearbeitbar, solange das Ziel
         # nicht ausdrücklich geleert wird.
         destination = attrs.get('destination')
@@ -256,7 +262,7 @@ class TripTaskSerializer(TripScopedSerializer):
 class TripEventSerializer(TripScopedSerializer):
     class Meta:
         model = TripEvent
-        fields = ['id', 'trip', 'title', 'starts_at', 'ends_at', 'location', 'created_at']
+        fields = ['id', 'trip', 'title', 'kind', 'starts_at', 'ends_at', 'location', 'note', 'created_at']
         read_only_fields = ['id', 'created_at']
 
     def validate(self, attrs):

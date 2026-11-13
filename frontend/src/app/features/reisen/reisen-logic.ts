@@ -1,5 +1,5 @@
 import { IconName } from '../../shared/icons/app-icon';
-import { BudgetCategory, PackingCategory, PackingItem, Trip, TripBudgetCategory, TripExpense, TripTask, TripStatus } from './reisen-api.service';
+import { BudgetCategory, PackingCategory, PackingItem, Trip, TripBudgetCategory, TripEvent, TripEventKind, TripExpense, TripTask, TripStatus } from './reisen-api.service';
 import { formatAmount } from '../../shared/currency/currencies';
 import { parseMoneyInput } from '../../shared/currency/money-input';
 
@@ -310,3 +310,98 @@ export const BUDGET_COLOR: Record<BudgetCategory, string> = {
   SONSTIGES: '#8a93a3',
   RESERVE: '#b6c1cf',
 };
+
+// ---------- Tagesablauf (12.11.2026) ----------
+export const EVENT_KIND_META: Record<TripEventKind, { label: string; icon: IconName }> = {
+  TRANSPORT: { label: 'Unterwegs', icon: 'train' },
+  STAY: { label: 'Unterkunft', icon: 'bed' },
+  ACTIVITY: { label: 'Programm', icon: 'ticket' },
+  FOOD: { label: 'Essen', icon: 'utensils' },
+  OTHER: { label: 'Sonstiges', icon: 'map-pin' },
+};
+export const EVENT_KIND_ORDER: TripEventKind[] = ['TRANSPORT', 'STAY', 'ACTIVITY', 'FOOD', 'OTHER'];
+
+/** Symbol eines Programmpunkts: „Unterwegs“ nimmt das Verkehrsmittel der Reise (Zug, Flugzeug, Auto …). */
+export function eventIcon(kind: TripEventKind, transport: Trip['transport_type']): IconName {
+  return kind === 'TRANSPORT' && transport ? transportIcon(transport) : EVENT_KIND_META[kind].icon;
+}
+/** „HH:MM“ in lokaler Zeit. */
+export function clock(iso: string): string {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+/** „08:12 – 12:31“ oder nur „15:00“; endet es an einem anderen Tag, mit Datum („bis Do., 26. Nov., 10:00“). */
+export function eventTime(event: Pick<TripEvent, 'starts_at' | 'ends_at'>): string {
+  const start = clock(event.starts_at);
+  if (!event.ends_at) return start;
+  if (localDay(new Date(event.ends_at)) === localDay(new Date(event.starts_at))) return `${start} – ${clock(event.ends_at)}`;
+  const endDay = new Date(event.ends_at).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' });
+  return `${start} – ${endDay}, ${clock(event.ends_at)}`;
+}
+
+export interface ItineraryDay {
+  key: string;
+  /** „Di., 24. Nov.“ oder „Vor der Reise“ / „Nach der Reise“ */
+  label: string;
+  /** „Tag 1 · Abreise“, „Tag 2“, „Tag 3 · Rückreise“; leer für vorher/nachher */
+  sub: string;
+  today: boolean;
+  /** Ein Tag der Reise selbst (auch ohne Einträge) – vorher/nachher erscheinen nur mit Einträgen */
+  tripDay: boolean;
+  events: TripEvent[];
+}
+/**
+ * Der Tagesablauf: jeder Reisetag als eigener Abschnitt (auch ohne Einträge – so sieht man freie Tage), Einträge nach
+ * Uhrzeit. Was vor dem ersten oder nach dem letzten Tag liegt, steht gesammelt davor bzw. danach.
+ */
+export function itinerary(trip: Pick<Trip, 'start_date' | 'end_date'>, events: TripEvent[], today: string): ItineraryDay[] {
+  const sorted = [...events].sort((a, b) => a.starts_at.localeCompare(b.starts_at) || a.id - b.id);
+  const dayOf = (e: TripEvent) => localDay(new Date(e.starts_at));
+  const days: ItineraryDay[] = [];
+  const before = sorted.filter((e) => dayOf(e) < trip.start_date);
+  if (before.length) days.push({ key: 'vorher', label: 'Vor der Reise', sub: '', today: false, tripDay: false, events: before });
+  const total = tripDays(trip);
+  for (let i = 0; i < total; i++) {
+    const iso = addDays(trip.start_date, i);
+    const role = total > 1 && i === 0 ? ' · Anreise' : total > 1 && i === total - 1 ? ' · Rückreise' : '';
+    days.push({
+      key: iso,
+      label: noon(iso).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' }),
+      sub: `Tag ${i + 1}${role}`,
+      today: iso === today,
+      tripDay: true,
+      events: sorted.filter((e) => dayOf(e) === iso),
+    });
+  }
+  const after = sorted.filter((e) => dayOf(e) > trip.end_date);
+  if (after.length) days.push({ key: 'nachher', label: 'Nach der Reise', sub: '', today: false, tripDay: false, events: after });
+  return days;
+}
+
+export interface CancellationInfo {
+  /** „Fr., 20. Nov.“ */
+  date: string;
+  /** Tage bis zur Frist (negativ = vorbei) */
+  days: number;
+  /** „noch 8 Tage“, „heute letzter Tag“, „abgelaufen“ */
+  status: string;
+  /** In den nächsten 14 Tagen (oder heute) – dann zeigt die Bordkarte eine Marke */
+  soon: boolean;
+  passed: boolean;
+}
+/** So weit vorher erscheint die Frist als Marke auf der Bordkarte. */
+export const CANCELLATION_SOON_DAYS = 14;
+/** Kostenlose Stornierung der Unterkunft – null ohne Frist oder bei abgesagten/abgeschlossenen Reisen. */
+export function cancellationInfo(trip: Pick<Trip, 'free_cancellation_until' | 'status'>, today: string): CancellationInfo | null {
+  const until = trip.free_cancellation_until;
+  if (!until || trip.status === 'CANCELLED' || trip.status === 'DONE') return null;
+  const days = daysUntil(until, today);
+  const status = days < 0 ? 'abgelaufen' : days === 0 ? 'heute letzter Tag' : days === 1 ? 'noch 1 Tag' : `noch ${days} Tage`;
+  return {
+    date: noon(until).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' }),
+    days,
+    status,
+    soon: days >= 0 && days <= CANCELLATION_SOON_DAYS,
+    passed: days < 0,
+  };
+}

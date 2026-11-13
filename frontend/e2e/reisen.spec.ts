@@ -52,7 +52,7 @@ for (const width of [390, 1440]) {
     await expect(page.getByRole('heading', { name: 'Reise erstellt' })).toBeVisible();
     await page.getByRole('button', { name: 'Ohne Vorschläge starten' }).click();
     await expect(page.locator('main h1')).toHaveText('Städtetrip Wien');
-    await expect(page.locator('nav.tabs button')).toHaveText(['Übersicht', 'Planung', 'Packliste', 'Budget']);
+    await expect(page.locator('nav.tabs button')).toHaveText(['Übersicht', 'Ablauf', 'Planung', 'Packliste', 'Budget']);
     await expect(page.locator('app-trip-overview .facts')).toContainText('DUS');
     await expect(page.locator('app-trip-overview .pass__stub')).toHaveText('60 Tage bis zur Abreise');
     await expect(page.locator('app-trip-overview .pass__route')).toContainText('DUS');
@@ -204,7 +204,7 @@ test('Planung: Aufgabe hinzufügen und erledigen — der Zähler folgt überall'
   await page.locator('app-trip-planning .row', { hasText: 'Hotel buchen' }).getByRole('checkbox').click();
   await expect(page.getByRole('button', { name: /Offen 4/ })).toBeVisible();
   await tab(page, 'Übersicht');
-  await expect(page.locator('app-trip-overview .pass__chip').first()).toHaveText('4 Aufgaben offen');
+  await expect(page.locator('app-trip-overview .pass__chip', { hasText: 'Aufgaben' })).toHaveText('4 Aufgaben offen');
 
   // Mit Datum, Uhrzeit und Zuständigkeit über das Formular.
   await tab(page, 'Planung');
@@ -460,10 +460,10 @@ test('Ausgabe: Fehler erst nach „Ausgabe speichern“, live korrigiert; Abbrec
 });
 
 test('alle Ansichten passen bei 360, 390, 430, Tablet und Desktop ohne Querscrollen und sind barrierearm', async ({ page }) => {
-  // 5 Ansichten × 5 Breiten mit axe: allein ~21 s, im vollen Lauf mit zwei Browsern knapp über 30 s
+  // 6 Ansichten × 5 Breiten mit axe: allein ~21 s, im vollen Lauf mit zwei Browsern knapp über 30 s
   test.setTimeout(90_000);
   await page.route('http://localhost:8000/api/**', (r) => r.abort());
-  const paths = ['', '?trip=1', '?trip=1&tab=planung', '?trip=1&tab=packliste', '?trip=1&tab=budget'];
+  const paths = ['', '?trip=1', '?trip=1&tab=ablauf', '?trip=1&tab=planung', '?trip=1&tab=packliste', '?trip=1&tab=budget'];
   for (const width of [360, 390, 430, 820, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     for (const path of paths) {
@@ -589,3 +589,26 @@ for (const trigger of ['Aktion', 'Tab-Wechsel'] as const) {
     await expect(page.getByText('Berlin', { exact: true })).toHaveCount(0);
   });
 }
+
+test('Ablauf: Tage mit Programmpunkten, Bearbeiten speichert; die Stornofrist steht auf Bordkarte und in den Details', async ({ page }) => {
+  await openDemo(page, '/demo/reisen?trip=1');
+  // Frist in 8 Tagen: Marke auf der Bordkarte und Zeile in den Reisedetails
+  await expect(page.locator('.pass__chip').first()).toHaveText(/^Kostenlos stornierbar bis /);
+  await expect(page.locator('.facts')).toContainText(/Stornierung\s*Kostenlos bis .* · noch 8 Tage/);
+
+  await tab(page, 'Ablauf');
+  await expect(page).toHaveURL(/tab=ablauf/);
+  const days = page.locator('.day:not(.is-edge)');
+  await expect(days).toHaveCount(3);
+  await expect(days.first()).toContainText('Tag 1 · Anreise');
+  await expect(days.first().locator('.event b')).toHaveText(['ICE nach Berlin', 'Check-in Hotel Central', 'Abendessen im Lindenhof']);
+  await expect(days.first()).toContainText('08:12 – 12:31');
+
+  await page.getByRole('button', { name: 'Check-in Hotel Central bearbeiten' }).click();
+  await expect(page.locator('#event-title')).toHaveValue('Check-in Hotel Central');
+  await page.locator('#event-note').fill('Buchungsnummer 2934 1187 · Zimmer 412');
+  await submit(page);
+  await expect(page.locator('app-modal-form [role="dialog"]')).toHaveCount(0);
+  await expect(days.first()).toContainText('Zimmer 412');
+  await axe(page);
+});

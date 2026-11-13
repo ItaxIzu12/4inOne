@@ -29,9 +29,9 @@
     </span>
     @if (chips().length) {
       <span class="pass__chips">
-        @for (c of chips(); track c.tab) {
-          @if (mode() === 'detail') {
-            <button type="button" class="pass__chip" [class.is-strong]="c.strong" (click)="openTab.emit(c.tab)">{{ c.text }}<app-icon name="arrow" aria-hidden="true" /></button>
+        @for (c of chips(); track c.text) {
+          @if (mode() === 'detail' && c.tab) {
+            <button type="button" class="pass__chip" [class.is-strong]="c.strong" (click)="openTab.emit(c.tab!)">{{ c.text }}<app-icon name="arrow" aria-hidden="true" /></button>
           } @else {
             <span class="pass__chip" [class.is-strong]="c.strong">{{ c.text }}</span>
           }
