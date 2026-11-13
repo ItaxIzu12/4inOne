@@ -6,7 +6,7 @@ import { AppIcon } from '../../shared/icons/app-icon';
 import { LinkHints, connectionHints } from '../../shared/connections/link-hints';
 import { isInCalendarWeek } from '../../shared/dates/calendar-week';
 import { DayRange, PersonalEvent } from './organisation-api.service';
-import { EVENT_CATEGORIES, dayWord, endTime, eventCategory, eventsOn, gridRange, localDay, longDay, monthGrid, startTime, timeRange, weekOf } from './organisation-logic';
+import { EVENT_CATEGORIES, SpanPart, spanPart, dayWord, endTime, eventCategory, eventsOn, gridRange, localDay, longDay, monthGrid, startTime, timeRange, weekOf } from './organisation-logic';
 
 export type CalendarView = 'day' | 'week' | 'month';
 
@@ -69,8 +69,10 @@ export class OrgCalendar {
   /** Wohin Termine gehören („✈ Berlin Wochenende“) — ein Abruf für alle Termine des Zeitraums. */
   protected readonly links = connectionHints('CALENDAR_EVENT', () => this.agendaDays().flatMap((g) => g.events.map((e) => e.id)));
   /** Punkte unter einem Tag (Streifen, Monat am Handy): je Kategorie einer, höchstens drei. */
-  protected dots(events: readonly PersonalEvent[]): string[] {
-    return [...new Set(events.map((e) => e.category ?? 'sonstiges'))].slice(0, 3);
+  protected dots(events: readonly PersonalEvent[], day?: string): string[] {
+    // Monat am Handy: der mehrtägige Termin, der schon als Linie läuft, bekommt keinen zusätzlichen Punkt
+    const bar = day ? events.find((e) => spanPart(e, day)) : undefined;
+    return [...new Set(events.filter((e) => e !== bar).map((e) => e.category ?? 'sonstiges'))].slice(0, 3);
   }
   protected readonly dayEvents = computed(() => eventsOn(this.events(), this.selectedDay()));
   protected readonly title = computed(() => {
@@ -214,6 +216,36 @@ export class OrgCalendar {
     this.selectedDay.set(this.todayKey);
   }
 
+  /** Mehrtägig: Anfang, Mitte oder Ende des Balkens an diesem Tag (null = eintägig). */
+  protected span(e: PersonalEvent, day: string): SpanPart | null {
+    return spanPart(e, day);
+  }
+  /** Der Titel steht am Anfang des Balkens und am Montag jeder neuen Kalenderzeile, sonst läuft nur die Linie weiter. */
+  protected spanLabel(e: PersonalEvent, day: string): boolean {
+    const part = spanPart(e, day);
+    return !part || part === 'start' || new Date(`${day}T12:00`).getDay() === 1;
+  }
+  /** Wie viele Tage der Balken ab hier in dieser Kalenderzeile noch läuft (bis Sonntag oder zum Ende) – so breit darf
+   *  der Titel werden, statt nach einem Tag abzubrechen. */
+  protected spanDays(e: PersonalEvent, day: string): number {
+    const d = new Date(`${day}T12:00`);
+    let n = 1;
+    while (d.getDay() !== 0) {
+      d.setDate(d.getDate() + 1);
+      const next = spanPart(e, localDay(d));
+      if (next !== 'mid' && next !== 'end') break;
+      n++;
+    }
+    return n;
+  }
+  /** Handy (Monat zeigt nur Punkte): der erste mehrtägige Termin des Tages als durchgehende Linie unter der Zahl. */
+  protected spanBar(events: PersonalEvent[], day: string): { part: SpanPart; category: string; trip: boolean } | null {
+    for (const e of events) {
+      const part = spanPart(e, day);
+      if (part) return { part, category: e.category ?? 'sonstiges', trip: e.derived?.kind === 'TRIP_CALENDAR' };
+    }
+    return null;
+  }
   protected weekday(day: string): string {
     return SHORT_WEEKDAY[new Date(`${day}T12:00`).getDay()];
   }

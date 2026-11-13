@@ -177,6 +177,52 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+// Mehrtägige Termine (12.11.2026): ein durchgehender Balken über alle Tage statt eines Kästchens je Tag. Er reicht
+// über den Zellrand hinaus in die Nachbarzelle; Titel nur am Anfang und am Montag einer neuen Zeile.
+.ev--span {
+  position: relative;
+  z-index: 1;
+  border-left: 0;
+  background: color-mix(in srgb, var(--cat, var(--c-sonstiges)) 18%, #fff);
+  color: var(--text);
+  font-weight: 600;
+}
+.ev--start {
+  margin-right: -7px;
+  border-left: 3px solid var(--cat, var(--c-sonstiges));
+  border-radius: 4px 0 0 4px;
+}
+.ev--mid {
+  margin-inline: -7px;
+  padding-left: 13px;
+  border-radius: 0;
+}
+.ev--end {
+  margin-left: -7px;
+  padding-left: 13px;
+  border-radius: 0 4px 4px 0;
+}
+.ev--quiet {
+  color: transparent;
+}
+// Titel am Anfang des Balkens so breit wie der Balken in dieser Zeile (über die Nachbarzellen), erst dann „…“
+.ev--label {
+  z-index: 2;
+  overflow: visible;
+}
+.ev--label .ev__text {
+  display: block;
+  overflow: hidden;
+  width: calc(var(--span, 1) * 100% + (var(--span, 1) - 1) * 13px);
+  text-overflow: ellipsis;
+}
+// Reisen aus „Aus Reisen“ in der Reisefarbe statt im Grau von „Sonstiges“
+.is-trip {
+  --cat: var(--travel-accent);
+}
+.cell__bar {
+  display: none;
+}
 .ev--more {
   border-left-color: transparent;
   background: none;
@@ -322,6 +368,34 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+.week__ev--span {
+  position: relative;
+  z-index: 1;
+  background: color-mix(in srgb, var(--cat) 18%, #fff);
+}
+.week__ev--start {
+  margin-right: -7px;
+  border-radius: 3px 0 0 3px;
+}
+.week__ev--mid {
+  margin-inline: -7px;
+  padding-left: 13px;
+  border-left: 0;
+  border-radius: 0;
+}
+.week__ev--end {
+  margin-left: -7px;
+  padding-left: 13px;
+  border-left: 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+// Fortsetzung: Text bleibt für Screenreader und Klickfläche erhalten, sichtbar ist nur die Linie (Titel steht am Anfang)
+.week__ev.week__ev--mid small,
+.week__ev.week__ev--mid b,
+.week__ev.week__ev--end small,
+.week__ev.week__ev--end b {
+  color: transparent;
 }
 .week__ev small {
   color: var(--text-muted);
@@ -545,6 +619,21 @@
   }
   .cell__dots {
     display: flex;
+  }
+  // Handy: mehrtägig als durchgehende Linie über die Tage (Zellen haben hier keinen Rand und keinen Seitenabstand)
+  .cell__bar {
+    display: block;
+    justify-self: stretch;
+    height: 4px;
+    background: var(--cat, var(--c-sonstiges));
+  }
+  .cell__bar--start {
+    margin-left: 50%;
+    border-radius: 2px 0 0 2px;
+  }
+  .cell__bar--end {
+    margin-right: 50%;
+    border-radius: 0 2px 2px 0;
   }
   // Woche: Tagesstreifen statt sieben Spalten.
   .week {

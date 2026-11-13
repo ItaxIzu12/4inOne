@@ -258,6 +258,12 @@ Abstand — nie nur über Farbe.
   Seiten Demo-Texte (`@if (demo)`), der Hinweis wird zu `.legal-warning--demo` („Gilt für die Testversion“, Sage
   `--ground-2`, Info-Kreis in `--ink-soft`). Kontakt-Links aus `shared/legal-page/demo-contact.ts`. Platzhalter der
   App-Fassung unverändert (dort „§ 18 Abs. 2 MStV“ statt veraltet „§ 55 RStV“, „Kompass“ → „4inOne“).
+- **Organisation › mehrtägige Termine (13.11.2026):** `spanPart(e, day)` (`organisation-logic.ts`) liefert Anfang/Mitte/
+  Ende; `.ev--span/--start/--mid/--end` (Monat, Rand-Überstand −7 px), `.ev--label` mit `--span` (Tage bis Sonntag/Ende),
+  `.ev--quiet` für Fortsetzungen, `.week__ev--span…` (Woche), `.cell__bar` (Monat ≤ 760 px), `.is-trip` setzt `--cat`
+  auf `--travel-accent`. Korrigiert: `onDay` zählt bei ganztägigen Terminen den letzten Tag mit (Ende = Mitternacht des
+  letzten Tags, wie Backend `organisation/services.py`) – vorher fehlte er im Kalender. `eventsOn` sortiert bei gleichem
+  Beginn den längeren Termin zuerst.
 - **Reisen › Ablauf und Stornofrist (12.11.2026):** neuer Reiter `ablauf` (`trip-itinerary.ts/.html/.scss`, Logik
   `itinerary()`, `eventTime()`, `eventIcon()`, `cancellationInfo()` in `reisen-logic.ts`). Raster Tag | Einträge
   (`minmax(130px,170px) 1fr`), Eintrag `7.5rem 36px 1fr auto`; ≤ 640 px Datum über den Einträgen, Uhrzeit über dem

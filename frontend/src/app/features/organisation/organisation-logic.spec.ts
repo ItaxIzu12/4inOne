@@ -4,6 +4,8 @@ import {
   groupTaskList,
   eventsOn,
   expandEvents,
+  onDay,
+  spanPart,
   filterTasks,
   gridRange,
   monthGrid,
@@ -23,6 +25,28 @@ const ev = (id: number, day: number, from: number, to: number | null, over: Part
 });
 const task = (id: number, due: string | null, over: Partial<PersonalTask> = {}): PersonalTask => ({
   id, title: `T${id}`, description: '', due_date: due, due_time: null, priority: 'MEDIUM', status: 'OPEN', project: '', ...over,
+});
+
+describe('Organisation: mehrtägige ganztägige Termine (Reise im Kalender)', () => {
+  // Wie derivedEvent/Formular: ganztägig, Ende = Mitternacht des letzten Tags (einschließlich)
+  const trip = ev(9, 25, 0, null, { all_day: true, starts_at: iso(25, 0), ends_at: iso(27, 0) });
+
+  it('zählt den letzten Tag mit – wie das Backend (ends_at >= Tagesbeginn)', () => {
+    expect(['2026-10-24', '2026-10-25', '2026-10-26', '2026-10-27', '2026-10-28'].map((d) => onDay(trip, d))).toEqual([false, true, true, true, false]);
+    // ein Termin mit Uhrzeit, der um 00:00 endet, gehört nicht mehr zum Folgetag
+    const late = ev(10, 4, 22, null, { ends_at: iso(5, 0) });
+    expect(onDay(late, '2026-10-05')).toBe(false);
+  });
+
+  it('zieht eine Linie: Anfang, Mitte, Ende – und nichts davor, danach oder bei eintägigen Terminen', () => {
+    expect(['2026-10-24', '2026-10-25', '2026-10-26', '2026-10-27', '2026-10-28'].map((d) => spanPart(trip, d))).toEqual([null, 'start', 'mid', 'end', null]);
+    expect(spanPart(ev(1, 4, 9, 10), '2026-10-04')).toBeNull();
+  });
+
+  it('der längere Termin steht bei gleichem Beginn zuerst – der Balken bleibt in seiner Zeile', () => {
+    const single = ev(11, 25, 0, null, { all_day: true, starts_at: iso(25, 0) });
+    expect(eventsOn([single, trip], '2026-10-25').map((e) => e.id)).toEqual([9, 11]);
+  });
 });
 
 describe('Organisation: Kalender', () => {

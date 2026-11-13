@@ -47,15 +47,25 @@
             <span class="cell__num" [class.is-today]="d.today">{{ d.number }}</span><span class="sr-only">{{ dayRest(d.key, d.events.length) }} – {{ d.events.length ? 'Tag öffnen' : 'Termin hinzufügen' }}</span>
             <span class="cell__events" aria-hidden="true">
               @for (e of d.events.slice(0, 2); track e.id + e.starts_at) {
-                <span class="ev" [class]="'ev cat-' + (e.category ?? 'sonstiges')">{{ e.title }}</span>
+                @let part = span(e, d.key);
+                <span
+                  class="ev"
+                  [class]="'ev cat-' + (e.category ?? 'sonstiges') + (e.derived?.kind === 'TRIP_CALENDAR' ? ' is-trip' : '') + (part ? ' ev--span ev--' + part : '')"
+                  [class.ev--quiet]="!spanLabel(e, d.key)"
+                  [class.ev--label]="!!part && spanLabel(e, d.key)"
+                  [style.--span]="part && spanLabel(e, d.key) ? spanDays(e, d.key) : null"
+                ><span class="ev__text">{{ e.title }}</span></span>
               }
               @if (d.events.length > 2) {
                 <span class="ev ev--more">+{{ d.events.length - 2 }} weitere</span>
               }
             </span>
+            @if (spanBar(d.events, d.key); as bar) {
+              <span [class]="'cell__bar cat-' + bar.category + (bar.trip ? ' is-trip' : '') + ' cell__bar--' + bar.part" aria-hidden="true"></span>
+            }
             @if (d.events.length) {
               <span class="cell__dots" aria-hidden="true">
-                @for (c of dots(d.events); track c) {<i [class]="'cat-' + c"></i>}
+                @for (c of dots(d.events, d.key); track c) {<i [class]="'cat-' + c"></i>}
               </span>
             }
           </button>
@@ -73,7 +83,12 @@
               <small>{{ weekday(d.day) }}</small><b [class.is-today]="d.day === todayKey">{{ +d.day.slice(8, 10) }}</b><span class="sr-only">{{ dayRest(d.day, d.events.length) }} – {{ d.events.length ? 'Tag öffnen' : 'Termin hinzufügen' }}</span>
             </button>
             @for (e of d.events; track e.id + e.starts_at) {
-              <button type="button" [class]="'week__ev cat-' + (e.category ?? 'sonstiges')" (click)="openEvent.emit(e)">
+              @let wpart = span(e, d.day);
+              <button
+                type="button"
+                [class]="'week__ev cat-' + (e.category ?? 'sonstiges') + (e.derived?.kind === 'TRIP_CALENDAR' ? ' is-trip' : '') + (wpart ? ' week__ev--span week__ev--' + wpart : '')"
+                (click)="openEvent.emit(e)"
+              >
                 <small>{{ timeRange(e) }}</small><b>{{ e.title }}</b>
               </button>
             }

@@ -197,7 +197,7 @@ for (const width of [360, 390, 430]) {
     expect(box.x + box.width).toBeLessThanOrEqual(width);
     for (const name of ['Annehmen', 'Ablehnen']) {
       const button = (await panel.getByRole('button', { name }).boundingBox())!;
-      expect(button.height).toBeGreaterThanOrEqual(44);
+      expect(Math.round(button.height)).toBeGreaterThanOrEqual(44); // Rundung: während der Einblendung z. B. 43,99998 px
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
   });

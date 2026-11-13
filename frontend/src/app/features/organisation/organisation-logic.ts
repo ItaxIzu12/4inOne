@@ -43,11 +43,33 @@ export function onDay(e: PersonalEvent, day: string): boolean {
   const end = new Date(start);
   end.setDate(end.getDate() + 1);
   const begins = new Date(e.starts_at);
-  return begins < end && (begins >= start || (!!e.ends_at && new Date(e.ends_at) > start));
+  if (begins >= end) return false;
+  if (begins >= start) return true;
+  if (!e.ends_at) return false;
+  const until = new Date(e.ends_at);
+  // Ganztägig speichert 4inOne den letzten Tag als Mitternacht (wie das Backend, organisation/services.py: ends_at >=
+  // Tagesbeginn) – dieser Tag gehört noch dazu. Ein Termin mit Uhrzeit, der um 00:00 endet, dagegen nicht.
+  return e.all_day ? until >= start : until > start;
+}
+
+/** Teil eines mehrtägigen Termins an diesem Tag: Anfang, Mitte oder Ende – null für eintägige Termine. So zieht der
+ *  Kalender eine durchgehende Linie über alle Tage (z. B. eine Reise vom 24. bis 26.). */
+export type SpanPart = 'start' | 'mid' | 'end';
+export function spanPart(e: PersonalEvent, day: string): SpanPart | null {
+  if (!onDay(e, day)) return null;
+  const d = parseDay(day);
+  const prev = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+  const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+  const before = onDay(e, localDay(prev));
+  const after = onDay(e, localDay(next));
+  if (!before && !after) return null;
+  return before && after ? 'mid' : before ? 'end' : 'start';
 }
 
 export function eventsOn(events: PersonalEvent[], day: string): PersonalEvent[] {
-  return events.filter((e) => onDay(e, day)).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  // Bei gleichem Beginn zuerst der längere Termin – so liegt ein mehrtägiger Balken an jedem seiner Tage in derselben Zeile
+  const length = (e: PersonalEvent) => (e.ends_at ? new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime() : 0);
+  return events.filter((e) => onDay(e, day)).sort((a, b) => a.starts_at.localeCompare(b.starts_at) || length(b) - length(a));
 }
 
 export interface CalendarDay {
