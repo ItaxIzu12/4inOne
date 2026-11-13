@@ -356,11 +356,11 @@
 <app-modal-form
   icon="calendar"
   [formGroup]="eventForm"
-  [title]="editEventId() ? 'Programmpunkt bearbeiten' : 'Programmpunkt hinzufügen'"
+  [title]="editEventId() ? 'Programm bearbeiten' : 'Programm hinzufügen'"
   [open]="eventEditor()"
   [saving]="eventSaving()"
   [error]="eventFormError()"
-  [deleteLabel]="editEventId() ? 'Programmpunkt löschen' : ''"
+  [deleteLabel]="editEventId() ? 'Programm löschen' : ''"
   (submitted)="saveEventForm()"
   (closed)="closeEventEditor()"
   (deleted)="removeEventFromEditor()"

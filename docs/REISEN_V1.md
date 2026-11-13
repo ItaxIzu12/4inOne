@@ -232,3 +232,8 @@ wo gebucht wurde. Alles wird selbst eingetragen; weiterhin keine Buchungs-, Flug
 - **Speichern robust:** Scheitern nur die Verbindungen, bleibt die neue Reise gespeichert und es erscheint ein Hinweis
   (vorher: „Reise konnte nicht gespeichert werden“ → zweiter Versuch hätte sie doppelt angelegt).
 - Budget › Ausgabe: Dialog mit „Abbrechen“ und „Speichern“ wie alle Dialoge (vorher „Ausgabe speichern“, brach um).
+- **Welche Reise? (13.11.2026):** Im Kalender tragen Reise-Einträge ein Reise-Symbol und die Reisefarbe. Der
+  Reisebalken nennt in der Marke Reiseart und Verkehrsmittel („Reise · Städtereise · Zug“) und als Ort das Ziel; jedes
+  Programm trägt den Reisenamen („Reise „Berlin Wochenende“ · Ablauf“) und seinen Ort. Backend liefert dafür
+  `location` und `context` in den abgeleiteten Kalendereinträgen. Ohne Reiseart/Verkehrsmittel kein Zusatz.
+- Reiter „Ablauf“: Knopf „Programm“, Dialog „Programm hinzufügen/bearbeiten“, „Programm löschen“.

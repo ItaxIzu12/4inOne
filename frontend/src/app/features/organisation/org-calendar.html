@@ -88,10 +88,10 @@
                 type="button"
                 [class]="'week__ev cat-' + (e.category ?? 'sonstiges') + (isTrip(e) ? ' is-trip' : '') + (wpart ? ' week__ev--span week__ev--' + wpart : '')"
                 [attr.title]="e.derived ? e.title + ' – ' + e.calendar_name : null"
+                [style.--span]="wpart === 'start' ? spanDays(e, d.day) : null"
                 (click)="openEvent.emit(e)"
               >
                 <small>{{ timeRange(e) }}</small><b>@if (isTrip(e)) {<app-icon class="ev__icon" name="travel" aria-hidden="true" />}{{ e.title }}</b>
-                @if (isTrip(e) && e.calendar_name && (wpart === 'start' || !wpart)) {<small class="week__ctx">{{ e.calendar_name }}</small>}
               </button>
             }
             <!-- Freie Fläche der Spalte: neuer Termin an diesem Tag -->

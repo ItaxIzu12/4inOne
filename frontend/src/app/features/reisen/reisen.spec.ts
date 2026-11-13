@@ -445,7 +445,7 @@ describe('Reisen V1 (Demo)', () => {
     expect(text(days[0])).toContain('Wagen 7, Platz 54');
     expect(text(days[2])).toContain('Tag 3 · Rückreise');
 
-    button(page, 'Programmpunkt').click();
+    button(page, 'Programm').click();
     page = await settle(fixture);
     const dialog = page.querySelector('[role="dialog"]') as HTMLElement;
     expect(dialog).not.toBeNull();

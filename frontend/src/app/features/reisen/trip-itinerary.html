@@ -11,7 +11,7 @@
       </p>
     </div>
     @if (canEdit()) {
-      <button type="button" class="primary" (click)="add.emit('')"><app-icon name="plus" aria-hidden="true" />Programmpunkt</button>
+      <button type="button" class="primary" (click)="add.emit('')"><app-icon name="plus" aria-hidden="true" />Programm</button>
     }
   </div>
 
@@ -52,7 +52,7 @@
           <p class="day__empty muted">
             Noch nichts geplant
             @if (canEdit()) {
-              <button type="button" class="link" [attr.aria-label]="'Programmpunkt am ' + day.label + ' hinzufügen'" (click)="add.emit(day.key)">
+              <button type="button" class="link" [attr.aria-label]="'Programm am ' + day.label + ' hinzufügen'" (click)="add.emit(day.key)">
                 Hinzufügen
               </button>
             }

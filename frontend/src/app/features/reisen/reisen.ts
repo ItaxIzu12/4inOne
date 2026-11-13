@@ -1279,7 +1279,7 @@ export class Reisen {
         },
         error: () => {
           this.eventSaving.set(false);
-          this.eventFormError.set('Der Programmpunkt konnte nicht gespeichert werden. Bitte versuche es erneut.');
+          this.eventFormError.set('Das Programm konnte nicht gespeichert werden. Bitte versuche es erneut.');
         },
       });
   }
@@ -1299,7 +1299,7 @@ export class Reisen {
         },
         error: () => {
           this.eventSaving.set(false);
-          this.eventFormError.set('Der Programmpunkt konnte nicht gelöscht werden. Bitte versuche es erneut.');
+          this.eventFormError.set('Das Programm konnte nicht gelöscht werden. Bitte versuche es erneut.');
         },
       });
   }

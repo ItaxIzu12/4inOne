@@ -112,6 +112,8 @@
 .month {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
+  // Ein Balkentitel reicht höchstens bis Sonntag – am rechten Rand trotzdem abschneiden, nie seitlich scrollen
+  overflow-x: clip;
   border-right: 1px solid var(--line);
 }
 .month__wd {
@@ -164,6 +166,8 @@
 }
 .cell__events {
   display: grid;
+  // feste Spaltenbreite: der überstehende Reisetitel darf die Zelle nicht aufweiten (sonst rechnet er falsch)
+  grid-template-columns: minmax(0, 1fr);
   gap: 2px;
   min-width: 0;
 }
@@ -235,11 +239,19 @@
 .ev--quiet .ev__icon {
   color: transparent;
 }
-.week__ctx {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+// Reisebalken in der Woche: Titel so breit wie der Balken (Reiseart und Ziel stehen in der Agenda daneben)
+.week__ev.week__ev--start {
+  z-index: 2;
+  overflow: visible;
 }
+.week__ev--start > b {
+  width: calc(var(--span, 1) * 100% + (var(--span, 1) - 1) * 13px);
+}
+.week__ev--mid .ev__icon,
+.week__ev--end .ev__icon {
+  color: transparent;
+}
+
 .ev--more {
   border-left-color: transparent;
   background: none;
@@ -286,6 +298,7 @@
 .week {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
+  overflow-x: clip;
   border-right: 1px solid var(--line);
 }
 .week__col {
@@ -374,6 +387,7 @@
 }
 .week__ev {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1px;
   min-width: 0;
   padding: 6px 8px;
