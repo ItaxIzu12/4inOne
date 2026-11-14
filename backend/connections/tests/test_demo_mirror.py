@@ -37,9 +37,14 @@ def test_demo_relevance_uses_the_same_word_lists_as_the_backend():
     extra = _ts_set('TRIP_GOAL_WORDS')
     assert link_suggestions.TRAVEL_WORDS | extra == link_suggestions.TRIP_GOAL_WORDS
     assert _ts_set('CONTRACT_WORDS') == link_suggestions.CONTRACT_WORDS
+    assert _ts_set('DEVICE_WORDS') == link_suggestions.DEVICE_WORDS
+    parts = re.search(r'export const TRIP_CONTRACT_PARTS = \[(.*?)\];', RULES, re.S).group(1)
+    assert tuple(re.findall(r"'([a-z]+)'", parts)) == link_suggestions.TRIP_CONTRACT_PARTS
 
 
 def test_demo_relevance_uses_the_same_time_windows():
     for name in ('GOAL_LEAD_DAYS', 'TASK_LEAD_DAYS', 'EVENT_MARGIN_DAYS'):
         value = int(re.search(rf'export const {name} = (\d+);', RULES).group(1))
         assert value == getattr(relevance, name), name
+    urgent = int(re.search(r'export const URGENT_EVERY_DAYS = (\d+);', RULES).group(1))
+    assert urgent == link_suggestions.URGENT_EVERY_DAYS

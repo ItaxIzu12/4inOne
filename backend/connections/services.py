@@ -333,9 +333,17 @@ def candidates_for(user, object_type: str, object_id: int, target_type: str, que
             already.add(other[1])
     from connections.relevance import fits
 
+    # Gerät ↔ Aufgabe: Pflegewörter zählen nicht, wenn die Aufgabe ein ANDERES Gerät nennt
+    other_devices: tuple[str, ...] = ()
+    if ObjectType.DEVICE in (object_type, target_type):
+        device_id = object_id if object_type == ObjectType.DEVICE else None
+        other_devices = tuple(
+            name for pk, name in KINDS[ObjectType.DEVICE].editable_for(user).values_list('pk', 'name') if pk != device_id
+        )
     rows = []
     for obj in queryset.exclude(pk__in=already).order_by('-pk')[:CANDIDATE_LIMIT]:
-        rows.append({**kind.summary(obj), 'fits': fits(object_type, anchor, target_type, obj)})
+        devices = tuple(n for n in other_devices if target_type != ObjectType.DEVICE or n != getattr(obj, 'name', None))
+        rows.append({**kind.summary(obj), 'fits': fits(object_type, anchor, target_type, obj, devices)})
     # Passendes zuerst (13.11.2026) – die Auswahl zeigt ohne Suche nur das; alles andere findet man über die Suche
     rows.sort(key=lambda row: not row['fits'])
     return rows

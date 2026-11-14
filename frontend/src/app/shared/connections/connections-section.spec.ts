@@ -169,6 +169,66 @@ describe('ConnectionsSection', () => {
     }
   });
 
+  it('Suche springt nicht: die Liste wechselt erst mit den Ergebnissen; veraltete Antworten werden verworfen', () => {
+    vi.useFakeTimers();
+    try {
+      const { click, flushList, fixture, el } = setup();
+      flushList([]);
+      click('+ Verknüpfen');
+      http.expectOne((r) => r.url.endsWith('/options/')).flush([{ type: 'TASK', label: 'Aufgabe', domain: 'organisation', relation_type: 'TASK_FOR' }]);
+      fixture.detectChanges();
+      click('Aufgabe');
+      http.expectOne((r) => r.url.endsWith('/candidates/')).flush([
+        task({ id: 1, title: 'Waschmaschinen vergleichen', fits: true }),
+        task({ id: 2, title: 'Badmintonschuhe kaufen', fits: false }),
+      ]);
+      fixture.detectChanges();
+      const titles = () => Array.from(el.querySelectorAll('.wizard__choices .connection__title')).map((n) => n.textContent?.trim());
+      const search = el.querySelector('input[type="search"]') as HTMLInputElement;
+      const type = (value: string) => {
+        search.value = value;
+        search.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+      };
+
+      // „0“ getippt: bis die Antwort da ist, bleibt die Liste wie sie war – nicht „alles“, nicht leer
+      type('0');
+      expect(titles()).toEqual(['Waschmaschinen vergleichen']);
+      vi.advanceTimersByTime(300);
+      fixture.detectChanges();
+      expect(titles()).toEqual(['Waschmaschinen vergleichen']);
+      expect(el.querySelector('.wizard__choices')?.getAttribute('aria-busy')).toBe('true');
+      http.expectOne((r) => r.params.get('q') === '0').flush([]);
+      fixture.detectChanges();
+      expect(el.textContent).toContain('Nichts gefunden für „0“.');
+
+      // „0“ gelöscht: „Nichts gefunden“ bleibt stehen, bis die volle Liste da ist – dann wieder nur Passendes
+      type('');
+      expect(el.textContent).toContain('Nichts gefunden für „0“.');
+      vi.advanceTimersByTime(300);
+      http.expectOne((r) => r.url.endsWith('/candidates/') && !r.params.get('q')).flush([
+        task({ id: 1, title: 'Waschmaschinen vergleichen', fits: true }),
+        task({ id: 2, title: 'Badmintonschuhe kaufen', fits: false }),
+      ]);
+      fixture.detectChanges();
+      expect(titles()).toEqual(['Waschmaschinen vergleichen']);
+
+      // schnell weitergetippt: die ältere Antwort kommt zu spät und wird verworfen
+      type('Wasch');
+      vi.advanceTimersByTime(300);
+      const slow = http.expectOne((r) => r.params.get('q') === 'Wasch');
+      type('Badm');
+      vi.advanceTimersByTime(300);
+      const fast = http.expectOne((r) => r.params.get('q') === 'Badm');
+      fast.flush([task({ id: 2, title: 'Badmintonschuhe kaufen', fits: false })]);
+      slow.flush([task({ id: 1, title: 'Waschmaschinen vergleichen', fits: true })]);
+      fixture.detectChanges();
+      expect(titles()).toEqual(['Badmintonschuhe kaufen']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('creates a connection in three steps and refreshes the list', () => {
     const { text, click, flushList, fixture, el } = setup();
     flushList([]);

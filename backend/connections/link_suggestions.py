@@ -32,7 +32,7 @@ from connections.models import Connection, ObjectType, Origin, RelationType, Sug
 from connections.registry import ALLOWED_PAIRS, KINDS, canonical_pair
 from connections.serializers import MAX_ID
 from finanzen.models import SavingsGoal
-from haushalt.models import FolderEntry
+from haushalt.models import FolderEntry, Task as HouseholdTask
 from organisation.models import PersonalEvent, PersonalTask
 from reisen.models import Trip
 
@@ -46,6 +46,7 @@ TASK_LEAD_DAYS = 30  # Aufgaben bis 30 Tage vor der Reise zählen als „kurz da
 PREP_LEAD_DAYS = 14  # ohne Ortsnennung: nur bis 14 Tage vorher und nur, wenn genau eine Reise in Frage kommt
 GOAL_LEAD_DAYS = 180  # Sparziel mit Zieldatum bis ein halbes Jahr vor der Reise
 EVENT_MARGIN_DAYS = 1  # Anreise am Vortag, Rückfahrt am Tag danach
+URGENT_EVERY_DAYS = 3  # Haushaltsaufgaben, die so oft anfallen, können während einer Reise nicht warten
 CANDIDATE_LIMIT = 300  # je Art; schützt vor O(n²) bei sehr vielen Einträgen
 
 # Füllwörter und Wörter, die zu allgemein sind, um zwei Dinge zu verbinden.
@@ -77,6 +78,14 @@ CONTRACT_WORDS = {
     'wechsel', 'anbieter', 'rechnung', 'abrechnung', 'zaehlerstand', 'zaehler', 'beitrag', 'police',
     'versicherung', 'laufzeit', 'preiserhoehung', 'widerspruch',
 }
+
+# Pflege und Reparatur: woran man eine Aufgabe als Gerätesache erkennt („Flusensieb reinigen“, „Reparatur anfragen“).
+DEVICE_WORDS = {
+    'wartung', 'warten', 'reparatur', 'reparieren', 'entkalken', 'filter', 'flusensieb', 'reinigen', 'service',
+    'garantie', 'ersatzteil', 'defekt', 'austauschen', 'abtauen', 'kalk', 'techniker', 'kundendienst',
+}
+# Verträge, die zu einer Reise gehören können – als Teil des Namens („Reiseversicherung“, „Auslandskrankenversicherung“).
+TRIP_CONTRACT_PARTS = ('reise', 'urlaub', 'ausland', 'mietwagen', 'roaming', 'travel')
 
 KEY_PATTERN = re.compile(r'^link:([A-Z_]{1,20}):(\d{1,19}):([A-Z_]{1,20}):(\d{1,19})$')
 
@@ -240,6 +249,9 @@ class _Scope:
 
     def devices(self) -> list[FolderEntry]:
         return self._load(ObjectType.DEVICE, lambda qs: qs.order_by('id'))
+
+    def household_tasks(self) -> list[HouseholdTask]:
+        return self._load(ObjectType.HOUSEHOLD_TASK, lambda qs: qs.filter(is_done=False, is_paused=False).order_by('due_date', 'id'))
 
     def contracts(self) -> list[FolderEntry]:
         return self._load(ObjectType.CONTRACT, lambda qs: qs.exclude(status=FolderEntry.Status.ENDED).order_by('id'))
@@ -419,6 +431,74 @@ def rule_contract_task(scope: _Scope) -> list[LinkSuggestion]:
     return found
 
 
+def rule_goal_task(scope: _Scope) -> list[LinkSuggestion]:
+    """Sparziel und offene Aufgabe nennen dasselbe Stichwort („Badmintonschuhe“ ↔ „Badmintonschuhe vergleichen“).
+    Genau gleiches Wort zählt stärker als ein Wortanfang („Waschmaschine“/„Waschmaschinen“). (14.11.2026)"""
+    found = []
+    goals = [(goal, words(goal.title)) for goal in scope.goals()]
+    goals = [(goal, keys) for goal, keys in goals if keys]
+    for task in scope.tasks() if goals else []:
+        task_words = words(task.title)
+        for goal, keys in goals:
+            hit = match_word(keys, task_words)
+            if hit is None:
+                continue
+            word, exact = hit
+            found.append(_make(
+                'goal_task', 'MATCHING_TITLE', 0.8 if exact else THRESHOLD, ObjectType.SAVINGS_GOAL, goal, ObjectType.TASK, task,
+                f'„{task.title}“ könnte zu deinem Sparziel „{goal.title}“ gehören.',
+                f'Beide erwähnen „{word}“.', task.due_date,
+            ))
+    return found
+
+
+def _due_during(task: HouseholdTask, start: date, end: date) -> date | None:
+    """Der erste Fälligkeitstag der Haushaltsaufgabe in [start, end] – mit Wiederholung (Tage oder Monate)."""
+    due = task.due_date
+    if due is None:
+        return None
+    if task.recurrence_days:
+        if due < start:
+            steps = -(-(start - due).days // task.recurrence_days)  # aufrunden
+            due = due + timedelta(days=steps * task.recurrence_days)
+    elif task.recurrence_months:
+        for _ in range(240):  # höchstens 20 Jahre weiter, nie endlos
+            if due >= start:
+                break
+            month = due.month - 1 + task.recurrence_months
+            year = due.year + month // 12
+            month = month % 12 + 1
+            last = (date(year + (month == 12), month % 12 + 1, 1) - timedelta(days=1)).day
+            due = date(year, month, min(task.due_date.day, last))
+    return due if start <= due <= end else None
+
+
+def rule_trip_household_task(scope: _Scope) -> list[LinkSuggestion]:
+    """Eine Haushaltsaufgabe, die nicht warten kann, wird während der Reise fällig („Pflanzen gießen“) – damit klar
+    ist, wer sich kümmert. „Kann nicht warten“: alle 1–3 Tage (Pflanzen, Haustier) oder einmalig genau in der
+    Reisezeit. Wöchentliches Putzen o. Ä. wartet, bis man zurück ist – sonst gäbe es für jede Reise eine Flut an
+    Vorschlägen, die die wichtigen verdrängt. Nur offene, nicht pausierte Aufgaben; die Reise steht bevor oder läuft."""
+    found = []
+    trips = scope.trips()
+    for task in scope.household_tasks() if trips else []:
+        urgent = (task.recurrence_days is not None and task.recurrence_days <= URGENT_EVERY_DAYS) or (
+            not task.recurrence_days and not task.recurrence_months
+        )
+        if not urgent:
+            continue
+        for trip in trips:
+            day = _due_during(task, max(trip.start_date, scope.today), trip.end_date)
+            if day is None:
+                continue
+            found.append(_make(
+                'trip_household_task', 'DUE_DURING_TRIP', THRESHOLD, ObjectType.TRIP, trip, ObjectType.HOUSEHOLD_TASK, task,
+                f'„{task.title}“ wird während deiner Reise „{_trip_name(trip)}“ fällig.',
+                f'Fällig am {_date(day)}, während du unterwegs bist – kläre, wer sich darum kümmert.',
+                trip.start_date,
+            ))
+    return found
+
+
 # Welche Regel welche Typen braucht — damit für ein einzelnes Objekt nur die passenden Regeln laufen.
 RULES = (
     ((ObjectType.TRIP, ObjectType.TASK), rule_trip_task),
@@ -426,6 +506,8 @@ RULES = (
     ((ObjectType.TRIP, ObjectType.SAVINGS_GOAL), rule_trip_goal),
     ((ObjectType.DEVICE, ObjectType.SAVINGS_GOAL), rule_device_goal),
     ((ObjectType.CONTRACT, ObjectType.TASK), rule_contract_task),
+    ((ObjectType.SAVINGS_GOAL, ObjectType.TASK), rule_goal_task),
+    ((ObjectType.TRIP, ObjectType.HOUSEHOLD_TASK), rule_trip_household_task),
 )
 
 

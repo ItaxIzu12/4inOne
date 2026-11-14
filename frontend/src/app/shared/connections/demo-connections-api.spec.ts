@@ -16,12 +16,12 @@ function setup(): DemoConnectionsApi {
 }
 
 describe('DemoConnectionsApi (Verknüpfungen in der Demo, Bestand aus den Demo-Bereichen)', () => {
-  it('alle neun Arten-Paare wie das Backend – auch Gerät ↔ Sparziel und Vertrag ↔ Aufgabe', async () => {
+  it('alle zwölf Arten-Paare wie das Backend – auch Gerät ↔ (Haushalts-)Aufgabe und Reise ↔ Vertrag', async () => {
     const api = setup();
-    expect(DEMO_PAIRS).toHaveLength(9);
-    expect((await firstValueFrom(api.options('TRIP'))).map((o) => o.type).sort()).toEqual(['CALENDAR_EVENT', 'HOUSEHOLD_TASK', 'SAVINGS_GOAL', 'TASK']);
-    expect((await firstValueFrom(api.options('DEVICE'))).map((o) => o.type)).toEqual(['SAVINGS_GOAL']);
-    expect((await firstValueFrom(api.options('CONTRACT'))).map((o) => o.type)).toEqual(['TASK']);
+    expect(DEMO_PAIRS).toHaveLength(12);
+    expect((await firstValueFrom(api.options('TRIP'))).map((o) => o.type).sort()).toEqual(['CALENDAR_EVENT', 'CONTRACT', 'HOUSEHOLD_TASK', 'SAVINGS_GOAL', 'TASK']);
+    expect((await firstValueFrom(api.options('DEVICE'))).map((o) => o.type).sort()).toEqual(['HOUSEHOLD_TASK', 'SAVINGS_GOAL', 'TASK']);
+    expect((await firstValueFrom(api.options('CONTRACT'))).map((o) => o.type).sort()).toEqual(['TASK', 'TRIP']);
     expect((await firstValueFrom(api.options('SAVINGS_GOAL'))).map((o) => o.type).sort()).toEqual(['DEVICE', 'TASK', 'TRIP']);
   });
 
@@ -60,10 +60,10 @@ describe('DemoConnectionsApi (Verknüpfungen in der Demo, Bestand aus den Demo-B
 
   it('Vorschlag annehmen legt die Verbindung an und verschwindet; doppelt → 409, falsches Paar → 400', async () => {
     const api = setup();
-    const [s] = await firstValueFrom(api.suggestions('TRIP', 1));
-    expect(s.other?.title).toBe('Bahn-Tickets ausdrucken');
+    const s = (await firstValueFrom(api.suggestions('TRIP', 1))).find((x) => x.other?.title === 'Bahn-Tickets ausdrucken')!;
+    expect(s).toBeTruthy();
     await firstValueFrom(api.acceptSuggestion(s.key));
-    expect(await firstValueFrom(api.suggestions('TRIP', 1))).toEqual([]);
+    expect((await firstValueFrom(api.suggestions('TRIP', 1))).some((x) => x.key === s.key)).toBe(false);
     expect((await firstValueFrom(api.summary('TASK', [9])))['9'][0].title).toBe('Berlin Wochenende');
     // dieselbe Verknüpfung von der anderen Seite ist dieselbe
     await expect(firstValueFrom(api.create('TASK', 9, 'TRIP', 1))).rejects.toMatchObject({ status: 409 });
@@ -79,5 +79,18 @@ describe('DemoConnectionsApi (Verknüpfungen in der Demo, Bestand aus den Demo-B
     const created = await firstValueFrom(TestBed.inject(OrganisationApi).saveTask({ title: 'Hotel in Berlin bestätigen', description: '', due_date: null, due_time: null, priority: 'MEDIUM', status: 'OPEN' }));
     const tasks = await firstValueFrom(api.candidates('TRIP', 1, 'TASK'));
     expect(tasks.find((t) => t.id === created.id)?.fits).toBe(true);
+  });
+
+  it('neue Vorschläge wie im Backend: Reise ↔ Haushaltsaufgabe nur, was nicht warten kann; „Nicht relevant“ merkt sich das', async () => {
+    const api = setup();
+    const trip = await firstValueFrom(api.suggestions('TRIP', 1));
+    const chores = trip.filter((x) => x.other?.type === 'HOUSEHOLD_TASK');
+    // keine Flut: wöchentliches Putzen o. Ä. wartet, bis man zurück ist
+    expect(chores.length).toBeLessThanOrEqual(2);
+    for (const c of chores) expect(c.reason).toContain('während du unterwegs bist');
+    if (chores[0]) {
+      await firstValueFrom(api.dismissSuggestion(chores[0].key));
+      expect((await firstValueFrom(api.suggestions('TRIP', 1))).some((x) => x.key === chores[0].key)).toBe(false);
+    }
   });
 });

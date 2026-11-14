@@ -41,7 +41,7 @@ test('Hinweise in Haushalt und Finanzen: wohin ein Eintrag gehört', async ({ pa
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test('auch Haushaltsaufgaben und Geräte zeigen ihre Verknüpfungen in der Demo; ein Gerät bietet nur Sparziele an', async ({ page }) => {
+test('auch Haushaltsaufgaben und Geräte zeigen ihre Verknüpfungen in der Demo; ein Gerät bietet Sparziel, Haushaltsaufgabe und Aufgabe an', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   // Haushaltsaufgabe „Pflanzen gießen“ gehört zur Berlin-Reise – auch von dieser Seite aus sichtbar
   await page.goto('/demo/haushalt?tab=aufgaben');
@@ -50,15 +50,19 @@ test('auch Haushaltsaufgaben und Geräte zeigen ihre Verknüpfungen in der Demo;
   await expect(taskLinks.locator('li.connection .connection__title')).toHaveText(['Berlin Wochenende']);
   await page.keyboard.press('Escape');
 
-  // Gerät: Verknüpfen bietet genau die Art aus dem Backend (Sparziel); keins der Demo-Sparziele passt zur Waschmaschine
+  // Gerät: Verknüpfen bietet genau die Arten aus dem Backend; keins der Demo-Sparziele passt zur Waschmaschine
   await page.goto('/demo/haushalt?tab=zuhause&bereich=geraete');
   await page.getByRole('button', { name: /^Waschmaschine/ }).first().click();
   const dialog = page.getByRole('dialog');
   if (!(await dialog.count())) await page.getByRole('button', { name: 'Bearbeiten' }).last().click();
   const deviceLinks = page.getByRole('dialog').locator('app-connections');
   await deviceLinks.getByRole('button', { name: /^\+? ?Verknüpfen$/ }).click();
-  await expect(deviceLinks.locator('.wizard .choice')).toHaveText(['Sparziel']);
+  await expect(deviceLinks.locator('.wizard .choice')).toHaveText(['Sparziel', 'Haushaltsaufgabe', 'Aufgabe']);
   await deviceLinks.getByRole('button', { name: 'Sparziel' }).click();
   await expect(deviceLinks).toContainText('Nichts, was erkennbar dazu passt.');
   await expect(deviceLinks).toContainText('4 weitere Einträge passen nicht erkennbar dazu');
+  // Haushaltsaufgabe: „Kühlschrank reinigen“ ist Pflege – aber für ein anderes Gerät, also nicht „passend“
+  await deviceLinks.getByRole('button', { name: 'Zurück' }).click();
+  await deviceLinks.getByRole('button', { name: 'Haushaltsaufgabe' }).click();
+  await expect(deviceLinks.locator('.wizard__choices')).not.toContainText('Kühlschrank reinigen');
 });

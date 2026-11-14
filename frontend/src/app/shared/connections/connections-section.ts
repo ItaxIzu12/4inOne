@@ -143,18 +143,27 @@ export class ConnectionsSection {
    *  Mit Suche alles Gefundene (Passendes zuerst): verknüpfen darf man weiterhin alles, was erlaubt ist. */
   protected readonly shownCandidates = computed(() => {
     const rows = this.candidates() ?? [];
-    return this.query() ? rows : rows.filter((r) => r.fits !== false);
+    return this.loadedQuery() ? rows : rows.filter((r) => r.fits !== false);
   });
   /** So viele Einträge sind wegen „passt nicht erkennbar“ ausgeblendet. */
-  protected readonly hiddenCandidates = computed(() => (this.query() ? 0 : (this.candidates() ?? []).filter((r) => r.fits === false).length));
+  protected readonly hiddenCandidates = computed(() => (this.loadedQuery() ? 0 : (this.candidates() ?? []).filter((r) => r.fits === false).length));
+  /** Der Suchbegriff, zu dem die angezeigte Liste gehört. Die Liste wechselt erst, wenn die Ergebnisse für den neuen
+   *  Begriff da sind – vorher sprang sie beim Tippen (erst alles, dann leer, dann „Nichts gefunden“). */
+  protected readonly loadedQuery = signal('');
+  /** Neue Suchergebnisse werden geladen; die bisherige Liste bleibt so lange stehen. */
+  protected readonly searching = signal(false);
+  // Auch solange noch Ergebnisse einer Suche angezeigt werden (loadedQuery) – sonst verschwand das Feld beim Löschen
+  // des Begriffs kurz, bis die volle Liste da war
   protected readonly showSearch = computed(
-    () => (this.candidates()?.length ?? 0) >= SEARCH_FROM || this.query() !== '' || this.hiddenCandidates() > 0,
+    () =>
+      (this.candidates()?.length ?? 0) >= SEARCH_FROM || this.query() !== '' || this.loadedQuery() !== '' || this.hiddenCandidates() > 0,
   );
 
   private readonly addButton = viewChild<ElementRef<HTMLButtonElement>>('addButton');
   private readonly stepHeading = viewChild<ElementRef<HTMLElement>>('stepHeading');
   private loadToken = 0;
   private searchTimer?: ReturnType<typeof setTimeout>;
+  private candidateToken = 0;
   protected readonly titleId = `connections-h-${nextHeadingId++}`;
   protected readonly suggestionsTitleId = `${this.titleId}-s`;
 
@@ -306,6 +315,8 @@ export class ConnectionsSection {
   protected pickType(option: ConnectionOption): void {
     this.chosenType.set(option);
     this.query.set('');
+    this.loadedQuery.set('');
+    this.candidates.set(null);
     this.chosen.set(null);
     this.step.set('object');
     this.loadCandidates();
@@ -316,11 +327,23 @@ export class ConnectionsSection {
     const id = this.numericId();
     const option = this.chosenType();
     if (id === null || !option) return;
+    const query = this.query();
+    const token = ++this.candidateToken;
     this.candidatesError.set('');
-    this.candidates.set(null);
-    this.api.candidates(this.objectType(), id, option.type, this.query()).subscribe({
-      next: (rows) => this.candidates.set(rows),
+    // Erste Liste: „Wird geladen …“ (pickType leert sie). Bei einer neuen Suche bleibt die bisherige Liste stehen,
+    // bis die Antwort für genau diesen Begriff da ist.
+    this.searching.set(this.candidates() !== null);
+    this.api.candidates(this.objectType(), id, option.type, query).subscribe({
+      next: (rows) => {
+        if (token !== this.candidateToken) return; // veraltete Antwort (schneller weitergetippt)
+        this.searching.set(false);
+        this.loadedQuery.set(query);
+        this.candidates.set(rows);
+      },
       error: (error) => {
+        if (token !== this.candidateToken) return;
+        this.searching.set(false);
+        this.loadedQuery.set(query);
         this.candidates.set([]);
         this.candidatesError.set(connectionErrorMessage(error, 'Die Liste konnte nicht geladen werden.'));
       },
@@ -328,7 +351,9 @@ export class ConnectionsSection {
   }
 
   protected onSearch(value: string): void {
-    this.query.set(value.trim());
+    const query = value.trim();
+    if (query === this.query()) return; // nur Leerzeichen getippt – nichts neu laden
+    this.query.set(query);
     clearTimeout(this.searchTimer);
     this.searchTimer = setTimeout(() => this.loadCandidates(), 250);
   }
@@ -378,6 +403,9 @@ export class ConnectionsSection {
     this.chosen.set(null);
     this.candidates.set(null);
     this.query.set('');
+    this.loadedQuery.set('');
+    this.searching.set(false);
+    this.candidateToken++;
     // Erst nach dem Rendern: „Verbindung hinzufügen“ existiert im Assistenten-Modus noch nicht.
     if (restoreFocus) setTimeout(() => this.addButton()?.nativeElement.focus());
   }

@@ -300,10 +300,14 @@ def test_options_list_only_supported_partners(a):
         'DEVICE', 'TASK', 'TRIP',
     ]
     assert sorted(o['type'] for o in client.get(URL + 'options/', {'object_type': 'TRIP'}).data) == [
-        'CALENDAR_EVENT', 'HOUSEHOLD_TASK', 'SAVINGS_GOAL', 'TASK',
+        'CALENDAR_EVENT', 'CONTRACT', 'HOUSEHOLD_TASK', 'SAVINGS_GOAL', 'TASK',
     ]
     assert sorted(o['type'] for o in client.get(URL + 'options/', {'object_type': 'TASK'}).data) == [
-        'CALENDAR_EVENT', 'CONTRACT', 'SAVINGS_GOAL', 'TRIP',
+        'CALENDAR_EVENT', 'CONTRACT', 'DEVICE', 'SAVINGS_GOAL', 'TRIP',
+    ]
+    # 14.11.2026: Gerät ↔ Haushaltsaufgabe/Aufgabe
+    assert sorted(o['type'] for o in client.get(URL + 'options/', {'object_type': 'DEVICE'}).data) == [
+        'HOUSEHOLD_TASK', 'SAVINGS_GOAL', 'TASK',
     ]
     assert client.get(URL + 'options/', {'object_type': 'BUDGET'}).data == []
     assert client.get(URL + 'options/', {'object_type': 'NOPE'}).status_code == 400

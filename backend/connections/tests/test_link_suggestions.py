@@ -414,3 +414,45 @@ def test_suggestion_response_exposes_only_preview_fields(w, settings):
     for side in ('source', 'target', 'other'):
         assert set(row[side]) == {'type', 'id', 'title', 'subtitle', 'domain'}
     assert '4711' not in str(row)  # keine Beschreibung, keine Notizen
+
+
+# ---------------------------------------------------------------------------
+# Neue Vorschläge (14.11.2026): Sparziel ↔ Aufgabe, Reise ↔ Haushaltsaufgabe
+# ---------------------------------------------------------------------------
+
+
+def test_goal_task_same_keyword_is_suggested_with_reason(w):
+    anna = w['anna']
+    shoes = goal(anna, 'Badmintonschuhe')
+    compare = task(anna, 'Badmintonschuhe vergleichen')
+    task(anna, 'Steuererklärung')
+    rows = listing(anna, 'SAVINGS_GOAL', shoes.pk)
+    assert [r['other']['title'] for r in rows] == ['Badmintonschuhe vergleichen']
+    assert rows[0]['reason'] == 'Beide erwähnen „Badmintonschuhe“.'
+    assert rows[0]['key'] == f'link:SAVINGS_GOAL:{shoes.pk}:TASK:{compare.pk}'
+    # erledigte Aufgaben und andere Personen nicht
+    task(anna, 'Badmintonschuhe zurückschicken', status=PersonalTask.Status.DONE)
+    task(w['clara'], 'Badmintonschuhe kaufen')
+    assert len(listing(anna, 'SAVINGS_GOAL', shoes.pk)) == 1
+
+
+def test_trip_household_task_due_during_the_trip_is_suggested(w):
+    from haushalt.models import Task as HouseholdTask
+
+    anna, home, start = w['anna'], w['home'], w['start']
+    plants = HouseholdTask.objects.create(household=home, title='Pflanzen gießen', due_date=_today(), recurrence_days=1)
+    weekly = HouseholdTask.objects.create(household=home, title='Müll rausbringen', due_date=start - timedelta(days=5), recurrence_days=7)
+    monthly = HouseholdTask.objects.create(household=home, title='Rauchmelder prüfen', due_date=start + timedelta(days=10), recurrence_months=1)
+    once = HouseholdTask.objects.create(household=home, title='Keller aufräumen', due_date=start + timedelta(days=60))
+    HouseholdTask.objects.create(household=home, title='Fenster putzen', due_date=start + timedelta(days=1), is_paused=True)
+    titles = sorted(r['other']['title'] for r in listing(anna, 'TRIP', w['trip'].pk))
+    # nur, was nicht warten kann: täglich ja; wöchentlich (wartet), monatlich und einmalig nach der Reise nicht
+    assert titles == ['Pflanzen gießen']
+    row = listing(anna, 'TRIP', w['trip'].pk)[0]
+    assert 'während du unterwegs bist' in row['reason'] and row['other']['id'] == plants.pk
+    assert not {weekly.pk, monthly.pk, once.pk} & {r['other']['id'] for r in listing(anna, 'TRIP', w['trip'].pk)}
+    # einmalig genau in der Reisezeit: ja
+    vet = HouseholdTask.objects.create(household=home, title='Tierarzt-Impfung Katze', due_date=start + timedelta(days=2))
+    assert vet.pk in {r['other']['id'] for r in listing(anna, 'TRIP', w['trip'].pk)}
+    # Clara (im Haushalt, aber nicht in der Reise) sieht die Reise nicht – also auch keinen Vorschlag dazu
+    assert _client(w['clara']).get(URL, {'object_type': 'TRIP', 'object_id': w['trip'].pk}).status_code == 404

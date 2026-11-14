@@ -42,4 +42,21 @@ describe('connection-relevance (wie backend/connections/relevance.py)', () => {
     expect(fits({ type: 'DEVICE', text: 'Waschmaschine Miele', day: null }, goal('Neue Waschmaschine'))).toBe(true);
     expect(fits({ type: 'TASK', text: 'Arzttermin vorbereiten', day: '2026-11-20' }, { type: 'CALENDAR_EVENT', text: 'Zahnarzt', day: '2026-11-20' })).toBe(true);
   });
+
+  it('neue Paare (14.11.2026): Gerät ↔ (Haushalts-)Aufgabe, Reise ↔ Vertrag', () => {
+    const washer: RelevanceFacts = { type: 'DEVICE', text: 'Waschmaschine Bosch', day: null };
+    expect(fits(washer, { type: 'HOUSEHOLD_TASK', text: 'Flusensieb reinigen', day: null })).toBe(true);
+    expect(fits(washer, { type: 'TASK', text: 'Reparatur anfragen', day: null })).toBe(true);
+    expect(fits(washer, { type: 'TASK', text: 'Geschenk kaufen', day: null })).toBe(false);
+    expect(fits(trip, { type: 'CONTRACT', text: 'Auslandskrankenversicherung HUK', day: null })).toBe(true);
+    expect(fits({ type: 'CONTRACT', text: 'Strom Stadtwerke', day: null }, trip)).toBe(false);
+  });
+
+  it('Pflegewörter zählen nicht, wenn die Aufgabe ein anderes Gerät nennt', () => {
+    const washer: RelevanceFacts = { type: 'DEVICE', text: 'Waschmaschine Bosch', day: null };
+    const fridgeTask: RelevanceFacts = { type: 'HOUSEHOLD_TASK', text: 'Kühlschrank reinigen', day: null };
+    expect(fits(washer, fridgeTask, ['Kühlschrank', 'Heizung'])).toBe(false);
+    expect(fits({ type: 'DEVICE', text: 'Kühlschrank Samsung', day: null }, fridgeTask, ['Waschmaschine'])).toBe(true);
+    expect(fits(washer, { type: 'HOUSEHOLD_TASK', text: 'Flusensieb reinigen', day: null }, ['Kühlschrank'])).toBe(true);
+  });
 });

@@ -366,3 +366,9 @@
     flex: 1;
   }
 }
+
+/* Suche läuft: bisherige Liste bleibt stehen, leicht gedimmt – kein Springen (14.11.2026) */
+.wizard__choices.is-searching {
+  opacity: 0.6;
+  transition: opacity 120ms ease-out;
+}

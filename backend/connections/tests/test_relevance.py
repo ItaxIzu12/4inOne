@@ -54,3 +54,20 @@ def test_contract_device_and_task_event_pairs():
     assert fits(T.CONTRACT, contract, T.TASK, task('Geschenk kaufen')) is False
     assert fits(T.DEVICE, O(name='Waschmaschine', provider='Miele'), T.SAVINGS_GOAL, goal('Neue Waschmaschine')) is True
     assert fits(T.TASK, task('Arzttermin vorbereiten', date(2026, 11, 20)), T.CALENDAR_EVENT, event('Zahnarzt', date(2026, 11, 20))) is True
+
+
+def test_new_pairs_device_tasks_and_trip_contract():
+    washer = O(name='Waschmaschine', provider='Bosch')
+    assert fits(T.DEVICE, washer, T.HOUSEHOLD_TASK, O(title='Flusensieb reinigen', due_date=None)) is True
+    assert fits(T.DEVICE, washer, T.TASK, task('Reparatur anfragen')) is True
+    assert fits(T.DEVICE, washer, T.TASK, task('Geschenk kaufen')) is False
+    assert fits(T.TRIP, TRIP, T.CONTRACT, O(name='Auslandskrankenversicherung', provider='HUK')) is True
+    assert fits(T.CONTRACT, O(name='Strom', provider='Stadtwerke'), T.TRIP, TRIP) is False
+
+
+def test_care_words_do_not_count_when_the_task_names_another_device():
+    washer = O(name='Waschmaschine', provider='Bosch')
+    fridge_task = O(title='Kühlschrank reinigen', due_date=None)
+    assert fits(T.DEVICE, washer, T.HOUSEHOLD_TASK, fridge_task, ('Kühlschrank', 'Heizung')) is False
+    assert fits(T.DEVICE, O(name='Kühlschrank', provider='Samsung'), T.HOUSEHOLD_TASK, fridge_task, ('Waschmaschine',)) is True
+    assert fits(T.DEVICE, washer, T.HOUSEHOLD_TASK, O(title='Flusensieb reinigen', due_date=None), ('Kühlschrank',)) is True

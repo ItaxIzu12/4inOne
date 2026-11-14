@@ -143,7 +143,7 @@
                 <p class="connections__error" [appErrorNotice]="candidatesError()">{{ candidatesError() }}</p>
                 <button type="button" class="c-link" (click)="loadCandidates()">Erneut versuchen</button>
               } @else {
-                <ul class="wizard__choices">
+                <ul class="wizard__choices" [attr.aria-busy]="searching() || null" [class.is-searching]="searching()">
                   @for (candidate of shownCandidates(); track candidate.id) {
                     <li>
                       <button type="button" class="choice choice--stacked" (click)="pickObject(candidate)">
@@ -153,8 +153,8 @@
                     </li>
                   } @empty {
                     <li class="connections__note">
-                      @if (query()) {
-                        Nichts gefunden für „{{ query() }}“.
+                      @if (loadedQuery()) {
+                        Nichts gefunden für „{{ loadedQuery() }}“.
                       } @else if (hiddenCandidates()) {
                         Nichts, was erkennbar dazu passt.
                       } @else {

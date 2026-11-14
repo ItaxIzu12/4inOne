@@ -265,6 +265,25 @@ keine Buchungen, keine Zahlungen. V1-Verbindungen bleiben unverändert.
   Bezeichnungen, Wortlisten und Fristen gegen das Backend. `tests/test_relevance.py` und
   `connection-relevance.spec.ts` prüfen dieselben Fälle.
 
+## Neue Paare und Vorschläge (14.11.2026, Nutzerentscheidung)
+
+- **Paare (jetzt 12):** Gerät ↔ Haushaltsaufgabe („Aufgabe für“, z. B. Flusensieb reinigen), Gerät ↔ Aufgabe
+  („Aufgabe für“, z. B. Reparatur anfragen), Reise ↔ Vertrag („Gehört zusammen“, z. B. Reiseversicherung).
+  Bewusst nicht: Haushaltsaufgabe ↔ Aufgabe (dieselbe Sache doppelt), Vertrag ↔ Termin.
+- **„Passt dazu“ für die neuen Paare:** Gerät ↔ (Haushalts-)Aufgabe bei gleichem Stichwort oder Pflegewort
+  (reinigen, entkalken, Reparatur, Filter …) – ein Pflegewort zählt nicht, wenn die Aufgabe ein ANDERES Gerät nennt
+  („Kühlschrank reinigen“ passt nicht zur Waschmaschine). Reise ↔ Vertrag, wenn der Vertragsname auf Reise hindeutet
+  (auch als Wortteil: Reise-, Urlaubs-, Auslands-, Mietwagen-, Roaming-).
+- **Vorschläge (jetzt 7 Regeln):**
+  - Sparziel ↔ Aufgabe: dasselbe Stichwort („Badmintonschuhe“ ↔ „Badmintonschuhe vergleichen“), Begründung „Beide
+    erwähnen …“; genau gleiches Wort 0,8, Wortanfang 0,7.
+  - Reise ↔ Haushaltsaufgabe: nur, was während der Reise **nicht warten kann** – alle 1–3 Tage (Pflanzen, Haustier) oder
+    einmalig genau in der Reisezeit; „Fällig am …, während du unterwegs bist – kläre, wer sich darum kümmert.“
+    Wöchentliches Putzen wartet; ohne diese Grenze verdrängte eine Flut solcher Vorschläge die wichtigen (beim Testen
+    für die Demo-Reise Berlin: Bad putzen, Wäsche, Küche …).
+- Demo rechnet dieselben zwei Vorschläge selbst (connection-relevance.ts `dueDuring`, `URGENT_EVERY_DAYS`);
+  test_demo_mirror.py prüft auch Pflegewörter, Reise-Vertrags-Wortteile und die 3-Tage-Grenze.
+
 ## Later: Automations
 
 Automations may act on connected objects only when the behavior is transparent, permission-safe and user-controlled.

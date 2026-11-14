@@ -4,7 +4,7 @@ import { PrivateFinanceApi } from '../../features/finanzen/data/private-finance-
 import { HAUSHALT_DATA_PROVIDER } from '../../features/haushalt/haushalt-data-provider';
 import { OrganisationApi } from '../../features/organisation/organisation-api.service';
 import { ReisenApi } from '../../features/reisen/reisen-api.service';
-import { RelevanceFacts, fits } from './connection-relevance';
+import { RelevanceFacts, URGENT_EVERY_DAYS, commonWord, dueDuring, fits } from './connection-relevance';
 import { ConnectedObject, ConnectionDto, ConnectionObjectType, ConnectionOption, LinkSuggestionDto } from './connections-api.service';
 
 /** Erlaubte Paare (Quelle, Ziel, Standardrelation, Bezeichnung) — Spiegel von backend/connections/registry.py
@@ -19,6 +19,9 @@ export const DEMO_PAIRS: [ConnectionObjectType, ConnectionObjectType, string, st
   ['TRIP', 'CALENDAR_EVENT', 'SCHEDULED_AS', 'Eingeplant als'],
   ['DEVICE', 'SAVINGS_GOAL', 'FUNDED_BY', 'Finanziert durch'],
   ['CONTRACT', 'TASK', 'TASK_FOR', 'Aufgabe für'],
+  ['DEVICE', 'HOUSEHOLD_TASK', 'TASK_FOR', 'Aufgabe für'],
+  ['DEVICE', 'TASK', 'TASK_FOR', 'Aufgabe für'],
+  ['TRIP', 'CONTRACT', 'RELATED_TO', 'Gehört zusammen'],
 ];
 const LABEL: Partial<Record<ConnectionObjectType, string>> = {
   TASK: 'Aufgabe', CALENDAR_EVENT: 'Termin', SAVINGS_GOAL: 'Sparziel', HOUSEHOLD_TASK: 'Haushaltsaufgabe', TRIP: 'Reise',
@@ -33,6 +36,9 @@ type Ref = { type: ConnectionObjectType; id: string };
 interface Entry {
   obj: ConnectedObject;
   facts: RelevanceFacts;
+  /** Für die Vorschläge: offen (nicht erledigt/pausiert), Wiederholung, Reise steht bevor oder läuft */
+  open?: boolean;
+  every?: { days?: number | null; months?: number | null };
 }
 interface DemoLink {
   id: number;
@@ -73,6 +79,7 @@ export class DemoConnectionsApi {
     { id: 2, a: ref('TRIP', 1), b: ref('HOUSEHOLD_TASK', 'demo-task-1'), relation: ['AFFECTS', 'Betrifft'] },
     { id: 3, a: ref('SAVINGS_GOAL', 3), b: ref('TASK', 8), relation: ['TASK_FOR', 'Aufgabe für'] },
   ];
+  private dismissed = new Set<string>();
   private suggestionList: { key: string; a: Ref; b: Ref; reason: string }[] = [
     { key: 'link:TRIP:1:TASK:9', a: ref('TRIP', 1), b: ref('TASK', 9), reason: 'Die Aufgabe gehört zur Anreise und ist kurz vor deiner Reise fällig.' },
   ];
@@ -91,6 +98,7 @@ export class DemoConnectionsApi {
       entries.push({
         obj: { type: 'TRIP', id: t.id, title: t.title, subtitle: t.destination ? `${t.destination}, ${when}` : when, domain: 'reisen' },
         facts: { type: 'TRIP', text: `${t.title} ${t.destination}`, day: null, start: t.start_date, end: t.end_date },
+        open: t.end_date >= iso(today) && (t.status === 'PLANNED' || t.status === 'CONFIRMED'),
       });
     }
     const org = this.injector.get(OrganisationApi);
@@ -112,12 +120,17 @@ export class DemoConnectionsApi {
     for (const t of this.sync(org.tasks(), [])) {
       const subtitle =
         t.status === 'DONE' ? 'Erledigt' : !t.due_date ? 'Ohne Datum' : `Fällig ${dm(t.due_date)}${t.due_time ? `, ${t.due_time.slice(0, 5)} Uhr` : ''}`;
-      entries.push({ obj: { type: 'TASK', id: t.id, title: t.title, subtitle, domain: 'organisation' }, facts: { type: 'TASK', text: t.title, day: t.due_date } });
+      entries.push({
+        obj: { type: 'TASK', id: t.id, title: t.title, subtitle, domain: 'organisation' },
+        facts: { type: 'TASK', text: t.title, day: t.due_date },
+        open: t.status !== 'DONE',
+      });
     }
     for (const g of this.sync(this.injector.get(PrivateFinanceApi).goals(iso(today).slice(0, 7)), [])) {
       entries.push({
         obj: { type: 'SAVINGS_GOAL', id: g.id, title: g.title, subtitle: `${euro(g.current_amount)} von ${euro(g.target_amount)}`, domain: 'finanzen' },
         facts: { type: 'SAVINGS_GOAL', text: g.title, day: g.target_date },
+        open: g.status !== 'COMPLETED',
       });
     }
     const haushalt = this.injector.get(HAUSHALT_DATA_PROVIDER);
@@ -126,6 +139,8 @@ export class DemoConnectionsApi {
       entries.push({
         obj: { type: 'HOUSEHOLD_TASK', id: t.id as number, title: t.title, subtitle, domain: 'haushalt' },
         facts: { type: 'HOUSEHOLD_TASK', text: t.title, day: t.due_date, recurring: !!(t.recurrence_days || t.recurrence_months) },
+        open: !t.is_done && !(t as { is_paused?: boolean }).is_paused,
+        every: { days: t.recurrence_days, months: t.recurrence_months },
       });
     }
     for (const f of this.sync(haushalt.getFolder(), [])) {
@@ -206,7 +221,13 @@ export class DemoConnectionsApi {
       catalog
         .filter((e) => e.obj.type === targetType && !taken.has(`${e.obj.type}:${e.obj.id}`))
         .filter((e) => !q || e.obj.title.toLocaleLowerCase('de').includes(q))
-        .map((e) => ({ ...e.obj, fits: fits(anchor.facts, e.facts) }))
+        .map((e) => {
+          // Namen der anderen Geräte – wie das Backend (services.candidates_for)
+          const devices = catalog
+            .filter((d) => d.obj.type === 'DEVICE' && d !== anchor && d !== e)
+            .map((d) => d.obj.title);
+          return { ...e.obj, fits: fits(anchor.facts, e.facts, devices) };
+        })
         .sort((x, y) => Number(y.fits) - Number(x.fits)),
     );
   }
@@ -227,20 +248,68 @@ export class DemoConnectionsApi {
     this.links = this.links.filter((l) => l.id !== id);
     return of(undefined);
   }
+  /** Wie backend link_suggestions.rule_goal_task und rule_trip_household_task (14.11.2026), dazu ein fester
+   *  Beispielvorschlag (Reise ↔ Aufgabe „Bahn-Tickets ausdrucken“). Schon Verknüpftes und Abgelehntes fehlen. */
+  private computedSuggestions(catalog: Entry[]): { key: string; a: Ref; b: Ref; reason: string; headline: string; score: number; relation: string }[] {
+    const today = iso(new Date());
+    const out: { key: string; a: Ref; b: Ref; reason: string; headline: string; score: number; relation: string }[] = [];
+    const goals = catalog.filter((e) => e.obj.type === 'SAVINGS_GOAL' && e.open);
+    const tasks = catalog.filter((e) => e.obj.type === 'TASK' && e.open);
+    for (const g of goals) {
+      for (const t of tasks) {
+        const hit = commonWord(g.obj.title, t.obj.title, 4);
+        if (!hit) continue;
+        out.push({
+          key: `link:SAVINGS_GOAL:${g.obj.id}:TASK:${t.obj.id}`, a: ref('SAVINGS_GOAL', g.obj.id), b: ref('TASK', t.obj.id),
+          headline: `„${t.obj.title}“ könnte zu deinem Sparziel „${g.obj.title}“ gehören.`, reason: `Beide erwähnen „${hit.word}“.`,
+          score: hit.exact ? 0.8 : 0.7, relation: 'Aufgabe für',
+        });
+      }
+    }
+    const trips = catalog.filter((e) => e.obj.type === 'TRIP' && e.open);
+    const chores = catalog.filter((e) => e.obj.type === 'HOUSEHOLD_TASK' && e.open);
+    for (const trip of trips) {
+      const from = trip.facts.start! > today ? trip.facts.start! : today;
+      for (const c of chores) {
+        // nur, was nicht warten kann: alle 1–3 Tage oder einmalig in der Reisezeit (wie das Backend)
+        const every = c.every ?? {};
+        const urgent = (!!every.days && every.days <= URGENT_EVERY_DAYS) || (!every.days && !every.months);
+        if (!urgent) continue;
+        const day = dueDuring(c.facts.day, every, from, trip.facts.end!);
+        if (!day) continue;
+        out.push({
+          key: `link:TRIP:${trip.obj.id}:HOUSEHOLD_TASK:${c.obj.id}`, a: ref('TRIP', trip.obj.id), b: ref('HOUSEHOLD_TASK', c.obj.id),
+          headline: `„${c.obj.title}“ wird während deiner Reise „${trip.obj.title}“ fällig.`,
+          reason: `Fällig am ${dm(day)}, während du unterwegs bist – kläre, wer sich darum kümmert.`,
+          score: 0.7, relation: 'Betrifft',
+        });
+      }
+    }
+    return out;
+  }
   suggestions(type: ConnectionObjectType, id: number): Observable<LinkSuggestionDto[]> {
     const catalog = this.catalog();
+    const linked = new Set(this.live(catalog).map((r) => `${r.link.a.type}:${r.link.a.id}:${r.link.b.type}:${r.link.b.id}`));
+    const all = [
+      ...this.suggestionList.map((s) => ({ ...s, headline: '', score: 0.7, relation: 'Aufgabe für' })),
+      ...this.computedSuggestions(catalog),
+    ];
     return of(
-      this.suggestionList
+      all
         .filter((s) => (same(s.a, type, id) || same(s.b, type, id)) && this.entry(catalog, s.a) && this.entry(catalog, s.b))
+        .filter((s) => !this.dismissed.has(s.key) && !linked.has(`${s.a.type}:${s.a.id}:${s.b.type}:${s.b.id}`))
+        .filter((s, i, list) => list.findIndex((x) => x.key === s.key) === i)
+        .sort((x, y) => y.score - x.score)
+        .slice(0, 3)
         .map((s) => {
           const a = this.entry(catalog, s.a)!.obj;
           const b = this.entry(catalog, s.b)!.obj;
           return {
             key: s.key,
-            reason_code: 'TRAVEL_PREPARATION',
-            headline: `„${b.title}“ gehört vielleicht zu „${a.title}“`,
+            reason_code: 'MATCHING_TITLE',
+            headline: s.headline || `„${b.title}“ gehört vielleicht zu „${a.title}“`,
             reason: s.reason,
-            relation_label: 'Aufgabe für',
+            relation_label: s.relation,
             source: a,
             target: b,
             other: same(s.a, type, id) ? b : a,
@@ -249,12 +318,12 @@ export class DemoConnectionsApi {
     );
   }
   acceptSuggestion(key: string): Observable<ConnectionDto> {
-    const s = this.suggestionList.find((x) => x.key === key);
+    const s = [...this.suggestionList, ...this.computedSuggestions(this.catalog())].find((x) => x.key === key);
     if (!s) return throwError(() => ({ status: 404 }));
     return this.create(s.a.type, s.a.id as unknown as number, s.b.type, s.b.id as unknown as number);
   }
   dismissSuggestion(key: string): Observable<void> {
-    this.suggestionList = this.suggestionList.filter((s) => s.key !== key);
+    this.dismissed.add(key);
     return of(undefined);
   }
 }

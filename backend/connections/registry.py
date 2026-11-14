@@ -186,6 +186,10 @@ ALLOWED_PAIRS: dict[tuple[str, str], tuple[str, ...]] = {
     (ObjectType.TRIP, ObjectType.CALENDAR_EVENT): (RelationType.SCHEDULED_AS, RelationType.RELATED_TO),
     (ObjectType.DEVICE, ObjectType.SAVINGS_GOAL): (RelationType.FUNDED_BY, RelationType.RELATED_TO),
     (ObjectType.CONTRACT, ObjectType.TASK): (RelationType.TASK_FOR, RelationType.RELATED_TO),
+    # 14.11.2026 (Nutzerentscheidung): Pflege und Erledigungen rund ums Gerät, Verträge für die Reise (Versicherung)
+    (ObjectType.DEVICE, ObjectType.HOUSEHOLD_TASK): (RelationType.TASK_FOR, RelationType.RELATED_TO),
+    (ObjectType.DEVICE, ObjectType.TASK): (RelationType.TASK_FOR, RelationType.RELATED_TO),
+    (ObjectType.TRIP, ObjectType.CONTRACT): (RelationType.RELATED_TO,),
 }
 
 

@@ -258,6 +258,12 @@ Abstand — nie nur über Farbe.
   Seiten Demo-Texte (`@if (demo)`), der Hinweis wird zu `.legal-warning--demo` („Gilt für die Testversion“, Sage
   `--ground-2`, Info-Kreis in `--ink-soft`). Kontakt-Links aus `shared/legal-page/demo-contact.ts`. Platzhalter der
   App-Fassung unverändert (dort „§ 18 Abs. 2 MStV“ statt veraltet „§ 55 RStV“, „Kompass“ → „4inOne“).
+- **Verknüpfen-Suche ohne Springen (14.11.2026):** `app-connections` zeigt die Liste zum `loadedQuery()` (nicht zum
+  gerade getippten `query()`), `searching()` dimmt sie (`.wizard__choices.is-searching`, `aria-busy`), veraltete
+  Antworten verwirft ein Zähler (`candidateToken`), das Suchfeld bleibt stehen, solange Suchergebnisse angezeigt werden.
+- **Neue Verknüpfungs-Paare (14.11.2026):** Gerät bietet beim Verknüpfen Sparziel · Haushaltsaufgabe · Aufgabe,
+  Reise zusätzlich Vertrag; Vorschlagskarten für Sparziel ↔ Aufgabe und Reise ↔ Haushaltsaufgabe nutzen das bestehende
+  Layout („Das könnte zusammengehören“). Keine neue Optik.
 - **Demo-Verknüpfungen aus echten Daten (14.11.2026):** `DemoConnectionsApi` liest die Demo-Bereiche über den
   Injector, alle 9 Paare (`DEMO_PAIRS`), Regel `connection-relevance.ts`. `DEMO_PROVIDERS` in `demo.routes.ts` (auch für
   Tests). `app-connections` nimmt in der Demo auch Text-Kennungen an. Keine optische Änderung.

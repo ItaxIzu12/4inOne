@@ -12,7 +12,9 @@ from datetime import date, timedelta
 
 from django.utils import timezone
 
-from connections.link_suggestions import CONTRACT_WORDS, TRAVEL_WORDS, TRIP_GOAL_WORDS, _flags, match_word, words
+from connections.link_suggestions import (
+    CONTRACT_WORDS, DEVICE_WORDS, TRAVEL_WORDS, TRIP_CONTRACT_PARTS, TRIP_GOAL_WORDS, _flags, _fold, match_word, words,
+)
 from connections.models import ObjectType
 
 GOAL_LEAD_DAYS = 180   # Sparziel mit Zieldatum bis ein halbes Jahr vor der Reise
@@ -52,14 +54,18 @@ def _trip_fit(trip, other_type: str, other) -> bool:
         return _flags(title, TRAVEL_WORDS) or near(TASK_LEAD_DAYS, 1)
     if other_type == ObjectType.CALENDAR_EVENT:
         return near(EVENT_MARGIN_DAYS, EVENT_MARGIN_DAYS)
+    if other_type == ObjectType.CONTRACT:
+        # Reiseversicherung, Auslands-Krankenversicherung, Mietwagen – auch als Teil eines längeren Wortes
+        return any(part in _fold(title) for part in TRIP_CONTRACT_PARTS)
     if other_type == ObjectType.HOUSEHOLD_TASK:
         # Was zuhause weiterläuft, während man weg ist (Pflanzen gießen), oder in der Reisezeit fällig wird
         return bool(getattr(other, 'recurrence_days', None) or getattr(other, 'recurrence_months', None)) or near(0)
     return False
 
 
-def fits(object_type: str, obj, other_type: str, other) -> bool:
-    """True, wenn `other` erkennbar zu `obj` passt (Reihenfolge der Typen egal)."""
+def fits(object_type: str, obj, other_type: str, other, other_devices: tuple[str, ...] = ()) -> bool:
+    """True, wenn `other` erkennbar zu `obj` passt (Reihenfolge der Typen egal). `other_devices`: Namen der ANDEREN
+    Geräte im Haushalt – „Kühlschrank reinigen“ ist Pflege, aber nicht für die Waschmaschine."""
     if object_type == ObjectType.TRIP:
         return _trip_fit(obj, other_type, other)
     if other_type == ObjectType.TRIP:
@@ -69,6 +75,11 @@ def fits(object_type: str, obj, other_type: str, other) -> bool:
     if pair == {ObjectType.CONTRACT, ObjectType.TASK}:
         task = b if other_type == ObjectType.TASK else a
         return _shares_word(a, b) or _flags(task, CONTRACT_WORDS)
+    if pair in ({ObjectType.DEVICE, ObjectType.HOUSEHOLD_TASK}, {ObjectType.DEVICE, ObjectType.TASK}):
+        task = b if object_type == ObjectType.DEVICE else a
+        if _shares_word(a, b):
+            return True
+        return _flags(task, DEVICE_WORDS) and not any(_shares_word(name, task) for name in other_devices)
     if pair in ({ObjectType.TASK, ObjectType.CALENDAR_EVENT}, {ObjectType.HOUSEHOLD_TASK, ObjectType.CALENDAR_EVENT}):
         day_a, day_b = _day(object_type, obj), _day(other_type, other)
         return _shares_word(a, b) or (day_a is not None and day_a == day_b)
