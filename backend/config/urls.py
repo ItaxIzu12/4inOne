@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from connections.views import TodayOverviewView
+from datenexport.views import DataExportView
 from finanzen.views import OnboardingStatusView
 from core.onboarding_views import OnboardingProfileView
 from core.feedback_views import BetaFeedbackView
@@ -35,6 +36,8 @@ urlpatterns = [
     # bestehenden Endpunkte ziehen gemeinsam auf /api/v1/ um, nicht nur
     # Finanzen — sonst wäre core/auth dauerhaft unversioniert geblieben,
     # während neuere Module schon versioniert sind.
+    # DSGVO-Datenexport (eigene App, liest aus allen Bereichen) — vor dem auth-Include, gleiche Adressfamilie
+    path('api/v1/auth/export/', DataExportView.as_view(), name='auth-data-export'),
     path('api/v1/auth/', include('core.auth_urls')),
     path('api/v1/finanzen/private/', include('finanzen.private_urls')),
     path('api/v1/finanzen/', include('finanzen.urls')),

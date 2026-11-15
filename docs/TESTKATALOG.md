@@ -247,7 +247,7 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 43 
 | ID | Fall | Prio | Art | Stand |
 |---|---|---|---|---|
 | GDPR-01 | Datenschutzerklärung vollständig und korrekt (GO_LIVE.md §1) | P0 | M | ❌ |
-| GDPR-02 | **Auskunft/Datenexport (Art. 15/20)**: alle eigenen Daten als Datei (JSON/CSV + Anhänge) | P0 | A/E | ❌ kein Endpunkt (nur Rate-Limit-Einstellung) |
+| GDPR-02 | **Auskunft/Datenexport (Art. 15/20)**: alle eigenen Daten als Datei (JSON + Anhänge) | P0 | A/E/F | ✅ seit 15.11.: `datenexport/tests.py` (je Person genau das Sichtbare, keine Geheimnisse, Einkommen anderer privat, neue Modelle erzwingen eine Entscheidung), Rechte-Matrix entpackt das ZIP, Full-Stack-Download |
 | GDPR-03 | Löschung (Art. 17): Konto löschen entfernt alles inkl. Dateien, Backups laufen nach Frist aus | P0 | A/I | 🟡 |
 | GDPR-04 | Auftragsverarbeitung (AVV) mit Hoster und Mail-Anbieter, Server in der EU | P0 | M | ❌ |
 | GDPR-05 | Verzeichnis der Verarbeitungstätigkeiten, TOM-Dokument | P1 | M | ❌ |
@@ -346,6 +346,6 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 43 
 ## Die Blocker auf einen Blick (P0 mit ❌)
 
 INF-01, INF-07, INF-08, INF-09/AUTH-08, INF-10, INF-11, INF-13, INF-14, INF-18, INF-20 · DB-06 · PUB-02 ·
-GDPR-01, GDPR-02, GDPR-04 · MAIL-01, MAIL-02 · UI-02 · OPS-01, OPS-02, OPS-04 · BETA-01
+GDPR-01, GDPR-04 · MAIL-01, MAIL-02 · UI-02 · OPS-01, OPS-02, OPS-04 · BETA-01
 
 Fast alle davon sind **Betrieb und Recht**, nicht Code. Der Anwendungscode selbst ist für seinen Umfang sehr gut getestet.

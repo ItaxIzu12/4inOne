@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { inflateRawSync } from 'node:zlib';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 /**
@@ -77,4 +79,47 @@ test('Konto, Aufgabe, Neuladen und Fremdzugriff – alles echt', async ({ browse
   await fremd.goto('/organisation');
   await expect(fremd).toHaveURL(/login/);
   expect((await fremd.request.get('http://localhost:8000/api/v1/organisation/tasks/')).status()).toBe(401);
+});
+
+/** Mini-Entpacker für den Test (nur „gespeichert“ und „deflate“, wie Pythons zipfile sie schreibt). */
+function unzip(buffer: Buffer): Map<string, Buffer> {
+  const files = new Map<string, Buffer>();
+  let at = 0;
+  while (buffer.readUInt32LE(at) === 0x04034b50) {
+    const method = buffer.readUInt16LE(at + 8);
+    const size = buffer.readUInt32LE(at + 18);
+    const nameLength = buffer.readUInt16LE(at + 26);
+    const extraLength = buffer.readUInt16LE(at + 28);
+    const name = buffer.toString('utf8', at + 30, at + 30 + nameLength);
+    const start = at + 30 + nameLength + extraLength;
+    const data = buffer.subarray(start, start + size);
+    files.set(name, method === 8 ? inflateRawSync(data) : data);
+    at = start + size;
+  }
+  return files;
+}
+
+test('Datenexport (DSGVO): eigene Aufgabe steckt im ZIP, fremde nicht, keine Geheimnisse', async ({ browser }) => {
+  const lena = await registrieren(browser, 'Lena');
+  const eigene = `Reisepass verlängern ${run}`;
+  await aufgabeAnlegen(lena, eigene);
+  const jonas = await registrieren(browser, 'Jonas');
+  const fremde = `Geheime Aufgabe ${run}`;
+  await aufgabeAnlegen(jonas, fremde);
+
+  await lena.goto('/einstellungen/profil');
+  const download = lena.waitForEvent('download');
+  await lena.getByRole('button', { name: 'Daten herunterladen' }).click();
+  const datei = await download;
+  expect(datei.suggestedFilename()).toMatch(/^4inone-daten-\d{4}-\d{2}-\d{2}\.zip$/);
+  await expect(lena.getByText('Die Datei wurde heruntergeladen.')).toBeVisible();
+
+  const zip = unzip(readFileSync((await datei.path())!));
+  expect([...zip.keys()]).toEqual(expect.arrayContaining(['LIESMICH.txt', 'konto.json', 'organisation.json', 'finanzen.json']));
+  const organisation = JSON.parse(zip.get('organisation.json')!.toString()) as { aufgaben: { title: string }[] };
+  expect(organisation.aufgaben.map((a) => a.title)).toEqual([eigene]);
+  const alles = [...zip.values()].map((b) => b.toString()).join('\n');
+  expect(alles).not.toContain(fremde);
+  expect(alles).not.toContain('argon2'); // kein Passwort-Hash
+  expect(JSON.parse(zip.get('konto.json')!.toString()).profil.email).toBe(`lena-${run}@example.test`);
 });

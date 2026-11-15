@@ -66,6 +66,60 @@
   outline-offset: 2px;
 }
 
+/* Daten herunterladen (DSGVO, 15.11.2026): gleiche ruhige Karte wie „Konto löschen“, Knopf neutral statt rot */
+.data-export {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--surface-card);
+}
+.data-export h2 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+.data-export p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.data-export__error {
+  color: #b3261e !important;
+}
+.data-export__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: start;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.data-export__button app-icon {
+  width: 18px;
+  height: 18px;
+}
+.data-export__button:hover:not(:disabled) {
+  background: var(--ground-2, #f3f4f1);
+}
+.data-export__button:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.data-export__button:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
 /* Ruhig statt Alarmfläche: weiße Karte, Rot nur für Titel und Knopf (31.10.2026) */
 .danger-zone {
   display: grid;

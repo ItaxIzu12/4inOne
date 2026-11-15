@@ -67,6 +67,38 @@ export class Profil {
     });
   }
 
+  // ---------- Daten herunterladen (DSGVO Art. 15/20) ----------
+  protected readonly exporting = signal(false);
+  protected readonly exportError = signal('');
+  protected readonly exported = signal(false);
+
+  protected exportData(): void {
+    if (this.exporting()) return;
+    this.exporting.set(true);
+    this.exportError.set('');
+    this.exported.set(false);
+    this.auth.exportData().subscribe({
+      next: ({ blob, filename }) => {
+        this.exporting.set(false);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+        this.exported.set(true);
+      },
+      error: (e: unknown) => {
+        this.exporting.set(false);
+        this.exportError.set(
+          e instanceof HttpErrorResponse && e.status === 429
+            ? 'Du hast gerade schon exportiert. Bitte warte eine Minute und versuche es dann noch einmal.'
+            : 'Der Export hat nicht geklappt. Bitte versuche es noch einmal.',
+        );
+      },
+    });
+  }
+
   // ---------- Konto löschen ----------
   protected readonly deleteModalOpen = signal(false);
   protected readonly deleting = signal(false);

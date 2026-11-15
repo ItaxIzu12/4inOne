@@ -18,6 +18,35 @@ describe('Profil', () => {
     return fixture;
   }
 
+  it('Daten herunterladen: lädt das ZIP mit dem Namen vom Server und meldet Erfolg', () => {
+    const fixture = render();
+    const el = fixture.nativeElement as HTMLElement;
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    (el.querySelector('.data-export__button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.data-export__button')!.textContent).toContain('Wird zusammengestellt');
+
+    TestBed.inject(HttpTestingController)
+      .expectOne((r) => r.url.endsWith('/auth/export/'))
+      .flush(new Blob(['zip']), { headers: { 'Content-Disposition': 'attachment; filename="4inone-daten-2026-11-15.zip"' } });
+    fixture.detectChanges();
+    expect(click).toHaveBeenCalled();
+    expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe('4inone-daten-2026-11-15.zip');
+    expect(el.textContent).toContain('Die Datei wurde heruntergeladen.');
+    click.mockRestore();
+  });
+
+  it('Daten herunterladen: zu oft hintereinander → verständlicher Hinweis statt Technik', () => {
+    const fixture = render();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('.data-export__button') as HTMLButtonElement).click();
+    TestBed.inject(HttpTestingController)
+      .expectOne((r) => r.url.endsWith('/auth/export/'))
+      .flush(new Blob(['']), { status: 429, statusText: 'Too Many Requests' });
+    fixture.detectChanges();
+    expect(el.querySelector('[role="alert"]')!.textContent).toContain('warte eine Minute');
+  });
+
   it('shows a "Konto löschen" button in its own danger zone, closed by default', () => {
     const el = render().nativeElement as HTMLElement;
     expect(el.querySelector('.danger-zone')).toBeTruthy();

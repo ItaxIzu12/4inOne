@@ -48,6 +48,23 @@
       </button>
     </form>
 
+    <section class="data-export" aria-labelledby="data-export-heading">
+      <h2 id="data-export-heading">Deine Daten herunterladen</h2>
+      <p>
+        Alles, was 4inOne zu deinem Konto speichert – Finanzen, Haushalt, Organisation, Reisen, Kontakte und deine
+        hochgeladenen Dateien – als ZIP-Datei. Die Datei enthält persönliche Angaben, bewahre sie sicher auf.
+      </p>
+      @if (exportError()) {
+        <p class="data-export__error" role="alert">{{ exportError() }}</p>
+      }
+      @if (exported()) {
+        <p class="profile-saved" role="status">Die Datei wurde heruntergeladen.</p>
+      }
+      <button type="button" class="data-export__button" [disabled]="exporting()" [attr.aria-busy]="exporting()" (click)="exportData()">
+        <app-icon name="download" aria-hidden="true" />{{ exporting() ? 'Wird zusammengestellt …' : 'Daten herunterladen' }}
+      </button>
+    </section>
+
     <section class="danger-zone" aria-labelledby="danger-zone-heading">
       <h2 id="danger-zone-heading">Konto löschen</h2>
       <p>Dein Konto und alle zugehörigen Daten (Finanzen, Haushalt, Organisation, Reisen, Kontakte) werden endgültig gelöscht. Das lässt sich nicht rückgängig machen.</p>

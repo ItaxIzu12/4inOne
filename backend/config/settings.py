@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     'reisen',
     'connections',
     'integrations',
+    'datenexport',
     # Öffentliche Website: cookielose Besucherzählung
     'website',
 ]
@@ -347,6 +348,9 @@ if env('CAPACITOR_APP_ORIGIN', default=None):
 CORS_ALLOW_CREDENTIALS = True
 # Idempotency-Key: Anlage-Anfragen ohne Duplikate wiederholbar (core/idempotency.py)
 CORS_ALLOW_HEADERS = (*default_headers, 'idempotency-key')
+# Dateinamen von Downloads (Datenexport, Finanzberichte) darf das Frontend lesen, auch wenn es lokal auf einem anderen
+# Port läuft; in Produktion liegen beide unter derselben Domain.
+CORS_EXPOSE_HEADERS = ['Content-Disposition']
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=CORS_ALLOWED_ORIGINS)
 
 # Content-Security-Policy (django-csp 4.x-Format)

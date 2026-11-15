@@ -63,6 +63,7 @@ backend/
   reisen/         # Reiseziel, Reisebudget, Packliste, Dokumente, Buchungen — NEU, vierter gleichrangiger Bereich
   connections/    # Connection Engine — verknüpft Datensätze modulübergreifend, siehe 2.1b
   integrations/   # Banking-API-Anbindung (später), Kalender-Sync
+  datenexport/    # DSGVO-Datenexport (seit 15.11.2026): liest aus allen Bereichen, keine Tabellen; nichts importiert es außer config/urls.py
 ```
 Kein Event-Bus im MVP für die drei bestehenden Kernmodule (Finanzen/Haushalt/Organisation). Apps rufen sich über direkt importierte Service-Funktionen auf. **Für Reisen und die Connection Engine gilt das erweitert** — siehe 2.1b, da hier mehrere unabhängige Konsumenten pro Ereignis existieren (eine Reise erzeugt gleichzeitig Budget, Kalendertermine, Packliste, Haushaltsaufgaben-Anpassung), was laut eigener Regel genau der Schwellenwert ist, ab dem ein Signal-/Event-System gerechtfertigt ist.
 

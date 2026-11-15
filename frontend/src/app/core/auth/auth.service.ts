@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { DOCUMENT, Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Observable, tap, switchMap, shareReplay } from 'rxjs';
+import { Observable, map, tap, switchMap, shareReplay } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
 
 export interface AuthUser {
@@ -173,6 +173,17 @@ export class AuthService {
     return this.http
       .delete<void>(`${API_BASE_URL}/auth/me/`, { withCredentials: true })
       .pipe(tap(() => this.forceLogout()));
+  }
+
+  /** DSGVO-Datenexport (datenexport/views.py): alle eigenen Daten als ZIP. Als Blob über den HttpClient, weil der
+   * Aufruf das Zugangs-Token braucht — ein einfacher Link hätte es nicht. */
+  exportData(): Observable<{ blob: Blob; filename: string }> {
+    return this.http.get(`${API_BASE_URL}/auth/export/`, { responseType: 'blob', observe: 'response' }).pipe(
+      map((response) => ({
+        blob: response.body as Blob,
+        filename: /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')?.[1] ?? '4inone-daten.zip',
+      })),
+    );
   }
 
   // Mit Cookies: nur so erkennt das Backend, WELCHES der Geräte gerade fragt („Dieses Gerät“).

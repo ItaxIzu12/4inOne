@@ -1237,6 +1237,7 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   setzt den Trennpunkt vor jeden Eintrag und schneidet ihn links per `clip-path` ab.
 - **Symbol:** `bus` neu in `shared/icons/app-icon.ts` (gleiche Strichsprache); `transportIcon('BUS')` nutzt es.
 
+- Einstellungen › Profil › Daten herunterladen (15.11.2026): Karte wie „Konto löschen“ (weiß, Radius 20, Rand `--border-subtle`), aber neutral: Titel in `--text-primary`, Knopf weiß mit Rand `--border-strong` und Download-Symbol, 44 px, beim Zusammenstellen „Wird zusammengestellt …“; Erfolg als Statuszeile, Fehler rot mit `role="alert"`. Steht zwischen Profilformular und „Konto löschen“. Keine neuen Tokens.
 - Stil-Dateien aufgeteilt (15.11.2026): `reisen.scss`, `familie.css` und `app-shell.scss` lagen über dem Stilbudget von 12 kB; der hintere Teil steht jetzt in `reisen-late.scss`, `familie-late.css` und `app-shell-late.scss`, direkt danach eingebunden. Optik unverändert (kompiliertes CSS vorher und nachher identisch), Build ohne Warnungen.
 
 ### Verknüpfungen sichtbar (31.10.2026)

@@ -12,7 +12,9 @@ Direktzugriffe (GET/PATCH/DELETE) auf jedes Objekt, Anlegen in fremdem Bereich, 
 Rollen-Eskalation und sofortiger Rechteentzug.
 """
 
+import io
 import json
+import zipfile
 from datetime import timedelta
 from decimal import Decimal
 
@@ -164,7 +166,11 @@ def dump(response) -> str:
     try:
         return json.dumps(response.data, default=str, ensure_ascii=False)
     except Exception:  # z. B. Datei-/CSV-Antworten
-        return response.content.decode(errors='ignore')
+        raw = b''.join(response.streaming_content) if response.streaming else response.content
+        if raw[:4] == b'PK\x03\x04':  # ZIP (Datenexport): jede enthaltene Datei mitprüfen
+            with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+                return '\n'.join(archive.read(name).decode(errors='ignore') for name in archive.namelist())
+        return raw.decode(errors='ignore')
 
 
 def _list_endpoints():
