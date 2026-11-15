@@ -113,7 +113,7 @@ const LEGACY_TABS: Record<string, TripTab> = { packlisten: 'packliste', erinneru
     MobileAction,
   ],
   templateUrl: './reisen.html',
-  styleUrls: ['./reisen.scss', './trip-dialogs.scss'],
+  styleUrls: ['./reisen.scss', './reisen-late.scss', './trip-dialogs.scss'],
 })
 export class Reisen {
   private api = inject(ReisenApi);

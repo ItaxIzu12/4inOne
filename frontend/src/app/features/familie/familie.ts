@@ -51,7 +51,7 @@ interface SharedSpace extends SharedArea {
   standalone: true,
   imports: [ErrorNoticeDirective, AppShell, FormsModule, RouterLink, AppIcon],
   templateUrl: './familie.html',
-  styleUrls: ['./familie.css', './familie-circle.scss'],
+  styleUrls: ['./familie.css', './familie-late.css', './familie-circle.scss'],
 })
 export class Familie {
   private readonly api = inject(ContactsApiService);

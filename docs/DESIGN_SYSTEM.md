@@ -1237,6 +1237,8 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   setzt den Trennpunkt vor jeden Eintrag und schneidet ihn links per `clip-path` ab.
 - **Symbol:** `bus` neu in `shared/icons/app-icon.ts` (gleiche Strichsprache); `transportIcon('BUS')` nutzt es.
 
+- Stil-Dateien aufgeteilt (15.11.2026): `reisen.scss`, `familie.css` und `app-shell.scss` lagen über dem Stilbudget von 12 kB; der hintere Teil steht jetzt in `reisen-late.scss`, `familie-late.css` und `app-shell-late.scss`, direkt danach eingebunden. Optik unverändert (kompiliertes CSS vorher und nachher identisch), Build ohne Warnungen.
+
 ### Verknüpfungen sichtbar (31.10.2026)
 
 - **`<app-link-hints [items] [exclude] [max]>`** (`shared/connections/link-hints.ts`): Pillen 24 px, Padding 0 9 px,

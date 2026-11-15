@@ -22,7 +22,7 @@ import { DEMO_ONLY } from '../core/demo-only';
   standalone: true,
   imports: [ErrorNoticeDirective, RouterLink, RouterLinkActive, BackToTop, BetaFeedbackDialog, Brand, AppIcon, NotificationBell, IconInfo, IconLegal, IconLogout, IconProfile, IconSettings, IconTwoFactor],
   templateUrl: './app-shell.html',
-  styleUrl: './app-shell.scss',
+  styleUrls: ['./app-shell.scss', './app-shell-late.scss'],
 })
 export class AppShell {
   /** Testversion nur mit Demo (GitHub Pages): keine Wege zu Anmeldung/Registrierung. */
