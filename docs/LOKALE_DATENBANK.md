@@ -28,6 +28,7 @@ Datenbank. `db.sqlite3` bleibt unverändert liegen und wird danach nicht mehr be
 | Befehl | Wirkung |
 | --- | --- |
 | `./scripts/dev-db.sh up` / `down` | starten / anhalten (Daten bleiben im Docker-Volume `4inone_postgres_data`) |
+| `docker compose stop` / `start` / `logs postgres` | geht auch direkt, sobald `init` einmal lief |
 | `./scripts/dev-db.sh status` | Container, Größe, und welche Datenbank Django gerade nutzt |
 | `./scripts/dev-db.sh psql` | SQL-Konsole |
 | `./scripts/dev-db.sh dump` | Sicherung nach `backups/` (Format wie auf dem Server, `pg_restore` geht in beide Richtungen) |
@@ -39,12 +40,16 @@ an und löscht sie wieder — die Entwicklungsdaten bleiben unberührt.
 ## Was ins Repository gehört
 
 - **Ja:** `docker-compose.yml`, `scripts/dev-db.sh`, `.env.example` — keine Geheimnisse, jede:r braucht sie.
-- **Nein (in `.gitignore`):** `backend/.env` (Passwort, `SECRET_KEY`), `backups/`, `*.sqlite3`, `*.dump`.
+- **Nein (in `.gitignore`):** `backend/.env` (Passwort, `SECRET_KEY`), `./.env` (nur Postgres-Werte, erzeugt), `backups/`,
+  `*.sqlite3`, `*.dump`.
 
 ## Stolpersteine
 
 - Port 5432 belegt (anderes Projekt oder lokal installiertes PostgreSQL): `POSTGRES_PORT=5433` in `backend/.env`
   setzen und den Port in `DATABASE_URL` anpassen.
-- Docker liest **nicht** die ganze `backend/.env`; das Skript reicht nur `POSTGRES_*` durch (ein `$` im `SECRET_KEY`
-  würde Compose sonst als Variable deuten).
+- Docker liest **nicht** die ganze `backend/.env` (ein `$` im `SECRET_KEY` würde Compose als Variable deuten).
+  `init` und `up` schreiben deshalb `./.env` im Projektordner mit **nur** den `POSTGRES_*`-Werten (in `.gitignore`,
+  Rechte 600). Die liest Compose von selbst — so funktionieren auch direkte Befehle wie `docker compose stop`,
+  `docker compose logs postgres` oder `docker compose ps`. Quelle bleibt `backend/.env`; eine fremde `./.env` wird nie
+  überschrieben.
 - `finanzen/signals.py` legt beim Import (`raw=True`) keine Standardkategorien an — sonst gäbe es sie doppelt.

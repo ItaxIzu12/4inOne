@@ -4,8 +4,8 @@
 # Tests) — genau wie auf dem Server, wo Django per systemd läuft (deploy/ANLEITUNG.md).
 #
 # Diese Datei enthält keine Geheimnisse und gehört ins Repository. Zugangsdaten kommen aus backend/.env
-# (in .gitignore). Bequemster Weg:  ./scripts/dev-db.sh up
-# Ohne Skript: POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB als Umgebungsvariablen setzen, dann docker compose up -d
+# (in .gitignore). `./scripts/dev-db.sh init` legt daraus zusätzlich ./.env an (nur die Postgres-Werte, ebenfalls in
+# .gitignore) — die liest Compose von selbst, also gehen auch direkt `docker compose up -d`, `stop`, `ps`, `logs`.
 name: 4inone
 
 services:

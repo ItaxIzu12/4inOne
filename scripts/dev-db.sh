@@ -55,6 +55,25 @@ need_env() {
 }
 psql_in() { "${COMPOSE[@]}" exec -T postgres psql -v ON_ERROR_STOP=1 -q -U "$(env_value POSTGRES_USER)" -d "$(env_value POSTGRES_DB)" "$@"; }
 
+# ./.env im Projektordner: liest Docker Compose von selbst — damit auch `docker compose stop/up/ps` direkt funktioniert.
+# Enthält NUR die Postgres-Werte (aus backend/.env abgeleitet, in .gitignore) und wird bei init/up neu geschrieben.
+COMPOSE_ENV="$ROOT/.env"
+COMPOSE_ENV_MARK='# Automatisch erzeugt von ./scripts/dev-db.sh'
+write_compose_env() {
+  if [[ -f "$COMPOSE_ENV" ]] && ! grep -qF "$COMPOSE_ENV_MARK" "$COMPOSE_ENV"; then
+    die "./.env gibt es schon und stammt nicht von diesem Skript — bitte prüfen, nichts überschrieben."
+  fi
+  local port; port="$(env_value POSTGRES_PORT)"
+  {
+    printf '%s — nicht bearbeiten, Quelle ist backend/.env.\n' "$COMPOSE_ENV_MARK"
+    printf '# Nur für Docker Compose (Postgres-Container). Nie committen (.gitignore).\n'
+    printf 'POSTGRES_USER=%s\nPOSTGRES_PASSWORD=%s\nPOSTGRES_DB=%s\n' \
+      "$(env_value POSTGRES_USER)" "$(env_value POSTGRES_PASSWORD)" "$(env_value POSTGRES_DB)"
+    [[ -n "$port" ]] && printf 'POSTGRES_PORT=%s\n' "$port"
+  } >"$COMPOSE_ENV"
+  chmod 600 "$COMPOSE_ENV"
+}
+
 cmd_init() {
   [[ -f "$ENV_FILE" ]] || die "backend/.env fehlt — Vorlage: cp .env.example backend/.env (und SECRET_KEY eintragen)"
   [[ -n "$(tail -c1 "$ENV_FILE")" ]] && printf '\n' >>"$ENV_FILE"   # letzte Zeile abschließen
@@ -77,11 +96,13 @@ cmd_init() {
     die "DATABASE_URL in backend/.env zeigt nicht auf PostgreSQL — bitte die Zeile entfernen und init erneut ausführen."
   fi
   chmod 600 "$ENV_FILE"
+  write_compose_env
   if [[ $changed == 1 ]]; then ok "backend/.env ergänzt (Passwort zufällig erzeugt, nirgends ausgegeben)."; else ok "backend/.env ist schon vollständig."; fi
 }
 
 cmd_up() {
   need_docker; need_env
+  write_compose_env
   say "Starte PostgreSQL und Redis …"
   "${COMPOSE[@]}" up -d --wait
   ok "PostgreSQL läuft auf 127.0.0.1:$(env_value POSTGRES_PORT | grep . || echo 5432), Redis auf 127.0.0.1:6379."
