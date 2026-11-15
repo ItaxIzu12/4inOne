@@ -23,12 +23,28 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    # Gleiche Datenbank wie lokal (scripts/dev-db.sh) und auf dem Server: PostgreSQL 16, nicht SQLite.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+          POSTGRES_DB: fourinone
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d fourinone"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       # Nur für den Testlauf – kein echtes Geheimnis, jede Ausführung bekommt eine frische Test-Datenbank.
       # DEBUG=True wie lokal: mit False leitet Django jede Testanfrage auf HTTPS um (SECURE_SSL_REDIRECT).
       SECRET_KEY: ci-only-not-a-secret
       DEBUG: 'True'
       FX_FETCH_ENABLED: 'False'
+      DATABASE_URL: postgres://ci:ci-only-not-a-secret@localhost:5432/fourinone
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7

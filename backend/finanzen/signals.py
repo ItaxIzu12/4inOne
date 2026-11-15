@@ -29,7 +29,8 @@ def create_default_categories(sender, instance: Household, created: bool, **kwar
     importieren (nur umgekehrt) — ein Signal-Receiver hier hält sich an
     diese Richtung, während RegisterView unverändert bleibt.
     """
-    if not created:
+    # raw = Fixture/Datenübernahme (`loaddata`): die Kategorien kommen dort mit, sonst gäbe es sie doppelt.
+    if not created or kwargs.get('raw'):
         return
     Category.objects.bulk_create(
         [

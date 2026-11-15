@@ -1,26 +1,40 @@
+# 4inOne — lokale Dienste für die Entwicklung: PostgreSQL und Redis.
+#
+# Django und Angular laufen bewusst NICHT im Container (schnelles Neuladen, Debugger, gleiche Python-Umgebung wie die
+# Tests) — genau wie auf dem Server, wo Django per systemd läuft (deploy/ANLEITUNG.md).
+#
+# Diese Datei enthält keine Geheimnisse und gehört ins Repository. Zugangsdaten kommen aus backend/.env
+# (in .gitignore). Bequemster Weg:  ./scripts/dev-db.sh up
+# Ohne Skript: POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB als Umgebungsvariablen setzen, dann docker compose up -d
+name: 4inone
+
 services:
   postgres:
+    # Hauptversion wie auf dem Server (Ubuntu 24.04 → PostgreSQL 16), damit Dumps in beide Richtungen passen.
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER fehlt – ./scripts/dev-db.sh init ausführen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt – ./scripts/dev-db.sh init ausführen}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB fehlt – ./scripts/dev-db.sh init ausführen}
+      # Sortierung und Großschreibung wie auf dem Server (UTF-8), nicht „C“
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale=C.UTF-8
+      TZ: Europe/Berlin
     ports:
-      - "127.0.0.1:5432:5432"  # nur lokal erreichbar, nie aus dem Netz
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"  # nur lokal erreichbar, nie aus dem Netz
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
-      - "127.0.0.1:6379:6379"  # nur lokal erreichbar, nie aus dem Netz
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"  # nur lokal erreichbar, nie aus dem Netz
     volumes:
       - redis_data:/data
     healthcheck:

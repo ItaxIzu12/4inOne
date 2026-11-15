@@ -30,7 +30,7 @@ Django/Python ist die finale Backend-Entscheidung für dieses Projekt — nicht 
 | Backend-Framework | 🔴 **Django** + Django REST Framework (DRF) | "batteries included": ORM, Auth-Grundgerüst, Admin-Oberfläche, Migrations |
 | Sprache Backend | 🔴 Python | — |
 | ORM | 🔴 Django-ORM (eingebaut) | parametrisierte Queries strukturell gegen SQL-Injection |
-| Datenbank (lokal) | 🔴 SQLite | **nur** für die eigene lokale Entwicklung |
+| Datenbank (lokal) | 🔴 PostgreSQL 16 in Docker (seit 15.11.2026, `docs/LOKALE_DATENBANK.md`) | SQLite nur noch für Wegwerf-Testdatenbanken |
 | Datenbank (Staging/Produktion) | 🔴 **PostgreSQL, ab dem ersten Mehrbenutzerzugriff verpflichtend** | siehe 2.2 |
 | Auth | 🔴 `django-allauth` | Registrierung, Login, MFA-Erweiterung über `django-otp` |
 | API-Layer | 🔴 Django REST Framework (DRF) | Grundlage für Autorisierung in 3.2 |
@@ -133,6 +133,7 @@ Nutzt dasselbe Generic-Relation-Muster wie die Connection Engine (2.1b) — bewu
 - **Lokale Entwicklung (nur du):** SQLite ist in Ordnung.
 - **Sobald eine zweite Person testet oder die App online erreichbar ist:** PostgreSQL ist Pflicht.
 - **Praktischer Ausweg:** von Anfang an lokal mit PostgreSQL in Docker entwickeln, dann entfällt der Migrationsschritt komplett.
+- **Umgesetzt (15.11.2026):** lokal PostgreSQL 16 in Docker (`docker-compose.yml`, `scripts/dev-db.sh`), CI ebenfalls; Daten aus SQLite übernommen. Siehe `docs/LOKALE_DATENBANK.md`.
 
 ### 2.3 Datenmodell-Skizze (Django-Models)
 ```python
