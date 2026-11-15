@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { AuthService } from './core/auth/auth.service';
 import { Router, Routes } from '@angular/router';
+import { adminGuard } from './features/admin/admin.guard';
 import { authGuard } from './core/auth/auth.guard';
 import { DEMO_ONLY } from './core/demo-only';
 // Public landing and authenticated dashboard share /; session initialization runs before matching.
@@ -109,6 +110,14 @@ const ALL_ROUTES: Routes = [
     path: 'einstellungen/zwei-faktor',
     loadComponent: () => import('./features/mfa-setup/mfa-setup').then((m) => m.MfaSetup),
     canActivate: [authGuard],
+    data: { shell: 'bare', hideHeader: true },
+  },
+  {
+    // Admin-Panel (features/admin/, docs/MONITORING.md) — nur für Admin-Konten; das Backend prüft Staff + Zwei-Faktor
+    path: 'admin',
+    title: 'Admin-Panel | 4inOne',
+    loadComponent: () => import('./features/admin/admin').then((m) => m.Admin),
+    canActivate: [adminGuard],
     data: { shell: 'bare', hideHeader: true },
   },
   {

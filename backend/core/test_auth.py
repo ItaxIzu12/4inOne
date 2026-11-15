@@ -50,7 +50,7 @@ def test_register_accepts_valid_password_and_hashes_with_configured_hasher():
     assert response.status_code == 201
     body = response.json()
     assert 'refresh' not in body  # nie im Body, siehe test_login_* unten
-    assert body['user'] == {'name': 'Valide', 'email': 'valide@example.com', 'home_currency': 'EUR', 'email_verified': False}
+    assert body['user'] == {'name': 'Valide', 'email': 'valide@example.com', 'home_currency': 'EUR', 'email_verified': False, 'is_admin': False}
 
     # Prüft gegen PASSWORD_HASHERS[0] statt fest gegen "argon2" — aktuell
     # (siehe settings.py-TODO) steht dort vorübergehend PBKDF2 statt Argon2,
@@ -78,7 +78,7 @@ def test_login_sets_httponly_refresh_cookie_never_in_body():
     assert response.status_code == 200
     body = response.json()
     assert set(body.keys()) == {'access', 'user'}  # kein 'refresh' im Body
-    assert body['user'] == {'name': 'Test', 'email': 'cookie@example.com', 'home_currency': 'EUR', 'email_verified': False}
+    assert body['user'] == {'name': 'Test', 'email': 'cookie@example.com', 'home_currency': 'EUR', 'email_verified': False, 'is_admin': False}
 
     cookie = response.cookies['refresh_token']
     assert cookie['httponly'] is True

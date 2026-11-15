@@ -324,9 +324,9 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 43 
 
 | ID | Fall | Prio | Art | Stand |
 |---|---|---|---|---|
-| OPS-01 | Fehler-Monitoring (Sentry o. ä., EU-Region) im Backend **und** Frontend, ohne personenbezogene Daten | P0 | I | ❌ `SENTRY_DSN` wird nicht benutzt |
+| OPS-01 | Fehler-Monitoring im Backend **und** Frontend, ohne personenbezogene Daten | P0 | I/A | 🟡 seit 15.11.: GlitchTip selbst betrieben (`monitoring/`), Anbindung + Filter getestet (`backend/monitoring/tests.py`, `monitoring.spec.ts`); **auf dem Server noch einzurichten** |
 | OPS-02 | Uptime-Überwachung mit Alarm (Mail/Push) | P0 | I | ❌ |
-| OPS-03 | Strukturierte Logs mit Aufbewahrung; Login-Fehlschläge nachvollziehbar | P1 | I | ❌ kein `LOGGING` konfiguriert |
+| OPS-03 | Strukturierte Logs mit Aufbewahrung; Login-Fehlschläge nachvollziehbar | P1 | I/A | 🟡 Anmelde-Ereignisse im Admin-Panel (90 Tage, IP gekürzt) seit 15.11.; allgemeines `LOGGING` weiter offen |
 | OPS-04 | Notfallplan: Server weg → Restore aus Backup in < 4 h, einmal geübt | P0 | M | ❌ |
 | OPS-05 | Vorfall-Ablauf bei Datenpanne (72-h-Meldepflicht), Kontakt der Aufsichtsbehörde | P1 | M | ❌ |
 | OPS-06 | Wartungsseite bei Updates | P2 | I | ❌ |

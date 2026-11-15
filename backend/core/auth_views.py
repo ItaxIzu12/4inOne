@@ -25,6 +25,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.settings import api_settings as jwt_settings
 from rest_framework_simplejwt.utils import get_md5_hash_password
 
+from core import auth_events
 from core.mfa_views import MfaVerifyRateThrottle, user_has_mfa_enabled, verify_mfa_code
 from core.models import Household, HouseholdMembership, PasswordResetToken, UserSession
 from core.throttling import LocalCacheThrottle
@@ -62,7 +63,7 @@ def _set_refresh_cookie(response: Response, refresh: RefreshToken, *, remember: 
     response.set_cookie(REFRESH_COOKIE_NAME, str(refresh), **cookie_kwargs)
 
 
-def _start_session(request, user, refresh: RefreshToken) -> None:
+def _start_session(request, user, refresh: RefreshToken, mfa_verified: bool = False) -> None:
     """Merkt sich das angemeldete Gerät. Die Sitzungs-ID steckt als Claim im Refresh-Token und bleibt bei jeder
     Rotation gleich; nur `current_jti` wandert mit (siehe RefreshView)."""
     sid = secrets.token_hex(16)
@@ -73,6 +74,7 @@ def _start_session(request, user, refresh: RefreshToken) -> None:
         current_jti=str(refresh['jti']),
         user_agent=(request.META.get('HTTP_USER_AGENT') or '')[:300],
         last_seen=timezone.now(),
+        mfa_verified=mfa_verified,
     )
 
 
@@ -98,6 +100,8 @@ def _user_payload(user) -> dict:
         'home_currency': home_currency_for(user),
         # Ob Kontakt-Einladungen schon in der App erscheinen dürfen (core/email_verification.py).
         'email_verified': is_verified(user),
+        # Admin-Panel (monitoring/): nur der Schalter fürs Menü — die Rechte prüft jeder Admin-Endpunkt selbst.
+        'is_admin': bool(user.is_staff and user.is_active),
     }
 
 
@@ -215,6 +219,7 @@ class RegisterView(APIView):
         from core.email_verification import send_verification_mail
 
         send_verification_mail(user)
+        auth_events.emit(auth_events.REGISTERED, request, user)
         refresh = RefreshToken.for_user(user)
         _start_session(request, user, refresh)
         response = Response(
@@ -268,6 +273,7 @@ class LoginView(APIView):
         # übertragen und verfällt regulär mit seiner Lifetime — es gibt in
         # SimpleJWT keinen Weg, Zugangsdaten zu prüfen, ohne dabei Tokens zu
         # erzeugen.
+        mfa_verified = False
         if user_has_mfa_enabled(user):
             mfa_code = request.data.get('mfa_code')
             if not mfa_code:
@@ -282,11 +288,14 @@ class LoginView(APIView):
                 raise Throttled(wait=mfa_throttle.wait())
 
             if not verify_mfa_code(user, mfa_code):
+                auth_events.emit(auth_events.MFA_FAILED, request, user)
                 return Response({'detail': 'Der Code ist ungültig oder abgelaufen.'}, status=401)
+            mfa_verified = True
 
         remember = login_data['remember']
         refresh = RefreshToken(serializer.validated_data['refresh'])
-        _start_session(request, user, refresh)
+        _start_session(request, user, refresh, mfa_verified=mfa_verified)
+        auth_events.emit(auth_events.LOGIN_SUCCEEDED, request, user)
         # Access-Token erst NACH _start_session ableiten, damit es die Sitzungs-ID trägt (core/authentication.py):
         # Abmelden entwertet es dann sofort, nicht erst nach Ablauf.
         response = Response({'access': str(refresh.access_token), 'user': _user_payload(user)})
@@ -436,6 +445,7 @@ class PasswordResetRequestView(APIView):
                 expires_at=timezone.now() + PASSWORD_RESET_TOKEN_LIFETIME,
             )
             _send_password_reset_mail(user, raw_token)
+            auth_events.emit(auth_events.PASSWORD_RESET_REQUESTED, request, user)
 
         return Response(
             {'detail': 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde eine Nachricht versendet.'}
@@ -488,6 +498,7 @@ class PasswordResetConfirmView(APIView):
                 BlacklistedToken.objects.get_or_create(token=outstanding)
             UserSession.objects.filter(user=reset_token.user).delete()
 
+        auth_events.emit(auth_events.PASSWORD_RESET_COMPLETED, request, reset_token.user)
         return Response({'detail': 'Passwort erfolgreich geändert.'})
 
 

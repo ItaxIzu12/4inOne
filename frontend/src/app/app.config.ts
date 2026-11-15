@@ -1,4 +1,4 @@
-import { ApplicationConfig, DOCUMENT, PLATFORM_ID, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, DOCUMENT, ErrorHandler, PLATFORM_ID, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { provideClientHydration, withNoIncrementalHydration } from '@angular/platform-browser';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
@@ -13,10 +13,14 @@ import { PageViews } from './core/analytics/page-views';
 import { SeoTitleStrategy } from './core/seo/seo-title-strategy';
 import { DEMO_ONLY } from './core/demo-only';
 import { ChunkLoadRecovery } from './core/navigation/chunk-load-recovery';
+import { MonitoringErrorHandler } from './core/monitoring/monitoring';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    // Fehlerberichte an GlitchTip (core/monitoring/, docs/MONITORING.md): startet erst beim ersten Fehler — ohne Fehler
+    // keine zusätzliche Anfrage, öffentliche Seiten laden weiterhin nichts. In der Demo nie.
+    { provide: ErrorHandler, useClass: DEMO_ONLY ? ErrorHandler : MonitoringErrorHandler },
     // scrollPositionRestoration: 'top' — jede Navigation (jeder Linkklick,
     // egal wie tief gescrollt war) landet oben auf der neuen Seite statt an
     // der zuletzt gescrollten Position. anchorScrolling erlaubt weiterhin

@@ -29,6 +29,10 @@ pytest-django==4.14.0
 qrcode==8.2
 reportlab==5.1.0
 redis==8.1.0
+# Fehler-Monitoring (GlitchTip, Sentry-kompatibel) — monitoring/, docs/MONITORING.md
+sentry-sdk==2.73.0
+certifi==2026.10.23
+urllib3==2.8.0
 sqlparse==0.6.1
 tzdata==2026.6
 

@@ -1,0 +1,137 @@
+<app-shell>
+  <main id="main-content" class="admin" tabindex="-1">
+    <header class="admin__head">
+      <h1>Admin-Panel</h1>
+      <p>Anmeldungen und Fehler auf einen Blick. Nur für Admin-Konten mit Zwei-Faktor sichtbar.</p>
+    </header>
+
+    @switch (access()) {
+      @case ('loading') {
+        <p class="admin__note" role="status">Wird geladen …</p>
+      }
+      @case ('mfa_required') {
+        <section class="card admin__gate" aria-labelledby="gate-heading">
+          <app-icon name="shield" aria-hidden="true" />
+          <h2 id="gate-heading">Erst Zwei-Faktor einrichten</h2>
+          <p>Das Admin-Panel zeigt Anmeldungen aller Konten. Deshalb öffnet es sich nur mit Zwei-Faktor-Anmeldung.</p>
+          <a class="admin__button" routerLink="/einstellungen/zwei-faktor">Zwei-Faktor einrichten</a>
+        </section>
+      }
+      @case ('mfa_session') {
+        <section class="card admin__gate" aria-labelledby="gate-heading">
+          <app-icon name="shield" aria-hidden="true" />
+          <h2 id="gate-heading">Bitte mit Zwei-Faktor neu anmelden</h2>
+          <p>Diese Anmeldung stammt von vor dem Einschalten der Zwei-Faktor-Anmeldung. Melde dich einmal ab und mit Code wieder an – dann öffnet sich das Admin-Panel.</p>
+        </section>
+      }
+      @case ('forbidden') {
+        <section class="card admin__gate" aria-labelledby="gate-heading">
+          <app-icon name="lock" aria-hidden="true" />
+          <h2 id="gate-heading">Kein Zugriff</h2>
+          <p>Dieses Konto hat keine Admin-Rechte.</p>
+        </section>
+      }
+      @case ('error') {
+        <p class="admin__note admin__note--bad" role="alert">Das Admin-Panel konnte nicht geladen werden. Bitte später noch einmal versuchen.</p>
+      }
+      @case ('ok') {
+        @if (overview(); as o) {
+          <section class="card admin__status" [class.is-on]="o.monitoring.connected" aria-label="Fehler-Monitoring">
+            <span class="admin__dot" aria-hidden="true"></span>
+            <div class="admin__status-text">
+              <strong>{{ o.monitoring.connected ? 'GlitchTip verbunden' : 'GlitchTip noch nicht verbunden' }}</strong>
+              <small>
+                @if (o.monitoring.connected) {
+                  Fehler und auffällige Anmeldungen werden gemeldet · Umgebung „{{ o.monitoring.environment }}“
+                } @else {
+                  SENTRY_DSN in backend/.env eintragen – Anleitung in docs/MONITORING.md
+                }
+              </small>
+            </div>
+            @if (o.monitoring.url) {
+              <a class="admin__button admin__button--soft" [href]="o.monitoring.url" target="_blank" rel="noopener noreferrer">
+                <app-icon name="external" aria-hidden="true" />GlitchTip öffnen<span class="sr-only"> (neues Fenster)</span>
+              </a>
+            }
+          </section>
+
+          <dl class="admin__kpis">
+            @for (k of kpis(); track k.label) {
+              <div class="card admin__kpi" [class]="'is-' + k.tone">
+                <dt>{{ k.label }}</dt>
+                <dd class="admin__kpi-value">{{ k.value }}</dd>
+                <dd class="admin__kpi-hint">{{ k.hint }}</dd>
+              </div>
+            }
+          </dl>
+
+          <div class="admin__grid">
+            <section class="card" aria-labelledby="events-heading">
+              <h2 id="events-heading" class="admin__title"><app-icon name="list" aria-hidden="true" />Anmelde-Ereignisse</h2>
+              <div class="admin__filters" role="group" aria-label="Nach Art filtern">
+                @for (f of filters; track f.kind) {
+                  <button type="button" class="admin__chip" [attr.aria-pressed]="filter() === f.kind" (click)="setFilter(f.kind)">{{ f.label }}</button>
+                }
+              </div>
+              @if (events().length) {
+                <ul class="admin__events" [attr.aria-busy]="eventsLoading() || null">
+                  @for (e of events(); track e.id) {
+                    <li class="admin__event">
+                      <span class="admin__event-icon" [class]="'is-' + meta[e.kind].tone" aria-hidden="true"><app-icon [name]="meta[e.kind].icon" /></span>
+                      <span class="admin__event-text">
+                        <b>{{ e.label }}</b>
+                        <small>{{ e.user ? e.user.name + ' · ' + e.user.email : 'Unbekanntes Konto' }}@if (e.ip_prefix) { · IP {{ e.ip_prefix }}}</small>
+                      </span>
+                      <time class="admin__event-time" [attr.datetime]="e.created_at">{{ when(e.created_at) }}</time>
+                    </li>
+                  }
+                </ul>
+                @if (hasMore()) {
+                  <button type="button" class="admin__more" [disabled]="eventsLoading()" (click)="loadEvents()">{{ eventsLoading() ? 'Wird geladen …' : 'Ältere laden' }}</button>
+                }
+              } @else if (!eventsLoading()) {
+                <p class="admin__note">Noch keine Ereignisse dieser Art.</p>
+              }
+              <p class="admin__small">IP-Adressen nur gekürzt, E-Mail-Adressen maskiert. Aufbewahrung {{ o.retention_days }} Tage.</p>
+            </section>
+
+            <section class="card" aria-labelledby="issues-heading">
+              <h2 id="issues-heading" class="admin__title"><app-icon name="bars" aria-hidden="true" />Offene Fehler</h2>
+              @switch (issuesState()) {
+                @case ('loading') {
+                  <p class="admin__note" role="status">Wird geladen …</p>
+                }
+                @case ('not_configured') {
+                  <p class="admin__note">Für die Liste hier ein GlitchTip-API-Token mit Leserechten in backend/.env eintragen (GLITCHTIP_URL, GLITCHTIP_ORG, GLITCHTIP_API_TOKEN). Alle Fehler siehst du auch direkt in GlitchTip.</p>
+                }
+                @case ('unreachable') {
+                  <p class="admin__note admin__note--bad">GlitchTip ist gerade nicht erreichbar.</p>
+                }
+                @default {
+                  @if (issues().length) {
+                    <ul class="admin__issues">
+                      @for (i of issues(); track i.id) {
+                        <li>
+                          <a class="admin__issue" [href]="i.link" target="_blank" rel="noopener noreferrer">
+                            <span class="admin__issue-text">
+                              <b>{{ i.title }}</b>
+                              <small>{{ i.culprit }}@if (i.last_seen) { · zuletzt {{ when(i.last_seen) }}}</small>
+                            </span>
+                            <span class="admin__issue-count" [attr.aria-label]="i.count + ' Mal'">{{ i.count }}×</span>
+                            <span class="sr-only"> (öffnet GlitchTip in neuem Fenster)</span>
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="admin__note admin__note--ok"><app-icon name="check-circle" aria-hidden="true" />Keine offenen Fehler.</p>
+                  }
+                }
+              }
+            </section>
+          </div>
+        }
+      }
+    }
+  </main>
+</app-shell>

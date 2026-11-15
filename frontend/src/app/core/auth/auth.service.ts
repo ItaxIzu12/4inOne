@@ -11,6 +11,8 @@ export interface AuthUser {
   home_currency?: string;
   /** Erst mit bestätigter E-Mail-Adresse erscheinen Kontakt-Einladungen in der App (core/email_verification.py). */
   email_verified?: boolean;
+  /** Admin-Panel im Menü zeigen (backend/monitoring/) — die Rechte prüft der Server bei jeder Anfrage selbst. */
+  is_admin?: boolean;
 }
 
 /** Ein angemeldetes Gerät (siehe Einstellungen → Aktive Sitzungen). */

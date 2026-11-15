@@ -29,7 +29,10 @@ Die Einrichtung des Servers Schritt für Schritt (von null): [`deploy/ANLEITUNG.
    Mailserver), `RATE_LIMIT_CACHE=database` + einmal `manage.py createcachetable`,
    `PRIVATE_MEDIA_ROOT` auf ein gesichertes Volume, `ADMIN_URL_PATH` auf einen eigenen Wert, `BEHIND_PROXY=True`
    nur hinter genau einem vertrauenswürdigen Proxy.
-4. **Täglicher Cron-Job:** `python manage.py prune_website` (löscht abgelaufene Zähler der Besucherzählung).
+4. **Täglicher Cron-Job:** `python manage.py prune_website` (löscht abgelaufene Zähler der Besucherzählung) und
+   `python manage.py prune_auth_events` (Anmelde-Ereignisse nach 90 Tagen) — beide in `deploy/systemd/4inone-prune.service`.
+4a. **Fehler-Monitoring:** GlitchTip auf dem Server einrichten und `SENTRY_DSN` setzen, Admin-Zugang per
+   `manage.py monitoring_admin` — [`MONITORING.md`](MONITORING.md#auf-dem-server). In der Datenschutzerklärung nennen.
 5. **Webserver (nginx):** fertige Konfiguration in `deploy/nginx/` — `4inone.conf` plus zwei Snippets nach
    `/etc/nginx/snippets/`. Darin vor dem Einsatz Domain, Pfad zu `frontend/dist/frontend/browser` und den Admin-Pfad
    (`ADMIN_URL_PATH`) eintragen, dann `nginx -t`. Sie regelt:

@@ -53,6 +53,8 @@ urlpatterns = [
     path('api/v1/places/', PlacesView.as_view(), name='places'),
     path('api/v1/feedback/', BetaFeedbackView.as_view(), name='beta-feedback'),
     path('api/v1/haushalt/', include('haushalt.urls')),
+    # Admin-Panel und Fehlerberichte (monitoring/, docs/MONITORING.md)
+    path('api/v1/', include('monitoring.urls')),
     # Öffentliche Website ohne Anmeldung: cookielose Besucherzählung
     path('api/v1/site/', include('website.urls')),
     # OnboardingStatusView liegt in finanzen/views.py (braucht Transaction/

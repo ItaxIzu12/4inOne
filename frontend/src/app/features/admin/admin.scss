@@ -1,0 +1,331 @@
+// Admin-Panel (15.11.2026): Werkzeug-Seite im Stil der Einstellungen — weiße Karten, Tinte, Status in Text UND Farbe.
+.admin {
+  max-width: var(--content-max-width, 1240px);
+  margin: 0 auto;
+  padding: 32px var(--content-padding-x, 24px) 56px;
+  display: grid;
+  gap: 16px;
+}
+.admin__head h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-page);
+  color: var(--text-primary);
+}
+.admin__head p {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+}
+.card {
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--surface-card);
+}
+.admin__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: var(--fs-subsection);
+  color: var(--text-primary);
+}
+.admin__title app-icon {
+  width: 20px;
+  height: 20px;
+}
+.admin__note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+  line-height: 1.5;
+}
+.admin__note--bad {
+  color: var(--danger);
+}
+.admin__note--ok {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--success);
+  font-weight: 600;
+}
+.admin__note--ok app-icon {
+  width: 18px;
+  height: 18px;
+}
+.admin__small {
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.admin__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  background: var(--brand-primary);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.admin__button--soft {
+  border: 1px solid var(--border-strong);
+  background: #fff;
+  color: var(--text-primary);
+}
+.admin__button app-icon {
+  width: 16px;
+  height: 16px;
+}
+.admin__button:focus-visible,
+.admin__chip:focus-visible,
+.admin__issue:focus-visible,
+.admin__more:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+// ---------- Zugang fehlt ----------
+.admin__gate {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  max-width: 560px;
+}
+.admin__gate > app-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--text-secondary);
+}
+.admin__gate h2,
+.admin__gate p {
+  margin: 0;
+}
+.admin__gate p {
+  color: var(--text-secondary);
+}
+
+// ---------- Status ----------
+.admin__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+.admin__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--warning);
+  box-shadow: 0 0 0 4px var(--warning-soft);
+  flex-shrink: 0;
+}
+.admin__status.is-on .admin__dot {
+  background: var(--success);
+  box-shadow: 0 0 0 4px var(--success-soft);
+}
+.admin__status-text {
+  display: grid;
+  flex: 1;
+  min-width: 220px;
+}
+.admin__status-text small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+
+// ---------- Kennzahlen ----------
+.admin__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+.admin__kpi {
+  display: grid;
+  gap: 2px;
+  padding: 16px 18px;
+}
+.admin__kpi dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+}
+.admin__kpi dd {
+  margin: 0;
+}
+.admin__kpi-value {
+  font-family: var(--font-display);
+  font-size: var(--fs-metric);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.admin__kpi-hint {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+.admin__kpi.is-warn .admin__kpi-value {
+  color: var(--warning);
+}
+.admin__kpi.is-bad .admin__kpi-value {
+  color: var(--danger);
+}
+
+// ---------- Listen ----------
+.admin__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 16px;
+  align-items: start;
+}
+.admin__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.admin__chip {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  background: #fff;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  cursor: pointer;
+}
+.admin__chip[aria-pressed='true'] {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: #fff;
+  font-weight: 600;
+}
+.admin__events,
+.admin__issues {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.admin__events li + li,
+.admin__issues li + li {
+  border-top: 1px solid var(--border-subtle);
+}
+.admin__event {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 0;
+}
+.admin__event-icon {
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+}
+.admin__event-icon app-icon {
+  width: 17px;
+  height: 17px;
+}
+.admin__event-icon.is-ok {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.admin__event-icon.is-warn {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.admin__event-icon.is-bad {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.admin__event-text,
+.admin__issue-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.admin__event-text b,
+.admin__issue-text b {
+  color: var(--text-primary);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.admin__event-text small,
+.admin__issue-text small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  overflow-wrap: anywhere;
+}
+.admin__event-time {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.admin__issue {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 0;
+  color: inherit;
+  text-decoration: none;
+}
+.admin__issue:hover b {
+  text-decoration: underline;
+}
+.admin__issue-count {
+  color: var(--danger);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.admin__more {
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .admin__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 520px) {
+  .admin {
+    padding-top: 20px;
+  }
+  .admin__head h1 {
+    font-size: var(--fs-page-mobile);
+  }
+  // Uhrzeit unter den Text statt daneben — sonst bleibt für Art, Person und IP zu wenig Breite
+  .admin__event {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    row-gap: 2px;
+  }
+  .admin__event-text {
+    flex: 1 1 calc(100% - 46px);
+  }
+  .admin__event-time {
+    margin-left: 46px;
+  }
+}

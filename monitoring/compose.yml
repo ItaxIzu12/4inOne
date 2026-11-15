@@ -1,0 +1,56 @@
+# GlitchTip (Open Source, Sentry-kompatibel) — Fehler-Monitoring für 4inOne, getrennt von der App.
+# Vorlage: https://glitchtip.com/assets/compose.sample.yml (15.11.2026), gehärtet:
+#   - Datenbank mit Passwort statt „trust“, eigene Datenbank nur für GlitchTip
+#   - nur auf 127.0.0.1 erreichbar (auf dem Server davor nginx mit TLS, siehe docs/MONITORING.md)
+#   - Registrierung nach dem ersten Konto geschlossen, kein Django-Admin, keine OpenAPI
+#   - ohne Valkey: GlitchTip nutzt dann PostgreSQL für Warteschlange und Cache (weniger Arbeitsspeicher)
+# Geheimnisse stehen in ./.env (in .gitignore), angelegt von ./glitchtip.sh init. Start: ./glitchtip.sh up
+name: 4inone-monitoring
+
+services:
+  postgres:
+    image: postgres:18
+    # GlitchTips partitionierte Tabellen brauchen mehr Sperren als der Standard erlaubt (laut Installationsanleitung)
+    command: -c max_locks_per_transaction=512
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: ${GLITCHTIP_DB_PASSWORD:?GLITCHTIP_DB_PASSWORD fehlt – ./glitchtip.sh init ausführen}
+      POSTGRES_DB: glitchtip
+    volumes:
+      - pg-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U glitchtip -d glitchtip"]
+      interval: 8s
+      timeout: 8s
+      retries: 15
+
+  web:
+    image: glitchtip/glitchtip:6
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${GLITCHTIP_PORT:-8001}:8000"  # nur lokal, nie aus dem Netz
+    environment:
+      DATABASE_URL: postgres://glitchtip:${GLITCHTIP_DB_PASSWORD}@postgres:5432/glitchtip
+      VALKEY_URL: ""
+      SECRET_KEY: ${GLITCHTIP_SECRET_KEY:?GLITCHTIP_SECRET_KEY fehlt – ./glitchtip.sh init ausführen}
+      GLITCHTIP_DOMAIN: ${GLITCHTIP_DOMAIN:-http://localhost:8001}
+      DEFAULT_FROM_EMAIL: ${GLITCHTIP_FROM_EMAIL:-glitchtip@localhost}
+      EMAIL_URL: ${GLITCHTIP_EMAIL_URL:-consolemail://}  # Alarm-Mails: smtp://… eintragen, sonst nur im Log
+      SERVER_ROLE: all_in_one
+      ALLOWED_HOSTS: ${GLITCHTIP_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      ENABLE_USER_REGISTRATION: "False"        # nur das erste Konto darf sich selbst registrieren
+      ENABLE_ORGANIZATION_CREATION: "False"
+      ENABLE_ADMIN: "False"
+      ENABLE_OPENAPI: "False"
+      GLITCHTIP_ENABLE_MCP: "False"
+      GLITCHTIP_RETENTION_DAYS: "90"
+    volumes:
+      - uploads:/code/uploads
+
+volumes:
+  pg-data:
+  uploads:

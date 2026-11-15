@@ -40,6 +40,7 @@ from core.models import (
 from finanzen.models import (
     Account, Budget, Category, MonthlyBudget, RecurringDeduction, SavingsContribution, SavingsGoal, Transaction,
 )
+from monitoring.models import AuthEvent
 from haushalt.models import (
     FolderAttachment, FolderEntry, ItemMemory, ShoppingItem, ShoppingList, ShoppingTrip, Task, TaskCompletion,
 )
@@ -177,6 +178,8 @@ class _Export:
             'anmeldungen': self.rows(AccessLog._base_manager.filter(username=user.username)),
             'fehlgeschlagene_anmeldungen': self.rows(AccessFailureLog._base_manager.filter(username=user.username)),
             'beta_feedback': self.rows(BetaFeedback._base_manager.filter(user=user)),
+            # Sicherheitsprotokoll: eigene Anmeldungen, Fehlversuche, Sperren (IP nur gekürzt)
+            'anmelde_ereignisse': self.rows(AuthEvent._base_manager.filter(user=user)),
         })
 
         finanzen = self.section('Finanzen', {
@@ -260,6 +263,7 @@ Programmen einlesen.
 Inhalt
 ------
 konto.json          Profil, Einstellungen, Kontakte, Einladungen, Benachrichtigungen, Geräte/Sitzungen, Anmeldungen
+                    (inkl. Sicherheitsprotokoll mit gekürzter IP-Adresse)
 finanzen.json       private Finanzen: Kategorien, Transaktionen (auch gelöschte, Feld deleted_at), Budgets, Sparziele
 haushalt.json       Haushalte, in denen du Mitglied bist: Aufgaben, Einkauf, Ordner (Verträge, Geräte)
 organisation.json   Termine, Kalender, Aufgaben, Notizen, Dateien

@@ -24,7 +24,8 @@ from finanzen.models import Transaction
 
 pytestmark = pytest.mark.django_db
 URL = '/api/v1/auth/export/'
-PROJECT_APPS = {'core', 'finanzen', 'haushalt', 'organisation', 'reisen', 'connections', 'website', 'integrations', 'datenexport'}
+PROJECT_APPS = {'core', 'finanzen', 'haushalt', 'organisation', 'reisen', 'connections', 'website', 'integrations', 'datenexport',
+                'monitoring'}
 
 
 @pytest.fixture(autouse=True)

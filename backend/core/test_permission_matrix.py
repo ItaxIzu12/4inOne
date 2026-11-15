@@ -405,6 +405,10 @@ PUBLIC_ROUTES = {
     'api/v1/auth/password-reset/request/', 'api/v1/auth/password-reset/confirm/', 'api/v1/auth/email/verify/',
     # Öffentliche Website (website/): nur Schreiben, nie Lesen — cookielose Seitenzählung.
     'api/v1/site/pageview/',
+    # Fehler-Monitoring (monitoring/): ob Fehlerberichte aktiv sind und der öffentliche DSN — der Browser braucht das
+    # auch vor der Anmeldung. Der Tunnel api/v1/monitoring/tunnel/ ist ebenfalls offen (Funktions-View, daher nicht in
+    # diesem Sweep): er leitet nur an den konfigurierten DSN weiter, mit Größen- und Rate-Limit (monitoring/tests.py).
+    'api/v1/monitoring/config/',
 }
 
 

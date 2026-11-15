@@ -227,6 +227,9 @@ class UserSession(models.Model):
     sid = models.CharField(max_length=32, unique=True)
     current_jti = models.CharField(max_length=64)
     user_agent = models.CharField(max_length=300, blank=True)
+    # Mit zweitem Faktor angemeldet? Das Admin-Panel (monitoring/permissions.py) verlangt das für DIESE Sitzung —
+    # Sitzungen von vor dem Einschalten der Zwei-Faktor-Anmeldung zählen nicht.
+    mfa_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     last_seen = models.DateTimeField()
 

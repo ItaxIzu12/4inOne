@@ -92,6 +92,11 @@
                   <a role="menuitem" routerLink="/einstellungen" (click)="closeMenu()"><icon-settings />Einstellungen</a>
                   <a role="menuitem" routerLink="/einstellungen/zwei-faktor" (click)="closeMenu()"><icon-two-factor />Zwei-Faktor-Authentifizierung</a>
                 </div>
+                @if (auth.currentUser()?.is_admin && !isDemoRoute()) {
+                  <div class="account-group" role="none">
+                    <a role="menuitem" routerLink="/admin" (click)="closeMenu()"><app-icon name="shield" />Admin-Panel</a>
+                  </div>
+                }
                 <div class="account-group" role="none">
                   <a role="menuitem" routerLink="/datenschutz" (click)="closeMenu()"><icon-legal />Datenschutz</a>
                   <a role="menuitem" routerLink="/barrierefreiheit" (click)="closeMenu()"><icon-info />Barrierefreiheit</a>

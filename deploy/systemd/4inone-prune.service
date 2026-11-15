@@ -1,9 +1,11 @@
-# Löscht abgelaufene Tageszähler der Besucherzählung (PAGEVIEW_RETENTION_DAYS). Ausgelöst von 4inone-prune.timer.
+# Löscht abgelaufene Tageszähler der Besucherzählung (PAGEVIEW_RETENTION_DAYS) und alte Anmelde-Ereignisse des
+# Admin-Panels (AUTH_EVENT_RETENTION_DAYS, docs/MONITORING.md). Ausgelöst von 4inone-prune.timer.
 [Unit]
-Description=4inOne: alte Besucherzähler löschen
+Description=4inOne: alte Besucherzähler und Anmelde-Ereignisse löschen
 
 [Service]
 Type=oneshot
 User=deploy
 WorkingDirectory=/srv/4inone/backend
 ExecStart=/srv/4inone/backend/.venv/bin/python manage.py prune_website
+ExecStart=/srv/4inone/backend/.venv/bin/python manage.py prune_auth_events

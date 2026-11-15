@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'connections',
     'integrations',
     'datenexport',
+    'monitoring',
     # Öffentliche Website: cookielose Besucherzählung
     'website',
 ]
@@ -267,6 +268,8 @@ REST_FRAMEWORK = {
         # mfa_views.py), da DRFs Rate-String-Format nur s/m/h/d als Einheit
         # kennt, kein "alle 5 Minuten".
         'mfa_verify': f"{env.int('RATE_LIMIT_MFA_VERIFY', default=5)}/min",
+        # Fehlerberichte aus dem Browser über den Tunnel (monitoring/views.py), pro IP
+        'monitoring_tunnel': f"{env.int('RATE_LIMIT_MONITORING_TUNNEL', default=60)}/min",
         # Pro HAUSHALT (nicht pro Nutzer/IP), siehe HouseholdInviteRateThrottle
         # (core/household_views.py) — mehrere Mitglieder desselben Haushalts
         # teilen sich das Limit, sonst ließe es sich durch Rollenwechsel/
@@ -473,3 +476,21 @@ else:
             'BACKEND': 'django.core.mail.backends.console.EmailBackend',
         },
     }
+
+# ============================================================
+# Fehler-Monitoring (GlitchTip, Sentry-kompatibel) und Admin-Panel — docs/MONITORING.md
+# Ohne SENTRY_DSN bleibt alles aus (Tests, CI, wer GlitchTip nicht betreibt).
+# ============================================================
+SENTRY_DSN = env('SENTRY_DSN', default='')
+SENTRY_ENVIRONMENT = env('SENTRY_ENVIRONMENT', default='entwicklung' if DEBUG else 'produktion')
+SENTRY_RELEASE = env('SENTRY_RELEASE', default='')
+# Für das Admin-Panel: Link zur GlitchTip-Oberfläche und (optional) die letzten Fehler über die GlitchTip-API
+GLITCHTIP_URL = env('GLITCHTIP_URL', default='')
+GLITCHTIP_ORG = env('GLITCHTIP_ORG', default='')
+GLITCHTIP_API_TOKEN = env('GLITCHTIP_API_TOKEN', default='')
+# Anmelde-Ereignisse im Admin-Panel: Aufbewahrung in Tagen (manage.py prune_auth_events, täglich)
+AUTH_EVENT_RETENTION_DAYS = env.int('AUTH_EVENT_RETENTION_DAYS', default=90)
+
+from monitoring.sentry import init_sentry  # noqa: E402 (braucht die Werte oben, keine App-Modelle)
+
+init_sentry(SENTRY_DSN, SENTRY_ENVIRONMENT, SENTRY_RELEASE)
