@@ -7,6 +7,7 @@ from .views import (
     TripEventViewSet,
     TripExpenseViewSet,
     TripParticipantViewSet,
+    TripSettlementViewSet,
     TripTaskViewSet,
     TripViewSet,
 )
@@ -19,4 +20,5 @@ router.register('events', TripEventViewSet, basename='reisen-event')
 router.register('expenses', TripExpenseViewSet, basename='reisen-expense')
 router.register('budget-categories', TripBudgetCategoryViewSet, basename='reisen-budget-category')
 router.register('participants', TripParticipantViewSet, basename='reisen-participant')
+router.register('settlements', TripSettlementViewSet, basename='reisen-settlement')
 urlpatterns = [path('', include(router.urls))]

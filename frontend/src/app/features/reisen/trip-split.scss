@@ -1,0 +1,107 @@
+// Reise › Budget › Wer schuldet wem (15.11.2026). Zeilen wie die Ausgabenliste, Saldo in Text UND Farbe.
+.split {
+  display: grid;
+  gap: 12px;
+}
+.split .card-title {
+  margin-bottom: 0;
+}
+.split__sub {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.people,
+.moves {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.people li,
+.moves li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-height: 52px;
+  padding: 8px 0;
+}
+.people li + li,
+.moves li + li {
+  border-top: 1px solid var(--line);
+}
+.people__name {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.people__name b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.people__state {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.is-plus {
+  color: var(--success);
+}
+.is-minus {
+  color: var(--blue-text);
+}
+.is-even {
+  color: var(--text-secondary);
+}
+.moves__text {
+  display: inline-flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-primary);
+}
+.moves__text app-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+.moves__amount {
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.moves .soft {
+  min-height: 44px;
+}
+.moves--done .moves__text,
+.moves--done .moves__amount {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.moves--done .link {
+  min-height: 44px;
+}
+.split__done {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--success);
+  font-weight: 600;
+}
+.split__done app-icon {
+  width: 18px;
+  height: 18px;
+}
+.split__note {
+  font-size: var(--fs-meta);
+}
+@media (max-width: 520px) {
+  .moves .soft {
+    width: 100%;
+    justify-content: center;
+  }
+}

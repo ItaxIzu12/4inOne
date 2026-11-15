@@ -9,7 +9,7 @@ from core.fx import convert
 from core.models import Contact, home_currency_for
 
 from .expense_fx import _Rates, resnapshot_trip_currency, snapshot_expense
-from .models import PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask
+from .models import PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripSettlement, TripTask
 
 
 def _display_name(user) -> str:
@@ -278,19 +278,45 @@ class TripEventSerializer(TripScopedSerializer):
         return attrs
 
 
+def _travels_with(trip, user) -> bool:
+    """Ersteller:in oder Teilnehmer:in dieser Reise – nur sie können zahlen oder mittragen."""
+    return trip.owner_id == user.id or TripParticipant.objects.filter(trip=trip, user=user).exists()
+
+
 class TripExpenseSerializer(TripScopedSerializer):
     """Originalbetrag + Originalwährung kommen vom Nutzer (Standard: Reisewährung); die Umrechnungen rechnet nur das
-    Backend (expense_fx.py) — vom Client gesendete Werte dafür werden ignoriert (read-only)."""
+    Backend (expense_fx.py) — vom Client gesendete Werte dafür werden ignoriert (read-only).
+    Wer schuldet wem (15.11.2026): `paid_by` (wer bezahlt hat) und `shared_with` (für wen; leer = alle Mitreisenden)."""
 
     currency = serializers.ChoiceField(choices=CURRENCY_CHOICES, required=False)
+    paid_by_name = serializers.SerializerMethodField()
 
     class Meta:
         model = TripExpense
         fields = [
             'id', 'trip', 'title', 'amount', 'currency', 'date', 'category', 'note',
             'amount_trip', 'rate_to_trip', 'home_currency', 'amount_home', 'rate_to_home', 'rate_date',
-            'created_at',
+            'paid_by', 'paid_by_name', 'shared_with', 'created_at',
         ]
+        extra_kwargs = {
+            'paid_by': {'error_messages': {'does_not_exist': 'Diese Person reist nicht mit.'}},
+            'shared_with': {'required': False, 'error_messages': {'does_not_exist': 'Diese Person reist nicht mit.'}},
+        }
+
+    def get_paid_by_name(self, obj) -> str:
+        return _display_name(obj.paid_by) if obj.paid_by_id else ''
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        trip = attrs.get('trip') or getattr(self.instance, 'trip', None)
+        if trip is None:
+            return attrs
+        payer = attrs.get('paid_by')
+        if payer is not None and not _travels_with(trip, payer):
+            raise serializers.ValidationError({'paid_by': 'Diese Person reist nicht mit.'})
+        if any(not _travels_with(trip, user) for user in attrs.get('shared_with', [])):
+            raise serializers.ValidationError({'shared_with': 'Diese Person reist nicht mit.'})
+        return attrs
         read_only_fields = [
             'id', 'created_at', 'amount_trip', 'rate_to_trip', 'home_currency', 'amount_home', 'rate_to_home', 'rate_date',
         ]
@@ -322,19 +348,25 @@ class TripExpenseSerializer(TripScopedSerializer):
         return data
 
     def create(self, validated_data):
+        shared = validated_data.pop('shared_with', None)  # Mehrfachauswahl erst nach dem Speichern setzbar
         validated_data.setdefault('currency', validated_data['trip'].currency)
         expense = TripExpense(**validated_data)
         snapshot_expense(expense, home_currency=self._home(), recompute=True)
         expense.save()
+        if shared is not None:
+            expense.shared_with.set(shared)
         return expense
 
     def update(self, instance, validated_data):
         validated_data.pop('trip', None)  # eine Ausgabe wandert nicht in eine andere Reise
+        shared = validated_data.pop('shared_with', None)
         changed = any(key in validated_data and validated_data[key] != getattr(instance, key) for key in ('amount', 'currency'))
         for key, value in validated_data.items():
             setattr(instance, key, value)
         snapshot_expense(instance, home_currency=self._home(), recompute=changed)
         instance.save()
+        if shared is not None:
+            instance.shared_with.set(shared)
         return instance
 
 
@@ -348,3 +380,42 @@ class TripBudgetCategorySerializer(TripScopedSerializer):
         if value < 0:
             raise serializers.ValidationError('Der geplante Betrag darf nicht negativ sein.')
         return value
+
+
+class TripSettlementSerializer(TripScopedSerializer):
+    """„Als beglichen markieren“: Geld ist zwischen zwei Mitreisenden geflossen – nur ein Vermerk, 4inOne zahlt nie."""
+
+    from_name = serializers.SerializerMethodField()
+    to_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TripSettlement
+        fields = ['id', 'trip', 'from_user', 'from_name', 'to_user', 'to_name', 'amount', 'created_at']
+        read_only_fields = ['id', 'created_at']
+        extra_kwargs = {
+            'from_user': {'error_messages': {'does_not_exist': 'Diese Person reist nicht mit.'}},
+            'to_user': {'error_messages': {'does_not_exist': 'Diese Person reist nicht mit.'}},
+        }
+
+    def get_from_name(self, obj) -> str:
+        return _display_name(obj.from_user)
+
+    def get_to_name(self, obj) -> str:
+        return _display_name(obj.to_user)
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError('Der Betrag muss größer als 0 sein.')
+        return value
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        trip = attrs.get('trip') or getattr(self.instance, 'trip', None)
+        giver = attrs.get('from_user', getattr(self.instance, 'from_user', None))
+        receiver = attrs.get('to_user', getattr(self.instance, 'to_user', None))
+        if giver is not None and receiver is not None and giver.id == receiver.id:
+            raise serializers.ValidationError({'to_user': 'Ausgleichen geht nur zwischen zwei Personen.'})
+        for field, user in (('from_user', giver), ('to_user', receiver)):
+            if trip is not None and user is not None and not _travels_with(trip, user):
+                raise serializers.ValidationError({field: 'Diese Person reist nicht mit.'})
+        return attrs

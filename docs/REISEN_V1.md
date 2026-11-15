@@ -252,3 +252,20 @@ wo gebucht wurde. Alles wird selbst eingetragen; weiterhin keine Buchungs-, Flug
 - **Ortsvorschläge beim Tippen** (Reiseziel, Abreiseort, Unterkunft) in Reisen vorerst aus – einfache Textfelder;
   `app-place-input` bleibt im Projekt, die zugehörigen Tests sind übersprungen und kommen mit der Funktion zurück.
 - Später (nicht gebaut): Buchungsbestätigung hochladen, die Angaben werden ausgelesen (wie trip.com / Prüfstand).
+
+## Wer schuldet wem (15.11.2026)
+
+- **Wofür:** Mehrere Personen reisen, jede zahlt mal etwas. Im Budget-Reiter steht, wer was ausgelegt hat, und wer wem
+  wie viel schuldet. Beispiel Berlin (Demo): Sophie 260 €, Max 120 €, je 190 € Anteil → „Max gibt Sophie 70 €“.
+- **Ausgabe-Dialog** (nur bei mehr als einer Person): „Bezahlt von“ (vorausgewählt: man selbst; „Nicht angegeben“
+  möglich) und „Für wen“ als Personen-Chips (vorausgewählt: alle, mindestens eine). Alle ausgewählt wird als „alle“
+  gespeichert (`shared_with` leer), damit später Mitreisende automatisch mitzählen.
+- **Rechnung** (`backend/reisen/split.py`, Spiegel `computeBalances` in `reisen-logic.ts` für die Demo): jede Ausgabe
+  mit Zahler gleich auf die Personen, für die sie war; in der Reisewährung (`amount_trip`), auf den Cent, Rest-Cent
+  reihum nach Nutzer-ID. Saldo = ausgelegt − Anteil (± Beglichenes). Wenigste Überweisungen: größte Schuld an das größte
+  Guthaben (höchstens n − 1). Ausgaben ohne Zahler (ältere) oder ohne Kurs zählen nicht mit – die Karte sagt, wie viele.
+- **Als beglichen markieren** legt einen `TripSettlement` an (nur ein Vermerk, 4inOne bewegt nie Geld), „Zurücknehmen“
+  löscht ihn. Sehen dürfen alle Mitreisenden (`GET trips/<id>/balances/`), vermerken nur Besitzer:in und
+  Bearbeiter:innen; Zahler, „Für wen“ und Begleichungen nur mit Mitreisenden (Backend prüft). Nichts geht nach Finanzen.
+- Alleinreise: keine Karte, kein „… hat bezahlt“. Migration `reisen/0014_expense_split_settlements`.
+- Tests: `backend/reisen/test_split.py`, `trip-split.spec.ts`, e2e „Wer schuldet wem“ in `e2e/reisen.spec.ts`.

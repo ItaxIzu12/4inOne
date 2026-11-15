@@ -1226,6 +1226,11 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
 - **Budget** `trip-budget.*`: `.kpis` — DOM-Reihenfolge Gesamtbudget · Ausgegeben · Noch übrig (Rechnung für
   Screenreader), sichtbar „Noch übrig“ per `order: -1` groß vorn; `.stack` 14 px (über Budget: roter Innenrand) +
   `.legend`; Farben `BUDGET_COLOR`; `.exp-day` Tageskopf.
+- **Wer schuldet wem** `trip-split.*` (15.11.2026, eigene Komponente im Budget, nur bei > 1 Person): `.people`
+  (Saldo `.is-plus` `--success` / `.is-minus` `--accent-hover` / `.is-even` grau – immer mit Wort), `.moves` (Zeilen
+  wie `.exp`, 52 px, Haarlinien; `.soft` 44 px, ≤ 520 px volle Breite), `.moves--done`, `.split__done`. Lädt
+  `ReisenApi.balances()` neu, sobald sich die Ausgaben ändern. Dialog: `.share-chip` = `.category-chip` mit
+  `--c: var(--travel-accent)`.
 - **Dialoge** `trip-dialogs.scss` (eigene Datei wegen Stilbudget von `reisen.scss`): `.ticket-preview` (sticky),
   `.form-step` mit 24-px-Nummer, `.transport-chip`/`.category-chip` 44 px.
 - **Reisekopf ≤ 760 px:** `.heading-icon` aus, `h1` `overflow-wrap: break-word` (in `trip-dialogs.scss`). `.pass__facts`

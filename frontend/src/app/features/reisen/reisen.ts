@@ -362,7 +362,24 @@ export class Reisen {
     date: [localDay(new Date()), Validators.required],
     category: ['SONSTIGES'],
     note: ['', Validators.maxLength(240)],
+    /** Wer schuldet wem (15.11.2026): Nutzer-ID als Text, leer = nicht angegeben */
+    paid_by: [''],
   });
+  /** „Für wen“: ausgewählte Mitreisende; alle ausgewählt wird als „alle“ gespeichert (shared_with leer). */
+  readonly expenseShares = signal<number[]>([]);
+  readonly sharedTrip = computed(() => (this.selectedTrip()?.participants.length ?? 0) > 1);
+  readonly payerOptions = computed<SelectOption[]>(() => [
+    ...(this.selectedTrip()?.participants ?? []).map((p) => ({ value: String(p.user), label: p.is_self ? `${p.display_name} (Du)` : p.display_name })),
+    { value: '', label: 'Nicht angegeben' },
+  ]);
+  toggleShare(user: number): void {
+    const current = this.expenseShares();
+    if (current.includes(user)) {
+      if (current.length > 1) this.expenseShares.set(current.filter((u) => u !== user)); // mindestens eine Person
+    } else {
+      this.expenseShares.set([...current, user]);
+    }
+  }
   /** Fehler am Feld — erst nach „Speichern“, danach live (siehe Field). */
   readonly expenseAmountError = signal('');
   readonly expenseValue = signal(this.expenseForm.getRawValue());
@@ -1319,7 +1336,11 @@ export class Reisen {
       date: item?.date ?? localDay(new Date()),
       category: item?.category ?? 'SONSTIGES',
       note: item?.note ?? '',
+      // Neue Ausgabe: „Ich“ habe bezahlt; ältere Ausgaben ohne Angabe bleiben offen, bis jemand sie zuordnet.
+      paid_by: item ? (item.paid_by ? String(item.paid_by) : '') : String(this.selectedTrip()?.participants.find((p) => p.is_self)?.user ?? ''),
     });
+    const everyone = (this.selectedTrip()?.participants ?? []).map((p) => p.user);
+    this.expenseShares.set(item?.shared_with?.length ? item.shared_with.filter((u) => everyone.includes(u)) : everyone);
     this.editExpenseId.set(item?.id);
     this.expenseFormError.set('');
     this.expenseAmountError.set('');
@@ -1353,6 +1374,7 @@ export class Reisen {
       date: v.date,
       category: v.category as BudgetCategory,
       note: v.note.trim(),
+      ...(this.sharedTrip() ? this.splitFields(v.paid_by) : {}),
     };
     this.api
       .saveExpense(data, id, id ? undefined : this.expenseSubmission.for(data))
@@ -1370,6 +1392,11 @@ export class Reisen {
           this.expenseFormError.set(id ? 'Die Ausgabe konnte nicht gespeichert werden.' : 'Die Ausgabe konnte nicht hinzugefügt werden.');
         },
       });
+  }
+  private splitFields(paidBy: string): Pick<TripExpense, 'paid_by' | 'shared_with'> {
+    const everyone = (this.selectedTrip()?.participants ?? []).map((p) => p.user);
+    const shares = this.expenseShares().filter((u) => everyone.includes(u));
+    return { paid_by: paidBy ? Number(paidBy) : null, shared_with: shares.length && shares.length < everyone.length ? shares : [] };
   }
   removeExpenseFromEditor(): void {
     const id = this.editExpenseId();

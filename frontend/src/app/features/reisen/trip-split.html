@@ -1,0 +1,67 @@
+<section class="card split" aria-labelledby="ts-title">
+  <h2 id="ts-title" class="card-title"><app-icon name="share" aria-hidden="true" />Wer schuldet wem</h2>
+
+  @if (failed()) {
+    <p class="muted">Die Abrechnung konnte nicht geladen werden.</p>
+    <button type="button" class="link" (click)="load()">Erneut versuchen</button>
+  } @else if (data(); as d) {
+    @if (!anyPaid()) {
+      <p class="muted">Sobald bei einer Ausgabe steht, wer bezahlt hat, siehst du hier, wer wem etwas schuldet.</p>
+    } @else {
+      <ul class="people">
+        @for (p of d.people; track p.user) {
+          @let s = state(p.balance);
+          <li>
+            <span class="people__name"><b>{{ p.name }}</b><small>hat {{ money(p.paid) }} ausgelegt · Anteil {{ money(p.share) }}</small></span>
+            <span class="people__state num" [class]="'is-' + s.tone">{{ s.text }}</span>
+          </li>
+        }
+      </ul>
+
+      @if (d.transfers.length) {
+        <h3 class="split__sub">So wird es ausgeglichen</h3>
+        <ul class="moves">
+          @for (t of d.transfers; track key(t)) {
+            <li>
+              <span class="moves__text"><b>{{ t.from_name }}</b> <app-icon name="arrow" aria-hidden="true" /><span class="sr-only"> gibt </span> <b>{{ t.to_name }}</b></span>
+              <b class="moves__amount num">{{ money(t.amount) }}</b>
+              @if (canEdit()) {
+                <button type="button" class="soft" [disabled]="busy() !== null" (click)="settle(t)">
+                  <app-icon name="check" />{{ busy() === key(t) ? 'Wird vermerkt …' : 'Als beglichen markieren' }}
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      } @else if (settled()) {
+        <p class="split__done"><app-icon name="check-circle" aria-hidden="true" />Alles ausgeglichen.</p>
+      }
+    }
+
+    @if (d.unassigned) {
+      <p class="muted">{{ d.unassigned === 1 ? '1 Ausgabe zählt' : d.unassigned + ' Ausgaben zählen' }} noch nicht mit – ohne Angabe, wer bezahlt hat, oder ohne Umrechnung.</p>
+    }
+
+    @if (d.settlements.length) {
+      <h3 class="split__sub">Beglichen</h3>
+      <ul class="moves moves--done">
+        @for (s of d.settlements; track s.id) {
+          <li>
+            <span class="moves__text">{{ s.from_name }} an {{ s.to_name }} <small>· {{ shortDate(s.created_at) }}</small></span>
+            <span class="moves__amount num">{{ money(s.amount) }}</span>
+            @if (canEdit()) {
+              <button type="button" class="link" [disabled]="busy() !== null" (click)="undo(s.id)">
+                Zurücknehmen<span class="sr-only"> ({{ s.from_name }} an {{ s.to_name }}, {{ money(s.amount) }})</span>
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    <p class="muted split__note">Nur ein Vermerk – 4inOne überweist kein Geld.</p>
+  } @else {
+    <p class="muted" role="status">Wird berechnet …</p>
+  }
+  <p class="sr-only" aria-live="polite">{{ message() }}</p>
+</section>

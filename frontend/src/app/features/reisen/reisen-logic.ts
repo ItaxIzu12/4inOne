@@ -1,5 +1,5 @@
 import { IconName } from '../../shared/icons/app-icon';
-import { BudgetCategory, PackingCategory, PackingItem, Trip, TripBudgetCategory, TripEvent, TripEventKind, TripExpense, TripTask, TripStatus } from './reisen-api.service';
+import { BudgetCategory, PackingCategory, PackingItem, Trip, TripBalances, TripBudgetCategory, TripEvent, TripEventKind, TripExpense, TripSettlement, TripTask, TripStatus } from './reisen-api.service';
 import { formatAmount } from '../../shared/currency/currencies';
 import { parseMoneyInput } from '../../shared/currency/money-input';
 
@@ -403,5 +403,76 @@ export function cancellationInfo(trip: Pick<Trip, 'free_cancellation_until' | 's
     status,
     soon: days >= 0 && days <= CANCELLATION_SOON_DAYS,
     passed: days < 0,
+  };
+}
+
+// ---------- Wer schuldet wem (15.11.2026) – dieselben Regeln wie backend reisen/split.py ----------
+/** In Cent rechnen, damit nichts verloren geht. Rest reihum an die ersten (nach Nutzer-ID). */
+export function splitEqually(cents: number, userIds: number[]): Map<number, number> {
+  const ids = [...userIds].sort((a, b) => a - b);
+  const base = Math.floor(cents / ids.length);
+  const rest = cents - base * ids.length;
+  return new Map(ids.map((id, i) => [id, base + (i < rest ? 1 : 0)]));
+}
+/** Wenigste Überweisungen: größte Schuld an das größte Guthaben. Beträge in Cent. */
+export function transfersFor(balance: Map<number, number>): [number, number, number][] {
+  const debtors = [...balance].filter(([, b]) => b < 0).map(([id, b]) => ({ id, amount: -b }));
+  const creditors = [...balance].filter(([, b]) => b > 0).map(([id, b]) => ({ id, amount: b }));
+  const out: [number, number, number][] = [];
+  const order = (list: { id: number; amount: number }[]) => list.sort((a, b) => b.amount - a.amount || a.id - b.id);
+  while (debtors.length && creditors.length) {
+    order(debtors);
+    order(creditors);
+    const d = debtors[0];
+    const c = creditors[0];
+    const amount = Math.min(d.amount, c.amount);
+    if (amount > 0) out.push([d.id, c.id, amount]);
+    d.amount -= amount;
+    c.amount -= amount;
+    if (!d.amount) debtors.shift();
+    if (!c.amount) creditors.shift();
+  }
+  return out;
+}
+const toCents = (value: string | null | undefined) => Math.round(Number(value ?? 0) * 100);
+const fromCents = (cents: number) => (cents / 100).toFixed(2);
+/** Für die Demo (ohne Backend): Salden und Überweisungen aus Ausgaben, Mitreisenden und Begleichungen. */
+export function computeBalances(
+  trip: Pick<Trip, 'currency' | 'participants'>,
+  expenses: TripExpense[],
+  settlements: TripSettlement[],
+): TripBalances {
+  const names = new Map(trip.participants.map((p) => [p.user, p.display_name]));
+  const travellers = [...names.keys()];
+  const paid = new Map<number, number>();
+  const share = new Map<number, number>();
+  let unassigned = 0;
+  for (const e of expenses) {
+    if (!e.paid_by || e.amount_trip == null) {
+      unassigned++;
+      continue;
+    }
+    if (!names.has(e.paid_by)) names.set(e.paid_by, e.paid_by_name || 'Jemand');
+    const cents = toCents(e.amount_trip);
+    paid.set(e.paid_by, (paid.get(e.paid_by) ?? 0) + cents);
+    const who = e.shared_with?.length ? e.shared_with : travellers;
+    for (const [id, part] of splitEqually(cents, who)) share.set(id, (share.get(id) ?? 0) + part);
+  }
+  const balance = new Map<number, number>([...names.keys()].map((id) => [id, (paid.get(id) ?? 0) - (share.get(id) ?? 0)]));
+  for (const s of settlements) {
+    balance.set(s.from_user, (balance.get(s.from_user) ?? 0) + toCents(s.amount));
+    balance.set(s.to_user, (balance.get(s.to_user) ?? 0) - toCents(s.amount));
+  }
+  const ids = [...names.keys()].sort((a, b) => a - b);
+  return {
+    currency: (trip as Trip).currency,
+    people: ids.map((id) => ({
+      user: id, name: names.get(id) ?? '', paid: fromCents(paid.get(id) ?? 0), share: fromCents(share.get(id) ?? 0), balance: fromCents(balance.get(id) ?? 0),
+    })),
+    transfers: transfersFor(balance).map(([from, to, cents]) => ({
+      from_user: from, from_name: names.get(from) ?? '', to_user: to, to_name: names.get(to) ?? '', amount: fromCents(cents),
+    })),
+    settlements,
+    unassigned,
   };
 }

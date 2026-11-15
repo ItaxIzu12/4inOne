@@ -12,13 +12,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .expense_fx import backfill_pending
-from .models import PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask
+from .models import PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripSettlement, TripTask
 from .permissions import WRITABLE_ROLES, TripAccessPermission, TripContentAccessPermission, TripParticipantManagePermission
 from core.idempotency import idempotent
 from .serializers import (
     PackingItemSerializer,
     TripBudgetCategorySerializer,
     TripEventSerializer,
+    TripSettlementSerializer,
     TripExpenseSerializer,
     TripParticipantSerializer,
     TripSerializer,
@@ -110,6 +111,14 @@ class TripViewSet(PrivateResponseMixin, viewsets.ModelViewSet):
             'currency': trip.currency,
         })
 
+    @action(detail=True, methods=['get'])
+    def balances(self, request, pk=None):
+        """Wer schuldet wem: ausgelegt, Anteil, Saldo je Person, die wenigsten Überweisungen und was schon beglichen
+        ist (reisen/split.py). Sichtbar für alle, die die Reise sehen – wie die Ausgaben selbst."""
+        from .split import balances
+
+        return Response(balances(self.get_object()))
+
     def perform_create(self, serializer):
         trip = serializer.save(owner=self.request.user)
         # Solo-Reise: der Ersteller ist automatisch der einzige Teilnehmer, ohne vorher eine Gruppe oder einen
@@ -185,8 +194,21 @@ class TripEventViewSet(TripScopedViewSet):
     serializer_class = TripEventSerializer
 
 
+class TripSettlementViewSet(TripScopedViewSet):
+    """Ausgleichszahlungen („als beglichen markiert“). Anlegen und Rückgängig (Löschen) wie andere Reiseinhalte:
+    Ersteller:in sowie Mitreisende mit Rolle OWNER/EDITOR. Ändern gibt es nicht – lieber löschen und neu eintragen."""
+
+    queryset = TripSettlement.objects.select_related('from_user', 'to_user')
+    serializer_class = TripSettlementSerializer
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
 class TripExpenseViewSet(TripScopedViewSet):
-    queryset = TripExpense.objects.all()
+    # Zahler und „für wen“ gleich mitladen – sonst je Ausgabe eigene Abfragen
+    queryset = TripExpense.objects.select_related('paid_by').prefetch_related('shared_with')
     serializer_class = TripExpenseSerializer
 
     @idempotent('reisen.expense.create')

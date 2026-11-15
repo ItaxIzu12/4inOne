@@ -128,6 +128,31 @@ export interface TripExpense {
   amount_home?: string | null;
   rate_to_home?: string | null;
   rate_date?: string | null;
+  /** Wer schuldet wem (15.11.2026): wer bezahlt hat (Nutzer-ID) – null bei älteren Ausgaben ohne Angabe. */
+  paid_by?: number | null;
+  paid_by_name?: string;
+  /** Für wen: Nutzer-IDs; leer = alle Mitreisenden. */
+  shared_with?: number[];
+}
+/** Ausgleichszahlung „als beglichen markiert“ – nur ein Vermerk, 4inOne bewegt nie Geld. */
+export interface TripSettlement {
+  id: number;
+  trip?: number;
+  from_user: number;
+  from_name: string;
+  to_user: number;
+  to_name: string;
+  amount: string;
+  created_at: string;
+}
+/** Wer schuldet wem – Antwort von GET /reisen/trips/<id>/balances/ (backend reisen/split.py). */
+export interface TripBalances {
+  currency: string;
+  people: { user: number; name: string; paid: string; share: string; balance: string }[];
+  transfers: { from_user: number; from_name: string; to_user: number; to_name: string; amount: string }[];
+  settlements: TripSettlement[];
+  /** Ausgaben ohne Zahler oder ohne Kurs in die Reisewährung – zählen nicht mit */
+  unassigned: number;
 }
 export type BudgetCategory = 'TRANSPORT' | 'UNTERKUNFT' | 'ESSEN' | 'AKTIVITAETEN' | 'SHOPPING' | 'SONSTIGES' | 'RESERVE';
 /** Geplanter Betrag je Kategorie; die Ausgaben tragen dieselbe Kategorie (geplant vs. ausgegeben). */
@@ -217,6 +242,16 @@ export class ReisenApi {
   }
   removeExpense(id: number) {
     return this.http.delete<void>(`${this.base}/expenses/${id}/`);
+  }
+
+  balances(tripId: number) {
+    return this.http.get<TripBalances>(`${this.base}/trips/${tripId}/balances/`);
+  }
+  settle(data: { trip: number; from_user: number; to_user: number; amount: string }) {
+    return this.http.post<TripSettlement>(`${this.base}/settlements/`, data);
+  }
+  removeSettlement(id: number) {
+    return this.http.delete<void>(`${this.base}/settlements/${id}/`);
   }
 
   budgetCategories(tripId: number) {

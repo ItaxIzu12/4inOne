@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { ContactOption, PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask } from './reisen-api.service';
+import { ContactOption, PackingItem, Trip, TripBalances, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripSettlement, TripTask } from './reisen-api.service';
+import { computeBalances } from './reisen-logic';
 import { DEMO_RATES } from '../../core/fx/fx.service';
 import { HomeCurrency } from '../../core/fx/home-currency';
 
@@ -191,17 +192,19 @@ export class DemoReisenApi {
     { id: 6, trip: 1, title: 'ICE nach Düsseldorf', kind: 'TRANSPORT', starts_at: at(BERLIN + 2, '16:29'), ends_at: at(BERLIN + 2, '20:50'), location: 'Berlin Hbf', note: 'Wagen 3, Platz 21' },
   ];
   private expenseList: TripExpense[] = [
-    { id: 1, trip: 1, title: 'Hotelanzahlung', amount: '200.00', date: dateOnly(-6), category: 'UNTERKUNFT', currency: 'EUR', amount_trip: '200.00', home_currency: 'EUR', amount_home: '200.00' },
-    { id: 2, trip: 1, title: 'Bahntickets', amount: '80.00', date: dateOnly(-7), category: 'TRANSPORT', currency: 'EUR', amount_trip: '80.00', home_currency: 'EUR', amount_home: '80.00' },
-    { id: 3, trip: 1, title: 'Restaurant „Lindenhof“ (Reservierung)', amount: '45.00', date: dateOnly(-4), category: 'ESSEN', currency: 'EUR', amount_trip: '45.00', home_currency: 'EUR', amount_home: '45.00' },
-    { id: 4, trip: 1, title: 'Museum – Eintritt', amount: '25.00', date: dateOnly(-3), category: 'AKTIVITAETEN', currency: 'EUR', amount_trip: '25.00', home_currency: 'EUR', amount_home: '25.00' },
-    { id: 5, trip: 1, title: 'Stadtführung', amount: '15.00', date: dateOnly(-3), category: 'AKTIVITAETEN', currency: 'EUR', amount_trip: '15.00', home_currency: 'EUR', amount_home: '15.00' },
-    { id: 6, trip: 1, title: 'Frühstück vorab bezahlt', amount: '15.00', date: dateOnly(-2), category: 'ESSEN', currency: 'EUR', amount_trip: '15.00', home_currency: 'EUR', amount_home: '15.00' },
+    { id: 1, trip: 1, title: 'Hotelanzahlung', amount: '200.00', date: dateOnly(-6), category: 'UNTERKUNFT', currency: 'EUR', amount_trip: '200.00', home_currency: 'EUR', amount_home: '200.00', paid_by: 1, paid_by_name: 'Sophie' },
+    { id: 2, trip: 1, title: 'Bahntickets', amount: '80.00', date: dateOnly(-7), category: 'TRANSPORT', currency: 'EUR', amount_trip: '80.00', home_currency: 'EUR', amount_home: '80.00', paid_by: 301, paid_by_name: 'Max' },
+    { id: 3, trip: 1, title: 'Restaurant „Lindenhof“ (Reservierung)', amount: '45.00', date: dateOnly(-4), category: 'ESSEN', currency: 'EUR', amount_trip: '45.00', home_currency: 'EUR', amount_home: '45.00', paid_by: 1, paid_by_name: 'Sophie' },
+    { id: 4, trip: 1, title: 'Museum – Eintritt', amount: '25.00', date: dateOnly(-3), category: 'AKTIVITAETEN', currency: 'EUR', amount_trip: '25.00', home_currency: 'EUR', amount_home: '25.00', paid_by: 301, paid_by_name: 'Max' },
+    { id: 5, trip: 1, title: 'Stadtführung', amount: '15.00', date: dateOnly(-3), category: 'AKTIVITAETEN', currency: 'EUR', amount_trip: '15.00', home_currency: 'EUR', amount_home: '15.00', paid_by: 1, paid_by_name: 'Sophie' },
+    { id: 6, trip: 1, title: 'Frühstück vorab bezahlt', amount: '15.00', date: dateOnly(-2), category: 'ESSEN', currency: 'EUR', amount_trip: '15.00', home_currency: 'EUR', amount_home: '15.00', paid_by: 301, paid_by_name: 'Max' },
     { id: 7, trip: 1, title: 'Kurtaxe', amount: '40.00', date: dateOnly(-2), category: 'UNTERKUNFT', currency: 'EUR', amount_trip: '40.00', home_currency: 'EUR', amount_home: '40.00' },
-    { id: 8, trip: 2, title: 'Flüge (Anzahlung)', amount: '600.00', date: dateOnly(-10), category: 'TRANSPORT', currency: 'EUR', amount_trip: '600.00', home_currency: 'EUR', amount_home: '600.00' },
+    { id: 8, trip: 2, title: 'Flüge (Anzahlung)', amount: '600.00', date: dateOnly(-10), category: 'TRANSPORT', currency: 'EUR', amount_trip: '600.00', home_currency: 'EUR', amount_home: '600.00', paid_by: 1, paid_by_name: 'Sophie' },
     { id: 9, trip: 4, title: 'Flüge', amount: '340.00', date: dateOnly(-100), category: 'TRANSPORT', currency: 'EUR', amount_trip: '340.00', home_currency: 'EUR', amount_home: '340.00' },
     { id: 10, trip: 4, title: 'Hotel', amount: '420.00', date: dateOnly(-55), category: 'UNTERKUNFT', currency: 'EUR', amount_trip: '420.00', home_currency: 'EUR', amount_home: '420.00' },
   ];
+  // Wer schuldet wem: Berlin – Sophie hat 260 € ausgelegt, Max 120 €, die Kurtaxe hat noch keinen Zahler → Max schuldet 70 €
+  private settlementList: TripSettlement[] = [];
   private budgetCategoryList: TripBudgetCategory[] = [
     { id: 1, trip: 1, category: 'UNTERKUNFT', planned_amount: '300.00' },
     { id: 2, trip: 1, category: 'TRANSPORT', planned_amount: '120.00' },
@@ -374,16 +377,20 @@ export class DemoReisenApi {
       const index = this.expenseList.findIndex((e) => e.id === id);
       if (index === -1) return throwError(() => ({ status: 404 }));
       const before = this.expenseList[index];
-      const next = { ...before, ...data };
+      const next = this.withPayerName({ ...before, ...data });
       const changed = next.amount !== before.amount || next.currency !== before.currency;
       this.expenseList[index] = changed ? { ...next, ...this.snapshot(next) } : next;
       return of(this.expenseList[index]);
     }
     const trip = this.tripList.find((t) => t.id === data.trip);
     const base: TripExpense = { id: this.nextId++, trip: 0, title: '', amount: '0.00', currency: trip?.currency ?? (this.home() as TripExpense['currency']), date: dateOnly(0), category: 'SONSTIGES', ...data };
-    const created = { ...base, ...this.snapshot(base) };
+    const created = this.withPayerName({ ...base, ...this.snapshot(base) });
     this.expenseList.push(created);
     return of(created);
+  }
+  private withPayerName(e: TripExpense): TripExpense {
+    const payer = e.paid_by ? this.participantList.find((p) => p.trip === e.trip && p.user === e.paid_by) : undefined;
+    return { ...e, paid_by: payer ? payer.user : null, paid_by_name: payer?.display_name ?? '', shared_with: e.shared_with ?? [] };
   }
   /** Wie das Backend beim Speichern: Wert in Reise- und Heimatwährung (Demo: EUR) zum Beispielkurs. */
   private snapshot(e: TripExpense): Partial<TripExpense> {
@@ -406,6 +413,38 @@ export class DemoReisenApi {
     const index = this.expenseList.findIndex((e) => e.id === id);
     if (index === -1) return throwError(() => ({ status: 404 }));
     this.expenseList.splice(index, 1);
+    return of(undefined);
+  }
+
+  /** Wie GET /reisen/trips/<id>/balances/ – gleiche Regeln wie backend reisen/split.py (computeBalances). */
+  balances(tripId: number): Observable<TripBalances> {
+    const trip = this.tripList.find((t) => t.id === tripId);
+    if (!trip) return throwError(() => ({ status: 404 }));
+    const participants = this.participantList.filter((p) => p.trip === tripId);
+    return of(
+      computeBalances(
+        { currency: trip.currency, participants },
+        this.expenseList.filter((e) => e.trip === tripId),
+        this.settlementList.filter((s) => s.trip === tripId),
+      ),
+    );
+  }
+  settle(data: { trip: number; from_user: number; to_user: number; amount: string }): Observable<TripSettlement> {
+    const people = this.participantList.filter((p) => p.trip === data.trip);
+    const from = people.find((p) => p.user === data.from_user);
+    const to = people.find((p) => p.user === data.to_user);
+    if (!from || !to || from === to || !(Number(data.amount) > 0)) return throwError(() => ({ status: 400 }));
+    const created: TripSettlement = {
+      id: this.nextId++, trip: data.trip, from_user: from.user, from_name: from.display_name, to_user: to.user, to_name: to.display_name,
+      amount: Number(data.amount).toFixed(2), created_at: new Date().toISOString(),
+    };
+    this.settlementList.push(created);
+    return of(created);
+  }
+  removeSettlement(id: number): Observable<void> {
+    const index = this.settlementList.findIndex((s) => s.id === id);
+    if (index === -1) return throwError(() => ({ status: 404 }));
+    this.settlementList.splice(index, 1);
     return of(undefined);
   }
 

@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { AppIcon } from '../../shared/icons/app-icon';
+import { TripSplit } from './trip-split';
 import { BudgetCategory, Trip, TripBudgetCategory, TripExpense } from './reisen-api.service';
 import { BUDGET_COLOR, BUDGET_META, budgetRows, formatMoney, percent, totalBudget, tripValue } from './reisen-logic';
 import { FxService } from '../../core/fx/fx.service';
@@ -13,7 +14,7 @@ const RECENT = 6;
  * Ohne Gesamtbudget nie „0 € Budget / 100 % verbraucht“, sondern nur „Bisher ausgegeben“. */
 @Component({
   selector: 'app-trip-budget',
-  imports: [AppIcon],
+  imports: [AppIcon, TripSplit],
   templateUrl: './trip-budget.html',
   styleUrls: ['./trip-common.scss', './trip-budget.scss'],
 })
@@ -30,6 +31,8 @@ export class TripBudget {
   /** Eine Kategorie-Zeile: geplanten Betrag ändern, neu planen oder die Planung entfernen. */
   readonly editCategory = output<BudgetCategory>();
 
+  /** Mehr als eine Person reist mit → „Wer schuldet wem“ und „… hat bezahlt“ (15.11.2026). */
+  readonly shared = computed(() => this.trip().participants.length > 1);
   readonly meta = BUDGET_META;
   readonly color = BUDGET_COLOR;
   readonly showAll = signal(false);

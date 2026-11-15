@@ -630,3 +630,32 @@ test('Stornofrist: beim Anlegen sichtbar (ohne „Weitere Angaben“), ohne Fris
   await row.getByRole('button', { name: 'Eintragen' }).click();
   await expect(page.getByRole('dialog').getByRole('heading', { name: 'Reise bearbeiten' })).toBeVisible();
 });
+
+test('Wer schuldet wem: Max schuldet Sophie 70 €, „nur für Max“ zählt nur bei ihm, beglichen und zurückgenommen — allein keine Karte', async ({ page }) => {
+  await openDemo(page, '/demo/reisen?trip=1&tab=budget');
+  const split = page.locator('app-trip-split');
+  await expect(split.getByRole('heading', { name: 'Wer schuldet wem' })).toBeVisible();
+  await expect(split.locator('.moves li').first()).toContainText(/Max\s*gibt\s*Sophie\s*70,00\s€/);
+  await expect(split).toContainText('1 Ausgabe zählt noch nicht mit'); // Kurtaxe ohne Zahler
+  await expect(page.locator('app-trip-budget .exp li', { hasText: 'Museum' })).toContainText('Max hat bezahlt');
+
+  // Neue Ausgabe: „Bezahlt von“ ist man selbst; nur für Max → Max schuldet 30 € mehr
+  await page.locator('app-trip-budget').getByRole('button', { name: 'Ausgabe hinzufügen' }).click();
+  await page.locator('#expense-title').fill('Taxi');
+  await page.locator('#expense-amount').fill('30');
+  await expect(page.getByLabel('Bezahlt von', { exact: true })).toContainText('Sophie (Du)');
+  await page.getByRole('group', { name: 'Für wen' }).getByRole('button', { name: 'Sophie (Du)' }).click();
+  await submit(page);
+  await expect(split.locator('.moves li').first()).toContainText('100,00 €');
+
+  await split.getByRole('button', { name: 'Als beglichen markieren' }).click();
+  await expect(split).toContainText('Alles ausgeglichen.');
+  await expect(split.locator('.moves--done')).toContainText('Max an Sophie');
+  await axe(page);
+  await split.getByRole('button', { name: /Zurücknehmen/ }).click();
+  await expect(split.locator('.moves li').first()).toContainText('100,00 €');
+
+  await page.goto('/demo/reisen?trip=4&tab=budget');
+  await expect(page.locator('app-trip-budget')).toBeVisible();
+  await expect(page.locator('app-trip-split')).toHaveCount(0);
+});

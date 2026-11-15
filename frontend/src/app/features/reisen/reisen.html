@@ -437,6 +437,22 @@
       }
     </div>
   </div>
+  <!-- Wer schuldet wem (15.11.2026): nur bei Reisen mit mehreren Personen -->
+  @if (sharedTrip()) {
+    <app-field label="Bezahlt von">
+      <app-select formControlName="paid_by" [options]="payerOptions()" />
+    </app-field>
+    <div class="transport-field">
+      <span class="baggage-field__label" id="expense-shares-label">Für wen</span>
+      <div class="category-chips" role="group" aria-labelledby="expense-shares-label">
+        @for (p of selectedTrip()?.participants ?? []; track p.user) {
+          <button type="button" class="category-chip share-chip" [attr.aria-pressed]="expenseShares().includes(p.user)" (click)="toggleShare(p.user)">
+            @if (expenseShares().includes(p.user)) { <app-icon name="check" aria-hidden="true" /> }{{ p.is_self ? p.display_name + ' (Du)' : p.display_name }}
+          </button>
+        }
+      </div>
+    </div>
+  }
   <app-field label="Notiz" [optional]="true">
     <input id="expense-note" formControlName="note" maxlength="240" />
   </app-field>

@@ -30,7 +30,7 @@ from finanzen.models import Account, Category, MonthlyBudget, RecurringDeduction
 from finanzen.models import Category as LegacyCategory
 from haushalt.models import FolderEntry, ShoppingItem, ShoppingList, Task
 from organisation.models import PersonalEvent, PersonalFile, PersonalNote, PersonalTask
-from reisen.models import PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripTask
+from reisen.models import PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripSettlement, TripTask
 
 pytestmark = pytest.mark.django_db
 
@@ -110,6 +110,9 @@ def world(tmp_path, monkeypatch):
         objs['trip_event' + suffix] = TripEvent.objects.create(trip=trip, title=f'{marker}-Museum', starts_at=now + timedelta(days=11))
         objs['expense' + suffix] = TripExpense.objects.create(trip=trip, title=f'{marker}-Hotel', amount=Decimal('280'), date=today)
         objs['budget_category' + suffix] = TripBudgetCategory.objects.create(trip=trip, category='UNTERKUNFT', planned_amount=Decimal('500'))
+    # Wer schuldet wem: Begleichungen (Beträge tragen keinen Marker – geprüft wird der Statuscode)
+    objs['settlement'] = TripSettlement.objects.create(trip=berlin, from_user=ben, to_user=sophie, amount=Decimal('30'))
+    objs['settlement_secret'] = TripSettlement.objects.create(trip=secret, from_user=alex, to_user=sophie, amount=Decimal('30'))
     # Verbindungen: geteiltes Gerät ↔ privates Sparziel, geteilte Reise ↔ privates Sparziel
     objs['connection'] = Connection.objects.create(source_type='DEVICE', source_id=device.pk, target_type='SAVINGS_GOAL',
                                                    target_id=goal.pk, relation_type='FUNDED_BY', created_by=sophie)
@@ -151,6 +154,8 @@ DETAIL = {
     'file': ('/api/v1/organisation/files/{}/', PRIVATE),
     'file_content': ('/api/v1/organisation/files/{}/inhalt/', PRIVATE),
     'participant': ('/api/v1/reisen/participants/{}/', TRIP),
+    'settlement': ('/api/v1/reisen/settlements/{}/', TRIP),
+    'settlement_secret': ('/api/v1/reisen/settlements/{}/', PRIVATE),
 }
 DETAIL_OBJECT = {'file_content': 'file'}  # Inhalt-Endpunkt nutzt dasselbe Objekt wie „file“
 
@@ -471,6 +476,7 @@ DETAIL_VIEW_COVERAGE = {
     'TripViewSet': 'DETAIL trip + secret_trip', 'PackingItemViewSet': 'DETAIL packing', 'TripTaskViewSet': 'DETAIL trip_task',
     'TripEventViewSet': 'DETAIL trip_event', 'TripExpenseViewSet': 'DETAIL expense',
     'TripBudgetCategoryViewSet': 'DETAIL budget_category', 'TripParticipantViewSet': 'DETAIL participant + role test',
+    'TripSettlementViewSet': 'DETAIL settlement + settlement_secret + reisen/test_split.py',
     'ConnectionDetailView': 'DETAIL connection + test_connections_never_reveal_a_private_target',
     'ContactDetailView': 'test_contact_rows_belong_to_their_owner',
     'InviteCancelView': 'test_contact_rows_belong_to_their_owner',

@@ -121,7 +121,7 @@
                 <span class="exp__icon" [style.--c]="color[e.category || 'SONSTIGES']" aria-hidden="true"><app-icon [name]="m.icon" /></span>
                 <span class="exp__title">
                   <b>{{ e.title }}</b>
-                  <small>{{ m.label }}@if (e.note) { · {{ e.note }} }</small>
+                  <small>{{ m.label }}@if (shared() && e.paid_by_name) { · {{ e.paid_by_name }} hat bezahlt }@if (e.note) { · {{ e.note }} }</small>
                 </span>
                 <span class="exp__amount num">
                   {{ original(e) }}
@@ -140,6 +140,10 @@
       <p class="muted">Noch keine Ausgaben erfasst.</p>
     }
   </section>
+
+  @if (shared()) {
+    <app-trip-split [trip]="trip()" [expenses]="expenses()" [canEdit]="canEdit()" />
+  }
 
   <p class="note"><app-icon name="lock" aria-hidden="true" />Reiseausgaben bleiben bei dieser Reise. Sie erscheinen nicht automatisch in Finanzen – so zählt nichts doppelt.</p>
 }

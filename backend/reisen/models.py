@@ -238,6 +238,10 @@ class TripExpense(TripScopedModel):
     amount_home = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     rate_to_home = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     rate_date = models.DateField(null=True, blank=True)
+    # Wer schuldet wem (15.11.2026): wer bezahlt hat und für wen. Ohne Zahler zählt die Ausgabe nicht in der
+    # Aufteilung (ältere Ausgaben). `shared_with` leer = alle, die mitreisen – auch wer später dazukommt.
+    paid_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    shared_with = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='+')
 
     def save(self, *args, **kwargs):
         # Ohne Angabe gilt die Reisewährung; in gleicher Währung ist der Wert in Reisewährung der Betrag selbst
@@ -252,6 +256,23 @@ class TripExpense(TripScopedModel):
         ordering = ['date', 'id']
         indexes = [models.Index(fields=['trip', 'date'])]
         constraints = [models.CheckConstraint(condition=models.Q(amount__gte=0), name='trip_expense_not_negative')]
+
+
+class TripSettlement(TripScopedModel):
+    """„Als beglichen markiert“: jemand hat einer anderen Person Geld für diese Reise gegeben. 4inOne überweist nie
+    selbst – das ist nur der Vermerk, damit die offene Schuld verschwindet. Betrag in der Reisewährung."""
+
+    from_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    to_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+
+    class Meta:
+        ordering = ['created_at', 'id']
+        constraints = [
+            models.CheckConstraint(condition=models.Q(amount__gt=0), name='trip_settlement_positive'),
+            models.CheckConstraint(condition=~models.Q(from_user=models.F('to_user')), name='trip_settlement_two_people'),
+        ]
 
 
 class TripBudgetCategory(TripScopedModel):

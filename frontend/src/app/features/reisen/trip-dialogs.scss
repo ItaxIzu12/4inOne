@@ -139,6 +139,10 @@
   font-weight: 600;
   box-shadow: inset 0 0 0 1px var(--c, #8a93a3);
 }
+// „Für wen“ (Wer schuldet wem): Personen-Chips in der Reisefarbe, ausgewählt mit Haken
+.share-chip {
+  --c: var(--travel-accent);
+}
 .transport-chip:focus-visible,
 .category-chip:focus-visible {
   outline: 2px solid var(--brand-primary, #172523);
