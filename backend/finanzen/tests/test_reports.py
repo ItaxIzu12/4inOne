@@ -2,6 +2,8 @@
 BerichtCsvView/BerichtPdfView) — zum Archivieren/Ausdrucken, nicht zu
 verwechseln mit dem "Für KI-Analyse exportieren"-Textblock."""
 
+import csv
+import io
 from datetime import date
 from decimal import Decimal
 
@@ -104,6 +106,27 @@ def test_csv_has_a_sum_row_and_a_separate_fixed_deductions_section(setup):
     header_index = lines.index('Datum;Beschreibung;Kategorie;Betrag (€)')
     sum_index = next(i for i, line in enumerate(lines) if line.startswith(';;Summe Transaktionen'))
     assert not any('Miete' in line for line in lines[header_index:sum_index])
+
+
+def test_csv_cells_from_users_never_become_spreadsheet_formulas(setup):
+    """CSV-Injection: ein Haushaltsmitglied darf keine Formel in den Export schmuggeln, die beim Öffnen in Excel oder
+    LibreOffice ausgeführt wird. Text bleibt Text (mit vorangestelltem '), Beträge bleiben Zahlen — auch negative."""
+    account, household = setup['account'], setup['household']
+    category = Category.objects.create(household=household, name='+Formel-Kategorie')
+    evil = ['=HYPERLINK("https://boese.example";"Klick")', '+1+1', '-2+3', '@SUMME(A1)', ' =1+1', '\t=1', '＝1+1']
+    for i, text in enumerate(evil):
+        Transaction.objects.create(account=account, category=category, amount='-5.00', datum=date(2026, 8, 1 + i), description=text)
+    RecurringDeduction.objects.create(household=household, name='=Abzug', amount='10.00', category=category)
+    Household.objects.filter(pk=household.pk).update(name='@Haushalt')
+
+    rows = list(csv.reader(io.StringIO(_csv_text(setup['client'].get('/api/v1/finanzen/berichte/csv/?monat=2026-08'))), delimiter=';'))
+    cells = [cell for row in rows for cell in row]
+    for text in evil:
+        assert "'" + text in cells, text
+    assert "'+Formel-Kategorie" in cells and "'=Abzug" in cells and "'@Haushalt" in cells
+    # harmlose Texte und Beträge unverändert
+    assert 'August-Einkauf' in cells and '-5.00' in cells and '64.20' in cells
+    assert not any(cell.lstrip(' ').startswith(('=', '+', '@', '\t')) for cell in cells)
 
 
 def test_csv_for_a_year_includes_transactions_from_multiple_months(setup):

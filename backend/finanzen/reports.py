@@ -79,6 +79,18 @@ def parse_period(query_params) -> Period:
     return Period(start=start, end=end, monate=12, label=str(jahr_zahl), slug=str(jahr_zahl))
 
 
+# CSV-Injection (OWASP): Tabellenprogramme führen Zellen, die mit = + - @ (oder Tab/Zeilenumbruch) beginnen, als
+# Formel aus — z. B. eine Ausgabe „=HYPERLINK("https://…";"Klick")“, die ein Haushaltsmitglied angelegt hat. Solche
+# Texte bekommen ein vorangestelltes ' und bleiben dadurch reiner Text. Gilt nur für Text von Nutzern; Beträge
+# erzeugt der Server selbst und sie müssen Zahlen bleiben (auch negative).
+_FORMULA_START = ('=', '+', '-', '@', '\t', '\r', '\n', '＝', '＋', '－', '＠')
+
+
+def _text_cell(value) -> str:
+    text = str(value)
+    return "'" + text if text.lstrip(' ').startswith(_FORMULA_START) else text
+
+
 def _money(value: Decimal) -> str:
     return str(Decimal(value).quantize(Decimal('0.01')))
 
@@ -122,7 +134,7 @@ def build_csv(household: Household, period: Period) -> str:
     buffer = io.StringIO()
     writer = csv.writer(buffer, delimiter=';')
 
-    writer.writerow(['4inOne — Finanzbericht', household.name, period.label])
+    writer.writerow(['4inOne — Finanzbericht', _text_cell(household.name), _text_cell(period.label)])
     writer.writerow([])
     writer.writerow(['Datum', 'Beschreibung', 'Kategorie', 'Betrag (€)'])
     gesamt = Decimal('0')
@@ -132,8 +144,8 @@ def build_csv(household: Household, period: Period) -> str:
         gesamt += transaction.amount
         writer.writerow([
             transaction.datum.isoformat(),
-            transaction.description or '—',
-            transaction.category.name if transaction.category else '—',
+            _text_cell(transaction.description or '—'),
+            _text_cell(transaction.category.name) if transaction.category else '—',
             _money(transaction.amount),
         ])
     writer.writerow(['', '', 'Summe Transaktionen', _money(gesamt)])
@@ -144,7 +156,11 @@ def build_csv(household: Household, period: Period) -> str:
     abzuege_gesamt = Decimal('0')
     for deduction in data['deductions']:
         abzuege_gesamt += deduction.amount
-        writer.writerow([deduction.name, deduction.category.name if deduction.category else '—', _money(deduction.amount)])
+        writer.writerow([
+            _text_cell(deduction.name),
+            _text_cell(deduction.category.name) if deduction.category else '—',
+            _money(deduction.amount),
+        ])
     writer.writerow(['', 'Summe feste Abzüge (pro Monat)', _money(abzuege_gesamt)])
 
     return buffer.getvalue()
