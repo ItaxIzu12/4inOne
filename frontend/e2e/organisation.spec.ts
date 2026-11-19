@@ -390,6 +390,9 @@ test('Kalender: ein mehrtägiger Termin ist ein Balken – ein Klick auf einen m
   await page.goto('/demo/organisation?tab=calendar');
   await page.getByRole('button', { name: 'Monat', exact: true }).click();
   const spans = page.locator('.month .cell:not(.is-outside) .ev--span');
+  // Die Demo-Reise liegt relativ zu heute (ca. 12 Tage voraus) — gegen Monatsende im nächsten Monat
+  await page.locator('.month').waitFor();
+  if ((await spans.count()) < 3) await page.getByRole('button', { name: 'Nächster Monat' }).click();
   await expect(spans.first()).toBeVisible();
   // die Demo-Reise (Berlin) läuft über drei Tage
   const days = await spans.evaluateAll((els) => els.map((e) => e.closest('.cell')!.querySelector('.cell__num')!.textContent!.trim()));

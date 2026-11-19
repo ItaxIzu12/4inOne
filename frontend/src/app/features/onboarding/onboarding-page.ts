@@ -1,66 +1,116 @@
-import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
-import { Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
+import { Observable } from 'rxjs';
 import { OnboardingApiService } from '../../core/onboarding/onboarding-api.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { ACCOUNT_DEFAULT_HOME_CURRENCY } from '../../core/fx/home-currency';
 import { Brand } from '../../shared/brand/brand';
-import { AreaTone } from '../../shared/area-deck/area-deck';
 import { AppIcon, IconName } from '../../shared/icons/app-icon';
-import { LinkChain } from '../../shared/link-chain/link-chain';
+import { AppSelect } from '../../shared/form/select';
+import { Field } from '../../shared/form/field';
+import { AppDatePicker } from '../../shared/form/date-picker';
+import { CURRENCY_OPTIONS } from '../../shared/currency/currencies';
+import { Area, Category, FirstEntryService } from './first-entry.service';
+
+type Usage = 'personal' | 'shared';
+
+interface AreaInfo {
+  key: Area;
+  label: string;
+  icon: IconName;
+  what: string;
+  /** Überschrift für den ersten Eintrag */
+  first: string;
+}
+
+const AREAS: AreaInfo[] = [
+  { key: 'finanzen', label: 'Finanzen', icon: 'finance', what: 'Budget, Ausgaben und Sparziele', first: 'Deine erste Ausgabe' },
+  { key: 'haushalt', label: 'Haushalt', icon: 'household', what: 'Aufgaben, Einkauf und Verträge', first: 'Deine erste Haushaltsaufgabe' },
+  { key: 'organisation', label: 'Organisation', icon: 'calendar', what: 'Termine, To-dos und Notizen', first: 'Dein erstes To-do' },
+  { key: 'reisen', label: 'Reisen', icon: 'travel', what: 'Planung, Packliste und Reisebudget', first: 'Deine erste Reise' },
+];
+
+function iso(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+function inDays(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return iso(d);
+}
+/** „12,40“, „12.40“ oder „1.234,50“ → Zahl; ungültig → null */
+function parseAmount(raw: string): number | null {
+  const text = raw.trim().replace(/\s/g, '');
+  if (!text) return null;
+  const normalized = text.includes(',') ? text.replace(/\./g, '').replace(',', '.') : text;
+  const value = Number(normalized);
+  return Number.isFinite(value) && value > 0 && value < 1_000_000 ? Math.round(value * 100) / 100 : null;
+}
+
+/**
+ * Onboarding (Neubau 19.11.2026, inhaltlich neu): kurz und mit echtem Ergebnis statt Erklärseiten.
+ * 1 Du — Name, Heimatwährung, allein oder gemeinsam · 2 Bereiche wählen · 3 erster echter Eintrag im gewählten
+ * Bereich (oder ohne weiter) · Fertig — zeigt, was angelegt wurde, und führt dorthin.
+ * Die Auswahl wird VOR dem ersten Eintrag gespeichert: das Backend sieht das Onboarding sonst wegen der neuen Daten als
+ * erledigt an, ohne die Auswahl zu kennen. „Überspringen“ ist auf jedem Schritt möglich.
+ */
 @Component({
   selector: 'app-onboarding-page',
   standalone: true,
-  imports: [ErrorNoticeDirective, Brand, AppIcon, LinkChain],
+  imports: [Brand, AppIcon, AppSelect, AppDatePicker, Field, NgTemplateOutlet, ReactiveFormsModule, RouterLink],
   templateUrl: './onboarding-page.html',
   styleUrl: './onboarding-page.scss',
 })
 export class OnboardingPage {
-  private api = inject(OnboardingApiService);
-  private router = inject(Router);
-  private destroy = inject(DestroyRef);
-  private heading = viewChild<ElementRef<HTMLElement>>('heading');
+  private readonly api = inject(OnboardingApiService);
+  private readonly auth = inject(AuthService);
+  private readonly entries = inject(FirstEntryService);
+  private readonly router = inject(Router);
+  private readonly destroy = inject(DestroyRef);
+  private readonly fb = inject(FormBuilder);
+  private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+
   readonly step = signal(1);
   readonly loading = signal(true);
   readonly allowed = signal(false);
   readonly error = signal('');
   readonly saving = signal(false);
-  readonly usage = signal<'personal' | 'shared' | null>(null);
-  readonly selected = signal<string[]>([]);
-  readonly stages = ['Willkommen', 'Nutzung', 'Interessen', 'Fertig'];
-  readonly domains: { key: string; tone: AreaTone; label: string; icon: IconName; description: string }[] = [
-    {
-      key: 'finanzen',
-      tone: 'finance',
-      label: 'Finanzen',
-      icon: 'finance',
-      description: 'Budgets, Ausgaben und mehr im Blick behalten.',
-    },
-    {
-      key: 'haushalt',
-      tone: 'household',
-      label: 'Haushalt',
-      icon: 'household',
-      description: 'Aufgaben, Einkaufslisten und alles rund um dein Zuhause.',
-    },
-    {
-      key: 'organisation',
-      tone: 'organisation',
-      label: 'Organisation',
-      icon: 'calendar',
-      description: 'Termine, To-dos und wichtige Erinnerungen.',
-    },
-    {
-      key: 'reisen',
-      tone: 'travel',
-      label: 'Reisen',
-      icon: 'travel',
-      description: 'Reisen planen und Vorfreude sammeln.',
-    },
-  ];
+  readonly usage = signal<Usage>('personal');
+  readonly selected = signal<Area[]>([]);
+  readonly entryArea = signal<Area>('finanzen');
+  readonly categories = signal<Category[]>([]);
+  readonly category = signal<number | null>(null);
+  readonly created = signal<{ area: Area; text: string } | null>(null);
+  readonly tried = signal(false);
+
+  readonly areas = AREAS;
+  readonly currencyOptions = CURRENCY_OPTIONS;
+  readonly stages = ['Du', 'Bereiche', 'Erster Eintrag'];
+
+  readonly profile = this.fb.nonNullable.group({
+    name: [this.auth.currentUser()?.name ?? '', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
+    currency: [this.auth.currentUser()?.home_currency ?? ACCOUNT_DEFAULT_HOME_CURRENCY],
+  });
+  readonly expenseForm = this.fb.nonNullable.group({ amount: ['', Validators.required], note: ['', [Validators.required, Validators.maxLength(120)]] });
+  readonly taskForm = this.fb.nonNullable.group({ title: ['', [Validators.required, Validators.maxLength(120)]], due: ['today' as 'today' | 'week' | 'none'] });
+  readonly tripForm = this.fb.nonNullable.group({
+    destination: ['', [Validators.required, Validators.maxLength(120)]],
+    start: [inDays(14), Validators.required],
+    end: [inDays(18), Validators.required],
+  });
+
+  readonly selectedAreas = computed(() => AREAS.filter((a) => this.selected().includes(a.key)));
+  readonly entryInfo = computed(() => AREAS.find((a) => a.key === this.entryArea())!);
+  readonly today = iso(new Date());
+
   constructor() {
     this.load();
   }
-  load() {
+
+  load(): void {
     this.loading.set(true);
     this.error.set('');
     this.api
@@ -77,65 +127,182 @@ export class OnboardingPage {
         },
         error: () => {
           this.loading.set(false);
-          this.error.set(
-            'Dein Einrichtungsstatus konnte nicht geladen werden. Bitte versuche es erneut.',
-          );
+          this.error.set('Dein Einrichtungsstand konnte nicht geladen werden. Bitte versuche es noch einmal.');
         },
       });
   }
-  toggle(key: string) {
-    this.selected.update((values) =>
-      values.includes(key) ? values.filter((x) => x !== key) : [...values, key],
-    );
-  }
-  move(step: number) {
+
+  private go(step: number): void {
     this.error.set('');
+    this.tried.set(false);
     this.step.set(step);
     setTimeout(() => this.heading()?.nativeElement.focus());
   }
-  next() {
-    if (this.step() === 2 && !this.usage()) {
-      this.error.set('Bitte wähle aus, wie du 4inOne nutzen möchtest.');
-      return;
-    }
-    if (this.step() === 3 && !this.selected().length) {
-      this.error.set('Wähle mindestens einen Bereich aus.');
-      return;
-    }
-    this.move(this.step() + 1);
+
+  back(): void {
+    if (this.step() > 1 && !this.saving()) this.go(this.step() - 1);
   }
-  /** Beide Wege speichern dieselbe Auswahl (needs_onboarding wird serverseitig erst dadurch false, siehe
-   * onboarding.guard.ts) — „4inOne entdecken“ führt zur öffentlichen Demo (Beispieldaten, siehe app.routes.ts),
-   * „Mit meinen Daten starten“ in den eigenen, leeren Arbeitsbereich.
-   *
-   * Zielseite danach: bei GENAU einem gewählten Bereich direkt dorthin (kürzester Weg vom Interesse zum
-   * Ergebnis) — die Domain-Keys ('finanzen'/'haushalt'/'organisation'/'reisen') sind bereits die Routennamen,
-   * keine Übersetzungstabelle nötig. Bei mehreren gewählten Bereichen gibt es keine eindeutige Priorität, daher
-   * zum Dashboard, das diese Auswahl selbst wieder ausliest und die gewählten Kacheln hervorhebt (siehe
-   * dashboard.ts preferredDomains()) statt sie zu verwerfen. */
-  finish(destination: '/demo' | '/') {
+
+  // ---------- 1 Du ----------
+  saveProfile(): void {
     if (this.saving()) return;
-    const usage = this.usage();
-    const selected = this.selected();
-    if (!usage || !selected.length) return;
+    this.tried.set(true);
+    if (this.profile.invalid) return;
+    const { name, currency } = this.profile.getRawValue();
+    const current = this.auth.currentUser();
+    const changes: { name?: string; home_currency?: string } = {};
+    if (name.trim() !== (current?.name ?? '')) changes.name = name.trim();
+    if (currency !== (current?.home_currency ?? ACCOUNT_DEFAULT_HOME_CURRENCY)) changes.home_currency = currency;
+    if (!Object.keys(changes).length) {
+      this.go(2);
+      return;
+    }
     this.saving.set(true);
+    this.auth.updateProfile(changes).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.go(2);
+      },
+      error: () => {
+        this.saving.set(false);
+        this.error.set('Dein Name konnte nicht gespeichert werden. Bitte versuche es noch einmal.');
+      },
+    });
+  }
+
+  // ---------- 2 Bereiche ----------
+  toggle(key: Area): void {
     this.error.set('');
+    this.selected.update((list) => (list.includes(key) ? list.filter((x) => x !== key) : [...list, key]));
+  }
+
+  saveAreas(): void {
+    if (this.saving()) return;
+    if (!this.selected().length) {
+      this.error.set('Wähle mindestens einen Bereich – du kannst die anderen jederzeit dazunehmen.');
+      return;
+    }
+    // In der Reihenfolge der Bereiche, nicht der Klicks
+    const chosen = AREAS.map((a) => a.key).filter((k) => this.selected().includes(k));
+    this.saving.set(true);
     this.api
-      .complete(usage, selected)
+      .complete(this.usage(), chosen)
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe({
         next: () => {
           this.saving.set(false);
-          const base = destination === '/' ? '' : destination;
-          const target = selected.length === 1 ? `${base}/${selected[0]}` : destination;
-          this.router.navigateByUrl(target, { replaceUrl: true });
+          this.entryArea.set(chosen[0]);
+          this.prepareEntry(chosen[0]);
+          this.go(3);
         },
         error: () => {
           this.saving.set(false);
-          this.error.set(
-            'Deine Auswahl konnte nicht gespeichert werden. Bitte versuche es erneut.',
-          );
+          this.error.set('Deine Auswahl konnte nicht gespeichert werden. Bitte versuche es noch einmal.');
         },
       });
+  }
+
+  // ---------- 3 Erster Eintrag ----------
+  chooseEntryArea(area: Area): void {
+    this.entryArea.set(area);
+    this.error.set('');
+    this.tried.set(false);
+    this.prepareEntry(area);
+  }
+
+  private prepareEntry(area: Area): void {
+    if (area !== 'finanzen' || this.categories().length) return;
+    this.entries.categories().subscribe({
+      next: (list) => {
+        this.categories.set(list.slice(0, 6));
+        this.category.set(list[0]?.id ?? null);
+      },
+      error: () => this.categories.set([]),
+    });
+  }
+
+  saveEntry(): void {
+    if (this.saving()) return;
+    this.tried.set(true);
+    this.error.set('');
+    const area = this.entryArea();
+    let request: Observable<string> | null = null;
+    let text = '';
+    if (area === 'finanzen') {
+      const amount = parseAmount(this.expenseForm.controls.amount.value);
+      if (amount === null || this.expenseForm.controls.note.invalid || this.category() === null) {
+        if (this.category() === null) this.error.set('Die Kategorien konnten nicht geladen werden. Bitte versuche es noch einmal.');
+        return;
+      }
+      const note = this.expenseForm.controls.note.value.trim();
+      const currency = this.profile.controls.currency.value;
+      request = this.entries.expense(amount, note, this.category()!, this.today, currency);
+      text = `${amount.toLocaleString('de-DE', { style: 'currency', currency })} für ${note}`;
+    } else if (area === 'haushalt' || area === 'organisation') {
+      if (this.taskForm.invalid) return;
+      const { title, due } = this.taskForm.getRawValue();
+      // „Diese Woche“ = bis Sonntag
+      const date = due === 'today' ? this.today : due === 'week' ? inDays((7 - new Date().getDay()) % 7) : null;
+      request = area === 'haushalt' ? this.entries.chore(title.trim(), date) : this.entries.todo(title.trim(), date);
+      text = title.trim();
+    } else {
+      if (this.tripForm.invalid) return;
+      const { destination, start, end } = this.tripForm.getRawValue();
+      if (end < start) {
+        this.error.set('Das Ende der Reise liegt vor dem Beginn.');
+        return;
+      }
+      request = this.entries.trip(destination.trim(), start, end);
+      text = destination.trim();
+    }
+    this.saving.set(true);
+    request.subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.created.set({ area, text });
+        this.go(4);
+      },
+      error: () => {
+        this.saving.set(false);
+        this.error.set('Der Eintrag konnte nicht gespeichert werden. Prüf die Angaben und versuch es noch einmal.');
+      },
+    });
+  }
+
+  skipEntry(): void {
+    this.created.set(null);
+    this.go(4);
+  }
+
+  /** Überspringen: Auswahl mit sinnvollen Standards speichern (sonst käme das Onboarding beim nächsten Mal wieder). */
+  skipAll(): void {
+    if (this.saving()) return;
+    const chosen = this.selected().length ? AREAS.map((a) => a.key).filter((k) => this.selected().includes(k)) : AREAS.map((a) => a.key);
+    this.saving.set(true);
+    this.api.complete(this.usage(), chosen).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.router.navigateByUrl('/', { replaceUrl: true });
+      },
+      error: () => {
+        this.saving.set(false);
+        this.error.set('Das hat nicht geklappt. Bitte versuche es noch einmal.');
+      },
+    });
+  }
+
+  // ---------- Fertig ----------
+  finish(): void {
+    const created = this.created();
+    const chosen = this.selected();
+    const target = created ? `/${created.area}` : chosen.length === 1 ? `/${chosen[0]}` : '/';
+    this.router.navigateByUrl(target, { replaceUrl: true });
+  }
+
+  areaLabel(key: Area): string {
+    return AREAS.find((a) => a.key === key)!.label;
+  }
+  areaIcon(key: Area): IconName {
+    return AREAS.find((a) => a.key === key)!.icon;
   }
 }

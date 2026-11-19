@@ -17,6 +17,8 @@
 *.keystore
 *.jks
 *.ppk
+# privater Schlüssel für „Sign in with Apple“
+*.p8
 id_rsa*
 id_ed25519*
 id_ecdsa*

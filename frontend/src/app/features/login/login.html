@@ -1,408 +1,304 @@
-<main class="auth-page" [class.is-register]="mode() === 'register'">
-  <aside class="auth-brand">
-    <a class="auth-brand__logo" routerLink="/" (click)="goHome()"> <app-brand /> </a>
-    <div class="auth-brand__body">
-      <h2 class="auth-brand__headline">Dein Alltag.<br />Alles verbunden.</h2>
-      <p class="auth-brand__lede">
-        Finanzen, Haushalt, Termine und Reisen in einer App. Und alles, was zusammengehört, ist verknüpft.
-      </p>
-      <app-link-chain class="auth-brand__chain" />
+<main id="main-content" class="auth" tabindex="-1">
+  <!-- Rechner: Band in Deep Forest. Am Handy ausgeblendet (dort nur Marke oben). -->
+  <aside class="aside" aria-label="Über 4inOne">
+    <a class="aside__brand" routerLink="/" aria-label="4inOne – zur Startseite"><app-brand /></a>
+    <div class="aside__body">
+      <p class="aside__lead">Dein Alltag.<br />Alles verbunden.</p>
+      <ul class="aside__areas">
+        <li><i class="dot dot--finance" aria-hidden="true"></i><b>Finanzen</b><span>Budget, Ausgaben, Sparziele</span></li>
+        <li><i class="dot dot--household" aria-hidden="true"></i><b>Haushalt</b><span>Aufgaben, Einkauf, Verträge</span></li>
+        <li><i class="dot dot--organisation" aria-hidden="true"></i><b>Organisation</b><span>Termine, To-dos, Notizen</span></li>
+        <li><i class="dot dot--travel" aria-hidden="true"></i><b>Reisen</b><span>Planung, Packliste, Budget</span></li>
+      </ul>
     </div>
+    <p class="aside__privacy"><app-icon name="lock" aria-hidden="true" />Privat als Standard. Geteilt wird nur, was du teilst.</p>
   </aside>
 
-  <section class="auth-panel">
-    <div class="auth-panel__inner">
-      <div class="auth-panel__top">
-        <a class="back-link" routerLink="/" aria-label="Zurück zum Start" (click)="goHome()">
-          <icon-arrow-left />
-        </a>
-        <a
-          class="auth-panel__brand"
-          routerLink="/"
-          aria-label="4inOne — zum Start"
-          (click)="goHome()"
-        >
-          <app-brand />
-        </a>
-        <span class="auth-panel__top-spacer" aria-hidden="true"></span>
-      </div>
+  <section class="panel">
+    <header class="panel__top">
+      <a class="panel__back" routerLink="/"><icon-arrow-left aria-hidden="true" /><span>Startseite</span></a>
+      <a class="panel__brand" routerLink="/" aria-label="4inOne – zur Startseite"><app-brand /></a>
+    </header>
 
-      @if (mode() === 'login') {
-        <div class="auth-intro">
-          <h1>Willkommen zurück</h1>
-          <p class="lede">Schön, dass du wieder da bist.</p>
-        </div>
-
-        <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
-          <div class="field">
-            <label for="login-email">E-Mail-Adresse</label>
-            <input
-              id="login-email"
-              type="email"
-              formControlName="email"
-              autocomplete="email"
-              [attr.aria-invalid]="
-                loginForm.controls.email.invalid && loginTried()
-              "
-              [attr.aria-describedby]="
-                loginForm.controls.email.invalid && loginTried()
-                  ? 'login-email-error'
-                  : null
-              "
-            />
-            @if (loginForm.controls.email.invalid && loginTried()) {
-              <p class="field-error" id="login-email-error" [appErrorNotice]="loginForm.controls.email.errors?.['required'] ? 'Bitte gib deine E-Mail-Adresse ein.' : 'Das sieht nicht wie eine gültige E-Mail-Adresse aus.'" [persistentError]="true">
-                @if (loginForm.controls.email.errors?.['required']) {
-                  Bitte gib deine E-Mail-Adresse ein.
-                } @else {
-                  Das sieht nicht wie eine gültige E-Mail-Adresse aus.
-                }
-              </p>
-            }
+    <div class="panel__body">
+      @switch (view()) {
+        <!-- ======================= Abschluss nach Google/Apple ======================= -->
+        @case ('finishing') {
+          <div class="finishing" role="status">
+            <span class="finishing__mark" aria-hidden="true"><app-brand /></span>
+            <p>Anmeldung wird abgeschlossen …</p>
           </div>
+        }
 
-          <div class="field">
-            <label for="login-password">Passwort</label>
-            <div class="password-wrap">
-              <input
-                [type]="showPassword() ? 'text' : 'password'"
-                id="login-password"
-                formControlName="password"
-                autocomplete="current-password"
-                [attr.aria-invalid]="
-                  loginForm.controls.password.invalid && loginTried()
-                "
-                aria-describedby="login-password-hint"
-              />
-              <button
-                type="button"
-                class="toggle-visibility"
-                (click)="togglePassword()"
-                [attr.aria-label]="showPassword() ? 'Passwort verbergen' : 'Passwort anzeigen'"
-              >
-                @if (showPassword()) {
-                  <svg
-                    aria-hidden="true"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"
-                    />
-                    <line x1="1" y1="1" x2="23" y2="23" />
-                  </svg>
-                } @else {
-                  <svg
-                    aria-hidden="true"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                }
-              </button>
-            </div>
-            @if (loginForm.controls.password.invalid && loginTried()) {
-              <p class="field-error" id="login-password-hint" [appErrorNotice]="'Bitte gib dein Passwort ein.'">Bitte gib dein Passwort ein.</p>
-            }
-            @if (submitError()) {
-              <p class="field-error"  [appErrorNotice]="submitError()">{{ submitError() }}</p>
-            }
-          </div>
-
-          @if (mfaRequired()) {
-            <div class="field">
-              <label for="mfa-code">Bestätigungscode oder Backup-Code</label
-              ><input
-                id="mfa-code"
-                autocomplete="one-time-code"
-                [value]="mfaCode()"
-                (input)="mfaCode.set($any($event.target).value)"
-              />
-              <p class="field-hint">
-                Gib den Code aus deiner Authenticator-App oder einen Backup-Code ein.
-              </p>
-            </div>
-          }
-          <div class="checkbox-row">
-            <label class="checkbox-field">
-              <input type="checkbox" formControlName="remember" />
-              Angemeldet bleiben
-            </label>
-            <a class="inline-link" routerLink="/passwort-vergessen">Passwort vergessen?</a>
-          </div>
-
-          <button
-            type="submit"
-            class="submit-button"
-            [disabled]="submitting()"
-            [attr.aria-busy]="submitting()"
-          >
-            @if (submitting()) {
-              <span class="spinner" aria-hidden="true"></span> Wird geprüft &hellip;
-            } @else {
-              Anmelden <app-icon name="arrow" />
-            }
-          </button>
-        </form>
-        <div class="auth-divider">Neu bei 4inOne?</div>
-        <a class="secondary-button" routerLink="/registrieren"
-          >Konto erstellen <app-icon name="plus"
-        /></a>
-        <p class="legal">
-          <a routerLink="/datenschutz">Datenschutz</a> ·
-          <a routerLink="/nutzungsbedingungen">Nutzungsbedingungen</a>
-        </p>
-      } @else {
-        <div class="auth-intro">
-          <h1>Dein Konto erstellen</h1>
-          <p class="lede">Ein Platz für deinen Alltag. Nur für dich – bis du etwas teilst.</p>
-        </div>
-
-        <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
-          <div class="field">
-            <label for="register-name">Vorname</label>
-            <input
-              id="register-name"
-              type="text"
-              formControlName="name"
-              autocomplete="given-name"
-              [attr.aria-invalid]="
-                registerForm.controls.name.invalid && registerTried()
-              "
-              [attr.aria-describedby]="
-                registerForm.controls.name.invalid && registerTried()
-                  ? 'register-name-error'
-                  : null
-              "
-            />
-            @if (registerForm.controls.name.invalid && registerTried()) {
-              <p class="field-error" id="register-name-error" [appErrorNotice]="'Bitte gib deinen Namen ein.'" [persistentError]="true">Bitte gib deinen Namen ein.</p>
-            }
-          </div>
-
-          <div class="field">
-            <label for="register-email">E-Mail-Adresse</label>
-            <input
-              id="register-email"
-              type="email"
-              formControlName="email"
-              autocomplete="email"
-              [attr.aria-invalid]="
-                registerForm.controls.email.invalid && registerTried()
-              "
-              [attr.aria-describedby]="
-                registerForm.controls.email.invalid && registerTried()
-                  ? 'register-email-error'
-                  : null
-              "
-            />
-            @if (registerForm.controls.email.invalid && registerTried()) {
-              <p class="field-error" id="register-email-error" [appErrorNotice]="registerForm.controls.email.errors?.['required'] ? 'Bitte gib deine E-Mail-Adresse ein.' : registerForm.controls.email.errors?.['backend'] || 'Das sieht nicht wie eine gültige E-Mail-Adresse aus.'" [persistentError]="true">
-                @if (registerForm.controls.email.errors?.['required']) {
-                  Bitte gib deine E-Mail-Adresse ein.
-                } @else if (registerForm.controls.email.errors?.['backend']) {
-                  {{ registerForm.controls.email.errors?.['backend'] }}
-                } @else {
-                  Das sieht nicht wie eine gültige E-Mail-Adresse aus.
-                }
-              </p>
-            }
-          </div>
-
-          <div class="field">
-            <label for="register-password">Passwort</label>
-            <div class="password-wrap">
-              <input
-                [type]="showPassword() ? 'text' : 'password'"
-                id="register-password"
-                formControlName="password"
-                autocomplete="new-password"
-                minlength="10"
-                [attr.aria-invalid]="
-                  registerForm.controls.password.invalid && registerTried()
-                "
-                aria-describedby="register-password-hint"
-              />
-              <button
-                type="button"
-                class="toggle-visibility"
-                (click)="togglePassword()"
-                [attr.aria-label]="showPassword() ? 'Passwort verbergen' : 'Passwort anzeigen'"
-              >
-                @if (showPassword()) {
-                  <svg
-                    aria-hidden="true"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"
-                    />
-                    <line x1="1" y1="1" x2="23" y2="23" />
-                  </svg>
-                } @else {
-                  <svg
-                    aria-hidden="true"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                }
-              </button>
-            </div>
-
-            <!-- Fester Hinweistext, KEIN Placeholder (verschwindet beim Tippen nicht) -->
-            <p class="field-hint" id="register-password-hint">
-              Mindestens 10 Zeichen, mit mindestens einem Buchstaben und einer Zahl.
-            </p>
-
-            @if (
-              registerTried() &&
-              registerForm.controls.password.errors?.['required']
-            ) {
-              <p class="field-error" [appErrorNotice]="'Bitte gib ein Passwort ein.'">Bitte gib ein Passwort ein.</p>
-            } @else if (
-              registerTried() &&
-              registerForm.controls.password.errors?.['backend']
-            ) {
-              <p class="field-error" [appErrorNotice]="registerForm.controls.password.errors?.['backend']">{{ registerForm.controls.password.errors?.['backend'] }}</p>
-            }
-          </div>
-
-          <div class="field">
-            <label for="register-confirm-password">Passwort wiederholen</label>
-            <div class="password-wrap">
-              <input
-                [type]="showConfirmPassword() ? 'text' : 'password'"
-                id="register-confirm-password"
-                formControlName="confirmPassword"
-                autocomplete="new-password"
-                [attr.aria-invalid]="
-                  (registerTried() &&
-                    registerForm.controls.confirmPassword.invalid) ||
-                  (registerTried() &&
-                    registerForm.errors?.['mismatch'])
-                "
-                [attr.aria-describedby]="'register-confirm-error'"
-              />
-              <button
-                type="button"
-                class="toggle-visibility"
-                (click)="toggleConfirmPassword()"
-                [attr.aria-label]="
-                  showConfirmPassword() ? 'Passwort verbergen' : 'Passwort anzeigen'
-                "
-              >
-                @if (showConfirmPassword()) {
-                  <svg
-                    aria-hidden="true"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"
-                    />
-                    <line x1="1" y1="1" x2="23" y2="23" />
-                  </svg>
-                } @else {
-                  <svg
-                    aria-hidden="true"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                }
-              </button>
-            </div>
-            @if (
-              registerTried() &&
-              registerForm.controls.confirmPassword.errors?.['required']
-            ) {
-              <p class="field-error" id="register-confirm-error" [appErrorNotice]="'Bitte bestätige dein Passwort.'" [persistentError]="true">Bitte bestätige dein Passwort.</p>
-            } @else if (
-              registerTried() && registerForm.errors?.['mismatch']
-            ) {
-              <p class="field-error" id="register-confirm-error" [appErrorNotice]="'Die Passwörter stimmen nicht überein.'" [persistentError]="true">
-                Die Passwörter stimmen nicht überein.
-              </p>
-            }
-          </div>
-          <label class="checkbox-field">
-            <input type="checkbox" formControlName="acceptPrivacy" />
-            <span
-              >Ich stimme den <a routerLink="/nutzungsbedingungen">Nutzungsbedingungen</a> und der
-              <a routerLink="/datenschutz">Datenschutzerklärung</a> zu</span
-            >
-          </label>
-          @if (
-            registerForm.controls.acceptPrivacy.invalid &&
-            registerTried()
-          ) {
-            <p class="field-error" [appErrorNotice]="'Bitte stimme den Nutzungsbedingungen und der Datenschutzerklärung zu.'">
-              Bitte stimme den Nutzungsbedingungen und der Datenschutzerklärung zu.
-            </p>
-          }
+        <!-- ======================= Zwei-Faktor nach Passwort ======================= -->
+        @case ('mfa') {
+          <h1 #stepHeading tabindex="-1">Bestätige, dass du es bist</h1>
+          <p class="lead">Gib den sechsstelligen Code aus deiner Authenticator-App ein. Ein Backup-Code geht auch.</p>
           @if (submitError()) {
-            <p class="field-error"  [appErrorNotice]="submitError()">{{ submitError() }}</p>
+            <p #errorBox class="alert" role="alert" tabindex="-1"><app-icon name="info" aria-hidden="true" />{{ submitError() }}</p>
+          }
+          <form class="form" (submit)="$event.preventDefault(); submitLogin()" novalidate>
+            <div class="field">
+              <label for="mfa-code">Code</label>
+              <input id="mfa-code" name="code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8"
+                [value]="code()" (input)="setCode($any($event.target).value)" />
+            </div>
+            <button type="submit" class="btn btn--primary" [disabled]="submitting()" [attr.aria-busy]="submitting()">
+              {{ submitting() ? 'Wird geprüft …' : 'Bestätigen' }}
+            </button>
+            <button type="button" class="btn btn--quiet" (click)="backToForm()">Zurück</button>
+          </form>
+        }
+
+        <!-- ======================= Google/Apple: bestehendes Konto verbinden ======================= -->
+        @case ('link') {
+          <h1 #stepHeading tabindex="-1">Konto verbinden</h1>
+          <p class="lead">
+            Für <strong>{{ pendingEmail() }}</strong> gibt es schon ein 4inOne-Konto. Bestätige einmal mit seinem
+            Passwort – danach meldest du dich auch mit {{ providerName[pendingProvider()] }} an.
+          </p>
+          @if (submitError()) {
+            <p #errorBox class="alert" role="alert" tabindex="-1"><app-icon name="info" aria-hidden="true" />{{ submitError() }}</p>
+          }
+          @if (pendingHasPassword()) {
+            <form class="form" [formGroup]="linkForm" (ngSubmit)="submitLink()" novalidate>
+              <div class="field">
+                <label for="link-password">Passwort von 4inOne</label>
+                <div class="secret">
+                  <input id="link-password" formControlName="password" [type]="showPassword() ? 'text' : 'password'"
+                    autocomplete="current-password"
+                    [attr.aria-invalid]="linkTried() && linkForm.controls.password.invalid ? 'true' : null"
+                    [attr.aria-describedby]="linkTried() && linkForm.controls.password.invalid ? 'link-password-error' : null" />
+                  <button type="button" class="secret__toggle" (click)="togglePassword()"
+                    [attr.aria-label]="showPassword() ? 'Passwort verbergen' : 'Passwort anzeigen'" [attr.aria-pressed]="showPassword()">
+                    <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" aria-hidden="true" />
+                  </button>
+                </div>
+                @if (linkTried() && linkForm.controls.password.invalid) {
+                  <p id="link-password-error" class="field-error">Bitte gib dein Passwort ein.</p>
+                }
+              </div>
+              @if (linkNeedsCode()) {
+                <div class="field">
+                  <label for="link-code">Code aus deiner Authenticator-App</label>
+                  <input id="link-code" name="code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8"
+                    [value]="code()" (input)="setCode($any($event.target).value)" />
+                </div>
+              }
+              <button type="submit" class="btn btn--primary" [disabled]="submitting()" [attr.aria-busy]="submitting()">
+                {{ submitting() ? 'Wird geprüft …' : 'Verbinden und anmelden' }}
+              </button>
+              <a class="text-link" routerLink="/passwort-vergessen">Passwort vergessen?</a>
+            </form>
+          } @else {
+            <p class="note">
+              Dieses Konto hat noch kein Passwort, weil du es mit einem anderen Anbieter angelegt hast. Melde dich damit an –
+              oder lege über „Passwort vergessen“ eines fest.
+            </p>
+            <a class="btn btn--primary" routerLink="/passwort-vergessen">Passwort festlegen</a>
+          }
+          <button type="button" class="btn btn--quiet" (click)="cancelSocial()">Abbrechen</button>
+        }
+
+        <!-- ======================= Zwei-Faktor nach Google/Apple ======================= -->
+        @case ('social-mfa') {
+          <h1 #stepHeading tabindex="-1">Noch ein Schritt</h1>
+          <p class="lead">Dein Konto ist mit Zwei-Faktor geschützt. Gib den Code aus deiner Authenticator-App ein.</p>
+          @if (submitError()) {
+            <p #errorBox class="alert" role="alert" tabindex="-1"><app-icon name="info" aria-hidden="true" />{{ submitError() }}</p>
+          }
+          <!-- Ohne formGroup feuert (ngSubmit) nicht → Absenden selbst abfangen, sonst lädt der Browser die Seite neu -->
+          <form class="form" (submit)="$event.preventDefault(); submitSocialMfa()" novalidate>
+            <div class="field">
+              <label for="social-code">Code</label>
+              <input id="social-code" name="code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8"
+                [value]="code()" (input)="setCode($any($event.target).value)" />
+            </div>
+            <button type="submit" class="btn btn--primary" [disabled]="submitting()" [attr.aria-busy]="submitting()">
+              {{ submitting() ? 'Wird geprüft …' : 'Bestätigen' }}
+            </button>
+            <button type="button" class="btn btn--quiet" (click)="cancelSocial()">Abbrechen</button>
+          </form>
+        }
+
+        <!-- ======================= Anmelden / Konto erstellen ======================= -->
+        @default {
+          @if (mode() === 'login') {
+            <h1>Anmelden</h1>
+            <p class="lead">Schön, dass du wieder da bist.</p>
+          } @else {
+            <h1>Konto erstellen</h1>
+            <p class="lead">Ein Platz für deinen Alltag. Nur für dich – bis du etwas teilst.</p>
           }
 
-          <button
-            type="submit"
-            class="submit-button"
-            [disabled]="submitting()"
-            [attr.aria-busy]="submitting()"
-          >
-            @if (submitting()) {
-              <span class="spinner" aria-hidden="true"></span> Wird angelegt &hellip;
-            } @else {
-              Konto erstellen <app-icon name="arrow" />
-            }
-          </button>
-        </form>
-        <p class="login-link">Schon ein Konto? <a routerLink="/login">Anmelden</a></p>
+          @if (submitError()) {
+            <p #errorBox class="alert" role="alert" tabindex="-1"><app-icon name="info" aria-hidden="true" />{{ submitError() }}</p>
+          }
+
+          @if (providers().length) {
+            <div class="social" role="group" aria-label="Mit einem anderen Konto">
+              @for (p of providers(); track p) {
+                <button type="button" class="social__btn" [class]="'social__btn social__btn--' + p" [disabled]="redirectingTo() !== null"
+                  [attr.aria-busy]="redirectingTo() === p" (click)="startSocial(p)">
+                  @if (p === 'google') {
+                    <svg class="social__logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path fill="#4285F4" d="M23.5 12.27c0-.82-.07-1.6-.2-2.36H12v4.47h6.46a5.53 5.53 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.56-5.17 3.56-8.73Z" />
+                      <path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.95-2.9l-3.88-3.01c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.27v3.11A12 12 0 0 0 12 24Z" />
+                      <path fill="#FBBC05" d="M5.27 14.28A7.2 7.2 0 0 1 4.9 12c0-.79.14-1.56.37-2.28V6.61h-4A12 12 0 0 0 0 12c0 1.94.46 3.77 1.27 5.39l4-3.11Z" />
+                      <path fill="#EA4335" d="M12 4.77c1.76 0 3.34.61 4.59 1.8l3.44-3.44A11.97 11.97 0 0 0 12 0 12 12 0 0 0 1.27 6.61l4 3.11C6.22 6.88 8.87 4.77 12 4.77Z" />
+                    </svg>
+                  } @else {
+                    <svg class="social__logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path fill="currentColor" d="M16.37 12.73c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.77-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.83-.81-3-.79-1.55.02-2.97.9-3.77 2.29-1.6 2.78-.41 6.9 1.15 9.16.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.78.74 2.99.72 1.24-.02 2.02-1.12 2.77-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.65Zm-2.27-6.74c.63-.77 1.06-1.83.94-2.89-.91.04-2.02.61-2.67 1.37-.58.67-1.1 1.76-.96 2.8 1.02.08 2.05-.52 2.69-1.28Z" />
+                    </svg>
+                  }
+                  {{ redirectingTo() === p ? 'Weiterleitung …' : 'Weiter mit ' + providerName[p] }}
+                </button>
+              }
+            </div>
+            <p class="divider"><span>oder mit E-Mail</span></p>
+          }
+
+          @if (mode() === 'login') {
+            <form class="form" [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
+              <div class="field">
+                <label for="login-email">E-Mail-Adresse</label>
+                <input id="login-email" type="email" formControlName="email" autocomplete="username" inputmode="email"
+                  [attr.aria-invalid]="loginTried() && loginForm.controls.email.invalid ? 'true' : null"
+                  [attr.aria-describedby]="loginTried() && loginForm.controls.email.invalid ? 'login-email-error' : null" />
+                @if (loginTried() && loginForm.controls.email.invalid) {
+                  <p id="login-email-error" class="field-error">
+                    {{ loginForm.controls.email.hasError('required') ? 'Bitte gib deine E-Mail-Adresse ein.' : 'Diese E-Mail-Adresse sieht nicht vollständig aus.' }}
+                  </p>
+                }
+              </div>
+              <div class="field">
+                <label for="login-password">Passwort</label>
+                <div class="secret">
+                  <input id="login-password" formControlName="password" [type]="showPassword() ? 'text' : 'password'"
+                    autocomplete="current-password"
+                    [attr.aria-invalid]="loginTried() && loginForm.controls.password.invalid ? 'true' : null"
+                    [attr.aria-describedby]="loginTried() && loginForm.controls.password.invalid ? 'login-password-error' : null" />
+                  <button type="button" class="secret__toggle" (click)="togglePassword()"
+                    [attr.aria-label]="showPassword() ? 'Passwort verbergen' : 'Passwort anzeigen'" [attr.aria-pressed]="showPassword()">
+                    <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" aria-hidden="true" />
+                  </button>
+                </div>
+                @if (loginTried() && loginForm.controls.password.invalid) {
+                  <p id="login-password-error" class="field-error">Bitte gib dein Passwort ein.</p>
+                }
+                <a class="text-link text-link--small field__aside" routerLink="/passwort-vergessen">Passwort vergessen?</a>
+              </div>
+              <label class="check">
+                <input type="checkbox" formControlName="remember" />
+                <span class="check__box" aria-hidden="true"><app-icon name="check" /></span>
+                <span>Angemeldet bleiben</span>
+              </label>
+              <button type="submit" class="btn btn--primary" [disabled]="submitting()" [attr.aria-busy]="submitting()">
+                {{ submitting() ? 'Wird angemeldet …' : 'Anmelden' }}
+              </button>
+            </form>
+            <p class="switch">Neu hier? <a routerLink="/registrieren">Konto erstellen</a></p>
+          } @else {
+            <form class="form" [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
+              <div class="field">
+                <label for="register-name">Vorname</label>
+                <input id="register-name" formControlName="name" autocomplete="given-name" maxlength="150"
+                  [attr.aria-invalid]="registerTried() && registerForm.controls.name.invalid ? 'true' : null"
+                  [attr.aria-describedby]="registerTried() && registerForm.controls.name.invalid ? 'register-name-error' : null" />
+                @if (registerTried() && registerForm.controls.name.invalid) {
+                  <p id="register-name-error" class="field-error">
+                    {{ registerForm.controls.name.errors?.['backend'] ?? 'Bitte gib deinen Vornamen ein (mindestens 2 Zeichen).' }}
+                  </p>
+                }
+              </div>
+              <div class="field">
+                <label for="register-email">E-Mail-Adresse</label>
+                <input id="register-email" type="email" formControlName="email" autocomplete="email" inputmode="email"
+                  [attr.aria-invalid]="registerTried() && registerForm.controls.email.invalid ? 'true' : null"
+                  [attr.aria-describedby]="registerTried() && registerForm.controls.email.invalid ? 'register-email-error' : null" />
+                @if (registerTried() && registerForm.controls.email.invalid) {
+                  <p id="register-email-error" class="field-error">
+                    {{ registerForm.controls.email.errors?.['backend'] ?? (registerForm.controls.email.hasError('required') ? 'Bitte gib deine E-Mail-Adresse ein.' : 'Diese E-Mail-Adresse sieht nicht vollständig aus.') }}
+                  </p>
+                }
+              </div>
+              <div class="field">
+                <label for="register-password">Passwort</label>
+                <div class="secret">
+                  <input id="register-password" formControlName="password" [type]="showPassword() ? 'text' : 'password'"
+                    autocomplete="new-password" aria-describedby="register-password-rules"
+                    [attr.aria-invalid]="registerTried() && registerForm.controls.password.invalid ? 'true' : null" />
+                  <button type="button" class="secret__toggle" (click)="togglePassword()"
+                    [attr.aria-label]="showPassword() ? 'Passwort verbergen' : 'Passwort anzeigen'" [attr.aria-pressed]="showPassword()">
+                    <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" aria-hidden="true" />
+                  </button>
+                </div>
+                <!-- Regeln immer sichtbar und live abgehakt; rot erst nach dem Absenden -->
+                <ul id="register-password-rules" class="rules" [attr.data-met]="passwordMet()">
+                  <li [class.is-met]="passwordChecks().length"><span class="rule-mark" aria-hidden="true">@if (passwordChecks().length) {<app-icon name="check" />}</span>Mindestens 10 Zeichen<span class="sr-only">{{ passwordChecks().length ? ' – erfüllt' : ' – offen' }}</span></li>
+                  <li [class.is-met]="passwordChecks().letter"><span class="rule-mark" aria-hidden="true">@if (passwordChecks().letter) {<app-icon name="check" />}</span>Ein Buchstabe<span class="sr-only">{{ passwordChecks().letter ? ' – erfüllt' : ' – offen' }}</span></li>
+                  <li [class.is-met]="passwordChecks().digit"><span class="rule-mark" aria-hidden="true">@if (passwordChecks().digit) {<app-icon name="check" />}</span>Eine Zahl<span class="sr-only">{{ passwordChecks().digit ? ' – erfüllt' : ' – offen' }}</span></li>
+                </ul>
+                @if (registerTried() && registerForm.controls.password.invalid) {
+                  <p class="field-error">
+                    {{ registerForm.controls.password.errors?.['backend'] ?? 'Das Passwort erfüllt noch nicht alle Regeln oben.' }}
+                  </p>
+                }
+              </div>
+              <div class="field">
+                <label for="register-confirm">Passwort wiederholen</label>
+                <div class="secret">
+                  <input id="register-confirm" formControlName="confirmPassword" [type]="showConfirmPassword() ? 'text' : 'password'"
+                    autocomplete="new-password"
+                    [attr.aria-invalid]="registerTried() && (registerForm.controls.confirmPassword.invalid || registerForm.hasError('mismatch')) ? 'true' : null"
+                    [attr.aria-describedby]="registerTried() && (registerForm.controls.confirmPassword.invalid || registerForm.hasError('mismatch')) ? 'register-confirm-error' : null" />
+                  <button type="button" class="secret__toggle" (click)="toggleConfirmPassword()"
+                    [attr.aria-label]="showConfirmPassword() ? 'Passwort verbergen' : 'Passwort anzeigen'" [attr.aria-pressed]="showConfirmPassword()">
+                    <app-icon [name]="showConfirmPassword() ? 'eye-off' : 'eye'" aria-hidden="true" />
+                  </button>
+                </div>
+                @if (registerTried() && (registerForm.controls.confirmPassword.invalid || registerForm.hasError('mismatch'))) {
+                  <p id="register-confirm-error" class="field-error">
+                    {{ registerForm.controls.confirmPassword.errors?.['backend'] ?? (registerForm.hasError('mismatch') ? 'Die Passwörter stimmen nicht überein.' : 'Bitte wiederhole dein Passwort.') }}
+                  </p>
+                }
+              </div>
+              <label class="check check--terms">
+                <input type="checkbox" formControlName="acceptPrivacy"
+                  [attr.aria-invalid]="registerTried() && registerForm.controls.acceptPrivacy.invalid ? 'true' : null"
+                  [attr.aria-describedby]="registerTried() && registerForm.controls.acceptPrivacy.invalid ? 'register-privacy-error' : null" />
+                <span class="check__box" aria-hidden="true"><app-icon name="check" /></span>
+                <span>Ich stimme den <a routerLink="/nutzungsbedingungen" target="_blank">Nutzungsbedingungen</a> zu und habe die
+                  <a routerLink="/datenschutz" target="_blank">Datenschutzerklärung</a> gelesen.</span>
+              </label>
+              @if (registerTried() && registerForm.controls.acceptPrivacy.invalid) {
+                <p id="register-privacy-error" class="field-error">
+                  {{ registerForm.controls.acceptPrivacy.errors?.['backend'] ?? 'Bitte stimme den Nutzungsbedingungen und der Datenschutzerklärung zu.' }}
+                </p>
+              }
+              <button type="submit" class="btn btn--primary" [disabled]="submitting()" [attr.aria-busy]="submitting()">
+                {{ submitting() ? 'Konto wird erstellt …' : 'Konto erstellen' }}
+              </button>
+            </form>
+            <p class="switch">Schon dabei? <a routerLink="/login">Anmelden</a></p>
+          }
+
+          @if (providers().length) {
+            <p class="fine">
+              Mit „Weiter mit {{ providers().length === 2 ? 'Google oder Apple' : providerName[providers()[0]] }}“ gelten ebenfalls die
+              <a routerLink="/nutzungsbedingungen">Nutzungsbedingungen</a> und die <a routerLink="/datenschutz">Datenschutzerklärung</a>.
+              Wir erhalten nur deinen Namen und deine E-Mail-Adresse.
+            </p>
+          }
+        }
       }
     </div>
+
+    <footer class="panel__foot">
+      <a routerLink="/datenschutz">Datenschutz</a>
+      <a routerLink="/nutzungsbedingungen">Nutzungsbedingungen</a>
+      <a routerLink="/impressum">Impressum</a>
+    </footer>
   </section>
 </main>

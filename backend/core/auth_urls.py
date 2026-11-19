@@ -14,6 +14,7 @@ from core.auth_views import (
     SessionListView,
 )
 from core.mfa_views import MfaSetupView, MfaStatusView, MfaVerifyView
+from core.social_views import CallbackView, LinkView, PendingView, ProvidersView, SocialMfaView, StartView
 
 urlpatterns = [
     path('csrf/', CsrfTokenView.as_view(), name='auth-csrf'),
@@ -31,4 +32,11 @@ urlpatterns = [
     path('mfa/status/', MfaStatusView.as_view(), name='auth-mfa-status'),
     path('mfa/setup/', MfaSetupView.as_view(), name='auth-mfa-setup'),
     path('mfa/verify/', MfaVerifyView.as_view(), name='auth-mfa-verify'),
+    # Anmeldung mit Google/Apple (core/social_views.py, docs/SOCIAL_LOGIN.md)
+    path('oauth/providers/', ProvidersView.as_view(), name='auth-oauth-providers'),
+    path('oauth/pending/', PendingView.as_view(), name='auth-oauth-pending'),
+    path('oauth/link/', LinkView.as_view(), name='auth-oauth-link'),
+    path('oauth/mfa/', SocialMfaView.as_view(), name='auth-oauth-mfa'),
+    path('oauth/<slug:provider>/start/', StartView.as_view(), name='auth-oauth-start'),
+    path('oauth/<slug:provider>/callback/', CallbackView.as_view(), name='auth-oauth-callback'),
 ]

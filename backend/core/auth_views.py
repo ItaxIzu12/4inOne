@@ -178,6 +178,25 @@ class RegisterSerializer(serializers.Serializer):
         return value
 
 
+def create_account(email: str, password: str | None, name: str = '', household_name: str = ''):
+    """Neues Konto samt eigenem Haushalt (ADMIN) — atomar: entweder alles oder nichts, sonst bliebe ein Nutzer ohne
+    Haushalt zurück. Registrierung mit Passwort und Anmeldung über Google/Apple (core/social_views.py, dann ohne
+    Passwort = unbrauchbares Passwort, setzbar über „Passwort vergessen“) nutzen denselben Weg.
+
+    household_name optional (Feld „Wie soll dein Haushalt heißen?“): leer → „Haushalt von <Name>“, nie ein leerer oder
+    rein technischer Name."""
+    User = get_user_model()
+    with transaction.atomic():
+        user = User.objects.create_user(username=email, email=email, password=password, first_name=name[:150])
+        if password is None:
+            user.set_unusable_password()
+            user.save(update_fields=['password'])
+        fallback_source = name or email.split('@')[0]
+        household = Household.objects.create(name=(household_name or '').strip() or f'Haushalt von {fallback_source}')
+        HouseholdMembership.objects.create(user=user, household=household, role=HouseholdMembership.Role.ADMIN)
+    return user
+
+
 @method_decorator(csrf_protect, name='dispatch')
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -188,33 +207,7 @@ class RegisterView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        User = get_user_model()
-        # Atomar: entweder entstehen User + Household + ADMIN-Mitgliedschaft
-        # zusammen, oder gar nichts — sonst könnte bei einem Fehler zwischen
-        # den drei Schritten ein User ohne Haushalt zurückbleiben, der sich
-        # zwar einloggen aber keine Haushaltsdaten anlegen könnte.
-        with transaction.atomic():
-            user = User.objects.create_user(
-                username=data['email'],
-                email=data['email'],
-                password=data['password'],
-                first_name=data.get('name', ''),
-            )
-            # Jede Registrierung startet mit einem eigenen Haushalt, dessen
-            # ADMIN der registrierende Nutzer ist — spätere Einladungen
-            # weiterer Mitglieder laufen über In-App-Einladungen (siehe
-            # core/invitations.py), nicht über diesen Endpunkt.
-            #
-            # household_name ist optional (Frontend-Feld "Wie soll dein
-            # Haushalt heißen?", siehe features/login/login.html) — bei
-            # leerem Feld greift derselbe Fallback wie zuvor, damit ein
-            # Haushalt nie einen leeren/rein technischen Namen bekommt.
-            fallback_source = data.get('name') or data['email'].split('@')[0]
-            household_name = data.get('household_name', '').strip() or f'Haushalt von {fallback_source}'
-            household = Household.objects.create(name=household_name)
-            HouseholdMembership.objects.create(
-                user=user, household=household, role=HouseholdMembership.Role.ADMIN
-            )
+        user = create_account(data['email'], data['password'], data.get('name', ''), data.get('household_name', ''))
 
         from core.email_verification import send_verification_mail
 

@@ -1,149 +1,227 @@
-<main class="onboarding">
-  <header class="brand-row">
-    <app-brand /><span aria-live="polite">{{ step() }} / 4</span>
+<main id="main-content" class="ob" tabindex="-1">
+  <header class="ob__top">
+    <app-brand />
+    @if (allowed() && step() < 4) {
+      <button type="button" class="ob__skip" [disabled]="saving()" (click)="skipAll()">Überspringen</button>
+    }
   </header>
-  <nav class="steps" aria-label="Einrichtungsschritte">
-    @for (stage of stages; track stage; let i = $index) {
-      <span [class.done]="step() >= i + 1" [attr.aria-current]="step() === i + 1 ? 'step' : null"
-        ><b>{{ i + 1 }}</b
-        ><span>{{ stage }}</span></span
-      >
-    }
-  </nav>
-  <div
-    class="progress"
-    role="progressbar"
-    aria-label="Einrichtung"
-    aria-valuemin="1"
-    aria-valuemax="4"
-    [attr.aria-valuenow]="step()"
-  >
-    @for (stage of stages; track stage; let i = $index) {
-      <span [class.done]="step() >= i + 1"></span>
-    }
-  </div>
+
   @if (loading()) {
-    <p class="status" role="status">Dein Konto wird vorbereitet …</p>
+    <p class="ob__state" role="status">Einen Moment …</p>
   } @else if (!allowed()) {
-    <div class="status">
-      <p  [appErrorNotice]="error()">{{ error() }}</p>
-      <button class="primary" (click)="load()">Erneut versuchen</button>
-    </div>
+    <section class="card ob__card">
+      @if (error()) {
+        <p class="alert" role="alert">{{ error() }}</p>
+        <button type="button" class="btn btn--primary" (click)="load()">Noch einmal versuchen</button>
+      }
+    </section>
   } @else {
-    <section class="step-content">
+    @if (step() < 4) {
+      <div class="progress">
+        <p class="progress__label" aria-live="polite">Schritt {{ step() }} von 3 · {{ stages[step() - 1] }}</p>
+        <ol class="progress__bar" aria-hidden="true">
+          @for (stage of stages; track stage; let i = $index) {
+            <li [class.is-done]="step() > i + 1" [class.is-now]="step() === i + 1"></li>
+          }
+        </ol>
+      </div>
+    }
+
+    <section class="card ob__card" [attr.aria-labelledby]="'ob-heading'">
       @switch (step()) {
+        <!-- ===================== 1 Du ===================== -->
         @case (1) {
-          <div class="intro">
-            <h1 #heading tabindex="-1">Willkommen<br />bei 4inOne</h1>
-            <p>
-              Finanzen, Haushalt, Organisation und Reisen in einer App. Was zusammengehört, verknüpfst du, zum Beispiel
-              ein Gerät mit seinem Sparziel.
-            </p>
-          </div>
-          <app-link-chain class="welcome-chain" />
+          <h1 id="ob-heading" #heading tabindex="-1">Willkommen bei 4inOne</h1>
+          <p class="lead">Drei kurze Schritte – danach legst du direkt deinen ersten echten Eintrag an.</p>
+          <form class="form" [formGroup]="profile" (ngSubmit)="saveProfile()" novalidate>
+            <div class="field">
+              <label for="ob-name">Wie dürfen wir dich nennen?</label>
+              <input id="ob-name" formControlName="name" autocomplete="given-name" maxlength="150"
+                [attr.aria-invalid]="tried() && profile.controls.name.invalid ? 'true' : null"
+                [attr.aria-describedby]="tried() && profile.controls.name.invalid ? 'ob-name-error' : null" />
+              @if (tried() && profile.controls.name.invalid) {
+                <p id="ob-name-error" class="field-error">Bitte gib einen Namen mit mindestens 2 Zeichen ein.</p>
+              }
+            </div>
+            <app-field label="Deine Währung" hint="Für Ausgaben und Umrechnungen auf Reisen. Später in den Einstellungen änderbar.">
+              <app-select formControlName="currency" [options]="currencyOptions" />
+            </app-field>
+            <div class="field">
+              <span class="label" id="ob-usage">Wofür nutzt du 4inOne?</span>
+              <div class="segment" role="group" aria-labelledby="ob-usage">
+                <button type="button" [attr.aria-pressed]="usage() === 'personal'" (click)="usage.set('personal')">
+                  <app-icon name="user" aria-hidden="true" />Nur für mich
+                </button>
+                <button type="button" [attr.aria-pressed]="usage() === 'shared'" (click)="usage.set('shared')">
+                  <app-icon name="people" aria-hidden="true" />Mit anderen zusammen
+                </button>
+              </div>
+              <p class="hint">Teilen ist immer deine Entscheidung – nichts wird automatisch für andere sichtbar.</p>
+            </div>
+            @if (error()) {
+              <p class="alert" role="alert">{{ error() }}</p>
+            }
+            <div class="actions">
+              <button type="submit" class="btn btn--primary" [disabled]="saving()" [attr.aria-busy]="saving()">
+                {{ saving() ? 'Wird gespeichert …' : 'Weiter' }}<app-icon name="arrow" aria-hidden="true" />
+              </button>
+            </div>
+          </form>
         }
+
+        <!-- ===================== 2 Bereiche ===================== -->
         @case (2) {
-          <h1 #heading tabindex="-1">Wie möchtest du<br />4inOne nutzen?</h1>
-          <p>Wähle die Option, die am besten zu dir passt.</p>
-          <div class="usage-options" role="group" aria-label="Nutzungsart">
-            <button
-              [attr.aria-pressed]="usage() === 'personal'"
-              [class.selected]="usage() === 'personal'"
-              (click)="usage.set('personal')"
-            >
-              <app-icon name="home" /><span
-                ><strong>Nur für mich</strong
-                ><small>Ich nutze 4inOne hauptsächlich alleine.</small></span
-              ><span class="selection" aria-hidden="true">@if (usage() === 'personal') {<app-icon name="check" />}</span></button
-            ><button
-              [attr.aria-pressed]="usage() === 'shared'"
-              [class.selected]="usage() === 'shared'"
-              (click)="usage.set('shared')"
-            >
-              <app-icon name="people" /><span
-                ><strong>Mit Partner / Familie / WG</strong
-                ><small>Ich möchte meinen Alltag gemeinsam planen.</small></span
-              ><span class="selection" aria-hidden="true">@if (usage() === 'shared') {<app-icon name="check" />}</span>
+          <h1 id="ob-heading" #heading tabindex="-1">Womit möchtest du anfangen?</h1>
+          <p class="lead">Wähle einen oder mehrere Bereiche. Die anderen sind da, sobald du sie brauchst.</p>
+          <ul class="areas" role="list">
+            @for (area of areas; track area.key) {
+              <li>
+                <button type="button" class="area" [class]="'area area--' + area.key" [attr.aria-pressed]="selected().includes(area.key)" (click)="toggle(area.key)">
+                  <span class="area__icon" aria-hidden="true"><app-icon [name]="area.icon" /></span>
+                  <span class="area__text"><b>{{ area.label }}</b><small>{{ area.what }}</small></span>
+                  <span class="area__check" aria-hidden="true">@if (selected().includes(area.key)) {<app-icon name="check" />}</span>
+                </button>
+              </li>
+            }
+          </ul>
+          @if (error()) {
+            <p class="alert" role="alert">{{ error() }}</p>
+          }
+          <div class="actions">
+            <button type="button" class="btn btn--quiet" (click)="back()">Zurück</button>
+            <button type="button" class="btn btn--primary" [disabled]="saving()" [attr.aria-busy]="saving()" (click)="saveAreas()">
+              {{ saving() ? 'Wird gespeichert …' : 'Weiter' }}<app-icon name="arrow" aria-hidden="true" />
             </button>
           </div>
-          <p class="privacy-note">
-            Deine Daten bleiben privat. Teilen und Einladungen entscheidest du später ausdrücklich
-            selbst.
-          </p>
         }
+
+        <!-- ===================== 3 Erster Eintrag ===================== -->
         @case (3) {
-          <h1 #heading tabindex="-1">Was möchtest du<br />zuerst organisieren?</h1>
-          <p>Wähle einen oder mehrere Bereiche aus. Alle Bereiche bleiben für dich erreichbar.</p>
-          <div class="domain-options" role="group" aria-label="Bereiche auswählen">
-            @for (domain of domains; track domain.key) {
-              <button
-                [class]="domain.key + ' tone-' + domain.tone"
-                [class.selected]="selected().includes(domain.key)"
-                [attr.aria-pressed]="selected().includes(domain.key)"
-                (click)="toggle(domain.key)"
-              >
-                <span class="selection" aria-hidden="true">@if (selected().includes(domain.key)) {<app-icon name="check" />}</span
-                ><span class="domain-icon" aria-hidden="true"><app-icon [name]="domain.icon" /></span><strong>{{ domain.label }}</strong
-                ><small>{{ domain.description }}</small>
-              </button>
-            }
-          </div>
-        }
-        @case (4) {
-          <div class="finish">
-            <div class="success" aria-hidden="true"><app-icon name="check" /></div>
-            <h1 #heading tabindex="-1">Dein 4inOne ist bereit</h1>
-            <p>Wie möchtest du starten?</p>
-            <div class="summary">
-              <app-brand />
-              <h2>Deine Auswahl</h2>
-              <p>{{ usage() === 'personal' ? 'Nur für mich' : 'Gemeinsam planen' }}</p>
-              <div class="summary-domains">
-                @for (domain of domains; track domain.key) {
-                  @if (selected().includes(domain.key)) {
-                    <span [class]="domain.key + ' tone-' + domain.tone"
-                      ><app-icon [name]="domain.icon" />{{ domain.label }}</span
-                    >
-                  }
-                }
-              </div>
-              <small>Du kannst alle Bereiche jederzeit öffnen. Noch wurde nichts geteilt.</small>
+          <h1 id="ob-heading" #heading tabindex="-1">{{ entryInfo().first }}</h1>
+          <p class="lead">Damit dein 4inOne nicht leer startet. Du kannst den Eintrag später jederzeit ändern oder löschen.</p>
+          @if (selectedAreas().length > 1) {
+            <div class="segment segment--areas" role="group" aria-label="Bereich für den ersten Eintrag">
+              @for (area of selectedAreas(); track area.key) {
+                <button type="button" [attr.aria-pressed]="entryArea() === area.key" (click)="chooseEntryArea(area.key)">
+                  <app-icon [name]="area.icon" aria-hidden="true" />{{ area.label }}
+                </button>
+              }
             </div>
+          }
+
+          @switch (entryArea()) {
+            @case ('finanzen') {
+              <form class="form" [formGroup]="expenseForm" (ngSubmit)="saveEntry()" novalidate>
+                <div class="form__row">
+                  <div class="field field--amount">
+                    <label for="ob-amount">Betrag</label>
+                    <input id="ob-amount" formControlName="amount" inputmode="decimal" autocomplete="off" placeholder="12,40"
+                      [attr.aria-invalid]="tried() && expenseForm.controls.amount.invalid ? 'true' : null" />
+                  </div>
+                  <div class="field">
+                    <label for="ob-note">Wofür?</label>
+                    <input id="ob-note" formControlName="note" maxlength="120" placeholder="z. B. Bäcker"
+                      [attr.aria-invalid]="tried() && expenseForm.controls.note.invalid ? 'true' : null" />
+                  </div>
+                </div>
+                @if (tried() && (expenseForm.controls.amount.invalid || expenseForm.controls.note.invalid)) {
+                  <p class="field-error">Bitte gib einen Betrag (z. B. 12,40) und eine kurze Beschreibung ein.</p>
+                }
+                @if (categories().length) {
+                  <div class="field">
+                    <span class="label" id="ob-cat">Kategorie</span>
+                    <div class="chips" role="group" aria-labelledby="ob-cat">
+                      @for (c of categories(); track c.id) {
+                        <button type="button" class="chip" [style.--c]="c.color" [attr.aria-pressed]="category() === c.id" (click)="category.set(c.id)">
+                          <i aria-hidden="true"></i>{{ c.name }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+                <ng-container *ngTemplateOutlet="entryActions" />
+              </form>
+            }
+            @case ('reisen') {
+              <form class="form" [formGroup]="tripForm" (ngSubmit)="saveEntry()" novalidate>
+                <div class="field">
+                  <label for="ob-destination">Wohin geht es?</label>
+                  <input id="ob-destination" formControlName="destination" maxlength="120" placeholder="z. B. Lissabon"
+                    [attr.aria-invalid]="tried() && tripForm.controls.destination.invalid ? 'true' : null"
+                    [attr.aria-describedby]="tried() && tripForm.controls.destination.invalid ? 'ob-destination-error' : null" />
+                  @if (tried() && tripForm.controls.destination.invalid) {
+                    <p id="ob-destination-error" class="field-error">Bitte gib ein Reiseziel ein.</p>
+                  }
+                </div>
+                <div class="form__row">
+                  <app-field label="Von"><app-date-picker mode="date" formControlName="start" [min]="today" /></app-field>
+                  <app-field label="Bis"><app-date-picker mode="date" formControlName="end" [min]="tripForm.controls.start.value || today" /></app-field>
+                </div>
+                <ng-container *ngTemplateOutlet="entryActions" />
+              </form>
+            }
+            @default {
+              <form class="form" [formGroup]="taskForm" (ngSubmit)="saveEntry()" novalidate>
+                <div class="field">
+                  <label for="ob-title">{{ entryArea() === 'haushalt' ? 'Was steht im Haushalt an?' : 'Was möchtest du erledigen?' }}</label>
+                  <input id="ob-title" formControlName="title" maxlength="120"
+                    [attr.placeholder]="entryArea() === 'haushalt' ? 'z. B. Pflanzen gießen' : 'z. B. Steuerunterlagen sortieren'"
+                    [attr.aria-invalid]="tried() && taskForm.controls.title.invalid ? 'true' : null"
+                    [attr.aria-describedby]="tried() && taskForm.controls.title.invalid ? 'ob-title-error' : null" />
+                  @if (tried() && taskForm.controls.title.invalid) {
+                    <p id="ob-title-error" class="field-error">Bitte gib kurz ein, was ansteht.</p>
+                  }
+                </div>
+                <div class="field">
+                  <span class="label" id="ob-due">Wann?</span>
+                  <div class="segment" role="group" aria-labelledby="ob-due">
+                    <button type="button" [attr.aria-pressed]="taskForm.controls.due.value === 'today'" (click)="taskForm.controls.due.setValue('today')">Heute</button>
+                    <button type="button" [attr.aria-pressed]="taskForm.controls.due.value === 'week'" (click)="taskForm.controls.due.setValue('week')">Diese Woche</button>
+                    <button type="button" [attr.aria-pressed]="taskForm.controls.due.value === 'none'" (click)="taskForm.controls.due.setValue('none')">Ohne Datum</button>
+                  </div>
+                </div>
+                <ng-container *ngTemplateOutlet="entryActions" />
+              </form>
+            }
+          }
+
+          <ng-template #entryActions>
+            @if (error()) {
+              <p class="alert" role="alert">{{ error() }}</p>
+            }
+            <div class="actions actions--split">
+              <button type="button" class="btn btn--quiet" (click)="back()">Zurück</button>
+              <span class="actions__end">
+                <button type="button" class="btn btn--soft" [disabled]="saving()" (click)="skipEntry()">Ohne Eintrag weiter</button>
+                <button type="submit" class="btn btn--primary" [disabled]="saving()" [attr.aria-busy]="saving()">
+                  {{ saving() ? 'Wird gespeichert …' : 'Speichern' }}
+                </button>
+              </span>
+            </div>
+          </ng-template>
+        }
+
+        <!-- ===================== Fertig ===================== -->
+        @case (4) {
+          <span class="done__mark" aria-hidden="true"><app-icon name="check" /></span>
+          <h1 id="ob-heading" #heading tabindex="-1">Alles bereit{{ profile.controls.name.value ? ', ' + profile.controls.name.value.trim() : '' }}</h1>
+          @if (created(); as c) {
+            <p class="lead">Dein erster Eintrag ist gespeichert:</p>
+            <div class="created" [class]="'created created--' + c.area">
+              <span class="area__icon" aria-hidden="true"><app-icon [name]="areaIcon(c.area)" /></span>
+              <span><small>{{ areaLabel(c.area) }}</small><b>{{ c.text }}</b></span>
+            </div>
+          } @else {
+            <p class="lead">Du startest mit einem leeren Arbeitsbereich. Leg los, wenn es passt.</p>
+          }
+          <div class="actions actions--stack">
+            <button type="button" class="btn btn--primary" (click)="finish()">
+              {{ created() ? 'Zu ' + areaLabel(created()!.area) : 'Zu meinem Alltag' }}<app-icon name="arrow" aria-hidden="true" />
+            </button>
+            <a class="text-link" routerLink="/demo">Lieber erst die Demo mit Beispieldaten ansehen</a>
           </div>
         }
       }
     </section>
-    @if (error()) {
-      <p class="error"  [appErrorNotice]="error()">{{ error() }}</p>
-    }
-    <footer>
-      @if (step() > 1) {
-        <button class="secondary" (click)="move(step() - 1)" [disabled]="saving()">
-          <app-icon class="back-icon" name="arrow" />Zurück
-        </button>
-      }
-      @if (step() < 4) {
-        <button class="primary" (click)="next()">
-          {{ step() === 1 ? 'Los geht’s' : 'Weiter' }} <app-icon name="arrow" />
-        </button>
-      } @else {
-        <button
-          class="secondary"
-          (click)="finish('/demo')"
-          [disabled]="saving()"
-          [attr.aria-busy]="saving()"
-        >
-          4inOne entdecken
-        </button>
-        <button
-          class="primary"
-          (click)="finish('/')"
-          [disabled]="saving()"
-          [attr.aria-busy]="saving()"
-        >
-          {{ saving() ? 'Wird gespeichert …' : 'Mit meinen Daten starten' }} <app-icon name="arrow" />
-        </button>
-      }
-    </footer>
   }
 </main>

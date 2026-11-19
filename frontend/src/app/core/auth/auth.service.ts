@@ -15,6 +15,17 @@ export interface AuthUser {
   is_admin?: boolean;
 }
 
+export type SocialProvider = 'google' | 'apple';
+export type SocialProviders = Record<SocialProvider, boolean>;
+export interface SocialPending {
+  step: 'link' | 'mfa' | null;
+  provider?: SocialProvider;
+  /** maskiert, z. B. „l•••@example.com“ */
+  email?: string;
+  /** false: Konto entstand über einen anderen Anbieter und hat noch kein Passwort */
+  has_password?: boolean;
+}
+
 /** Ein angemeldetes Gerät (siehe Einstellungen → Aktive Sitzungen). */
 export interface LoginSession {
   id: string;
@@ -105,6 +116,34 @@ export class AuthService {
       confirm_password: confirmPassword,
       accept_privacy: acceptPrivacy,
     }).pipe(tap((res) => this.applySession(res)));
+  }
+
+  // ---------- Anmeldung mit Google/Apple (backend core/social_views.py, docs/SOCIAL_LOGIN.md) ----------
+  /** Welche Anmeldewege eingerichtet sind — die Knöpfe erscheinen nur dafür. */
+  socialProviders(): Observable<SocialProviders> {
+    return this.http.get<SocialProviders>(`${API_BASE_URL}/auth/oauth/providers/`);
+  }
+  /** Adresse, zu der der Browser navigiert: das Backend leitet von dort zum Anbieter weiter (state/nonce/PKCE). */
+  socialStartUrl(provider: SocialProvider): string {
+    return `${API_BASE_URL}/auth/oauth/${provider}/start/`;
+  }
+  /** Was nach der Rückkehr vom Anbieter noch offen ist (Konto verknüpfen oder Zwei-Faktor). */
+  socialPending(): Observable<SocialPending> {
+    return this.http.get<SocialPending>(`${API_BASE_URL}/auth/oauth/pending/`, { withCredentials: true });
+  }
+  socialCancel(): Observable<void> {
+    return this.http.delete<void>(`${API_BASE_URL}/auth/oauth/pending/`, { withCredentials: true });
+  }
+  /** Bestehendes Konto verknüpfen — nur mit dessen Passwort (und Zwei-Faktor-Code, falls eingeschaltet). */
+  socialLink(password: string, mfaCode = ''): Observable<AuthResponse | { mfa_required: true }> {
+    return this.cookiePost<AuthResponse | { mfa_required: true }>('oauth/link', { password, mfa_code: mfaCode }).pipe(
+      tap((res) => {
+        if ('access' in res) this.applySession(res);
+      }),
+    );
+  }
+  socialMfa(code: string): Observable<AuthResponse> {
+    return this.cookiePost<AuthResponse>('oauth/mfa', { code }).pipe(tap((res) => this.applySession(res)));
   }
 
   /** Versucht, die Sitzung über das httpOnly-Refresh-Cookie wiederherzustellen

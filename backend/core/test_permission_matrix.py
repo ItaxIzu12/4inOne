@@ -409,6 +409,10 @@ PUBLIC_ROUTES = {
     # auch vor der Anmeldung. Der Tunnel api/v1/monitoring/tunnel/ ist ebenfalls offen (Funktions-View, daher nicht in
     # diesem Sweep): er leitet nur an den konfigurierten DSN weiter, mit Größen- und Rate-Limit (monitoring/tests.py).
     'api/v1/monitoring/config/',
+    # Anmeldung mit Google/Apple (core/social_views.py): vor der Anmeldung nötig. Start/Rückruf sind an ein signiertes
+    # Ablauf-Cookie gebunden (state/nonce/PKCE), Verknüpfen verlangt das Passwort, Zwei-Faktor den Code (test_social.py).
+    'api/v1/auth/oauth/providers/', 'api/v1/auth/oauth/pending/', 'api/v1/auth/oauth/link/', 'api/v1/auth/oauth/mfa/',
+    'api/v1/auth/oauth/<slug:provider>/start/', 'api/v1/auth/oauth/<slug:provider>/callback/',
 }
 
 

@@ -81,3 +81,37 @@ def test_server_validates_preferences(context, data):
     user, home, client = context
     assert client.put(URL, data, format='json').status_code == 400
     assert not OnboardingProfile.objects.filter(user=user).exists()
+
+
+def test_first_real_entry_from_onboarding_works_with_minimal_input():
+    """Onboarding Schritt 3 (Neubau 19.11.2026): ein neues Konto legt mit wenigen Feldern seinen ersten echten Eintrag
+    an — genau die Felder, die frontend/src/app/features/onboarding/first-entry.service.ts schickt."""
+    from datetime import date, timedelta
+
+    from django.contrib.auth import get_user_model
+    from rest_framework.test import APIClient
+
+    from core.auth_views import create_account
+
+    user = create_account('neu@example.com', 'Sicher123!x', 'Neu')
+    client = APIClient()
+    client.force_authenticate(user)
+    today = date.today()
+
+    categories = client.get('/api/v1/finanzen/private/categories/').json()
+    if not categories:
+        categories = client.post('/api/v1/finanzen/private/categories/setup/', {}, format='json').json()
+    assert categories, 'Ein neues Konto braucht Kategorien für die erste Ausgabe'
+    expense = client.post('/api/v1/finanzen/private/transactions/', {
+        'amount': '12.40', 'type': 'EXPENSE', 'category': categories[0]['id'], 'date': today.isoformat(),
+        'note': 'Bäcker', 'currency': 'EUR'}, format='json')
+    assert expense.status_code == 201, expense.content
+    chore = client.post('/api/v1/haushalt/aufgaben/', {'title': 'Pflanzen gießen', 'due_date': today.isoformat()}, format='json')
+    assert chore.status_code == 201, chore.content
+    todo = client.post('/api/v1/organisation/tasks/', {'title': 'Steuer vorbereiten', 'due_date': None}, format='json')
+    assert todo.status_code == 201, todo.content
+    trip = client.post('/api/v1/reisen/trips/', {'title': 'Lissabon', 'destination': 'Lissabon',
+                                                  'start_date': (today + timedelta(days=30)).isoformat(),
+                                                  'end_date': (today + timedelta(days=34)).isoformat()}, format='json')
+    assert trip.status_code == 201, trip.content
+    assert get_user_model().objects.count() == 1

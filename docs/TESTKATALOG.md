@@ -83,6 +83,10 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 43 
 | AUTH-22 | Onboarding: erster Login → Profilfragen, überspringen, später ändern | P1 | E | ✅ `onboarding.spec.ts`, `core/test_onboarding.py` |
 | AUTH-23 | Zwei Tabs: in Tab A abmelden → Tab B reagiert beim nächsten Klick sauber | P1 | E | ❌ |
 | AUTH-24 | CSRF: schreibende Anfrage ohne Token → 403 | P0 | A | ✅ |
+| AUTH-25 | Google/Apple: neues Konto, bekannter Zugang, Konto mit gleicher E-Mail nur mit Passwort (+ Zwei-Faktor) | P0 | A/E | ✅ `core/test_social.py`, `e2e/auth-social.spec.ts` |
+| AUTH-26 | Google/Apple-Angriffe: falscher/fehlender `state`, gefälschtes/abgelaufenes/fremdes ID-Token, `alg: none`, alte Nonce, unbestätigte E-Mail, manipulierte Cookies | P0 | A | ✅ `core/test_social.py` (mit Gegenproben) |
+| AUTH-27 | Google/Apple mit echten Zugangsdaten gegen die echten Anbieter (Google lokal, Apple auf dem Server) | P0 | M | ❌ braucht deine Zugangsdaten |
+| AUTH-28 | Onboarding: erster echter Eintrag je Bereich mit minimalen Feldern | P1 | A/E | ✅ `core/test_onboarding.py`, `e2e/onboarding.spec.ts` |
 
 ## 3. Berechtigungen und Privatsphäre (wichtigster Block)
 

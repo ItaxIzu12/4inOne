@@ -269,6 +269,8 @@ REST_FRAMEWORK = {
         # kennt, kein "alle 5 Minuten".
         'mfa_verify': f"{env.int('RATE_LIMIT_MFA_VERIFY', default=5)}/min",
         # Fehlerberichte aus dem Browser über den Tunnel (monitoring/views.py), pro IP
+        # Anmeldung mit Google/Apple: Start und Rückruf (core/social_views.py), pro IP
+        'social_login': f"{env.int('RATE_LIMIT_SOCIAL_LOGIN', default=20)}/min",
         'monitoring_tunnel': f"{env.int('RATE_LIMIT_MONITORING_TUNNEL', default=60)}/min",
         # Pro HAUSHALT (nicht pro Nutzer/IP), siehe HouseholdInviteRateThrottle
         # (core/household_views.py) — mehrere Mitglieder desselben Haushalts
@@ -490,6 +492,19 @@ GLITCHTIP_ORG = env('GLITCHTIP_ORG', default='')
 GLITCHTIP_API_TOKEN = env('GLITCHTIP_API_TOKEN', default='')
 # Anmelde-Ereignisse im Admin-Panel: Aufbewahrung in Tagen (manage.py prune_auth_events, täglich)
 AUTH_EVENT_RETENTION_DAYS = env.int('AUTH_EVENT_RETENTION_DAYS', default=90)
+
+# ============================================================
+# Anmeldung mit Google und Apple (core/social.py, docs/SOCIAL_LOGIN.md)
+# Ein Anbieter ist nur aktiv, wenn seine Werte gesetzt sind — sonst kein Knopf, kein Endpunkt.
+# ============================================================
+# Öffentliche Adresse des Backends; daraus wird die Rückruf-Adresse …/api/v1/auth/oauth/<anbieter>/callback/
+OAUTH_CALLBACK_BASE = env('OAUTH_CALLBACK_BASE', default='http://localhost:8000')
+GOOGLE_OAUTH_CLIENT_ID = env('GOOGLE_OAUTH_CLIENT_ID', default='')
+GOOGLE_OAUTH_CLIENT_SECRET = env('GOOGLE_OAUTH_CLIENT_SECRET', default='')
+APPLE_CLIENT_ID = env('APPLE_CLIENT_ID', default='')        # Services ID, z. B. de.4inone.web
+APPLE_TEAM_ID = env('APPLE_TEAM_ID', default='')
+APPLE_KEY_ID = env('APPLE_KEY_ID', default='')
+APPLE_PRIVATE_KEY_PATH = env('APPLE_PRIVATE_KEY_PATH', default='')  # Pfad zur .p8-Datei, außerhalb des Repositorys
 
 from monitoring.sentry import init_sentry  # noqa: E402 (braucht die Werte oben, keine App-Modelle)
 

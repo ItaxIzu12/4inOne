@@ -18,6 +18,11 @@ const PUBLIC_AUTH_URLS = [
   `${API_BASE_URL}/auth/password-reset/request/`,
   `${API_BASE_URL}/auth/password-reset/confirm/`,
   `${API_BASE_URL}/auth/email/verify/`,
+  // Google/Apple (core/social_views.py): 401 = falsches Passwort beim Verknüpfen bzw. falscher Zwei-Faktor-Code
+  `${API_BASE_URL}/auth/oauth/providers/`,
+  `${API_BASE_URL}/auth/oauth/pending/`,
+  `${API_BASE_URL}/auth/oauth/link/`,
+  `${API_BASE_URL}/auth/oauth/mfa/`,
 ];
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {

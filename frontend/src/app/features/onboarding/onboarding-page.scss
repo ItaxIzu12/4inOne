@@ -1,460 +1,528 @@
-@use '../../shared/styles/editorial' as editorial;
-
-// Einrichtung nach der Registrierung im Stil der Startseite „Editorial hell“ (shared/styles/_editorial.scss):
-// warmweißer Grund, eine weiße Karte mit feinem Rand, Schibsted Grotesk, Knöpfe als Pillen in Tinte bzw. mit Tintenrand.
-// Bereiche in ihren vier Farben (Mixin area-tones), Auswahl = Rand + Haken in Tinte. Schritt 1 erklärt Verknüpfen mit
-// der Beispielkette (shared/link-chain). Keine Verläufe, keine schrägen Kacheln, keine Textzeichen als Symbole.
+// Onboarding (Neubau 19.11.2026): Porcelain-Fläche, eine weiße Karte, Tinte; Bereiche in ihren gedeckten Farben.
+// Nur vorhandene Tokens (styles.css).
 :host {
-  @include editorial.tokens;
-  display: grid;
-  min-height: 100dvh;
-  place-items: center;
-  font-size: 16px;
-  line-height: 1.55;
-}
-@include editorial.area-tones;
-.onboarding {
-  width: min(880px, calc(100% - 64px));
-  margin: 40px auto;
-  padding: 32px 48px 40px;
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: var(--card);
+  display: block;
 }
 
-// ---------- Kopf und Fortschritt ----------
-.brand-row {
+.ob {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 20px;
+  min-height: 100dvh;
+  padding: 20px clamp(16px, 4vw, 40px) 48px;
+  background: var(--surface-app);
+  color: var(--text-primary);
+  outline: none;
+}
+.ob ::selection {
+  background: var(--finance-soft);
+}
+.ob input {
+  caret-color: var(--brand-primary);
+}
+.ob__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  width: min(100%, 1040px);
+  min-height: 48px;
 }
-.brand-row app-brand {
+.ob__top app-brand {
   font-size: 22px;
 }
-.brand-row > span {
-  color: var(--ink-soft);
-  font-size: 14px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
+.ob__skip {
+  min-height: 44px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
-.steps {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 28px 0 40px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--line);
+.ob__skip:hover {
+  color: var(--text-primary);
 }
-.steps > span {
-  display: flex;
-  align-items: center;
+.ob__state {
+  margin-top: 20vh;
+  color: var(--text-secondary);
+}
+
+// ---------------------------------------------------------------- Fortschritt
+.progress {
+  display: grid;
   gap: 10px;
-  color: var(--ink-soft);
+  width: min(100%, 580px);
+  margin-top: clamp(4px, 4vh, 40px);
+}
+.progress__label {
+  margin: 0;
+  color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
 }
-.steps b {
+.progress__bar {
   display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border: 1.5px solid var(--line);
-  border-radius: 50%;
-  font-size: 13px;
-  font-weight: 700;
-  transition:
-    background-color 200ms ease-out,
-    border-color 200ms ease-out,
-    color 200ms ease-out;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.steps .done {
-  color: var(--ink);
+.progress__bar li {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-default);
+  transition: background-color 240ms ease-out;
 }
-.steps .done b {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: #fff;
-}
-.progress {
-  display: none;
+.progress__bar li.is-done,
+.progress__bar li.is-now {
+  background: var(--brand-primary);
 }
 
-// ---------- Inhalt ----------
-.step-content {
-  max-width: 600px;
-  min-height: 380px;
-  margin: 0 auto;
+// ---------------------------------------------------------------- Karte
+.card {
+  width: min(100%, 580px);
+  padding: clamp(22px, 4vw, 36px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--surface-card);
 }
 h1 {
-  @include editorial.display;
-  margin: 0 0 14px;
-  color: var(--ink);
-  font-size: clamp(2rem, 1.5rem + 1.4vw, 2.75rem);
-  line-height: 1.05;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 3.4vw, 34px);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
   text-wrap: balance;
-}
-h1:focus {
   outline: none;
 }
-p {
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 17px;
-  line-height: 1.6;
-}
-.welcome-chain {
-  margin-top: 32px;
-}
-strong {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--ink);
-  font-size: 17px;
-  font-weight: 600;
-}
-small {
-  display: block;
-  color: var(--ink-soft);
-  font-size: 14px;
+.lead {
+  margin: 10px 0 26px;
+  color: var(--text-secondary);
+  font-size: 16px;
   line-height: 1.5;
 }
 
-// Auswahlkarten (Nutzung und Bereiche): weiße Karte, Rand; gewählt = Tintenrand + Haken
-.usage-options,
-.domain-options {
-  margin-top: 28px;
-}
-.usage-options {
+// ---------------------------------------------------------------- Formular
+.form {
   display: grid;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 20px;
 }
-.usage-options button,
-.domain-options button {
-  position: relative;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--card);
-  color: var(--ink);
-  text-align: left;
-  transition:
-    border-color 180ms ease-out,
-    box-shadow 180ms ease-out,
-    background-color 180ms ease-out,
-    transform 180ms var(--ease);
+.form__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
 }
-.usage-options button {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  min-height: 96px;
-  padding: 20px 22px;
+.form__row:has(.field--amount) {
+  grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.3fr);
 }
-.usage-options button > span:nth-of-type(1) {
-  flex: 1;
+.field {
+  display: grid;
+  gap: 8px;
 }
-.usage-options button > app-icon {
-  flex: none;
-  box-sizing: content-box;
-  width: 24px;
-  height: 24px;
-  padding: 12px;
+// wie app-field (shared/form/field.ts): 14 px, fett — damit alle Beschriftungen auf der Karte gleich aussehen
+label,
+.label {
+  font-size: 14px;
+  font-weight: 700;
+}
+input:not([type='checkbox']) {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  border: 1px solid var(--border-control);
   border-radius: 12px;
-  background: var(--ground-2);
-  color: var(--ink);
+  background: #fff;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 16px;
 }
-.selection {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border: 1.5px solid #879189; // 3,3:1 zum Weiß — leere Auswahlmarke bleibt erkennbar
-  border-radius: 50%;
-  color: #fff;
+input::placeholder {
+  color: var(--text-secondary); // 6,6:1 auf Weiß — gedimmt wären es nur ~4:1 (Untergrenze 4,5:1)
+  opacity: 1;
 }
-.selection app-icon {
-  width: 14px;
-  height: 14px;
+input:focus-visible {
+  border-color: var(--brand-primary);
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
 }
-.selected .selection {
-  border-color: var(--ink);
-  background: var(--ink);
+input[aria-invalid='true'] {
+  border-color: var(--danger);
 }
-.usage-options button.selected,
-.domain-options button.selected {
-  border-color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--ink);
+.hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
 }
-.domain-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+.field-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 14px;
 }
-.domain-options button {
-  display: block;
-  min-height: 168px;
-  padding: 20px;
-}
-.domain-options button.selected {
-  background: var(--c-tint);
-}
-.domain-options .selection {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-}
-.domain-icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  margin-bottom: 16px;
+.alert {
+  margin: 0;
+  padding: 12px 14px;
   border-radius: 12px;
-  background: var(--c);
-  color: var(--c-on);
-}
-.domain-icon app-icon {
-  width: 22px;
-  height: 22px;
-}
-.privacy-note {
-  display: block;
-  padding: 14px 18px;
-  border-radius: 12px;
-  background: var(--ground);
-  color: var(--ink);
+  background: var(--danger-soft);
+  color: var(--danger);
   font-size: 15px;
 }
 
-// ---------- Fertig ----------
-.finish {
-  text-align: center;
+// Umschalter (Nutzung, Wann?, Bereich für den Eintrag): Sage-Spur, gewählt = weiß mit Tintenrand
+.segment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--surface-sunken);
 }
-.success {
+.segment button {
+  display: inline-flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.segment button app-icon {
+  width: 18px;
+  height: 18px;
+}
+.segment button:hover {
+  color: var(--text-primary);
+}
+.segment button[aria-pressed='true'] {
+  border-color: var(--border-default);
+  background: #fff;
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(23, 37, 35, 0.08);
+}
+.segment--areas {
+  margin-bottom: 22px;
+}
+
+// ---------------------------------------------------------------- Bereiche
+.areas {
   display: grid;
-  place-items: center;
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 24px;
-  border-radius: 50%;
-  background: var(--finance-tint);
-  color: var(--finance-deep);
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.success app-icon {
-  width: 36px;
-  height: 36px;
-}
-.summary {
-  margin-top: 28px;
-  padding: 24px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--ground);
+.area {
+  --c: var(--brand-primary);
+  --soft: var(--surface-sunken);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
   text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease-out, box-shadow 140ms ease-out;
 }
-.summary app-brand {
-  font-size: 20px;
+.area--finanzen,
+.created--finanzen {
+  --c: var(--finance-accent);
+  --soft: var(--finance-soft);
 }
-.summary h2 {
-  margin: 18px 0 4px;
-  color: var(--ink);
-  font-size: 18px;
-  font-weight: 700;
+.area--haushalt,
+.created--haushalt {
+  --c: var(--household-accent);
+  --soft: var(--household-soft);
 }
-.summary-domains {
+.area--organisation,
+.created--organisation {
+  --c: var(--organization-accent);
+  --soft: var(--organization-soft);
+}
+.area--reisen,
+.created--reisen {
+  --c: var(--travel-accent);
+  --soft: var(--travel-soft);
+}
+.area:hover {
+  border-color: var(--border-strong);
+}
+.area[aria-pressed='true'] {
+  border-color: var(--c);
+  box-shadow: inset 0 0 0 1px var(--c);
+}
+.area__icon {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--c);
+}
+.area__icon app-icon {
+  width: 22px;
+  height: 22px;
+}
+.area__text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+.area__text b {
+  font-size: 16px;
+  font-weight: 600;
+}
+.area__text small {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.area__check {
+  display: grid;
+  flex: 0 0 24px;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid var(--border-control);
+  border-radius: 7px;
+  color: #fff;
+}
+.area[aria-pressed='true'] .area__check {
+  border-color: var(--c);
+  background: var(--c);
+}
+.area__check app-icon {
+  width: 15px;
+  height: 15px;
+}
+
+// ---------------------------------------------------------------- Kategorien
+.chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 16px 0;
 }
-.summary-domains span {
+.chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 36px;
-  padding: 0 14px 0 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
   border-radius: 999px;
-  background: var(--c-tint);
-  color: var(--c-deep);
-  font-size: 14px;
-  font-weight: 600;
-}
-.summary-domains app-icon {
-  width: 18px;
-  height: 18px;
-}
-
-// ---------- Knöpfe ----------
-footer {
-  display: flex;
-  gap: 12px;
-  max-width: 600px;
-  margin: 32px auto 0;
-}
-button {
+  background: #fff;
+  color: var(--text-primary);
   font: inherit;
+  font-size: 14px;
   cursor: pointer;
 }
-.primary,
-.secondary {
+.chip i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c, var(--text-secondary));
+}
+.chip[aria-pressed='true'] {
+  border-color: var(--brand-primary);
+  box-shadow: inset 0 0 0 1px var(--brand-primary);
+  font-weight: 600;
+}
+
+// ---------------------------------------------------------------- Knöpfe
+.actions {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 10px;
-  min-height: 52px;
-  padding: 0 26px;
+  margin-top: 6px;
+}
+.actions--split {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.actions__end {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: auto;
+}
+.actions--stack {
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: 22px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
+  font: inherit;
   font-size: 16px;
   font-weight: 600;
-  transition:
-    background-color 200ms ease-out,
-    color 200ms ease-out,
-    transform 200ms var(--ease);
+  cursor: pointer;
 }
-.primary {
-  flex: 1;
-  background: var(--ink);
-  color: #fff;
-}
-.secondary {
-  background: transparent;
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1.5px var(--ink);
-}
-.primary:active,
-.secondary:active {
-  transform: scale(0.98);
-}
-footer app-icon {
+.btn app-icon {
   width: 18px;
   height: 18px;
 }
-.back-icon {
-  transform: rotate(180deg);
+.btn--primary {
+  background: var(--brand-primary);
+  color: #fff;
 }
-button:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 3px;
+.btn--primary:hover:not(:disabled) {
+  background: var(--brand-primary-hover);
 }
-button:disabled {
-  opacity: 0.65;
-  cursor: wait;
+.btn--primary:active:not(:disabled) {
+  transform: translateY(1px);
 }
-.error {
-  max-width: 600px;
-  margin: 20px auto 0;
-  color: #a13f40;
+.btn--soft {
+  border: 1px solid var(--border-default);
+  background: #fff;
+  color: var(--text-primary);
+}
+.btn--soft:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.btn--quiet {
+  padding: 0 8px;
+  background: transparent;
+  color: var(--text-secondary);
   font-weight: 500;
 }
-.status {
-  padding: 60px 0;
-  text-align: center;
+.btn--quiet:hover {
+  color: var(--text-primary);
 }
-.status button {
-  margin: 20px auto 0;
+.btn:disabled {
+  cursor: progress;
+  opacity: 0.72;
 }
-@media (hover: hover) and (pointer: fine) {
-  .usage-options button:not(.selected):hover,
-  .domain-options button:not(.selected):hover {
-    border-color: #879189;
-    transform: translateY(-2px);
+.text-link {
+  align-self: center;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-radius: 4px;
+}
+
+.btn:focus-visible,
+.segment button:focus-visible,
+.area:focus-visible,
+.chip:focus-visible,
+.ob__skip:focus-visible,
+.text-link:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+// ---------------------------------------------------------------- Fertig
+.done__mark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 18px;
+  border-radius: 16px;
+  background: var(--success-soft);
+  color: var(--success);
+  animation: settle 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.done__mark app-icon {
+  width: 28px;
+  height: 28px;
+}
+@keyframes settle {
+  from {
+    transform: scale(0.82);
   }
-  .primary:not(:disabled):hover {
-    background: #22332f;
-  }
-  .secondary:not(:disabled):hover {
-    background: var(--ink);
-    color: #fff;
+  to {
+    transform: scale(1);
   }
 }
+.created {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-app);
+}
+.created span:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.created small {
+  color: var(--c);
+  font-size: 13px;
+  font-weight: 600;
+}
+.created b {
+  font-size: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .usage-options button,
-  .domain-options button,
-  .primary,
-  .secondary {
+  .done__mark {
+    animation: none;
+  }
+  .progress__bar li,
+  .area {
     transition: none;
   }
 }
 
-// ---------- Handy: ganze Fläche, Fortschritt als Balken, Knöpfe unten ----------
-@media (max-width: 600px) {
-  :host {
-    display: block;
-    background: var(--card);
+@media (max-width: 560px) {
+  .form__row,
+  .form__row:has(.field--amount) {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .onboarding {
-    display: flex;
-    flex-direction: column;
+  .actions--split {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .actions__end {
+    flex-direction: column-reverse;
+    margin-left: 0;
+  }
+  .actions--split .btn {
     width: 100%;
-    min-height: 100dvh;
-    margin: 0;
-    padding: 20px max(20px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom))
-      max(20px, env(safe-area-inset-left));
-    border: 0;
-    border-radius: 0;
   }
-  .brand-row app-brand {
-    font-size: 20px;
-  }
-  .steps {
-    display: none;
-  }
-  .progress {
-    display: flex;
-    gap: 4px;
-    margin: 20px 0 28px;
-  }
-  .progress span {
-    flex: 1;
-    height: 5px;
-    border-radius: 999px;
-    background: var(--ground-2);
-    transition: background-color 200ms ease-out;
-  }
-  .progress .done {
-    background: var(--ink);
-  }
-  .step-content {
-    flex: 1;
+  .actions:not(.actions--split):not(.actions--stack) .btn--primary {
     width: 100%;
-    min-height: 0;
-  }
-  p {
-    font-size: 16px;
-  }
-  .welcome-chain {
-    margin-top: 24px;
-  }
-  .usage-options button {
-    gap: 14px;
-    padding: 18px 16px;
-  }
-  .domain-options button {
-    min-height: 0;
-    padding: 16px 14px;
-  }
-  .domain-icon {
-    width: 40px;
-    height: 40px;
-    margin-bottom: 12px;
-  }
-  .domain-options strong {
-    font-size: 16px;
-  }
-  .domain-options small {
-    font-size: 13px;
-  }
-  .summary {
-    padding: 20px;
-  }
-  footer {
-    width: 100%;
-    margin-top: 28px;
-  }
-  .secondary {
-    padding: 0 20px;
   }
 }

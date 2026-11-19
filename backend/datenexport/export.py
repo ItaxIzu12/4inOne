@@ -34,7 +34,7 @@ from django_otp import devices_for_user
 from connections.models import AutoLink, AutoLinkEvent, Connection, SuggestionDismissal
 from core.households import own_household
 from core.models import (
-    BetaFeedback, Contact, ContactInvite, Household, HouseholdMembership, Invitation, Notification, OnboardingProfile,
+    BetaFeedback, Contact, ContactInvite, SocialAccount, Household, HouseholdMembership, Invitation, Notification, OnboardingProfile,
     UserPreference, UserSession,
 )
 from finanzen.models import (
@@ -178,6 +178,8 @@ class _Export:
             'anmeldungen': self.rows(AccessLog._base_manager.filter(username=user.username)),
             'fehlgeschlagene_anmeldungen': self.rows(AccessFailureLog._base_manager.filter(username=user.username)),
             'beta_feedback': self.rows(BetaFeedback._base_manager.filter(user=user)),
+            # mit Google/Apple verknüpfte Anmeldungen (Anbieter, Kennung beim Anbieter, E-Mail beim Verknüpfen)
+            'verknuepfte_anmeldungen': self.rows(SocialAccount._base_manager.filter(user=user)),
             # Sicherheitsprotokoll: eigene Anmeldungen, Fehlversuche, Sperren (IP nur gekürzt)
             'anmelde_ereignisse': self.rows(AuthEvent._base_manager.filter(user=user)),
         })

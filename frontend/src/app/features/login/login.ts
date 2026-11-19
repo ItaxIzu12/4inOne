@@ -1,37 +1,40 @@
-import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { Brand } from '../../shared/brand/brand';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, DOCUMENT, ElementRef, PLATFORM_ID, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../core/auth/auth.service';
-import { ScrollService } from '../../core/scroll/scroll.service';
+import { AuthService, SocialProvider } from '../../core/auth/auth.service';
+import { DEMO_ONLY } from '../../core/demo-only';
 import { IconArrowLeft } from '../../shared/icons/icon-arrow-left';
-import { LinkChain } from '../../shared/link-chain/link-chain';
 
 type Mode = 'login' | 'register';
+/** form = E-Mail/Passwort · mfa = Code nach Passwort · link = Google/Apple mit bestehendem Konto verbinden ·
+ * social-mfa = Code nach Google/Apple · finishing = Rückkehr vom Anbieter wird abgeschlossen */
+type View = 'form' | 'mfa' | 'link' | 'social-mfa' | 'finishing';
 
-// Passwort-Richtlinie: Länge statt erzwungener Zeichenvielfalt (NIST SP 800-63B) —
-// kein Pflicht-Sonderzeichen/Großbuchstabe, das bringt laut NIST kaum Sicherheitsgewinn
-// und ist gerade für die ältere Zielgruppe aus GESAMTKONZEPT.md eine unnötige Hürde.
+// Passwort-Richtlinie: Länge statt erzwungener Zeichenvielfalt (NIST SP 800-63B) — kein Pflicht-Sonderzeichen,
+// das bringt kaum Sicherheit und ist eine unnötige Hürde. Serverseitig gilt dasselbe (core/validators.py).
 const PASSWORD_MIN_LENGTH = 10;
 const PASSWORD_HAS_LETTER = /[a-zA-Zà-öø-ÿÀ-ÖØ-ß]/;
 const PASSWORD_HAS_DIGIT = /\d/;
-// Nur für die optische Stärkeanzeige (nicht Teil der harten Policy oben):
-// ein Sonderzeichen ist NICHT Pflicht, hebt die Anzeige aber als drittes,
-// zusätzliches Signal an — siehe passwordStrength().
-const PASSWORD_HAS_SPECIAL = /[^A-Za-zÀ-ÖØ-öø-ÿ0-9\s]/;
 const PASSWORD_POLICY_PATTERN = new RegExp(
   `^(?=.*${PASSWORD_HAS_LETTER.source})(?=.*${PASSWORD_HAS_DIGIT.source}).{${PASSWORD_MIN_LENGTH},}$`,
 );
+
+const PROVIDER_NAME: Record<SocialProvider, string> = { google: 'Google', apple: 'Apple' };
+
+/** Kurzwörter vom Backend (core/social_views.py) → verständliche Sätze, ohne technische Details. */
+const SOCIAL_ERRORS: Record<string, string> = {
+  abgebrochen: 'Die Anmeldung wurde abgebrochen. Du kannst es jederzeit noch einmal versuchen.',
+  abgelaufen: 'Die Anmeldung hat zu lange gedauert. Bitte versuche es noch einmal.',
+  email: 'Dein Konto beim Anbieter hat keine bestätigte E-Mail-Adresse. Bitte bestätige sie dort oder nutze E-Mail und Passwort.',
+  gesperrt: 'Dieses Konto ist gesperrt.',
+  token: 'Die Anmeldung konnte nicht bestätigt werden. Bitte versuche es noch einmal.',
+  anbieter: 'Der Anbieter ist gerade nicht erreichbar. Bitte versuche es später noch einmal.',
+};
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value;
@@ -39,10 +42,16 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   return password && confirmPassword && password !== confirmPassword ? { mismatch: true } : null;
 }
 
+/**
+ * Anmelden und Konto erstellen (Neubau 19.11.2026, 4inOne-Stil): links ein Band in Deep Forest mit Leitsatz, den vier
+ * Bereichen und dem Datenschutz-Versprechen, rechts eine Formularspalte. Oben „Weiter mit Google/Apple“, nur wenn
+ * eingerichtet; darunter E-Mail und Passwort. Dieselbe Seite übernimmt die Folgeschritte: Zwei-Faktor-Code,
+ * Verknüpfen eines bestehenden Kontos (nur mit dessen Passwort) und den Abschluss nach der Rückkehr vom Anbieter.
+ */
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ErrorNoticeDirective, AppIcon, Brand, ReactiveFormsModule, RouterLink, IconArrowLeft, LinkChain],
+  imports: [AppIcon, Brand, ReactiveFormsModule, RouterLink, IconArrowLeft],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
@@ -50,23 +59,30 @@ export class Login {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly scroll = inject(ScrollService);
   private readonly auth = inject(AuthService);
+  private readonly doc = inject(DOCUMENT);
+  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly errorBox = viewChild<ElementRef<HTMLElement>>('errorBox');
+  private readonly stepHeading = viewChild<ElementRef<HTMLElement>>('stepHeading');
 
-  protected readonly mode = signal<Mode>(
-    this.route.snapshot.data['mode'] === 'register' ? 'register' : 'login',
-  );
-  protected readonly mfaRequired = signal(false);
-  protected readonly mfaCode = signal('');
+  protected readonly mode = signal<Mode>(this.route.snapshot.data['mode'] === 'register' ? 'register' : 'login');
+  protected readonly view = signal<View>('form');
   protected readonly submitting = signal(false);
   protected readonly submitError = signal<string | null>(null);
   protected readonly showPassword = signal(false);
   protected readonly showConfirmPassword = signal(false);
+  protected readonly code = signal('');
+  protected readonly providers = signal<SocialProvider[]>([]);
+  protected readonly redirectingTo = signal<SocialProvider | null>(null);
+  protected readonly pendingProvider = signal<SocialProvider>('google');
+  protected readonly pendingEmail = signal('');
+  protected readonly pendingHasPassword = signal(true);
+  protected readonly linkNeedsCode = signal(false);
+  protected readonly providerName = PROVIDER_NAME;
 
   protected readonly loginForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    // Nur "required": ein bestehendes Konto kann ein Passwort haben, das unter einer
-    // früheren Richtlinie vergeben wurde — die Prüfung selbst passiert serverseitig.
+    // Nur Pflicht: ältere Passwörter können unter einer früheren Richtlinie entstanden sein — geprüft wird serverseitig.
     password: ['', [Validators.required]],
     remember: [true],
   });
@@ -75,24 +91,16 @@ export class Login {
     {
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
       email: ['', [Validators.required, Validators.email]],
-      password: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(PASSWORD_MIN_LENGTH),
-          Validators.pattern(PASSWORD_POLICY_PATTERN),
-        ],
-      ],
+      password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.pattern(PASSWORD_POLICY_PATTERN)]],
       confirmPassword: ['', [Validators.required]],
       acceptPrivacy: [false, [Validators.requiredTrue]],
     },
     { validators: passwordsMatch },
   );
 
-  private readonly registerPassword = toSignal(this.registerForm.controls.password.valueChanges, {
-    initialValue: '',
-  });
+  protected readonly linkForm = this.fb.nonNullable.group({ password: ['', [Validators.required]] });
 
+  private readonly registerPassword = toSignal(this.registerForm.controls.password.valueChanges, { initialValue: '' });
   protected readonly passwordChecks = computed(() => {
     const value = this.registerPassword();
     return {
@@ -101,55 +109,113 @@ export class Login {
       digit: PASSWORD_HAS_DIGIT.test(value),
     };
   });
+  protected readonly passwordMet = computed(() => Object.values(this.passwordChecks()).filter(Boolean).length);
 
-  // Rein optische Zusatzanzeige (3 Balken), NICHT die durchgesetzte Policy
-  // (die bleibt Länge+Buchstabe+Ziffer, siehe passwordChecks/PASSWORD_POLICY_PATTERN).
-  // Bewertet zusätzlich Sonderzeichen als drittes Signal für "wie stark wirkt es".
-  protected readonly passwordStrength = computed(() => {
-    const value = this.registerPassword();
-    if (!value) return 0;
-    let score = 0;
-    if (value.length >= PASSWORD_MIN_LENGTH) score++;
-    if (PASSWORD_HAS_DIGIT.test(value)) score++;
-    if (PASSWORD_HAS_SPECIAL.test(value)) score++;
-    return score;
-  });
-
-  private errorDismissTimeout?: ReturnType<typeof setTimeout>;
+  /** Feldfehler erst nach dem ersten Absenden zeigen (4inOne-Regel), danach live. */
+  protected readonly loginTried = signal(false);
+  protected readonly registerTried = signal(false);
+  protected readonly linkTried = signal(false);
 
   constructor() {
-    // Serverfehler ("E-Mail-Adresse oder Passwort ist falsch.") soll nicht
-    // stehen bleiben, sobald man die Eingabe korrigiert — sonst wirkt eine
-    // neu eingetippte E-Mail-Adresse fälschlich weiterhin als falsch.
-    const clearSubmitError = () => this.clearSubmitError();
-    this.loginForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(clearSubmitError);
-    this.registerForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(clearSubmitError);
-    inject(DestroyRef).onDestroy(() => clearTimeout(this.errorDismissTimeout));
+    const clear = () => this.submitError.set(null);
+    this.loginForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(clear);
+    this.registerForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(clear);
+    this.linkForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(clear);
+    if (this.browser && !DEMO_ONLY) {
+      this.auth.socialProviders().pipe(takeUntilDestroyed()).subscribe({
+        next: (p) => this.providers.set((Object.keys(p) as SocialProvider[]).filter((k) => p[k])),
+        error: () => this.providers.set([]), // ohne Backend einfach ohne Google/Apple
+      });
+      this.handleReturn();
+    }
   }
 
-  private clearSubmitError(): void {
-    clearTimeout(this.errorDismissTimeout);
-    this.submitError.set(null);
-  }
-
-  /** Blendet die allgemeine Fehlermeldung nach ein paar Sekunden von selbst
-   * wieder aus, statt dauerhaft stehen zu bleiben. */
-  private scheduleErrorDismiss(): void {
-    clearTimeout(this.errorDismissTimeout);
-    // Errors remain visible until the user edits or retries.
-  }
-
-  protected goHome(): void {
-    this.scroll.toTop();
-  }
-
-  protected setMode(mode: Mode): void {
-    if (this.mode() === mode) {
+  // ---------- Rückkehr von Google/Apple ----------
+  private handleReturn(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const social = params.get('social');
+    const error = params.get('fehler');
+    if (error) {
+      this.showError(SOCIAL_ERRORS[error] ?? SOCIAL_ERRORS['token']);
+      this.cleanUrl();
       return;
     }
-    this.mode.set(mode);
-    this.clearSubmitError();
-    this.router.navigate([mode === 'register' ? '/registrieren' : '/login']);
+    if (social === 'ok' || social === 'neu') {
+      this.view.set('finishing');
+      this.auth.refresh().subscribe({
+        next: () => this.router.navigateByUrl(social === 'neu' ? '/onboarding' : '/', { replaceUrl: true }),
+        error: () => {
+          this.view.set('form');
+          this.showError(SOCIAL_ERRORS['abgelaufen']);
+          this.cleanUrl();
+        },
+      });
+      return;
+    }
+    if (social === 'verknuepfen' || social === 'zwei-faktor') {
+      this.view.set('finishing');
+      this.auth.socialPending().subscribe({
+        next: (pending) => {
+          if (!pending.step || !pending.provider) {
+            this.view.set('form');
+            this.showError(SOCIAL_ERRORS['abgelaufen']);
+            this.cleanUrl();
+            return;
+          }
+          this.pendingProvider.set(pending.provider);
+          this.pendingEmail.set(pending.email ?? '');
+          this.pendingHasPassword.set(pending.has_password !== false);
+          this.setView(pending.step === 'link' ? 'link' : 'social-mfa');
+        },
+        error: () => {
+          this.view.set('form');
+          this.showError(SOCIAL_ERRORS['abgelaufen']);
+        },
+      });
+    }
+  }
+
+  private cleanUrl(): void {
+    this.router.navigate([], { queryParams: {}, replaceUrl: true });
+  }
+
+  protected startSocial(provider: SocialProvider): void {
+    if (this.redirectingTo()) return;
+    this.redirectingTo.set(provider);
+    this.leaveTo(this.auth.socialStartUrl(provider));
+  }
+
+  /** Ganze Seite zum Backend (das leitet zum Anbieter weiter) — eigene Methode, damit Tests sie beobachten können. */
+  protected leaveTo(url: string): void {
+    this.doc.location.assign(url);
+  }
+
+  protected cancelSocial(): void {
+    this.auth.socialCancel().subscribe({ complete: () => undefined, error: () => undefined });
+    this.code.set('');
+    this.linkForm.reset();
+    this.linkTried.set(false);
+    this.linkNeedsCode.set(false);
+    this.submitError.set(null);
+    this.setView('form');
+    this.cleanUrl();
+  }
+
+  // ---------- Allgemein ----------
+  private setView(view: View): void {
+    this.view.set(view);
+    setTimeout(() => this.stepHeading()?.nativeElement.focus());
+  }
+
+  private showError(message: string): void {
+    this.submitError.set(message);
+    setTimeout(() => this.errorBox()?.nativeElement.focus());
+  }
+
+  protected setCode(value: string): void {
+    // Nur Ziffern; Einfügen aus dem Passwort-Manager oder per SMS-Vorschlag bleibt erlaubt (WCAG 3.3.8)
+    this.code.set(value.replace(/\D/g, '').slice(0, 8));
+    this.submitError.set(null);
   }
 
   protected togglePassword(): void {
@@ -160,16 +226,19 @@ export class Login {
     this.showConfirmPassword.update((v) => !v);
   }
 
-  /** Feldfehler erst nach dem ersten Absenden zeigen (globale 4inOne-Regel), danach live. */
-  protected readonly loginTried = signal(false);
-  protected readonly registerTried = signal(false);
+  protected backToForm(): void {
+    this.code.set('');
+    this.submitError.set(null);
+    this.setView('form');
+  }
 
+  // ---------- E-Mail und Passwort ----------
   protected submitLogin(): void {
     if (this.submitting()) return;
     this.loginTried.set(true);
-    this.clearSubmitError();
-    if (this.mfaRequired() && !this.mfaCode().trim()) {
-      this.submitError.set('Bitte gib deinen Bestätigungscode ein.');
+    this.submitError.set(null);
+    if (this.view() === 'mfa' && !this.code()) {
+      this.showError('Bitte gib den Code aus deiner Authenticator-App ein.');
       return;
     }
     if (this.loginForm.invalid) {
@@ -178,31 +247,27 @@ export class Login {
     }
     this.submitting.set(true);
     const { email, password, remember } = this.loginForm.getRawValue();
-
-    this.auth.login(email, password, remember, this.mfaCode()).subscribe({
+    this.auth.login(email.trim(), password, remember, this.code()).subscribe({
       next: (response) => {
+        this.submitting.set(false);
         if ('mfa_required' in response) {
-          this.submitting.set(false);
-          this.mfaRequired.set(true);
+          this.setView('mfa');
           return;
         }
-        this.submitting.set(false);
         this.router.navigateByUrl('/');
       },
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
-        this.submitError.set(
+        this.showError(
           err.status === 0
-            ? 'Server nicht erreichbar. Bitte versuche es später erneut.'
+            ? 'Der Server ist nicht erreichbar. Bitte versuche es später noch einmal.'
             : err.status === 429
-              ? 'Zu viele Anmeldeversuche. Bitte warte einen Moment und versuche es dann erneut.'
-              : // 401 deckt sowohl falsche Zugangsdaten als auch eine Axes-
-              // Sperre nach zu vielen Fehlversuchen ab (ARCHITEKTUR.md §3.1)
-              // — bewusst dieselbe Meldung für beides, damit niemand von
-              // außen erkennen kann, welcher der beiden Fälle vorliegt.
-              'E-Mail-Adresse oder Passwort ist falsch.',
+              ? 'Zu viele Anmeldeversuche. Bitte warte einen Moment und versuche es dann noch einmal.'
+              : this.view() === 'mfa'
+                ? 'Der Code stimmt nicht oder ist abgelaufen.'
+                : // Falsche Zugangsdaten und axes-Sperre bewusst gleich, damit niemand die Fälle unterscheiden kann
+                  'E-Mail-Adresse oder Passwort ist falsch.',
         );
-        this.scheduleErrorDismiss();
       },
     });
   }
@@ -210,55 +275,40 @@ export class Login {
   protected submitRegister(): void {
     if (this.submitting()) return;
     this.registerTried.set(true);
-    this.clearSubmitError();
+    this.submitError.set(null);
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       return;
     }
     this.submitting.set(true);
-    const { name, email, password, confirmPassword, acceptPrivacy } =
-      this.registerForm.getRawValue();
-
-    this.auth
-      .register(name.trim(), email.trim(), password, confirmPassword, acceptPrivacy)
-      .subscribe({
-        next: () => {
-          this.submitting.set(false);
-          this.router.navigateByUrl('/');
-        },
-        error: (err: HttpErrorResponse) => {
-          this.submitting.set(false);
-          this.applyRegisterFieldErrors(err);
-        },
-      });
+    const { name, email, password, confirmPassword, acceptPrivacy } = this.registerForm.getRawValue();
+    this.auth.register(name.trim(), email.trim(), password, confirmPassword, acceptPrivacy).subscribe({
+      next: () => {
+        this.submitting.set(false);
+        this.router.navigateByUrl('/');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.submitting.set(false);
+        this.applyRegisterFieldErrors(err);
+      },
+    });
   }
 
   private applyRegisterFieldErrors(err: HttpErrorResponse): void {
     if (err.status === 0) {
-      this.submitError.set('Server nicht erreichbar. Bitte versuche es später erneut.');
-      this.scheduleErrorDismiss();
+      this.showError('Der Server ist nicht erreichbar. Bitte versuche es später noch einmal.');
       return;
     }
-
-    // Serverseitige Validierungsfehler (z. B. Passwort-Policy oder
-    // E-Mail bereits vergeben, siehe core/validators.py auf dem Backend)
-    // landen als Feldfehler in der Antwort — auf die jeweiligen Controls
-    // mappen, damit sie wie normale Formularfehler angezeigt werden.
+    if (err.status === 429) {
+      this.showError('Zu viele Versuche. Bitte warte einen Moment und versuche es dann noch einmal.');
+      return;
+    }
+    // Serverseitige Feldfehler (Passwort-Richtlinie, E-Mail vergeben …) wie normale Formularfehler am Feld zeigen
     const body = err.error as Record<string, string[]> | undefined;
     let mapped = false;
-
-    if (body?.['email']?.length) {
-      this.registerForm.controls.email.setErrors({ backend: body['email'][0] });
-      this.registerForm.controls.email.markAsTouched();
-      mapped = true;
-    }
-    if (body?.['password']?.length) {
-      this.registerForm.controls.password.setErrors({ backend: body['password'][0] });
-      this.registerForm.controls.password.markAsTouched();
-      mapped = true;
-    }
-
     for (const [key, control] of [
+      ['email', this.registerForm.controls.email],
+      ['password', this.registerForm.controls.password],
       ['name', this.registerForm.controls.name],
       ['confirm_password', this.registerForm.controls.confirmPassword],
       ['accept_privacy', this.registerForm.controls.acceptPrivacy],
@@ -269,8 +319,69 @@ export class Login {
         mapped = true;
       }
     }
-    if (!mapped) {
-      this.submitError.set('Registrierung ist fehlgeschlagen. Bitte versuche es erneut.');
+    if (!mapped) this.showError('Das Konto konnte nicht erstellt werden. Bitte versuche es noch einmal.');
+  }
+
+  // ---------- Google/Apple: bestehendes Konto verknüpfen / Zwei-Faktor ----------
+  protected submitLink(): void {
+    if (this.submitting()) return;
+    this.linkTried.set(true);
+    this.submitError.set(null);
+    if (this.linkForm.invalid) return;
+    if (this.linkNeedsCode() && !this.code()) {
+      this.showError('Bitte gib den Code aus deiner Authenticator-App ein.');
+      return;
     }
+    this.submitting.set(true);
+    this.auth.socialLink(this.linkForm.getRawValue().password, this.code()).subscribe({
+      next: (response) => {
+        this.submitting.set(false);
+        if ('mfa_required' in response) {
+          this.linkNeedsCode.set(true);
+          setTimeout(() => this.doc.getElementById('link-code')?.focus());
+          return;
+        }
+        this.router.navigateByUrl('/', { replaceUrl: true });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.submitting.set(false);
+        this.showError(
+          err.status === 401
+            ? this.linkNeedsCode()
+              ? 'Passwort oder Code stimmt nicht.'
+              : 'Das Passwort stimmt nicht.'
+            : err.status === 409
+              ? `Dieser ${this.providerName[this.pendingProvider()]}-Zugang ist schon mit einem anderen Konto verbunden.`
+              : err.status === 429
+                ? 'Zu viele Versuche. Bitte warte einen Moment und versuche es dann noch einmal.'
+                : 'Die Verknüpfung ist abgelaufen. Bitte melde dich noch einmal an.',
+        );
+      },
+    });
+  }
+
+  protected submitSocialMfa(): void {
+    if (this.submitting()) return;
+    if (!this.code()) {
+      this.showError('Bitte gib den Code aus deiner Authenticator-App ein.');
+      return;
+    }
+    this.submitting.set(true);
+    this.auth.socialMfa(this.code()).subscribe({
+      next: () => {
+        this.submitting.set(false);
+        this.router.navigateByUrl('/', { replaceUrl: true });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.submitting.set(false);
+        this.showError(
+          err.status === 401
+            ? 'Der Code stimmt nicht oder ist abgelaufen.'
+            : err.status === 429
+              ? 'Zu viele Versuche. Bitte warte einen Moment und versuche es dann noch einmal.'
+              : 'Die Anmeldung ist abgelaufen. Bitte melde dich noch einmal an.',
+        );
+      },
+    });
   }
 }

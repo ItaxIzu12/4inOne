@@ -378,3 +378,31 @@ class BetaFeedback(models.Model):
             models.CheckConstraint(condition=models.Q(in_control__gte=1, in_control__lte=5) | models.Q(in_control__isnull=True),
                                    name='beta_feedback_in_control_1_5'),
         ]
+
+
+class SocialAccount(models.Model):
+    """Ein mit Google oder Apple verknüpfter Zugang (core/social_views.py, seit 19.11.2026).
+
+    `subject` ist die feste, pseudonyme Kennung des Anbieters (`sub` im ID-Token) — nie die E-Mail-Adresse, die sich
+    ändern kann. Verknüpft wird nur über diese Kennung; ein bestehendes Konto mit gleicher E-Mail wird erst nach
+    Eingabe seines Passworts verknüpft (kein Kontoübernahme allein über die E-Mail)."""
+
+    class Provider(models.TextChoices):
+        GOOGLE = 'google', 'Google'
+        APPLE = 'apple', 'Apple'
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='social_accounts')
+    provider = models.CharField(max_length=16, choices=Provider.choices)
+    subject = models.CharField(max_length=255)
+    email = models.EmailField(max_length=254, blank=True)  # E-Mail beim Anbieter zum Zeitpunkt der Verknüpfung
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['provider', 'subject'], name='social_account_provider_subject_unique'),
+            models.UniqueConstraint(fields=['user', 'provider'], name='social_account_one_per_provider'),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.get_provider_display()} · {self.user_id}'
