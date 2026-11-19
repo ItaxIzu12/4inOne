@@ -25,6 +25,13 @@ Datenbank. `db.sqlite3` bleibt unverändert liegen und wird danach nicht mehr be
 
 ## Alltag
 
+**Am einfachsten — alles mit einem Befehl:** `./scripts/4inone.sh` startet Docker Desktop (falls nötig), Datenbank,
+Backend und Frontend und öffnet den Browser; fehlen Migrationen, fragt es nach. `./scripts/4inone.sh stop` hält alles
+wieder an, `./scripts/4inone.sh status` zeigt den Stand. Protokolle in `.run/`. Mit `start --mit-monitoring` auch
+GlitchTip.
+
+Einzeln:
+
 | Befehl | Wirkung |
 | --- | --- |
 | `./scripts/dev-db.sh up` / `down` | starten / anhalten (Daten bleiben im Docker-Volume `4inone_postgres_data`) |

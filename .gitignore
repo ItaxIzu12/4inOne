@@ -98,6 +98,8 @@ beta-nutzung*.md
 # ============================================================
 # Lokale Werkzeug-Einstellungen
 # ============================================================
+# Laufzeit-Dateien von ./4inone.sh (Protokolle, Prozessnummern)
+.run/
 # Arbeitskopien von Claude Code (vollständige Kopien des Projekts) und persönliche Einstellungen
 .claude/worktrees/
 .claude/settings.local.json
