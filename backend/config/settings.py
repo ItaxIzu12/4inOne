@@ -166,7 +166,7 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': (
             'django.contrib.auth.password_validation.MinimumLengthValidator'
         ),
-        'OPTIONS': {'min_length': 10},
+        'OPTIONS': {'min_length': 12},
     },
     {
         'NAME': (
@@ -179,7 +179,8 @@ AUTH_PASSWORD_VALIDATORS = [
         ),
     },
     {
-        'NAME': 'core.validators.LetterAndDigitValidator',
+        # Richtlinie nach LKA NRW / BSI (core/validators.py): 12+ Zeichen mit vier Zeichenarten oder Passphrase ab 25
+        'NAME': 'core.validators.PasswordPolicyValidator',
     },
 ]
 

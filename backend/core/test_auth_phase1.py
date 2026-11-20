@@ -7,7 +7,7 @@ pytestmark = pytest.mark.django_db
 
 
 def payload(**changes):
-    return dict(name='Sophie', email='sophie@example.com', password='Sicher123!x', confirm_password='Sicher123!x', accept_privacy=True, **changes)
+    return dict(name='Sophie', email='sophie@example.com', password='Sicher-Wald-27x', confirm_password='Sicher-Wald-27x', accept_privacy=True, **changes)
 
 
 @pytest.mark.parametrize('field,value', [('confirm_password', 'anders12345'), ('accept_privacy', False), ('name', ' ')])
@@ -47,7 +47,7 @@ def test_csrf_registration_login_refresh_logout_and_revocation():
     assert response.cookies['refresh_token']['httponly']
     membership = HouseholdMembership.objects.get(user__email='sophie@example.com')
     assert membership.household.members.count() == 1
-    response = client.post('/api/v1/auth/login/', {'email':'SOPHIE@example.com', 'password':'Sicher123!x', 'remember':False}, content_type='application/json', **headers)
+    response = client.post('/api/v1/auth/login/', {'email':'SOPHIE@example.com', 'password':'Sicher-Wald-27x', 'remember':False}, content_type='application/json', **headers)
     assert response.status_code == 200
     assert not response.cookies['refresh_token']['max-age']
     response = client.post('/api/v1/auth/refresh/', {}, content_type='application/json', **headers)

@@ -32,7 +32,10 @@
   gap: 32px;
   height: 100dvh;
   padding: 36px clamp(32px, 4vw, 56px) 36px;
-  background: var(--brand-primary);
+  // feines Punktraster als Struktur statt Foto (Neubau 20.11.2026) — reine CSS-Fläche, kein Bild
+  background-color: var(--brand-primary);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
   color: #fff;
 }
 .aside ::selection {
@@ -217,12 +220,16 @@
 }
 
 // ---------------------------------------------------------------- Formularspalte
+// Formularspalte (Neubau 20.11.2026): Porzellan mit feinem Punktraster, das Formular als schwebende weiße Karte
 .panel {
   display: grid;
   grid-template-rows: auto 1fr auto;
   min-width: 0;
   min-height: 100dvh;
   padding: 24px clamp(20px, 4vw, 56px);
+  background-color: var(--surface-app);
+  background-image: radial-gradient(var(--border-default) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 .panel__top {
   display: flex;
@@ -280,8 +287,26 @@
 .panel__body {
   justify-self: center;
   align-self: center;
-  width: min(100%, 420px);
-  padding: 40px 0 48px;
+  width: min(100%, 480px);
+  margin: 32px 0 40px;
+  padding: 40px clamp(24px, 3vw, 44px) 36px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--surface-card);
+  box-shadow:
+    0 1px 2px rgba(23, 37, 35, 0.04),
+    0 24px 48px -28px rgba(23, 37, 35, 0.28);
+  animation: card-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 h1 {
   margin: 0;
@@ -459,42 +484,6 @@ input[aria-invalid='true'] {
 .secret__toggle app-icon {
   width: 20px;
   height: 20px;
-}
-.rules {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  margin: 2px 0 0;
-  padding: 0;
-  list-style: none;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-.rules li {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.rule-mark {
-  display: grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  border: 1.5px solid var(--border-control);
-  border-radius: 50%;
-  transition: background-color 140ms ease-out, border-color 140ms ease-out;
-}
-.rule-mark app-icon {
-  width: 11px;
-  height: 11px;
-}
-.rules li.is-met .rule-mark {
-  border-color: var(--success);
-  background: var(--success);
-  color: #fff;
-}
-.rules li.is-met {
-  color: var(--success);
 }
 .field-error {
   margin: 0;
@@ -678,7 +667,8 @@ input[aria-invalid='true'] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .finishing__mark {
+  .finishing__mark,
+  .panel__body {
     animation: none;
   }
   .social__btn,
@@ -723,24 +713,56 @@ input[aria-invalid='true'] {
   .aside__privacy {
     font-size: 13px;
   }
+  // Handy/Tablet: die ganze Seite liegt auf Deep Forest mit Raster; das Formular kommt als weißes Sheet mit runden
+  // oberen Ecken (wie in einer App) — kein reines Weiß mehr, nichts liegt übereinander
+  .auth {
+    background-color: var(--brand-primary);
+    background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+  .aside {
+    background: transparent;
+  }
   .panel {
     min-height: 0;
+    padding: 10px 20px 8px;
+    border-radius: 24px 24px 0 0;
+    background: var(--surface-card);
+    box-shadow: 0 -12px 32px -20px rgba(0, 0, 0, 0.5);
+    animation: card-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .panel::before {
+    content: '';
+    justify-self: center;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-default);
   }
   .panel__top {
     display: none;
   }
+  .panel__body {
+    width: min(100%, 520px);
+    margin: 0;
+    padding: 24px 0 28px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    animation: none;
+  }
 }
 @media (max-width: 480px) {
-  .panel {
-    padding: 16px 20px;
-  }
   .panel__body {
-    padding: 28px 0 32px;
+    padding: 20px 0 28px;
   }
   h1 {
     font-size: 30px;
   }
-  .rules {
-    font-size: 13.5px;
+}
+@media (max-width: 960px) and (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
   }
 }

@@ -32,7 +32,7 @@ describe('PasswortZuruecksetzen', () => {
   it('shows errors only after submitting and does not call the backend', () => {
     const { fixture, c, http, el } = create('abc');
     expect(el.querySelector('.field-error')).toBeNull();
-    c['form'].setValue({ password: 'Sicher12345', confirmPassword: 'Anders12345' });
+    c['form'].setValue({ password: 'Sicher-Wald-27x', confirmPassword: 'Anders12345' });
     c['submit']();
     fixture.detectChanges();
     expect(el.textContent).toContain('Die Passwörter stimmen nicht überein.');
@@ -41,10 +41,10 @@ describe('PasswortZuruecksetzen', () => {
 
   it('sends token and new password, then offers the login', () => {
     const { fixture, c, http, el } = create('abc');
-    c['form'].setValue({ password: 'Sicher12345', confirmPassword: 'Sicher12345' });
+    c['form'].setValue({ password: 'Sicher-Wald-27x', confirmPassword: 'Sicher-Wald-27x' });
     c['submit']();
     const req = http.expectOne(URL);
-    expect(req.request.body).toEqual({ token: 'abc', password: 'Sicher12345' });
+    expect(req.request.body).toEqual({ token: 'abc', password: 'Sicher-Wald-27x' });
     req.flush({ detail: 'ok' });
     fixture.detectChanges();
     expect(el.querySelector('h1')?.textContent).toContain('Passwort geändert');
@@ -53,7 +53,7 @@ describe('PasswortZuruecksetzen', () => {
 
   it('switches to the invalid-link state when the token is rejected', () => {
     const { fixture, c, http, el } = create('alt');
-    c['form'].setValue({ password: 'Sicher12345', confirmPassword: 'Sicher12345' });
+    c['form'].setValue({ password: 'Sicher-Wald-27x', confirmPassword: 'Sicher-Wald-27x' });
     c['submit']();
     http.expectOne(URL).flush({ detail: 'ungültig' }, { status: 400, statusText: 'Bad Request' });
     fixture.detectChanges();

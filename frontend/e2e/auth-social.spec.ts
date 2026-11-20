@@ -29,7 +29,7 @@ for (const width of [375, 1440]) {
       await expect(page.getByText('oder mit E-Mail')).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await axe(page);
-      await page.screenshot({ path: `test-results/auth${path.replace('/', '-')}-${width}.png`, fullPage: true });
+      await page.screenshot({ path: `test-results/auth${path.replace('/', '-')}-${width}.png`, fullPage: true, animations: 'disabled' });
     });
   }
 }
@@ -67,7 +67,7 @@ test('bestehendes Konto: verbinden nur mit Passwort, danach in die App', async (
   await expect(page.getByRole('heading', { name: 'Konto verbinden' })).toBeFocused();
   await expect(page.getByText('l•••@example.com')).toBeVisible();
   await axe(page);
-  await page.screenshot({ path: 'test-results/auth-verbinden-1440.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/auth-verbinden-1440.png', fullPage: true, animations: 'disabled' });
   await page.getByRole('button', { name: 'Verbinden und anmelden' }).click();
   await expect(page.locator('#link-password-error')).toHaveText('Bitte gib dein Passwort ein.');
   await page.getByLabel('Passwort von 4inOne').fill('Sicher123!x');
@@ -117,3 +117,24 @@ test('Passwort-Anmeldung mit Zwei-Faktor: Code wird geprüft, nicht die Seite ne
   await expect(page).not.toHaveURL(/\/login/);
   expect(bodies.at(-1)).toEqual(expect.objectContaining({ email: 'lena@example.com', mfa_code: '654321' }));
 });
+
+for (const width of [375, 1440]) {
+  test(`Registrierung bei ${width}px: Passwortregeln nach LKA NRW live, Stärke als Text und Balken`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await mock(page);
+    await page.goto('/registrieren');
+    await page.getByLabel('Vorname').fill('Sophie');
+    await page.getByLabel('E-Mail-Adresse').fill('sophie@example.com');
+    const pw = page.getByLabel('Passwort', { exact: true });
+    await pw.fill('Sophie-Wald-27x'); // alles erfüllt außer: enthält den eigenen Namen
+    await expect(page.locator('.strength-label')).toContainText('Fast geschafft');
+    await expect(page.locator('#register-password-rules li.is-met')).toHaveCount(4);
+    await pw.fill('Mond!Fluss7Rabe');
+    await expect(page.locator('.strength-label')).toContainText('Stark');
+    await expect(page.locator('#register-password-rules li.is-met')).toHaveCount(5);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await axe(page);
+    await page.locator('#register-password').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `test-results/auth-passwort-${width}.png`, fullPage: true, animations: 'disabled' });
+  });
+}

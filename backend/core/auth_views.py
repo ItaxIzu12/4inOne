@@ -155,6 +155,12 @@ class RegisterSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs['password'] != attrs['confirm_password']:
             raise serializers.ValidationError({'confirm_password': 'Die Passwörter stimmen nicht überein.'})
+        # Name und E-Mail dürfen nicht im Passwort stecken (core/validators.py) — dafür ein ungespeicherter Nutzer.
+        candidate = get_user_model()(email=attrs['email'], username=attrs['email'], first_name=attrs['name'])
+        try:
+            validate_password(attrs['password'], user=candidate)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({'password': exc.messages}) from exc
         if not attrs['accept_privacy']:
             raise serializers.ValidationError({'accept_privacy': 'Bitte bestätige die Nutzungsbedingungen und den Datenschutz.'})
         return attrs
@@ -163,13 +169,6 @@ class RegisterSerializer(serializers.Serializer):
     # Serializer, weil der Fallback von einem ANDEREN Feld (name/email)
     # abhängt, nicht validierbar auf Feldebene).
     household_name = serializers.CharField(max_length=120, required=False, allow_blank=True)
-
-    def validate_password(self, value: str) -> str:
-        try:
-            validate_password(value)
-        except DjangoValidationError as exc:
-            raise serializers.ValidationError(exc.messages) from exc
-        return value
 
     def validate_email(self, value: str) -> str:
         User = get_user_model()

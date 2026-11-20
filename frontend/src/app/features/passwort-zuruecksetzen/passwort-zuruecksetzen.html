@@ -20,12 +20,12 @@
               formControlName="password"
               autocomplete="new-password"
               [attr.aria-invalid]="passwordError() ? true : null"
-              [attr.aria-describedby]="passwordError() ? 'new-password-error' : 'new-password-hint'"
+              [attr.aria-describedby]="passwordError() ? 'new-password-error new-password-rules' : 'new-password-rules'"
             />
+            <!-- dieselbe Live-Anzeige wie bei der Registrierung (LKA NRW / BSI); Name/E-Mail prüft hier das Backend -->
+            <app-password-strength rulesId="new-password-rules" [password]="passwordValue()" />
             @if (passwordError(); as message) {
               <p class="field-error" id="new-password-error">{{ message }}</p>
-            } @else {
-              <p class="field-hint" id="new-password-hint">Mindestens 10 Zeichen, mit mindestens einem Buchstaben und einer Zahl.</p>
             }
           </div>
 

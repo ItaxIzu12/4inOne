@@ -21,7 +21,7 @@ from haushalt.models import FolderEntry, Task, TaskCompletion
 from reisen.models import Trip, TripParticipant, TripTask
 
 pytestmark = pytest.mark.django_db
-PASSWORD = 'Sicher123!x'
+PASSWORD = 'Sicher-Wald-27x'
 
 
 def make_user(name, household=None, role=HouseholdMembership.Role.ADMIN):

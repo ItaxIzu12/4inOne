@@ -87,6 +87,7 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 43 
 | AUTH-26 | Google/Apple-Angriffe: falscher/fehlender `state`, gefälschtes/abgelaufenes/fremdes ID-Token, `alg: none`, alte Nonce, unbestätigte E-Mail, manipulierte Cookies | P0 | A | ✅ `core/test_social.py` (mit Gegenproben) |
 | AUTH-27 | Google/Apple mit echten Zugangsdaten gegen die echten Anbieter (Google lokal, Apple auf dem Server) | P0 | M | ❌ braucht deine Zugangsdaten |
 | AUTH-28 | Onboarding: erster echter Eintrag je Bereich mit minimalen Feldern | P1 | A/E | ✅ `core/test_onboarding.py`, `e2e/onboarding.spec.ts` |
+| AUTH-29 | Passwort-Richtlinie nach LKA NRW/BSI (12+ mit vier Zeichenarten oder Passphrase ab 25; keine Folgen; nicht Name/E-Mail; kein „Password123!“) im Backend und gleich angezeigt im Frontend; alte Passwörter melden sich weiter an | P0 | A/E | ✅ `core/test_password_policy.py`, `shared/password-policy.spec.ts`, `e2e/auth-social.spec.ts` |
 
 ## 3. Berechtigungen und Privatsphäre (wichtigster Block)
 

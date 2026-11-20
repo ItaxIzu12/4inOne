@@ -28,7 +28,7 @@ describe('Login (Neubau 19.11.2026)', () => {
     providers(http, { google: false, apple: false });
     expect(el.querySelector('h1')!.textContent).toContain('Konto erstellen');
     const form = c['registerForm'];
-    form.patchValue({ name: 'Anna', email: 'anna@example.de', password: 'Passwort123', confirmPassword: 'Passwort123' });
+    form.patchValue({ name: 'Anna', email: 'anna@example.de', password: 'Sicher-Wald-27x', confirmPassword: 'Sicher-Wald-27x' });
     expect(form.valid).toBe(false);
     form.controls.acceptPrivacy.setValue(true);
     expect(form.valid).toBe(true);
@@ -39,14 +39,28 @@ describe('Login (Neubau 19.11.2026)', () => {
   it('Passwortregeln sind immer sichtbar und haken sich live ab; kurze Passwörter werden nicht gesendet', () => {
     const { c, el, fixture, http } = setup('register');
     providers(http, { google: false, apple: false });
-    expect(el.querySelectorAll('#register-password-rules li').length).toBe(3);
+    expect(el.querySelectorAll('#register-password-rules li').length).toBe(5);
     c['registerForm'].patchValue({ name: 'Anna', email: 'anna@example.de', password: 'kurz1', confirmPassword: 'kurz1', acceptPrivacy: true });
     fixture.detectChanges();
-    expect(el.querySelectorAll('#register-password-rules li.is-met').length).toBe(2); // Buchstabe + Zahl
+    expect(el.querySelectorAll('#register-password-rules li.is-met').length).toBe(2); // keine Folge, nicht der Name
+    expect(el.querySelector('.strength-label')!.textContent).toContain('Schwach');
     c['submitRegister']();
     http.expectNone((r) => r.url.includes('/auth/register/'));
     fixture.detectChanges();
     expect(el.querySelector('.field-error')!.textContent).toContain('Regeln');
+  });
+
+  it('strenge Regeln (LKA NRW): eigener Name im Passwort ist ungültig, Passphrase ab 25 Zeichen gilt', () => {
+    const { c, el, fixture, http } = setup('register');
+    providers(http, { google: false, apple: false });
+    const form = c['registerForm'];
+    form.patchValue({ name: 'Anna', email: 'anna@example.de', password: 'Anna-Wald-27x!', confirmPassword: 'Anna-Wald-27x!', acceptPrivacy: true });
+    expect(form.controls.password.hasError('passwordPolicy')).toBe(true);
+    form.patchValue({ password: 'grüner fluss trifft 7 berge', confirmPassword: 'grüner fluss trifft 7 berge' });
+    fixture.detectChanges();
+    expect(form.valid).toBe(true);
+    expect(el.querySelector('.rules__alt')!.classList).toContain('is-met');
+    expect(el.querySelector('.strength-label')!.textContent).toContain('Stark');
   });
 
   it('Fehler erst nach dem Absenden, dann am Feld mit aria-describedby', () => {

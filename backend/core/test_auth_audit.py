@@ -12,7 +12,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from core.models import UserSession
 
 pytestmark = pytest.mark.django_db
-PASSWORD = 'Sicher123!x'
+PASSWORD = 'Sicher-Wald-27x'
 
 
 def register(client=None, **overrides):

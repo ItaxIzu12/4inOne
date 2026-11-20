@@ -9,7 +9,7 @@ from reisen.models import Trip
 
 pytestmark = pytest.mark.django_db
 
-PASSWORD = 'Sicher123!x'
+PASSWORD = 'Sicher-Wald-27x'
 
 
 @pytest.fixture

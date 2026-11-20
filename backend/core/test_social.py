@@ -22,7 +22,7 @@ from core import social
 from core.models import SocialAccount, UserSession
 
 pytestmark = pytest.mark.django_db
-PASSWORD = 'Sicher123!x'
+PASSWORD = 'Sicher-Wald-27x'
 KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 OTHER_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 GOOGLE_ID = 'test-client.apps.googleusercontent.com'

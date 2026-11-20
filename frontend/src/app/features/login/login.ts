@@ -9,20 +9,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService, SocialProvider } from '../../core/auth/auth.service';
 import { DEMO_ONLY } from '../../core/demo-only';
 import { IconArrowLeft } from '../../shared/icons/icon-arrow-left';
+import { passwordPolicy, personalParts } from '../../shared/password-policy';
+import { PasswordStrength } from '../../shared/password-strength/password-strength';
 
 type Mode = 'login' | 'register';
 /** form = E-Mail/Passwort · mfa = Code nach Passwort · link = Google/Apple mit bestehendem Konto verbinden ·
  * social-mfa = Code nach Google/Apple · finishing = Rückkehr vom Anbieter wird abgeschlossen */
 type View = 'form' | 'mfa' | 'link' | 'social-mfa' | 'finishing';
-
-// Passwort-Richtlinie: Länge statt erzwungener Zeichenvielfalt (NIST SP 800-63B) — kein Pflicht-Sonderzeichen,
-// das bringt kaum Sicherheit und ist eine unnötige Hürde. Serverseitig gilt dasselbe (core/validators.py).
-const PASSWORD_MIN_LENGTH = 10;
-const PASSWORD_HAS_LETTER = /[a-zA-Zà-öø-ÿÀ-ÖØ-ß]/;
-const PASSWORD_HAS_DIGIT = /\d/;
-const PASSWORD_POLICY_PATTERN = new RegExp(
-  `^(?=.*${PASSWORD_HAS_LETTER.source})(?=.*${PASSWORD_HAS_DIGIT.source}).{${PASSWORD_MIN_LENGTH},}$`,
-);
 
 const PROVIDER_NAME: Record<SocialProvider, string> = { google: 'Google', apple: 'Apple' };
 
@@ -51,7 +44,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [AppIcon, Brand, ReactiveFormsModule, RouterLink, IconArrowLeft],
+  imports: [AppIcon, Brand, ReactiveFormsModule, RouterLink, IconArrowLeft, PasswordStrength],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
@@ -91,7 +84,8 @@ export class Login {
     {
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.pattern(PASSWORD_POLICY_PATTERN)]],
+      // Richtlinie nach LKA NRW / BSI (shared/password-policy.ts); Name und E-Mail aus demselben Formular
+      password: ['', [Validators.required, passwordPolicy(() => this.personal())]],
       confirmPassword: ['', [Validators.required]],
       acceptPrivacy: [false, [Validators.requiredTrue]],
     },
@@ -100,16 +94,13 @@ export class Login {
 
   protected readonly linkForm = this.fb.nonNullable.group({ password: ['', [Validators.required]] });
 
-  private readonly registerPassword = toSignal(this.registerForm.controls.password.valueChanges, { initialValue: '' });
-  protected readonly passwordChecks = computed(() => {
-    const value = this.registerPassword();
-    return {
-      length: value.length >= PASSWORD_MIN_LENGTH,
-      letter: PASSWORD_HAS_LETTER.test(value),
-      digit: PASSWORD_HAS_DIGIT.test(value),
-    };
-  });
-  protected readonly passwordMet = computed(() => Object.values(this.passwordChecks()).filter(Boolean).length);
+  protected readonly registerValue = toSignal(this.registerForm.valueChanges, { initialValue: this.registerForm.getRawValue() });
+  protected readonly personalNow = computed(() => personalParts(this.registerValue().name, this.registerValue().email));
+  /** Name/E-Mail-Teile für die Regel „nicht dein Name oder deine E-Mail“ (Validator und Anzeige). */
+  protected personal(): string[] {
+    const form = this.registerForm as typeof this.registerForm | undefined; // beim Aufbau des Formulars noch leer
+    return form ? personalParts(form.controls.name.value, form.controls.email.value) : [];
+  }
 
   /** Feldfehler erst nach dem ersten Absenden zeigen (4inOne-Regel), danach live. */
   protected readonly loginTried = signal(false);
@@ -120,6 +111,10 @@ export class Login {
     const clear = () => this.submitError.set(null);
     this.loginForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(clear);
     this.registerForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(clear);
+    // Name/E-Mail ändern die Regel „nicht dein Name oder deine E-Mail“ — Passwort neu prüfen
+    for (const c of [this.registerForm.controls.name, this.registerForm.controls.email]) {
+      c.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.registerForm.controls.password.updateValueAndValidity({ emitEvent: false }));
+    }
     this.linkForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(clear);
     if (this.browser && !DEMO_ONLY) {
       this.auth.socialProviders().pipe(takeUntilDestroyed()).subscribe({

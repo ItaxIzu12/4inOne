@@ -265,12 +265,9 @@
                     <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" aria-hidden="true" />
                   </button>
                 </div>
-                <!-- Regeln immer sichtbar und live abgehakt; rot erst nach dem Absenden -->
-                <ul id="register-password-rules" class="rules" [attr.data-met]="passwordMet()">
-                  <li [class.is-met]="passwordChecks().length"><span class="rule-mark" aria-hidden="true">@if (passwordChecks().length) {<app-icon name="check" />}</span>Mindestens 10 Zeichen<span class="sr-only">{{ passwordChecks().length ? ' – erfüllt' : ' – offen' }}</span></li>
-                  <li [class.is-met]="passwordChecks().letter"><span class="rule-mark" aria-hidden="true">@if (passwordChecks().letter) {<app-icon name="check" />}</span>Ein Buchstabe<span class="sr-only">{{ passwordChecks().letter ? ' – erfüllt' : ' – offen' }}</span></li>
-                  <li [class.is-met]="passwordChecks().digit"><span class="rule-mark" aria-hidden="true">@if (passwordChecks().digit) {<app-icon name="check" />}</span>Eine Zahl<span class="sr-only">{{ passwordChecks().digit ? ' – erfüllt' : ' – offen' }}</span></li>
-                </ul>
+                <!-- Stärke + Regeln nach LKA NRW / BSI, immer sichtbar und live abgehakt; rot erst nach dem Absenden -->
+                <app-password-strength rulesId="register-password-rules" [password]="registerValue().password ?? ''"
+                  [personal]="personalNow()" />
                 @if (registerTried() && registerForm.controls.password.invalid) {
                   <p class="field-error">
                     {{ registerForm.controls.password.errors?.['backend'] ?? 'Das Passwort erfüllt noch nicht alle Regeln oben.' }}

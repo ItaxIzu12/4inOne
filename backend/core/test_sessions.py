@@ -8,7 +8,7 @@ from core.models import UserSession
 
 pytestmark = pytest.mark.django_db
 
-PASSWORD = 'Sicher123!x'
+PASSWORD = 'Sicher-Wald-27x'
 AGENT_A = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605 Version/17.0 Safari/605'
 AGENT_B = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605 Version/17.0 Mobile Safari/604'
 

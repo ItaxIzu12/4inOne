@@ -23,7 +23,7 @@ from monitoring.models import AuthEvent
 from monitoring.sentry import scrub_event
 
 pytestmark = pytest.mark.django_db
-PASSWORD = 'Sicher123!x'
+PASSWORD = 'Sicher-Wald-27x'
 DSN = 'http://publickey@glitchtip.local:8001/1'
 
 

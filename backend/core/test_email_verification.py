@@ -31,7 +31,7 @@ def link_token(body: str) -> str:
 
 def test_registration_sends_a_verification_link_and_reports_the_state():
     response = APIClient().post('/api/v1/auth/register/', {
-        'name': 'Alex', 'email': 'alex@example.com', 'password': 'Sicher123!x', 'confirm_password': 'Sicher123!x',
+        'name': 'Alex', 'email': 'alex@example.com', 'password': 'Sicher-Wald-27x', 'confirm_password': 'Sicher-Wald-27x',
         'accept_privacy': True,
     }, format='json')
     assert response.status_code == 201

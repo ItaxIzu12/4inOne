@@ -16,7 +16,7 @@ from core.models import MfaBackupCode
 pytestmark = pytest.mark.django_db
 
 
-def _register_and_login(client: APIClient, email='mfa@example.com', password='Sicher123!x'):
+def _register_and_login(client: APIClient, email='mfa@example.com', password='Sicher-Wald-27x'):
     client.post('/api/v1/auth/register/', {'confirm_password': password, 'accept_privacy': True, 'name': 'Test', 'email': email, 'password': password}, format='json')
     user = get_user_model().objects.get(email=email)
     client.force_authenticate(user=user)
@@ -80,7 +80,7 @@ def test_mfa_verify_endpoint_has_its_own_stricter_rate_limit(settings):
 
 def test_login_requires_mfa_code_when_enabled_for_user():
     setup_client = APIClient()
-    email, password = 'twofactor@example.com', 'Sicher123!x'
+    email, password = 'twofactor@example.com', 'Sicher-Wald-27x'
     _register_and_login(setup_client, email, password)
     setup = setup_client.post('/api/v1/auth/mfa/setup/')
     totp = pyotp.TOTP(setup.data['secret'])
@@ -109,7 +109,7 @@ def test_login_requires_mfa_code_when_enabled_for_user():
 
 def test_login_accepts_unused_backup_code_exactly_once():
     setup_client = APIClient()
-    email, password = 'backupcode@example.com', 'Sicher123!x'
+    email, password = 'backupcode@example.com', 'Sicher-Wald-27x'
     _register_and_login(setup_client, email, password)
     setup = setup_client.post('/api/v1/auth/mfa/setup/')
     totp = pyotp.TOTP(setup.data['secret'])
@@ -130,10 +130,10 @@ def test_login_accepts_unused_backup_code_exactly_once():
 
 def test_login_without_mfa_enabled_is_unaffected():
     client = APIClient()
-    client.post('/api/v1/auth/register/', {'confirm_password': 'Sicher123!x', 'accept_privacy': True, 'name': 'Test', 'email': 'nomfa@example.com', 'password': 'Sicher123!x'}, format='json')
+    client.post('/api/v1/auth/register/', {'confirm_password': 'Sicher-Wald-27x', 'accept_privacy': True, 'name': 'Test', 'email': 'nomfa@example.com', 'password': 'Sicher-Wald-27x'}, format='json')
 
     response = client.post(
-        '/api/v1/auth/login/', {'email': 'nomfa@example.com', 'password': 'Sicher123!x'}, format='json'
+        '/api/v1/auth/login/', {'email': 'nomfa@example.com', 'password': 'Sicher-Wald-27x'}, format='json'
     )
 
     assert response.status_code == 200

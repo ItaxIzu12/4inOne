@@ -93,7 +93,7 @@ def test_first_real_entry_from_onboarding_works_with_minimal_input():
 
     from core.auth_views import create_account
 
-    user = create_account('neu@example.com', 'Sicher123!x', 'Neu')
+    user = create_account('neu@example.com', 'Sicher-Wald-27x', 'Neu')
     client = APIClient()
     client.force_authenticate(user)
     today = date.today()

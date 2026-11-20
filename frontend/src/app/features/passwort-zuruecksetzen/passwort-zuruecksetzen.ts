@@ -1,14 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { Brand } from '../../shared/brand/brand';
 import { tokenFromLink } from '../../shared/link-token';
+import { passwordPolicy } from '../../shared/password-policy';
+import { PasswordStrength } from '../../shared/password-strength/password-strength';
 
-// Gleiche Richtlinie wie bei der Registrierung (login.ts); das Backend prüft zusätzlich.
-const PASSWORD_MIN_LENGTH = 10;
-const PASSWORD_POLICY_PATTERN = new RegExp(`^(?=.*[a-zA-Zà-öø-ÿÀ-ÖØ-ß])(?=.*\\d).{${PASSWORD_MIN_LENGTH},}$`);
+// Gleiche Richtlinie wie bei der Registrierung (shared/password-policy.ts, LKA NRW / BSI); das Backend prüft
+// zusätzlich Name/E-Mail des Kontos und häufige Passwörter.
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   const { password, confirmPassword } = control.value as { password: string; confirmPassword: string };
@@ -25,7 +27,7 @@ type State = 'form' | 'done' | 'invalid-link';
 @Component({
   selector: 'app-passwort-zuruecksetzen',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, Brand],
+  imports: [ReactiveFormsModule, RouterLink, Brand, PasswordStrength],
   templateUrl: './passwort-zuruecksetzen.html',
   styleUrl: '../passwort-vergessen/passwort-vergessen.css',
 })
@@ -41,11 +43,12 @@ export class PasswortZuruecksetzen {
 
   protected readonly form = this.fb.nonNullable.group(
     {
-      password: ['', [Validators.required, Validators.pattern(PASSWORD_POLICY_PATTERN)]],
+      password: ['', [Validators.required, passwordPolicy()]],
       confirmPassword: ['', [Validators.required]],
     },
     { validators: passwordsMatch },
   );
+  protected readonly passwordValue = toSignal(this.form.controls.password.valueChanges, { initialValue: '' });
 
   constructor() {
     if (this.token) {
@@ -56,7 +59,7 @@ export class PasswortZuruecksetzen {
   protected passwordError(): string | null {
     const errors = this.form.controls.password.errors;
     if (!this.tried() || !errors) return null;
-    return errors['required'] ? 'Bitte gib ein neues Passwort ein.' : 'Mindestens 10 Zeichen, mit mindestens einem Buchstaben und einer Zahl.';
+    return errors['required'] ? 'Bitte gib ein neues Passwort ein.' : 'Das Passwort erfüllt noch nicht alle Regeln oben.';
   }
 
   protected confirmError(): string | null {
