@@ -21,7 +21,7 @@ Die Einrichtung des Servers Schritt für Schritt (von null): [`deploy/ANLEITUNG.
      läuft nach 7 Tagen ab bzw. wird beim Abmelden gelöscht) und die eine Browser-Einstellung im Einkaufsmodus.
    - **Auskunft und Datenübertragbarkeit (Art. 15/20):** Selbstbedienung unter Einstellungen → Profil → „Daten
      herunterladen“ (ZIP, Inhalt siehe `docs/PROFILE_AND_SETTINGS.md`).
-   Danach den Platzhalter-Hinweis in `shared/legal-page/legal-page.html` entfernen.
+   Danach den Platzhalter-Hinweis in `layout/legal-page/legal-page.html` entfernen.
 2. **Domain eintragen:** `cd frontend && npm run seo -- https://deine-domain.de` — erzeugt `sitemap.xml`, ergänzt
    `robots.txt` und setzt die vollen Adressen für das Teilen-Bild.
 3. **Server-Umgebung** (`.env`, siehe `.env.example`; `manage.py check --deploy` muss ohne Fehler laufen):

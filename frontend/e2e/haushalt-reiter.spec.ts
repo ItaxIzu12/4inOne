@@ -62,15 +62,15 @@ test('Heute: due tasks, upcoming deadlines (30 days) and the shopping summary', 
   await expect(page.locator('#hh-tab-einkaufen')).toHaveAttribute('aria-selected', 'true');
 });
 
-test('recurring tasks: pausing via the switch and filtering paused ones', async ({ page }) => {
+test('recurring tasks: pausing via the row menu and filtering paused ones', async ({ page }) => {
   await page.route('http://localhost:8000/api/**', (route) => route.abort());
   await page.goto('/demo/haushalt?tab=aufgaben');
   await page.getByRole('button', { name: 'Wiederkehrend' }).click();
   await expect(page).toHaveURL(/ansicht=wiederkehrend/);
-  const toggle = page.getByRole('switch', { name: 'Küche sauber halten aktiv' });
-  await expect(toggle).toHaveAttribute('aria-checked', 'true');
-  await toggle.click();
-  await expect(toggle).toHaveAttribute('aria-checked', 'false');
+  await expect(page.getByRole('switch')).toHaveCount(0); // kein Schalter rechts — Pausieren steht im Menü
+  await page.getByRole('button', { name: 'Aktionen für Küche sauber halten' }).click();
+  await page.getByRole('menuitem', { name: 'Pausieren' }).click();
+  await expect(page.locator('app-routinen-tab .row', { hasText: 'Küche sauber halten' })).toContainText('Pausiert');
   await page.getByRole('button', { name: /^Pausiert \(3\)/ }).click();
   await expect(page.locator('app-routinen-tab .title-text')).toHaveCount(3);
   await page.getByRole('button', { name: 'Aktionen für Küche sauber halten' }).click();

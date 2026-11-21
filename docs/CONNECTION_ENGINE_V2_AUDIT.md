@@ -87,7 +87,7 @@ Fremd und nicht vorhanden sind gleich (404); Betrag eines anderen planen → 403
 
 ## 5. Oberfläche (bestehende Formulare, keine neuen Seiten)
 
-- **Baustein `app-auto-links`** (`shared/connections/auto-links.*`) in den Dialogen Vertrag, Gerät, Reise, Sparziel:
+- **Baustein `app-auto-links`** (`shared/features/connections/auto-links.*`) in den Dialogen Vertrag, Gerät, Reise, Sparziel:
   Schalter in Alltagssprache, darunter **was genau wo erscheint** (aus den Formularwerten, also schon vor dem ersten
   Speichern) oder was fehlt; Status „Aktiv/Pausiert“ mit Pausieren/Fortsetzen und Link „In Finanzen/Im Kalender
   ansehen“; Aufheben mit Hinweis, dass Quelle und echte Einträge bleiben. Alles gilt erst beim **Speichern**.
@@ -104,7 +104,7 @@ Backend: `connections/models.py`, `auto_links.py` (neu), `views.py`, `urls.py`, 
 (neu), `tests/test_auto_links.py` (neu), `tests/test_existing_connections.py` (neu); `finanzen/private_api.py`
 (`planned_expenses`); `core/test_permission_matrix.py`.
 
-Frontend: `shared/connections/auto-links-api.service.ts`, `auto-link-rules.ts`, `demo-auto-links-api.ts`, `auto-links.*`,
+Frontend: `shared/features/connections/auto-links-api.service.ts`, `auto-link-rules.ts`, `demo-auto-links-api.ts`, `auto-links.*`,
 `auto-links.spec.ts` (alle neu); `features/haushalt/ordner-tab.*`; `features/reisen/reisen.*`;
 `features/finanzen/private-finance.*`, `private-finance-api.service.ts`, `demo-private-finance-api.ts`;
 `features/organisation/organisation.*`, `organisation-api.service.ts`, `org-calendar.html`, `org-day-sheet.html`,

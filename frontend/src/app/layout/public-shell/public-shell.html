@@ -1,0 +1,19 @@
+<a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+<header class="head">
+  <div class="head__inner">
+    <a routerLink="/" class="head__brand" aria-label="4inOne – Startseite"><app-brand /></a>
+    <div class="head__actions">
+      @if (!demoOnly) {
+        <a routerLink="/login" class="head__link">Anmelden</a>
+      }
+      <a routerLink="/demo" class="head__cta">Demo ansehen</a>
+    </div>
+  </div>
+</header>
+
+<main id="inhalt" class="body" tabindex="-1">
+  <ng-content />
+</main>
+
+<!-- Globale Kachel-Fußzeile, kompakt: Name und Pflicht-Links (layout/tile-footer) -->
+<app-tile-footer />

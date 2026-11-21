@@ -2,9 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../core/api.config';
-import { SuggestionDto } from '../../shared/connections/suggestions-api.service';
-import { LinkSuggestionDto } from '../../shared/connections/connections-api.service';
-import { TodayData, organisationTimezone } from '../organisation/organisation-api.service';
+import { SuggestionDto } from '../../shared/features/connections/suggestions-api.service';
+import { LinkSuggestionDto } from '../../shared/features/connections/connections-api.service';
+import { TodayData, organisationTimezone } from '../organisation/data/organisation-api.service';
 
 export interface TodayHouseholdTask {
   id: number;

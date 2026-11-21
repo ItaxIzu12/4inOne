@@ -1,7 +1,7 @@
 import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
-import { AppIcon } from '../../../shared/icons/app-icon';
-import { Modal } from '../../../shared/modal/modal';
-import { TermHint } from '../../../shared/term-hint/term-hint';
+import { AppIcon } from '../../../shared/ui/icons/app-icon';
+import { Modal } from '../../../shared/ui/modal/modal';
+import { TermHint } from '../../../shared/ui/term-hint/term-hint';
 import { winningBudget } from '../data/private-finance-api.service';
 import { FinanceDateNav } from '../shared/finance-date-nav';
 import { categoryBudgetStatus, categoryIcon } from '../shared/finance-tabs';

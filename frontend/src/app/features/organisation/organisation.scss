@@ -193,8 +193,8 @@
 .allday-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: flex-start; // runder Haken links, Text daneben (wie Haushalt)
+  gap: 12px;
   min-height: 48px;
   padding: 6px 14px;
   border: 1px solid var(--border-subtle);
@@ -206,7 +206,7 @@
   font-size: var(--fs-secondary);
   font-weight: 600;
 }
-// Haken und Schalter: zentral (shared/form/choice-controls.css), hier nur die Bereichsfarbe
+// Haken und Schalter: zentral (shared/ui/form/choice-controls.css), hier nur die Bereichsfarbe
 :host {
   --check-color: var(--organization-fill);
 }

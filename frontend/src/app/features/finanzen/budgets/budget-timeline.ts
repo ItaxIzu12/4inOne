@@ -1,6 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
-import { MONTH_NAMES } from '../../../shared/form/date-utils';
-import { AppIcon } from '../../../shared/icons/app-icon';
+import { MONTH_NAMES } from '../../../shared/ui/form/date-utils';
+import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { FinanceBudget, euros, winningBudget } from '../data/private-finance-api.service';
 
 @Component({

@@ -1,5 +1,5 @@
-import { AutoLinksApi } from './shared/connections/auto-links-api.service';
-import { DemoAutoLinksApi } from './shared/connections/demo-auto-links-api';
+import { AutoLinksApi } from './shared/features/connections/auto-links-api.service';
+import { DemoAutoLinksApi } from './shared/features/connections/demo-auto-links-api';
 import { PlacesService } from './core/places/places.service';
 import { DemoPlacesService } from './core/places/demo-places.service';
 import { Provider } from '@angular/core';
@@ -9,8 +9,8 @@ import { ContactsApiService } from './core/contacts/contacts-api.service';
 import { HouseholdApiService } from './core/household/household-api.service';
 import { DemoHouseholdApiService } from './core/household/demo-household-api.service';
 import { DemoContactsApiService } from './core/contacts/demo-contacts-api.service';
-import { ConnectionsApi } from './shared/connections/connections-api.service';
-import { DemoConnectionsApi } from './shared/connections/demo-connections-api';
+import { ConnectionsApi } from './shared/features/connections/connections-api.service';
+import { DemoConnectionsApi } from './shared/features/connections/demo-connections-api';
 import { DemoFxService, FxService } from './core/fx/fx.service';
 import { DemoHomeCurrency, HomeCurrency } from './core/fx/home-currency';
 import { DemoFinanzenDataProvider } from './features/finanzen/data/demo-finanzen-data-provider';
@@ -18,12 +18,12 @@ import { DemoPrivateFinanceApi } from './features/finanzen/data/demo-private-fin
 import { FINANZEN_DATA_PROVIDER } from './features/finanzen/data/finanzen-data-provider';
 import { FinanzenStateService } from './features/finanzen/data/finanzen-state.service';
 import { PrivateFinanceApi } from './features/finanzen/data/private-finance-api.service';
-import { DemoHaushaltDataProvider } from './features/haushalt/demo-haushalt-data-provider';
-import { HAUSHALT_DATA_PROVIDER } from './features/haushalt/haushalt-data-provider';
-import { DemoOrganisationApi } from './features/organisation/demo-organisation-api';
-import { OrganisationApi } from './features/organisation/organisation-api.service';
-import { DemoReisenApi } from './features/reisen/demo-reisen-api';
-import { ReisenApi } from './features/reisen/reisen-api.service';
+import { DemoHaushaltDataProvider } from './features/haushalt/data/demo-haushalt-data-provider';
+import { HAUSHALT_DATA_PROVIDER } from './features/haushalt/data/haushalt-data-provider';
+import { DemoOrganisationApi } from './features/organisation/data/demo-organisation-api';
+import { OrganisationApi } from './features/organisation/data/organisation-api.service';
+import { DemoReisenApi } from './features/reisen/data/demo-reisen-api';
+import { ReisenApi } from './features/reisen/data/reisen-api.service';
 
 /** Alle Demo-Dienste (nur unter /demo) – auch für Tests, die die Demo als Ganzes prüfen. */
 export const DEMO_PROVIDERS: Provider[] = [

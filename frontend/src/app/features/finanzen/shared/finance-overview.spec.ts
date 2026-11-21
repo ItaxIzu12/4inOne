@@ -1,4 +1,4 @@
-import { CATEGORY_ICON_MAP } from '../../../shared/icons/category-icon.map';
+import { CATEGORY_ICON_MAP } from '../../../shared/ui/icons/category-icon.map';
 import { budgetBand, categoryVisual, daysLeftInMonth, groupByDay, shiftMonth, splitAmount } from './finance-overview';
 import { FinanceSummary, FinanceTransaction } from '../data/private-finance-api.service';
 

@@ -4,7 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ScrollService } from '../../core/scroll/scroll.service';
-import { Brand } from '../../shared/brand/brand';
+import { Brand } from '../../shared/ui/brand/brand';
 
 @Component({
   selector: 'app-passwort-vergessen',

@@ -3,7 +3,7 @@
   // Kopfkarte (Titel, Hauptknopf, Reiter) scrollt mit der Seite — sie klebt
   // nicht mehr oben, damit vor allem auf dem Handy mehr Platz für den Inhalt
   // bleibt. Zurück nach oben geht es über den globalen „Nach oben“-Knopf
-  // (shared/back-to-top). Der Klassenname bleibt, um nichts umzubenennen.
+  // (layout/back-to-top). Der Klassenname bleibt, um nichts umzubenennen.
   .domain-sticky {
     padding: 20px;
     margin-bottom: var(--space-6);
@@ -76,7 +76,7 @@
       width: 28px;
       height: 28px;
     }
-    // Die Hauptaktion steht auf dem Handy als fester Knopf unten (shared/mobile-action), nicht im Kopf.
+    // Die Hauptaktion steht auf dem Handy als fester Knopf unten (shared/ui/mobile-action), nicht im Kopf.
     .domain-heading .head-actions,
     .domain-heading > button {
       display: none;

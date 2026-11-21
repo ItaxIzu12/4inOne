@@ -1,13 +1,13 @@
 import { Component, afterNextRender, computed, inject } from '@angular/core';
-import { AppIcon } from '../../../shared/icons/app-icon';
-import { SpendCurveChart } from '../../../shared/spend-curve/spend-curve';
-import { spendCurve, spendingBudget } from '../../../shared/spend-curve/spend-curve-data';
-import { TermHint } from '../../../shared/term-hint/term-hint';
+import { AppIcon } from '../../../shared/ui/icons/app-icon';
+import { SpendCurveChart } from '../../../shared/features/spend-curve/spend-curve';
+import { spendCurve, spendingBudget } from '../../../shared/features/spend-curve/spend-curve-data';
+import { TermHint } from '../../../shared/ui/term-hint/term-hint';
 import { FinanceDateNav } from '../shared/finance-date-nav';
 import { groupByDay } from '../shared/finance-overview';
 import { categoryIcon, goalIcon, goalPercent } from '../shared/finance-tabs';
 import { FinancePeriodView } from './finance-period';
-import { GuideStep, StartGuide } from '../../../shared/start-guide/start-guide';
+import { GuideStep, StartGuide } from '../../../shared/features/start-guide/start-guide';
 import { FINANCE_CONTEXT, FinanceTab, LegacyTab, REVIEW_KEY } from '../finance-context';
 
 /** Finanzen › Übersicht: Monatsbühne, erste Schritte, Monatsrückblick, letzte Transaktionen, Hinweise, Budgets und Sparziele im Blick.

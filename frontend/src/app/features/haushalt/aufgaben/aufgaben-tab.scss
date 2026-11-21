@@ -1,0 +1,292 @@
+// Haushalt › Aufgaben — derselbe ruhige Aufbau wie Organisation › Aufgaben:
+// Ansichts-Chips, Suche, Liste (Haken, Titel, darunter die Angaben). Keine Tabelle, keine Seitenleiste.
+.views {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.view-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--control-height); // Filter-Chips überall 44 px (wie Reisen)
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  cursor: pointer;
+}
+.view-chip app-icon {
+  width: 16px;
+  height: 16px;
+}
+.view-chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+.view-chip__count {
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+}
+.view-chip__count.is-late {
+  background: #fde2e2;
+  color: #a12323;
+}
+.field-error {
+  margin: 0 0 12px;
+}
+
+.list {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--surface-sunken);
+}
+.search > app-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+}
+.search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-body);
+}
+.search input:focus-visible {
+  outline: none;
+}
+.search:focus-within {
+  border-bottom-color: var(--accent);
+}
+
+.tasks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.task {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 60px;
+  padding: 0 4px;
+}
+.task + .task {
+  border-top: 1px solid var(--surface-sunken);
+}
+.task__main:focus-visible,
+.view-chip:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.task__main {
+  display: grid;
+  flex: 1;
+  align-content: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.task__main:hover {
+  background: #f8faf9;
+}
+.task__title {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.task__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  color: var(--text-muted);
+  font-size: var(--fs-meta);
+}
+.task__meta span + span::before {
+  padding: 0 6px;
+  content: '·';
+}
+.task__meta .late,
+.task__meta .is-high {
+  color: #a12323;
+  font-weight: 600;
+}
+.task.is-done .task__title {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+.empty {
+  padding: 28px 12px;
+  text-align: center;
+}
+.empty p {
+  margin: 0;
+}
+@media (max-width: 760px) {
+  .list {
+    padding: 4px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .task__main,
+  .view-chip {
+    transition: background-color 150ms ease-out;
+  }
+}
+
+// ---------- Gruppen (31.10.2026): nach Tag · Raum · Person, Raumfilter aus „Heute“, Erledigt-Moment ----------
+.list__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  border-bottom: 1px solid var(--surface-sunken);
+}
+.list__tools .search {
+  flex: 1 1 260px;
+  border-bottom: 0;
+}
+.group-by {
+  display: inline-flex;
+  gap: 2px;
+  margin: 4px 4px 4px auto;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+.group-by button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: calc(var(--radius-md) - 3px);
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-meta);
+  cursor: pointer;
+}
+.group-by button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+}
+.group-by button:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 1px;
+}
+.room-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 10px 8px 0;
+  font-size: var(--fs-secondary);
+}
+.room-filter__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-hover);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.room-filter__clear app-icon {
+  width: 15px;
+  height: 15px;
+}
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 8px 2px;
+  color: var(--text);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+.group-head.is-late {
+  color: #a12323;
+}
+.group-head app-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+}
+.group-head__count {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+// Zuständig als Kürzel rechts (Name steht für Screenreader in der Zeile)
+.who {
+  display: grid;
+  flex: 0 0 30px;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-size: 12px;
+  font-weight: 700;
+}
+.task.is-ticked .task__title {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .task.is-ticked {
+    animation: fade-out 260ms 260ms ease both;
+  }
+}
+@keyframes tick {
+  from { transform: scale(0.4); }
+}
+@keyframes fade-out {
+  to { opacity: 0.35; }
+}
+@media (max-width: 560px) {
+  .group-by {
+    width: 100%;
+    margin: 0 0 6px;
+  }
+  .group-by button {
+    flex: 1;
+  }
+}

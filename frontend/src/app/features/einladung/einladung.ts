@@ -1,11 +1,11 @@
-import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
+import { ErrorNoticeDirective } from '../../shared/ui/error-notice/error-notice';
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { map } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ContactsApiService, Relation } from '../../core/contacts/contacts-api.service';
-import { tokenFromLink } from '../../shared/link-token';
+import { tokenFromLink } from '../../shared/utils/link-token';
 
 /** Ziel des Links aus der Einladungs-E-Mail (/einladung#<token>, ältere Links /einladung/<token>). Angenommen wird nur mit dem Konto, an dessen
  * E-Mail-Adresse die Einladung ging; für alle anderen (und für ungültige Links) sieht es gleich aus. */

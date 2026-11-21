@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { DEMO_ONLY } from '../../core/demo-only';
-import { DEMO_FEEDBACK_URL, GITHUB_PRIVACY_URL } from '../../shared/legal-page/demo-contact';
-import { LegalPage } from '../../shared/legal-page/legal-page';
+import { DEMO_FEEDBACK_URL, GITHUB_PRIVACY_URL } from '../../layout/legal-page/demo-contact';
+import { LegalPage } from '../../layout/legal-page/legal-page';
 
 @Component({
   selector: 'app-nutzungsbedingungen',

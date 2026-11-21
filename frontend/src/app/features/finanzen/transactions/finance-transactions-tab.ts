@@ -1,10 +1,10 @@
 import { Component, computed, inject } from '@angular/core';
-import { formatMoneyInput } from '../../../shared/currency/money-input';
-import { AppSelect, SelectOption } from '../../../shared/form/select';
-import { AppIcon } from '../../../shared/icons/app-icon';
-import { TermHint } from '../../../shared/term-hint/term-hint';
+import { formatMoneyInput } from '../../../shared/ui/currency/money-input';
+import { AppSelect, SelectOption } from '../../../shared/ui/form/select';
+import { AppIcon } from '../../../shared/ui/icons/app-icon';
+import { TermHint } from '../../../shared/ui/term-hint/term-hint';
 import { FinanceTransaction } from '../data/private-finance-api.service';
-import { todayIso } from '../overview/finance-periods';
+import { todayIso } from '../shared/finance-periods';
 import { FinanceDateNav } from '../shared/finance-date-nav';
 import { dayLabel as weekdayLabel } from '../shared/finance-overview';
 import { axis, categoryIcon, categorySlices, dayLabel, donut, expenseSplit, fixedKey, monthTotalUntil, monthlyBars, recurringItems } from '../shared/finance-tabs';

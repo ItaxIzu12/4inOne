@@ -1,4 +1,4 @@
-import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
+import { ErrorNoticeDirective } from '../../shared/ui/error-notice/error-notice';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -13,7 +13,7 @@ const STEPS = ['App holen', 'Code scannen', 'Bestätigen'];
 /** Einstellungen → Zwei-Faktor-Authentifizierung.
  * Zeigt zuerst den Zustand (aktiv oder nicht) und führt sonst in drei Schritten durch die Einrichtung:
  * App holen → QR-Code scannen und Code bestätigen → Backup-Codes sichern. Backend: core/mfa_views.py.
- * Wird auch vom Onboarding (shared/onboarding) verlinkt. */
+ * Wird auch vom Onboarding (shared/features/onboarding) verlinkt. */
 @Component({
   selector: 'app-mfa-setup',
   standalone: true,

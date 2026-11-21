@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
-import { LinkHints, connectionHints } from '../../../shared/connections/link-hints';
-import { AppIcon } from '../../../shared/icons/app-icon';
+import { LinkHints, connectionHints } from '../../../shared/features/connections/link-hints';
+import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { SavingsGoal } from '../data/private-finance-api.service';
 import { FinanceDateNav } from '../shared/finance-date-nav';
 import { dayLabel, goalIcon, goalNearlyDone, goalOnTrack, goalPercent, shortMonthYear } from '../shared/finance-tabs';

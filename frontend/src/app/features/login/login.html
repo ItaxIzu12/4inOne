@@ -220,9 +220,9 @@
                 }
                 <a class="text-link text-link--small field__aside" routerLink="/passwort-vergessen">Passwort vergessen?</a>
               </div>
-              <label class="switch-row remember">
+              <label class="check-row remember">
+                <input type="checkbox" formControlName="remember" />
                 <span>Angemeldet bleiben</span>
-                <input type="checkbox" role="switch" formControlName="remember" />
               </label>
               <button type="submit" class="btn btn--primary" [disabled]="submitting()" [attr.aria-busy]="submitting()">
                 {{ submitting() ? 'Wird angemeldet …' : 'Anmelden' }}

@@ -12,7 +12,7 @@ schnell mit echten Daten starten können. Beide Importe folgen demselben Ablauf.
 3. **Übernehmen** – alles Gültige und Neue wird in **einer Transaktion** angelegt; Dubletten und fehlerhafte Zeilen
    werden übersprungen. Dieselbe Datei zweimal zu importieren erzeugt keine Doppelten.
 
-Oberfläche: gemeinsame Komponente `shared/import-dialog` (Darstellung), Lesen und Prüfen je Bereich.
+Oberfläche: gemeinsame Komponente `shared/features/import-dialog` (Darstellung), Lesen und Prüfen je Bereich.
 
 ## Finanzen – Kontoauszug (CSV)
 
@@ -32,7 +32,7 @@ Oberfläche: gemeinsame Komponente `shared/import-dialog` (Darstellung), Lesen u
 ## Organisation – Kalender (ICS)
 
 - Einstieg: Kalender → Zeile „Termine aus Google, Apple oder Outlook übernehmen? Kalender importieren“.
-- Leser `features/organisation/org-import.ts` (RFC 5545): nur VEVENT; Fortsetzungszeilen; Escapes; UTC (`Z`),
+- Leser `features/organisation/kalender/org-import.ts` (RFC 5545): nur VEVENT; Fortsetzungszeilen; Escapes; UTC (`Z`),
   `TZID` (auch Outlook-Namen wie „W. Europe Standard Time“), sonst Wanduhrzeit der Person; ganztägig (`VALUE=DATE`,
   DTEND exklusiv → letzter Tag, über das Kalenderdatum gerechnet); `DURATION`. Höchstens 1.000 Termine, 5 MB.
 - Wiederholung: `FREQ=DAILY|WEEKLY|MONTHLY|YEARLY` (optional `INTERVAL=1`, `WKST`) wird übernommen. Alles darüber

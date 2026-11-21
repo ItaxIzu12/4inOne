@@ -74,6 +74,54 @@ Guidance:
 - separate server state concerns from presentational state;
 - lazy-load larger areas where useful.
 
+### Globale Ordner (verbindlich seit 21.11.2026)
+
+```text
+src/app/
+├── core/              Dienste und Zustand ohne Oberfläche (Anmeldung, API, Haushalt, Währung, Monitoring …)
+├── layout/            Seitenrahmen: App-Hülle, Kopfzeile, Fußzeile, Seitenleiste, untere Navigation, Glocke,
+│                      öffentlicher Rahmen, Rechtsseiten-Gerüst, „nach oben“, Neu-laden-Hinweis
+├── shared/
+│   ├── ui/            wiederverwendbare Bausteine ohne Fachlogik: Formularfelder (form/ inkl. globaler
+│   │                  form-controls.css und choice-controls.css), Dialog, Symbole, Marke, Abhak-Knopf
+│   │                  (done-toggle), Fehler-/Speicher-Hinweise, Begriffserklärung, Beträge/Währung …
+│   ├── features/      bereichsübergreifende Funktionen mit eigener Logik: Verbindungen, Startleitfaden,
+│   │                  Ausgabenkurve, Import, Anhänge, Einladungen, Beta-Feedback
+│   ├── utils/         reine Hilfsfunktionen: Datum/Kalenderwoche, Geräte-Namen, Idempotenz, Link-Token,
+│   │                  Passwort-Richtlinie, „vor x Minuten“, Scroll-Sperre
+│   └── styles/        globale SCSS-Partials (Editorial, Bereichslayout)
+└── features/          die Bereiche und Seiten (siehe Bereichsordner)
+```
+
+Einordnung: Hat es Oberfläche ohne Fachwissen → `shared/ui`. Kennt es Fachbegriffe mehrerer Bereiche →
+`shared/features`. Ist es reine Logik ohne Oberfläche → `shared/utils` (bzw. `core/`, wenn es Zustand hält oder das
+Backend anspricht). Gehört es zum Rahmen jeder Seite → `layout/`. Design-Tokens stehen ausschließlich in
+`src/styles.css`.
+
+### Bereichsordner (verbindlich seit 21.11.2026)
+
+Jeder Bereich folgt demselben Muster wie Finanzen — ein Unterordner je Reiter, dazu `data/` und `shared/`:
+
+```text
+features/<bereich>/
+├── <bereich>.ts|html|scss     Container: Reiterleiste, Routing-Parameter, Dialoge des Bereichs
+├── <reiter>/                  je Reiter ein Ordner (Komponenten, Logik und Tests nur dieses Reiters)
+├── data/                      API-Service, Daten-Provider (echt/Demo)
+└── shared/                    was mehrere Reiter des Bereichs nutzen (Logik, gemeinsame Stile, kleine Bausteine)
+```
+
+| Bereich | Reiter-Ordner |
+| --- | --- |
+| finanzen | `overview/`, `transactions/`, `budgets/`, `goals/`, `editor/` |
+| haushalt | `heute/`, `aufgaben/` (inkl. Routinen), `einkaufen/`, `zuhause/` |
+| organisation | `heute/`, `kalender/`, `aufgaben/`, `notizen/` |
+| reisen | `liste/`, `uebersicht/`, `ablauf/`, `planung/`, `packliste/`, `budget/` |
+
+Regeln: Ein Reiter importiert nie aus einem anderen Reiter — nur aus `../shared/`, `../data/` oder dem globalen
+`app/shared` bzw. `app/core`. Was zwei Reiter brauchen, wandert nach `shared/` des Bereichs; was zwei Bereiche
+brauchen, nach `app/shared/` (UI-Bausteine) bzw. `app/core/` (Dienste, Zustand). Prüfbar mit
+`grep -rE "from '\.\./[a-z]+/" features/<bereich>/<reiter>` (erlaubt sind nur `shared` und `data`).
+
 ## Django direction
 
 Logical apps may include:

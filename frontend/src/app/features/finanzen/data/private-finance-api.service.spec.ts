@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { API_BASE_URL } from '../../../core/api.config';
-import { SubmissionKey } from '../../../shared/idempotency';
+import { SubmissionKey } from '../../../shared/utils/idempotency';
 import { PrivateFinanceApi } from './private-finance-api.service';
 
 describe('PrivateFinanceApi – idempotentes Anlegen', () => {

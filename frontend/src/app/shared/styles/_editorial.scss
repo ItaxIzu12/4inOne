@@ -23,7 +23,7 @@
   --gutter: clamp(20px, 4vw, 48px);
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   // Vier Bereiche (gedeckt, nur für Symbole, Balken, Beschriftungen, kleine Flächen): Fläche · Text (≥ 4,5:1 auf
-  // Weiß, Porcelain und Sage) · Tönung. Das Logo (shared/brand) behält seine eigenen Farben.
+  // Weiß, Porcelain und Sage) · Tönung. Das Logo (shared/ui/brand) behält seine eigenen Farben.
   --finance: #17694f;
   --finance-deep: #17694f;
   --finance-tint: #e4efe9;
@@ -36,7 +36,7 @@
   --travel: #3d6b9a;
   --travel-deep: #36608b;
   --travel-tint: #e4ebf3;
-  // Der globale Fuß (shared/tile-footer) übernimmt die Farben
+  // Der globale Fuß (layout/tile-footer) übernimmt die Farben
   --tf-ink: var(--ink);
   --tf-muted: var(--ink-soft);
   --tf-line: var(--line);

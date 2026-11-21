@@ -29,8 +29,8 @@
             ],
             "styles": [
               "src/styles.css",
-              "src/app/shared/form/form-controls.css",
-              "src/app/shared/form/choice-controls.css"
+              "src/app/shared/ui/form/form-controls.css",
+              "src/app/shared/ui/form/choice-controls.css"
             ]
           },
           "configurations": {

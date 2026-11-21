@@ -1,0 +1,96 @@
+/*
+ * Runder Haken für das ganze Projekt (21.11.2026, Vorbild: die Abhak-Kreise in Haushalt) — statt eckiger
+ * Browser-Kästchen und statt Schaltern: dünner grauer Kreis (22 px), der sich beim Antippen mit kurzem Federn in
+ * --check-color füllt (Standard Tinte; Bereiche setzen ihre Farbe, z. B. Reisen --travel-fill). Für Abhaken,
+ * Zustimmen und Ein/Aus-Optionen gleichermaßen; Zeile `.check-row`: Haken links, Text (+ Hinweis) rechts.
+ *
+ * Echte <input>-Elemente bleiben (Tastatur, Screenreader, Formulare); nur das Aussehen ändert sich. Der Haken ist
+ * aus Rändern gezeichnet (kein Bild, keine data:-URL wegen CSP). Die Tippfläche ist das umgebende <label>.
+ * Ausnahme mit Absicht: Haushalt › Routinen pausiert Serien mit einem Schalter-Knopf (eigene Stile) — ein Kreis
+ * neben einer Aufgabe hieße dort „erledigt“.
+ */
+input[type='checkbox'] {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-content: center;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border: 1.6px solid #8592a6; /* wie die Kreise in Haushalt: ≥ 3:1 auf Weiß */
+  border-radius: 50%;
+  background: var(--surface-card);
+  vertical-align: middle;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 160ms ease-out, border-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+input[type='checkbox']::before {
+  content: '';
+  width: 6px;
+  height: 11px;
+  margin-top: -2px;
+  border: solid #fff;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+input[type='checkbox']:checked {
+  border-color: var(--check-color, var(--brand-primary));
+  background: var(--check-color, var(--brand-primary));
+}
+input[type='checkbox']:checked::before {
+  transform: rotate(45deg) scale(1);
+}
+input[type='checkbox']:hover:not(:disabled):not(:checked) {
+  border-color: var(--check-color, var(--brand-primary));
+  box-shadow: 0 0 0 4px var(--surface-hover);
+}
+input[type='checkbox'][aria-invalid='true'] {
+  border-color: var(--danger);
+}
+input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+input[type='checkbox']:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Zeile „Haken links, Text rechts“ — Optionen in Formularen (Text, darunter optional ein Hinweis) */
+.check-row {
+  display: flex;
+  flex-shrink: 0; /* in scrollbaren Dialog-Spalten nie unter die Höhe des Hinweistexts schrumpfen */
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+.check-row > input {
+  margin-top: 1px;
+}
+.check-row > span {
+  display: grid;
+  gap: 2px;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.check-row small {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  input[type='checkbox'],
+  input[type='checkbox']::before {
+    transition: none;
+  }
+}

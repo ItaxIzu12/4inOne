@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { MONTH_NAMES, MONTH_SHORT } from '../../../shared/form/date-utils';
-import { AppIcon } from '../../../shared/icons/app-icon';
-import { eur, eurRound } from '../../../shared/spend-curve/spend-curve-data';
+import { MONTH_NAMES, MONTH_SHORT } from '../../../shared/ui/form/date-utils';
+import { AppIcon } from '../../../shared/ui/icons/app-icon';
+import { eur, eurRound } from '../../../shared/features/spend-curve/spend-curve-data';
 import { FinanceYearSummary } from '../data/private-finance-api.service';
 
 /** Wie ein Monat im Jahresbild erscheint. */

@@ -1,0 +1,244 @@
+// Gemeinsame Bausteine der Organisation-Reiter: Karten, Kopfzeilen, Listen,
+// Kategorie-Farben (Termine) und Projekt-Farben (Aufgaben).
+:host {
+  display: block;
+  --line: var(--surface-sunken);
+  --c-gesundheit: #2f80d0;
+  --c-sport: #2e9b57;
+  --c-familie: #e07b16;
+  --c-arbeit: var(--organization-accent);
+  --c-freizeit: #d6457c;
+  --c-sonstiges: #8a93a3;
+}
+.card {
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: #fff;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+h2 {
+  margin: 0;
+  font-size: var(--fs-subsection);
+  line-height: 1.3;
+}
+h3 {
+  margin: 0;
+  font-size: var(--fs-body);
+}
+.sub {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-meta);
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--control-height);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  cursor: pointer;
+}
+.link app-icon {
+  width: 14px;
+  height: 14px;
+}
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-secondary);
+  line-height: 1.5;
+}
+.rows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rows > li + li {
+  border-top: 1px solid var(--line);
+}
+.row-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.row-btn:hover {
+  background: var(--surface-hover);
+}
+.row-text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+.row-text b {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+.row-text small,
+small {
+  color: var(--text-muted);
+  font-size: var(--fs-meta);
+}
+.tile {
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  color: #4b4f63;
+}
+.tile app-icon {
+  width: 19px;
+  height: 19px;
+}
+.dot {
+  display: inline-block;
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cat, var(--c-sonstiges));
+}
+.cat-gesundheit {
+  --cat: var(--c-gesundheit);
+}
+.cat-sport {
+  --cat: var(--c-sport);
+}
+.cat-familie {
+  --cat: var(--c-familie);
+}
+.cat-arbeit {
+  --cat: var(--c-arbeit);
+}
+.cat-freizeit {
+  --cat: var(--c-freizeit);
+}
+.cat-sonstiges {
+  --cat: var(--c-sonstiges);
+}
+.tag {
+  display: inline-block;
+  justify-self: start;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cat, #8a93a3) 13%, #fff);
+  color: color-mix(in srgb, var(--cat, #8a93a3) 55%, #1a1d2b);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+.late {
+  color: #c4214a !important;
+}
+.prio {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.prio--HIGH {
+  background: #fde7ec;
+  color: #b0203f;
+}
+.prio--MEDIUM {
+  background: #fdf1dc;
+  color: #8a4b00;
+}
+.prio--LOW {
+  background: #e3f6ec;
+  color: #1a7a43;
+}
+.tone-violet {
+  --cat: #8b6ad8;
+}
+.tone-indigo {
+  --cat: #4f46e5;
+}
+.tone-green {
+  --cat: #2e9b57;
+}
+.tone-orange {
+  --cat: #e07b16;
+}
+.tone-gray {
+  --cat: #8a93a3;
+}
+.tone-rose {
+  --cat: #d6457c;
+}
+.tone-teal {
+  --cat: #1b8a8a;
+}
+.empty {
+  padding: 24px 8px;
+  color: var(--text-muted);
+  text-align: center;
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+// Marke „Familie · von Max“ an gemeinsamen Terminen (Kalender, Heute) — 31.10.2026
+.cal-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 22px;
+  padding: 1px 9px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--cal, #5b6b7f) 13%, #fff);
+  color: color-mix(in srgb, var(--cal, #5b6b7f) 72%, #172523);
+  font-size: var(--fs-meta, 13px);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+}
+.cal-tag::before {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cal, #5b6b7f);
+  content: '';
+}
+.cal-tag[data-color='green'] { --cal: #2e8b57; }
+.cal-tag[data-color='blue'] { --cal: #2f6fb5; }
+.cal-tag[data-color='amber'] { --cal: #b8741a; }
+.cal-tag[data-color='rose'] { --cal: #c4456f; }
+.cal-tag[data-color='violet'] { --cal: #7451b8; }
+.cal-tag[data-color='slate'] { --cal: #5b6b7f; }

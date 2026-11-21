@@ -8,7 +8,7 @@ registerLocaleData(localeDe);
 
 // Globales Setup für Vitest/jsdom (siehe angular.json -> architect.test.options.setupFiles).
 // jsdom implementiert window.matchMedia nicht — ThemeService (prefers-color-scheme)
-// und RevealDirective (prefers-reduced-motion) rufen es aber auf. Ohne diesen Stub
+// und mehrere Komponenten (prefers-reduced-motion, Hover-Erkennung) rufen es aber auf. Ohne diesen Stub
 // schlägt jeder Test fehl, der eine Komponente rendert, die eine dieser beiden nutzt.
 if (typeof window !== 'undefined' && !window.matchMedia) {
   window.matchMedia = (query: string): MediaQueryList =>

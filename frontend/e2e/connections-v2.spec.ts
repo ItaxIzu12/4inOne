@@ -38,7 +38,7 @@ test('contract → planned cost in Finanzen: preview, exactly one item, price ch
   const links = dialog.locator('app-auto-links');
   // Vorschau VOR dem Speichern: was genau wo erscheint
   await expect(links).toContainText('Finanzen › Geplant: 17,99 € monatlich');
-  await links.getByRole('switch', { name: /In Finanzen als geplante Kosten zeigen/ }).check();
+  await links.getByRole('checkbox', { name: /In Finanzen als geplante Kosten zeigen/ }).check();
   await expect(links).toContainText('Wird beim Speichern eingeschaltet.');
   expect((await new AxeBuilder({ page }).include('app-auto-links').withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()).violations).toEqual([]);
   await dialog.getByRole('button', { name: 'Speichern' }).click();
@@ -83,13 +83,13 @@ test('contract → cancellation reminder in the calendar; unlink removes only th
   let dialog = await editContract(page, 'Strom');
   const links = dialog.locator('app-auto-links');
   await expect(links).toContainText('„Kündigen bis: Strom“ am');
-  await links.getByRole('switch', { name: /Kündigungserinnerung im Kalender/ }).check();
+  await links.getByRole('checkbox', { name: /Kündigungserinnerung im Kalender/ }).check();
   await dialog.getByRole('button', { name: 'Speichern' }).click();
   await go(page, '/demo/organisation?tab=calendar');
   expect(await monthHas(page, 'Kündigen bis: Strom')).toBe(true);
 
   dialog = await editContract(page, 'Strom');
-  await dialog.locator('app-auto-links').getByRole('switch', { name: /Kündigungserinnerung/ }).uncheck();
+  await dialog.locator('app-auto-links').getByRole('checkbox', { name: /Kündigungserinnerung/ }).uncheck();
   await expect(dialog.locator('app-auto-links')).toContainText('Der Vertrag und echte Buchungen, Termine und Aufgaben bleiben');
   await dialog.getByRole('button', { name: 'Speichern' }).click();
   await go(page, '/demo/organisation?tab=calendar');
@@ -101,10 +101,10 @@ test('contract → cancellation reminder in the calendar; unlink removes only th
 test('cancel discards switch changes; nothing is applied before saving', async ({ page }) => {
   await page.goto('/demo/haushalt');
   let dialog = await editContract(page, 'Strom');
-  await dialog.locator('app-auto-links').getByRole('switch', { name: /In Finanzen/ }).check();
+  await dialog.locator('app-auto-links').getByRole('checkbox', { name: /In Finanzen/ }).check();
   await dialog.getByRole('button', { name: 'Abbrechen' }).click();
   dialog = await editContract(page, 'Strom');
-  await expect(dialog.locator('app-auto-links').getByRole('switch', { name: /In Finanzen/ })).not.toBeChecked();
+  await expect(dialog.locator('app-auto-links').getByRole('checkbox', { name: /In Finanzen/ })).not.toBeChecked();
 });
 
 for (const width of [390, 1440]) {
@@ -113,7 +113,7 @@ for (const width of [390, 1440]) {
     await page.goto('/demo/organisation?tab=tasks');
     const box = page.locator('app-org-household-tasks');
     await expect(box).toContainText('Haushaltsaufgaben hier zeigen?');
-    await box.getByRole('switch').check();
+    await box.getByRole('checkbox').check();
     await expect(box).toContainText('Winterreifen-Termin vereinbaren');
     expect((await new AxeBuilder({ page }).include('app-org-household-tasks').withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()).violations).toEqual([]);
     // einmalige Aufgabe: nach dem Abhaken ist sie weg (wiederkehrende rücken weiter und bleiben offen)

@@ -1,6 +1,6 @@
 import { Type } from '@angular/core';
-import { IconName } from '../../../shared/icons/app-icon';
-import { CATEGORY_ICON_MAP, DEFAULT_CATEGORY_ICON_KEY } from '../../../shared/icons/category-icon.map';
+import { IconName } from '../../../shared/ui/icons/app-icon';
+import { CATEGORY_ICON_MAP, DEFAULT_CATEGORY_ICON_KEY } from '../../../shared/ui/icons/category-icon.map';
 import { FinanceSummary, FinanceTransaction } from '../data/private-finance-api.service';
 
 /**

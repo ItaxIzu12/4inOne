@@ -1,5 +1,5 @@
-import { AppIcon } from '../../shared/icons/app-icon';
-import { Brand } from '../../shared/brand/brand';
+import { AppIcon } from '../../shared/ui/icons/app-icon';
+import { Brand } from '../../shared/ui/brand/brand';
 import { HttpErrorResponse } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { Component, DOCUMENT, ElementRef, PLATFORM_ID, computed, inject, signal, viewChild } from '@angular/core';
@@ -8,9 +8,9 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService, SocialProvider } from '../../core/auth/auth.service';
 import { DEMO_ONLY } from '../../core/demo-only';
-import { IconArrowLeft } from '../../shared/icons/icon-arrow-left';
-import { passwordPolicy, personalParts } from '../../shared/password-policy';
-import { PasswordStrength } from '../../shared/password-strength/password-strength';
+import { IconArrowLeft } from '../../shared/ui/icons/icon-arrow-left';
+import { passwordPolicy, personalParts } from '../../shared/utils/password-policy';
+import { PasswordStrength } from '../../shared/ui/password-strength/password-strength';
 
 type Mode = 'login' | 'register';
 /** form = E-Mail/Passwort · mfa = Code nach Passwort · link = Google/Apple mit bestehendem Konto verbinden ·
@@ -84,7 +84,7 @@ export class Login {
     {
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
       email: ['', [Validators.required, Validators.email]],
-      // Richtlinie nach LKA NRW / BSI (shared/password-policy.ts); Name und E-Mail aus demselben Formular
+      // Richtlinie nach LKA NRW / BSI (shared/utils/password-policy.ts); Name und E-Mail aus demselben Formular
       password: ['', [Validators.required, passwordPolicy(() => this.personal())]],
       confirmPassword: ['', [Validators.required]],
       acceptPrivacy: [false, [Validators.requiredTrue]],

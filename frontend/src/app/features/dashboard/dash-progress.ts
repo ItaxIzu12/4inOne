@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AppIcon } from '../../shared/icons/app-icon';
+import { AppIcon } from '../../shared/ui/icons/app-icon';
 import { Idea, Ring } from './dashboard-pulse';
 
 /**

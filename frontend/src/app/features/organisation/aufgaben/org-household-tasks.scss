@@ -1,0 +1,97 @@
+// Organisation › Aufgaben › „Aus dem Haushalt“ (Connection Engine V2): Karte mit Schalter, darunter die Aufgaben.
+:host {
+  display: block;
+  margin-bottom: 16px;
+}
+.hh {
+  display: grid;
+  gap: 10px;
+}
+.hh__switch {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start; // runder Haken links, Text daneben (wie Haushalt)
+  gap: 12px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.hh__text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.hh__text b {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-body);
+}
+.hh__text b app-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--household-accent);
+}
+.hh__text small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  line-height: 1.4;
+}
+.hh__toggle {
+  --check-color: var(--household-fill); // Schalter selbst: shared/ui/form/choice-controls.css
+}
+.hh__more:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.hh__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border-subtle);
+}
+.hh__task {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.hh__task.is-done .hh__title b {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+.hh__title {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 0;
+}
+.hh__title b {
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+.hh__title small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.hh__empty {
+  margin: 0;
+}
+.hh__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  min-height: 44px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.hh__more app-icon {
+  width: 14px;
+  height: 14px;
+}
+.hh__error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-secondary);
+}

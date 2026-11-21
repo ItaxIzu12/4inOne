@@ -83,9 +83,9 @@ Abstand — nie nur über Farbe.
   Inhalt (max. 680 px), am Handy als Blatt von unten. Langer Inhalt scrollt in `.modal-scroll` (31.10.2026; vorher
   schnitt das Panel ab und nichts ließ sich scrollen), das Schließen-Kreuz bleibt stehen; `flush`-Dialoge (Formulare,
   „Kalender teilen“) bringen eigenen Innenabstand und eigenen Scrollbereich mit.
-- Anhänge (31.10.2026): gemeinsamer Baustein `shared/attachments/attachment-field.*` (`app-attachment-field`, Eingaben
+- Anhänge (31.10.2026): gemeinsamer Baustein `shared/features/attachments/attachment-field.*` (`app-attachment-field`, Eingaben
   `attachments`, `load`, `privacy`; `commit(upload, remove)`, `reset()`; Farbe über `--att-accent/--att-soft/--att-on`,
-  Standard Organisation, Haushalt `.att-household`), `shared/attachments/file-thumb.ts` (lädt private Bilder als Blob, Objekt-URL; CSP `img-src blob:` in
+  Standard Organisation, Haushalt `.att-household`), `shared/features/attachments/file-thumb.ts` (lädt private Bilder als Blob, Objekt-URL; CSP `img-src blob:` in
   `deploy/nginx/snippets/4inone-security-headers.conf`). Backend: `PersonalFile.note`, Upload `files/` mit `note=<id>`,
   nur JPG/PNG/WebP/PDF, max. 10 je Notiz; Fotos werden mit Pillow ohne EXIF neu gespeichert (`files.clean_image`).
   Haushalt: `FolderAttachment` (Gerät/Vertrag), `ordner/{id}/anhaenge/` (POST) und `ordner/{id}/anhaenge/{anhang}/`
@@ -105,15 +105,15 @@ Abstand — nie nur über Farbe.
   (`demoTripsFor`, `demoInvite`, `demoAccept`) — Entfernen/Einladen bei Reisen und in Personen & Gruppen zeigen
   denselben Stand (solange nicht neu geladen wird). Im echten System rechnet `contacts/` ohnehin aus der Datenbank.
 - Personen & Gruppen: `.shared-chip--more` ist ein Knopf (`toggleExpanded`, `aria-expanded`) statt einer Zahl.
-- Connection Engine V2: `shared/connections/auto-links.*` (`app-auto-links`; Eingaben `sourceType`, `sourceId`, `previews`,
+- Connection Engine V2: `shared/features/connections/auto-links.*` (`app-auto-links`; Eingaben `sourceType`, `sourceId`, `previews`,
   `sourceLabel`; `commit(sourceId)`, `reset()`; `.al__row`, `.al__toggle` = Kontrollkästchen `role=switch`, Spur `#7d8796`,
   an `--accent`), Regeln für Vorschau und Demo `auto-link-rules.ts`, Demo `demo-auto-links-api.ts`.
   `features/organisation/org-household-tasks.*` (`app-org-household-tasks`, `.hh__*`, Schalter an `--household-fill`).
   Abgeleitete Kalendereinträge = `PersonalEvent` mit `derived` (negative ID, `calendar_color: slate`, nur lesbar).
-- `shared/save-feedback` (01.11.2026): `.toast[data-tone]` (`success|warning|error`, sonst aus dem Text: `feedbackTone`),
+- `shared/ui/save-feedback` (01.11.2026): `.toast[data-tone]` (`success|warning|error`, sonst aus dem Text: `feedbackTone`),
   Dauer `feedbackDuration` (5–9 s), Pause bei `mouseenter`/`focusin`, Eingaben `message`, `tone`, `stamp` (gleiche Meldung
   neu starten), Ausgabe `dismissed`. Seiten setzen keinen eigenen Timer mehr. Live-Region `role=status` bleibt im DOM.
-- `shared/reload-notice` (11.11.2026, `app-reload-notice` in `app.html`): Hinweis, wenn ein Bereich nicht nachgeladen
+- `layout/reload-notice` (11.11.2026, `app-reload-notice` in `app.html`): Hinweis, wenn ein Bereich nicht nachgeladen
   werden konnte (Funkloch, neue Version). Logik `core/navigation/chunk-load-recovery.ts` über
   `withNavigationErrorHandler`: erster Fehler → Zielseite einmal neu laden (höchstens alle 10 s, Marke
   `4io_chunk_reload_at` im Sitzungsspeicher), zweiter → Karte „Diese Seite konnte nicht geladen werden.“ mit
@@ -121,11 +121,11 @@ Abstand — nie nur über Farbe.
   `--radius-lg`, `--border-subtle`, `--shadow-overlay`), bleibt aber stehen, bis man handelt; `role=alert`.
 - Demo-Abgleich Kalender: `demo-contacts-api` liest „Kalender: …“ und Kalenderfreigaben aus `demo-organisation-api`
   (`demoLinksFor`, `demoInviteArea`, `demoAcceptNow`).
-- `shared/form/modal-form`: `submitIcon`/`cancelIcon` (optional); ohne Angabe passend zum Text (`submitIconName`:
+- `shared/ui/form/modal-form`: `submitIcon`/`cancelIcon` (optional); ohne Angabe passend zum Text (`submitIconName`:
   „…importieren“ → upload, „Vorschau“ → arrow, „Schließen“ → close, sonst check; `cancelIconName`: „prüfen/zurück“ →
   arrow-left, sonst close). Eigene Fußzeilen (Profil › Konto löschen, Reisen › Vorschläge, Person einladen) nutzen
   dieselben Symbole, 16 px.
-- `shared/form/place-input.*` (`app-place-input`, ControlValueAccessor): Combobox nach WAI-ARIA (`role=combobox`,
+- `shared/ui/form/place-input.*` (`app-place-input`, ControlValueAccessor): Combobox nach WAI-ARIA (`role=combobox`,
   `aria-expanded`, `aria-activedescendant`, Listbox mit Gruppen „Deine Orte“/„Orte“, Live-Region „3 Vorschläge“);
   Pfeiltasten, Enter übernimmt (schickt das Formular nicht ab), Escape schließt nur die Liste. Eingaben `inputId`,
   `maxLength`, `placeholder`, `full`. Quelle `core/places/places.service.ts` → `GET /api/v1/places/?q=`
@@ -242,13 +242,13 @@ Abstand — nie nur über Farbe.
   Antwort. Nach der Verknüpfungs-Probe ein nächster Schritt „Das war ein Ausschnitt … In der Demo weitermachen“
   (heller Knopf auf Deep Forest, Rahmen 20 px). Symbol-Links in `index.html` mit `?v=2`, damit Browser gespeicherte
   alte Symbole (Angular-Standard) neu laden.
-- **Fuß und Rechtsseiten neu (22.10.2026, Nutzerwunsch):** `shared/tile-footer` ist jetzt ein
+- **Fuß und Rechtsseiten neu (22.10.2026, Nutzerwunsch):** `layout/tile-footer` ist jetzt ein
   klassischer Fuß auf Porcelain mit feiner Linie oben: links Marke (`app-brand`, 22 px) mit Leitsatz (voll: plus ein
   Satz), rechts Link-Spalten, unten eine ©-Leiste („Läuft im Browser …“). `full` (Startseite): Bereiche (Bereichsfarbe
   nur als 8-px-Punkt, Links in die Demo), Produkt (Demo ansehen, Anmelden, Konto erstellen), Rechtliches. `compact`
   (Rechtsseiten, 404): Marke + Rechtliches in einer Reihe, aktuelle Seite unterstrichen und `aria-current`. Entfallen:
   großer Schriftzug, Kacheln, Einladung. Farben über `--tf-ink/-muted/-line/-ground/-hover` und `--tf-finance …`
-  (von der Seite geerbt; der Host setzt keine eigenen Werte). Rechtsseiten (`shared/legal-page`, alle vier):
+  (von der Seite geerbt; der Host setzt keine eigenen Werte). Rechtsseiten (`layout/legal-page`, alle vier):
   links „Rechtliche Seiten“ (Navigation zwischen den vier Seiten, aktuelle Seite als weiße Karte), rechts der Text
   auf einem weißen Blatt (Radius 28, Rand `--line`, Innenabstand bis 64 px), H1 650 bis 56 px, H2 650, Lesespalte
   68 ch, Links Evergreen, Platzhalter-Hinweis in Ocker-Tönung (Radius 20, ohne Emoji); ≤ 900 px Navigation als
@@ -256,7 +256,7 @@ Abstand — nie nur über Farbe.
   axe (2.2 AA + Best Practice) ohne Befund auf /, den vier Rechtsseiten und 404, 1440 und 390 px.
   Testversion (11.11.2026): `LegalPage` hat den Eingang `demo` (Standard `DEMO_ONLY`); im Pages-Build zeigen die vier
   Seiten Demo-Texte (`@if (demo)`), der Hinweis wird zu `.legal-warning--demo` („Gilt für die Testversion“, Sage
-  `--ground-2`, Info-Kreis in `--ink-soft`). Kontakt-Links aus `shared/legal-page/demo-contact.ts`. Platzhalter der
+  `--ground-2`, Info-Kreis in `--ink-soft`). Kontakt-Links aus `layout/legal-page/demo-contact.ts`. Platzhalter der
   App-Fassung unverändert (dort „§ 18 Abs. 2 MStV“ statt veraltet „§ 55 RStV“, „Kompass“ → „4inOne“).
 - **Verknüpfen-Suche ohne Springen (14.11.2026):** `app-connections` zeigt die Liste zum `loadedQuery()` (nicht zum
   gerade getippten `query()`), `searching()` dimmt sie (`.wizard__choices.is-searching`, `aria-busy`), veraltete
@@ -350,7 +350,7 @@ Abstand — nie nur über Farbe.
   Zahl 2,75 rem Display, Tagessatz, kompakte Kurve (64 px), „Letzte Transaktionen“ (3). Demnächst als zwei Kacheln
   (Reise: Zeitraum „8.–10. Nov.“, Titel 22 px Display, Countdown/Aufgaben, Packbalken in Reisefarbe; Haushalt:
   Frist „8. Nov.“, Einkaufszeile). Seitenleiste ohne „Alles Wichtige …“-Karte.
-  **Ausgabenkurve** `shared/spend-curve` (`app-spend-curve`, Daten `spend-curve-data.ts`): aufsummierte Ausgaben des
+  **Ausgabenkurve** `shared/features/spend-curve` (`app-spend-curve`, Daten `spend-curve-data.ts`): aufsummierte Ausgaben des
   Monats bis heute (nur Typ EXPENSE), gestrichelt das gleichmäßige Budget-Tempo, Punkt für heute; SVG ohne Bibliothek
   (`preserveAspectRatio="none"` + `non-scaling-stroke`, Punkte als HTML). Kompakt = Bild mit `aria-label`; voll =
   `role="slider"` (← → Pos1 Ende, Maus/Finger), Zeile darüber „Heute · 1.272,71 € ausgegeben · Plan: 2.613 €“, Achse
@@ -408,7 +408,7 @@ Abstand — nie nur über Farbe.
   durchgestrichen; jeder Schritt öffnet den vorhandenen Dialog. Sichtbar, solange Budget oder Transaktion fehlen; im
   Monat ohne Budget und ohne Daten ersetzt sie Kopfkarte, Kurve und leere Karten (keine Wand aus Nullen, kein zweiter
   Startknopf). (2) Unter der großen Zahl aufklappbar „Wie entsteht diese Zahl?“ (`details.calc`): Monatsbudget −
-  ausgegeben − Geplant − Sparbeiträge = Noch verfügbar. (3) Begriffe erklärt, wo sie stehen: `shared/term-hint`
+  ausgegeben − Geplant − Sparbeiträge = Noch verfügbar. (3) Begriffe erklärt, wo sie stehen: `shared/ui/term-hint`
   (`app-term-hint`, (i) 18 px, Klickfläche 44 px, Toggletip statt Hover, Blase Tinte/weiß, bleibt per Messung 16 px im
   Bild, Escape/Klick daneben schließt, Text als Statusmeldung) bei Geplant, Sparbeiträge (Übersicht + Budgets) und
   Fixkosten; unter „Geplant“ in Transaktionen ein Erklärsatz über der Liste.
@@ -445,7 +445,7 @@ Abstand — nie nur über Farbe.
   Höhe begrenzt, vorher waren am Handy September–Dezember nicht erreichbar. Beim Öffnen (`openYear()`) wird der
   angezeigte Monat in den sichtbaren Teil gescrollt. ≤ 640 px: „Jahr“ steht neben der Auswahl statt darüber.
   **UI-Taste-Durchgang Finanzen (30.10.2026):** (a) Ausgabenkurve (Finanzen + Startseite): Tempo-Linie = Monatsbudget
-  minus Sparbeiträge (`spendingBudget()` in `shared/spend-curve/spend-curve-data.ts`), dieselbe Grundlage wie „Noch
+  minus Sparbeiträge (`spendingBudget()` in `shared/features/spend-curve/spend-curve-data.ts`), dieselbe Grundlage wie „Noch
   verfügbar“; Legende „Budget für Ausgaben (ohne Sparbeiträge), gleichmäßig verteilt“. (b) „Kontoauszug importieren“
   ist ein Textlink mit Symbol im Kopf der Transaktionsliste (`.all-rows__head .tx-import`), nicht mehr in der
   Steuerleiste. (c) „Budgetstatus“ erscheint nur bei echter Überschreitung (Monatsbudget oder Kategorie über Limit);
@@ -477,7 +477,7 @@ Abstand — nie nur über Farbe.
   geplante wiederkehrende Ausgaben ab wie `month_figures`.
   **Abschluss (30.10.2026):** (s) Reiter 761–1000 px ohne Symbole (Padding 12 px), damit alle vier in die Zeile passen.
   (t) Kein lesbarer Text unter 13 px: Hinweise unter Kennzahlen am Handy `--fs-meta`, Monatsnamen in „Dein Jahr“ und
-  „Ab Apr. 2026“ 13 px. (u) Eine Monatskurzform `MONTH_ABBR` in `shared/form/date-utils.ts` (auch für die Kurvenachse);
+  „Ab Apr. 2026“ 13 px. (u) Eine Monatskurzform `MONTH_ABBR` in `shared/ui/form/date-utils.ts` (auch für die Kurvenachse);
   `MONTH_SHORT` (drei Buchstaben) bleibt für Diagrammachsen. (v) Ausgaben-Ansicht: große Zahl, fest/variabel und Anteile
   aus bis heute gebuchten Ausgaben (`expenseBooked`, wie der Vergleich). (w) Toter Code entfernt
   (`finance-settings.ts/.scss`, `finanzen/budget/`).
@@ -540,7 +540,7 @@ Abstand — nie nur über Farbe.
   Bereichsseiten stehen die alten Akzentfarben an ~40 Stellen fest im Code (z. B. `private-finance.scss --accent`,
   `haushalt.scss`, `einkauf-tab.scss`, `familie.css`).
 - **Login/Registrierung im Startseiten-Stil, Kette als Baustein (21.10.2026):** Die Beispielkette
-  ist jetzt der globale Baustein `shared/link-chain` (`app-link-chain`; Eingänge `heading`, `caption`, `links`;
+  ist jetzt der globale Baustein `shared/features/link-chain` (`app-link-chain`; Eingänge `heading`, `caption`, `links`;
   Lichtlinien über `viewChildren`, Werte bei Containerbreite ≤ 380 px ausgeblendet). Die Bereichsklassen `.tone-*`
   (`--c`, `--c-deep`, `--c-tint`, `--c-on`) kommen aus dem Mixin `editorial.area-tones`. Startseite nutzt den Baustein
   im Hero (Hero-Abstand unten etwas kleiner). Login und Registrierung: Markenspalte warmweiß mit Überschrift, Satz und
@@ -556,12 +556,12 @@ Abstand — nie nur über Farbe.
   Kontaktseite, Danke-Seite, Formular-Baustein und der öffentliche Backend-Endpunkt `/api/v1/site/contact/` samt
   Tabelle (Migration `website.0002`) entfernt. `familie.css`: `.people-card` mit `min-width: 0` (breitere Schrift
   erzeugte bei 360 px 3 px Überstand). Der folgende Eintrag gilt sonst weiter.
-- **Logo, Unterseiten, ohne Kontakt (21.10.2026):** Das Logo (`shared/brand`, Favicon, App-Icons,
+- **Logo, Unterseiten, ohne Kontakt (21.10.2026):** Das Logo (`shared/ui/brand`, Favicon, App-Icons,
   Teilen-Bild) nutzt die vier Bereichsfarben der Startseite (Finanzen `#0F9D6B`, Reisen `#3B6FE0`, Organisation
   `#E3961A`, Haushalt `#E04F78`), Schriftzug in Tinte `#121826`; das Favicon zeichnet die Felder als echte
   Blütenform (enge Ecke zur Mitte). Impressum, Datenschutz, Nutzungsbedingungen und Barrierefreiheit (dazu Kontakt,
   Danke, 404) im Stil der Startseite über dieselben Tokens (`shared/styles/_editorial.scss` als SCSS-Mixin für
-  Startseite und `shared/public-shell`). Der Kontaktbereich auf der Startseite und der Kontakt-Link im Fuß sind
+  Startseite und `layout/public-shell`). Der Kontaktbereich auf der Startseite und der Kontakt-Link im Fuß sind
   entfernt (Nutzerwunsch); `/kontakt` bleibt erreichbar (404 „Fehler melden“). Der Name im Kachel-Fuß steht immer in
   der Markenschrift, nur Überschriften nutzen die Serife. Der folgende Eintrag gilt sonst weiter.
 - **Startseite „Editorial hell“ (21.10.2026):** Auf Nutzerwunsch („modern, elegant, Agentur-Niveau,
@@ -569,7 +569,7 @@ Abstand — nie nur über Farbe.
   Schrift; klar erklären, was die App ist“) aus drei Richtungen gewählt und mit ui-taste, ui-ux-pro-max, magic-ui und
   impeccable umgesetzt. Werte, Aufbau und Bausteine: `design-system/4inone/MASTER.md`. Ersetzt Runde 3 (Blüten-Motiv,
   Inclusive Sans — Schrift entfernt). Neue globale Bausteine: `shared/spotlight` (Lichtkegel, Magic Card) und
-  `shared/animated-beam` (Lichtlinie, Animated Beam); `app-tile-footer` farblich und typografisch über `--tf-*`
+  `shared/ui/animated-beam` (Lichtlinie, Animated Beam); `app-tile-footer` farblich und typografisch über `--tf-*`
   anpassbar (Host setzt keine eigenen Werte mehr, die die Seite überdecken würden).
 - **Startseite, Runde 3: weniger generisch (20.10.2026):** Nach eigener Kritik („wirkt zu zwei
   Dritteln wie eine KI-Vorlage“) mit `ui-ux-pro-max` und dem Taste-Skill umgebaut (Richtung „One motif“, Prüfung
@@ -582,11 +582,11 @@ Abstand — nie nur über Farbe.
   zur Mitte), ohne Icons; Größen über `--tf-*`. Kopf ohne Glas-Effekt. Der folgende Eintrag gilt sonst weiter.
 - **Globale Bausteine Fächer und Kachel-Fußzeile (20.10.2026):** Nach Auswahl aus der Kombai-Galerie
   (Vorbilder „Daymoor“ und „Yieldr“, nichts kopiert, in unser System übertragen):
-  `shared/area-deck` (`app-area-deck`) zeigt beliebige Bereichskarten als Fächer — gleich für alle vier Bereiche,
+  `shared/ui/area-deck` (`app-area-deck`) zeigt beliebige Bereichskarten als Fächer — gleich für alle vier Bereiche,
   nur die Farbe wechselt (Logo-Feld als Symbolgrund, helles Feld für Stichworte und Nachbarkarten, Text Tinte).
   Bewegung 450 ms transform/opacity, keine Auto-Drehung, Wischen am Handy, horizontal abgeschnitten (kein
-  seitliches Scrollen). `shared/tile-footer` (`app-tile-footer`) ersetzt den dunklen Startseiten-Fuß (`full`) und
-  den Fuß von `shared/public-shell` (`compact`). Startseite: Fächer im Hero, das Bento der Bereiche entfällt (sonst
+  seitliches Scrollen). `layout/tile-footer` (`app-tile-footer`) ersetzt den dunklen Startseiten-Fuß (`full`) und
+  den Fuß von `layout/public-shell` (`compact`). Startseite: Fächer im Hero, das Bento der Bereiche entfällt (sonst
   doppelt), das echte Startseiten-Bild sitzt jetzt in „Ein Tag mit 4inOne“. Der folgende Eintrag gilt sonst weiter.
 - **Öffentliche Startseite, Neuentwurf (20.10.2026):** Auf Nutzerwunsch komplett neu erfunden, mit dem
   Skill `ui-ux-pro-max` (Designsystem in `design-system/4inone/MASTER.md`; der automatische Erstvorschlag — dunkles
@@ -601,7 +601,7 @@ Abstand — nie nur über Farbe.
   `::details-content`, wo unterstützt). Kontaktformular als gemeinsame Komponente `shared/contact-form` (Startseite
   und `/kontakt`). Die alte Startseite (Satz-Bühne, Verknüpfungs-Karte `link-steps`, Teilen-Schalter) ist entfernt.
 - **Öffentliche Unterseiten (20.10.2026):** Impressum, Datenschutz, Nutzungsbedingungen, Barrierefreiheit, Kontakt,
-  Danke und 404 stehen im gemeinsamen Rahmen `shared/public-shell` im Stil der Startseite: Kopfzeile 72 px mit Marke
+  Danke und 404 stehen im gemeinsamen Rahmen `layout/public-shell` im Stil der Startseite: Kopfzeile 72 px mit Marke
   (22 px, Handy 20) und „Anmelden“ / „Konto erstellen“ (Pill, `--brand-primary`), Inhalt max. 1120 px, Fußzeile mit
   Kontakt · Impressum · Datenschutz · Nutzungsbedingungen · Barrierefreiheit (15 px, je ≥ 44 px Tippziel) und
   Copyright. Keine App-Navigation mehr auf diesen Seiten (führte Besucher nur zur Anmeldung). Lange Überschriften
@@ -762,7 +762,7 @@ Abstand — nie nur über Farbe.
   Neue Seite `/email-bestaetigen` im Stil von „Neues Passwort“ (zentrierte Karte, ohne App-Leisten). Lokal ohne
   Mailserver erscheint nach „Mail senden“ „Entwicklungsmodus: …“ mit Link „Jetzt bestätigen“ / „Link öffnen und bestätigen“.
 
-- **Invitation System V1 (11.10.2026):** Neue Komponente `shared/notification-bell` ersetzt den leeren
+- **Invitation System V1 (11.10.2026):** Neue Komponente `layout/notification-bell` ersetzt den leeren
   „Benachrichtigungen“-Dialog der Shell: gleiche 44-px-Glocke, Zähler als Zahl in `--brand-primary` mit weißem Rand,
   `aria-label` „Benachrichtigungen, 1 ungelesen“; Popover (`role=dialog`, Fokus auf erstes „Annehmen“, Escape und
   Klick außerhalb schließen, Fokus zurück zur Glocke), 150 ms Einblenden, ohne Bewegung bei reduzierter Bewegung; am
@@ -772,7 +772,7 @@ Abstand — nie nur über Farbe.
   Ausstehend“; offene eigene Einladung je Person als „Eingeladen · ausstehend“ (Uhr-Symbol); Haushaltskarte mit
   Mitgliedern, „Entfernen“/„Haushalt verlassen“ mit Rückfrage. Haushalts-Einladungsdialog neu: Person (Auswahl aus
   Kontakten), „Zu“ und „Rolle“ als Faktenliste, Hinweis, was geteilt wird; Tokens V3 statt alter Violett-Werte.
-  Gemeinsame Hilfsfunktion `shared/time-ago.ts`.
+  Gemeinsame Hilfsfunktion `shared/utils/time-ago.ts`.
 
 - **Personen & Gruppen neu (11.10.2026, nach Vorlage):** Seitenkopf mit Untertitel und grüner Hinweis-Karte „Eine
   Verbindung teilt noch keine Daten.“ (`--success-soft`, Schild-Symbol). Reiter Übersicht / Gruppen / Geteilte Bereiche
@@ -1148,7 +1148,7 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   „Im Wagen N“, „Oft gekauft“ (13 px/700). Jede Kachel ist ein Knopf mit Aktion im Namen („Bananen, 1 kg abhaken“).
 - **Leiste „im Wagen“**: Zahl + „im Wagen“ in einer Zeile, darunter „wird zur Ausgabe in Finanzen“ (12 px, Finanzen-
   Symbol, Weiß 82 % auf Tinte) — nur wenn gebucht werden kann. Der Einkaufsmodus nutzt weiterhin die Liste.
-- Neues Symbol `grid` (vier Quadrate) in `shared/icons/app-icon.ts`.
+- Neues Symbol `grid` (vier Quadrate) in `shared/ui/icons/app-icon.ts`.
 
 ### Haushalt › Zuhause — Als Nächstes und Geräte nach Raum (31.10.2026)
 
@@ -1235,16 +1235,16 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   `.form-step` mit 24-px-Nummer, `.transport-chip`/`.category-chip` 44 px.
 - **Reisekopf ≤ 760 px:** `.heading-icon` aus, `h1` `overflow-wrap: break-word` (in `trip-dialogs.scss`). `.pass__facts`
   setzt den Trennpunkt vor jeden Eintrag und schneidet ihn links per `clip-path` ab.
-- **Symbol:** `bus` neu in `shared/icons/app-icon.ts` (gleiche Strichsprache); `transportIcon('BUS')` nutzt es.
+- **Symbol:** `bus` neu in `shared/ui/icons/app-icon.ts` (gleiche Strichsprache); `transportIcon('BUS')` nutzt es.
 
 - Admin-Panel (15.11.2026, `features/admin/`): Werkzeug-Seite im Stil der Einstellungen (weiße Karten Radius 20, Tinte). Statuskarte mit Punkt 12 px (grün `--success` = verbunden, Bernstein `--warning` = nicht verbunden) und Knopf „GlitchTip öffnen“ (Rand `--border-strong`); fünf Kennzahl-Karten (auto-fit, min. 150 px; Fehlversuche in `--warning`, Sperren in `--danger`, sonst Tinte); links „Anmelde-Ereignisse“ mit Filter-Chips (36 px, gewählt = Tinte gefüllt) und Zeilen 56 px (Symbol 34 px auf `--success-soft`/`--warning-soft`/`--danger-soft`, Person maskiert, IP gekürzt, Uhrzeit rechts bzw. am Handy darunter), rechts „Offene Fehler“ mit Zähler in `--danger`; ab 900 px zweispaltig. Zugangs-Hinweise (Zwei-Faktor fehlt / neu anmelden / kein Zugriff) als ruhige Karte mit Symbol. Kontomenü: eigene Gruppe „Admin-Panel“ mit Schild-Symbol, nur für Admins. Keine neuen Tokens.
 - Einstellungen › Profil › Daten herunterladen (15.11.2026): Karte wie „Konto löschen“ (weiß, Radius 20, Rand `--border-subtle`), aber neutral: Titel in `--text-primary`, Knopf weiß mit Rand `--border-strong` und Download-Symbol, 44 px, beim Zusammenstellen „Wird zusammengestellt …“; Erfolg als Statuszeile, Fehler rot mit `role="alert"`. Steht zwischen Profilformular und „Konto löschen“. Keine neuen Tokens.
-- Anmelden/Registrieren/Onboarding (Neubau 19.11.2026): `features/login/login.{ts,html,scss}` (eine Komponente, Zustände `form · mfa · link · social-mfa · finishing`), `features/onboarding/onboarding-page.*` + `first-entry.service.ts`. Band `.aside` (Deep Forest, Logo-Farbfelder `.dot--*`, Bereichs-Pillen `.aside__chips`, Beispielansicht `.preview` – am Handy kompakter Kopf statt ausgeblendet), Formularspalte `.panel` (Porzellan mit Punktraster, Formular `.panel__body` als schwebende Karte; am Handy weißes Sheet auf Deep Forest), Google/Apple `.social__btn` (52 px, offizielle Logos als Inline-SVG, Text „Weiter mit …“), Stärke und Passwortregeln als eigene Komponente `shared/password-strength` (auch auf „Neues Passwort“; Regeln aus `shared/password-policy.ts`, gespiegelt in `backend/core/validators.py`), Kästchen `.check`/`.check__box`, Wechsel Anmelden ↔ Konto erstellen `.switch` (zentriert unter dem Hauptknopf, statt oben rechts), „Passwort vergessen?“ `.field__aside` (rechtsbündig unter dem Passwortfeld), Fehlerbox `.alert` (`role=alert`, fokussiert, bewusst ohne `appErrorNotice`-Toast). Onboarding: `.progress`, `.segment` (Sage-Spur), Auswahlzeilen `.area--<bereich>` mit `--c`/`--soft` aus den Bereichs-Tokens, `.chips`, `.created`. Absenden der Code-Formulare über `(submit)` + `preventDefault` (ohne `formGroup` feuert `ngSubmit` nicht). Neues Symbol `eye`. Keine neuen Tokens.
+- Anmelden/Registrieren/Onboarding (Neubau 19.11.2026): `features/login/login.{ts,html,scss}` (eine Komponente, Zustände `form · mfa · link · social-mfa · finishing`), `features/onboarding/onboarding-page.*` + `first-entry.service.ts`. Band `.aside` (Deep Forest, Logo-Farbfelder `.dot--*`, Bereichs-Pillen `.aside__chips`, Beispielansicht `.preview` – am Handy kompakter Kopf statt ausgeblendet), Formularspalte `.panel` (Porzellan mit Punktraster, Formular `.panel__body` als schwebende Karte; am Handy weißes Sheet auf Deep Forest), Google/Apple `.social__btn` (52 px, offizielle Logos als Inline-SVG, Text „Weiter mit …“), Stärke und Passwortregeln als eigene Komponente `shared/ui/password-strength` (auch auf „Neues Passwort“; Regeln aus `shared/utils/password-policy.ts`, gespiegelt in `backend/core/validators.py`), Kästchen `.check`/`.check__box`, Wechsel Anmelden ↔ Konto erstellen `.switch` (zentriert unter dem Hauptknopf, statt oben rechts), „Passwort vergessen?“ `.field__aside` (rechtsbündig unter dem Passwortfeld), Fehlerbox `.alert` (`role=alert`, fokussiert, bewusst ohne `appErrorNotice`-Toast). Onboarding: `.progress`, `.segment` (Sage-Spur), Auswahlzeilen `.area--<bereich>` mit `--c`/`--soft` aus den Bereichs-Tokens, `.chips`, `.created`. Absenden der Code-Formulare über `(submit)` + `preventDefault` (ohne `formGroup` feuert `ngSubmit` nicht). Neues Symbol `eye`. Keine neuen Tokens.
 - Stil-Dateien aufgeteilt (15.11.2026): `reisen.scss`, `familie.css` und `app-shell.scss` lagen über dem Stilbudget von 12 kB; der hintere Teil steht jetzt in `reisen-late.scss`, `familie-late.css` und `app-shell-late.scss`, direkt danach eingebunden. Optik unverändert (kompiliertes CSS vorher und nachher identisch), Build ohne Warnungen.
 
 ### Verknüpfungen sichtbar (31.10.2026)
 
-- **`<app-link-hints [items] [exclude] [max]>`** (`shared/connections/link-hints.ts`): Pillen 24 px, Padding 0 9 px,
+- **`<app-link-hints [items] [exclude] [max]>`** (`shared/features/connections/link-hints.ts`): Pillen 24 px, Padding 0 9 px,
   Symbol 13 px, Schrift `--fs-meta` 600, Farbe je Bereich (`dom-reisen|finanzen|haushalt|organisation` →
   `--*-soft`/`--*-accent`), `max-width: min(240px, 100%)`, Titel mit Ellipse. Für Screenreader „verknüpft mit …“.
   Daten über `connectionHints(type, ids)` — ein Abruf je Liste.
@@ -1295,8 +1295,8 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   „wird geprüft …“, nie eine Behauptung.
 - Profil/Zwei-Faktor/Sitzungen: Blau-Werte (`#164ed0`, `#142143`, `#56627a`, …) durch Tokens ersetzt; kleinste Schrift
   13 px.
-- `shared/scroll-lock`: sperrt nur noch `html` (nicht `body` — dessen `height: 100%` schnitt die Seite ab und setzte
-  die Scrollposition auf 0). `shared/modal`: erst entsperren, dann Fokus mit `preventScroll` zurückgeben.
+- `shared/utils/scroll-lock`: sperrt nur noch `html` (nicht `body` — dessen `height: 100%` schnitt die Seite ab und setzte
+  die Scrollposition auf 0). `shared/ui/modal`: erst entsperren, dann Fokus mit `preventScroll` zurückgeben.
 - WCAG 2.5.3: kein `aria-label`, das vom sichtbaren Text abweicht — stattdessen `.sr-only`-Zusatz nach dem sichtbaren
   Text (z. B. Kalender `dayRest()`: „26“ + „. Oktober 2026 (Montag), 1 Termin“). Prüfung mit
   `wcag21a`/`wcag21aa` auf allen Bereichsseiten.
@@ -1336,9 +1336,9 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
 - Vertrag/Gerät-Felder (02.11.2026, `haushalt/ordner-tab.*`): Signale `formNextCost`/`formNextFrom`, `formLead`
   (`LEAD_OPTIONS`), `formLastMaintenance`/`formSerial`; `setMaintenanceBasis(last, interval)` setzt „Nächste Wartung“ =
   `addMonthsIso(last, interval)`. Anzeige `leadLabel`, `moneyLabel` (`vertraege-logic.ts`). Regeln gespiegelt in
-  `shared/connections/auto-link-rules.ts`: `costOn(c, day)`, `contractLeadDay(c, day)`; Demo `applyDuePrice` und
+  `shared/features/connections/auto-link-rules.ts`: `costOn(c, day)`, `contractLeadDay(c, day)`; Demo `applyDuePrice` und
   Kalender-Eintrag `contract-lead:{id}`. „Erinnern“ steht mit der Checkbox in einer `.field-row` (`.check-field`).
-- Beta-Feedback (04.11.2026): `shared/beta-feedback/beta-feedback-dialog.*` (`app-beta-feedback-dialog`, Eingaben `open`,
+- Beta-Feedback (04.11.2026): `shared/features/beta-feedback/beta-feedback-dialog.*` (`app-beta-feedback-dialog`, Eingaben `open`,
   `areas`, `tasks`, `area`; `reset()` beim Öffnen), Dienst `beta-feedback.service.ts` (GET Schalter/Listen, POST
   senden; kein Lesen). Umschalter `.bf-option` (44 px, `aria-pressed`, `--border-control`, gewählt `--brand-primary`),
   Fragen als `fieldset.bf-scale` mit `legend`. Kontomenü: `AppShell.betaInfo` (einmal beim ersten Öffnen),
@@ -1361,7 +1361,7 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   Reiter lesen Zustand und Aktionen über `inject(FINANCE_CONTEXT)` (Signale, keine Kopien). Typografie des Seiten-
   Layouts (`.domain-page small` …) gilt in den Reitern über `:host-context(.domain-page)`.
 
-- **Startleitfäden (21.11.2026):** gemeinsamer Baustein `shared/start-guide/start-guide.{ts,html,scss}` (`app-start-guide`,
+- **Startleitfäden (21.11.2026):** gemeinsamer Baustein `shared/features/start-guide/start-guide.{ts,html,scss}` (`app-start-guide`,
   Eingaben `area`, `heading`, `intro`, `steps: GuideStep[]`, `demoPath`; Ausgaben `pick`, `alt`, `hide`; Farbe über
   `--c`/`--soft` aus den Bereichs-Tokens) und `start-overview` (`app-start-overview`, Startseite, ersetzt „Erste Schritte“
   samt `.steps`-Stilen in `dashboard-side.scss`). Stand und „ausgeblendet“ über `core/onboarding/guide.service.ts`
@@ -1370,7 +1370,7 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   `.start*`-Stile in Finanzen sind entfernt. Einstellungen: Gruppe `#leitfaeden` mit `.settings-row__action`
   („Einblenden“); Startseite: `moneyCoveredByStart()` blendet die Finanzen-Karte für neue Konten aus. Keine neuen Tokens.
 
-- **Haken und Schalter (21.11.2026):** zentral in `shared/form/choice-controls.css` (in `angular.json › styles`).
+- **Haken und Schalter (21.11.2026):** zentral in `shared/ui/form/choice-controls.css` (in `angular.json › styles`).
   `input[type=checkbox]` = runder Haken, `input[type=checkbox][role=switch]` = Schalter; Farbe je Bereich über
   `--check-color`. Entfernt: eigene Kästchen/Schalter in `login.scss` (`.check__box`), `finance-blocks.scss`,
   `organisation.scss` (`.switch`, `.checkbox-row`), `org-household-tasks.scss` (`.hh__toggle`), `auto-links.scss`
@@ -1386,3 +1386,11 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   (wie in Produktion: nginx gibt mit Cookie `4io_signed_in` `index.csr.html` aus). Die Browser-Tests laufen mit der
   neuen Konfiguration `e2e` (mit Vorrendern wie Produktion). Produktions-Build unverändert: `index.html` vorgerendert,
   `index.csr.html` ohne Landingpage-Inhalt (geprüft).
+
+- **Nur noch runde Haken (21.11.2026):** `choice-controls.css` kennt keine Schalter mehr (`role="switch"` und
+  `.switch-row` entfernt); alle Ein/Aus-Optionen nutzen `input[type=checkbox]` in `.check-row` (Haken links,
+  `flex-shrink: 0`, damit der Hinweis in scrollbaren Dialogen nicht abgeschnitten wird). Routinen: Schalter-Spalte
+  entfernt (`.switch`, `.row__status`, Spalte „Status“), Pausieren nur noch über das Zeilenmenü.
+- **Ordnerstruktur der Bereiche (21.11.2026):** Haushalt, Organisation und Reisen wie Finanzen gegliedert — ein
+  Unterordner je Reiter, `data/`, `shared/` (Regeln: docs/ARCHITECTURE.md › Bereichsordner). Stile und Komponenten
+  unverändert, nur verschoben; `finance-periods` und `aufgaben-logic` liegen jetzt im jeweiligen `shared/`.

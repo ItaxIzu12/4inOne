@@ -1,21 +1,21 @@
-import { ErrorNoticeDirective } from '../shared/error-notice/error-notice';
+import { ErrorNoticeDirective } from '../shared/ui/error-notice/error-notice';
 import { Component, DestroyRef, input, output, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IsActiveMatchOptions, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
-import { BackToTop } from '../shared/back-to-top/back-to-top';
-import { BetaFeedbackDialog } from '../shared/beta-feedback/beta-feedback-dialog';
-import { BetaFeedbackInfo, BetaFeedbackService } from '../shared/beta-feedback/beta-feedback.service';
-import { Brand } from '../shared/brand/brand';
-import { AppIcon, IconName } from '../shared/icons/app-icon';
-import { IconInfo } from '../shared/icons/icon-info';
-import { IconLegal } from '../shared/icons/icon-legal';
-import { IconLogout } from '../shared/icons/icon-logout';
-import { IconProfile } from '../shared/icons/icon-profile';
-import { IconSettings } from '../shared/icons/icon-settings';
-import { IconTwoFactor } from '../shared/icons/icon-two-factor';
-import { NotificationBell } from '../shared/notification-bell/notification-bell';
+import { BackToTop } from './back-to-top/back-to-top';
+import { BetaFeedbackDialog } from '../shared/features/beta-feedback/beta-feedback-dialog';
+import { BetaFeedbackInfo, BetaFeedbackService } from '../shared/features/beta-feedback/beta-feedback.service';
+import { Brand } from '../shared/ui/brand/brand';
+import { AppIcon, IconName } from '../shared/ui/icons/app-icon';
+import { IconInfo } from '../shared/ui/icons/icon-info';
+import { IconLegal } from '../shared/ui/icons/icon-legal';
+import { IconLogout } from '../shared/ui/icons/icon-logout';
+import { IconProfile } from '../shared/ui/icons/icon-profile';
+import { IconSettings } from '../shared/ui/icons/icon-settings';
+import { IconTwoFactor } from '../shared/ui/icons/icon-two-factor';
+import { NotificationBell } from './notification-bell/notification-bell';
 import { DEMO_ONLY } from '../core/demo-only';
 @Component({
   selector: 'app-shell',

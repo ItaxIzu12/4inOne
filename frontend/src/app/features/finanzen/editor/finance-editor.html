@@ -121,11 +121,11 @@
     <app-field label="Notiz" [optional]="true">
       <input id="booking-note" formControlName="note" maxlength="255" />
     </app-field>
-    <label class="switch-row">
+    <label class="check-row">
+      <input type="checkbox" formControlName="recurring" />
       <span>Kommt jeden Monat wieder<small>{{ form.value.type === 'INCOME'
-        ? 'z. B. dein Gehalt – erscheint dann unter „Wiederkehrende Einnahmen“. Es wird nichts automatisch gebucht.'
-        : 'z. B. Miete oder ein Abo – wird ab dem nächsten Monat jeden Monat als geplante Ausgabe im Budget berücksichtigt. Eine neue Transaktion wird dabei nicht angelegt.' }}</small></span>
-      <input type="checkbox" role="switch" formControlName="recurring" />
+        ? 'z. B. Gehalt – wird in der Liste als „monatlich“ markiert, aber nicht gebucht.'
+        : 'z. B. Miete oder Abo – wird jeden Monat im Budget eingeplant, aber nicht gebucht.' }}</small></span>
     </label>
   } @else if (editor() === 'budgets') {
     <!-- Beim Ändern ist der Startmonat gesperrt (sonst verschiebt man das Budget aus seinem Monat); anderer Zeitraum = neues Budget. -->

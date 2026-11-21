@@ -3,12 +3,12 @@ import { Router, provideRouter } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { DemoPrivateFinanceApi } from '../finanzen/data/demo-private-finance-api';
 import { PrivateFinanceApi } from '../finanzen/data/private-finance-api.service';
-import { DemoHaushaltDataProvider } from './demo-haushalt-data-provider';
-import { AufgabenTab } from './aufgaben-tab';
-import { EinkaufTab } from './einkauf-tab';
+import { DemoHaushaltDataProvider } from './data/demo-haushalt-data-provider';
+import { AufgabenTab } from './aufgaben/aufgaben-tab';
+import { EinkaufTab } from './einkaufen/einkauf-tab';
 import { Haushalt } from './haushalt';
-import { HAUSHALT_DATA_PROVIDER } from './haushalt-data-provider';
-import { daysUntil, todayIso } from './haushalt-logic';
+import { HAUSHALT_DATA_PROVIDER } from './data/haushalt-data-provider';
+import { daysUntil, todayIso } from './shared/haushalt-logic';
 
 describe('Haushalt (Demo)', () => {
   beforeEach(async () => {
@@ -121,7 +121,7 @@ describe('Haushalt (Demo)', () => {
     expect(chip('Überfällig').getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('“Wiederkehrend” shows the recurring tasks with stats, streak and a pause switch', () => {
+  it('“Wiederkehrend” shows the recurring tasks with stats, streak and pausing via the row menu', () => {
     const fixture = TestBed.createComponent(Haushalt);
     fixture.detectChanges();
     openTab(fixture, 'aufgaben');
@@ -136,10 +136,15 @@ describe('Haushalt (Demo)', () => {
     expect(values.slice(0, 3)).toEqual(['8', '2', '92 %']);
     const kitchen = Array.from(compiled.querySelectorAll('app-routinen-tab .row')).find((r) => text(r).includes('Küche sauber halten'))!;
     expect(text(kitchen.querySelector('.row__streak'))).toBe('12 Tage');
-    const toggle = kitchen.querySelector('[role="switch"]') as HTMLButtonElement;
-    toggle.click();
+    // Pausieren über das Menü der Zeile (kein Schalter mehr — rechts steht nur noch „···“)
+    expect(kitchen.querySelector('[role="switch"]')).toBeNull();
+    (kitchen.querySelector('app-row-menu button') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(toggle.getAttribute('aria-checked')).toBe('false');
+    const pause = Array.from(kitchen.querySelectorAll('[role="menuitem"]')).find((m) => text(m).includes('Pausieren')) as HTMLButtonElement;
+    pause.click();
+    fixture.detectChanges();
+    const kitchenAfter = Array.from(compiled.querySelectorAll('app-routinen-tab .row')).find((r) => text(r).includes('Küche sauber halten'))!;
+    expect(text(kitchenAfter.querySelector('.row__due'))).toContain('Pausiert');
     expect(text(compiled.querySelector('app-routinen-tab .stat__value'))).toBe('7');
 
     // Hauptaktion öffnet hier das Formular für wiederkehrende Aufgaben — mit jährlich und „alle X …“
@@ -189,13 +194,13 @@ describe('Haushalt (Demo)', () => {
     fixture.detectChanges();
     let compiled = fixture.nativeElement as HTMLElement;
     // „Heute“ zeigt nur Fälliges: „Müll rausbringen“ (morgen) hat dort kein Kästchen.
-    expect(compiled.querySelector('app-uebersicht-tab .box[aria-label*="Müll rausbringen"]')).toBeNull();
+    expect(compiled.querySelector('app-uebersicht-tab button[aria-label*="Müll rausbringen"]')).toBeNull();
 
     openTab(fixture, 'aufgaben');
     compiled = fixture.nativeElement as HTMLElement;
     const taskCheck = compiled.querySelector('button[aria-label*="Müll rausbringen"]') as HTMLButtonElement;
     expect(taskCheck.disabled).toBe(true);
-    (compiled.querySelector('button[aria-label*="Müll rausbringen"] ~ .task__main') as HTMLButtonElement).click();
+    (taskCheck.closest('li')!.querySelector('.task__main') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(text(compiled.querySelector('app-modal-form h2'))).toBe('Aufgabe bearbeiten');
   });

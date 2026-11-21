@@ -131,7 +131,7 @@ If the user cannot access the target object, the connection must not leak target
 ## Implementierter Stand (V1, 10.10.2026)
 
 Code: `backend/connections/` (registry.py = einzige Stelle, die die Domains kennt; services.py = alle Regeln),
-Frontend `shared/connections/` (`<app-connections>`).
+Frontend `shared/features/connections/` (`<app-connections>`).
 
 - **Typen (Allowlist):** `TASK`, `CALENDAR_EVENT` (Organisation), `SAVINGS_GOAL` (Finanzen), `HOUSEHOLD_TASK`
   (Haushalt), `TRIP` (Reisen). `BUDGET` ist vorgesehen, aber in keinem Paar. Erlaubte Paare und Relationen nur in
@@ -228,7 +228,7 @@ in den Bearbeiten-Dialogen.
   nur eingeloggt; Lesen ist wie die übrigen GETs nicht gedrosselt. Tests: `connections/tests/test_connection_summary.py`
   (sichtbare Gegenstücke, private Seite der Mitreisenden bleibt verborgen, Fremde → leer, entzogener Reisezugriff
   blendet sofort aus, ungültige Abfragen → 400, anonym abgelehnt, feste Abfragezahl).
-- **Frontend:** `shared/connections/link-hints.ts` — `connectionHints(type, ids)` (ein Abruf je Liste, Fehler bleiben
+- **Frontend:** `shared/features/connections/link-hints.ts` — `connectionHints(type, ids)` (ein Abruf je Liste, Fehler bleiben
   still) und `<app-link-hints>` (Marken in Bereichsfarbe mit Symbol, nicht klickbar, „verknüpft mit …“ für
   Screenreader, höchstens 2 + „+n“). Eingesetzt in Organisation (Heute: Tageslinie und Aufgaben; Kalender-Agenda;
   Aufgaben), Haushalt (Heute fällig; Aufgaben) und Finanzen (Sparziel-Karten).
@@ -253,7 +253,7 @@ keine Buchungen, keine Zahlungen. V1-Verbindungen bleiben unverändert.
   weiterlaufen). `candidates` liefert `fits`, Passendes zuerst; ohne Suche zeigt die Oberfläche nur Passendes, der Rest
   bleibt über die Suche erreichbar. Grenze: Wörter zählen nur als ganzes Wort bzw. als Wortanfang ab 5 Buchstaben –
   „Stromtarif“ enthält für die Regel kein „Tarif“.
-- **Demo = Backend:** `frontend/src/app/shared/connections/demo-connections-api.ts` baut den Bestand live aus den
+- **Demo = Backend:** `frontend/src/app/shared/features/connections/demo-connections-api.ts` baut den Bestand live aus den
   Demo-Bereichen (Reisen, Termine, Aufgaben, Sparziele, Haushaltsaufgaben, Geräte, Verträge), kennt alle 9 Paare und
   nutzt `connection-relevance.ts` (Spiegel von `relevance.py`). Gelöschte Demo-Einträge nehmen ihre Verknüpfungen mit,
   neue sind sofort verknüpfbar. In der Demo zeigen jetzt auch Haushaltsaufgaben, Geräte und Verträge (Text-IDs) ihren

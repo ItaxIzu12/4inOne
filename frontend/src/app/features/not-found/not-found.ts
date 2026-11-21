@@ -1,7 +1,7 @@
 import { Component, inject, OnDestroy } from '@angular/core';
 import { Meta } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
-import { PublicShell } from '../../shared/public-shell/public-shell';
+import { PublicShell } from '../../layout/public-shell/public-shell';
 
 /**
  * 404 für unbekannte Adressen — statt stiller Weiterleitung auf die Startseite (für Suchmaschinen ein „Soft-404“).

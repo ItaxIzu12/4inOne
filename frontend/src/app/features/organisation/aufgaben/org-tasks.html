@@ -1,0 +1,73 @@
+<div class="views" role="group" aria-label="Aufgaben anzeigen">
+  @for (v of views; track v.key) {
+    <button type="button" class="view-chip" [attr.aria-pressed]="view() === v.key" (click)="view.set(v.key)">
+      {{ v.label }}
+      @if (counts()[v.key] && v.key !== 'all') {
+        <span class="view-chip__count" [class.is-late]="v.key === 'overdue'">{{ counts()[v.key] }}</span>
+      }
+    </button>
+  }
+</div>
+<app-scope-note scope="private"
+  >Deine persönlichen Aufgaben – nur für dich sichtbar. Gemeinsames für den Haushalt:
+  <a routerLink="../haushalt" [queryParams]="{ tab: 'aufgaben' }">Haushalt → Aufgaben</a></app-scope-note
+>
+
+<section class="card list" aria-labelledby="tasks-h">
+  <h2 id="tasks-h" class="sr-only">Aufgaben</h2>
+  <label class="search">
+    <app-icon name="search" aria-hidden="true" />
+    <span class="sr-only">Aufgaben durchsuchen</span>
+    <input type="search" placeholder="Aufgaben durchsuchen …" autocomplete="off" [value]="search()" (input)="search.set($any($event.target).value)" />
+  </label>
+
+  @if (hasProjects() && (view() === 'all' || view() === 'recurring') && visible().length) {
+    <div class="group-by" role="group" aria-label="Aufgaben gliedern">
+      <button type="button" [attr.aria-pressed]="grouping() === 'day'" (click)="setGrouping('day')">Nach Tag</button>
+      <button type="button" [attr.aria-pressed]="grouping() === 'project'" (click)="setGrouping('project')">Nach Projekt</button>
+    </div>
+  }
+
+  @for (g of groups(); track g.key) {
+    @if (g.label) {
+      <h3 class="group-h" [class.is-late]="g.late">{{ g.label }} <span>{{ g.tasks.length }}</span></h3>
+    }
+    <ul class="tasks">
+      @for (t of g.tasks; track t.id) {
+        @let m = meta(t, g.key);
+        @let ticking = justDone() === t.id;
+        <li class="task" [class.is-done]="t.status === 'DONE' || ticking" [class.is-ticking]="ticking">
+          <app-done-toggle class="check" [done]="t.status === 'DONE' || ticking"
+            [label]="t.status === 'DONE' ? t.title + ' wieder öffnen' : t.title + ' erledigen'"
+            [disabled]="busy() || ticking" (toggle)="toggle(t)" />
+          <button type="button" class="task__main" (click)="openTask.emit(t)">
+            <span class="task__title">{{ t.title }}</span>
+            @if (m.due || m.parts.length) {
+              <small class="task__meta">
+                @if (m.due) {
+                  <span [class.late]="m.late">{{ m.late && g.key !== 'late' ? 'Überfällig · ' : '' }}{{ m.due }}</span>
+                }
+                @for (p of m.parts; track p) {
+                  <span [class.is-high]="p === 'Hoch'">{{ p }}</span>
+                }
+              </small>
+            }
+            <app-link-hints [items]="links()[t.id]" />
+          </button>
+        </li>
+      }
+    </ul>
+  } @empty {
+    <ul class="tasks">
+      <li class="empty">
+        @if (emptyText(); as text) {
+          <p class="muted">{{ text }}</p>
+        } @else {
+          <h3>Noch keine Aufgaben</h3>
+          <p class="muted">Erstelle eine Aufgabe, die du im Blick behalten möchtest.</p>
+          <button type="button" class="link-btn" (click)="addTask.emit()"><app-icon name="plus" />Aufgabe hinzufügen</button>
+        }
+      </li>
+    </ul>
+  }
+</section>

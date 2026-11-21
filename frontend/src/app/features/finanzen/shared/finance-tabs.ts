@@ -1,6 +1,6 @@
-import { IconName } from '../../../shared/icons/app-icon';
+import { IconName } from '../../../shared/ui/icons/app-icon';
 import { BudgetCategoryFigures, FinanceCategory, FinanceTransaction, PlannedItem, SavingsContributionDto, SavingsGoal } from '../data/private-finance-api.service';
-import { MONTH_ABBR as ABBR } from '../../../shared/form/date-utils';
+import { MONTH_ABBR as ABBR } from '../../../shared/ui/form/date-utils';
 
 /**
  * Reine Rechenhilfen für die Finanz-Reiter Übersicht, Ausgaben, Einnahmen,

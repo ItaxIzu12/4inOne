@@ -4,12 +4,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { Brand } from '../../shared/brand/brand';
-import { tokenFromLink } from '../../shared/link-token';
-import { passwordPolicy } from '../../shared/password-policy';
-import { PasswordStrength } from '../../shared/password-strength/password-strength';
+import { Brand } from '../../shared/ui/brand/brand';
+import { tokenFromLink } from '../../shared/utils/link-token';
+import { passwordPolicy } from '../../shared/utils/password-policy';
+import { PasswordStrength } from '../../shared/ui/password-strength/password-strength';
 
-// Gleiche Richtlinie wie bei der Registrierung (shared/password-policy.ts, LKA NRW / BSI); das Backend prüft
+// Gleiche Richtlinie wie bei der Registrierung (shared/utils/password-policy.ts, LKA NRW / BSI); das Backend prüft
 // zusätzlich Name/E-Mail des Kontos und häufige Passwörter.
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {

@@ -2,8 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { InvitationsService } from '../../core/invitations/invitations.service';
-import { Brand } from '../../shared/brand/brand';
-import { tokenFromLink } from '../../shared/link-token';
+import { Brand } from '../../shared/ui/brand/brand';
+import { tokenFromLink } from '../../shared/utils/link-token';
 
 type State = 'checking' | 'done' | 'invalid';
 

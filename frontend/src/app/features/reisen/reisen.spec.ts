@@ -1,13 +1,13 @@
 import { provideHttpClient } from '@angular/common/http';
-import { AutoLinksApi } from '../../shared/connections/auto-links-api.service';
-import { DemoAutoLinksApi } from '../../shared/connections/demo-auto-links-api';
+import { AutoLinksApi } from '../../shared/features/connections/auto-links-api.service';
+import { DemoAutoLinksApi } from '../../shared/features/connections/demo-auto-links-api';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { NEVER, of, throwError } from 'rxjs';
-import { DemoReisenApi } from './demo-reisen-api';
+import { DemoReisenApi } from './data/demo-reisen-api';
 import { Reisen } from './reisen';
-import { ReisenApi } from './reisen-api.service';
+import { ReisenApi } from './data/reisen-api.service';
 
 type Fixture = ComponentFixture<Reisen>;
 

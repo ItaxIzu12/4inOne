@@ -149,7 +149,7 @@ Prefer object storage later, with DB metadata and private access rules.
   (`complete_task(..., expected_due)` with a row lock): a double click or retry does not skip a date or log twice.
   Save buttons are blocked while a request runs. Creating transactions, savings goals, trip expenses and the CSV
   import is idempotent on the server too: the client sends an `Idempotency-Key` (stable per form submission and
-  content, `shared/idempotency.ts`); a repeated request gets the stored answer instead of a second object
+  content, `shared/utils/idempotency.ts`); a repeated request gets the stored answer instead of a second object
   (`core/idempotency.py`, `core.IdempotencyRecord`, 24 h, per user and endpoint; same key with other content → 422).
 - **Parents and references:** deleting an object removes its connections (post_delete per registered kind, plus
   `manage.py prune_connections`). Leaving a household clears that person's task assignments and rotation places;

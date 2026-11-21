@@ -1,0 +1,65 @@
+// Runder Abhak-Knopf — gleiche Linie, Größe und Füllung wie der runde Haken in Formularen (choice-controls.css)
+:host {
+  display: inline-flex;
+  flex: none;
+}
+.dt {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.dt__ring {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.6px solid #8592a6; // ≥ 3:1 auf Weiß
+  border-radius: 50%;
+  background: var(--surface-card);
+  transition: background-color 160ms ease-out, border-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+// Haken aus Rändern gezeichnet (kein Bild) — erscheint mit kurzem Federn
+.dt__ring::before {
+  content: '';
+  width: 6px;
+  height: 11px;
+  margin-top: -2px;
+  border: solid #fff;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.dt.is-done .dt__ring {
+  border-color: var(--check-color, var(--brand-primary));
+  background: var(--check-color, var(--brand-primary));
+}
+.dt.is-done .dt__ring::before {
+  transform: rotate(45deg) scale(1);
+}
+.dt:hover:not(:disabled):not(.is-done) .dt__ring {
+  border-color: var(--check-color, var(--brand-primary));
+  box-shadow: 0 0 0 4px var(--surface-hover);
+}
+.dt:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: -2px;
+}
+.dt:disabled {
+  cursor: not-allowed;
+}
+// gesperrt (z. B. „erst morgen fällig“) sichtbar blasser; gerade abgehakt bleibt kräftig
+.dt:disabled:not(.is-done) .dt__ring {
+  opacity: 0.5;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dt__ring,
+  .dt__ring::before {
+    transition: none;
+  }
+}

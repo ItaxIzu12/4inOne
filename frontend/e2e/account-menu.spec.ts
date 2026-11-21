@@ -21,6 +21,8 @@ async function signedIn(page: import('@playwright/test').Page) {
 test('the profile button opens an account menu with name, email and the account actions', async ({ page }) => {
   await signedIn(page);
   await page.goto('/');
+  // erst wenn das Dashboard steht: unter / kommt zuerst die vorgerenderte Landingpage, die App lädt einmal neu
+  await expect(page.getByRole('heading', { level: 1, name: /Mira/ })).toBeVisible();
   const trigger = page.getByRole('button', { name: 'Kontomenü' });
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
   await trigger.click();

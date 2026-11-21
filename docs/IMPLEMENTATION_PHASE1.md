@@ -126,8 +126,8 @@ Fachmodullogik implementiert.
 - `frontend/src/app/layout/app-shell.html`
 - `frontend/src/app/layout/app-shell.scss`
 - `frontend/src/app/layout/app-shell.ts`
-- `frontend/src/app/shared/brand/brand.ts`
-- `frontend/src/app/shared/icons/app-icon.ts`
+- `frontend/src/app/shared/ui/brand/brand.ts`
+- `frontend/src/app/shared/ui/icons/app-icon.ts`
 - `frontend/src/index.html`
 
 ## Dashboard-Design nach den Referenzen (24.09.2026)

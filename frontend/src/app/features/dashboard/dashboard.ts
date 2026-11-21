@@ -1,7 +1,7 @@
-import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
+import { ErrorNoticeDirective } from '../../shared/ui/error-notice/error-notice';
 import { DEMO_MODE } from '../../core/demo-context';
 import { GUIDE_AREAS, GuideArea, GuideService } from '../../core/onboarding/guide.service';
-import { StartOverview, StartRow } from '../../shared/start-guide/start-overview';
+import { StartOverview, StartRow } from '../../shared/features/start-guide/start-overview';
 
 const GUIDE_LABEL: Record<GuideArea, string> = { finanzen: 'Finanzen', haushalt: 'Haushalt', organisation: 'Organisation', reisen: 'Reisen' };
 /** Kurzform des nächsten offenen Schritts je Bereich (gleiche Reihenfolge wie die Leitfäden der Bereiche). */
@@ -12,7 +12,7 @@ const START_NEXT: Record<GuideArea, [string, string][]> = {
   reisen: [['trip', 'erste Reise'], ['packing', 'Packliste'], ['budget', 'Reisebudget']],
 };
 import { InvitationsService, acceptedMessage } from '../../core/invitations/invitations.service';
-import { devLinkPath } from '../../shared/dev-link';
+import { devLinkPath } from '../../shared/utils/dev-link';
 import {
   PrivateFinanceApi,
   FinanceSummary,
@@ -21,10 +21,10 @@ import {
   euros,
   financeMonth,
 } from '../finanzen/data/private-finance-api.service';
-import { SpendCurveChart } from '../../shared/spend-curve/spend-curve';
-import { daysLeft, eurRound, spendCurve, spendingBudget } from '../../shared/spend-curve/spend-curve-data';
-import { HaushaltOverviewDto } from '../haushalt/haushalt-api.service';
-import { HAUSHALT_DATA_PROVIDER } from '../haushalt/haushalt-data-provider';
+import { SpendCurveChart } from '../../shared/features/spend-curve/spend-curve';
+import { daysLeft, eurRound, spendCurve, spendingBudget } from '../../shared/features/spend-curve/spend-curve-data';
+import { HaushaltOverviewDto } from '../haushalt/data/haushalt-api.service';
+import { HAUSHALT_DATA_PROVIDER } from '../haushalt/data/haushalt-data-provider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   OrganisationApi,
@@ -32,13 +32,13 @@ import {
   TodayData,
   TodayItem,
   PersonalTask,
-} from '../organisation/organisation-api.service';
-import { TripPass } from '../reisen/trip-pass';
+} from '../organisation/data/organisation-api.service';
+import { TripPass } from '../reisen/shared/trip-pass';
 import { DashAnswers } from './dash-answers';
 import { DashProgress } from './dash-progress';
 import { financeAnswer, householdAnswer, ideaForToday, organisationAnswer, progressRings, spentOn, travelAnswer } from './dashboard-pulse';
-import { ReisenApi, Trip } from '../reisen/reisen-api.service';
-import { AnimatedBeam } from '../../shared/animated-beam/animated-beam';
+import { ReisenApi, Trip } from '../reisen/data/reisen-api.service';
+import { AnimatedBeam } from '../../shared/ui/animated-beam/animated-beam';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -54,12 +54,12 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
 import { AppShell } from '../../layout/app-shell';
-import { AppIcon, IconName } from '../../shared/icons/app-icon';
-import { Modal } from '../../shared/modal/modal';
+import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
+import { Modal } from '../../shared/ui/modal/modal';
 import { AuthService } from '../../core/auth/auth.service';
 import { TodayApi, TodayOverview } from './today-api.service';
 import { forkJoin } from 'rxjs';
-import { linkFor } from '../../shared/connections/connections-section';
+import { linkFor } from '../../shared/features/connections/connections-section';
 
 /** Eine Zeile unter „Heute“ — aus welchem Bereich auch immer. */
 export interface TodayRow {

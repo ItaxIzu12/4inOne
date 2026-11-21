@@ -16,12 +16,12 @@ Neutraler App-Hintergrund, weiße Karten, weniger Verläufe und Schatten. Dekora
 
 Alle Frontendpfade relativ zu `frontend/`:
 
-- `src/app/shared/icons/domain-icon-paths.ts` (neu)
-- `src/app/shared/icons/app-icon.ts`
-- `src/app/shared/icons/icon-finanzen.ts`
-- `src/app/shared/icons/icon-haushalt.ts`
-- `src/app/shared/icons/icon-organisation.ts`
-- `src/app/shared/icons/icon-settings.ts`
+- `src/app/shared/ui/icons/domain-icon-paths.ts` (neu)
+- `src/app/shared/ui/icons/app-icon.ts`
+- `src/app/shared/ui/icons/icon-finanzen.ts`
+- `src/app/shared/ui/icons/icon-haushalt.ts`
+- `src/app/shared/ui/icons/icon-organisation.ts`
+- `src/app/shared/ui/icons/icon-settings.ts`
 - `src/app/layout/app-shell.html`
 - `src/app/layout/app-shell.scss`
 - `src/app/features/dashboard/dashboard.html`

@@ -127,7 +127,7 @@ h1 {
   display: grid;
   gap: 8px;
 }
-// wie app-field (shared/form/field.ts): 14 px, fett — damit alle Beschriftungen auf der Karte gleich aussehen
+// wie app-field (shared/ui/form/field.ts): 14 px, fett — damit alle Beschriftungen auf der Karte gleich aussehen
 label,
 .label {
   font-size: 14px;

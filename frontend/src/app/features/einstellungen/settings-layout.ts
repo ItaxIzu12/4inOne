@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AppIcon, IconName } from '../../shared/icons/app-icon';
+import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
 
 export type SettingsSection = 'overview' | 'profil' | 'sicherheit' | 'geraete';
 

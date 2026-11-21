@@ -1,5 +1,5 @@
-import { AppIcon } from '../../shared/icons/app-icon';
-import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
+import { AppIcon } from '../../shared/ui/icons/app-icon';
+import { ErrorNoticeDirective } from '../../shared/ui/error-notice/error-notice';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -7,9 +7,9 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { AppShell } from '../../layout/app-shell';
 import { SettingsLayout } from '../einstellungen/settings-layout';
-import { Modal } from '../../shared/modal/modal';
-import { AppSelect } from '../../shared/form/select';
-import { CURRENCY_OPTIONS } from '../../shared/currency/currencies';
+import { Modal } from '../../shared/ui/modal/modal';
+import { AppSelect } from '../../shared/ui/form/select';
+import { CURRENCY_OPTIONS } from '../../shared/ui/currency/currencies';
 import { ACCOUNT_DEFAULT_HOME_CURRENCY } from '../../core/fx/home-currency';
 
 /** Einstellungen → Profil: Name und Heimatwährung sind änderbar, die E-Mail-Adresse nur lesbar (sie ist zugleich der

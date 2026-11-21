@@ -1,8 +1,8 @@
 import { Component, computed, inject } from '@angular/core';
-import { isInCalendarWeek } from '../../../shared/dates/calendar-week';
-import { AppDatePicker } from '../../../shared/form/date-picker';
-import { AppIcon } from '../../../shared/icons/app-icon';
-import { FinancePeriod, addDays, customRangeError, weekTitle } from '../overview/finance-periods';
+import { isInCalendarWeek } from '../../../shared/utils/dates/calendar-week';
+import { AppDatePicker } from '../../../shared/ui/form/date-picker';
+import { AppIcon } from '../../../shared/ui/icons/app-icon';
+import { FinancePeriod, addDays, customRangeError, weekTitle } from './finance-periods';
 import { shiftMonth } from './finance-overview';
 import { FINANCE_CONTEXT } from '../finance-context';
 

@@ -2,17 +2,17 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { MfaApiService } from '../../core/mfa/mfa-api.service';
-import { AppIcon, IconName } from '../../shared/icons/app-icon';
+import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
 import { GUIDE_AREAS, GuideScope, GuideService } from '../../core/onboarding/guide.service';
 import { SettingsLayout } from './settings-layout';
 import { AppShell } from '../../layout/app-shell';
-import { IconChevron } from '../../shared/icons/icon-chevron';
-import { IconInfo } from '../../shared/icons/icon-info';
-import { IconLegal } from '../../shared/icons/icon-legal';
-import { IconLogout } from '../../shared/icons/icon-logout';
-import { IconProfile } from '../../shared/icons/icon-profile';
-import { IconSessions } from '../../shared/icons/icon-sessions';
-import { IconTwoFactor } from '../../shared/icons/icon-two-factor';
+import { IconChevron } from '../../shared/ui/icons/icon-chevron';
+import { IconInfo } from '../../shared/ui/icons/icon-info';
+import { IconLegal } from '../../shared/ui/icons/icon-legal';
+import { IconLogout } from '../../shared/ui/icons/icon-logout';
+import { IconProfile } from '../../shared/ui/icons/icon-profile';
+import { IconSessions } from '../../shared/ui/icons/icon-sessions';
+import { IconTwoFactor } from '../../shared/ui/icons/icon-two-factor';
 
 type RowIcon = 'profile' | 'two-factor' | 'sessions' | 'legal' | 'info';
 

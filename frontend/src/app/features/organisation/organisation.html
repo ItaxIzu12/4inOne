@@ -180,10 +180,10 @@
         <app-date-picker mode="date" formControlName="end_date" [clearable]="true" />
       </app-field>
     </div>
-    <!-- Ganztägig direkt vor der Uhrzeit: der Schalter blendet Beginn und Ende aus -->
+    <!-- Ganztägig direkt vor der Uhrzeit: der Haken blendet Beginn und Ende aus -->
     <label class="allday-row">
+      <input type="checkbox" formControlName="all_day" />
       <span>Ganztägig</span>
-      <input type="checkbox" role="switch" class="switch" formControlName="all_day" />
     </label>
     @if (!form.controls.all_day.value) {
       <div class="field-row">
@@ -261,8 +261,8 @@
     <textarea id="note-body" rows="8" maxlength="10000" [value]="noteBody()" (input)="noteBody.set($any($event.target).value)"></textarea>
   </app-field>
   <app-attachment-field [attachments]="noteAttachments() ?? []" [load]="loadFile" />
-  <label class="switch-row">
+  <label class="check-row">
+    <input type="checkbox" [checked]="notePinned()" (change)="notePinned.set($any($event.target).checked)" />
     <span>Oben anheften<small>Angeheftete Notizen stehen immer zuerst.</small></span>
-    <input type="checkbox" role="switch" [checked]="notePinned()" (change)="notePinned.set($any($event.target).checked)" />
   </label>
 </app-modal-form>

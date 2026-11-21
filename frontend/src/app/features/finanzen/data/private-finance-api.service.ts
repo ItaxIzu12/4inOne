@@ -1,9 +1,9 @@
-import { IDEMPOTENCY_HEADER } from '../../../shared/idempotency';
+import { IDEMPOTENCY_HEADER } from '../../../shared/utils/idempotency';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { API_BASE_URL } from '../../../core/api.config';
 import { ImportRow } from '../transactions/finance-import';
-import { MONTH_ABBR } from '../../../shared/form/date-utils';
+import { MONTH_ABBR } from '../../../shared/ui/form/date-utils';
 export interface FinanceCategory {
   id: number;
   name: string;
@@ -277,7 +277,7 @@ export class PrivateFinanceApi {
   goals(month: string) {
     return this.http.get<SavingsGoal[]>(`${this.base}/goals/`, { params: { month } });
   }
-  /** `idempotencyKey` beim Anlegen: dieselbe Absendung zweimal ergibt nur einen Eintrag (shared/idempotency.ts). */
+  /** `idempotencyKey` beim Anlegen: dieselbe Absendung zweimal ergibt nur einen Eintrag (shared/utils/idempotency.ts). */
   save(resource: 'transactions' | 'budgets' | 'goals', payload: object, id?: number, idempotencyKey?: string) {
     return id
       ? this.http.patch(`${this.base}/${resource}/${id}/`, payload)

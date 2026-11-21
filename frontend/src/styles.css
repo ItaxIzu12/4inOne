@@ -61,7 +61,7 @@ cite {
   --brand-primary: #172523;
   --brand-primary-hover: #22332f;
   --accent-evergreen: #17694f;
-  /* Bereichsfarben „Soft Editorial“ (gedeckt; das Logo behält seine eigenen Farben, shared/brand): hier die
+  /* Bereichsfarben „Soft Editorial“ (gedeckt; das Logo behält seine eigenen Farben, shared/ui/brand): hier die
      Textvariante, ≥ 4,5:1 auf Weiß, Porcelain und Sage; die Tönung nur für kleine Flächen. */
   --finance-accent: #17694f;
   --finance-soft: #e4efe9;
@@ -372,7 +372,7 @@ body:has(app-einkauf-tab .checkout-bar) app-back-to-top .back-to-top {
   bottom: 96px;
 }
 @media (max-width: 760px) {
-  /* über dem festen Hauptknopf unten (shared/mobile-action) */
+  /* über dem festen Hauptknopf unten (shared/ui/mobile-action) */
   body:has(.mobile-action) app-back-to-top .back-to-top {
     bottom: calc(142px + env(safe-area-inset-bottom, 0px));
   }

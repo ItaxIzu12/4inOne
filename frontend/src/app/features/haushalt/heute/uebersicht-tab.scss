@@ -1,0 +1,383 @@
+// Reiter „Heute“: Heute fällig über die volle Breite (wichtigster Bereich), darunter Demnächst und Einkauf
+// nebeneinander; am Handy alles untereinander. Ohne jede Angabe ein einladender leerer Zustand.
+:host {
+  display: block;
+}
+
+// ---------- Raster ----------
+.today {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    'tasks tasks'
+    'soon shop';
+  gap: var(--space-5);
+  align-items: start;
+}
+.today__tasks {
+  grid-area: tasks;
+}
+.today__soon {
+  grid-area: soon;
+}
+.today__shop {
+  grid-area: shop;
+}
+.card + .card {
+  margin-top: 0; // im Raster regelt gap den Abstand
+}
+.card {
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  margin-bottom: 6px;
+}
+.card-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: var(--fs-subsection);
+  line-height: 1.3;
+}
+.card-head h2 app-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--text);
+}
+.count {
+  min-width: 24px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-size: var(--fs-meta);
+  text-align: center;
+}
+.head-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.head-link app-icon {
+  width: 15px;
+  height: 15px;
+}
+.head-link:hover {
+  color: var(--accent-hover);
+}
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-secondary);
+}
+.small {
+  font-size: var(--fs-meta);
+}
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 18px 0 6px;
+  text-align: center;
+}
+.field-error {
+  margin: 0 0 14px;
+}
+.hint {
+  margin: 0 0 6px;
+  font-size: var(--fs-secondary);
+}
+.hint--warn {
+  color: #a12323;
+}
+
+// ---------- Heute fällig ----------
+.task {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 14px;
+  min-height: 56px;
+  border-top: 1px solid var(--surface-sunken);
+}
+.task:first-child {
+  border-top: 0;
+}
+.task__title {
+  display: grid;
+  gap: 2px;
+  font-size: var(--fs-body);
+  overflow-wrap: anywhere;
+}
+.task__title small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+.task__title small app-icon {
+  width: 13px;
+  height: 13px;
+}
+.tag {
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tag--warn {
+  background: #fde2e2;
+  color: #a12323;
+}
+.tag--prio {
+  background: #fdf1dc;
+  color: #7a4300;
+}
+.add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-hover);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.add app-icon {
+  width: 18px;
+  height: 18px;
+}
+
+// ---------- Demnächst ----------
+.soon {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 6px 0;
+  border: 0;
+  border-top: 1px solid var(--surface-sunken);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.soon-list li:first-child .soon {
+  border-top: 0;
+}
+.soon:hover .soon__text b {
+  color: var(--accent-hover);
+}
+.soon__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+.soon__icon--warn {
+  background: #fdf1dc;
+  color: #7a4300;
+}
+.soon__icon app-icon {
+  width: 20px;
+  height: 20px;
+}
+.soon__text,
+.soon__date {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.soon__text b {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.soon__date {
+  text-align: right;
+  white-space: nowrap;
+}
+.soon small {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+// ---------- Einkauf ----------
+.shop__count {
+  margin: 0 0 10px;
+  font-size: var(--fs-body);
+}
+.shop__count b {
+  font-size: var(--fs-metric);
+}
+.shop__preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.shop__preview li {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f3f5f8;
+  font-size: var(--fs-meta);
+}
+.shop__preview .shop__more {
+  background: none;
+  color: var(--text-muted);
+}
+.shop__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.shop__open app-icon {
+  width: 16px;
+  height: 16px;
+}
+
+// ---------- Leerer Zustand ----------
+.welcome {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 40px 24px;
+  text-align: center;
+}
+.welcome h2 {
+  margin: 0;
+  font-size: var(--fs-metric);
+}
+.welcome .muted {
+  max-width: 460px;
+}
+.welcome__icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+.welcome__icon app-icon {
+  width: 32px;
+  height: 32px;
+}
+.welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.welcome__actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.welcome__actions app-icon {
+  width: 18px;
+  height: 18px;
+}
+
+// ---------- Rechner: Aufgabenzeilen in festen Spalten ----------
+// Kästchen · Titel mit Wiederholung · Fälligkeit · Priorität — über alle Zeilen bündig, damit sich die volle
+// Breite gut lesen lässt. „Heute“ ist ruhiger Text statt Pille; Überfällig bleibt dezent hervorgehoben (Text +
+// leichte Tönung), Priorität „Hoch“ als kleine Marke. Am Handy unverändert.
+@media (min-width: 961px) {
+  .task {
+    grid-template-columns: 22px minmax(0, 1fr) 12rem 4.5rem;
+    column-gap: var(--space-4);
+    min-height: 60px;
+    padding: var(--space-2) 0;
+  }
+  .task .tag {
+    justify-self: end;
+  }
+  .task .tag:not(.tag--warn):not(.tag--prio) {
+    padding: 0;
+    background: none;
+    color: var(--text-secondary);
+    font-size: var(--fs-secondary);
+    font-weight: var(--fw-medium);
+  }
+  .task .tag--prio {
+    grid-column: 4;
+  }
+  .soon {
+    min-height: 60px;
+  }
+}
+
+// ---------- Responsiv ----------
+@media (max-width: 960px) {
+  .today {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'tasks' 'soon' 'shop';
+  }
+}
+@media (max-width: 560px) {
+  .card {
+    padding: 16px;
+  }
+  .task {
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+    row-gap: 4px;
+    padding: 8px 0;
+  }
+  .task .tag--prio {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .welcome__actions {
+    display: grid;
+    width: 100%;
+  }
+  .welcome__actions button {
+    justify-content: center;
+  }
+}
+
+// Abhak-Knopf (shared/ui/done-toggle): Tippfläche 44 px, hier aber wie bisher nur 22 px Platz in der Zeile
+app-done-toggle.box {
+  margin: -11px;
+}

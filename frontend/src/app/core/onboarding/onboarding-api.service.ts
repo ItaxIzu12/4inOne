@@ -19,7 +19,7 @@ export interface OnboardingStatusDto {
 
 /** Nur unter /app relevant (IsAuthenticated-Endpunkt, siehe
  * finanzen/views.py OnboardingStatusView) — auf der Demo-Route (/) wird
- * dieser Service nie aufgerufen, siehe shared/onboarding. */
+ * dieser Service nie aufgerufen, siehe shared/features/onboarding. */
 @Injectable({ providedIn: 'root' })
 export class OnboardingApiService {
   private readonly http = inject(HttpClient);

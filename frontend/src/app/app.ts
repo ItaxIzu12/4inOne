@@ -1,14 +1,14 @@
-import { ErrorNotice } from './shared/error-notice/error-notice';
-import { ReloadNotice } from './shared/reload-notice/reload-notice';
+import { ErrorNotice } from './shared/ui/error-notice/error-notice';
+import { ReloadNotice } from './layout/reload-notice/reload-notice';
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
-import { Header } from './shared/header/header';
-import { Footer } from './shared/footer/footer';
-import { BackToTop } from './shared/back-to-top/back-to-top';
-import { BottomNav } from './shared/bottom-nav/bottom-nav';
-import { HouseholdInviteModal } from './shared/household-invite-modal/household-invite-modal';
+import { Header } from './layout/header/header';
+import { Footer } from './layout/footer/footer';
+import { BackToTop } from './layout/back-to-top/back-to-top';
+import { BottomNav } from './layout/bottom-nav/bottom-nav';
+import { HouseholdInviteModal } from './shared/features/household-invite-modal/household-invite-modal';
 
 @Component({
   selector: 'app-root',
@@ -34,7 +34,7 @@ export class App {
     return route.snapshot.data;
   });
 
-  // Footer wird immer gerendert (siehe shared/footer). Nur Back-to-Top/
+  // Footer wird immer gerendert (siehe layout/footer). Nur Back-to-Top/
   // Bottom-Nav der Marketing-Seiten werden für App-Routen (aktuell:
   // Dashboard, Einstellungen, siehe app.routes.ts data: { shell: 'bare' })
   // ausgeblendet — die App hat dort ihre eigene Bottom-Nav/FAB.
@@ -51,7 +51,7 @@ export class App {
   );
 
   // Der Header zeigt normalerweise einen "Anmelden"-Button (siehe
-  // shared/header) — auf der Anmelde-/Registrierungsseite selbst wäre das
+  // layout/header) — auf der Anmelde-/Registrierungsseite selbst wäre das
   // redundant, da diese Seiten schon ihre eigene Marke/ihren eigenen
   // Zurück-Link haben (siehe app.routes.ts data: { hideHeader: true }).
   protected readonly showHeader = computed(

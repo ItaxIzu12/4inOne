@@ -1,8 +1,8 @@
 import { Component, DestroyRef, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
-import { AppIcon } from '../../../shared/icons/app-icon';
-import { weekRangeLabel } from '../../../shared/dates/calendar-week';
+import { AppIcon } from '../../../shared/ui/icons/app-icon';
+import { weekRangeLabel } from '../../../shared/utils/dates/calendar-week';
 import {
   FinanceCategory,
   FinanceSummary,
@@ -25,7 +25,7 @@ import {
   rangeFor,
   todayIso,
   topCategories,
-} from './finance-periods';
+} from '../shared/finance-periods';
 import { groupByDay } from '../shared/finance-overview';
 import { categoryIcon, dayLabel as nearDayLabel } from '../shared/finance-tabs';
 

@@ -1,6 +1,6 @@
 import { Injector, inject } from '@angular/core';
-import { AutoLinksApi } from '../../../shared/connections/auto-links-api.service';
-import { ContractFacts, contractFinance, contractPaymentDays, costOn } from '../../../shared/connections/auto-link-rules';
+import { AutoLinksApi } from '../../../shared/features/connections/auto-links-api.service';
+import { ContractFacts, contractFinance, contractPaymentDays, costOn } from '../../../shared/features/connections/auto-link-rules';
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { plannedItems } from '../shared/finance-tabs';

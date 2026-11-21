@@ -1,7 +1,7 @@
-import { SubmissionKey } from '../../../shared/idempotency';
+import { SubmissionKey } from '../../../shared/utils/idempotency';
 import { Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ImportDialog, ImportPreview } from '../../../shared/import-dialog/import-dialog';
+import { ImportDialog, ImportPreview } from '../../../shared/features/import-dialog/import-dialog';
 import { CsvFormatError, IMPORT_MAX_BYTES, ImportRow, decodeCsv, parseCsv } from './finance-import';
 import { ImportResult, PrivateFinanceApi } from '../data/private-finance-api.service';
 

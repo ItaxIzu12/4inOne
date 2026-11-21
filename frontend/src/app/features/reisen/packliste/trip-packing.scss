@@ -1,0 +1,406 @@
+// Reise › Packliste: Fortschritt mit Schnell-Eingabe, darunter je Kategorie eine Karte mit großen Häkchen.
+:host {
+  max-width: 1120px;
+}
+.progress {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.progress__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.progress__top h2 {
+  font-size: var(--fs-subsection);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--control-height);
+  padding: 0 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-secondary); // wie die Filter-Chips in den Aufgaben
+  cursor: pointer;
+}
+.chips button[aria-pressed='true'] {
+  border-color: #b9cdf3;
+  background: var(--blue-soft);
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+.quick {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, auto) auto;
+  align-items: center;
+  padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+}
+.quick:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-soft);
+}
+.quick__field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 12px 0 14px;
+}
+.quick__field input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-body);
+  outline: none;
+}
+// Kategorie optional und leise — nur durch einen Strich getrennt.
+.quick__category {
+  min-width: 0;
+  border-left: 1px solid var(--border-subtle);
+}
+.quick__category ::ng-deep .select__trigger {
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font-size: var(--fs-secondary);
+}
+.quick__category ::ng-deep .select__trigger:focus-visible,
+.quick__category ::ng-deep .select__trigger[aria-expanded='true'] {
+  outline: 0;
+  background: var(--blue-soft);
+  color: var(--text-primary);
+}
+.quick__submit {
+  position: relative;
+  min-height: 40px;
+  margin-left: 4px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--blue);
+  color: #fff;
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+// Optisch 40 px in der 48-px-Eingabezeile, Klickfläche unsichtbar 44 px.
+.quick__submit::before {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
+}
+.quick__submit:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.group {
+  margin-bottom: 12px;
+  padding: 6px 16px;
+}
+.group__heading {
+  margin: 0;
+}
+.group__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.group__icon {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  color: var(--blue);
+}
+.group__label {
+  flex: 1;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+.group__count {
+  color: var(--text-muted);
+  font-size: var(--fs-meta);
+  font-weight: 500;
+}
+.items {
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+}
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+}
+.check {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  min-height: 52px;
+  cursor: pointer;
+}
+// runder Haken: shared/ui/form/choice-controls.css — hier etwas größer und in der Reisefarbe (Abhaken beim Packen)
+.check input {
+  --check-color: var(--travel-fill);
+  width: 24px;
+  height: 24px;
+}
+.item__title {
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  overflow-wrap: anywhere;
+}
+.is-done .item__title {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+.qty {
+  margin-left: 6px;
+  color: var(--text-muted);
+  font-size: var(--fs-meta);
+}
+.icon-btn {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.icon-btn:hover {
+  background: var(--surface-hover);
+}
+.icon-btn app-icon {
+  width: 18px;
+  height: 18px;
+}
+.empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 4px;
+}
+.confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+}
+.soft--danger {
+  border-color: #f2c4cd;
+  color: #a32038;
+}
+@media (max-width: 560px) {
+  // Artikel über die volle Breite, darunter Kategorie und „Hinzufügen“.
+  .quick {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .quick__field {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .quick__category {
+    border-left: 0;
+  }
+  .group {
+    padding: 4px 12px;
+  }
+}
+
+// ---------- Kategorie-Kacheln und Fertig-Moment (31.10.2026) ----------
+.cat-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+  padding: 0;
+  list-style: none;
+}
+.cat-tile {
+  position: relative; // hält den versteckten Vorlesetext in der Kachel (sonst ragte er aus der wischbaren Reihe)
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 116px;
+  padding: 14px 8px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+.cat-tile:hover {
+  border-color: color-mix(in srgb, var(--travel-accent) 30%, var(--border-subtle));
+  transform: translateY(-2px);
+}
+.cat-tile:focus-visible,
+.group__head:focus-visible {
+  outline: 2px solid var(--brand-primary, #172523);
+  outline-offset: 2px;
+}
+.cat-tile b {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cat-tile small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.cat-tile__ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+}
+.cat-tile__ring i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--travel-accent) var(--p, 0%), var(--travel-soft) 0);
+  -webkit-mask: radial-gradient(circle, transparent 0 18px, #000 19px);
+  mask: radial-gradient(circle, transparent 0 18px, #000 19px);
+}
+.cat-tile__ring app-icon {
+  position: relative;
+  width: 19px;
+  height: 19px;
+  color: var(--travel-accent);
+}
+.cat-tile.is-full .cat-tile__ring i {
+  -webkit-mask: none;
+  mask: none;
+  background: var(--travel-accent);
+}
+.cat-tile.is-full .cat-tile__ring app-icon {
+  color: #fff;
+  stroke-width: 3;
+}
+.group {
+  scroll-margin-top: 96px;
+}
+// Ab 1100 px zwei Spalten: die Liste wird halb so lang, Gruppen brechen nie auseinander
+@media (min-width: 1100px) {
+  .groups {
+    columns: 2;
+    column-gap: 14px;
+  }
+  .groups > * {
+    break-inside: avoid;
+    margin-bottom: 14px;
+  }
+}
+.all-packed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--travel-soft);
+  color: var(--blue-text);
+  font-weight: 600;
+}
+.all-packed span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--travel-accent);
+  color: #fff;
+}
+.all-packed app-icon {
+  width: 15px;
+  height: 15px;
+  stroke-width: 3;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .all-packed span app-icon {
+    animation: pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cat-tile,
+  .cat-tile:hover {
+    transition: none;
+    transform: none;
+  }
+}
+@keyframes pop {
+  from { transform: scale(0.3); }
+}
+@media (max-width: 560px) {
+  .cat-tiles {
+    display: flex;
+    gap: 8px;
+    margin: 12px -4px;
+    padding: 2px 4px 6px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .cat-tiles li {
+    flex: 0 0 104px;
+    scroll-snap-align: start;
+  }
+  .cat-tile {
+    min-height: 104px;
+  }
+}

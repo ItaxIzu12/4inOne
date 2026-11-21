@@ -72,7 +72,7 @@ nur bei ausschließlich Handgepäck; Handgepäck → „Handgepäck-Maße und Fl
 ## Budget, Währungen und Ausgaben
 
 - **Reisewährung** (`Trip.currency`): alle 30 Währungen mit EZB-Referenzkurs (`core/currencies.py`, Frontend
-  `shared/currency/currencies.ts`), Anzeige „JPY – Japanischer Yen“. Beträge formatiert zentral `formatAmount` (Intl.NumberFormat, Locale de-DE
+  `shared/ui/currency/currencies.ts`), Anzeige „JPY – Japanischer Yen“. Beträge formatiert zentral `formatAmount` (Intl.NumberFormat, Locale de-DE
   getrennt von der Währung): „250.000 ¥“, „1.430,20 CHF“, „350,00 $“, „1.430,20 €“ — gespeichert wird immer Zahl +
   ISO-Code. Eine neue Reise bekommt die Landeswährung, wenn das Ziel eindeutig ein Land nennt („Tokio, Japan“ → JPY),
   sonst die Heimatwährung (auch serverseitig, wenn keine Währung mitkommt); im Budget-Dialog wird sie vorgeschlagen, solange noch nichts geplant oder ausgegeben ist. Keine
@@ -99,7 +99,7 @@ nur bei ausschließlich Handgepäck; Handgepäck → „Handgepäck-Maße und Fl
   Ausgabe zählt bis dahin nicht in „Ausgegeben“ (steht dabei) und wird nachgerechnet, sobald wieder ein Kurs da ist
   (`backfill_pending` beim Laden von Reisen/Ausgaben; Kursdatum = Datum des Nachrechnens). Migrierte Ausgaben sind
   davon ausgenommen.
-- **Betragsfelder** (alle Bereiche, `AmountInput` + `shared/currency/money-input.ts`): „1.500,50“, „250.000“,
+- **Betragsfelder** (alle Bereiche, `AmountInput` + `shared/ui/currency/money-input.ts`): „1.500,50“, „250.000“,
   „1500.5“, „12,5“; beim Verlassen formatiert („250000“ → „250.000“), Eingefügtes wie „700 €“ wird bereinigt. Ein
   Leser für Finanzen, Haushalt und Reisen; Mehrdeutiges („12,345“, „1.2.3“) ist ungültig statt geraten. Wechselt die Reisewährung, werden nur die Werte in
   Reisewährung neu berechnet.

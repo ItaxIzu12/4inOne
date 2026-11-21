@@ -10,7 +10,7 @@ export interface PrivateCategoryCreated {
 }
 
 /** Minimaler Client für den "Kategorie anlegen"-Onboarding-Schritt
- * (shared/onboarding). Legt die Kategorie in den PRIVATEN Finanzen an
+ * (shared/features/onboarding). Legt die Kategorie in den PRIVATEN Finanzen an
  * (ADR-001) — die alten Haushaltsfinanzen sind eingefroren. Die Farbe vergibt
  * das Backend fest nach Namen (finanzen/category_colors.py). */
 @Injectable({ providedIn: 'root' })

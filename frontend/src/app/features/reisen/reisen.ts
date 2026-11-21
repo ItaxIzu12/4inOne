@@ -1,31 +1,31 @@
-import { AutoLinks } from '../../shared/connections/auto-links';
-import { tripCalendar, tripItinerary } from '../../shared/connections/auto-link-rules';
-import { SubmissionKey } from '../../shared/idempotency';
-import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
-import { AmountInput } from '../../shared/directives/amount-input';
+import { AutoLinks } from '../../shared/features/connections/auto-links';
+import { tripCalendar, tripItinerary } from '../../shared/features/connections/auto-link-rules';
+import { SubmissionKey } from '../../shared/utils/idempotency';
+import { ErrorNoticeDirective } from '../../shared/ui/error-notice/error-notice';
+import { AmountInput } from '../../shared/ui/directives/amount-input';
 import { Component, DestroyRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShell } from '../../layout/app-shell';
-import { AppIcon, IconName } from '../../shared/icons/app-icon';
-import { AppDatePicker } from '../../shared/form/date-picker';
-import { todayIso } from '../../shared/form/date-utils';
-import { Field } from '../../shared/form/field';
-import { AppSelect, SelectOption } from '../../shared/form/select';
-import { ModalForm } from '../../shared/form/modal-form';
-import { AppTimePicker } from '../../shared/form/time-picker';
-import { MobileAction } from '../../shared/mobile-action/mobile-action';
-import { Modal } from '../../shared/modal/modal';
-import { ConnectionsSection } from '../../shared/connections/connections-section';
+import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
+import { AppDatePicker } from '../../shared/ui/form/date-picker';
+import { todayIso } from '../../shared/ui/form/date-utils';
+import { Field } from '../../shared/ui/form/field';
+import { AppSelect, SelectOption } from '../../shared/ui/form/select';
+import { ModalForm } from '../../shared/ui/form/modal-form';
+import { AppTimePicker } from '../../shared/ui/form/time-picker';
+import { MobileAction } from '../../shared/ui/mobile-action/mobile-action';
+import { Modal } from '../../shared/ui/modal/modal';
+import { ConnectionsSection } from '../../shared/features/connections/connections-section';
 import { HomeCurrency } from '../../core/fx/home-currency';
 import { DEMO_MODE } from '../../core/demo-context';
 import { GuideService } from '../../core/onboarding/guide.service';
-import { GuideStep, StartGuide } from '../../shared/start-guide/start-guide';
+import { GuideStep, StartGuide } from '../../shared/features/start-guide/start-guide';
 import { Invitation, InvitationsService } from '../../core/invitations/invitations.service';
-import { CURRENCY_OPTIONS, currencyForDestination } from '../../shared/currency/currencies';
-import { FxHint } from '../../shared/currency/fx-hint';
+import { CURRENCY_OPTIONS, currencyForDestination } from '../../shared/ui/currency/currencies';
+import { FxHint } from '../../shared/ui/currency/fx-hint';
 import {
   BaggageType,
   BudgetCategory,
@@ -40,14 +40,14 @@ import {
   TripExpense,
   TripParticipant,
   TripTask,
-} from './reisen-api.service';
-import { buildTripSuggestions, guessClimate, SuggestedPackingItem, SuggestedTask } from './trip-suggestions';
-import { TripList } from './trip-list';
-import { TripPacking } from './trip-packing';
-import { TripBudget } from './trip-budget';
-import { TripPlanning } from './trip-planning';
-import { TripOverview, TripTab } from './trip-overview';
-import { TripItinerary } from './trip-itinerary';
+} from './data/reisen-api.service';
+import { buildTripSuggestions, guessClimate, SuggestedPackingItem, SuggestedTask } from './shared/trip-suggestions';
+import { TripList } from './liste/trip-list';
+import { TripPacking } from './packliste/trip-packing';
+import { TripBudget } from './budget/trip-budget';
+import { TripPlanning } from './planung/trip-planning';
+import { TripOverview, TripTab } from './uebersicht/trip-overview';
+import { TripItinerary } from './ablauf/trip-itinerary';
 import {
   BUDGET_COLOR,
   BUDGET_META,
@@ -71,11 +71,11 @@ import {
   longRange,
   shortRange,
   totalBudget,
-} from './reisen-logic';
+} from './shared/reisen-logic';
 
-export { formatMoney, localDay } from './reisen-logic';
+export { formatMoney, localDay } from './shared/reisen-logic';
 export type SuggestionScope = 'all' | 'tasks' | 'packing';
-export type { TripTab } from './trip-overview';
+export type { TripTab } from './uebersicht/trip-overview';
 
 /** Innerhalb einer Reise genau vier Reiter (docs/REISEN_V1.md). */
 const TABS: { key: TripTab; label: string; icon: IconName }[] = [

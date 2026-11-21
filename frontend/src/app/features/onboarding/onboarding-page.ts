@@ -7,12 +7,12 @@ import { Observable } from 'rxjs';
 import { OnboardingApiService } from '../../core/onboarding/onboarding-api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ACCOUNT_DEFAULT_HOME_CURRENCY } from '../../core/fx/home-currency';
-import { Brand } from '../../shared/brand/brand';
-import { AppIcon, IconName } from '../../shared/icons/app-icon';
-import { AppSelect } from '../../shared/form/select';
-import { Field } from '../../shared/form/field';
-import { AppDatePicker } from '../../shared/form/date-picker';
-import { CURRENCY_OPTIONS } from '../../shared/currency/currencies';
+import { Brand } from '../../shared/ui/brand/brand';
+import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
+import { AppSelect } from '../../shared/ui/form/select';
+import { Field } from '../../shared/ui/form/field';
+import { AppDatePicker } from '../../shared/ui/form/date-picker';
+import { CURRENCY_OPTIONS } from '../../shared/ui/currency/currencies';
 import { Area, Category, FirstEntryService } from './first-entry.service';
 
 type Usage = 'personal' | 'shared';

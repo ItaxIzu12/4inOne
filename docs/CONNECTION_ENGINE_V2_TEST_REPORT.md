@@ -10,7 +10,7 @@ Architektur und Regeln: `CONNECTION_ENGINE_V2_AUDIT.md`.
 | Django Unit + Integration | `backend/connections/tests/test_auto_links.py` (18 Tests) | Pflicht-Szenario „Internetvertrag“, QA-01 … QA-14, Zahlungstage, Sparziel-Termin, Doppelzählung F-01, ungültige Eingaben | grün |
 | Django Integration | `backend/connections/tests/test_existing_connections.py` (3) | CON-05 Abhaken ≠ Buchung, Abschließen bucht genau einmal; CON-06 Reisekosten nie in Finanzen | grün |
 | Berechtigungsmatrix | `backend/core/test_permission_matrix.py` | neuer Detail-Endpunkt `AutoLinkDetailView` registriert | grün |
-| Angular Unit | `frontend/src/app/shared/connections/auto-links.spec.ts` (8) | Regeln (gleich wie Backend), Vorschau, Änderungen erst beim Speichern, Reihenfolge, fremder Betrag gesperrt | grün |
+| Angular Unit | `frontend/src/app/shared/features/connections/auto-links.spec.ts` (8) | Regeln (gleich wie Backend), Vorschau, Änderungen erst beim Speichern, Reihenfolge, fremder Betrag gesperrt | grün |
 | End-to-End (Playwright, Demo) | `frontend/e2e/connections-v2.spec.ts` (6) | Vertrag → Finanzen (Vorschau, genau ein Posten, Preisänderung, Pause), Vertrag → Kündigung im Kalender + Aufheben, Abbrechen verwirft, Haushaltsaufgaben in Organisation (390/1440 px, axe), abgeleitete Kalendereinträge öffnen die Quelle | grün |
 
 Gesamtläufe: siehe `REGRESSION_TEST_REPORT.md`.

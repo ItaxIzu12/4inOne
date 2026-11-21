@@ -1,4 +1,4 @@
-import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
+import { ErrorNoticeDirective } from '../../shared/ui/error-notice/error-notice';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -16,8 +16,8 @@ import {
 import { DEMO_MODE } from '../../core/demo-context';
 import { HouseholdApiService, HouseholdMember, HouseholdMembers } from '../../core/household/household-api.service';
 import { Invitation, InvitationsService } from '../../core/invitations/invitations.service';
-import { timeAgo } from '../../shared/time-ago';
-import { AppIcon, IconName } from '../../shared/icons/app-icon';
+import { timeAgo } from '../../shared/utils/time-ago';
+import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
 
 type Tab = 'overview' | 'groups' | 'shared';
 

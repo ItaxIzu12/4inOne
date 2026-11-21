@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { AppShell } from '../../layout/app-shell';
-import { AppIcon, IconName } from '../../shared/icons/app-icon';
+import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
 import { AdminApi, AdminEvent, AdminIssue, AdminOverview, AuthEventKind } from './admin-api.service';
 
 type Access = 'loading' | 'ok' | 'mfa_required' | 'mfa_session' | 'forbidden' | 'error';

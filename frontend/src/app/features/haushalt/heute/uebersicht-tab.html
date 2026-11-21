@@ -1,0 +1,179 @@
+@if (loadError()) {
+  <div class="load-error">
+    <p [appErrorNotice]="'Heute konnte nicht geladen werden.'">Heute konnte nicht geladen werden.</p>
+    <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
+  </div>
+} @else if (overview(); as data) {
+  @if (showGuide()) {
+    <app-start-guide area="haushalt" heading="So startest du mit Haushalt"
+      intro="Aufgaben, Einkauf, Geräte und Verträge an einem Ort – für dich allein oder mit allen, die bei dir wohnen."
+      demoPath="/demo/haushalt" [steps]="guideSteps()" (pick)="pick($event)" (alt)="create.emit('vertrag')"
+      (hide)="guide.hide('haushalt')" />
+  }
+  @if (isEmpty()) {
+    @if (!showGuide()) {
+    <section class="card welcome" aria-labelledby="welcome-heading">
+      <span class="welcome__icon" aria-hidden="true"><app-icon name="household" /></span>
+      <h2 id="welcome-heading">Dein Zuhause im Blick</h2>
+      <p class="muted">Aufgaben, Einkauf, Geräte und Verträge an einem Ort. Fang mit dem an, was gerade ansteht.</p>
+      <div class="welcome__actions">
+        <button type="button" class="btn-primary" (click)="create.emit('aufgabe')"><app-icon name="plus" />Aufgabe hinzufügen</button>
+        <button type="button" class="btn-secondary" (click)="create.emit('einkauf')"><app-icon name="cart" />Einkauf planen</button>
+        <button type="button" class="btn-secondary" (click)="create.emit('geraet')"><app-icon name="smartphone" />Gerät hinzufügen</button>
+        <button type="button" class="btn-secondary" (click)="create.emit('vertrag')"><app-icon name="finance" />Vertrag hinzufügen</button>
+      </div>
+    </section>
+    }
+  } @else {
+    @if (actionError()) {
+      <p class="field-error" [appErrorNotice]="actionError()">{{ actionError() }}</p>
+    }
+    <!-- Dein Zuhause heute: die eine Zahl in der Haushaltsfarbe — was heute ansteht, wie lange es dauert, was schon geschafft ist -->
+    <section class="hero" aria-labelledby="hero-h">
+      <p class="hero__date">Dein Zuhause heute</p>
+      <h2 id="hero-h" class="hero__title">
+        @if (dueCount()) {
+          {{ dueCount() === 1 ? '1 Aufgabe' : dueCount() + ' Aufgaben' }} heute@if (minutes()) {<span class="hero__time"><span class="hero__sep"> · </span>{{ minutes() }}</span>}
+        } @else {
+          Heute ist nichts fällig
+        }
+      </h2>
+      @if (data.summary.overdue_tasks || doneTodayCount()) {
+        <ul class="hero__chips">
+          @if (data.summary.overdue_tasks) {
+            <li class="hero__chip hero__chip--late">{{ data.summary.overdue_tasks }} überfällig</li>
+          }
+          @if (doneTodayCount()) {
+            <li class="hero__chip"><app-icon name="check" aria-hidden="true" />{{ doneTodayCount() }} heute erledigt</li>
+          }
+        </ul>
+      }
+      @if (fair(); as f) {
+        <div class="hero__fair">
+          <p id="fair-h">Diesen Monat erledigt</p>
+          <!-- Jedes Feld trägt Name und Zahl — die Breite zeigt den Anteil (Abnahme 31.10.2026) -->
+          <ul class="hero__fairbar" aria-labelledby="fair-h">
+            @for (p of f.parts; track p.name) {
+              <li [style.flex-grow]="p.count" [attr.aria-label]="p.name + ': ' + p.count + ' erledigt'"><span aria-hidden="true">{{ p.name }} <b>{{ p.count }}</b></span></li>
+            }
+          </ul>
+        </div>
+      }
+    </section>
+
+    <!-- Räume: wo es gerade drängt — aus den Fälligkeiten der Aufgaben, Text statt nur Farbe -->
+    @if (rooms().length) {
+      <section class="rooms" aria-labelledby="rooms-h">
+        <h2 id="rooms-h" class="rooms__title">Nach Räumen <small>dringendste zuerst</small></h2>
+        <ul class="rooms__grid">
+          @for (r of rooms(); track r.room) {
+            <li>
+              <button
+                type="button"
+                class="room"
+                [class]="'room room--' + r.level"
+                (click)="openRoom.emit(r.room)"
+              >
+                <span class="room__icon" aria-hidden="true"><app-icon [name]="r.icon" /></span>
+                <span class="room__name">{{ r.label }}</span>
+                <span class="room__state">{{ r.text }}</span>
+                <!-- Statt eines Balkens ohne klare Bedeutung (Abnahme 31.10.2026): wie viel in diesem Raum offen ist -->
+                <span class="room__count">{{ r.open === 1 ? '1 offene Aufgabe' : r.open + ' offene Aufgaben' }}</span><span class="sr-only">. Aufgaben zeigen</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <div class="today">
+      <!-- Heute fällig -->
+      <section class="card today__tasks" aria-labelledby="due-heading">
+        <div class="card-head">
+          <h2 id="due-heading">
+            <app-icon name="check-circle" aria-hidden="true" />Heute fällig
+            @if (dueCount()) {<span class="count">{{ dueCount() }}</span>}
+          </h2>
+          <button type="button" class="head-link" (click)="openTab.emit('aufgaben')">Alle Aufgaben <app-icon name="arrow" /></button>
+        </div>
+        <ul class="task-list">
+          @for (task of data.today; track task.id) {
+            <li class="task" [class.is-done]="justDone() === task.id">
+              <app-done-toggle class="box" [label]="task.title + ' als erledigt markieren'" [done]="justDone() === task.id"
+                [disabled]="completing() === task.id || justDone() === task.id" (toggle)="complete(task)" />
+              <span class="task__title">
+                <span class="task__name">{{ task.title }}</span>
+                @if (roomLabel(task.room) || task.duration_minutes || repeatLabel(task)) {
+                  <small>
+                    @if (roomLabel(task.room); as r) {<span>{{ r }}</span>}
+                    @if (task.duration_minutes) {<span>{{ durationLabel(task.duration_minutes) }}</span>}
+                    @if (repeatLabel(task); as repeat) {<span><app-icon name="repeat" aria-hidden="true" />{{ repeat }}</span>}
+                  </small>
+                }
+                <app-link-hints [items]="links()[task.id]" />
+              </span>
+              <span class="tag" [class.tag--warn]="task.is_overdue">{{ dueChip(task) }}</span>
+              @if (task.priority === 'hoch') {
+                <span class="tag tag--prio">{{ priorityLabel[task.priority] }}</span>
+              }
+            </li>
+          } @empty {
+            <li class="empty">
+              <p class="muted">
+                Heute ist nichts fällig.
+                @if (nextTask(); as next) {
+                  Als Nächstes: <b>{{ next.title }}</b> {{ relativeDay(next.due_date!) }}.
+                }
+              </p>
+              <button type="button" class="add" (click)="create.emit('aufgabe')"><app-icon name="plus" />Aufgabe hinzufügen</button>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <!-- Demnächst -->
+      <section class="card today__soon" aria-labelledby="soon-heading">
+        <div class="card-head">
+          <h2 id="soon-heading"><app-icon name="calendar" aria-hidden="true" />Demnächst</h2>
+          <span class="muted small">nächste {{ upcomingDays }} Tage</span>
+        </div>
+        <ul class="soon-list">
+          @for (deadline of data.deadlines; track deadline.entry_id + deadline.art) {
+            <li>
+              <button type="button" class="soon" (click)="openDeadline(deadline)">
+                <span class="soon__icon" [class.soon__icon--warn]="deadline.days <= 7" aria-hidden="true"><app-icon [name]="deadlineIcon[deadline.art]" /></span>
+                <span class="soon__text"><b>{{ deadline.name }}</b><small>{{ deadlineLabel[deadline.art] }}</small></span>
+                <span class="soon__date"><b>{{ formatDate(deadline.date) }}</b><small>{{ fromNow(deadline.date) }}</small></span>
+              </button>
+            </li>
+          } @empty {
+            <li class="empty"><p class="muted">In den nächsten {{ upcomingDays }} Tagen stehen keine Wartungen, Garantie- oder Kündigungsfristen an.</p></li>
+          }
+        </ul>
+      </section>
+
+      <!-- Einkauf -->
+      <section class="card today__shop" aria-labelledby="shop-heading">
+        <div class="card-head">
+          <h2 id="shop-heading"><app-icon name="cart" aria-hidden="true" />Einkauf</h2>
+        </div>
+        @if (data.shopping.open_items) {
+          <p class="shop__count"><b>{{ data.shopping.open_items }}</b> {{ data.shopping.open_items === 1 ? 'Artikel offen' : 'Artikel offen' }}</p>
+          <ul class="shop__preview" aria-label="Einige offene Artikel">
+            @for (name of data.shopping.preview; track $index) {
+              <li>{{ name }}</li>
+            }
+            @if (data.shopping.open_items > data.shopping.preview.length) {
+              <li class="shop__more">+{{ data.shopping.open_items - data.shopping.preview.length }} weitere</li>
+            }
+          </ul>
+        } @else {
+          <p class="muted">Die Einkaufsliste ist leer.</p>
+        }
+        <button type="button" class="btn-secondary shop__open" (click)="openTab.emit('einkaufen')">Einkauf öffnen <app-icon name="arrow" /></button>
+      </section>
+    </div>
+  }
+} @else {
+  <p class="muted" aria-live="polite">Heute wird geladen …</p>
+}

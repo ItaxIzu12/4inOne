@@ -1,8 +1,8 @@
 import { Component, DestroyRef, ElementRef, Injector, afterNextRender, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, concat, defaultIfEmpty, last, tap } from 'rxjs';
-import { ModalForm } from '../../../shared/form/modal-form';
-import { AppIcon } from '../../../shared/icons/app-icon';
+import { ModalForm } from '../../../shared/ui/form/modal-form';
+import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import {
   FALLBACK_CATEGORY,
   FinanceCategory,
@@ -10,7 +10,7 @@ import {
   MAX_CATEGORY_NAME,
   PrivateFinanceApi,
 } from '../data/private-finance-api.service';
-import { normalizeMoneyInput } from '../../../shared/currency/money-input';
+import { normalizeMoneyInput } from '../../../shared/ui/currency/money-input';
 
 /** Eine Zeile im Entwurf: bestehende Kategorie (id) oder neu angelegte (id null). */
 export interface CategoryDraft {

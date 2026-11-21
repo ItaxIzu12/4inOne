@@ -134,7 +134,7 @@ test('4 · Haushalt: Aufgabe anlegen und erledigen, Einkauf, Gerät, Vertrag', a
   await contract.getByLabel('Name', { exact: true }).fill('Strom');
   await contract.getByLabel('Anbieter (optional)').fill('Stadtwerke');
   await contract.getByLabel('Kosten (optional)').fill('64,90');
-  await contract.getByRole('switch', { name: 'Verlängert sich automatisch' }).check();
+  await contract.getByRole('checkbox', { name: 'Verlängert sich automatisch' }).check();
   await contract.getByRole('button', { name: 'Speichern' }).click();
   await expect(contract).toHaveCount(0);
   await expect(p.getByText('Strom').first()).toBeVisible();
@@ -171,7 +171,7 @@ test('5 · Organisation: Termin, Aufgabe, Notiz', async () => {
   const note = p.getByRole('dialog', { name: 'Neue Notiz' });
   await note.getByLabel('Titel (optional)').fill('Geschenkideen');
   await note.getByLabel('Inhalt').fill('- Buch für Max\n- Pflanze');
-  await note.getByRole('switch', { name: /Oben anheften/ }).check();
+  await note.getByRole('checkbox', { name: /Oben anheften/ }).check();
   await note.getByRole('button', { name: 'Speichern' }).click();
   await expect(note).toHaveCount(0);
   await expect(p.getByText('Geschenkideen').first()).toBeVisible();

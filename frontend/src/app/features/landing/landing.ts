@@ -1,10 +1,10 @@
 import { afterNextRender, afterRenderEffect, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AnimatedBeam } from '../../shared/animated-beam/animated-beam';
-import { AreaTone } from '../../shared/area-deck/area-deck';
-import { Brand } from '../../shared/brand/brand';
-import { AppIcon, IconName } from '../../shared/icons/app-icon';
-import { TileFooter } from '../../shared/tile-footer/tile-footer';
+import { AnimatedBeam } from '../../shared/ui/animated-beam/animated-beam';
+import { AreaTone } from '../../shared/ui/area-deck/area-deck';
+import { Brand } from '../../shared/ui/brand/brand';
+import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
+import { TileFooter } from '../../layout/tile-footer/tile-footer';
 import { DEMO_ONLY } from '../../core/demo-only';
 
 /** Ein Bereich der App, so wie er auf der Startseite gezeigt wird. Bild und Werte stammen aus der echten Demo. */

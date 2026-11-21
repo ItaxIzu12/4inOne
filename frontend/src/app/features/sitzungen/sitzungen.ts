@@ -1,11 +1,11 @@
-import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
+import { ErrorNoticeDirective } from '../../shared/ui/error-notice/error-notice';
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { AuthService, LoginSession } from '../../core/auth/auth.service';
 import { AppShell } from '../../layout/app-shell';
 import { SettingsLayout } from '../einstellungen/settings-layout';
-import { describeDevice } from '../../shared/device/describe-device';
-import { AppIcon, IconName } from '../../shared/icons/app-icon';
+import { describeDevice } from '../../shared/utils/device/describe-device';
+import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
 
 /** Einstellungen → Aktive Sitzungen: wo bin ich angemeldet, und einzelne Geräte (oder alle anderen) abmelden. */
 @Component({
