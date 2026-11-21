@@ -83,14 +83,14 @@ for (const width of [320, 360, 390]) {
     const action = page.locator('app-mobile-action button');
     await expect(action).toHaveText('Reise erstellen');
     await expect(page.locator('.domain-heading > button')).toBeHidden();
-    await expect(page.locator('nav.tabs')).toHaveCount(0);
+    await expect(page.locator('.tabs[role="tablist"]')).toHaveCount(0);
 
     await page.goto('/demo/reisen?trip=1&tab=budget');
-    const tabs = page.locator('nav.tabs button');
+    const tabs = page.locator('.tabs[role="tablist"] [role="tab"]');
     await expect(tabs).toHaveCount(5);
     const tops = await tabs.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().top));
     expect(new Set(tops).size).toBe(1);
-    await expect(tabs.filter({ hasText: 'Budget' })).toHaveAttribute('aria-current');
+    await expect(tabs.filter({ hasText: 'Budget' })).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('app-mobile-action')).toHaveCount(0);
     const edit = page.getByRole('button', { name: 'Reise bearbeiten' });
     await expect(edit).toBeVisible();

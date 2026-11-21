@@ -27,7 +27,7 @@ async function aufgabeAnlegen(page: Page, titel: string) {
   await page.goto('/organisation');
   // Neue Konten landen beim ersten Aufruf ggf. im Onboarding – dann direkt weiter in die Organisation
   if (/onboarding/.test(page.url())) await page.goto('/organisation');
-  await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
+  await page.getByRole('tab', { name: 'Aufgaben', exact: true }).click();
   await page.getByRole('button', { name: 'Aufgabe hinzufügen', exact: true }).first().click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Titel', { exact: true }).fill(titel);
@@ -46,14 +46,14 @@ test('Konto, Aufgabe, Neuladen und Fremdzugriff – alles echt', async ({ browse
 
   // Neuladen: Sitzung bleibt (Refresh-Cookie), die Aufgabe kommt aus der Datenbank
   await sophie.reload();
-  await sophie.getByRole('button', { name: 'Aufgaben', exact: true }).click();
+  await sophie.getByRole('tab', { name: 'Aufgaben', exact: true }).click();
   await expect(sophie.locator('.task')).toContainText([titel]);
 
   // Zweite Person: eigene Liste ohne Sophies Aufgabe …
   const max = await registrieren(browser, 'Max');
   await max.goto('/organisation');
   if (/onboarding/.test(max.url())) await max.goto('/organisation');
-  await max.getByRole('button', { name: 'Aufgaben', exact: true }).click();
+  await max.getByRole('tab', { name: 'Aufgaben', exact: true }).click();
   await expect(max.getByText(titel)).toHaveCount(0);
 
   // … und auch direkt über die API kein Zugriff: fremde ID → 404 (verrät nicht einmal, dass es sie gibt)

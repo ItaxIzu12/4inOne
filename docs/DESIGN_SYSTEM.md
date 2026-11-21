@@ -1376,3 +1376,13 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   `organisation.scss` (`.switch`, `.checkbox-row`), `org-household-tasks.scss` (`.hh__toggle`), `auto-links.scss`
   (`.al__toggle`), `haushalt-common.scss`, `trip-packing.scss`, `trip-planning.scss`, `reisen-late.scss`
   (`.suggest__row input`), `mfa-setup.css`. Listen-Abhakknöpfe (`.box`, `.check__ring`) mit `border-radius: 50%`.
+
+- **Reiter (21.11.2026):** `private-finance.html`, `organisation.html`, `reisen.html` von `<nav>` + `aria-current` auf
+  `role="tablist"`/`tab`/`tabpanel` (Panels `#fin-panel`, `#org-panel`, `#reisen-panel`); Stile hängen jetzt an
+  `.tabs [aria-selected='true']`. Reisen: `.later-card--new` entfernt. Kalender: `.cal-filter.fade-start/.fade-end`
+  (`org-calendars.ts › updateFade`, ResizeObserver).
+- **Entwicklungsserver ohne Vorrendern (21.11.2026):** `angular.json` › `development` und `fullstack` mit
+  `"server": false` — `ng serve` liefert unter / die App-Hülle, damit Angemeldete nicht kurz die Landingpage sehen
+  (wie in Produktion: nginx gibt mit Cookie `4io_signed_in` `index.csr.html` aus). Die Browser-Tests laufen mit der
+  neuen Konfiguration `e2e` (mit Vorrendern wie Produktion). Produktions-Build unverändert: `index.html` vorgerendert,
+  `index.csr.html` ohne Landingpage-Inhalt (geprüft).

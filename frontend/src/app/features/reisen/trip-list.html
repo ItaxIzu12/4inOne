@@ -27,8 +27,9 @@
       <p class="muted none">Keine bevorstehende Reise. <button type="button" class="link" (click)="create.emit()">Reise erstellen</button></p>
     }
 
-    <!-- Danach: Karten mit Kalenderblatt; zuletzt „Neue Reise“ -->
-    <ul class="later" [attr.aria-label]="later().length ? 'Weitere Reisen' : null">
+    <!-- Danach: Karten mit Kalenderblatt. Neue Reise: oben rechts (Rechner) bzw. schwebender Knopf (Handy) — keine zweite Karte -->
+    @if (later().length) {
+    <ul class="later" aria-label="Weitere Reisen">
       @for (t of later(); track t.id) {
         @let leafDate = leaf(t);
         @let p = packing(t);
@@ -54,14 +55,8 @@
           </button>
         </li>
       }
-      <li>
-        <button type="button" class="later-card later-card--new" (click)="create.emit()">
-          <span class="later-card__plus" aria-hidden="true"><app-icon name="plus" /></span>
-          <b>Neue Reise</b>
-          <small>Wohin · Wann · Wie</small>
-        </button>
-      </li>
     </ul>
+    }
   </section>
 
   @if (g.past.length) {

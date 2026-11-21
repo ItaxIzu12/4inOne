@@ -163,34 +163,6 @@
   background: var(--travel-accent);
 }
 // „Neue Reise“: gestrichelt, ruhig — dieselbe Höhe wie die Karten
-.later-card--new {
-  align-content: center;
-  justify-items: center;
-  gap: 6px;
-  border: 1.5px dashed var(--border-strong);
-  background: none;
-  text-align: center;
-}
-.later-card--new:hover {
-  border-color: var(--travel-accent);
-  box-shadow: none;
-}
-.later-card--new b {
-  color: var(--text-primary);
-}
-.later-card__plus {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--travel-soft);
-  color: var(--travel-accent);
-}
-.later-card__plus app-icon {
-  width: 20px;
-  height: 20px;
-}
 // Kalenderblatt: Monat als Band, Tag groß
 .leaf {
   display: grid;
@@ -358,14 +330,5 @@
   }
   .later-card {
     min-height: 0;
-  }
-  .later-card--new {
-    grid-auto-flow: column;
-    align-items: center;
-    justify-content: start;
-    min-height: 64px;
-  }
-  .later-card--new small {
-    display: none;
   }
 }

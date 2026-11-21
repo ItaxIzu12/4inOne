@@ -15,15 +15,18 @@
           <app-icon name="plus" /><span>{{ headAction() }}</span>
         </button>
       </header>
-      <nav class="tabs domain-tabs" aria-label="Organisation Ansichten" (keydown)="onTabKeydown($event)">
+      <div class="tabs domain-tabs" role="tablist" aria-label="Organisation Ansichten" (keydown)="onTabKeydown($event)">
         @for (t of tabs; track t.key) {
-          <button [id]="'org-tab-' + t.key" [attr.aria-current]="tab() === t.key ? 'page' : null" (click)="selectTab(t.key)">
+          <button type="button" role="tab" [id]="'org-tab-' + t.key" aria-controls="org-panel" [attr.aria-selected]="tab() === t.key"
+            [attr.tabindex]="tab() === t.key ? 0 : -1" (click)="selectTab(t.key)">
             <app-icon [name]="t.icon" aria-hidden="true" />{{ t.label }}
           </button>
         }
-      </nav>
+      </div>
     </div>
 
+    <!-- Inhalt des gewählten Reiters (Reiter-Muster wie Haushalt: tablist/tab/tabpanel) -->
+    <div id="org-panel" role="tabpanel" [attr.aria-labelledby]="'org-tab-' + tab()">
     @if (error()) {
       <div class="inline-error">
         <p [appErrorNotice]="error()">{{ error() }}</p>
@@ -100,6 +103,7 @@
         }
       }
     }
+    </div>
     <!-- Solange der Startleitfaden sichtbar ist, trägt er den Hauptschritt — kein zweiter schwebender Knopf darüber -->
     @if (!(tab() === 'today' && showGuide())) {
       <app-mobile-action [label]="headAction()" icon="plus" (pressed)="headActionClick()" />

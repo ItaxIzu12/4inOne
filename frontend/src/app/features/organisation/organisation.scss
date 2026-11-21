@@ -112,7 +112,7 @@
 .tabs button:hover {
   color: var(--accent-hover);
 }
-.tabs button[aria-current] {
+.tabs button[aria-selected='true'] {
   border-bottom-color: var(--accent);
   color: var(--accent-hover);
   font-weight: 600;
@@ -184,7 +184,7 @@
   .tabs button app-icon {
     display: none;
   }
-  .tabs button[aria-current] {
+  .tabs button[aria-selected='true'] {
     background: var(--accent-soft);
   }
 }

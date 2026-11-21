@@ -170,19 +170,19 @@ describe('Reisen V1 (Demo)', () => {
 
   it('old links (?tab=packlisten, ?tab=erinnerungen) land in the new tabs', async () => {
     let { root } = await open('/?trip=1&tab=packlisten');
-    expect(root.querySelector('.tabs button[aria-current]')?.id).toBe('reisen-tab-packliste');
+    expect(root.querySelector('.tabs button[aria-selected="true"]')?.id).toBe('reisen-tab-packliste');
     ({ root } = await open('/?trip=1&tab=erinnerungen'));
-    expect(root.querySelector('.tabs button[aria-current]')?.id).toBe('reisen-tab-planung');
+    expect(root.querySelector('.tabs button[aria-selected="true"]')?.id).toBe('reisen-tab-planung');
   });
 
   it('tabs can be switched with the arrow keys, and "Meine Reisen" leads back', async () => {
     const { fixture, root } = await open('/?trip=1');
     root.querySelector('.tabs')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     let page = await settle(fixture);
-    expect(page.querySelector('.tabs button[aria-current]')?.id).toBe('reisen-tab-ablauf');
+    expect(page.querySelector('.tabs button[aria-selected="true"]')?.id).toBe('reisen-tab-ablauf');
     page.querySelector('.tabs')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
     page = await settle(fixture);
-    expect(page.querySelector('.tabs button[aria-current]')?.id).toBe('reisen-tab-uebersicht');
+    expect(page.querySelector('.tabs button[aria-selected="true"]')?.id).toBe('reisen-tab-uebersicht');
     button(page, 'Meine Reisen').click();
     page = await settle(fixture);
     expect(page.querySelector('app-trip-list')).not.toBeNull();

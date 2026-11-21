@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 /** Transaktionen › Alle/Ausgaben/Einnahmen (Ausgaben und Einnahmen sind keine eigenen Reiter mehr). */
 async function txView(page: import('@playwright/test').Page, label: 'Alle' | 'Ausgaben' | 'Einnahmen') {
-  await page.getByRole('button', { name: 'Transaktionen', exact: true }).click();
+  await page.getByRole('tab', { name: 'Transaktionen', exact: true }).click();
   await page.locator('.tx-switch').getByRole('button', { name: label, exact: true }).click();
 }
 
@@ -13,7 +13,7 @@ for (const width of [390, 1440]) {
     await page.route('http://localhost:8000/api/**', (route) => route.abort());
     // direkt in die Demo-Finanzen (der Link auf /demo kann je nach Breite zur echten Seite führen)
     await page.goto('/demo/finanzen');
-    await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+    await page.getByRole('tab', { name: 'Budgets', exact: true }).click();
     await page.getByRole('button', { name: 'Kategorien verwalten', exact: true }).click();
     const dialog = page.getByRole('dialog');
     await expect(dialog.getByRole('heading', { name: 'Kategorien verwalten' })).toBeVisible();

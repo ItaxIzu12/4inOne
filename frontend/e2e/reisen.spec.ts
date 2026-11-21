@@ -21,7 +21,7 @@ async function submit(page: Page) {
   await page.locator('app-modal-form form').evaluate((f: HTMLFormElement) => f.requestSubmit());
 }
 async function tab(page: Page, label: string) {
-  await page.locator('nav.tabs button', { hasText: label }).click();
+  await page.locator('.tabs[role="tablist"] [role="tab"]', { hasText: label }).click();
 }
 async function openDemo(page: Page, path = '/demo/reisen') {
   await page.route('http://localhost:8000/api/**', (r) => r.abort());
@@ -51,7 +51,7 @@ for (const width of [390, 1440]) {
     await expect(page.getByRole('heading', { name: 'Reise erstellt' })).toBeVisible();
     await page.getByRole('button', { name: 'Ohne Vorschläge starten' }).click();
     await expect(page.locator('main h1')).toHaveText('Städtetrip Wien');
-    await expect(page.locator('nav.tabs button')).toHaveText(['Übersicht', 'Ablauf', 'Planung', 'Packliste', 'Budget']);
+    await expect(page.locator('.tabs[role="tablist"] [role="tab"]')).toHaveText(['Übersicht', 'Ablauf', 'Planung', 'Packliste', 'Budget']);
     await expect(page.locator('app-trip-overview .facts')).toContainText('DUS');
     await expect(page.locator('app-trip-overview .pass__stub')).toHaveText('60 Tage bis zur Abreise');
     await expect(page.locator('app-trip-overview .pass__route')).toContainText('DUS');
@@ -538,7 +538,7 @@ test('viele Reisen bleiben übersichtlich: Bordkarte nur für jetzt und als Näc
   const list = page.locator('app-trip-list');
   await expect(list.getByRole('heading', { name: 'Jetzt unterwegs' })).toBeVisible();
   await expect(list.locator('.pass')).toHaveCount(2); // unterwegs + als Nächstes
-  await expect(list.locator('.later-card:not(.later-card--new)')).toHaveCount(3);
+  await expect(list.locator('.later-card')).toHaveCount(3);
   await expect(list.locator('#tl-past-list .row')).toHaveCount(3);
   await expect(list.locator('#tl-past-list')).not.toContainText('gepackt'); // vorbei: keine offenen Punkte mehr
   await list.getByRole('button', { name: 'Alle 5 vergangenen Reisen anzeigen' }).click();

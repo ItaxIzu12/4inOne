@@ -394,7 +394,7 @@
   .tabs button app-icon {
     display: none;
   }
-  .tabs button[aria-current] {
+  .tabs button[aria-selected='true'] {
     background: #e6efff;
   }
 

@@ -325,7 +325,21 @@
   .cal-filter {
     flex-wrap: nowrap;
     overflow-x: auto;
+    scroll-snap-type: x proximity;
     scrollbar-width: none;
+  }
+  .cal-filter > * {
+    scroll-snap-align: start;
+  }
+  // weicher Rand: dort folgen noch Kalender (nur solange es etwas zu wischen gibt)
+  .cal-filter.fade-end {
+    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  }
+  .cal-filter.fade-start {
+    mask-image: linear-gradient(to right, transparent, #000 40px);
+  }
+  .cal-filter.fade-start.fade-end {
+    mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent);
   }
   .cal-chip {
     flex-shrink: 0;

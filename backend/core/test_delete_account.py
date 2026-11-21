@@ -101,9 +101,9 @@ def test_accounts_without_password_confirm_with_their_email(user):
 
 
 def test_password_guessing_via_account_deletion_is_rate_limited(user, settings):
-    from django.core.cache import cache
+    from django.core.cache import caches
 
-    cache.clear()
+    caches['throttle'].clear()  # eigener Cache der Rate-Limits (nicht der Standard-Cache — in der CI wäre das Redis)
     client, token = sign_in('nora@example.com')
     statuses = [call(client, '/api/v1/auth/me/', token, data={'password': f'falsch-{i}'}).status_code for i in range(8)]
     assert 429 in statuses

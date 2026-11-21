@@ -141,7 +141,7 @@ textarea:focus-visible {
 .tabs button:hover {
   color: var(--accent-hover);
 }
-.tabs button[aria-current] {
+.tabs button[aria-selected='true'] {
   border-bottom-color: var(--accent);
   color: var(--accent-hover);
   font-weight: 600;

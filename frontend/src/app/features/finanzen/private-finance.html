@@ -18,15 +18,18 @@
           </button>
         </div>
       </header>
-      <nav class="tabs domain-tabs" aria-label="Finanzansichten" (keydown)="onTabKeydown($event)">
+      <div class="tabs domain-tabs" role="tablist" aria-label="Finanzansichten" (keydown)="onTabKeydown($event)">
         @for (t of tabs; track t.key) {
-          <button [id]="'fin-tab-' + t.key" [attr.aria-current]="tab() === t.key ? 'page' : null" (click)="selectTab(t.key)">
+          <button type="button" role="tab" [id]="'fin-tab-' + t.key" aria-controls="fin-panel" [attr.aria-selected]="tab() === t.key"
+            [attr.tabindex]="tab() === t.key ? 0 : -1" (click)="selectTab(t.key)">
             <app-icon [name]="t.icon" aria-hidden="true" />{{ t.label }}
           </button>
         }
-      </nav>
+      </div>
     </div>
 
+    <!-- Inhalt des gewählten Reiters (Reiter-Muster wie Haushalt: tablist/tab/tabpanel) -->
+    <div id="fin-panel" role="tabpanel" [attr.aria-labelledby]="'fin-tab-' + tab()">
     @if (loading()) {
       <p class="empty" role="status">Deine Finanzen werden geladen …</p>
     } @else if (error()) {
@@ -64,6 +67,7 @@
         <app-finance-goals-tab />
       }
     }
+    </div>
     <!-- Solange der Startleitfaden sichtbar ist, trägt er den Hauptschritt — kein zweiter schwebender Knopf darüber -->
     @if (!(tab() === 'overview' && startGuide())) {
       <app-mobile-action [label]="headAction().label" [icon]="headAction().icon" (pressed)="headActionClick()" />

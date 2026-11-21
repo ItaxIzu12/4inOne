@@ -28,7 +28,7 @@ async function mockOrganisation(page: Page, opts: { failPost?: boolean; slowPost
 
 async function openNewNote(page: Page) {
   await page.goto('/organisation');
-  await page.getByRole('button', { name: 'Notizen', exact: true }).click();
+  await page.getByRole('tab', { name: 'Notizen', exact: true }).click();
   await page.getByRole('button', { name: 'Notiz erstellen', exact: true }).first().click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Inhalt').fill('Arztfragen\nBlutwerte besprechen');
@@ -61,6 +61,6 @@ test('nach dem Neuladen zeigt die Seite genau den Stand des Servers', async ({ p
   await expect(page.locator('.note__title')).toHaveText(['Arztfragen']);
   server.notes.length = 0; // auf dem Server inzwischen gelöscht (z. B. auf einem anderen Gerät)
   await page.reload();
-  await page.getByRole('button', { name: 'Notizen', exact: true }).click();
+  await page.getByRole('tab', { name: 'Notizen', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Noch keine Notizen' })).toBeVisible();
 });

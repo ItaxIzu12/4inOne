@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterNextRender, computed, inject, input, model, output, signal, viewChild } from '@angular/core';
 import { ContactDto, ContactsApiService } from '../../core/contacts/contacts-api.service';
 import { DEMO_MODE } from '../../core/demo-context';
 import { AppIcon } from '../../shared/icons/app-icon';
@@ -32,6 +32,26 @@ const ROLE_LABEL: Record<CalendarRole, string> = { OWNER: 'Besitzer:in', EDITOR:
   styleUrl: './org-calendars.scss',
 })
 export class OrgCalendars {
+  // Filterzeile: am Handy seitlich scrollbar — weicher Rand an der Seite, auf der noch etwas folgt (21.11.2026)
+  private readonly filterRow = viewChild<ElementRef<HTMLElement>>('filterRow');
+  protected readonly fadeStart = signal(false);
+  protected readonly fadeEnd = signal(false);
+  protected updateFade(): void {
+    const el = this.filterRow()?.nativeElement;
+    if (!el) return;
+    this.fadeStart.set(el.scrollLeft > 4);
+    this.fadeEnd.set(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }
+  private readonly fadeSetup = afterNextRender(() => {
+    const el = this.filterRow()?.nativeElement;
+    if (!el || typeof ResizeObserver === 'undefined') return this.updateFade();
+    const observer = new ResizeObserver(() => this.updateFade());
+    observer.observe(el);
+    this.destroyRef.onDestroy(() => observer.disconnect());
+    this.updateFade();
+  });
+  private readonly destroyRef = inject(DestroyRef);
+
   private readonly api = inject(OrganisationApi);
   private readonly contactsApi = inject(ContactsApiService);
   /** In der Demo nimmt niemand Einladungen an — dort lässt sich das Annehmen ausdrücklich simulieren. */

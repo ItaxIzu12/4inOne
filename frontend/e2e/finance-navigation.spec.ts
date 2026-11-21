@@ -8,9 +8,9 @@ test.beforeEach(async ({ page }) => {
 
 test('four main tabs; Ausgaben and Einnahmen live under Transaktionen', async ({ page }) => {
   await page.goto('/demo/finanzen');
-  await expect(page.locator('nav.tabs button')).toHaveText(['Übersicht', 'Transaktionen', 'Budgets', 'Sparziele']);
+  await expect(page.locator('.tabs[role="tablist"] [role="tab"]')).toHaveText(['Übersicht', 'Transaktionen', 'Budgets', 'Sparziele']);
 
-  await page.getByRole('button', { name: 'Transaktionen', exact: true }).click();
+  await page.getByRole('tab', { name: 'Transaktionen', exact: true }).click();
   const kinds = page.locator('.tx-switch button');
   await expect(kinds).toHaveText(['Alle', 'Ausgaben', 'Einnahmen', 'Geplant']);
   await expect(page.locator('.tx-switch [aria-pressed="true"]')).toHaveText('Alle');
@@ -38,7 +38,7 @@ test('four main tabs; Ausgaben and Einnahmen live under Transaktionen', async ({
 
 test('old links to the former tabs still land in the right place', async ({ page }) => {
   await page.goto('/demo/finanzen?tab=income');
-  await expect(page.locator('nav.tabs [aria-current]')).toHaveText('Transaktionen');
+  await expect(page.locator('.tabs [aria-selected="true"]')).toHaveText('Transaktionen');
   await expect(page.locator('.tx-switch [aria-pressed="true"]')).toHaveText('Einnahmen');
 
   await page.goto('/demo/finanzen?tab=transactions&art=expenses');

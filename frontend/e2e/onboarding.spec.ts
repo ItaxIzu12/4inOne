@@ -58,7 +58,7 @@ for (const width of [390, 1440]) {
     await page.getByLabel('Wie dürfen wir dich nennen?').fill('Sophie Weber');
     await page.getByRole('button', { name: 'Weiter' }).click();
     await expect(page.getByRole('heading', { name: 'Womit möchtest du anfangen?' })).toBeFocused();
-    expect(seen.me).toEqual({ name: 'Sophie Weber' });
+    await expect.poll(() => seen.me).toEqual({ name: 'Sophie Weber' });
 
     await page.getByRole('button', { name: /Reisen/ }).click();
     await page.getByRole('button', { name: /Finanzen/ }).click();
@@ -67,7 +67,8 @@ for (const width of [390, 1440]) {
     await axe(page);
     await page.screenshot({ path: `test-results/onboarding-2-${width}.png`, fullPage: true });
     await page.getByRole('button', { name: 'Weiter' }).click();
-    expect(seen.profile).toEqual({ usage: 'personal', domains: ['finanzen', 'reisen'] });
+    // die Anfrage kann auf langsamen Rechnern (CI) einen Moment nach dem Klick kommen — warten statt sofort prüfen
+    await expect.poll(() => seen.profile).toEqual({ usage: 'personal', domains: ['finanzen', 'reisen'] });
 
     await expect(page.getByRole('heading', { name: 'Deine erste Ausgabe' })).toBeVisible();
     await page.getByLabel('Betrag').fill('12,40');
@@ -77,7 +78,7 @@ for (const width of [390, 1440]) {
     await axe(page);
     await page.screenshot({ path: `test-results/onboarding-3-${width}.png`, fullPage: true });
     await page.getByRole('button', { name: 'Speichern' }).click();
-    expect(seen.entry!.url).toContain('/finanzen/private/transactions/');
+    await expect.poll(() => seen.entry?.url).toContain('/finanzen/private/transactions/');
     expect(seen.entry!.body).toEqual(expect.objectContaining({ amount: '12.40', category: 4, note: 'Bäcker', type: 'EXPENSE' }));
 
     await expect(page.getByRole('heading', { name: /Alles bereit/ })).toBeVisible();
@@ -101,7 +102,7 @@ test('Bereich für den ersten Eintrag wechseln: Reise mit Zeitraum', async ({ pa
   await expect(page.getByRole('heading', { name: 'Deine erste Reise' })).toBeVisible();
   await page.getByLabel('Wohin geht es?').fill('Lissabon');
   await page.getByRole('button', { name: 'Speichern' }).click();
-  expect(seen.entry!.url).toContain('/reisen/trips/');
+  await expect.poll(() => seen.entry?.url).toContain('/reisen/trips/');
   expect(seen.entry!.body).toEqual(expect.objectContaining({ title: 'Lissabon', destination: 'Lissabon' }));
   await expect(page.getByRole('button', { name: 'Zu Reisen' })).toBeVisible();
 });
@@ -112,7 +113,7 @@ test('Überspringen speichert sinnvolle Standards und führt zur Startseite', as
   await page.goto('/onboarding');
   await page.getByRole('button', { name: 'Überspringen' }).click();
   await expect(page).toHaveURL(/\/$/);
-  expect(seen.profile).toEqual({ usage: 'personal', domains: ['finanzen', 'haushalt', 'organisation', 'reisen'] });
+  await expect.poll(() => seen.profile).toEqual({ usage: 'personal', domains: ['finanzen', 'haushalt', 'organisation', 'reisen'] });
 });
 
 test('ohne Eintrag weiter: leerer Start, kein Eintrag gesendet', async ({ page }) => {

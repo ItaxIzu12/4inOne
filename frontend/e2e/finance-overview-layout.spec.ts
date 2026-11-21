@@ -16,7 +16,7 @@ for (const width of [390, 1440]) {
     // Der Bereichskopf scrollt mit (nicht mehr sticky); die globale Kopfzeile bleibt oben.
     await page.evaluate(() => window.scrollTo(0, 500));
     await expect(page.locator('.topbar')).toBeInViewport();
-    await page.getByRole('button', {name:'Budgets', exact:true}).click();
+    await page.getByRole('tab', {name:'Budgets', exact:true}).click();
     await expect(page.locator('.finance-overview')).toHaveCount(0);
     // Suche in der Kopfzeile vorerst aus (searchEnabled); die Logik bleibt über ?q= erreichbar.
     await expect(page.getByRole('searchbox')).toHaveCount(0);
@@ -73,7 +73,7 @@ for (const width of [390, 1440]) {
     await expect(page.locator('.fin-hero').first()).toBeVisible();
     await expect(page.locator('section.review')).toHaveCount(0);
 
-    await page.getByRole('button', { name: 'Transaktionen', exact: true }).click();
+    await page.getByRole('tab', { name: 'Transaktionen', exact: true }).click();
     await page.getByRole('group', { name: 'Transaktionen anzeigen' }).getByRole('button', { name: 'Ausgaben', exact: true }).click();
     const fixed = page.locator('section.fixed-costs');
     await expect(fixed.getByRole('heading', { name: /Fixkosten/ })).toBeVisible();

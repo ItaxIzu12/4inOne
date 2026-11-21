@@ -96,7 +96,7 @@ test('the day view switches to the expenses tab from the empty state', async ({ 
   await page.getByRole('group', { name: 'Zeitraum der Übersicht' }).getByRole('button', { name: 'Tag', exact: true }).click();
   await nav.getByRole('button', { name: 'Nächster Tag' }).click();
   await view.getByRole('button', { name: /Zu den Ausgaben/ }).click();
-  await expect(page.locator('nav.tabs [aria-current]')).toContainText('Transaktionen');
+  await expect(page.locator('.tabs [aria-selected="true"]')).toContainText('Transaktionen');
   await expect(page.locator('.tx-switch [aria-pressed="true"]')).toHaveText('Ausgaben');
   await expect(page.getByRole('button', { name: 'Transaktion erfassen', exact: true })).toBeVisible();
 });
@@ -212,7 +212,7 @@ test('the jump-back button follows the period: current day, week or month', asyn
     await expect(jump).toHaveCount(0);
   }
   // Auch in den anderen Reitern: Monat zurück auf den aktuellen
-  await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+  await page.getByRole('tab', { name: 'Budgets', exact: true }).click();
   await nav.getByRole('button', { name: 'Vorheriger Monat' }).click();
   await expect(jump).toHaveText('Aktueller Monat');
   await jump.click();

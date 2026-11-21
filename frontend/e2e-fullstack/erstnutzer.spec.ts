@@ -77,7 +77,7 @@ test('3 · Finanzen: Monatsbudget, Einnahme, Sparziel', async () => {
   await expect(p.locator('app-start-guide')).toHaveCount(0);
   await expect(p.locator('.kpis')).toContainText('787,60');
 
-  await p.getByRole('button', { name: 'Transaktionen', exact: true }).click();
+  await p.getByRole('tab', { name: 'Transaktionen', exact: true }).click();
   await p.locator('.tx-switch').getByRole('button', { name: 'Einnahmen', exact: true }).click();
   await p.getByRole('button', { name: 'Transaktion erfassen', exact: true }).click();
   await p.getByLabel('Betrag in EUR', { exact: true }).fill('2400');
@@ -86,7 +86,7 @@ test('3 · Finanzen: Monatsbudget, Einnahme, Sparziel', async () => {
   await expect(p.getByRole('dialog')).toHaveCount(0);
   await expect(p.getByText('Gehalt').first()).toBeVisible();
 
-  await p.getByRole('button', { name: 'Sparziele', exact: true }).click();
+  await p.getByRole('tab', { name: 'Sparziele', exact: true }).click();
   await p.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
   await p.getByLabel('Titel', { exact: true }).fill('Urlaub Lissabon');
   await p.getByLabel('Zielbetrag in EUR').fill('900');
@@ -166,7 +166,7 @@ test('5 · Organisation: Termin, Aufgabe, Notiz', async () => {
   await expect(p.locator('.day-hero')).toBeVisible();
   await expect(p.getByRole('region', { name: /Aufgaben heute/ })).toContainText('Steuererklärung');
 
-  await p.getByRole('button', { name: 'Notizen', exact: true }).click();
+  await p.getByRole('tab', { name: 'Notizen', exact: true }).click();
   await p.getByRole('button', { name: /Notiz (hinzufügen|anlegen|erstellen)|Neue Notiz/ }).first().click();
   const note = p.getByRole('dialog', { name: 'Neue Notiz' });
   await note.getByLabel('Titel (optional)').fill('Geschenkideen');
@@ -176,9 +176,9 @@ test('5 · Organisation: Termin, Aufgabe, Notiz', async () => {
   await expect(note).toHaveCount(0);
   await expect(p.getByText('Geschenkideen').first()).toBeVisible();
 
-  await p.getByRole('button', { name: 'Aufgaben', exact: true }).click();
+  await p.getByRole('tab', { name: 'Aufgaben', exact: true }).click();
   await expect(p.getByText('Steuererklärung').first()).toBeVisible();
-  await p.getByRole('button', { name: 'Kalender', exact: true }).click();
+  await p.getByRole('tab', { name: 'Kalender', exact: true }).click();
   await expect(p.getByRole('button', { name: /Elternabend – bearbeiten/ })).toBeVisible();
 });
 
@@ -207,19 +207,19 @@ test('6 · Reisen: Reise, Packliste, Aufgabe, Budget', async () => {
   await sug.getByRole('button', { name: /33 Vorschläge übernehmen/ }).click();
   await expect(sug).toHaveCount(0);
 
-  const nav = p.getByRole('navigation', { name: 'Bereiche dieser Reise' });
-  await nav.getByRole('button', { name: 'Packliste', exact: true }).click();
+  const nav = p.getByRole('tablist', { name: 'Bereiche dieser Reise' });
+  await nav.getByRole('tab', { name: 'Packliste', exact: true }).click();
   await expect(p.getByRole('checkbox', { name: /Reisepass/ })).toBeVisible();
   await expect(p.getByRole('checkbox', { name: /Versicherung/ })).toHaveCount(0);
   await p.getByRole('checkbox', { name: /Reisepass/ }).check();
   await expect(p.getByRole('checkbox', { name: /Reisepass/ })).toBeChecked();
 
-  await nav.getByRole('button', { name: 'Planung', exact: true }).click();
+  await nav.getByRole('tab', { name: 'Planung', exact: true }).click();
   await expect(p.getByRole('checkbox', { name: /Unterkunft prüfen/ })).toBeVisible();
   await p.getByRole('checkbox', { name: /Unterkunft prüfen/ }).check();
   await p.waitForTimeout(500);
 
-  await nav.getByRole('button', { name: 'Budget', exact: true }).click();
+  await nav.getByRole('tab', { name: 'Budget', exact: true }).click();
   await p.waitForTimeout(700);
   await p.getByRole('button', { name: 'Gesamtbudget festlegen' }).click();
   const budget = p.getByRole('dialog', { name: 'Gesamtbudget festlegen' });
@@ -238,7 +238,7 @@ test('6 · Reisen: Reise, Packliste, Aufgabe, Budget', async () => {
   await expect(p.locator('main')).toContainText('720'); // 900 − 180 übrig
 
   // Übersicht: 4inOne schlägt das Sparziel „Urlaub Lissabon“ zum Verknüpfen vor
-  await nav.getByRole('button', { name: 'Übersicht', exact: true }).click();
+  await nav.getByRole('tab', { name: 'Übersicht', exact: true }).click();
   await p.getByRole('button', { name: 'Mit „Urlaub Lissabon“ verknüpfen' }).click();
   await expect(p.getByRole('region', { name: 'Gehört zu dieser Reise' })).toContainText('Urlaub Lissabon');
 
@@ -259,7 +259,7 @@ test('7 · Startseite nach dem Einrichten: echte Inhalte statt Leitfaden', async
 test('8 · Bearbeiten und Löschen mit Bestätigung', async () => {
   const p = sophie;
   await p.goto('/organisation');
-  await p.getByRole('button', { name: 'Notizen', exact: true }).click();
+  await p.getByRole('tab', { name: 'Notizen', exact: true }).click();
   await p.getByRole('button', { name: /Geschenkideen/ }).first().click();
   const edit = p.getByRole('dialog', { name: 'Notiz bearbeiten' });
   await edit.getByLabel('Titel (optional)').fill('Geschenkideen Weihnachten');
@@ -295,7 +295,7 @@ test('9 · Abmelden und wieder anmelden: alles ist noch da', async () => {
   await p.goto('/finanzen');
   await expect(p.locator('.kpis')).toContainText('787,60');
   await p.goto('/organisation');
-  await p.getByRole('button', { name: 'Aufgaben', exact: true }).click();
+  await p.getByRole('tab', { name: 'Aufgaben', exact: true }).click();
   await expect(p.getByText('Steuererklärung').first()).toBeVisible();
   await p.goto('/reisen');
   await expect(p.getByText('Lissabon im Frühling').first()).toBeVisible();

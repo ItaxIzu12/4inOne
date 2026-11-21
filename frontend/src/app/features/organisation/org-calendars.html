@@ -1,5 +1,7 @@
 <!-- Filter: wessen Termine im Kalender stehen -->
-<div class="cal-filter" role="group" aria-label="Welche Kalender anzeigen">
+<!-- Am Handy seitlich wischbar: ein weicher Rand zeigt, auf welcher Seite noch Kalender folgen -->
+<div class="cal-filter" #filterRow role="group" aria-label="Welche Kalender anzeigen" (scroll)="updateFade()"
+  [class.fade-end]="fadeEnd()" [class.fade-start]="fadeStart()">
   <button type="button" class="cal-chip" [attr.aria-pressed]="filter() === 'all'" (click)="filter.set('all')">Alle</button>
   <button type="button" class="cal-chip" [attr.aria-pressed]="filter() === 'mine'" (click)="filter.set('mine')">
     <app-icon name="lock" aria-hidden="true" />Nur meine

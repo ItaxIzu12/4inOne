@@ -49,19 +49,19 @@ async function mockApi(page: Page) {
 test('a new account starts on Heute, sees four tabs and clean empty states, no demo data', async ({ page }) => {
   await mockApi(page);
   await page.goto('/organisation');
-  await expect(page.getByRole('navigation', { name: 'Organisation Ansichten' }).getByRole('button')).toHaveText(['Heute', 'Kalender', 'Aufgaben', 'Notizen']);
-  await expect(page.locator('#org-tab-today')).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('tablist', { name: 'Organisation Ansichten' }).getByRole('tab')).toHaveText(['Heute', 'Kalender', 'Aufgaben', 'Notizen']);
+  await expect(page.locator('#org-tab-today')).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('heading', { name: 'Heute ist nichts geplant' })).toBeVisible();
   await expect(page.getByText('Für heute ist keine Aufgabe fällig.')).toBeVisible();
-  await page.getByRole('button', { name: 'Kalender', exact: true }).click();
+  await page.getByRole('tab', { name: 'Kalender', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Noch keine Termine' })).toBeVisible();
-  await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
+  await page.getByRole('tab', { name: 'Aufgaben', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Noch keine Aufgaben' })).toBeVisible();
-  await page.getByRole('button', { name: 'Notizen', exact: true }).click();
+  await page.getByRole('tab', { name: 'Notizen', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Noch keine Notizen' })).toBeVisible();
   // Alte Links (Übersicht, Dateien) landen bei Heute
   await page.goto('/organisation?tab=files');
-  await expect(page.locator('#org-tab-today')).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('#org-tab-today')).toHaveAttribute('aria-selected', 'true');
 });
 
 test('the calendar loads only the visible range', async ({ page }) => {
@@ -100,7 +100,7 @@ for (const width of [360, 1440]) {
     await expect(page.locator('.agenda__row')).toContainText(['Teammeeting']);
 
     // Aufgabe anlegen, suchen, erledigen, unter „Erledigt“ (mit Anzahl) wieder öffnen
-    await page.getByRole('button', { name: 'Aufgaben', exact: true }).click();
+    await page.getByRole('tab', { name: 'Aufgaben', exact: true }).click();
     await page.getByRole('button', { name: 'Aufgabe hinzufügen', exact: true }).first().click();
     await dialog.getByLabel('Titel', { exact: true }).fill('Präsentation vorbereiten');
     await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
@@ -120,7 +120,7 @@ for (const width of [360, 1440]) {
     await expect(page.locator('.task')).toHaveCount(1);
 
     // Notiz: Inhalt genügt, Titel optional; anheften
-    await page.getByRole('button', { name: 'Notizen', exact: true }).click();
+    await page.getByRole('tab', { name: 'Notizen', exact: true }).click();
     await page.getByRole('button', { name: 'Notiz erstellen', exact: true }).first().click();
     await dialog.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(dialog.getByText('Bitte schreib etwas in die Notiz.')).toBeVisible();
@@ -134,7 +134,7 @@ for (const width of [360, 1440]) {
     expect((await new AxeBuilder({ page }).include('main').withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
 
     // Termin löschen mit Bestätigung, ohne Neuladen der Seite
-    await page.getByRole('button', { name: 'Kalender', exact: true }).click();
+    await page.getByRole('tab', { name: 'Kalender', exact: true }).click();
     await page.locator('.agenda__row', { hasText: 'Teammeeting' }).click();
     await page.getByRole('button', { name: 'Termin löschen', exact: true }).click();
     await page.getByRole('button', { name: 'Ja, löschen', exact: true }).click();
@@ -184,8 +184,8 @@ test.describe('demo preview', () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto('/demo/organisation');
       for (const [tab, key] of [['Heute', 'today'], ['Kalender', 'calendar'], ['Aufgaben', 'tasks'], ['Notizen', 'notes']]) {
-        await page.getByRole('button', { name: tab, exact: true }).click();
-        await expect(page.locator('#org-tab-' + key)).toHaveAttribute('aria-current', 'page');
+        await page.getByRole('tab', { name: tab, exact: true }).click();
+        await expect(page.locator('#org-tab-' + key)).toHaveAttribute('aria-selected', 'true');
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         const result = await new AxeBuilder({ page }).include('main').withTags(['wcag2a', 'wcag2aa']).analyze();
         expect(result.violations, tab).toEqual([]);
@@ -272,7 +272,7 @@ test.describe('demo preview', () => {
   test('Heute: the day in the hero, the day line with free time, tasks due today', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/demo/organisation');
-    await expect(page.locator('#org-tab-today')).toHaveAttribute('aria-current', 'page');
+    await expect(page.locator('#org-tab-today')).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('.day-hero__title')).toHaveText(/Termin|Aufgabe|nichts geplant/);
     await expect(page.getByRole('heading', { name: 'Tageslinie' })).toBeVisible();
     // freie Zeit antippen = an diesem Tag einen Termin eintragen
@@ -403,4 +403,19 @@ test('Kalender: ein mehrtägiger Termin ist ein Balken – ein Klick auf einen m
   const box = (await middle.locator('.ev--mid').boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.locator('#day-sheet-h')).toContainText(`${number}.`);
+});
+
+test('Kalender am Handy: die wischbare Filterzeile zeigt mit weichem Rand, dass noch Kalender folgen', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route('http://localhost:8000/api/**', (route) => route.abort());
+  await page.goto('/demo/organisation?tab=calendar');
+  const row = page.locator('.cal-filter');
+  await expect(row).toHaveClass(/fade-end/);
+  await expect(row).not.toHaveClass(/fade-start/);
+  await row.screenshot({ path: 'test-results/kalender-filter-anfang.png' });
+  await row.evaluate((el) => el.scrollTo({ left: el.scrollWidth }));
+  await expect(row).toHaveClass(/fade-start/);
+  await expect(row).not.toHaveClass(/fade-end/);
+  // alle Filter bleiben per Tastatur erreichbar (echte Knöpfe, nichts versteckt)
+  await expect(row.getByRole('button', { name: 'Kalender teilen' })).toBeVisible();
 });

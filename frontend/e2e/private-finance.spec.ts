@@ -3,7 +3,7 @@ import { choose, pickDate, pickMonth } from './helpers';
 import AxeBuilder from '@axe-core/playwright';
 /** Transaktionen › Alle/Ausgaben/Einnahmen (Ausgaben und Einnahmen sind keine eigenen Reiter mehr). */
 async function txView(page: import('@playwright/test').Page, label: 'Alle' | 'Ausgaben' | 'Einnahmen') {
-  await page.getByRole('button', { name: 'Transaktionen', exact: true }).click();
+  await page.getByRole('tab', { name: 'Transaktionen', exact: true }).click();
   await page.locator('.tx-switch').getByRole('button', { name: label, exact: true }).click();
 }
 
@@ -15,7 +15,7 @@ async function newBooking(page: import('@playwright/test').Page, kind: 'Ausgabe'
 /** Nach dem Speichern zurück zur Übersicht, deren Kennzahlen die Tests prüfen. */
 async function overview(page: import('@playwright/test').Page) {
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
+  await page.getByRole('tab', { name: 'Übersicht', exact: true }).click();
 }
 for (const width of [390, 1440]) {
   test(`private finance lifecycle ${width}px`, async ({ page }) => {
@@ -147,10 +147,10 @@ for (const width of [390, 1440]) {
     const nextMonth = `${following.getFullYear()}-${String(following.getMonth() + 1).padStart(2, '0')}`;
     await pickMonth(page, page.locator('#finance-month'), nextMonth);
     await expect(page.locator('.kpis')).toContainText('3.000 €');
-    await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+    await page.getByRole('tab', { name: 'Budgets', exact: true }).click();
     await expect(page.locator('.kpi').filter({ hasText: 'Gültig:' })).toContainText(/bis auf Weiteres/);
     await pickMonth(page, page.locator('#finance-month'), `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
-    await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
+    await page.getByRole('tab', { name: 'Übersicht', exact: true }).click();
     await newBooking(page);
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('48,32');
     await page.getByRole('button', { name: 'Standardkategorien anlegen' }).click();
@@ -171,7 +171,7 @@ for (const width of [390, 1440]) {
     // Einnahme erhöht das verfügbare Budget und wird sichtbar bestätigt
     await expect(page.locator('.kpis')).toContainText('2.950 €');
     // Der Reiter Budgets zeigt Budget, Rest und Verbrauch direkt in den Kennzahlen; Einnahmen zählen nicht hinein.
-    await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+    await page.getByRole('tab', { name: 'Budgets', exact: true }).click();
     const budgetKpis = page.locator('.kpis');
     await expect(budgetKpis).toContainText('3.000 €');
     await expect(budgetKpis).toContainText('2.950 €');
@@ -180,7 +180,7 @@ for (const width of [390, 1440]) {
     await expect(page.getByRole('status').filter({ hasText: 'Einnahme' })).toContainText(
       'Einnahme von 3.100,00 € gespeichert. Vom Monatsbudget übrig: 2.950,00 €.',
     );
-    await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
+    await page.getByRole('tab', { name: 'Sparziele', exact: true }).click();
     await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
     await page.getByLabel('Titel', { exact: true }).fill('Neue Waschmaschine');
     await page.getByLabel('Zielbetrag in EUR').fill('700');
@@ -217,12 +217,12 @@ for (const width of [390, 1440]) {
     await expect(page.locator('.goal')).toHaveCount(1);
     await expect(page.locator('.goal .plan')).toContainText(/Ab \S+ \d{4}/);
     await pickMonth(page, page.locator('#finance-month'), thisMonth);
-    await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
+    await page.getByRole('tab', { name: 'Übersicht', exact: true }).click();
     // Gespartes mindert das verfügbare Budget und steht in der Aufschlüsselung
     await expect(page.locator('.kpis')).toContainText('2.470 €');
-    await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+    await page.getByRole('tab', { name: 'Budgets', exact: true }).click();
     await expect(page.locator('.kpis')).toContainText('Sparbeiträge− 480 €');
-    await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
+    await page.getByRole('tab', { name: 'Übersicht', exact: true }).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -356,12 +356,12 @@ test('warns when the savings rates together exceed the budget, even in a later m
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
 
   // Der Hinweis gilt für den ganzen Monat und steht deshalb in jedem Reiter, auch unter Budgets
-  await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+  await page.getByRole('tab', { name: 'Budgets', exact: true }).click();
   await expect(page.locator('.alert-note')).toContainText('Sparplanung prüfen');
 
   // Betrifft es den angezeigten Monat, sagt der Hinweis „In diesem Monat“
   alert = { month: '2026-09', over: '10.00', planned: '110.00' };
-  await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
+  await page.getByRole('tab', { name: 'Übersicht', exact: true }).click();
   await page.reload();
   await expect(page.locator('.alert-note')).toContainText('In diesem Monat reicht das Monatsbudget nach Ausgaben nicht für alle Sparraten');
 
@@ -410,7 +410,7 @@ test('warns BEFORE saving a savings goal that exceeds the budget and saves only 
   });
 
   await page.goto('/finanzen');
-  await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
+  await page.getByRole('tab', { name: 'Sparziele', exact: true }).click();
   await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
   const dialog = page.getByRole('dialog');
   const popup = page.locator('app-error-notice aside');
@@ -491,7 +491,7 @@ test('a goal for another month is saved but not shown, and says so', async ({ pa
     return r.fulfill({ json: [] });
   });
   await page.goto('/finanzen');
-  await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
+  await page.getByRole('tab', { name: 'Sparziele', exact: true }).click();
   await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Titel', { exact: true }).fill('Urlaub');
@@ -571,7 +571,7 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
   expect(monthBox.y + monthBox.height).toBeLessThanOrEqual(kpiBox.y);
 
   for (const tab of ['Transaktionen', 'Budgets', 'Sparziele', 'Übersicht']) {
-    await page.getByRole('button', { name: tab, exact: true }).click();
+    await page.getByRole('tab', { name: tab, exact: true }).click();
     await expect(selector).toHaveCount(1); // in jedem Reiter derselbe, nie doppelt
   }
 
@@ -584,17 +584,17 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
   await expect(page.locator('#all-rows').getByRole('button', { name: /Oktoberkauf/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /Septemberkauf/ })).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
+  await page.getByRole('tab', { name: 'Sparziele', exact: true }).click();
   await expect(page.locator('.goal')).toHaveCount(1);
   await expect(page.locator('.goal')).toContainText('Ab Oktober');
 
-  await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+  await page.getByRole('tab', { name: 'Budgets', exact: true }).click();
   await expect(page.locator('.kpi').first()).toContainText('für Oktober 2026');
   await expect(page.locator('.kpi').first()).not.toContainText('Verfügbar');
 
   // zurück in den September: alles springt mit
   await pickMonth(page, selector, SEP);
-  await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
+  await page.getByRole('tab', { name: 'Sparziele', exact: true }).click();
   await expect(page.locator('.goal')).toContainText('Nur September');
   await txView(page, 'Ausgaben');
   await expect(page.getByRole('button', { name: /Septemberkauf/ }).first()).toBeVisible();
@@ -603,7 +603,7 @@ test('there is exactly one month selector and every tab follows it', async ({ pa
 test('an empty goal list spans the whole goal grid, centered', async ({ page }) => {
   await mockTwoMonths(page);
   await page.goto('/finanzen');
-  await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
+  await page.getByRole('tab', { name: 'Sparziele', exact: true }).click();
   await pickMonth(page, page.locator('#finance-month'), '2027-05'); // kein Ziel gilt hier mehr? „Ab Oktober“ gilt offen → 2026-08 ist leer
   await pickMonth(page, page.locator('#finance-month'), '2026-08');
   const empty = page.locator('.goal-cards > .empty');
@@ -658,7 +658,7 @@ test('month picker: the selected month stays readable on hover, presses that sli
 test('the year overview opens one level deeper, picking a month closes it; editing remains explicit', async ({ page }) => {
   await mockTwoMonths(page);
   await page.goto('/finanzen');
-  await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+  await page.getByRole('tab', { name: 'Budgets', exact: true }).click();
   // Keine dauerhafte 12-Monats-Liste mehr, sondern „Jahresplanung“ mit Einstieg
   await expect(page.locator('app-budget-year')).toHaveCount(0);
   await expect(page.locator('.year-plan')).toContainText('von 12 Monaten');
@@ -728,7 +728,7 @@ test('savings can be saved independently of a spending limit', async ({ page }) 
     return r.fallback();
   });
   await page.goto('/finanzen');
-  await page.getByRole('button', { name: 'Sparziele', exact: true }).click();
+  await page.getByRole('tab', { name: 'Sparziele', exact: true }).click();
   await page.getByRole('button', { name: 'Sparziel erstellen', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Titel', { exact: true }).fill('Auto');
@@ -744,7 +744,7 @@ test('changing a budget keeps its start month locked, and a new budget can be st
   await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
   await mockTwoMonths(page);
   await page.goto('/finanzen');
-  await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+  await page.getByRole('tab', { name: 'Budgets', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Budget erstellen', exact: true })).toHaveCount(0); // ein Button genügt
   await page.getByRole('button', { name: 'Budget ändern', exact: true }).click();
   const dialog = page.getByRole('dialog');
@@ -773,7 +773,7 @@ test('a budget that another budget overrides warns in the dialog and shows one v
   );
   await page.goto('/finanzen');
   await pickMonth(page, page.locator('#finance-month'), '2099-04');
-  await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+  await page.getByRole('tab', { name: 'Budgets', exact: true }).click();
 
   // Each month shows exactly one effective amount, including overlapping budgets.
   await page.getByRole('button', { name: 'Budgets je Monat', exact: true }).click();
@@ -795,7 +795,7 @@ test('the budget dialog says what stays without a budget, and the overview names
   await mockTwoMonths(page);
   await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
   await page.goto('/finanzen');
-  await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+  await page.getByRole('tab', { name: 'Budgets', exact: true }).click();
   await page.getByRole('button', { name: 'Budget ändern', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Im September 2026 sind 1 Transaktion und 1 Sparziel vorhanden. Beim Löschen dieses Budgets bleiben diese Einträge erhalten.');
 });
@@ -875,7 +875,7 @@ test('budget deletion note is absent when the selected month has no records', as
   ] }));
   await page.route('**/api/v1/finanzen/private/goals/**', r => r.fulfill({ json: [] }));
   await page.goto('/finanzen');
-  await page.getByRole('button', { name: 'Budgets', exact: true }).click();
+  await page.getByRole('tab', { name: 'Budgets', exact: true }).click();
   await page.getByRole('button', { name: 'Budget ändern', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();

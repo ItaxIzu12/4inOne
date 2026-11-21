@@ -47,7 +47,7 @@
 .tabs button:hover {
   color: var(--accent-hover);
 }
-.tabs [aria-current] {
+.tabs [aria-selected='true'] {
   border-bottom-color: var(--accent);
   color: var(--accent-hover);
   font-weight: 600;
@@ -120,7 +120,7 @@
     border-bottom: 0;
     font-size: var(--fs-meta);
   }
-  .tabs [aria-current] {
+  .tabs [aria-selected='true'] {
     background: #e3f5e9;
   }
   // Wie Organisation: auf dem Handy nur Text, damit fünf Reiter ohne Scrollen passen.

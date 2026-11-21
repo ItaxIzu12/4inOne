@@ -63,12 +63,23 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
+              "sourceMap": true,
+              "server": false,
+              "outputMode": "static",
+              "prerender": false
+            },
+            "e2e": {
+              "optimization": false,
+              "extractLicenses": false,
               "sourceMap": true
             },
             "fullstack": {
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
+              "server": false,
+              "outputMode": "static",
+              "prerender": false,
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -101,6 +112,9 @@
             },
             "development": {
               "buildTarget": "frontend:build:development"
+            },
+            "e2e": {
+              "buildTarget": "frontend:build:e2e"
             },
             "fullstack": {
               "buildTarget": "frontend:build:fullstack"
