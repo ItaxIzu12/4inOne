@@ -1,6 +1,6 @@
-import { HaushaltOverviewDto, TaskDto } from '../haushalt/data/haushalt-api.service';
-import { PersonalEvent, TodayItem } from '../organisation/data/organisation-api.service';
-import { Trip } from '../reisen/data/reisen-api.service';
+import { HaushaltOverviewDto, TaskDto } from '../household/data/haushalt-api.service';
+import { PersonalEvent, TodayItem } from '../organization/data/organisation-api.service';
+import { Trip } from '../travel/data/reisen-api.service';
 import { financeAnswer, householdAnswer, ideaForToday, organisationAnswer, progressRings, spentOn, travelAnswer } from './dashboard-pulse';
 
 // Samstag, 31. Oktober 2026, 10:00 Uhr (lokal)

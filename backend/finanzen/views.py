@@ -190,7 +190,7 @@ class CategoryViewSet(ModelViewSet):
 
 class OverviewView(APIView):
     """Aggregierte Zahlen für die Finanzen-Startseite (Budget-Block +
-    Kategorien-Donut, siehe features/finanzen/finanzen.ts im Frontend) —
+    Kategorien-Donut, siehe features/finance/finanzen.ts im Frontend) —
     bewusst EIN Endpunkt statt zwei, da beide Werte aus denselben
     Transaktionen des laufenden Monats berechnet werden.
 
@@ -235,7 +235,7 @@ class OverviewView(APIView):
 
         # Faire Aufteilung ergibt bei einer Person keinen Sinn — das Feld
         # existiert dann gar nicht im JSON (nicht null/0), das Frontend prüft
-        # per @if auf Anwesenheit (siehe features/finanzen/finanzen.ts).
+        # per @if auf Anwesenheit (siehe features/finance/finanzen.ts).
         member_count = household.members.count()
         response_data = {
             # Kopfzeile aus den Kategorien darunter berechnet (services.budget_head),

@@ -1,4 +1,4 @@
-import { BERLIN } from '../../reisen/data/demo-reisen-api';
+import { BERLIN } from '../../travel/data/demo-reisen-api';
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import {
@@ -21,7 +21,7 @@ import {
   TodayItem,
 } from './organisation-api.service';
 import { expandEvents, localDay } from '../shared/organisation-logic';
-import { EventImportRow } from '../kalender/org-import';
+import { EventImportRow } from '../calendar/org-import';
 
 // Sicherheitskritisch wie demo-finanzen-data-provider.ts: diese Datei importiert KEINEN HttpClient. Sie ersetzt
 // OrganisationApi nur für die öffentliche Demo-Route (siehe app.routes.ts) und hält ihren gesamten Zustand im

@@ -17,7 +17,7 @@ Oberfläche: gemeinsame Komponente `shared/features/import-dialog` (Darstellung)
 ## Finanzen – Kontoauszug (CSV)
 
 - Einstieg: Transaktionen → „Kontoauszug importieren“ (leise Nebenaktion neben Alle/Ausgaben/Einnahmen).
-- Leser `features/finanzen/transactions/finance-import.ts`: Trenner `;` `,` Tab; Werte in Anführungszeichen; Vorspann-Zeilen
+- Leser `features/finance/transactions/finance-import.ts`: Trenner `;` `,` Tab; Werte in Anführungszeichen; Vorspann-Zeilen
   vor der Kopfzeile; Spalten Buchungstag/Datum/Valuta, Betrag/Umsatz oder Soll/Haben, Empfänger + Verwendungszweck
   (zusammengefasst zum Text), optional Kategorie; Beträge „-1.234,56“, „12.50“, „(45,00)“, „45,00-“; Daten
   „09.10.2026“, „9.10.26“, „2026-10-09“; UTF-8 oder Windows-1252. Höchstens 1.000 Buchungen, 2 MB.
@@ -32,7 +32,7 @@ Oberfläche: gemeinsame Komponente `shared/features/import-dialog` (Darstellung)
 ## Organisation – Kalender (ICS)
 
 - Einstieg: Kalender → Zeile „Termine aus Google, Apple oder Outlook übernehmen? Kalender importieren“.
-- Leser `features/organisation/kalender/org-import.ts` (RFC 5545): nur VEVENT; Fortsetzungszeilen; Escapes; UTC (`Z`),
+- Leser `features/organization/calendar/org-import.ts` (RFC 5545): nur VEVENT; Fortsetzungszeilen; Escapes; UTC (`Z`),
   `TZID` (auch Outlook-Namen wie „W. Europe Standard Time“), sonst Wanduhrzeit der Person; ganztägig (`VALUE=DATE`,
   DTEND exklusiv → letzter Tag, über das Kalenderdatum gerechnet); `DURATION`. Höchstens 1.000 Termine, 5 MB.
 - Wiederholung: `FREQ=DAILY|WEEKLY|MONTHLY|YEARLY` (optional `INTERVAL=1`, `WKST`) wird übernommen. Alles darüber

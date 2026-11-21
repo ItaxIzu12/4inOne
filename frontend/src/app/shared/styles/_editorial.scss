@@ -2,7 +2,7 @@
 // Startseite (features/landing) und Unterseiten (shared/public-shell: Rechtliches, Kontakt, Danke, 404).
 // Eine Quelle für beide, damit Farben, Schriften und der Kachel-Fuß überall gleich sind.
 //
-//   @use '../../shared/styles/editorial' as editorial;
+//   @use './editorial' as editorial;
 //   :host { @include editorial.tokens; }
 
 @mixin tokens {

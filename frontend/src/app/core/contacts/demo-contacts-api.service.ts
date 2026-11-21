@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { ReisenApi } from '../../features/reisen/data/reisen-api.service';
-import { OrganisationApi } from '../../features/organisation/data/organisation-api.service';
+import { ReisenApi } from '../../features/travel/data/reisen-api.service';
+import { OrganisationApi } from '../../features/organization/data/organisation-api.service';
 import { Observable, of, throwError } from 'rxjs';
 import { ContactDto, ContactsApiService, ContactsOverview, ReceivedInviteDto, Relation, SentInviteDto, SharedArea } from './contacts-api.service';
 

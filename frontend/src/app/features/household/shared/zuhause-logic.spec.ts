@@ -1,5 +1,5 @@
 import { FolderEntryDto, TaskDto } from '../data/haushalt-api.service';
-import { deviceIcon } from '../zuhause/geraete-logic';
+import { deviceIcon } from '../home/geraete-logic';
 import { dayGroupKey, devicesByRoom, doneToday, dueNow, fairness, groupTasks, minutesLabel, nextDeadlines, roomStates } from './zuhause-logic';
 
 // Freitag, 30. Oktober 2026

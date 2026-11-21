@@ -2,8 +2,8 @@ import { AttachmentItem } from '../../../shared/features/attachments/attachment-
 import { Injectable, inject } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { DemoPrivateFinanceApi } from '../../finanzen/data/demo-private-finance-api';
-import { FinanceTransaction, PrivateFinanceApi } from '../../finanzen/data/private-finance-api.service';
+import { DemoPrivateFinanceApi } from '../../finance/data/demo-private-finance-api';
+import { FinanceTransaction, PrivateFinanceApi } from '../../finance/data/private-finance-api.service';
 import {
   HaushaltOverviewDto,
   CompleteShoppingResult,

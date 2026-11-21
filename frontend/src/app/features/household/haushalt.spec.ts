@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { DemoPrivateFinanceApi } from '../finanzen/data/demo-private-finance-api';
-import { PrivateFinanceApi } from '../finanzen/data/private-finance-api.service';
+import { DemoPrivateFinanceApi } from '../finance/data/demo-private-finance-api';
+import { PrivateFinanceApi } from '../finance/data/private-finance-api.service';
 import { DemoHaushaltDataProvider } from './data/demo-haushalt-data-provider';
-import { AufgabenTab } from './aufgaben/aufgaben-tab';
-import { EinkaufTab } from './einkaufen/einkauf-tab';
+import { AufgabenTab } from './tasks/aufgaben-tab';
+import { EinkaufTab } from './shopping/einkauf-tab';
 import { Haushalt } from './haushalt';
 import { HAUSHALT_DATA_PROVIDER } from './data/haushalt-data-provider';
 import { daysUntil, todayIso } from './shared/haushalt-logic';

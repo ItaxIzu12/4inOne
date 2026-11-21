@@ -42,12 +42,12 @@ import {
   TripTask,
 } from './data/reisen-api.service';
 import { buildTripSuggestions, guessClimate, SuggestedPackingItem, SuggestedTask } from './shared/trip-suggestions';
-import { TripList } from './liste/trip-list';
-import { TripPacking } from './packliste/trip-packing';
+import { TripList } from './list/trip-list';
+import { TripPacking } from './packing/trip-packing';
 import { TripBudget } from './budget/trip-budget';
-import { TripPlanning } from './planung/trip-planning';
-import { TripOverview, TripTab } from './uebersicht/trip-overview';
-import { TripItinerary } from './ablauf/trip-itinerary';
+import { TripPlanning } from './planning/trip-planning';
+import { TripOverview, TripTab } from './overview/trip-overview';
+import { TripItinerary } from './itinerary/trip-itinerary';
 import {
   BUDGET_COLOR,
   BUDGET_META,
@@ -75,7 +75,7 @@ import {
 
 export { formatMoney, localDay } from './shared/reisen-logic';
 export type SuggestionScope = 'all' | 'tasks' | 'packing';
-export type { TripTab } from './uebersicht/trip-overview';
+export type { TripTab } from './overview/trip-overview';
 
 /** Innerhalb einer Reise genau vier Reiter (docs/REISEN_V1.md). */
 const TABS: { key: TripTab; label: string; icon: IconName }[] = [

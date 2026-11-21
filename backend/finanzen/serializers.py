@@ -129,7 +129,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     # übliche DRF-Muster "nested read, flat write".
     category = CategorySerializer(read_only=True)
     # required=True (keine Ausnahme mehr): "Ausgabe hinzufügen" verlangt jetzt
-    # eine Kategorie-Auswahl im Frontend (siehe features/finanzen/finanzen.html
+    # eine Kategorie-Auswahl im Frontend (siehe features/finance/finanzen.html
     # Kategorie-Chips) — eine Transaction ohne Kategorie ergäbe dort keinen
     # sinnvollen Zustand mehr.
     category_id = serializers.PrimaryKeyRelatedField(source='category', queryset=Category.objects.all(), write_only=True)

@@ -45,7 +45,7 @@ export const appConfig: ApplicationConfig = {
     // ARCHITEKTUR.md §3.1) bei JEDEM Seiten-Reload verloren, obwohl das
     // httpOnly-Refresh-Cookie noch gültig ist — ein eigentlich angemeldeter
     // Nutzer würde nach F5 bei jedem authentifizierten Aufruf (z. B. dem
-    // Transaktions-Modal, siehe features/finanzen) ein stilles 401 bekommen.
+    // Transaktions-Modal, siehe features/finance) ein stilles 401 bekommen.
     // Scheitert der Versuch (kein/abgelaufenes Cookie), einfach normal als
     // "nicht angemeldet" weitermachen statt den App-Start zu blockieren.
     provideAppInitializer(() => {

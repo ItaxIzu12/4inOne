@@ -50,12 +50,12 @@ const ALL_ROUTES: Routes = [
   },
   {
     path: 'einladung',
-    loadComponent: () => import('./features/einladung/einladung').then((m) => m.Einladung),
+    loadComponent: () => import('./features/invitation/einladung').then((m) => m.Einladung),
     data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'einladung/:token',
-    loadComponent: () => import('./features/einladung/einladung').then((m) => m.Einladung),
+    loadComponent: () => import('./features/invitation/einladung').then((m) => m.Einladung),
     data: { shell: 'bare', hideHeader: true },
   },
   {
@@ -74,21 +74,21 @@ const ALL_ROUTES: Routes = [
     path: 'passwort-vergessen',
     title: 'Passwort vergessen | 4inOne',
     loadComponent: () =>
-      import('./features/passwort-vergessen/passwort-vergessen').then((m) => m.PasswortVergessen),
+      import('./features/forgot-password/passwort-vergessen').then((m) => m.PasswortVergessen),
     data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'email-bestaetigen',
     title: 'E-Mail bestätigen | 4inOne',
     loadComponent: () =>
-      import('./features/email-bestaetigen/email-bestaetigen').then((m) => m.EmailBestaetigen),
+      import('./features/verify-email/email-bestaetigen').then((m) => m.EmailBestaetigen),
     data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'passwort-zuruecksetzen',
     title: 'Neues Passwort | 4inOne',
     loadComponent: () =>
-      import('./features/passwort-zuruecksetzen/passwort-zuruecksetzen').then(
+      import('./features/reset-password/passwort-zuruecksetzen').then(
         (m) => m.PasswortZuruecksetzen,
       ),
     data: { shell: 'bare', hideHeader: true },
@@ -97,14 +97,14 @@ const ALL_ROUTES: Routes = [
     path: 'einstellungen',
     title: 'Einstellungen | 4inOne',
     loadComponent: () =>
-      import('./features/einstellungen/einstellungen').then((m) => m.Einstellungen),
+      import('./features/settings/einstellungen').then((m) => m.Einstellungen),
     canActivate: [authGuard],
     data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'einstellungen/profil',
     title: 'Profil bearbeiten | 4inOne',
-    loadComponent: () => import('./features/profil/profil').then((m) => m.Profil),
+    loadComponent: () => import('./features/profile/profil').then((m) => m.Profil),
     canActivate: [authGuard],
     data: { shell: 'bare', hideHeader: true },
   },
@@ -126,7 +126,7 @@ const ALL_ROUTES: Routes = [
   {
     path: 'einstellungen/sitzungen',
     title: 'Angemeldete Geräte | 4inOne',
-    loadComponent: () => import('./features/sitzungen/sitzungen').then((m) => m.Sitzungen),
+    loadComponent: () => import('./features/sessions/sitzungen').then((m) => m.Sitzungen),
     canActivate: [authGuard],
     data: { shell: 'bare', hideHeader: true },
   },
@@ -138,7 +138,7 @@ const ALL_ROUTES: Routes = [
       hideHeader: true,
       description: 'Impressum von 4inOne: Anbieter, Kontakt und Verantwortliche.',
     },
-    loadComponent: () => import('./features/impressum/impressum').then((m) => m.Impressum),
+    loadComponent: () => import('./features/imprint/impressum').then((m) => m.Impressum),
   },
   {
     path: 'datenschutz',
@@ -149,14 +149,14 @@ const ALL_ROUTES: Routes = [
       description:
         'Wie 4inOne mit deinen Daten umgeht: welche Daten, wofür und welche Rechte du hast.',
     },
-    loadComponent: () => import('./features/datenschutz/datenschutz').then((m) => m.Datenschutz),
+    loadComponent: () => import('./features/privacy/datenschutz').then((m) => m.Datenschutz),
   },
   {
     path: 'nutzungsbedingungen',
     title: 'Nutzungsbedingungen | 4inOne',
     data: { shell: 'bare', hideHeader: true, description: 'Die Nutzungsbedingungen von 4inOne.' },
     loadComponent: () =>
-      import('./features/nutzungsbedingungen/nutzungsbedingungen').then(
+      import('./features/terms/nutzungsbedingungen').then(
         (m) => m.Nutzungsbedingungen,
       ),
   },
@@ -169,7 +169,7 @@ const ALL_ROUTES: Routes = [
       description: 'Erklärung zur Barrierefreiheit von 4inOne und wie du Barrieren melden kannst.',
     },
     loadComponent: () =>
-      import('./features/barrierefreiheit/barrierefreiheit').then((m) => m.Barrierefreiheit),
+      import('./features/accessibility/barrierefreiheit').then((m) => m.Barrierefreiheit),
   },
   {
     path: '',

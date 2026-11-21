@@ -12,7 +12,7 @@ from connections import link_suggestions, relevance
 from connections.models import RelationType
 from connections.registry import ALLOWED_PAIRS
 
-FRONTEND = Path(__file__).resolve().parents[3] / 'frontend' / 'src' / 'app' / 'shared' / 'connections'
+FRONTEND = Path(__file__).resolve().parents[3] / 'frontend' / 'src' / 'app' / 'shared' / 'features' / 'connections'
 DEMO = (FRONTEND / 'demo-connections-api.ts').read_text(encoding='utf-8')
 RULES = (FRONTEND / 'connection-relevance.ts').read_text(encoding='utf-8')
 

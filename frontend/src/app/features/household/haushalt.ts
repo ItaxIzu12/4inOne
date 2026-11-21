@@ -7,11 +7,11 @@ import { AppShell } from '../../layout/app-shell';
 import { MembershipChanges } from '../../core/access/membership-changes';
 import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
 import { SaveFeedback } from '../../shared/ui/save-feedback/save-feedback';
-import { AufgabenTab, AufgabenView, AUFGABEN_VIEWS } from './aufgaben/aufgaben-tab';
-import { EinkaufTab } from './einkaufen/einkauf-tab';
-import { OrdnerTab } from './zuhause/ordner-tab';
+import { AufgabenTab, AufgabenView, AUFGABEN_VIEWS } from './tasks/aufgaben-tab';
+import { EinkaufTab } from './shopping/einkauf-tab';
+import { OrdnerTab } from './home/ordner-tab';
 import type { ZuhauseSection } from './shared/zuhause-logic';
-import { HaushaltCreate, HaushaltTabKey, UebersichtTab } from './heute/uebersicht-tab';
+import { HaushaltCreate, HaushaltTabKey, UebersichtTab } from './today/uebersicht-tab';
 import { TaskRoom } from './data/haushalt-api.service';
 
 type HaushaltTab = HaushaltTabKey;

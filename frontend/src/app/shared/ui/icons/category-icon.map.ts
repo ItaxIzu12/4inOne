@@ -33,7 +33,7 @@ export const CATEGORY_ICON_MAP: Record<string, Type<unknown>> = {
 };
 
 // Für die Icon-Kachel-Auswahl im "Kategorie hinzufügen"-Sheet (siehe
-// features/finanzen/finanzen.ts) — feste Reihenfolge statt Object.keys()
+// features/finance/finanzen.ts) — feste Reihenfolge statt Object.keys()
 // direkt zu iterieren, damit sich die Anzeige-Reihenfolge nicht zufällig
 // mit der Deklarationsreihenfolge oben verschiebt.
 export const CATEGORY_ICON_KEYS: readonly string[] = [

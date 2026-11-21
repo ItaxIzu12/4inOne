@@ -29,7 +29,7 @@ type State = 'form' | 'done' | 'invalid-link';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink, Brand, PasswordStrength],
   templateUrl: './passwort-zuruecksetzen.html',
-  styleUrl: '../passwort-vergessen/passwort-vergessen.css',
+  styleUrl: '../forgot-password/passwort-vergessen.css',
 })
 export class PasswortZuruecksetzen {
   private readonly fb = inject(FormBuilder);

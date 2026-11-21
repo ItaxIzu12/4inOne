@@ -9,7 +9,7 @@ const FOCUSABLE_SELECTOR =
 /**
  * Generische Modal-Basis (Backdrop, Fokus-Falle, Escape-Handling,
  * Body-Scroll-Sperre) — EINZIGER Ort für dieses Verhalten im Projekt, damit
- * künftige Dialoge (z. B. das Transaktions-Modal in features/finanzen)
+ * künftige Dialoge (z. B. das Transaktions-Modal in features/finance)
  * dieselbe Komponente wiederverwenden statt eine eigene, später
  * auseinanderlaufende Implementierung zu bekommen.
  *

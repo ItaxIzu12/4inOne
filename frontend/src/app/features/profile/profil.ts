@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { AppShell } from '../../layout/app-shell';
-import { SettingsLayout } from '../einstellungen/settings-layout';
+import { SettingsLayout } from '../settings/settings-layout';
 import { Modal } from '../../shared/ui/modal/modal';
 import { AppSelect } from '../../shared/ui/form/select';
 import { CURRENCY_OPTIONS } from '../../shared/ui/currency/currencies';
@@ -19,7 +19,7 @@ import { ACCOUNT_DEFAULT_HOME_CURRENCY } from '../../core/fx/home-currency';
   standalone: true,
   imports: [ErrorNoticeDirective, AppShell, SettingsLayout, FormsModule, Modal, AppSelect, AppIcon],
   templateUrl: './profil.html',
-  styleUrls: ['../einstellungen/einstellungen.css', './profil.css'],
+  styleUrls: ['../settings/einstellungen.css', './profil.css'],
 })
 export class Profil {
   private readonly auth = inject(AuthService);

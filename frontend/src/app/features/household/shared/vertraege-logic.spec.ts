@@ -11,7 +11,7 @@ import {
   noticeLabel,
   sortContracts,
 } from './vertraege-logic';
-import { deviceState, deviceStats, filterDevices, nextDeviceDeadline } from '../zuhause/geraete-logic';
+import { deviceState, deviceStats, filterDevices, nextDeviceDeadline } from '../home/geraete-logic';
 
 const today = new Date(2026, 9, 6);
 const c = (id: number, over: Partial<FolderEntryDto> = {}): FolderEntryDto =>

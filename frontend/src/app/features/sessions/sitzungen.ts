@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { AuthService, LoginSession } from '../../core/auth/auth.service';
 import { AppShell } from '../../layout/app-shell';
-import { SettingsLayout } from '../einstellungen/settings-layout';
+import { SettingsLayout } from '../settings/settings-layout';
 import { describeDevice } from '../../shared/utils/device/describe-device';
 import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
 
@@ -13,7 +13,7 @@ import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
   standalone: true,
   imports: [ErrorNoticeDirective, AppIcon, AppShell, SettingsLayout, DatePipe],
   templateUrl: './sitzungen.html',
-  styleUrls: ['../einstellungen/einstellungen.css', '../profil/profil.css', './sitzungen.css'],
+  styleUrls: ['../settings/einstellungen.css', '../profile/profil.css', './sitzungen.css'],
 })
 export class Sitzungen {
   private readonly auth = inject(AuthService);

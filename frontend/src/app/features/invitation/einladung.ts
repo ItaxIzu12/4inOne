@@ -14,7 +14,7 @@ import { tokenFromLink } from '../../shared/utils/link-token';
   standalone: true,
   imports: [ErrorNoticeDirective, RouterLink, DatePipe],
   templateUrl: './einladung.html',
-  styleUrls: ['../profil/profil.css', './einladung.css'],
+  styleUrls: ['../profile/profil.css', './einladung.css'],
 })
 export class Einladung {
   protected readonly auth = inject(AuthService);

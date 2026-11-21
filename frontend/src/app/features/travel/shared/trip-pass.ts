@@ -2,7 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { Trip } from '../data/reisen-api.service';
-import type { TripTab } from '../uebersicht/trip-overview';
+import type { TripTab } from '../overview/trip-overview';
 import { TRANSPORT_LABELS, cancellationInfo, formatMoney, localDay, passStub, peopleLabel, placeParts, shortRange, transportIcon, tripPhase } from './reisen-logic';
 
 /**

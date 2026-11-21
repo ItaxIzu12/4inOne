@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { API_BASE_URL } from '../../../core/api.config';
-import { EventImportRow } from '../kalender/org-import';
+import { EventImportRow } from '../calendar/org-import';
 /** Art eines Termins — backend organisation/models.py EventCategory. */
 export type EventCategory = 'gesundheit' | 'sport' | 'familie' | 'arbeit' | 'freizeit' | 'sonstiges';
 /** Wiederholung eines Termins oder einer Aufgabe — backend core/recurrence.py SIMPLE. */

@@ -16,7 +16,7 @@ type State = 'checking' | 'done' | 'invalid';
   standalone: true,
   imports: [RouterLink, Brand],
   templateUrl: './email-bestaetigen.html',
-  styleUrl: '../passwort-vergessen/passwort-vergessen.css',
+  styleUrl: '../forgot-password/passwort-vergessen.css',
 })
 export class EmailBestaetigen {
   protected readonly auth = inject(AuthService);

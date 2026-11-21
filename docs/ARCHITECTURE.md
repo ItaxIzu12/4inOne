@@ -103,24 +103,29 @@ Backend anspricht). Gehört es zum Rahmen jeder Seite → `layout/`. Design-Toke
 Jeder Bereich folgt demselben Muster wie Finanzen — ein Unterordner je Reiter, dazu `data/` und `shared/`:
 
 ```text
-features/<bereich>/
+features/<area>/
 ├── <bereich>.ts|html|scss     Container: Reiterleiste, Routing-Parameter, Dialoge des Bereichs
 ├── <reiter>/                  je Reiter ein Ordner (Komponenten, Logik und Tests nur dieses Reiters)
 ├── data/                      API-Service, Daten-Provider (echt/Demo)
 └── shared/                    was mehrere Reiter des Bereichs nutzen (Logik, gemeinsame Stile, kleine Bausteine)
 ```
 
-| Bereich | Reiter-Ordner |
+| Bereich (Ordner) | Reiter-Ordner |
 | --- | --- |
-| finanzen | `overview/`, `transactions/`, `budgets/`, `goals/`, `editor/` |
-| haushalt | `heute/`, `aufgaben/` (inkl. Routinen), `einkaufen/`, `zuhause/` |
-| organisation | `heute/`, `kalender/`, `aufgaben/`, `notizen/` |
-| reisen | `liste/`, `uebersicht/`, `ablauf/`, `planung/`, `packliste/`, `budget/` |
+| Finanzen (`finance/`) | `overview/`, `transactions/`, `budgets/`, `goals/`, `editor/` |
+| Haushalt (`household/`) | `today/`, `tasks/` (inkl. Routinen), `shopping/`, `home/` |
+| Organisation (`organization/`) | `today/`, `calendar/`, `tasks/`, `notes/` |
+| Reisen (`travel/`) | `list/`, `overview/`, `itinerary/`, `planning/`, `packing/`, `budget/` |
+
+Ordnernamen im Code sind englisch (seit 21.11.2026); die Adressen in der App bleiben deutsch (`/finanzen`,
+`/haushalt`, …), ebenso die Backend-Apps (eine Umbenennung beträfe Datenbanktabellen und Migrationen). Weitere
+Seitenordner: `settings/`, `profile/`, `sessions/`, `people/` (Personen & Gruppen), `privacy/`, `imprint/`, `terms/`,
+`accessibility/`, `forgot-password/`, `reset-password/`, `verify-email/`, `invitation/`.
 
 Regeln: Ein Reiter importiert nie aus einem anderen Reiter — nur aus `../shared/`, `../data/` oder dem globalen
 `app/shared` bzw. `app/core`. Was zwei Reiter brauchen, wandert nach `shared/` des Bereichs; was zwei Bereiche
 brauchen, nach `app/shared/` (UI-Bausteine) bzw. `app/core/` (Dienste, Zustand). Prüfbar mit
-`grep -rE "from '\.\./[a-z]+/" features/<bereich>/<reiter>` (erlaubt sind nur `shared` und `data`).
+`grep -rE "from '\.\./[a-z]+/" features/<area>/<reiter>` (erlaubt sind nur `shared` und `data`).
 
 ## Django direction
 

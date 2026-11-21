@@ -108,7 +108,7 @@ Abstand — nie nur über Farbe.
 - Connection Engine V2: `shared/features/connections/auto-links.*` (`app-auto-links`; Eingaben `sourceType`, `sourceId`, `previews`,
   `sourceLabel`; `commit(sourceId)`, `reset()`; `.al__row`, `.al__toggle` = Kontrollkästchen `role=switch`, Spur `#7d8796`,
   an `--accent`), Regeln für Vorschau und Demo `auto-link-rules.ts`, Demo `demo-auto-links-api.ts`.
-  `features/organisation/org-household-tasks.*` (`app-org-household-tasks`, `.hh__*`, Schalter an `--household-fill`).
+  `features/organization/org-household-tasks.*` (`app-org-household-tasks`, `.hh__*`, Schalter an `--household-fill`).
   Abgeleitete Kalendereinträge = `PersonalEvent` mit `derived` (negative ID, `calendar_color: slate`, nur lesbar).
 - `shared/ui/save-feedback` (01.11.2026): `.toast[data-tone]` (`success|warning|error`, sonst aus dem Text: `feedbackTone`),
   Dauer `feedbackDuration` (5–9 s), Pause bei `mouseenter`/`focusin`, Eingaben `message`, `tone`, `stamp` (gleiche Meldung
@@ -1347,7 +1347,7 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   blenden Wege zu Anmeldung/Registrierung mit `@if (!demoOnly)` aus. Schriftpfad `/fonts/…` setzt
   `scripts/build-pages.mjs` auf den Unterordner. Vor dem Livegang entfernen (`docs/GITHUB_PAGES_DEMO.md`).
 - Finanzen › Ordnerstruktur (06.11.2026, Umbau ohne Änderung an Optik und Verhalten — pixelgleich geprüft):
-  `features/finanzen/` = Rahmen `private-finance.*` (Kopf, Reiter, Monatsladen, Formular-Zustand, Import, Meldungen); der
+  `features/finance/` = Rahmen `private-finance.*` (Kopf, Reiter, Monatsladen, Formular-Zustand, Import, Meldungen); der
   gemeinsame Dialog Transaktion/Budget/Sparziel ist seit 07.11.2026 `editor/finance-editor.*` (Formular-Ansicht,
   Warnungen, neue Kategorie, Verbindungen, Speichern/Löschen; `open()` bleibt im Rahmen und setzt über
   `resetLinks()` den Verbindungs-Baustein zurück) + `finance-context.ts` (Token `FINANCE_CONTEXT`, Typen `FinanceTab`/`ListRow`/…).

@@ -20,7 +20,7 @@ DEFAULT_CATEGORIES = [
 @receiver(post_save, sender=Household)
 def create_default_categories(sender, instance: Household, created: bool, **kwargs) -> None:
     """Jeder neue Haushalt bekommt sofort drei Standard-Kategorien, damit er
-    nicht mit einer leeren Kategorien-Liste startet (siehe features/finanzen
+    nicht mit einer leeren Kategorien-Liste startet (siehe features/finance
     Kategorie-Chips beim Erfassen einer Ausgabe — ohne mindestens eine
     Kategorie wäre "Ausgabe hinzufügen" sonst nicht nutzbar).
 
