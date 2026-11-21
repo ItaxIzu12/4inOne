@@ -5,8 +5,8 @@ const AGENDA_LIMIT = 10;
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { LinkHints, connectionHints } from '../../../shared/features/connections/link-hints';
 import { isInCalendarWeek } from '../../../shared/utils/dates/calendar-week';
-import { DayRange, PersonalEvent } from '../data/organisation-api.service';
-import { EVENT_CATEGORIES, SpanPart, spanPart, dayWord, endTime, eventCategory, eventsOn, gridRange, localDay, longDay, monthGrid, startTime, timeRange, weekOf } from '../shared/organisation-logic';
+import { DayRange, PersonalEvent } from '../data/organization-api.service';
+import { EVENT_CATEGORIES, SpanPart, spanPart, dayWord, endTime, eventCategory, eventsOn, gridRange, localDay, longDay, monthGrid, startTime, timeRange, weekOf } from '../shared/organization-logic';
 
 export type CalendarView = 'day' | 'week' | 'month';
 

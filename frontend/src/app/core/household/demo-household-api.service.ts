@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { HouseholdMembers } from './household-api.service';
 
-/** Demo (/demo): dieselben Personen wie demo-haushalt-data-provider.ts (Sophie, Max) — nur lesen, kein Konto. */
+/** Demo (/demo): dieselben Personen wie demo-household-data-provider.ts (Sophie, Max) — nur lesen, kein Konto. */
 @Injectable()
 export class DemoHouseholdApiService {
   members(): Observable<HouseholdMembers> {

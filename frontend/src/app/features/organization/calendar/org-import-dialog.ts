@@ -2,7 +2,7 @@ import { Component, DestroyRef, computed, inject, input, output, signal } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ImportDialog, ImportPreview } from '../../../shared/features/import-dialog/import-dialog';
 import { EventImportRow, ICS_MAX_BYTES, IcsFormatError, parseIcs } from './org-import';
-import { EventImportResult, OrganisationApi } from '../data/organisation-api.service';
+import { EventImportResult, OrganisationApi } from '../data/organization-api.service';
 
 const PREVIEW_ROWS = 8;
 const REPEAT: Record<string, string> = { daily: 'täglich', weekly: 'wöchentlich', monthly: 'monatlich', yearly: 'jährlich' };

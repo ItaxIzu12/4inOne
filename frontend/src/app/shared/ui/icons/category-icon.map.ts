@@ -1,11 +1,11 @@
 import { Type } from '@angular/core';
-import { IconBildung } from './icon-bildung';
-import { IconFixkosten } from './icon-fixkosten';
-import { IconFreizeit } from './icon-freizeit';
-import { IconGeschenke } from './icon-geschenke';
-import { IconGesundheit } from './icon-gesundheit';
-import { IconHaushalt } from './icon-haushalt';
-import { IconSonstiges } from './icon-sonstiges';
+import { IconBildung } from './icon-education';
+import { IconFixkosten } from './icon-fixed-costs';
+import { IconFreizeit } from './icon-leisure';
+import { IconGeschenke } from './icon-gifts';
+import { IconGesundheit } from './icon-health';
+import { IconHaushalt } from './icon-household';
+import { IconSonstiges } from './icon-other';
 import { IconTransport } from './icon-transport';
 
 /**

@@ -23,8 +23,8 @@ import {
 } from '../finance/data/private-finance-api.service';
 import { SpendCurveChart } from '../../shared/features/spend-curve/spend-curve';
 import { daysLeft, eurRound, spendCurve, spendingBudget } from '../../shared/features/spend-curve/spend-curve-data';
-import { HaushaltOverviewDto } from '../household/data/haushalt-api.service';
-import { HAUSHALT_DATA_PROVIDER } from '../household/data/haushalt-data-provider';
+import { HaushaltOverviewDto } from '../household/data/household-api.service';
+import { HAUSHALT_DATA_PROVIDER } from '../household/data/household-data-provider';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   OrganisationApi,
@@ -32,12 +32,12 @@ import {
   TodayData,
   TodayItem,
   PersonalTask,
-} from '../organization/data/organisation-api.service';
+} from '../organization/data/organization-api.service';
 import { TripPass } from '../travel/shared/trip-pass';
 import { DashAnswers } from './dash-answers';
 import { DashProgress } from './dash-progress';
 import { financeAnswer, householdAnswer, ideaForToday, organisationAnswer, progressRings, spentOn, travelAnswer } from './dashboard-pulse';
-import { ReisenApi, Trip } from '../travel/data/reisen-api.service';
+import { ReisenApi, Trip } from '../travel/data/travel-api.service';
 import { AnimatedBeam } from '../../shared/ui/animated-beam/animated-beam';
 import {
   ChangeDetectionStrategy,

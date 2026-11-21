@@ -1,9 +1,9 @@
 import { Injectable, Injector, inject } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { PrivateFinanceApi } from '../../../features/finance/data/private-finance-api.service';
-import { HAUSHALT_DATA_PROVIDER } from '../../../features/household/data/haushalt-data-provider';
-import { OrganisationApi } from '../../../features/organization/data/organisation-api.service';
-import { ReisenApi } from '../../../features/travel/data/reisen-api.service';
+import { HAUSHALT_DATA_PROVIDER } from '../../../features/household/data/household-data-provider';
+import { OrganisationApi } from '../../../features/organization/data/organization-api.service';
+import { ReisenApi } from '../../../features/travel/data/travel-api.service';
 import { RelevanceFacts, URGENT_EVERY_DAYS, commonWord, dueDuring, fits } from './connection-relevance';
 import { ConnectedObject, ConnectionDto, ConnectionObjectType, ConnectionOption, LinkSuggestionDto } from './connections-api.service';
 

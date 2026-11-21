@@ -1,8 +1,8 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { AppSelect, SelectOption } from '../../../shared/ui/form/select';
-import { PackingCategory, PackingItem } from '../data/reisen-api.service';
-import { PACKING_META, PACKING_ORDER, PackingView, packingGroups, percent } from '../shared/reisen-logic';
+import { PackingCategory, PackingItem } from '../data/travel-api.service';
+import { PACKING_META, PACKING_ORDER, PackingView, packingGroups, percent } from '../shared/travel-logic';
 
 /** Reise › Packliste: Artikel eintippen und Enter (Kategorie optional), nach Kategorie gruppiert abhaken, Fortschritt
  * „12 von 24 gepackt“. Seit 31.10.2026 oben Kategorie-Kacheln mit Ring (antippen springt zur Gruppe) und ein ruhiger

@@ -74,7 +74,7 @@ Stand: 06.10.2026. Grundlage: „4inOne – HAUSHALT V1 – FINALER MASTER PROMP
 
 - Backend: `haushalt/test_haushalt_v1.py` (Wiederholung, Kündigungstag, Status, Validierung, Vertragsnummer,
   30-Tage-Fenster, Zusammenfassung nur eigener Haushalt, Archiv, Migration); bestehende Tests angepasst.
-- Frontend: `vertraege-logic.spec.ts` (inkl. Geräte), `haushalt.spec.ts` (Reiter, Ansichten, Archiv, Zuhause, Demo-Provider).
+- Frontend: `contracts-logic.spec.ts` (inkl. Geräte), `household.spec.ts` (Reiter, Ansichten, Archiv, Zuhause, Demo-Provider).
 - E2E: `haushalt-reiter.spec.ts` (alle Reiter bei 360/390/430/820/1280/1440 px mit axe, alte Links, leerer Zustand,
   Archiv, Löschen mit Bestätigung), `haushalt-aufgaben.spec.ts`.
 

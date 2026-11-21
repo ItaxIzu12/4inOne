@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
-import { ReisenApi, Trip, TripBalances, TripExpense } from '../data/reisen-api.service';
-import { formatMoney } from '../shared/reisen-logic';
+import { ReisenApi, Trip, TripBalances, TripExpense } from '../data/travel-api.service';
+import { formatMoney } from '../shared/travel-logic';
 
 /** Reise › Budget › „Wer schuldet wem“ (15.11.2026): wer was ausgelegt hat, wer wem wie viel schuldet – mit den
  * wenigsten Überweisungen (backend reisen/split.py). „Als beglichen markieren“ ist nur ein Vermerk; 4inOne bewegt

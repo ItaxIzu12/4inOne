@@ -2,8 +2,8 @@ import { DoneToggle } from '../../../shared/ui/done-toggle/done-toggle';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { LinkHints, connectionHints } from '../../../shared/features/connections/link-hints';
-import { PersonalEvent, PersonalNote, PersonalTask } from '../data/organisation-api.service';
-import { eventCategory, eventsOn, localDay, noteLines, noteTitle } from '../shared/organisation-logic';
+import { PersonalEvent, PersonalNote, PersonalTask } from '../data/organization-api.service';
+import { eventCategory, eventsOn, localDay, noteLines, noteTitle } from '../shared/organization-logic';
 import { DAY_END_MIN, clock, dayLine, nextUp, span, tasksForToday } from './org-day-logic';
 
 /**

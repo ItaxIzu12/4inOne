@@ -1,0 +1,454 @@
+// Fortsetzung von travel.scss (aufgeteilt wegen des Stilbudgets von 12 kB je Datei, 15.11.2026).
+// Wird in travel.ts direkt NACH travel.scss eingebunden — die Reihenfolge der Regeln ist dieselbe wie vorher.
+@use '../../shared/styles/domain-layout' as domain;
+
+// ---------- Vorschläge prüfen ----------
+// Kopf · Auswahlleiste · scrollende Liste · feste Fußleiste (wie die Formular-Modals). Ausgewählte Zeilen tragen
+// das Akzent-Blau leise; die Anzahl im Button sagt, was passiert.
+.suggest {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.suggest__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 24px 68px 4px 24px;
+}
+.suggest__icon {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.suggest__icon app-icon {
+  width: 22px;
+  height: 22px;
+}
+.suggest__intro h2 {
+  margin: 0;
+  font-size: var(--fs-section);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.suggest__intro p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+  line-height: 1.45;
+}
+.suggest__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 24px 0;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.suggest__all {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.suggest__all:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.suggest__body {
+  display: grid;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: 20px;
+  min-height: 0;
+  padding: 16px 24px 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.suggest__group h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+}
+.suggest__group h3 app-icon {
+  width: 17px;
+  height: 17px;
+  color: var(--accent);
+}
+.suggest__count {
+  margin-left: auto;
+  color: #6b7a90;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.suggest__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.suggest__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 14px 8px 12px;
+  border: 1px solid #e3e9f2;
+  border-radius: var(--radius-md);
+  background: #fff;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out;
+}
+.suggest__row:hover {
+  border-color: #c8d6ec;
+}
+// Abgewählt tritt zurück; Angehakt bleibt ruhig weiß — das Kästchen trägt die Farbe.
+.suggest__row:not(.is-on) {
+  background: var(--surface-hover);
+}
+.suggest__row:not(.is-on) .suggest__text {
+  color: var(--text-secondary);
+}
+.suggest__row:has(input:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.suggest__row:has(input:disabled) {
+  cursor: default;
+  opacity: 0.7;
+}
+// runder Haken: shared/ui/form/choice-controls.css — hier in der Reisefarbe
+.suggest__row input {
+  --check-color: var(--travel-fill);
+  cursor: inherit;
+}
+.suggest__text {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  overflow-wrap: anywhere;
+}
+.suggest__meta {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.suggest__done {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px 8px;
+  text-align: center;
+}
+.suggest__done span {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e8f7ee;
+  color: #1f7a44;
+}
+.suggest__done app-icon {
+  width: 22px;
+  height: 22px;
+}
+.suggest__done p {
+  max-width: 34ch;
+  margin: 0;
+  color: #34445e;
+  font-size: var(--fs-body);
+}
+.suggest__error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: #fdecea;
+  color: #b3261e;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+}
+.suggest__foot {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px 20px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-hover);
+}
+// Fußknöpfe mit Symbol wie in allen Dialogen (01.11.2026)
+.suggest__foot button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.suggest__foot button app-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+.suggest__foot .primary {
+  min-width: 180px;
+  font-size: var(--fs-body);
+}
+.suggest__foot .primary:disabled {
+  border-color: #b9c8e6;
+  background: #b9c8e6;
+  cursor: default;
+}
+.suggest__cancel {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #d6dfeb;
+  border-radius: var(--radius-md);
+  background: #fff;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+.suggest__cancel:hover:not(:disabled) {
+  border-color: #b9c6da;
+}
+.suggest .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .suggest__head {
+    padding: 28px 60px 4px 20px;
+  }
+  .suggest__bar {
+    margin-inline: 20px;
+  }
+  .suggest__body {
+    padding-inline: 20px;
+  }
+  .suggest__text {
+    font-size: var(--fs-body);
+  }
+  .suggest__foot {
+    padding: 12px 20px calc(16px + env(safe-area-inset-bottom));
+  }
+  .suggest__foot .primary {
+    flex: 1;
+    min-width: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .suggest__row {
+    transition: none;
+  }
+}
+.save-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: -3px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .save-spinner {
+    animation: reisen-spin 0.7s linear infinite;
+  }
+
+}
+@keyframes reisen-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.overlap-warning {
+  padding: 16px;
+  border: 1px solid #f6dfa3;
+  border-radius: var(--radius-lg);
+  background: #fff9ec;
+  color: #7a5a12;
+}
+.overlap-warning p {
+  margin: 0 0 8px;
+  color: inherit;
+}
+.overlap-warning ul {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+.overlap-warning li {
+  margin-bottom: 4px;
+}
+.overlap-warning .muted {
+  color: #6e5527;
+}
+
+@media (max-width: 1100px) {
+  .reisen-page {
+    padding: 24px 20px 40px;
+  }
+  .tabs {
+    gap: 0;
+  }
+  .tabs button {
+    flex: 0 0 auto;
+    padding: 0 10px;
+  }
+
+}
+@include domain.layout;
+// Kopf ohne Karte wie in den anderen Bereichen.
+.domain-sticky {
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+  margin-bottom: 16px;
+}
+@media (max-width: 760px) {
+  .domain-sticky {
+    padding: 10px 10px 0;
+    margin-bottom: 12px;
+  }
+  .subtitle {
+    display: none;
+  }
+  .heading-icon {
+    width: 44px;
+    height: 44px;
+  }
+  .trip-heading {
+    align-items: flex-start;
+  }
+  .trip-heading h1 {
+    font-size: var(--fs-metric);
+    letter-spacing: -0.5px;
+  }
+  // Der Zeitraum ist in einer Reise die wichtigste Zeile — auch am Handy sichtbar.
+  // Zeitraum, Ziel und Status umbrechen sauber als eigene Stücke — kein einzelnes „·“ am Zeilenende.
+  .trip-heading .subtitle {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 8px;
+    font-size: var(--fs-meta);
+  }
+  .trip-heading .subtitle__sep {
+    display: none;
+  }
+  .trip-heading .secondary span {
+    display: none;
+  }
+  .trip-heading .secondary {
+    width: 44px;
+    padding: 0;
+  }
+  .field-row {
+    flex-direction: column;
+  }
+  // Vier Reiter auf 360 px ohne Scrollen, Symbole nur am Rechner.
+  .tabs {
+    gap: 0;
+    border: 1px solid #e3eaf7;
+    background: #f8fbff;
+  }
+  .tabs button {
+    flex: 1 1 auto;
+    justify-content: center;
+    margin-bottom: 0;
+    padding: 0 3px;
+    border-bottom: 0;
+    font-size: var(--fs-meta);
+  }
+  .tabs button app-icon {
+    display: none;
+  }
+  .tabs button[aria-selected='true'] {
+    background: #e6efff;
+  }
+
+}
+
+// Gepäck: kombinierbare Chips (wie die Kategorie-Chips in Finanzen), ausgewählt mit Häkchen — nicht nur über Farbe.
+.baggage-field {
+  display: grid;
+  gap: 8px;
+}
+.baggage-field__label {
+  color: var(--text, var(--text-primary));
+  font-size: var(--fs-secondary);
+  font-weight: 700;
+}
+.baggage-field__label .muted {
+  font-weight: 400;
+}
+.baggage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.baggage-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #d7e1ef;
+  border-radius: 999px;
+  background: #fff;
+  color: #2c3a4e;
+  font: inherit;
+  font-size: var(--fs-secondary);
+  cursor: pointer;
+  transition: border-color 150ms ease-out, background-color 150ms ease-out;
+}
+.baggage-chip:hover {
+  border-color: #b7c7de;
+}
+.baggage-chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #1c3f8f;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.baggage-chip app-icon {
+  width: 16px;
+  height: 16px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .baggage-chip {
+    transition: none;
+  }
+}

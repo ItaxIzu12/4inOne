@@ -1,8 +1,8 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
-import { Trip, TripParticipant, TripTask } from '../data/reisen-api.service';
-import { TRANSPORT_LABELS, TaskView, dueLabel, filterTasks, initials, localDay, planningTips, taskTimeline, transportIcon, tripPhase } from '../shared/reisen-logic';
+import { Trip, TripParticipant, TripTask } from '../data/travel-api.service';
+import { TRANSPORT_LABELS, TaskView, dueLabel, filterTasks, initials, localDay, planningTips, taskTimeline, transportIcon, tripPhase } from '../shared/travel-logic';
 
 const ROLE_LABELS: Record<TripParticipant['role'], string> = { OWNER: 'Besitzer', EDITOR: 'Bearbeiter', VIEWER: 'Betrachter' };
 

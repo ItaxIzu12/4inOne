@@ -19,7 +19,7 @@ const STEPS = ['App holen', 'Code scannen', 'Bestätigen'];
   standalone: true,
   imports: [ErrorNoticeDirective, AppShell, SettingsLayout, RouterLink],
   templateUrl: './mfa-setup.html',
-  styleUrls: ['../settings/einstellungen.css', '../profile/profil.css', './mfa-setup.css'],
+  styleUrls: ['../settings/settings.css', '../profile/profile.css', './mfa-setup.css'],
 })
 export class MfaSetup {
   private readonly api = inject(MfaApiService);

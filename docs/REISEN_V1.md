@@ -161,10 +161,10 @@ getestet). Das Frontend lädt beim Öffnen einer Reise deren vier Listen paralle
   Status, Scope-Filter, Rechte, Query-Anzahl, Summary 700/420/280, Aufgaben inkl. Zuständigkeit, Packliste inkl.
   Fortschritt, Budget inkl. Kategorie, Ausgabe vor Reisebeginn, Betrag > 0, keine Finanztransaktion, Privatsphäre),
   `reisen/test_migration_0009.py`, angepasst `connections/tests/test_trip_overview.py`.
-- Frontend: `reisen.spec.ts` (Meine Reisen, Leer-/Lade-/Fehlerzustände, Reiter, alte Links, Tastatur, CRUD,
-  Validierung, Überschneidung, Aufgaben, Teilnehmer, Packliste, Budget, Leserechte), `reisen-logic.spec.ts`,
+- Frontend: `travel.spec.ts` (Meine Reisen, Leer-/Lade-/Fehlerzustände, Reiter, alte Links, Tastatur, CRUD,
+  Validierung, Überschneidung, Aufgaben, Teilnehmer, Packliste, Budget, Leserechte), `travel-logic.spec.ts`,
   `trip-suggestions.spec.ts`.
-- E2E: `e2e/reisen.spec.ts` (manuelle Testfälle 1–11 inkl. 360/390/430/820/1440 px und axe), angepasst
+- E2E: `e2e/travel.spec.ts` (manuelle Testfälle 1–11 inkl. 360/390/430/820/1440 px und axe), angepasst
   `mobile-domain-controls`, `scroll-lock`, `demo-pages`.
 
 ## Bewusst nicht in V1
@@ -260,7 +260,7 @@ wo gebucht wurde. Alles wird selbst eingetragen; weiterhin keine Buchungs-, Flug
 - **Ausgabe-Dialog** (nur bei mehr als einer Person): „Bezahlt von“ (vorausgewählt: man selbst; „Nicht angegeben“
   möglich) und „Für wen“ als Personen-Chips (vorausgewählt: alle, mindestens eine). Alle ausgewählt wird als „alle“
   gespeichert (`shared_with` leer), damit später Mitreisende automatisch mitzählen.
-- **Rechnung** (`backend/reisen/split.py`, Spiegel `computeBalances` in `reisen-logic.ts` für die Demo): jede Ausgabe
+- **Rechnung** (`backend/reisen/split.py`, Spiegel `computeBalances` in `travel-logic.ts` für die Demo): jede Ausgabe
   mit Zahler gleich auf die Personen, für die sie war; in der Reisewährung (`amount_trip`), auf den Cent, Rest-Cent
   reihum nach Nutzer-ID. Saldo = ausgelegt − Anteil (± Beglichenes). Wenigste Überweisungen: größte Schuld an das größte
   Guthaben (höchstens n − 1). Ausgaben ohne Zahler (ältere) oder ohne Kurs zählen nicht mit – die Karte sagt, wie viele.
@@ -268,4 +268,4 @@ wo gebucht wurde. Alles wird selbst eingetragen; weiterhin keine Buchungs-, Flug
   löscht ihn. Sehen dürfen alle Mitreisenden (`GET trips/<id>/balances/`), vermerken nur Besitzer:in und
   Bearbeiter:innen; Zahler, „Für wen“ und Begleichungen nur mit Mitreisenden (Backend prüft). Nichts geht nach Finanzen.
 - Alleinreise: keine Karte, kein „… hat bezahlt“. Migration `reisen/0014_expense_split_settlements`.
-- Tests: `backend/reisen/test_split.py`, `trip-split.spec.ts`, e2e „Wer schuldet wem“ in `e2e/reisen.spec.ts`.
+- Tests: `backend/reisen/test_split.py`, `trip-split.spec.ts`, e2e „Wer schuldet wem“ in `e2e/travel.spec.ts`.

@@ -1,7 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
-import { Trip, TripEvent } from '../data/reisen-api.service';
-import { EVENT_KIND_META, eventIcon, eventTime, itinerary, localDay } from '../shared/reisen-logic';
+import { Trip, TripEvent } from '../data/travel-api.service';
+import { EVENT_KIND_META, eventIcon, eventTime, itinerary, localDay } from '../shared/travel-logic';
 
 /**
  * Reise › Ablauf (12.11.2026): jeder Reisetag als Abschnitt, darin die Programmpunkte nach Uhrzeit – Zugfahrt,

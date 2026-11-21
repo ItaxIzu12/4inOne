@@ -13,17 +13,17 @@ import { ConnectionsApi } from './shared/features/connections/connections-api.se
 import { DemoConnectionsApi } from './shared/features/connections/demo-connections-api';
 import { DemoFxService, FxService } from './core/fx/fx.service';
 import { DemoHomeCurrency, HomeCurrency } from './core/fx/home-currency';
-import { DemoFinanzenDataProvider } from './features/finance/data/demo-finanzen-data-provider';
+import { DemoFinanzenDataProvider } from './features/finance/data/demo-finance-data-provider';
 import { DemoPrivateFinanceApi } from './features/finance/data/demo-private-finance-api';
-import { FINANZEN_DATA_PROVIDER } from './features/finance/data/finanzen-data-provider';
-import { FinanzenStateService } from './features/finance/data/finanzen-state.service';
+import { FINANZEN_DATA_PROVIDER } from './features/finance/data/finance-data-provider';
+import { FinanzenStateService } from './features/finance/data/finance-state.service';
 import { PrivateFinanceApi } from './features/finance/data/private-finance-api.service';
-import { DemoHaushaltDataProvider } from './features/household/data/demo-haushalt-data-provider';
-import { HAUSHALT_DATA_PROVIDER } from './features/household/data/haushalt-data-provider';
-import { DemoOrganisationApi } from './features/organization/data/demo-organisation-api';
-import { OrganisationApi } from './features/organization/data/organisation-api.service';
-import { DemoReisenApi } from './features/travel/data/demo-reisen-api';
-import { ReisenApi } from './features/travel/data/reisen-api.service';
+import { DemoHaushaltDataProvider } from './features/household/data/demo-household-data-provider';
+import { HAUSHALT_DATA_PROVIDER } from './features/household/data/household-data-provider';
+import { DemoOrganisationApi } from './features/organization/data/demo-organization-api';
+import { OrganisationApi } from './features/organization/data/organization-api.service';
+import { DemoReisenApi } from './features/travel/data/demo-travel-api';
+import { ReisenApi } from './features/travel/data/travel-api.service';
 
 /** Alle Demo-Dienste (nur unter /demo) – auch für Tests, die die Demo als Ganzes prüfen. */
 export const DEMO_PROVIDERS: Provider[] = [
@@ -72,20 +72,20 @@ export const DEMO_ROUTES: Routes = [
       {
         path: 'haushalt',
         title: 'Haushalt – Demo | 4inOne',
-        loadComponent: () => import('./features/household/haushalt').then((m) => m.Haushalt),
+        loadComponent: () => import('./features/household/household').then((m) => m.Haushalt),
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'organisation',
         title: 'Organisation – Demo | 4inOne',
         loadComponent: () =>
-          import('./features/organization/organisation').then((m) => m.Organisation),
+          import('./features/organization/organization').then((m) => m.Organisation),
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'reisen',
         title: 'Reisen – Demo | 4inOne',
-        loadComponent: () => import('./features/travel/reisen').then((m) => m.Reisen),
+        loadComponent: () => import('./features/travel/travel').then((m) => m.Reisen),
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
@@ -94,7 +94,7 @@ export const DEMO_ROUTES: Routes = [
         // zur Anmeldung zwang, obwohl der Rest der Demo ohne Login auskommt.
         path: 'familie',
         title: 'Personen & Gruppen – Demo | 4inOne',
-        loadComponent: () => import('./features/people/familie').then((m) => m.Familie),
+        loadComponent: () => import('./features/people/people').then((m) => m.Familie),
         data: { shell: 'bare', sidebarNav: true },
       },
     ],

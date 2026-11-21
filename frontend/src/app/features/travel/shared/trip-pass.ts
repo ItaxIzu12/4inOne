@@ -1,9 +1,9 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
-import { Trip } from '../data/reisen-api.service';
+import { Trip } from '../data/travel-api.service';
 import type { TripTab } from '../overview/trip-overview';
-import { TRANSPORT_LABELS, cancellationInfo, formatMoney, localDay, passStub, peopleLabel, placeParts, shortRange, transportIcon, tripPhase } from './reisen-logic';
+import { TRANSPORT_LABELS, cancellationInfo, formatMoney, localDay, passStub, peopleLabel, placeParts, shortRange, transportIcon, tripPhase } from './travel-logic';
 
 /**
  * Reisen › Bordkarte („Von hier nach dort“, 31.10.2026): die eine Fläche in der Reisefarbe. Links Abreiseort → Ziel

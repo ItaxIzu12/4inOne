@@ -24,7 +24,7 @@ class Trip(models.Model):
 
     class Status(models.TextChoices):
         # Reisen V1: vier Zustände, kein Entwurf. „Unterwegs“ ist kein gespeicherter Status, sondern ergibt sich aus
-        # dem Zeitraum (siehe Frontend reisen-logic.ts). Frühere Werte IDEA/ACTIVE migriert 0009 (IDEA → PLANNED,
+        # dem Zeitraum (siehe Frontend travel-logic.ts). Frühere Werte IDEA/ACTIVE migriert 0009 (IDEA → PLANNED,
         # ACTIVE → CONFIRMED), damit keine Reise verloren geht.
         PLANNED = 'PLANNED', 'In Planung'
         CONFIRMED = 'CONFIRMED', 'Bestätigt'

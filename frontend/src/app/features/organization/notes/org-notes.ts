@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FileThumb } from '../../../shared/features/attachments/file-thumb';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
-import { OrganisationApi, PersonalNote } from '../data/organisation-api.service';
-import { noteEdited, noteLines, noteTitle } from '../shared/organisation-logic';
+import { OrganisationApi, PersonalNote } from '../data/organization-api.service';
+import { noteEdited, noteLines, noteTitle } from '../shared/organization-logic';
 
 /** Längste Schnellnotiz (eine Zeile im Eingabefeld); längere schreibt man im Dialog. */
 export const QUICK_NOTE_MAX = 500;
@@ -10,7 +10,7 @@ export const QUICK_NOTE_MAX = 500;
 /**
  * Notizen als Zettelwand: oben „Schnell notieren“ (Enter speichert sofort, ohne Dialog), darunter angeheftete
  * Notizen in der Organisationsfarbe, dann alle übrigen als Karten mit ein paar Zeilen Vorschau — zuletzt bearbeitet
- * zuerst. Suche über Titel und Inhalt. Bearbeiten und Speichern übernimmt die Hülle (organisation.ts).
+ * zuerst. Suche über Titel und Inhalt. Bearbeiten und Speichern übernimmt die Hülle (organization.ts).
  */
 @Component({
   selector: 'app-org-notes',

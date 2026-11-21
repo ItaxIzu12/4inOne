@@ -1,4 +1,4 @@
-import { PackingCategory, Trip, TripClimate } from '../data/reisen-api.service';
+import { PackingCategory, Trip, TripClimate } from '../data/travel-api.service';
 
 export interface SuggestedPackingItem {
   title: string;

@@ -7,10 +7,10 @@ import { AppSelect, SelectOption } from '../../../shared/ui/form/select';
 import { AppTimePicker } from '../../../shared/ui/form/time-picker';
 import { ModalForm } from '../../../shared/ui/form/modal-form';
 import { ScopeNote } from '../../../shared/ui/scope-note/scope-note';
-import { Effort, Id, MemberLoadDto, Recurrence, TaskDto, TaskInput, TaskPriority, TaskRoom } from '../data/haushalt-api.service';
-import { HAUSHALT_DATA_PROVIDER } from '../data/haushalt-data-provider';
-import { todayIso } from '../shared/haushalt-logic';
-import { PRIORITIES, ROOMS } from '../shared/aufgaben-logic';
+import { Effort, Id, MemberLoadDto, Recurrence, TaskDto, TaskInput, TaskPriority, TaskRoom } from '../data/household-api.service';
+import { HAUSHALT_DATA_PROVIDER } from '../data/household-data-provider';
+import { todayIso } from '../shared/household-logic';
+import { PRIORITIES, ROOMS } from '../shared/tasks-logic';
 
 /** Wiederholung im Formular: die einfachen Rhythmen oder „alle X Tage/Wochen“ (→ recurrence_days). */
 type RepeatChoice = Recurrence | 'every_days' | 'every_weeks';
@@ -43,7 +43,7 @@ export interface TaskFormChange {
   standalone: true,
   imports: [ConnectionsSection, Field, ModalForm, AppSelect, AppDatePicker, AppTimePicker, ScopeNote],
   templateUrl: './task-form.html',
-  styleUrls: ['../shared/haushalt-common.scss'],
+  styleUrls: ['../shared/household-common.scss'],
 })
 export class TaskForm {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);

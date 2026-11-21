@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { TripExpense, TripParticipant, TripSettlement } from '../data/reisen-api.service';
-import { computeBalances, splitEqually, transfersFor } from '../shared/reisen-logic';
+import { TripExpense, TripParticipant, TripSettlement } from '../data/travel-api.service';
+import { computeBalances, splitEqually, transfersFor } from '../shared/travel-logic';
 
 /** Dieselben Fälle wie backend/reisen/test_split.py – die Demo rechnet wie das Backend. */
 const person = (user: number, name: string): TripParticipant =>

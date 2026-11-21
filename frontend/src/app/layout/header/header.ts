@@ -4,9 +4,9 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { filter } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { ScrollService } from '../../core/scroll/scroll.service';
-import { IconFinanzen } from '../../shared/ui/icons/icon-finanzen';
-import { IconHaushalt } from '../../shared/ui/icons/icon-haushalt';
-import { IconOrganisation } from '../../shared/ui/icons/icon-organisation';
+import { IconFinanzen } from '../../shared/ui/icons/icon-finance';
+import { IconHaushalt } from '../../shared/ui/icons/icon-household';
+import { IconOrganisation } from '../../shared/ui/icons/icon-organization';
 import { IconMenu } from '../../shared/ui/icons/icon-menu';
 import { IconClose } from '../../shared/ui/icons/icon-close';
 import { Brand } from '../../shared/ui/brand/brand';

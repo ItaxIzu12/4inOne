@@ -13,7 +13,7 @@ Wir prüfen, ob Menschen 4inOne verstehen, einen persönlichen Nutzen finden, pa
 - [ ] Impressum und Datenschutzerklärung mit echten Angaben (P1-03).
 - [ ] Deployment-Topologie entschieden (ARCHITEKTUR.md §3.10) und auf dem echten Server über HTTPS geprüft: Registrierung, Login, Reload, Passwort zurücksetzen mit echtem Mailversand (`EMAIL_HOST`, `FRONTEND_URL`), Body-Limit am Proxy.
 - [ ] Betreute Kontaktadresse für Feedback und Sicherheitsmeldungen festgelegt (siehe Feedback-Weg).
-- [ ] Reisen-Testsuite grün: Die neue Regel „erster Reisetag nicht vor heute“ widerspricht noch `e2e/reisen.spec.ts:82` und `reisen/tests.py::test_trip_crud_and_owner_spoofing`.
+- [ ] Reisen-Testsuite grün: Die neue Regel „erster Reisetag nicht vor heute“ widerspricht noch `e2e/travel.spec.ts:82` und `reisen/tests.py::test_trip_crud_and_owner_spoofing`.
 - [ ] Danach P0 = 0 und P1 = 0 erneut bestätigen.
 
 ### Teilnehmer und Ablauf

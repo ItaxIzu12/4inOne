@@ -1,4 +1,4 @@
-import { PersonalEvent, PersonalTask } from '../data/organisation-api.service';
+import { PersonalEvent, PersonalTask } from '../data/organization-api.service';
 import { dayLine, nextUp, span, tasksForToday } from './org-day-logic';
 
 // Samstag, 31. Oktober 2026, 14:40 Uhr (lokal)

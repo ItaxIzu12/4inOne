@@ -1,13 +1,13 @@
 import { Component, computed, input, output } from '@angular/core';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { Modal } from '../../../shared/ui/modal/modal';
-import { PersonalEvent } from '../data/organisation-api.service';
-import { dayWord, endTime, eventsOn, longDay, startTime } from '../shared/organisation-logic';
+import { PersonalEvent } from '../data/organization-api.service';
+import { dayWord, endTime, eventsOn, longDay, startTime } from '../shared/organization-logic';
 
 /**
  * Organisation › Kalender › Tagesblatt (31.10.2026): Klick auf einen Tag mit Terminen zeigt sie hier — antippen öffnet
  * den Termin, „Termin an diesem Tag“ legt einen weiteren an. Nach dem Speichern kehrt die Seite hierher zurück, so
- * lassen sich mehrere Termine nacheinander eintragen. Leere Tage öffnen direkt „Termin hinzufügen“ (organisation.ts).
+ * lassen sich mehrere Termine nacheinander eintragen. Leere Tage öffnen direkt „Termin hinzufügen“ (organization.ts).
  */
 @Component({
   selector: 'app-org-day-sheet',

@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { IconFinanzen } from '../../shared/ui/icons/icon-finanzen';
-import { IconHaushalt } from '../../shared/ui/icons/icon-haushalt';
-import { IconOrganisation } from '../../shared/ui/icons/icon-organisation';
+import { IconFinanzen } from '../../shared/ui/icons/icon-finance';
+import { IconHaushalt } from '../../shared/ui/icons/icon-household';
+import { IconOrganisation } from '../../shared/ui/icons/icon-organization';
 
 interface NavItem {
   route: string;

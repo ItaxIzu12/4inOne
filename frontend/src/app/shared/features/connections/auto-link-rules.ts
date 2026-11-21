@@ -1,4 +1,4 @@
-import { cancellationDeadline } from '../../../features/household/shared/vertraege-logic';
+import { cancellationDeadline } from '../../../features/household/shared/contracts-logic';
 import { AutoKind } from './auto-links-api.service';
 
 /**

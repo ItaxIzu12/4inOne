@@ -1,10 +1,10 @@
 import { Type as ComponentType } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Impressum } from './imprint/impressum';
-import { Datenschutz } from './privacy/datenschutz';
-import { Nutzungsbedingungen } from './terms/nutzungsbedingungen';
-import { Barrierefreiheit } from './accessibility/barrierefreiheit';
+import { Impressum } from './imprint/imprint';
+import { Datenschutz } from './privacy/privacy';
+import { Nutzungsbedingungen } from './terms/terms';
+import { Barrierefreiheit } from './accessibility/accessibility';
 
 /**
  * Regressionsschutz: der Platzhalter-

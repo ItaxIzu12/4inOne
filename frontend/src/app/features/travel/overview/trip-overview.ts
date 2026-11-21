@@ -1,8 +1,8 @@
 import { Component, computed, input, output } from '@angular/core';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { ConnectionsSection } from '../../../shared/features/connections/connections-section';
-import { Trip, TripTask } from '../data/reisen-api.service';
-import { TRANSPORT_LABELS, cancellationInfo, dueLabel, filterTasks, formatMoney, initials, localDay, nights, peopleLabel, percent, transportIcon, tripDays, tripPhase } from '../shared/reisen-logic';
+import { Trip, TripTask } from '../data/travel-api.service';
+import { TRANSPORT_LABELS, cancellationInfo, dueLabel, filterTasks, formatMoney, initials, localDay, nights, peopleLabel, percent, transportIcon, tripDays, tripPhase } from '../shared/travel-logic';
 import { TripPass } from '../shared/trip-pass';
 
 export type TripTab = 'uebersicht' | 'ablauf' | 'planung' | 'packliste' | 'budget';

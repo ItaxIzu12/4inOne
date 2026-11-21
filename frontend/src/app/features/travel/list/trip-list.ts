@@ -1,8 +1,8 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
-import { Trip } from '../data/reisen-api.service';
-import { STATUS_LABELS, STATUS_TONE, groupTrips, localDay, packingShare, placeParts, shortRange, tripPhase, whenText } from '../shared/reisen-logic';
+import { Trip } from '../data/travel-api.service';
+import { STATUS_LABELS, STATUS_TONE, groupTrips, localDay, packingShare, placeParts, shortRange, tripPhase, whenText } from '../shared/travel-logic';
 import { TripPass } from '../shared/trip-pass';
 
 const MONTH_ABBR = ['JAN', 'FEB', 'MÄR', 'APR', 'MAI', 'JUN', 'JUL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEZ'];

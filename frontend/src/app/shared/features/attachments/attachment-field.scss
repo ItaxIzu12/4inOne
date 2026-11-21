@@ -1,6 +1,6 @@
 // Fotos & PDF in Dialogen (Notiz, Gerät, Vertrag; 31.10.2026): Kacheln 96 px, Auswahl als gestrichelte Schaltfläche,
 // Hinweis mit Schloss. Bereichsfarbe über --att-accent/--att-soft/--att-on (Standard Organisation; der Haushalt setzt
-// seine eigene Farbe, siehe haushalt/ordner-tab.scss).
+// seine eigene Farbe, siehe haushalt/home-tab.scss).
 :host {
   --att-accent: var(--organization-accent);
   --att-soft: var(--organization-soft);

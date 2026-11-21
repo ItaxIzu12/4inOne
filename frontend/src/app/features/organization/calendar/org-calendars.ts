@@ -3,7 +3,7 @@ import { ContactDto, ContactsApiService } from '../../../core/contacts/contacts-
 import { DEMO_MODE } from '../../../core/demo-context';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { Modal } from '../../../shared/ui/modal/modal';
-import { CalendarColor, CalendarRole, CalendarShares, OrganisationApi, SharedCalendar, ShareRole } from '../data/organisation-api.service';
+import { CalendarColor, CalendarRole, CalendarShares, OrganisationApi, SharedCalendar, ShareRole } from '../data/organization-api.service';
 
 /** 'all' · 'mine' · ID eines gemeinsamen Kalenders · `p<Konto-ID>` = für mich freigegebener Kalender einer Person */
 export type CalendarFilter = 'all' | 'mine' | number | `p${number}`;

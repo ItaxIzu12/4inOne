@@ -1,10 +1,10 @@
 import { Injectable, Injector, inject } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { HAUSHALT_DATA_PROVIDER } from '../../../features/household/data/haushalt-data-provider';
-import { FolderEntryDto } from '../../../features/household/data/haushalt-api.service';
+import { HAUSHALT_DATA_PROVIDER } from '../../../features/household/data/household-data-provider';
+import { FolderEntryDto } from '../../../features/household/data/household-api.service';
 import { PrivateFinanceApi } from '../../../features/finance/data/private-finance-api.service';
-import { ReisenApi } from '../../../features/travel/data/reisen-api.service';
-import { TRANSPORT_LABELS } from '../../../features/travel/shared/reisen-logic';
+import { ReisenApi } from '../../../features/travel/data/travel-api.service';
+import { TRANSPORT_LABELS } from '../../../features/travel/shared/travel-logic';
 
 /** Reiseart wie im Backend (reisen.models.Trip.TravelType) – für „Städtereise · Zug“ am Reisebalken. */
 const TRAVEL_TYPE_LABEL: Record<string, string> = {

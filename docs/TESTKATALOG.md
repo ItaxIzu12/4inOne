@@ -89,7 +89,7 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 44 
 | AUTH-28 | Onboarding: erster echter Eintrag je Bereich mit minimalen Feldern | P1 | A/E | ✅ `core/test_onboarding.py`, `e2e/onboarding.spec.ts` |
 | AUTH-29 | Passwort-Richtlinie nach LKA NRW/BSI (12+ mit vier Zeichenarten oder Passphrase ab 25; keine Folgen; nicht Name/E-Mail; kein „Password123!“) im Backend und gleich angezeigt im Frontend; alte Passwörter melden sich weiter an | P0 | A/E | ✅ `core/test_password_policy.py`, `shared/utils/password-policy.spec.ts`, `e2e/auth-social.spec.ts` |
 | ONB-10 | Startleitfäden: neues Konto sieht Start-Übersicht und in allen vier Bereichen den Leitfaden; Schritte haken sich aus eigenen Daten ab (fremde zählen nie, keine fremde Reise-ID); Ausblenden im Konto (alle Geräte); nie in der Demo; Handy ohne schwebenden Knopf über dem Leitfaden; Wiedereinblenden unter Einstellungen; keine doppelte Budget-Aufforderung auf der Startseite | P1 | A/E | ✅ `core/test_onboarding_guide.py`, `shared/features/start-guide/start-guide.spec.ts`, `e2e/start-guide.spec.ts` |
-| AUTH-30 | Konto löschen nur mit Bestätigung: Passwort (bzw. E-Mail bei Konten nur über Google/Apple); falsch/fehlend → 400, nichts gelöscht; Rate-Limit gegen Durchprobieren | P0 | A/E | ✅ `core/test_delete_account.py`, `features/profile/profil.spec.ts`, `e2e-fullstack/erstnutzer.spec.ts` |
+| AUTH-30 | Konto löschen nur mit Bestätigung: Passwort (bzw. E-Mail bei Konten nur über Google/Apple); falsch/fehlend → 400, nichts gelöscht; Rate-Limit gegen Durchprobieren | P0 | A/E | ✅ `core/test_delete_account.py`, `features/profile/profile.spec.ts`, `e2e-fullstack/erstnutzer.spec.ts` |
 | E2E-FULL-1 | Vollständiger Testlauf als Erstnutzerin gegen echtes Backend (frische DB, Port 8010/4211): Registrierung, Onboarding, alle Bereiche anlegen/abhaken/bearbeiten/löschen, Abmelden/Anmelden, Export, zweites Konto isoliert (App und API 404), Konto löschen | P0 | E | ✅ `e2e-fullstack/erstnutzer.spec.ts` |
 
 ## 3. Berechtigungen und Privatsphäre (wichtigster Block)
@@ -101,7 +101,7 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 44 
 | PERM-03 | Private Finanzen sind nie für Haushaltsmitglieder sichtbar | P0 | A | ✅ `finanzen/tests/test_permissions.py` |
 | PERM-04 | Haushalt: Admin vs. Mitglied (einladen, entfernen, Rollen) | P0 | A | ✅ |
 | PERM-05 | Reise: Besitzer / Bearbeiter / Betrachter / Fremd — lesen, schreiben, löschen, einladen | P0 | A | ✅ `reisen/test_reisen_v1.py`, `test_split.py` |
-| PERM-06 | Aus Reise/Haushalt entfernt → offene Seite zeigt sofort „kein Zugriff“ | P0 | E | ✅ `reisen.spec.ts` |
+| PERM-06 | Aus Reise/Haushalt entfernt → offene Seite zeigt sofort „kein Zugriff“ | P0 | E | ✅ `travel.spec.ts` |
 | PERM-07 | Verknüpfung zeigt nie den Titel eines Ziels, das die Person nicht sehen darf | P0 | A | ✅ `connections/tests/test_connection_security.py` |
 | PERM-08 | Suche findet nur Eigenes/Geteiltes | P0 | A | ✅ `finanzen/tests/test_search_and_categories.py` (Teil) |
 | PERM-09 | Geteilte Kalender: nur freigegebene Termine, private nie | P0 | A | ✅ `organisation/test_shared_calendars.py`, `test_calendar_shares.py` |
@@ -168,7 +168,7 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 44 
 
 | ID | Fall | Prio | Art | Stand |
 |---|---|---|---|---|
-| ORG-01 | Termin: ganztägig, mit Uhrzeit, über Mitternacht, mehrtägig, Ende vor Beginn | P0 | A/E | ✅ `organisation.spec.ts`, `test_private_api.py` |
+| ORG-01 | Termin: ganztägig, mit Uhrzeit, über Mitternacht, mehrtägig, Ende vor Beginn | P0 | A/E | ✅ `organization.spec.ts`, `test_private_api.py` |
 | ORG-02 | Wiederholung (falls vorhanden), Ausnahme, Ende der Serie | P1 | A | 🟡 |
 | ORG-03 | Kalender-Monatsansicht: Balken über Wochen-/Monatsgrenze, Klick auf jeden Tag | P1 | E | ✅ |
 | ORG-04 | ICS-Import: Google/Apple/Outlook-Datei, Zeitzonen, Umlaute, Dubletten, 2.000 Termine, kaputte Datei | P0 | A/E | ✅ `test_event_import.py`, `organisation-import.spec.ts` |
@@ -182,7 +182,7 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 44 
 
 | ID | Fall | Prio | Art | Stand |
 |---|---|---|---|---|
-| TRIP-01 | Reise anlegen/bearbeiten/absagen/löschen, Datum Ende vor Beginn, Überschneidung | P0 | E/A | ✅ `reisen.spec.ts`, `test_reisen_v1.py` |
+| TRIP-01 | Reise anlegen/bearbeiten/absagen/löschen, Datum Ende vor Beginn, Überschneidung | P0 | E/A | ✅ `travel.spec.ts`, `test_reisen_v1.py` |
 | TRIP-02 | Teilnehmer einladen, Rolle ändern, entfernen; Rechte je Rolle | P0 | A/E | ✅ |
 | TRIP-03 | Ablauf (Tagesprogramm), im Kalender sichtbar, Zeiten über Mitternacht | P1 | A/E | ✅ |
 | TRIP-04 | Planung (Aufgaben), Packliste, Vorschläge übernehmen | P1 | E | ✅ |
@@ -211,7 +211,7 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 44 
 |---|---|---|---|---|
 | PPL-01 | Kontakt einladen per E-Mail, annehmen, ablehnen, abgelaufen, an sich selbst | P0 | A/E | ✅ `invitations.spec.ts`, `test_invitations.py` |
 | PPL-02 | Einladung an noch nicht registrierte Adresse → nach Registrierung sichtbar | P0 | F | 🟡 |
-| PPL-03 | Gruppen anlegen, Mitglieder, löschen | P1 | E | ✅ `familie.spec.ts`, `people-sync.spec.ts` |
+| PPL-03 | Gruppen anlegen, Mitglieder, löschen | P1 | E | ✅ `people.spec.ts`, `people-sync.spec.ts` |
 | PPL-04 | Benachrichtigung erscheint, gelesen, Link führt zum Eintrag, Eintrag inzwischen gelöscht | P1 | A/E | 🟡 |
 | PPL-05 | Einladungs-Rate-Limit | P1 | A | ✅ |
 

@@ -4,8 +4,8 @@ import { RouterLink } from '@angular/router';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { LinkHints, connectionHints } from '../../../shared/features/connections/link-hints';
 import { ScopeNote } from '../../../shared/ui/scope-note/scope-note';
-import { PersonalTask } from '../data/organisation-api.service';
-import { REPEAT_LABEL, TASK_VIEWS, TaskGrouping, TaskView, filterTasks, groupTaskList, isRecurring, localDay, taskDue } from '../shared/organisation-logic';
+import { PersonalTask } from '../data/organization-api.service';
+import { REPEAT_LABEL, TASK_VIEWS, TaskGrouping, TaskView, filterTasks, groupTaskList, isRecurring, localDay, taskDue } from '../shared/organization-logic';
 
 const GROUPING_KEY = '4io-org-aufgaben-gruppe';
 
@@ -14,7 +14,7 @@ const GROUPING_KEY = '4io-org-aufgaben-gruppe';
  * darüber eine Suche. „Alle“ und „Wiederkehrend“ sind gegliedert — nach Tag oder
  * nach Projekt (gemerkt pro Gerät). Abhaken zeigt kurz Haken und Durchstreichen. Neue Aufgaben kommen über „Aufgabe hinzufügen“ im Kopf.
  * Eine klare Liste statt Tabelle: Haken, Titel, darunter Fälligkeit · Priorität ·
- * Wiederholung. Bearbeiten und Abhaken übernimmt die Hülle (organisation.ts).
+ * Wiederholung. Bearbeiten und Abhaken übernimmt die Hülle (organization.ts).
  */
 @Component({
   selector: 'app-org-tasks',

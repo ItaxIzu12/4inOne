@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../core/api.config';
 import { SuggestionDto } from '../../shared/features/connections/suggestions-api.service';
 import { LinkSuggestionDto } from '../../shared/features/connections/connections-api.service';
-import { TodayData, organisationTimezone } from '../organization/data/organisation-api.service';
+import { TodayData, organisationTimezone } from '../organization/data/organization-api.service';
 
 export interface TodayHouseholdTask {
   id: number;

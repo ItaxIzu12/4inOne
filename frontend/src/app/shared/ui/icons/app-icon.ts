@@ -118,7 +118,7 @@ export type IconName =
   selector: 'app-icon',
   standalone: true,
   // Flache, einfarbige Strichzeichnung (currentColor, keine Verlauf-/Glanz-Füllung) — dieselbe Sprache wie die
-  // einzelnen icon-*.ts-Komponenten (z. B. icon-finanzen.ts). Vorher hatten einige Namen hier eine abweichende,
+  // einzelnen icon-*.ts-Komponenten (z. B. icon-finance.ts). Vorher hatten einige Namen hier eine abweichende,
   // "glänzende" Gradient-Darstellung (eigenes @case je Name mit linearGradient-Füllung) — das war der einzige Ort
   // im Produkt mit diesem Stil und wirkte dadurch wie ein KI-generiertes Mockup statt ruhig/einheitlich.
   template: `<svg

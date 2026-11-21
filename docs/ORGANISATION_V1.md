@@ -57,9 +57,9 @@ Zugriff auf persönliche Organisation-Daten.
   Tag), ganztägig, Zeitraumfilter, wöchentliche/jährliche Wiederholung (auch über die Zeitumstellung), Aufgabenfilter,
   vergangene Fälligkeit, Erledigen einmalig/wiederkehrend, Notizen (Inhalt ohne Titel, anheften, lösen, Reihenfolge),
   kein Zugriff und keine Metadaten für andere Personen, Summary.
-- Frontend `organisation-logic.spec.ts`: Monatsraster, Woche ab Montag, Zeiten, Wiederholungen im Zeitraum,
+- Frontend `organization-logic.spec.ts`: Monatsraster, Woche ab Montag, Zeiten, Wiederholungen im Zeitraum,
   Aufgabenansichten, Notiztitel und Datum.
-- E2E `organisation.spec.ts`: leeres Konto (Empty States, keine Demo-Daten), Kalender lädt nur den Zeitraum,
+- E2E `organization.spec.ts`: leeres Konto (Empty States, keine Demo-Daten), Kalender lädt nur den Zeitraum,
   Termin mit Fehler am Feld + Wiederholung, Schnelleingabe, Erledigen/Wieder öffnen, Notiz, Löschen mit Bestätigung,
   Demo-Ansichten, axe bei 360/390/430/820/1440 px, Tagesstreifen am Handy.
 

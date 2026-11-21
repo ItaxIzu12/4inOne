@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { IconFinanzen } from './icon-finanzen';
-import { IconHaushalt } from './icon-haushalt';
-import { IconOrganisation } from './icon-organisation';
+import { IconFinanzen } from './icon-finance';
+import { IconHaushalt } from './icon-household';
+import { IconOrganisation } from './icon-organization';
 
 describe('Section icons', () => {
   it('IconFinanzen renders an aria-hidden svg using currentColor', () => {

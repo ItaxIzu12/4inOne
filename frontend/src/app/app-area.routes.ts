@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
 import { onboardingGuard } from './core/onboarding/onboarding.guard';
-import { FINANZEN_DATA_PROVIDER } from './features/finance/data/finanzen-data-provider';
-import { FinanzenStateService } from './features/finance/data/finanzen-state.service';
-import { RealFinanzenDataProvider } from './features/finance/data/real-finanzen-data-provider';
-import { HAUSHALT_DATA_PROVIDER } from './features/household/data/haushalt-data-provider';
-import { RealHaushaltDataProvider } from './features/household/data/real-haushalt-data-provider';
+import { FINANZEN_DATA_PROVIDER } from './features/finance/data/finance-data-provider';
+import { FinanzenStateService } from './features/finance/data/finance-state.service';
+import { RealFinanzenDataProvider } from './features/finance/data/real-finance-data-provider';
+import { HAUSHALT_DATA_PROVIDER } from './features/household/data/household-data-provider';
+import { RealHaushaltDataProvider } from './features/household/data/real-household-data-provider';
 
 /**
  * Die angemeldete App (Startseite, Finanzen, Haushalt, Organisation, Reisen, Familie, Onboarding) — eigene Datei, damit
@@ -42,7 +42,7 @@ export const APP_AREA_ROUTES: Routes = [
       {
         path: 'haushalt',
         title: 'Haushalt | 4inOne',
-        loadComponent: () => import('./features/household/haushalt').then((m) => m.Haushalt),
+        loadComponent: () => import('./features/household/household').then((m) => m.Haushalt),
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
@@ -55,20 +55,20 @@ export const APP_AREA_ROUTES: Routes = [
       {
         path: 'reisen',
         title: 'Reisen | 4inOne',
-        loadComponent: () => import('./features/travel/reisen').then((m) => m.Reisen),
+        loadComponent: () => import('./features/travel/travel').then((m) => m.Reisen),
         data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'familie',
         title: 'Personen & Gruppen | 4inOne',
-        loadComponent: () => import('./features/people/familie').then((m) => m.Familie),
+        loadComponent: () => import('./features/people/people').then((m) => m.Familie),
         data: { shell: 'bare', sidebarNav: true },
       },
       {
         path: 'organisation',
         title: 'Organisation | 4inOne',
         loadComponent: () =>
-          import('./features/organization/organisation').then((m) => m.Organisation),
+          import('./features/organization/organization').then((m) => m.Organisation),
         data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
       },
     ],

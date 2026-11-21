@@ -1,12 +1,12 @@
 import { IconName } from '../../shared/ui/icons/app-icon';
-import { HaushaltOverviewDto } from '../household/data/haushalt-api.service';
-import { room } from '../household/shared/aufgaben-logic';
+import { HaushaltOverviewDto } from '../household/data/household-api.service';
+import { room } from '../household/shared/tasks-logic';
 import { FinanceSummary } from '../finance/data/private-finance-api.service';
-import { PersonalEvent, TodayItem } from '../organization/data/organisation-api.service';
+import { PersonalEvent, TodayItem } from '../organization/data/organization-api.service';
 import { DAY_END_MIN, clock, dayLine, nextUp, span } from '../organization/today/org-day-logic';
-import { localDay as orgLocalDay } from '../organization/shared/organisation-logic';
-import { Trip } from '../travel/data/reisen-api.service';
-import { daysUntil, packingShare, placeParts, tripPhase } from '../travel/shared/reisen-logic';
+import { localDay as orgLocalDay } from '../organization/shared/organization-logic';
+import { Trip } from '../travel/data/travel-api.service';
+import { daysUntil, packingShare, placeParts, tripPhase } from '../travel/shared/travel-logic';
 
 /**
  * Startseite (31.10.2026) — „Vier Antworten“ und „Dein Fortschritt“. Reine Rechnungen aus den echten Daten der vier

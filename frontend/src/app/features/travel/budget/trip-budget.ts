@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { TripSplit } from './trip-split';
-import { BudgetCategory, Trip, TripBudgetCategory, TripExpense } from '../data/reisen-api.service';
-import { BUDGET_COLOR, BUDGET_META, budgetRows, formatMoney, percent, totalBudget, tripValue } from '../shared/reisen-logic';
+import { BudgetCategory, Trip, TripBudgetCategory, TripExpense } from '../data/travel-api.service';
+import { BUDGET_COLOR, BUDGET_META, budgetRows, formatMoney, percent, totalBudget, tripValue } from '../shared/travel-logic';
 import { FxService } from '../../../core/fx/fx.service';
 import { HomeCurrency } from '../../../core/fx/home-currency';
 

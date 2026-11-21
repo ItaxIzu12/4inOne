@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { ReisenApi } from '../../features/travel/data/reisen-api.service';
-import { OrganisationApi } from '../../features/organization/data/organisation-api.service';
+import { ReisenApi } from '../../features/travel/data/travel-api.service';
+import { OrganisationApi } from '../../features/organization/data/organization-api.service';
 import { Observable, of, throwError } from 'rxjs';
 import { ContactDto, ContactsApiService, ContactsOverview, ReceivedInviteDto, Relation, SentInviteDto, SharedArea } from './contacts-api.service';
 
-// Dieselben Namen wie demo-reisen-api.ts (Max/Lena) — eine Demo-Instanz erzählt eine durchgängige Geschichte,
+// Dieselben Namen wie demo-travel-api.ts (Max/Lena) — eine Demo-Instanz erzählt eine durchgängige Geschichte,
 // keine je Bereich unterschiedlich erfundenen Personen.
 function daysAgo(days: number): string {
   const d = new Date();
@@ -22,7 +22,7 @@ function daysFromNow(days: number): string {
   return d.toISOString();
 }
 
-/** Wie demo-reisen-api.ts: keine HTTP-Aufrufe, ersetzt ContactsApiService nur für die öffentliche Demo-Route
+/** Wie demo-travel-api.ts: keine HTTP-Aufrufe, ersetzt ContactsApiService nur für die öffentliche Demo-Route
  * (siehe app.routes.ts), gesamter Zustand lebt nur im Speicher dieser einen Instanz — ein Reload setzt zurück.
  * Zeigt absichtlich alle drei Zustände gleichzeitig (bestehende Verbindung, offene eigene Einladung, eingehende
  * Einladung), damit die Demo das Feature in einem Blick erklärt statt nur eine leere Liste zu zeigen. */
@@ -30,8 +30,8 @@ function daysFromNow(days: number): string {
 export class DemoContactsApiService {
   private nextId = 100;
   private contacts: ContactDto[] = [
-    // Reisen und Kalender stehen hier NICHT fest drin — sie kommen live aus demo-reisen-api.ts und
-    // demo-organisation-api.ts (siehe withLinks), damit Entfernen oder Einladen dort sofort auch hier stimmt.
+    // Reisen und Kalender stehen hier NICHT fest drin — sie kommen live aus demo-travel-api.ts und
+    // demo-organization-api.ts (siehe withLinks), damit Entfernen oder Einladen dort sofort auch hier stimmt.
     { id: 1, name: 'Max', email: 'max@beispiel.de', relation: 'FAMILY', since: daysAgo(120), shared: [ZUHAUSE], can_add_to: [], invited_to: [] },
     { id: 2, name: 'Lena', email: 'lena@beispiel.de', relation: 'FRIEND', since: daysAgo(30), shared: [], can_add_to: [ZUHAUSE], invited_to: [] },
   ];
@@ -147,14 +147,14 @@ export class DemoContactsApiService {
   }
 }
 
-/** Was die Reisen-Demo für den Abgleich anbietet (demo-reisen-api.ts) — nur in der Demo vorhanden. */
+/** Was die Reisen-Demo für den Abgleich anbietet (demo-travel-api.ts) — nur in der Demo vorhanden. */
 interface DemoTrips {
   demoTripsFor?(user: number): { id: number; title: string; joined: boolean; invitationId: number | null; canInvite: boolean }[];
   demoInvite?(tripId: number, user: number): void;
   demoAccept?(invitationId: number): boolean;
 }
 
-/** Was die Organisation-Demo für den Abgleich anbietet (demo-organisation-api.ts) — nur in der Demo vorhanden. */
+/** Was die Organisation-Demo für den Abgleich anbietet (demo-organization-api.ts) — nur in der Demo vorhanden. */
 interface DemoCalendars {
   demoLinksFor?(user: number, name: string): { shared: SharedArea[]; canAdd: SharedArea[]; invited: (SharedArea & { invitation_id: number })[] };
   demoInviteArea?(kind: 'CALENDAR' | 'MY_CALENDAR', areaId: number, contactId: number): void;

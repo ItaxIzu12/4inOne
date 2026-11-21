@@ -1,4 +1,4 @@
-import { InsightDto } from './finanzen-api.service';
+import { InsightDto } from './finance-api.service';
 
 /**
  * Dieselben Schwellenwert-Regeln wie das Backend (finanzen/insights.py

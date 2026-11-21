@@ -4,8 +4,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { DEMO_PROVIDERS } from '../../../demo.routes';
-import { HAUSHALT_DATA_PROVIDER } from '../../../features/household/data/haushalt-data-provider';
-import { OrganisationApi } from '../../../features/organization/data/organisation-api.service';
+import { HAUSHALT_DATA_PROVIDER } from '../../../features/household/data/household-data-provider';
+import { OrganisationApi } from '../../../features/organization/data/organization-api.service';
 import { ConnectionsApi } from './connections-api.service';
 import { DEMO_PAIRS, DemoConnectionsApi } from './demo-connections-api';
 

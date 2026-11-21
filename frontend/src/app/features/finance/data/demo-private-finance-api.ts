@@ -23,7 +23,7 @@ import {
 } from './private-finance-api.service';
 import { ImportRow } from '../transactions/finance-import';
 
-// Sicherheitskritisch wie demo-finanzen-data-provider.ts (dieselbe Regel gilt hier): diese Datei importiert KEINEN
+// Sicherheitskritisch wie demo-finance-data-provider.ts (dieselbe Regel gilt hier): diese Datei importiert KEINEN
 // HttpClient. Sie ersetzt PrivateFinanceApi nur für die öffentliche Demo-Route (siehe app.routes.ts) und hält ihren
 // gesamten Zustand im Speicher dieser einen Instanz — ein Reload verwirft ihn, das ist im Demo-Modus korrekt.
 //
