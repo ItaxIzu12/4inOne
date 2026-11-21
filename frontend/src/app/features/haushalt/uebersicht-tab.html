@@ -4,7 +4,14 @@
     <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
   </div>
 } @else if (overview(); as data) {
+  @if (showGuide()) {
+    <app-start-guide area="haushalt" heading="So startest du mit Haushalt"
+      intro="Aufgaben, Einkauf, Geräte und Verträge an einem Ort – für dich allein oder mit allen, die bei dir wohnen."
+      demoPath="/demo/haushalt" [steps]="guideSteps()" (pick)="pick($event)" (alt)="create.emit('vertrag')"
+      (hide)="guide.hide('haushalt')" />
+  }
   @if (isEmpty()) {
+    @if (!showGuide()) {
     <section class="card welcome" aria-labelledby="welcome-heading">
       <span class="welcome__icon" aria-hidden="true"><app-icon name="household" /></span>
       <h2 id="welcome-heading">Dein Zuhause im Blick</h2>
@@ -16,6 +23,7 @@
         <button type="button" class="btn-secondary" (click)="create.emit('vertrag')"><app-icon name="finance" />Vertrag hinzufügen</button>
       </div>
     </section>
+    }
   } @else {
     @if (actionError()) {
       <p class="field-error" [appErrorNotice]="actionError()">{{ actionError() }}</p>

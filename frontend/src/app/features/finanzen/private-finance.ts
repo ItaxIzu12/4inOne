@@ -23,6 +23,8 @@ import { FinanceOverviewTab } from './overview/finance-overview-tab';
 import { FinanceTransactionsTab } from './transactions/finance-transactions-tab';
 import { FinanceBudgetsTab } from './budgets/finance-budgets-tab';
 import { FinanceGoalsTab } from './goals/finance-goals-tab';
+import { DEMO_MODE } from '../../core/demo-context';
+import { GuideService } from '../../core/onboarding/guide.service';
 // Bisherige Exporte bleiben über diese Datei erreichbar
 export type { FinanceTab, ListRow, TransactionKind } from './finance-context';
 const FINANCE_TABS: { key: FinanceTab; label: string; icon: IconName }[] = [
@@ -132,6 +134,10 @@ export class PrivateFinance {
     return { budget, transaction, goal, done: [budget, transaction, goal].filter(Boolean).length };
   });
   readonly showStart = computed(() => !this.loading() && !this.error() && (!this.startSteps().budget || !this.startSteps().transaction));
+  // Startleitfaden (21.11.2026): wie bisher aus den Monatsdaten, aber „Ausblenden“ gilt fürs ganze Konto
+  readonly guide = inject(GuideService);
+  readonly demoMode = inject(DEMO_MODE);
+  readonly startGuide = computed(() => this.showStart() && !this.demoMode && !this.guide.dismissed().has('finanzen'));
   // Begriffe, die man nicht kennen muss — je ein Satz, an der Stelle erklärt, wo sie stehen (app-term-hint)
   readonly plannedHint =
     'Ausgaben, die in diesem Monat noch kommen: mit einem Datum nach heute oder wiederkehrend und noch nicht gebucht. Sie sind im Budget schon abgezogen, damit „Noch verfügbar“ nicht zu hoch ist.';
@@ -465,6 +471,7 @@ export class PrivateFinance {
     );
   });
   constructor() {
+    if (!this.demoMode) this.guide.load(); // „ausgeblendet“ steht im Konto
     // Reiter aus der Adresse (?tab=expenses …), wie in Haushalt, Organisation und Reisen.
     const linkedTab = this.route.snapshot.queryParamMap.get('tab');
     if (FINANCE_TABS.some((t) => t.key === linkedTab) || linkedTab === 'expenses' || linkedTab === 'income')

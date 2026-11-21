@@ -10,6 +10,9 @@ import { PRIORITY_LABEL, durationLabel, room } from './aufgaben-logic';
 import { RoomState, doneToday, dueNow, fairness, minutesLabel, roomStates } from './zuhause-logic';
 import type { ZuhauseSection } from './ordner-tab';
 import { UPCOMING_DAYS, formatDate, fromNow } from './vertraege-logic';
+import { DEMO_MODE } from '../../core/demo-context';
+import { GuideService } from '../../core/onboarding/guide.service';
+import { GuideStep, StartGuide } from '../../shared/start-guide/start-guide';
 
 /** Die vier Reiter im Haushalt. */
 export type HaushaltTabKey = 'heute' | 'aufgaben' | 'einkaufen' | 'zuhause';
@@ -38,12 +41,25 @@ const DEADLINE_LABEL: Record<UpcomingDeadlineDto['art'], string> = {
 @Component({
   selector: 'app-uebersicht-tab',
   standalone: true,
-  imports: [ErrorNoticeDirective, AppIcon, LinkHints],
+  imports: [ErrorNoticeDirective, AppIcon, LinkHints, StartGuide],
   templateUrl: './uebersicht-tab.html',
   styleUrls: ['./haushalt-common.scss', './uebersicht-tab.scss', './heute-hero.scss'],
 })
 export class UebersichtTab {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
+  // Startleitfaden (21.11.2026): Schritte aus echten Daten (GuideService), nie in der Demo
+  protected readonly guide = inject(GuideService);
+  private readonly demoMode = inject(DEMO_MODE);
+  protected readonly showGuide = computed(() => !this.demoMode && this.guide.shows('haushalt'));
+  protected readonly guideSteps = computed<GuideStep[]>(() => {
+    const h = this.guide.status()?.areas.haushalt;
+    return [
+      { key: 'aufgabe', title: 'Erste Aufgabe anlegen', hint: 'Was regelmäßig ansteht, z. B. Bad putzen. Auf Wunsch mit Wiederholung und wer dran ist.', done: !!h?.task },
+      { key: 'einkauf', title: 'Einkauf planen', hint: 'Die gemeinsame Liste – was jemand einträgt, sehen alle im Haushalt sofort.', done: !!h?.shopping },
+      { key: 'geraet', title: 'Gerät oder Vertrag ablegen', hint: 'Garantie, Kündigungsfrist, Kosten – 4inOne erinnert dich rechtzeitig.', done: !!h?.folder, optional: true,
+        alt: { label: 'Oder einen Vertrag hinzufügen', icon: 'finance' } },
+    ];
+  });
   readonly saved = output<string>();
   readonly openTab = output<HaushaltTabKey>();
   readonly openZuhause = output<ZuhauseSection>();
@@ -98,7 +114,12 @@ export class UebersichtTab {
     this.load();
   }
 
+  protected pick(key: string): void {
+    this.create.emit(key as HaushaltCreate);
+  }
+
   protected load(): void {
+    if (!this.demoMode) this.guide.load(); // mit jedem Neuladen: frisch angelegte Einträge sofort abhaken
     forkJoin({
       overview: this.provider.getOverview(),
       // Zusatzangaben: fehlen sie, zeigt „Heute“ das Wesentliche trotzdem

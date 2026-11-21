@@ -64,7 +64,10 @@
         <app-finance-goals-tab />
       }
     }
-    <app-mobile-action [label]="headAction().label" [icon]="headAction().icon" (pressed)="headActionClick()" />
+    <!-- Solange der Startleitfaden sichtbar ist, trägt er den Hauptschritt — kein zweiter schwebender Knopf darüber -->
+    @if (!(tab() === 'overview' && startGuide())) {
+      <app-mobile-action [label]="headAction().label" [icon]="headAction().icon" (pressed)="headActionClick()" />
+    }
   </main></app-shell
 >
 <app-finance-editor />

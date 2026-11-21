@@ -88,6 +88,7 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 43 
 | AUTH-27 | Google/Apple mit echten Zugangsdaten gegen die echten Anbieter (Google lokal, Apple auf dem Server) | P0 | M | ❌ braucht deine Zugangsdaten |
 | AUTH-28 | Onboarding: erster echter Eintrag je Bereich mit minimalen Feldern | P1 | A/E | ✅ `core/test_onboarding.py`, `e2e/onboarding.spec.ts` |
 | AUTH-29 | Passwort-Richtlinie nach LKA NRW/BSI (12+ mit vier Zeichenarten oder Passphrase ab 25; keine Folgen; nicht Name/E-Mail; kein „Password123!“) im Backend und gleich angezeigt im Frontend; alte Passwörter melden sich weiter an | P0 | A/E | ✅ `core/test_password_policy.py`, `shared/password-policy.spec.ts`, `e2e/auth-social.spec.ts` |
+| ONB-10 | Startleitfäden: neues Konto sieht Start-Übersicht und in allen vier Bereichen den Leitfaden; Schritte haken sich aus eigenen Daten ab (fremde zählen nie, keine fremde Reise-ID); Ausblenden im Konto (alle Geräte); nie in der Demo; Handy ohne schwebenden Knopf über dem Leitfaden; Wiedereinblenden unter Einstellungen; keine doppelte Budget-Aufforderung auf der Startseite | P1 | A/E | ✅ `core/test_onboarding_guide.py`, `shared/start-guide/start-guide.spec.ts`, `e2e/start-guide.spec.ts` |
 
 ## 3. Berechtigungen und Privatsphäre (wichtigster Block)
 

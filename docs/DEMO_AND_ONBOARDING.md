@@ -93,6 +93,24 @@ Recommended:
 
 Do not ask for income, detailed household structure or travel plans during signup.
 
+## Start guides in every area (since 2026-11-21)
+
+After onboarding, an empty account sees in each area a guide „So startest du mit …“ with three steps that lead
+straight to the right form and tick off from real data (`GET /api/v1/onboarding/guide/`):
+
+| Area | 1 | 2 | 3 (optional) |
+| --- | --- | --- | --- |
+| Finanzen | Monatsbudget festlegen | Erste Ausgabe erfassen (or CSV import) | Sparziel anlegen |
+| Haushalt | Erste Aufgabe anlegen | Einkauf planen | Gerät oder Vertrag ablegen |
+| Organisation | Ersten Termin eintragen | Eine Aufgabe festhalten | Eine Notiz anlegen |
+| Reisen | Erste Reise anlegen | Packliste beginnen | Reisebudget festlegen |
+
+An area counts as set up once steps 1 and 2 are done; then its guide disappears. The start page shows
+„Dein Start mit 4inOne“ with all four areas. Every guide can be hidden with ✕ — stored in the account
+(`OnboardingProfile.dismissed_guides`, `PUT /api/v1/onboarding/guide/ {area, hidden}`), so it stays hidden on all
+devices; Einstellungen › „Startleitfäden“ shows them again. While the start overview is shown and there is neither a
+budget nor an expense, the start page leaves out its finance card. Only the person's own visible data counts (own household, own/participated trips). Never shown in the demo.
+
 ## Demo tour
 
 A very short tour may explain:

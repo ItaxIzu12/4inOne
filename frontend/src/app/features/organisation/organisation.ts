@@ -6,7 +6,7 @@ import { PlaceInput } from '../../shared/form/place-input';
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { MobileAction } from '../../shared/mobile-action/mobile-action';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
@@ -30,6 +30,8 @@ import { OrgTasks } from './org-tasks';
 import { OrgNotes } from './org-notes';
 import { OrgImportDialog } from './org-import-dialog';
 import { OrgToday } from './org-today';
+import { GuideService } from '../../core/onboarding/guide.service';
+import { GuideStep, StartGuide } from '../../shared/start-guide/start-guide';
 import { SaveFeedback } from '../../shared/save-feedback/save-feedback';
 
 export { localDay } from './organisation-logic';
@@ -83,7 +85,7 @@ function apiFieldError(error: unknown, field: string): string {
   standalone: true,
   imports: [
     MobileAction, ErrorNoticeDirective, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, ReactiveFormsModule,
-    AppSelect, AppDatePicker, AppTimePicker, OrgCalendar, OrgCalendars, OrgDaySheet, AttachmentField, PlaceInput, OrgHouseholdTasks, OrgTasks, OrgNotes, OrgToday, ScopeNote, OrgImportDialog, SaveFeedback,
+    AppSelect, AppDatePicker, AppTimePicker, OrgCalendar, OrgCalendars, OrgDaySheet, AttachmentField, PlaceInput, OrgHouseholdTasks, OrgTasks, OrgNotes, OrgToday, ScopeNote, OrgImportDialog, SaveFeedback, StartGuide,
   ],
   templateUrl: './organisation.html',
   styleUrl: './organisation.scss',
@@ -127,6 +129,26 @@ export class Organisation {
   /** Connection Engine V2: abgeleitete Einträge (Kündigungsfrist, Wartung, Reise, Sparziel) — nur lesbar. */
   private readonly autoLinks = inject(AutoLinksApi);
   private readonly demo = inject(DEMO_MODE);
+  // Startleitfaden (21.11.2026): Schritte aus echten Daten (GuideService), nie in der Demo; neu geladen, sobald sich
+  // die Zahl der Termine, Aufgaben oder Notizen ändert — so hakt sich ein Schritt direkt nach dem Speichern ab
+  protected readonly guide = inject(GuideService);
+  protected readonly showGuide = computed(() => !this.demo && this.guide.shows('organisation'));
+  protected readonly guideSteps = computed<GuideStep[]>(() => {
+    const o = this.guide.status()?.areas.organisation;
+    return [
+      { key: 'event', title: 'Ersten Termin eintragen', hint: 'Arzt, Elternabend, Geburtstag – mit Erinnerung, wenn du möchtest.', done: !!o?.event },
+      { key: 'task', title: 'Eine Aufgabe festhalten', hint: 'Mit Fälligkeit taucht sie hier unter „Heute“ auf.', done: !!o?.task },
+      { key: 'note', title: 'Eine Notiz anlegen', hint: 'Für Ideen, Listen und alles, was du nicht vergessen willst.', done: !!o?.note, optional: true },
+    ];
+  });
+  private readonly guideCounts = effect(() => {
+    const counts = [this.events().length, this.tasks().length, this.notes().length];
+    if (!this.demo && counts) untracked(() => this.guide.load());
+  });
+  guidePick(key: string) {
+    if (key === 'note') this.openNote();
+    else this.open(key === 'event' ? 'event' : 'task');
+  }
   readonly derivedEvents = signal<PersonalEvent[]>([]);
   readonly visibleEvents = computed(() => {
     const filter = this.calendarFilter();

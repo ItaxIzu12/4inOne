@@ -214,6 +214,9 @@ class OnboardingProfile(models.Model):
     usage = models.CharField(max_length=10, choices=[('personal', 'Nur für mich'), ('shared', 'Gemeinsam')])
     domains = models.JSONField(default=list)
     completed_at = models.DateTimeField(null=True, blank=True)
+    # Startleitfäden, die die Person ausgeblendet hat ('start', 'finanzen', 'haushalt', 'organisation', 'reisen');
+    # im Konto gespeichert, damit sie auf allen Geräten weg bleiben (core/onboarding_views.py, seit 21.11.2026).
+    dismissed_guides = models.JSONField(default=list, blank=True)
 
 
 class UserSession(models.Model):

@@ -1,5 +1,6 @@
 @let l = line();
 <!-- Dein Tag: die eine Zeile, was heute ansteht — in der Organisationsfarbe -->
+@if (!intro()) {
 <section class="day-hero" aria-labelledby="day-h">
   <p class="day-hero__date">Dein Tag</p>
   <h2 id="day-h" class="day-hero__title">{{ title() }}</h2>
@@ -19,6 +20,7 @@
     </ul>
   }
 </section>
+}
 
 <div class="day-grid">
   <!-- Tageslinie: Termine in Folge, dazwischen die Zeit ohne Termin (die App kennt nur, was eingetragen ist) -->

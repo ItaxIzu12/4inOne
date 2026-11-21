@@ -164,9 +164,9 @@ Uhrzeit abhängt.
 
 Ruhig und erklärbar: Begrüßung mit Tageszeile, der Tag als Plan in Gruppen (Überfällig · Als Nächstes · Später · Ohne
 Uhrzeit · Vorbei) in einer einzigen Zeilen-Form, daneben bzw. darunter Demnächst (mit Datum), Budget und Für dich im
-selben Stil; für neue Konten „Erste Schritte“ (Budget, erste Aufgabe/Termin, Reise — haken sich mit echten Daten ab).
+selben Stil; für neue Konten „Dein Start mit 4inOne“ (seit 21.11.2026: die vier Bereiche mit Stand und nächstem Schritt aus `GET /api/v1/onboarding/guide/`; jeder Bereich hat seinen eigenen Startleitfaden).
 Bühne, Tagessatz und Zeitleiste sind entfernt.
 
 Erkennbarkeit (17.10.2026): Bereichs-Symbole wie in der Navigation statt Farbpunkten, Bereich als Wort im Hinweis
 (auch am Handy), keine Doppelungen (Zeitspalte bei „Ohne Uhrzeit“ leer, „überfällig“ nur in der Gruppe und für
-Screenreader), erklärender Satz bei „Für dich“ und bei „Erste Schritte“, kein Logo-Zeichen und keine Tagesbewegung.
+Screenreader), erklärender Satz bei „Für dich“ und bei „Dein Start mit 4inOne“, kein Logo-Zeichen und keine Tagesbewegung.

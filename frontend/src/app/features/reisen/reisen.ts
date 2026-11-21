@@ -21,6 +21,8 @@ import { Modal } from '../../shared/modal/modal';
 import { ConnectionsSection } from '../../shared/connections/connections-section';
 import { HomeCurrency } from '../../core/fx/home-currency';
 import { DEMO_MODE } from '../../core/demo-context';
+import { GuideService } from '../../core/onboarding/guide.service';
+import { GuideStep, StartGuide } from '../../shared/start-guide/start-guide';
 import { Invitation, InvitationsService } from '../../core/invitations/invitations.service';
 import { CURRENCY_OPTIONS, currencyForDestination } from '../../shared/currency/currencies';
 import { FxHint } from '../../shared/currency/fx-hint';
@@ -89,7 +91,7 @@ const LEGACY_TABS: Record<string, TripTab> = { packlisten: 'packliste', erinneru
 @Component({
   selector: 'app-reisen',
   standalone: true,
-  imports: [
+  imports: [StartGuide, 
     FxHint,
     ErrorNoticeDirective,
     AmountInput,
@@ -762,6 +764,28 @@ export class Reisen {
   readonly participantsNotice = signal('');
   private readonly invitations = inject(InvitationsService);
   private readonly demoMode = inject(DEMO_MODE);
+  // Startleitfaden (21.11.2026): Schritte aus echten Daten (GuideService), nie in der Demo; neu geladen, sobald sich
+  // die Zahl der Reisen ändert. Packliste/Budget öffnen die zuletzt beginnende sichtbare Reise (ID vom Backend).
+  protected readonly guide = inject(GuideService);
+  protected readonly showGuide = computed(() => !this.demoMode && this.guide.shows('reisen'));
+  protected readonly guideSteps = computed<GuideStep[]>(() => {
+    const r = this.guide.status()?.areas.reisen;
+    return [
+      { key: 'trip', title: 'Erste Reise anlegen', hint: 'Ziel und Zeitraum genügen – alles andere kannst du später ergänzen.', done: !!r?.trip },
+      { key: 'packliste', title: 'Packliste beginnen', hint: 'Mit Vorschlägen je nach Reiseart; abhaken beim Packen.', done: !!r?.packing },
+      { key: 'budget', title: 'Reisebudget festlegen', hint: 'Was die Reise kosten darf – Ausgaben unterwegs werden davon abgezogen.', done: !!r?.budget, optional: true },
+    ];
+  });
+  private readonly guideOnTrips = effect(() => {
+    // neu laden bei neuer Reise und beim Zurück zur Liste (Packliste/Budget wurden in der Reise angelegt)
+    const state = [this.trips().length, this.selectedTripId() === null];
+    if (!this.demoMode && state) untracked(() => this.guide.load());
+  });
+  guidePick(key: string): void {
+    const id = this.guide.status()?.areas.reisen.trip_id;
+    if (key === 'trip' || !id) this.openTripEditor();
+    else this.openTrip(id, key === 'budget' ? 'budget' : 'packliste');
+  }
   /** Nach „Annehmen“ in der Glocke sofort die Reiseliste neu laden — ohne Seiten-Reload. */
   private readonly reloadOnJoin = effect(() => {
     if (this.invitations.membershipVersion()) untracked(() => this.refreshTrips());

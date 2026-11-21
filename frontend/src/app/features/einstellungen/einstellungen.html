@@ -59,6 +59,30 @@
         </section>
       }
 
+      @if (guideRows(); as rows) {
+        <!-- Startleitfäden: ausgeblendete wieder einblenden (im Konto gespeichert, gilt auf allen Geräten) -->
+        <section class="settings-group" id="leitfaeden" aria-labelledby="settings-leitfaeden">
+          <h2 class="settings-group__title" id="settings-leitfaeden">Startleitfäden</h2>
+          <ul class="settings-list">
+            @for (g of rows; track g.scope) {
+              <li>
+                <div class="settings-row">
+                  <span class="settings-row__icon"><app-icon [name]="g.icon" aria-hidden="true" /></span>
+                  <span class="settings-row__text">
+                    <span class="settings-row__label">{{ g.label }}</span>
+                    <span class="settings-row__hint">{{ g.state }}</span>
+                  </span>
+                  @if (g.canShow) {
+                    <button type="button" class="settings-row__action" (click)="guide.hide(g.scope, false)"
+                      [attr.aria-label]="g.label + ' wieder einblenden'">Einblenden</button>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
       <button type="button" class="settings-logout" (click)="logout()">
         <icon-logout />Abmelden
       </button>

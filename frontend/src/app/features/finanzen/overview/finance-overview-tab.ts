@@ -7,6 +7,7 @@ import { FinanceDateNav } from '../shared/finance-date-nav';
 import { groupByDay } from '../shared/finance-overview';
 import { categoryIcon, goalIcon, goalPercent } from '../shared/finance-tabs';
 import { FinancePeriodView } from './finance-period';
+import { GuideStep, StartGuide } from '../../../shared/start-guide/start-guide';
 import { FINANCE_CONTEXT, FinanceTab, LegacyTab, REVIEW_KEY } from '../finance-context';
 
 /** Finanzen › Übersicht: Monatsbühne, erste Schritte, Monatsrückblick, letzte Transaktionen, Hinweise, Budgets und Sparziele im Blick.
@@ -14,7 +15,7 @@ import { FINANCE_CONTEXT, FinanceTab, LegacyTab, REVIEW_KEY } from '../finance-c
 @Component({
   selector: 'app-finance-overview-tab',
   standalone: true,
-  imports: [AppIcon, FinanceDateNav, FinancePeriodView, SpendCurveChart, TermHint],
+  imports: [AppIcon, FinanceDateNav, FinancePeriodView, SpendCurveChart, StartGuide, TermHint],
   templateUrl: './finance-overview-tab.html',
   // Reihenfolge wie vor der Aufteilung: Diagramme, Bausteine, Finanz-Look, späte Bausteine, eigene Regeln
   styleUrls: ['../shared/finance-charts.scss', '../shared/finance-blocks.scss', '../shared/_fin-look.scss', '../shared/finance-blocks-late.scss', './finance-overview-tab.scss'],
@@ -36,6 +37,19 @@ export class FinanceOverviewTab {
   protected readonly goals = this.ctx.goals;
   protected readonly startSteps = this.ctx.startSteps;
   protected readonly showStart = this.ctx.showStart;
+  protected readonly startGuide = this.ctx.startGuide;
+  protected readonly guideSteps = computed<GuideStep[]>(() => {
+    const st = this.ctx.startSteps();
+    return [
+      { key: 'budgets', title: 'Monatsbudget festlegen', hint: 'Wie viel möchtest du im Monat höchstens ausgeben? Daraus wird „Noch verfügbar“.', done: st.budget },
+      { key: 'transactions', title: 'Erste Ausgabe erfassen', hint: 'Betrag, Kategorie, fertig. Das Datum ist heute vorbelegt.', done: st.transaction,
+        alt: { label: 'Oder Kontoauszug als CSV importieren', icon: 'upload' } },
+      { key: 'goals', title: 'Sparziel anlegen', hint: 'Für etwas Bestimmtes sparen, z. B. eine Reise. Der Betrag wird vom Budget zurückgelegt.', done: st.goal, optional: true },
+    ];
+  });
+  protected guidePick(key: string) {
+    this.open(key as 'budgets' | 'transactions' | 'goals');
+  }
   protected readonly plannedHint = this.ctx.plannedHint;
   protected readonly savingsHint = this.ctx.savingsHint;
   protected readonly review = this.ctx.review;

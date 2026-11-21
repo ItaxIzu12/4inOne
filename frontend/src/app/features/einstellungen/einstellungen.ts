@@ -2,7 +2,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { MfaApiService } from '../../core/mfa/mfa-api.service';
-import { AppIcon } from '../../shared/icons/app-icon';
+import { AppIcon, IconName } from '../../shared/icons/app-icon';
+import { GUIDE_AREAS, GuideScope, GuideService } from '../../core/onboarding/guide.service';
 import { SettingsLayout } from './settings-layout';
 import { AppShell } from '../../layout/app-shell';
 import { IconChevron } from '../../shared/icons/icon-chevron';
@@ -53,6 +54,14 @@ const GROUPS: Group[] = [
   },
 ];
 
+const GUIDE_ROWS: { scope: GuideScope; label: string; where: string; icon: IconName }[] = [
+  { scope: 'start', label: 'Dein Start mit 4inOne', where: 'auf der Startseite', icon: 'home' },
+  { scope: 'finanzen', label: 'So startest du mit Finanzen', where: 'in Finanzen', icon: 'finance' },
+  { scope: 'haushalt', label: 'So startest du mit Haushalt', where: 'in Haushalt', icon: 'household' },
+  { scope: 'organisation', label: 'So startest du mit Organisation', where: 'in Organisation', icon: 'calendar' },
+  { scope: 'reisen', label: 'So startest du mit Reisen', where: 'in Reisen', icon: 'travel' },
+];
+
 @Component({
   selector: 'app-einstellungen',
   standalone: true,
@@ -65,6 +74,21 @@ export class Einstellungen {
   private readonly auth = inject(AuthService);
 
   protected readonly groups = GROUPS;
+
+  // ---------- Startleitfäden (21.11.2026): ausgeblendete wieder einblenden (gespeichert im Konto) ----------
+  protected readonly guide = inject(GuideService);
+  protected readonly guideRows = computed(() => {
+    const status = this.guide.status();
+    if (!status) return null;
+    const hidden = new Set(status.dismissed);
+    const allSetUp = GUIDE_AREAS.every((a) => this.guide.isSetUp(a));
+    return GUIDE_ROWS.map((row) => {
+      const setUp = row.scope === 'start' ? allSetUp : this.guide.isSetUp(row.scope);
+      const isHidden = hidden.has(row.scope);
+      const state = setUp ? 'Eingerichtet – wird nicht mehr gebraucht' : isHidden ? 'Ausgeblendet' : `Sichtbar ${row.where}`;
+      return { ...row, canShow: isHidden && !setUp, state };
+    });
+  });
   protected readonly name = computed(() => this.auth.currentUser()?.name ?? '');
   protected readonly email = computed(() => this.auth.currentUser()?.email ?? '');
   protected readonly initials = computed(() => {
@@ -98,6 +122,7 @@ export class Einstellungen {
   });
 
   constructor() {
+    this.guide.load();
     this.mfa.status().subscribe({ next: (s) => this.mfaOn.set(!!s.enabled), error: () => this.mfaOn.set(null) });
     this.auth.sessions().subscribe({ next: (rows) => this.deviceCount.set(rows.length), error: () => this.deviceCount.set(null) });
   }

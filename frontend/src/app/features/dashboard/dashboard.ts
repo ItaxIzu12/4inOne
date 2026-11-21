@@ -1,5 +1,16 @@
 import { ErrorNoticeDirective } from '../../shared/error-notice/error-notice';
 import { DEMO_MODE } from '../../core/demo-context';
+import { GUIDE_AREAS, GuideArea, GuideService } from '../../core/onboarding/guide.service';
+import { StartOverview, StartRow } from '../../shared/start-guide/start-overview';
+
+const GUIDE_LABEL: Record<GuideArea, string> = { finanzen: 'Finanzen', haushalt: 'Haushalt', organisation: 'Organisation', reisen: 'Reisen' };
+/** Kurzform des nächsten offenen Schritts je Bereich (gleiche Reihenfolge wie die Leitfäden der Bereiche). */
+const START_NEXT: Record<GuideArea, [string, string][]> = {
+  finanzen: [['budget', 'Monatsbudget'], ['transaction', 'erste Ausgabe'], ['goal', 'Sparziel']],
+  haushalt: [['task', 'erste Aufgabe'], ['shopping', 'Einkauf planen'], ['folder', 'Gerät oder Vertrag']],
+  organisation: [['event', 'erster Termin'], ['task', 'erste Aufgabe'], ['note', 'Notiz']],
+  reisen: [['trip', 'erste Reise'], ['packing', 'Packliste'], ['budget', 'Reisebudget']],
+};
 import { InvitationsService, acceptedMessage } from '../../core/invitations/invitations.service';
 import { devLinkPath } from '../../shared/dev-link';
 import {
@@ -132,6 +143,7 @@ function ddmm(isoDate: string): string {
   selector: 'app-dashboard',
   standalone: true,
   imports: [
+    StartOverview,
     ErrorNoticeDirective,
     AppShell,
     AppIcon,
@@ -414,6 +426,7 @@ export class Dashboard {
   }
 
   constructor() {
+    if (this.live()) this.guide.load();
     inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed(this.destroy)).subscribe(params => this.boardQuery.set((params.get('q') ?? '').slice(0, 200)));
     effect(() => {
       if (this.boardQuery().trim()) untracked(() => this.loadTasksForSearch());
@@ -583,20 +596,24 @@ export class Dashboard {
   get rest(): TodayRow[] {
     return this.plan().rest;
   }
-  /** Erste Schritte für neue Konten — der Moment, in dem sonst eine leere Seite steht. Jeder Schritt öffnet das
-   * vorhandene Formular und hakt sich ab, sobald es echte Daten dazu gibt. Verschwindet, wenn alle drei erledigt sind. */
-  readonly firstSteps = computed(() => {
+  /** „Dein Start mit 4inOne“ (21.11.2026, ersetzt „Erste Schritte“): die vier Bereiche mit ihrem Stand aus echten Daten
+   * (GuideService); weg, sobald alle eingerichtet sind oder die Person die Karte ausblendet (im Konto gespeichert). */
+  readonly guide = inject(GuideService);
+  readonly startRows = computed<StartRow[] | null>(() => {
     if (!this.live()) return null;
-    const finance = this.finance();
-    const org = this.organisationToday();
-    if (this.tripsLoading() || (!finance && !this.financeError()) || (!org && !this.todayError())) return null;
-    const steps = [
-      { key: 'budget', label: 'Monatsbudget festlegen', hint: 'Dann siehst du jeden Tag, was noch übrig ist.', done: finance?.total != null, path: this.domainPath('finanzen'), query: { tab: 'budgets' } as Record<string, string> },
-      { key: 'task', label: 'Erste Aufgabe oder ersten Termin anlegen', hint: 'Er erscheint hier unter „Heute“.', done: !!org && (org.open_task_count > 0 || org.event_count > 0), path: this.domainPath('organisation'), query: { tab: 'tasks', neu: 'aufgabe' } },
-      { key: 'trip', label: 'Eine Reise planen', hint: 'Packliste, Budget und Mitreisende an einem Ort.', done: this.trips().length > 0, path: this.domainPath('reisen'), query: { neu: 'reise' } },
-    ];
-    const done = steps.filter((st) => st.done).length;
-    return done === steps.length ? null : { steps, done };
+    const status = this.guide.status();
+    if (!status || status.dismissed.includes('start')) return null;
+    const rows = GUIDE_AREAS.map((area) => {
+      const steps = status.areas[area] as unknown as Record<string, unknown>;
+      const next = START_NEXT[area].find(([key]) => steps[key] !== true)?.[1] ?? '';
+      return { area, label: GUIDE_LABEL[area], done: this.guide.doneCount(area), total: 3, setUp: this.guide.isSetUp(area), next, path: this.domainPath(area) };
+    });
+    return rows.every((r) => r.setUp) ? null : rows;
+  });
+  /** Finanzen-Karte weglassen, solange die Start-Übersicht steht und es weder Budget noch Ausgaben gibt. */
+  readonly moneyCoveredByStart = computed(() => {
+    const f = this.guide.status()?.areas.finanzen;
+    return !!this.startRows() && !!f && !f.budget && !f.transaction;
   });
   /** „Demnächst“ (ersetzt die Bereichskacheln): die nächste Reise und die nächste Frist im Haushalt, je mit Weg dorthin. */
   readonly soonLoading = computed(() => (this.household() === null && !this.householdError()) || this.tripsLoading());

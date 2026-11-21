@@ -24,6 +24,8 @@ export class OrgToday {
   readonly notes = input<PersonalNote[]>([]);
   readonly loading = input(false);
   readonly busy = input(false);
+  /** Neues Konto mit Startleitfaden darüber: ohne Tageskopf („11 Std. ohne Termin“ wirkt für Neue wie ein Fehler). */
+  readonly intro = input(false);
 
   readonly openEvent = output<PersonalEvent>();
   readonly addEvent = output<string>();

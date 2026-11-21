@@ -1,0 +1,40 @@
+<section class="guide__card" [attr.aria-labelledby]="headingId()">
+  <div class="guide__head">
+    <h2 [id]="headingId()">{{ heading() }}</h2>
+    <button type="button" class="guide__hide" (click)="hide.emit()" [attr.aria-label]="heading() + ' ausblenden'">
+      <app-icon name="close" aria-hidden="true" />
+    </button>
+  </div>
+  <p class="guide__count">{{ done() }} von {{ steps().length }} erledigt</p>
+  <ol class="guide__bar" aria-hidden="true">
+    @for (s of steps(); track s.key) {
+      <li [class.is-done]="s.done"></li>
+    }
+  </ol>
+  <p class="guide__intro">{{ intro() }}</p>
+  <ol class="guide__list">
+    @for (s of steps(); track s.key; let i = $index) {
+      <li [class.is-done]="s.done" [class.is-next]="s === next()">
+        <button type="button" class="guide__item" (click)="pick.emit(s.key)">
+          <span class="guide__check" aria-hidden="true">@if (s.done) {<app-icon name="check" />} @else {<span>{{ i + 1 }}</span>}</span>
+          <span class="guide__copy">
+            <strong>{{ s.title }}@if (s.optional) {<span class="guide__opt">optional</span>}@if (s.done) {<span class="sr-only"> – erledigt</span>}</strong>
+            <small>{{ s.hint }}</small>
+          </span>
+          <app-icon class="guide__go" name="arrow" aria-hidden="true" />
+        </button>
+        @if (s.alt && !s.done) {
+          <button type="button" class="guide__alt" (click)="alt.emit(s.key)"><app-icon [name]="s.alt.icon" aria-hidden="true" />{{ s.alt.label }}</button>
+        }
+      </li>
+    }
+  </ol>
+  <div class="guide__foot">
+    @if (next(); as n) {
+      <button type="button" class="guide__cta" (click)="pick.emit(n.key)"><span class="guide__cta-pre">Weiter mit: </span>{{ n.title }}<app-icon name="arrow" aria-hidden="true" /></button>
+    }
+    @if (demoPath()) {
+      <a class="guide__demo" [routerLink]="demoPath()">Mit Beispieldaten ansehen</a>
+    }
+  </div>
+</section>

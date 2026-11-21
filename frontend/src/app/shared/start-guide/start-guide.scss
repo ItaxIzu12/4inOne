@@ -1,0 +1,279 @@
+// Startleitfaden (21.11.2026), aus dem Finanzen-Leitfaden verallgemeinert: weiße Karte, Fortschritt in der
+// Bereichsfarbe, Schritte als große Tippflächen, nächster Schritt zusätzlich als Hauptknopf. Nur vorhandene Tokens.
+:host {
+  --c: var(--brand-primary);
+  --soft: var(--surface-sunken);
+  display: block;
+  margin-bottom: 20px;
+}
+:host(.guide--finanzen) {
+  --c: var(--finance-accent);
+  --soft: var(--finance-soft);
+}
+:host(.guide--haushalt) {
+  --c: var(--household-accent);
+  --soft: var(--household-soft);
+}
+:host(.guide--organisation) {
+  --c: var(--organization-accent);
+  --soft: var(--organization-soft);
+}
+:host(.guide--reisen) {
+  --c: var(--travel-accent);
+  --soft: var(--travel-soft);
+}
+.guide__card {
+  display: grid;
+  gap: 4px;
+  padding: 24px 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg, 16px);
+  background: var(--surface-card);
+}
+.guide__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.guide__hide {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: -10px -12px 0 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.guide__hide app-icon {
+  width: 18px;
+  height: 18px;
+}
+.guide__count {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.guide__bar {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.guide__bar li {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-default);
+  transition: background-color 240ms ease-out;
+}
+.guide__bar li.is-done {
+  background: var(--c);
+}
+.guide__intro {
+  max-width: 60ch;
+  margin: 12px 0 8px;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.guide__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.guide__list li {
+  display: grid;
+  border-top: 1px solid var(--border-subtle);
+}
+.guide__item {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 12px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.guide__check {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--border-control);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+}
+.is-next .guide__check {
+  border-color: var(--c);
+  color: var(--c);
+}
+.is-done .guide__check {
+  border-color: var(--c);
+  background: var(--c);
+  color: #fff;
+}
+.guide__check app-icon {
+  width: 16px;
+  height: 16px;
+}
+.guide__copy {
+  display: grid;
+  gap: 2px;
+}
+.guide__copy strong {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+.is-done .guide__copy strong {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+.guide__copy small {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.guide__opt {
+  margin-left: 6px;
+  vertical-align: 1px;
+  white-space: nowrap;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-block;
+}
+.guide__go {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+.guide__alt {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 6px;
+  min-height: 44px;
+  margin: -10px 0 4px 46px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--c);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.guide__alt app-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.guide__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin-top: 14px;
+}
+.guide__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--c);
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.guide__cta-pre {
+  font-weight: 500;
+}
+.guide__cta app-icon {
+  width: 16px;
+  height: 16px;
+}
+.guide__cta:active {
+  transform: translateY(1px);
+}
+.guide__demo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.guide__item:focus-visible,
+.guide__hide:focus-visible,
+.guide__alt:focus-visible,
+.guide__cta:focus-visible,
+.guide__demo:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .guide__item:hover {
+    background: var(--surface-hover);
+  }
+  .guide__hide:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide__bar li {
+    transition: none;
+  }
+}
+@media (max-width: 560px) {
+  .guide__card {
+    padding: 20px 18px;
+  }
+  h2 {
+    font-size: 20px;
+  }
+  .guide__cta {
+    width: 100%;
+  }
+  .guide__foot {
+    justify-content: center;
+  }
+}

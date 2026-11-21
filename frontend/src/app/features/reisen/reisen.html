@@ -65,7 +65,15 @@
         <button class="secondary" (click)="backToList()">Zu Meine Reisen</button>
       </div>
     } @else if (!trip) {
-      <app-trip-list [trips]="trips()" (open)="openTrip($event)" (create)="openTripEditor()" />
+      @if (showGuide()) {
+        <app-start-guide area="reisen" heading="So startest du mit Reisen"
+          intro="Plane eine Reise mit Packliste, Aufgaben, Ablauf und Budget an einem Ort – allein oder mit Mitreisenden."
+          demoPath="/demo/reisen" [steps]="guideSteps()" (pick)="guidePick($event)" (hide)="guide.hide('reisen')" />
+      }
+      <!-- ohne Reise trägt der Leitfaden den Einstieg; die leere Karte der Liste wäre doppelt -->
+      @if (!(showGuide() && !trips().length)) {
+        <app-trip-list [trips]="trips()" (open)="openTrip($event)" (create)="openTripEditor()" />
+      }
     } @else {
       @if (actionError()) {
         <p class="field-error" [appErrorNotice]="actionError()">{{ actionError() }}</p>

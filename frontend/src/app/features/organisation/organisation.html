@@ -35,7 +35,13 @@
         @if (eventsError()) {
           <p class="inline-error" [appErrorNotice]="eventsError()">{{ eventsError() }}</p>
         }
+        @if (showGuide()) {
+          <app-start-guide area="organisation" heading="So startest du mit Organisation"
+            intro="Termine, Aufgaben und Notizen an einem Ort – für dich allein oder mit deiner Familie."
+            demoPath="/demo/organisation" [steps]="guideSteps()" (pick)="guidePick($event)" (hide)="guide.hide('organisation')" />
+        }
         <app-org-today
+          [intro]="showGuide()"
           [events]="events()"
           [tasks]="tasks()"
           [notes]="notes()"
@@ -94,7 +100,10 @@
         }
       }
     }
-    <app-mobile-action [label]="headAction()" icon="plus" (pressed)="headActionClick()" />
+    <!-- Solange der Startleitfaden sichtbar ist, trägt er den Hauptschritt — kein zweiter schwebender Knopf darüber -->
+    @if (!(tab() === 'today' && showGuide())) {
+      <app-mobile-action [label]="headAction()" icon="plus" (pressed)="headActionClick()" />
+    }
   </main></app-shell
 >
 

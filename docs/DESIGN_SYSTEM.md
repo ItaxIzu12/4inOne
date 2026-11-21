@@ -1360,3 +1360,12 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   `shared/finance-blocks-late.scss` → eigene Datei (so bleibt die Kaskade wie vorher; jede Datei unter 12 kB). Die
   Reiter lesen Zustand und Aktionen über `inject(FINANCE_CONTEXT)` (Signale, keine Kopien). Typografie des Seiten-
   Layouts (`.domain-page small` …) gilt in den Reitern über `:host-context(.domain-page)`.
+
+- **Startleitfäden (21.11.2026):** gemeinsamer Baustein `shared/start-guide/start-guide.{ts,html,scss}` (`app-start-guide`,
+  Eingaben `area`, `heading`, `intro`, `steps: GuideStep[]`, `demoPath`; Ausgaben `pick`, `alt`, `hide`; Farbe über
+  `--c`/`--soft` aus den Bereichs-Tokens) und `start-overview` (`app-start-overview`, Startseite, ersetzt „Erste Schritte“
+  samt `.steps`-Stilen in `dashboard-side.scss`). Stand und „ausgeblendet“ über `core/onboarding/guide.service.ts`
+  (`GET/PUT /api/v1/onboarding/guide/`, Backend `core/onboarding_views.py`, Feld `OnboardingProfile.dismissed_guides`).
+  Finanzen nutzt weiter die eigenen Monatsdaten (`startSteps`), nur die Darstellung ist gemeinsam; die alten
+  `.start*`-Stile in Finanzen sind entfernt. Einstellungen: Gruppe `#leitfaeden` mit `.settings-row__action`
+  („Einblenden“); Startseite: `moneyCoveredByStart()` blendet die Finanzen-Karte für neue Konten aus. Keine neuen Tokens.

@@ -12,42 +12,12 @@
   <app-finance-date-nav class="in-period" />
 </app-finance-period>
 @if (period() === 'month') {
-@if (showStart()) {
-  @let st = startSteps();
-  <!-- Neues Konto: drei echte Schritte statt einer Seite voller Nullen (hakt sich mit Daten ab) -->
-  <section class="start" aria-labelledby="start-h">
-    <div class="start__head">
-      <h2 id="start-h">So startest du mit Finanzen</h2>
-      <p>{{ st.done }} von 3 erledigt</p>
-    </div>
-    <p class="start__intro">Mit einem Monatsbudget und deinen Ausgaben zeigt dir 4inOne jeden Tag, wie viel noch übrig ist.</p>
-    <ol class="start__list">
-      <li [class.is-done]="st.budget">
-        <button type="button" class="start__item" (click)="open('budgets')">
-          <span class="start__check" aria-hidden="true">@if (st.budget) {<app-icon name="check" />} @else {1}</span>
-          <span class="start__copy"><strong>Monatsbudget festlegen@if (st.budget) {<span class="sr-only"> – erledigt</span>}</strong><small>Wie viel möchtest du im Monat höchstens ausgeben? Daraus wird „Noch verfügbar“.</small></span>
-          <app-icon class="start__go" name="arrow" aria-hidden="true" />
-        </button>
-      </li>
-      <li [class.is-done]="st.transaction">
-        <button type="button" class="start__item" (click)="open('transactions')">
-          <span class="start__check" aria-hidden="true">@if (st.transaction) {<app-icon name="check" />} @else {2}</span>
-          <span class="start__copy"><strong>Erste Ausgabe erfassen@if (st.transaction) {<span class="sr-only"> – erledigt</span>}</strong><small>Betrag, Kategorie, fertig. Das Datum ist heute vorbelegt.</small></span>
-          <app-icon class="start__go" name="arrow" aria-hidden="true" />
-        </button>
-        @if (!st.transaction) {
-          <button type="button" class="link start__alt" (click)="importOpen.set(true)"><app-icon name="upload" aria-hidden="true" />Oder Kontoauszug als CSV importieren</button>
-        }
-      </li>
-      <li [class.is-done]="st.goal">
-        <button type="button" class="start__item" (click)="open('goals')">
-          <span class="start__check" aria-hidden="true">@if (st.goal) {<app-icon name="check" />} @else {3}</span>
-          <span class="start__copy"><strong>Sparziel anlegen <span class="start__opt">optional</span>@if (st.goal) {<span class="sr-only"> – erledigt</span>}</strong><small>Für etwas Bestimmtes sparen, z. B. eine Reise. Der Betrag wird vom Budget zurückgelegt.</small></span>
-          <app-icon class="start__go" name="arrow" aria-hidden="true" />
-        </button>
-      </li>
-    </ol>
-  </section>
+@if (startGuide()) {
+  <!-- Neues Konto: drei echte Schritte statt einer Seite voller Nullen (hakt sich mit Daten ab); gemeinsamer Baustein -->
+  <app-start-guide area="finanzen" heading="So startest du mit Finanzen"
+    intro="Mit einem Monatsbudget und deinen Ausgaben zeigt dir 4inOne jeden Tag, wie viel noch übrig ist."
+    demoPath="/demo/finanzen" [steps]="guideSteps()" (pick)="guidePick($event)" (alt)="importOpen.set(true)"
+    (hide)="ctx.guide.hide('finanzen')" />
 }
 @if (review(); as r) {
   <!-- Monatsrückblick (1.–7. eines Monats): Vormonat in einem Blick — nur echte Zahlen -->
@@ -105,7 +75,7 @@
   </div>
 }
 <!-- Leerer Monat eines neuen Kontos: die Schritte oben genügen — keine Kopfkarte aus Nullen, keine leeren Karten -->
-@if (!(showStart() && emptyMonth())) {
+@if (!(startGuide() && emptyMonth())) {
 <!-- Kopf wie in Banking-Apps (27.10.2026): die eine Zahl (noch verfügbar), Tagessatz, drei ruhige Werte und
      darunter die abfahrbare Ausgabenkurve. Klassen .kpis/.kpi bleiben (Tests, Meldungen). -->
 <section class="kpis fin-hero" aria-labelledby="hero-money-h">

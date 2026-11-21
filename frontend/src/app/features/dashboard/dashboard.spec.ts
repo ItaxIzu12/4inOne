@@ -286,22 +286,36 @@ describe('Dashboard', () => {
       } finally { vi.useRealTimers(); }
     });
 
-    it('a new account sees three first steps instead of empty boxes; each ticks off with real data, all done → gone', () => {
+    it('a new account sees „Dein Start mit 4inOne“ with all four areas; it ticks off from real data and can be hidden in the account', () => {
       const f = TestBed.createComponent(Dashboard);
       f.detectChanges();
       const http = TestBed.inject(HttpTestingController);
-      http.expectOne((req) => req.url.includes('/finanzen/private/summary/')).flush({ available: null, total: null, budget: null, expenses: '0.00', has_data: false });
-      http.expectOne((req) => req.url.endsWith('/api/v1/today/')).flush(overview());
-      http.expectOne((req) => req.url.includes('/reisen/trips/')).flush([]);
+      const none = {
+        finanzen: { budget: false, transaction: false, goal: false },
+        haushalt: { task: false, shopping: false, folder: false },
+        organisation: { event: false, task: false, note: false },
+        reisen: { trip: false, packing: false, budget: false, trip_id: null },
+      };
+      http.expectOne((req) => req.url.endsWith('/onboarding/guide/') && req.method === 'GET').flush({ areas: none, dismissed: [] });
       f.detectChanges();
-      const steps = f.nativeElement.querySelector('.steps');
-      expect(steps.textContent).toContain('0 von 3 erledigt');
-      expect(steps.querySelectorAll('li').length).toBe(3);
-      f.componentInstance.finance.set({ available: '100.00', total: '500.00', budget: '500.00', expenses: '400.00', has_data: true } as never);
-      f.componentInstance.trips.set([{ id: 1 } as never]);
-      f.componentInstance.organisationToday.set({ date: '2026-10-02', timezone: 'Europe/Berlin', event_count: 1, open_task_count: 0, overdue_count: 0, items: [] });
+      const card = f.nativeElement.querySelector('app-start-overview') as HTMLElement;
+      expect(card.textContent).toContain('0 von 4 Bereichen eingerichtet');
+      expect(card.querySelectorAll('.so__row').length).toBe(4);
+      expect(card.textContent).toContain('als Nächstes: erste Aufgabe');
+      expect(card.querySelector('.so__demo')!.getAttribute('href')).toBe('/demo');
+
+      // Finanzen eingerichtet (Budget + Ausgabe) → „Eingerichtet“ mit Haken
+      f.componentInstance.guide.status.set({ areas: { ...none, finanzen: { budget: true, transaction: true, goal: false } }, dismissed: [] });
       f.detectChanges();
-      expect(f.nativeElement.querySelector('.steps')).toBeNull();
+      expect(card.textContent).toContain('1 von 4 Bereichen eingerichtet');
+      expect(card.querySelectorAll('.so__ok').length).toBe(1);
+
+      // Ausblenden: sofort weg und im Konto gespeichert
+      (card.querySelector('.so__hide') as HTMLButtonElement).click();
+      f.detectChanges();
+      expect(f.nativeElement.querySelector('app-start-overview')).toBeNull();
+      const put = http.expectOne((req) => req.url.endsWith('/onboarding/guide/') && req.method === 'PUT');
+      expect(put.request.body).toEqual({ area: 'start', hidden: true });
     });
     it('keeps the start page minimal: greeting, today, Demnächst, Für dich and Budget — no tiles, no extra lists', () => {
       const f = TestBed.createComponent(Dashboard);

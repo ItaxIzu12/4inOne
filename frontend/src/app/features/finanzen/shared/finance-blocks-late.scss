@@ -148,26 +148,6 @@
     border-bottom: 1px solid var(--border-subtle);
   }
 }
-.start__check {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--surface-pressed, #ecefea);
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 700;
-}
-.start__check app-icon {
-  width: 16px;
-  height: 16px;
-}
-.start__go {
-  width: 16px;
-  height: 16px;
-  color: var(--text-secondary);
-}
 .review__facts app-icon {
   flex: none;
   width: 18px;

@@ -127,7 +127,7 @@ for (const width of [390, 1440]) {
     const start = page.getByRole('region', { name: 'So startest du mit Finanzen' });
     await expect(start).toContainText('0 von 3 erledigt');
     await expect(page.locator('.fin-hero')).toHaveCount(0);
-    await start.getByRole('button', { name: /Monatsbudget festlegen/ }).click();
+    await start.getByRole('button', { name: /^Monatsbudget festlegen/ }).click();
     await page.getByLabel('Monatsbudget in EUR').fill('3000,00');
     // Zeitraum: Endmonat vor dem Start wird abgelehnt, „bis auf Weiteres“ gilt auch im Folgemonat
     await choose(page, 'Gilt für', 'Mehrere Monate');

@@ -83,26 +83,9 @@
       </div>
     }
 
-    @if (firstSteps(); as fs) {
-      <!-- Erste Schritte für neue Konten: statt leerer Kästen drei echte Wege hinein -->
-      <section class="steps" aria-labelledby="steps-title">
-        <div class="steps__head">
-          <h2 id="steps-title">Erste Schritte</h2>
-          <p>{{ fs.done }} von 3 erledigt</p>
-        </div>
-        <p class="steps__intro">4inOne bündelt Finanzen, Haushalt, Termine und Reisen an einem Ort. Fang mit einem Schritt an.</p>
-        <ol class="steps__list">
-          @for (st of fs.steps; track st.key) {
-            <li [class.is-done]="st.done">
-              <a class="steps__item" [routerLink]="st.path" [queryParams]="st.query">
-                <span class="steps__check" aria-hidden="true">@if (st.done) {<app-icon name="check" />}</span>
-                <span class="steps__copy"><strong>{{ st.label }}@if (st.done) {<span class="sr-only"> – erledigt</span>}</strong><small>{{ st.hint }}</small></span>
-                <span class="steps__go" aria-hidden="true"><app-icon name="arrow" /></span>
-              </a>
-            </li>
-          }
-        </ol>
-      </section>
+    @if (startRows(); as rows) {
+      <!-- Neues Konto: die vier Bereiche mit ihrem Stand statt leerer Kästen (Leitfäden je Bereich, 21.11.2026) -->
+      <app-start-overview [rows]="rows" (hide)="guide.hide('start')" />
     }
 
     <div class="board-overview">
@@ -119,7 +102,7 @@
       }
 
       <!-- Vier Antworten (31.10.2026): je Bereich die eine Antwort in seiner Handschrift — Inhalt, keine Navigationskacheln -->
-      @if (!firstSteps()) {
+      @if (!startRows()) {
         <app-dash-answers [answers]="answers()" />
       }
 
@@ -216,7 +199,9 @@
           </ng-template>
         </section>
 
-        <!-- Finanzen: die eine Zahl, die man täglich wissen will — dazu Tagessatz, Kurve und die letzten Transaktionen -->
+        <!-- Finanzen: die eine Zahl, die man täglich wissen will — dazu Tagessatz, Kurve und die letzten Transaktionen.
+             Neues Konto ohne Budget und Ausgaben: „Dein Start mit 4inOne“ oben führt schon dorthin — keine zweite Aufforderung -->
+        @if (!moneyCoveredByStart()) {
         <section class="money budget finance" aria-labelledby="budget-title" [attr.aria-busy]="(!money() && !financeError()) || null">
           <header class="money__head">
             <span class="row__icon" aria-hidden="true"><app-icon name="finance" /></span>
@@ -281,6 +266,7 @@
             <span class="curve-skeleton" aria-hidden="true"></span>
           }
         </section>
+        }
 
         <!-- Dein Fortschritt (Ringe aus gezählten Werten) und Idee für heute (freie Zeit + offene Aufgabe) -->
         <app-dash-progress class="pulse" [rings]="rings()" [idea]="idea()" [organisationPath]="organisationPath()" />

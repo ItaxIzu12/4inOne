@@ -41,6 +41,10 @@ interface State {
 async function mockApi(page: Page, state: State) {
   // Alles Übrige ruhig beantworten — dieser Test prüft nur Einladungen.
   await page.route('**/api/v1/**', (r) => r.fulfill({ json: {} }));
+  // neues Konto: „Dein Start mit 4inOne“ steht auf der Startseite (wie früher „Erste Schritte“)
+  await page.route('**/api/v1/onboarding/guide/', (r) => r.fulfill({ json: { dismissed: [], areas: {
+    finanzen: { budget: false, transaction: false, goal: false }, haushalt: { task: false, shopping: false, folder: false },
+    organisation: { event: false, task: false, note: false }, reisen: { trip: false, packing: false, budget: false, trip_id: null } } } }));
   await page.route('**/api/v1/reisen/**', (r) => r.fulfill({ json: [] }));
   await page.route('**/api/v1/organisation/tasks/**', (r) => r.fulfill({ json: [] }));
   await page.route('**/api/v1/finanzen/private/summary/**', (r) =>

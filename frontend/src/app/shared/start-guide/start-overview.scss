@@ -1,0 +1,195 @@
+// „Dein Start mit 4inOne“ (21.11.2026): Deep-Forest-Karte wie das Band der Anmeldung, darin eine weiße Liste der
+// vier Bereiche mit ihren Logo-Farbfeldern. Nur vorhandene Tokens; Logo-Farben wie in login.scss.
+:host {
+  display: block;
+  margin-bottom: 24px;
+}
+.so {
+  display: grid;
+  gap: 4px;
+  padding: 22px 22px 18px;
+  border-radius: 20px;
+  background-color: var(--brand-primary);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
+  color: #fff;
+}
+.so__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+h2 {
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.so__hide {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: -10px -10px 0 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+}
+.so__hide app-icon {
+  width: 18px;
+  height: 18px;
+}
+.so__count {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+}
+.so__bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.so__seg {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+}
+.so__seg--finanzen.is-done {
+  background: #0f9d6b;
+}
+.so__seg--haushalt.is-done {
+  background: #e04f78;
+}
+.so__seg--organisation.is-done {
+  background: #e3961a;
+}
+.so__seg--reisen.is-done {
+  background: #3b6fe0;
+}
+.so__intro {
+  max-width: 60ch;
+  margin: 10px 0 12px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.so__rows {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--surface-card);
+  list-style: none;
+}
+.so__rows li + li {
+  border-top: 1px solid var(--border-subtle);
+}
+.so__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 60px;
+  padding: 10px 16px;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.so__dot {
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  border-radius: 6px 6px 2px 6px;
+}
+.so__dot--finanzen {
+  background: #0f9d6b;
+}
+.so__dot--haushalt {
+  background: #e04f78;
+}
+.so__dot--organisation {
+  background: #e3961a;
+}
+.so__dot--reisen {
+  background: #3b6fe0;
+}
+.so__copy {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+.so__copy strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.so__copy small {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.so__go {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+.so__ok {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--success);
+  color: #fff;
+}
+.so__ok app-icon {
+  width: 14px;
+  height: 14px;
+}
+.so__demo {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 6px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.so__row:focus-visible,
+.so__hide:focus-visible,
+.so__demo:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.so__row:focus-visible {
+  outline-color: var(--brand-primary);
+  outline-offset: -2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .so__row:hover {
+    background: var(--surface-hover);
+  }
+  .so__hide:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+}
+@media (max-width: 560px) {
+  .so {
+    padding: 20px 16px 14px;
+  }
+  h2 {
+    font-size: 20px;
+  }
+}

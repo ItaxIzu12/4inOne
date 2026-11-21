@@ -21,7 +21,7 @@ from django.urls import include, path
 from connections.views import TodayOverviewView
 from datenexport.views import DataExportView
 from finanzen.views import OnboardingStatusView
-from core.onboarding_views import OnboardingProfileView
+from core.onboarding_views import OnboardingGuideView, OnboardingProfileView
 from core.feedback_views import BetaFeedbackView
 from core.fx_views import ExchangeRatesView
 from core.place_views import PlacesView
@@ -29,6 +29,7 @@ from core.invitation_urls import invitation_urlpatterns, notification_urlpattern
 
 urlpatterns = [
     path('api/v1/onboarding/profile/', OnboardingProfileView.as_view(), name='onboarding-profile'),
+    path('api/v1/onboarding/guide/', OnboardingGuideView.as_view(), name='onboarding-guide'),
     # Pfad kommt aus ADMIN_URL_PATH (.env), NICHT hart als 'admin/' —
     # siehe ARCHITEKTUR.md §3.4 (Standardziel automatisierter Scanner).
     path(settings.ADMIN_URL_PATH, admin.site.urls),
