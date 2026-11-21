@@ -147,7 +147,7 @@ textarea:focus-visible {
   width: 26px;
   height: 26px;
   border: 2px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+  border-radius: 50%; // runder Haken wie überall
   color: transparent;
   transition: background 0.15s, border-color 0.15s;
 }
@@ -331,10 +331,9 @@ textarea:focus-visible {
   font-size: var(--fs-body);
   cursor: pointer;
 }
-.checkbox input {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--accent);
+// Haken/Schalter selbst: shared/form/choice-controls.css — hier nur die Bereichsfarbe
+:host {
+  --check-color: var(--household-fill);
 }
 
 @media (max-width: 959px) {

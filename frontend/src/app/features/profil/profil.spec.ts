@@ -90,10 +90,15 @@ describe('Profil', () => {
     (el.querySelector('.danger-zone__button') as HTMLButtonElement).click();
     fixture.detectChanges();
     el = fixture.nativeElement as HTMLElement;
+    const pw = el.querySelector('#delete-confirm') as HTMLInputElement;
+    pw.value = 'Sicher-Wald-27x';
+    pw.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
     (el.querySelector('.delete-account__confirm') as HTMLButtonElement).click();
     fixture.detectChanges();
 
     const req = TestBed.inject(HttpTestingController).expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/auth/me/'));
+    expect(req.request.body).toEqual({ password: 'Sicher-Wald-27x' });
     req.flush(null, { status: 204, statusText: 'No Content' });
     fixture.detectChanges();
 
@@ -107,6 +112,10 @@ describe('Profil', () => {
     (el.querySelector('.danger-zone__button') as HTMLButtonElement).click();
     fixture.detectChanges();
     el = fixture.nativeElement as HTMLElement;
+    const pw = el.querySelector('#delete-confirm') as HTMLInputElement;
+    pw.value = 'Sicher-Wald-27x';
+    pw.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
     (el.querySelector('.delete-account__confirm') as HTMLButtonElement).click();
     fixture.detectChanges();
 
@@ -117,5 +126,28 @@ describe('Profil', () => {
 
     expect(el.querySelector('[role="dialog"]')).toBeTruthy();
     expect(el.querySelector('[role="alert"]')?.textContent).toContain('nicht geklappt');
+  });
+
+  it('Konto löschen braucht das Passwort: ohne Eingabe kein Aufruf, falsches Passwort wird klar gemeldet', () => {
+    const fixture = render();
+    let el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('.danger-zone__button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('.delete-account__confirm') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectNone((r) => r.method === 'DELETE');
+    expect(el.querySelector('[role="alert"]')?.textContent).toContain('Bitte gib dein Passwort ein');
+    const pw = el.querySelector('#delete-confirm') as HTMLInputElement;
+    pw.value = 'falsch';
+    pw.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (el.querySelector('.delete-account__confirm') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    http.expectOne((r) => r.method === 'DELETE').flush({ password: ['x'] }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+    expect(el.querySelector('[role="alert"]')?.textContent).toContain('Das Passwort stimmt nicht');
+    expect(el.querySelector('[role="dialog"]')).toBeTruthy();
   });
 });

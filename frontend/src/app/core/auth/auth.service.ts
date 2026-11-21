@@ -13,6 +13,8 @@ export interface AuthUser {
   email_verified?: boolean;
   /** Admin-Panel im Menü zeigen (backend/monitoring/) — die Rechte prüft der Server bei jeder Anfrage selbst. */
   is_admin?: boolean;
+  /** Konto löschen: false = Konto nur über Google/Apple → Bestätigung mit der E-Mail-Adresse statt Passwort. */
+  has_password?: boolean;
 }
 
 export type SocialProvider = 'google' | 'apple';
@@ -207,12 +209,12 @@ export class AuthService {
       .pipe(tap((user) => this._currentUser.set(user)));
   }
 
-  /** Löscht das eigene Konto endgültig (core/auth_views.py ProfileView.delete) — die Rückfrage "wirklich
-   * löschen?" übernimmt die aufrufende Komponente per Modal, dieser Aufruf selbst führt sie sofort aus.
+  /** Löscht das eigene Konto endgültig (core/auth_views.py ProfileView.delete) — nur mit Bestätigung: Passwort oder,
+   * bei Konten nur über Google/Apple, die eigene E-Mail-Adresse (das Backend prüft beides).
    * withCredentials: true, damit das Backend das httpOnly-Refresh-Cookie löschen kann (wie bei logout()). */
-  deleteAccount(): Observable<void> {
+  deleteAccount(confirm: { password?: string; confirm_email?: string }): Observable<void> {
     return this.http
-      .delete<void>(`${API_BASE_URL}/auth/me/`, { withCredentials: true })
+      .delete<void>(`${API_BASE_URL}/auth/me/`, { withCredentials: true, body: confirm })
       .pipe(tap(() => this.forceLogout()));
   }
 

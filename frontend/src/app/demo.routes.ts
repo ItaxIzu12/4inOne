@@ -64,23 +64,27 @@ export const DEMO_ROUTES: Routes = [
       },
       {
         path: 'finanzen',
+        title: 'Finanzen – Demo | 4inOne',
         loadComponent: () =>
           import('./features/finanzen/private-finance').then((m) => m.PrivateFinance),
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'haushalt',
+        title: 'Haushalt – Demo | 4inOne',
         loadComponent: () => import('./features/haushalt/haushalt').then((m) => m.Haushalt),
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'organisation',
+        title: 'Organisation – Demo | 4inOne',
         loadComponent: () =>
           import('./features/organisation/organisation').then((m) => m.Organisation),
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'reisen',
+        title: 'Reisen – Demo | 4inOne',
         loadComponent: () => import('./features/reisen/reisen').then((m) => m.Reisen),
         data: { dashboardNav: true, sidebarNav: true },
       },
@@ -89,6 +93,7 @@ export const DEMO_ROUTES: Routes = [
         // Backend-Aufruf — zuvor fehlte diese Route komplett, wodurch "Familie & Freunde" aus der Demo heraus
         // zur Anmeldung zwang, obwohl der Rest der Demo ohne Login auskommt.
         path: 'familie',
+        title: 'Personen & Gruppen – Demo | 4inOne',
         loadComponent: () => import('./features/familie/familie').then((m) => m.Familie),
         data: { shell: 'bare', sidebarNav: true },
       },

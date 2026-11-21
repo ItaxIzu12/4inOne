@@ -104,8 +104,13 @@ export class Profil {
   protected readonly deleting = signal(false);
   protected readonly deleteError = signal('');
 
+  /** Bestätigung: Passwort — oder bei Konten nur über Google/Apple die eigene E-Mail-Adresse. */
+  protected readonly hasPassword = computed(() => this.auth.currentUser()?.has_password !== false);
+  protected readonly deleteConfirm = signal('');
+
   protected openDeleteModal(): void {
     this.deleteError.set('');
+    this.deleteConfirm.set('');
     this.deleteModalOpen.set(true);
   }
   protected closeDeleteModal(): void {
@@ -114,17 +119,28 @@ export class Profil {
   }
   protected confirmDelete(): void {
     if (this.deleting()) return;
+    const value = this.deleteConfirm().trim();
+    if (!value) {
+      this.deleteError.set(this.hasPassword() ? 'Bitte gib dein Passwort ein.' : 'Bitte gib deine E-Mail-Adresse ein.');
+      return;
+    }
     this.deleting.set(true);
     this.deleteError.set('');
-    this.auth.deleteAccount().subscribe({
+    this.auth.deleteAccount(this.hasPassword() ? { password: this.deleteConfirm() } : { confirm_email: value }).subscribe({
       next: () => {
         this.deleting.set(false);
         this.deleteModalOpen.set(false);
         this.router.navigateByUrl('/', { onSameUrlNavigation: 'reload', replaceUrl: true });
       },
-      error: () => {
+      error: (err: { status?: number }) => {
         this.deleting.set(false);
-        this.deleteError.set('Löschen hat nicht geklappt. Bitte versuche es noch einmal.');
+        this.deleteError.set(
+          err?.status === 400
+            ? this.hasPassword() ? 'Das Passwort stimmt nicht.' : 'Die E-Mail-Adresse stimmt nicht.'
+            : err?.status === 429
+              ? 'Zu viele Versuche. Bitte warte einen Moment.'
+              : 'Löschen hat nicht geklappt. Bitte versuche es noch einmal.',
+        );
       },
     });
   }

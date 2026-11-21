@@ -110,9 +110,9 @@
   }
 
   @if (canRotate()) {
-    <label class="checkbox">
-      <input type="checkbox" [checked]="formRotate()" (change)="toggleRotate($any($event.target).checked)" />
-      Reihum wechseln
+    <label class="switch-row">
+      <span>Reihum wechseln<small>Nach jedem Erledigen ist die nächste Person dran.</small></span>
+      <input type="checkbox" role="switch" [checked]="formRotate()" (change)="toggleRotate($any($event.target).checked)" />
     </label>
     @if (formRotate()) {
       <fieldset class="field rotation">

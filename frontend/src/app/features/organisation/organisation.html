@@ -257,8 +257,8 @@
     <textarea id="note-body" rows="8" maxlength="10000" [value]="noteBody()" (input)="noteBody.set($any($event.target).value)"></textarea>
   </app-field>
   <app-attachment-field [attachments]="noteAttachments() ?? []" [load]="loadFile" />
-  <label class="checkbox-row">
-    <input type="checkbox" [checked]="notePinned()" (change)="notePinned.set($any($event.target).checked)" />
+  <label class="switch-row">
     <span>Oben anheften<small>Angeheftete Notizen stehen immer zuerst.</small></span>
+    <input type="checkbox" role="switch" [checked]="notePinned()" (change)="notePinned.set($any($event.target).checked)" />
   </label>
 </app-modal-form>

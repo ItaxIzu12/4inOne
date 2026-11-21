@@ -133,6 +133,12 @@
   text-underline-offset: 3px;
   cursor: pointer;
 }
+// Tippfläche mindestens 44 px hoch, ohne das Layout zu verschieben (WCAG 2.5.8)
+.breakdown__link::before {
+  content: '';
+  position: absolute;
+  inset: -11px -4px;
+}
 .breakdown__link small {
   color: var(--text-secondary);
   font-weight: var(--fw-regular);

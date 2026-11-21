@@ -124,7 +124,7 @@ ul {
   height: 22px;
   padding: 0;
   border: 1.6px solid #8592a6; // ≥ 3:1 auf Weiß, wie die Aufgaben-Kästchen in Organisation
-  border-radius: var(--radius-sm);
+  border-radius: 50%; // runder Haken wie überall (shared/form/choice-controls.css)
   background: #fff;
   color: #fff;
   cursor: pointer;

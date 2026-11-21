@@ -1,7 +1,7 @@
 # 4inOne — Vollständiger Testkatalog (Stand 15.11.2026)
 
 Alle Testfälle, die vor einer öffentlichen Produktion sinnvoll sind — automatisiert und manuell. Erstellt nach einer
-Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 43 E2E-Dateien, 1 Full-Stack-Datei).
+Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 44 E2E-Dateien, 2 Full-Stack-Dateien).
 
 **Priorität:** **P0** = Blocker vor Go-Live · **P1** = vor öffentlichem Start · **P2** = bald danach
 **Stand:** ✅ automatisiert vorhanden (Datei genannt) · 🟡 teilweise / nur Demo / nur lokal · ❌ fehlt
@@ -89,6 +89,8 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 43 
 | AUTH-28 | Onboarding: erster echter Eintrag je Bereich mit minimalen Feldern | P1 | A/E | ✅ `core/test_onboarding.py`, `e2e/onboarding.spec.ts` |
 | AUTH-29 | Passwort-Richtlinie nach LKA NRW/BSI (12+ mit vier Zeichenarten oder Passphrase ab 25; keine Folgen; nicht Name/E-Mail; kein „Password123!“) im Backend und gleich angezeigt im Frontend; alte Passwörter melden sich weiter an | P0 | A/E | ✅ `core/test_password_policy.py`, `shared/password-policy.spec.ts`, `e2e/auth-social.spec.ts` |
 | ONB-10 | Startleitfäden: neues Konto sieht Start-Übersicht und in allen vier Bereichen den Leitfaden; Schritte haken sich aus eigenen Daten ab (fremde zählen nie, keine fremde Reise-ID); Ausblenden im Konto (alle Geräte); nie in der Demo; Handy ohne schwebenden Knopf über dem Leitfaden; Wiedereinblenden unter Einstellungen; keine doppelte Budget-Aufforderung auf der Startseite | P1 | A/E | ✅ `core/test_onboarding_guide.py`, `shared/start-guide/start-guide.spec.ts`, `e2e/start-guide.spec.ts` |
+| AUTH-30 | Konto löschen nur mit Bestätigung: Passwort (bzw. E-Mail bei Konten nur über Google/Apple); falsch/fehlend → 400, nichts gelöscht; Rate-Limit gegen Durchprobieren | P0 | A/E | ✅ `core/test_delete_account.py`, `features/profil/profil.spec.ts`, `e2e-fullstack/erstnutzer.spec.ts` |
+| E2E-FULL-1 | Vollständiger Testlauf als Erstnutzerin gegen echtes Backend (frische DB, Port 8010/4211): Registrierung, Onboarding, alle Bereiche anlegen/abhaken/bearbeiten/löschen, Abmelden/Anmelden, Export, zweites Konto isoliert (App und API 404), Konto löschen | P0 | E | ✅ `e2e-fullstack/erstnutzer.spec.ts` |
 
 ## 3. Berechtigungen und Privatsphäre (wichtigster Block)
 

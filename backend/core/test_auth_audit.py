@@ -50,7 +50,7 @@ def test_registration_trims_email_accepts_unicode_names_and_never_returns_the_pa
     response = register(email='  Alex@Example.com ', name='Zoë Ñúñez-Øberg')
     assert response.status_code == 201
     body = json.dumps(response.json())
-    assert PASSWORD not in body and 'password' not in body
+    assert PASSWORD not in body and '"password"' not in body  # nie ein Passwort-Feld (has_password ist nur Ja/Nein)
     user = get_user_model().objects.get()
     assert user.email == 'Alex@example.com' and user.first_name  # Domain normalisiert, Leerzeichen entfernt == 'Zoë Ñúñez-Øberg'
     assert user.password.startswith('argon2') and PASSWORD not in user.password

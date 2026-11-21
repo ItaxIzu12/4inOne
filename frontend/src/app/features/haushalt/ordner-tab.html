@@ -536,9 +536,9 @@
         <app-field label="Erinnern">
           <app-select [options]="leadOptions" [value]="formLead()" (valueChange)="formLead.set($any($event))" />
         </app-field>
-        <label class="checkbox check-field">
-          <input type="checkbox" [checked]="formAutoRenewal()" (change)="formAutoRenewal.set($any($event.target).checked)" />
-          Verlängert sich automatisch
+        <label class="switch-row check-field">
+          <span>Verlängert sich automatisch</span>
+          <input type="checkbox" role="switch" [checked]="formAutoRenewal()" (change)="formAutoRenewal.set($any($event.target).checked)" />
         </label>
       </div>
       <app-field label="Vertragsnummer" [optional]="true" hint="Nur in der Detailansicht sichtbar.">

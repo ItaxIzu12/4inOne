@@ -28,38 +28,45 @@ export const APP_AREA_ROUTES: Routes = [
       },
       {
         path: 'finanzen',
+        title: 'Finanzen | 4inOne',
         loadComponent: () =>
           import('./features/finanzen/private-finance').then((m) => m.PrivateFinance),
         data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'haushaltsfinanzen',
+        title: 'Haushaltsfinanzen | 4inOne',
         redirectTo: 'finanzen',
         pathMatch: 'full',
       },
       {
         path: 'haushalt',
+        title: 'Haushalt | 4inOne',
         loadComponent: () => import('./features/haushalt/haushalt').then((m) => m.Haushalt),
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'onboarding',
+        title: 'Willkommen | 4inOne',
         loadComponent: () =>
           import('./features/onboarding/onboarding-page').then((m) => m.OnboardingPage),
         data: { shell: 'bare', hideHeader: true },
       },
       {
         path: 'reisen',
+        title: 'Reisen | 4inOne',
         loadComponent: () => import('./features/reisen/reisen').then((m) => m.Reisen),
         data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'familie',
+        title: 'Personen & Gruppen | 4inOne',
         loadComponent: () => import('./features/familie/familie').then((m) => m.Familie),
         data: { shell: 'bare', sidebarNav: true },
       },
       {
         path: 'organisation',
+        title: 'Organisation | 4inOne',
         loadComponent: () =>
           import('./features/organisation/organisation').then((m) => m.Organisation),
         data: { shell: 'bare', dashboardNav: true, sidebarNav: true },

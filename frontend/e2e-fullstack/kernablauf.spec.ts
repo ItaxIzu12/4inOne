@@ -58,16 +58,16 @@ test('Konto, Aufgabe, Neuladen und Fremdzugriff – alles echt', async ({ browse
 
   // … und auch direkt über die API kein Zugriff: fremde ID → 404 (verrät nicht einmal, dass es sie gibt)
   const status = await max.evaluate(async (taskId) => {
-    const refresh = await fetch('http://localhost:8000/api/v1/auth/csrf/', { credentials: 'include' });
+    const refresh = await fetch('http://localhost:8010/api/v1/auth/csrf/', { credentials: 'include' });
     const { csrfToken } = (await refresh.json()) as { csrfToken: string };
-    const tokenRes = await fetch('http://localhost:8000/api/v1/auth/refresh/', {
+    const tokenRes = await fetch('http://localhost:8010/api/v1/auth/refresh/', {
       method: 'POST',
       credentials: 'include',
       headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
       body: '{}',
     });
     const { access } = (await tokenRes.json()) as { access: string };
-    const r = await fetch(`http://localhost:8000/api/v1/organisation/tasks/${taskId}/`, {
+    const r = await fetch(`http://localhost:8010/api/v1/organisation/tasks/${taskId}/`, {
       headers: { Authorization: `Bearer ${access}` },
     });
     return { refresh: tokenRes.status, task: r.status };
@@ -78,7 +78,7 @@ test('Konto, Aufgabe, Neuladen und Fremdzugriff – alles echt', async ({ browse
   const fremd = await (await browser.newContext()).newPage();
   await fremd.goto('/organisation');
   await expect(fremd).toHaveURL(/login/);
-  expect((await fremd.request.get('http://localhost:8000/api/v1/organisation/tasks/')).status()).toBe(401);
+  expect((await fremd.request.get('http://localhost:8010/api/v1/organisation/tasks/')).status()).toBe(401);
 });
 
 /** Mini-Entpacker für den Test (nur „gespeichert“ und „deflate“, wie Pythons zipfile sie schreibt). */

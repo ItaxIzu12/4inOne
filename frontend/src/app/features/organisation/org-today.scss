@@ -301,7 +301,7 @@
   position: absolute;
   inset: 11px;
   border: 1.6px solid #8592a6;
-  border-radius: var(--radius-sm);
+  border-radius: 50%; // runder Haken wie überall
   background: #fff;
   content: '';
 }

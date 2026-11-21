@@ -139,30 +139,10 @@
   cursor: default;
   opacity: 0.7;
 }
-// Eigenes Kästchen statt Browser-Standard, bleibt aber ein echtes Checkbox-Element (Tastatur, Screenreader).
+// runder Haken: shared/form/choice-controls.css — hier in der Reisefarbe
 .suggest__row input {
-  appearance: none;
-  display: grid;
-  flex: 0 0 22px;
-  place-content: center;
-  width: 22px;
-  height: 22px;
-  margin: 0;
-  border: 1.5px solid #9fb0c8;
-  border-radius: var(--radius-sm);
-  background: #fff center / 14px no-repeat;
+  --check-color: var(--travel-fill);
   cursor: inherit;
-  transition:
-    background-color 150ms ease-out,
-    border-color 150ms ease-out;
-}
-.suggest__row input:checked {
-  border-color: var(--accent);
-  background-color: var(--accent);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
-}
-.suggest__row input:focus {
-  outline: none;
 }
 .suggest__text {
   flex: 1;
@@ -288,8 +268,7 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .suggest__row,
-  .suggest__row input {
+  .suggest__row {
     transition: none;
   }
 }

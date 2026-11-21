@@ -154,6 +154,11 @@ test('deleting the account opens a clear warning first, then signs the user out 
   // Opazitäts-Transition ausgeführt, was einen nur während des Einblendens kurz zu schwachen Kontrast meldet.
   await page.waitForTimeout(250);
   expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations).toEqual([]);
+  // Ohne Bestätigung passiert nichts (seit 21.11.2026: Passwort nötig)
+  await page.getByRole('button', { name: 'Konto endgültig löschen' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Bitte gib dein Passwort ein');
+  expect(deleteCalled).toBe(false);
+  await dialog.getByLabel('Zur Bestätigung: dein Passwort').fill('Sicher-Wald-27x');
   await page.getByRole('button', { name: 'Konto endgültig löschen' }).click();
   // Nicht mehr angemeldet: die Startseite zeigt wieder Anmelden/Registrieren statt der echten App.
   await expect(page).toHaveURL(/\/$/);

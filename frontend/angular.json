@@ -29,7 +29,8 @@
             ],
             "styles": [
               "src/styles.css",
-              "src/app/shared/form/form-controls.css"
+              "src/app/shared/form/form-controls.css",
+              "src/app/shared/form/choice-controls.css"
             ]
           },
           "configurations": {
@@ -64,6 +65,17 @@
               "extractLicenses": false,
               "sourceMap": true
             },
+            "fullstack": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.fullstack.ts"
+                }
+              ]
+            },
             "pages": {
               "outputHashing": "all",
               "optimization": {
@@ -89,6 +101,9 @@
             },
             "development": {
               "buildTarget": "frontend:build:development"
+            },
+            "fullstack": {
+              "buildTarget": "frontend:build:fullstack"
             }
           },
           "defaultConfiguration": "development"

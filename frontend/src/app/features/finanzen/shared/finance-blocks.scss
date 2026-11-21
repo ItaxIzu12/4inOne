@@ -478,25 +478,9 @@ h3 {
   width: 18px;
   height: 18px;
 }
-// Formular-Ergänzungen
-.checkbox-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: var(--fs-secondary);
-  cursor: pointer;
-}
-.checkbox-row input {
-  width: 20px;
-  height: 20px;
-  margin-top: 1px;
-  accent-color: var(--accent);
-}
-.checkbox-row small {
-  display: block;
-  margin-top: 2px;
-  color: var(--text-muted);
-  font-size: var(--fs-meta);
+// Haken und Schalter: zentral (shared/form/choice-controls.css), hier nur die Bereichsfarbe
+:host {
+  --check-color: var(--finance-fill);
 }
 button:focus-visible,
 input:focus-visible {

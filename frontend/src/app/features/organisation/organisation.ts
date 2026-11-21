@@ -147,7 +147,12 @@ export class Organisation {
   });
   guidePick(key: string) {
     if (key === 'note') this.openNote();
-    else this.open(key === 'event' ? 'event' : 'task');
+    else if (key === 'event') this.open('event');
+    else {
+      // „Mit Fälligkeit taucht sie hier unter ‚Heute‘ auf“ — aus dem Leitfaden heraus also gleich mit heute
+      this.open('task');
+      this.form.patchValue({ due_date: localDay(new Date()) });
+    }
   }
   readonly derivedEvents = signal<PersonalEvent[]>([]);
   readonly visibleEvents = computed(() => {

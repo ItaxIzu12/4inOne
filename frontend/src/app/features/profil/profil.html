@@ -82,8 +82,22 @@
       Organisation, Reisen und deine Kontakte — werden endgültig gelöscht. Das lässt sich nicht rückgängig
       machen.
     </p>
+    <!-- Erneute Bestätigung (seit 21.11.2026): ein kurz unbeaufsichtigtes Gerät reicht nicht zum Löschen -->
+    <div class="profile-field">
+      @if (hasPassword()) {
+        <label for="delete-confirm">Zur Bestätigung: dein Passwort</label>
+        <input id="delete-confirm" name="delete-confirm" type="password" autocomplete="current-password"
+          [value]="deleteConfirm()" (input)="deleteConfirm.set($any($event.target).value)" (keydown.enter)="confirmDelete()"
+          [attr.aria-invalid]="deleteError() ? 'true' : null" [attr.aria-describedby]="deleteError() ? 'delete-error' : null" />
+      } @else {
+        <label for="delete-confirm">Zur Bestätigung: deine E-Mail-Adresse</label>
+        <input id="delete-confirm" name="delete-confirm" type="email" autocomplete="off" inputmode="email"
+          [value]="deleteConfirm()" (input)="deleteConfirm.set($any($event.target).value)" (keydown.enter)="confirmDelete()"
+          [attr.aria-invalid]="deleteError() ? 'true' : null" [attr.aria-describedby]="deleteError() ? 'delete-error' : null" />
+      }
+    </div>
     @if (deleteError()) {
-      <p class="delete-account__error" role="alert">{{ deleteError() }}</p>
+      <p id="delete-error" class="delete-account__error" role="alert">{{ deleteError() }}</p>
     }
     <div class="delete-account__actions">
       <button type="button" class="delete-account__cancel" [disabled]="deleting()" (click)="closeDeleteModal()"><app-icon name="close" aria-hidden="true" />Abbrechen</button>

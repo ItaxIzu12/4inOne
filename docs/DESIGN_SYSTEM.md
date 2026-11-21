@@ -1369,3 +1369,10 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   Finanzen nutzt weiter die eigenen Monatsdaten (`startSteps`), nur die Darstellung ist gemeinsam; die alten
   `.start*`-Stile in Finanzen sind entfernt. Einstellungen: Gruppe `#leitfaeden` mit `.settings-row__action`
   („Einblenden“); Startseite: `moneyCoveredByStart()` blendet die Finanzen-Karte für neue Konten aus. Keine neuen Tokens.
+
+- **Haken und Schalter (21.11.2026):** zentral in `shared/form/choice-controls.css` (in `angular.json › styles`).
+  `input[type=checkbox]` = runder Haken, `input[type=checkbox][role=switch]` = Schalter; Farbe je Bereich über
+  `--check-color`. Entfernt: eigene Kästchen/Schalter in `login.scss` (`.check__box`), `finance-blocks.scss`,
+  `organisation.scss` (`.switch`, `.checkbox-row`), `org-household-tasks.scss` (`.hh__toggle`), `auto-links.scss`
+  (`.al__toggle`), `haushalt-common.scss`, `trip-packing.scss`, `trip-planning.scss`, `reisen-late.scss`
+  (`.suggest__row input`), `mfa-setup.css`. Listen-Abhakknöpfe (`.box`, `.check__ring`) mit `border-radius: 50%`.

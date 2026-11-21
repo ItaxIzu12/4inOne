@@ -171,11 +171,11 @@
   min-height: 52px;
   cursor: pointer;
 }
+// runder Haken: shared/form/choice-controls.css — hier etwas größer und in der Reisefarbe (Abhaken beim Packen)
 .check input {
-  flex: 0 0 24px;
+  --check-color: var(--travel-fill);
   width: 24px;
   height: 24px;
-  accent-color: var(--blue);
 }
 .item__title {
   min-width: 0;

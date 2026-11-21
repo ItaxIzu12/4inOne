@@ -492,9 +492,8 @@ input[aria-invalid='true'] {
   line-height: 1.4;
 }
 
-// Kästchen: echtes Checkbox-Element (Tastatur, Screenreader), optisch eigenes Feld
+// Zustimmung: runder Haken (shared/form/choice-controls.css) vor dem Text; „Angemeldet bleiben“ ist ein Schalter
 .check {
-  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -506,41 +505,10 @@ input[aria-invalid='true'] {
   cursor: pointer;
 }
 .check input {
-  position: absolute;
-  top: 10px;
-  left: 0;
-  width: 22px;
-  height: 22px;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
+  margin-top: 1px;
 }
-.check__box {
-  display: grid;
-  place-items: center;
-  flex: 0 0 22px;
-  height: 22px;
-  border: 1.5px solid var(--border-control);
-  border-radius: 6px;
-  background: #fff;
-  color: transparent;
-  transition: background-color 120ms ease-out, border-color 120ms ease-out;
-}
-.check__box app-icon {
-  width: 15px;
-  height: 15px;
-}
-.check input:checked + .check__box {
-  border-color: var(--brand-primary);
-  background: var(--brand-primary);
-  color: #fff;
-}
-.check input:focus-visible + .check__box {
-  outline: 2px solid var(--brand-primary);
-  outline-offset: 2px;
-}
-.check input[aria-invalid='true'] + .check__box {
-  border-color: var(--danger);
+.remember {
+  min-height: 44px;
 }
 
 // ---------------------------------------------------------------- Knöpfe
@@ -673,8 +641,7 @@ input[aria-invalid='true'] {
   }
   .social__btn,
   .btn--primary,
-  input,
-  .check__box {
+  input {
     transition: none;
   }
 }

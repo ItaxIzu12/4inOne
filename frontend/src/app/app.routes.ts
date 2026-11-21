@@ -95,6 +95,7 @@ const ALL_ROUTES: Routes = [
   },
   {
     path: 'einstellungen',
+    title: 'Einstellungen | 4inOne',
     loadComponent: () =>
       import('./features/einstellungen/einstellungen').then((m) => m.Einstellungen),
     canActivate: [authGuard],
@@ -102,12 +103,14 @@ const ALL_ROUTES: Routes = [
   },
   {
     path: 'einstellungen/profil',
+    title: 'Profil bearbeiten | 4inOne',
     loadComponent: () => import('./features/profil/profil').then((m) => m.Profil),
     canActivate: [authGuard],
     data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'einstellungen/zwei-faktor',
+    title: 'Zwei-Faktor-Anmeldung | 4inOne',
     loadComponent: () => import('./features/mfa-setup/mfa-setup').then((m) => m.MfaSetup),
     canActivate: [authGuard],
     data: { shell: 'bare', hideHeader: true },
@@ -122,6 +125,7 @@ const ALL_ROUTES: Routes = [
   },
   {
     path: 'einstellungen/sitzungen',
+    title: 'Angemeldete Geräte | 4inOne',
     loadComponent: () => import('./features/sitzungen/sitzungen').then((m) => m.Sitzungen),
     canActivate: [authGuard],
     data: { shell: 'bare', hideHeader: true },

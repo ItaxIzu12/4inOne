@@ -422,7 +422,7 @@
   </app-field>
   <div class="field-row field-row--amount">
     <app-field label="Betrag" [error]="expenseAmountError()">
-      <input id="expense-amount" formControlName="amount" inputmode="decimal" placeholder="z. B. 8.500" />
+      <input id="expense-amount" formControlName="amount" inputmode="decimal" placeholder="z. B. 24,90" />
     </app-field>
     <app-field label="Währung" hint="So, wie bezahlt wurde.">
       <app-select formControlName="currency" [options]="currencyOptions" />

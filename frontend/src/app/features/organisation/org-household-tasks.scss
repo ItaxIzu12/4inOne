@@ -37,34 +37,8 @@
   line-height: 1.4;
 }
 .hh__toggle {
-  position: relative;
-  flex: 0 0 44px;
-  width: 44px;
-  height: 26px;
-  margin: 0;
-  border-radius: 999px;
-  background: #7d8796;
-  appearance: none;
-  cursor: pointer;
+  --check-color: var(--household-fill); // Schalter selbst: shared/form/choice-controls.css
 }
-.hh__toggle::after {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
-  content: '';
-}
-.hh__toggle:checked {
-  background: var(--household-fill);
-}
-.hh__toggle:checked::after {
-  transform: translateX(18px);
-}
-.hh__toggle:focus-visible,
 .hh__more:focus-visible {
   outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
@@ -120,10 +94,4 @@
   margin: 0;
   color: var(--danger);
   font-size: var(--fs-secondary);
-}
-@media (prefers-reduced-motion: no-preference) {
-  .hh__toggle,
-  .hh__toggle::after {
-    transition: background-color 150ms ease-out, transform 150ms ease-out;
-  }
 }

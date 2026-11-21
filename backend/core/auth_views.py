@@ -102,6 +102,8 @@ def _user_payload(user) -> dict:
         'email_verified': is_verified(user),
         # Admin-Panel (monitoring/): nur der Schalter fürs Menü — die Rechte prüft jeder Admin-Endpunkt selbst.
         'is_admin': bool(user.is_staff and user.is_active),
+        # Konto löschen: mit Passwort bestätigen — oder, bei Konten nur über Google/Apple, mit der E-Mail-Adresse.
+        'has_password': user.has_usable_password(),
     }
 
 
@@ -134,6 +136,16 @@ class LoginRateThrottle(LocalCacheThrottle):
         email = raw_email.strip().lower() if isinstance(raw_email, str) else ''
         ident = f'{self.get_ident(request)}:{email}'
         return self.cache_format % {'scope': self.scope, 'ident': ident}
+
+
+class DeleteAccountRateThrottle(LocalCacheThrottle):
+    """Konto löschen bestätigt das Passwort — wie die Anmeldung begrenzt (Scope „login“), je Konto, damit dieser Weg
+    nicht zum Durchprobieren von Passwörtern taugt."""
+
+    scope = 'login'
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {'scope': 'delete_account', 'ident': request.user.pk}
 
 
 class PasswordResetRateThrottle(LocalCacheThrottle):
@@ -602,17 +614,34 @@ class ProfileView(APIView):
             UserPreference.objects.update_or_create(user=request.user, defaults={'home_currency': data['home_currency']})
         return Response(_user_payload(request.user))
 
+    def get_throttles(self):
+        return [DeleteAccountRateThrottle()] if self.request.method == 'DELETE' else super().get_throttles()
+
     def delete(self, request):
-        """Löscht das eigene Konto endgültig. Die Bestätigung ("wirklich löschen?") ist Sache des Frontends
-        (Modal) — dieser Endpunkt führt die Löschung ohne weitere Rückfrage aus, sobald er aufgerufen wird.
+        """Löscht das eigene Konto endgültig — nur mit erneuter Bestätigung (seit 21.11.2026): das Passwort, bei
+        Konten nur über Google/Apple (kein Passwort) die eigene E-Mail-Adresse. Ein kurz unbeaufsichtigtes, angemeldetes
+        Gerät reicht so nicht, um alle Daten unwiderruflich zu löschen. Begrenzt wie die Anmeldung
+        (DeleteAccountRateThrottle).
 
         Alles, was über eine FK mit on_delete=CASCADE am User hängt, verschwindet durch Djangos ORM automatisch
         mit (Reisen, Kontakte, Haushaltsmitgliedschaften, Sitzungen, Tokens, …) — kein Modell im Projekt verwendet
         PROTECT auf einer User-FK. Ein Haushalt/eine Reise mit weiteren Mitgliedern bleibt für diese bestehen;
         nur die eigene Mitgliedschaft/die eigenen Reisen verschwinden (siehe reisen/models.py Trip.owner).
         """
+        user = request.user
+        if user.has_usable_password():
+            password = request.data.get('password')
+            if not isinstance(password, str) or not password or not user.check_password(password):
+                return Response({'password': ['Das Passwort stimmt nicht.']}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            confirm = request.data.get('confirm_email')
+            if not isinstance(confirm, str) or confirm.strip().lower() != (user.email or '').strip().lower():
+                return Response(
+                    {'confirm_email': ['Bitte gib zur Bestätigung deine E-Mail-Adresse ein.']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         with transaction.atomic():
-            request.user.delete()
+            user.delete()
         response = Response(status=status.HTTP_204_NO_CONTENT)
         response.delete_cookie(REFRESH_COOKIE_NAME, path=REFRESH_COOKIE_KWARGS['path'])
         return response

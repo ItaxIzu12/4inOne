@@ -135,25 +135,6 @@
   color: #8f2a3d;
   font-size: var(--fs-secondary);
 }
-.checkbox-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: var(--fs-secondary);
-  cursor: pointer;
-}
-.checkbox-row input {
-  width: 20px;
-  height: 20px;
-  margin-top: 1px;
-  accent-color: var(--accent);
-}
-.checkbox-row small {
-  display: block;
-  margin-top: 2px;
-  color: var(--text-muted);
-  font-size: var(--fs-meta);
-}
 @media (max-width: 1100px) {
   .organisation-page {
     padding: 24px 20px 40px;
@@ -225,44 +206,9 @@
   font-size: var(--fs-secondary);
   font-weight: 600;
 }
-// Schalter aus einem echten Kontrollkästchen (Formular, Tastatur, Screenreader „Schalter“); Spur ≥ 3:1 Kontrast
-.switch {
-  position: relative;
-  flex: 0 0 44px;
-  width: 44px;
-  height: 26px;
-  margin: 0;
-  border-radius: 999px;
-  background: #7d8796;
-  appearance: none;
-  cursor: pointer;
-}
-.switch::after {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
-  content: '';
-}
-.switch:checked {
-  background: var(--organization-fill);
-}
-.switch:checked::after {
-  transform: translateX(18px);
-}
-.switch:focus-visible {
-  outline: 2px solid var(--brand-primary);
-  outline-offset: 2px;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .switch,
-  .switch::after {
-    transition: background-color 150ms ease-out, transform 150ms ease-out;
-  }
+// Haken und Schalter: zentral (shared/form/choice-controls.css), hier nur die Bereichsfarbe
+:host {
+  --check-color: var(--organization-fill);
 }
 .series-note {
   display: flex;

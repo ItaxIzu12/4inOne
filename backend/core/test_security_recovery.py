@@ -155,7 +155,7 @@ def test_account_deletion_removes_only_its_files_after_commit(tmp_path, monkeypa
     theirs = stored_file(other, tmp_path, monkeypatch)
     own_path, other_path = Path(own.file.path), Path(theirs.file.path)
     with django_capture_on_commit_callbacks(execute=True):
-        assert client_for(owner).delete('/api/v1/auth/me/').status_code == 204
+        assert client_for(owner).delete('/api/v1/auth/me/', {'password': PASSWORD}, format='json').status_code == 204
     assert not own_path.exists()
     assert other_path.exists()
     assert PersonalFile.objects.filter(pk=theirs.pk).exists()

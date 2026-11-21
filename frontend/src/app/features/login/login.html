@@ -220,10 +220,9 @@
                 }
                 <a class="text-link text-link--small field__aside" routerLink="/passwort-vergessen">Passwort vergessen?</a>
               </div>
-              <label class="check">
-                <input type="checkbox" formControlName="remember" />
-                <span class="check__box" aria-hidden="true"><app-icon name="check" /></span>
+              <label class="switch-row remember">
                 <span>Angemeldet bleiben</span>
+                <input type="checkbox" role="switch" formControlName="remember" />
               </label>
               <button type="submit" class="btn btn--primary" [disabled]="submitting()" [attr.aria-busy]="submitting()">
                 {{ submitting() ? 'Wird angemeldet …' : 'Anmelden' }}
@@ -296,7 +295,6 @@
                 <input type="checkbox" formControlName="acceptPrivacy"
                   [attr.aria-invalid]="registerTried() && registerForm.controls.acceptPrivacy.invalid ? 'true' : null"
                   [attr.aria-describedby]="registerTried() && registerForm.controls.acceptPrivacy.invalid ? 'register-privacy-error' : null" />
-                <span class="check__box" aria-hidden="true"><app-icon name="check" /></span>
                 <span>Ich stimme den <a routerLink="/nutzungsbedingungen" target="_blank">Nutzungsbedingungen</a> zu und habe die
                   <a routerLink="/datenschutz" target="_blank">Datenschutzerklärung</a> gelesen.</span>
               </label>
