@@ -3,6 +3,7 @@ import { DOCUMENT, Injectable, PLATFORM_ID, computed, inject, signal } from '@an
 import { isPlatformBrowser } from '@angular/common';
 import { Observable, map, tap, switchMap, shareReplay } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
+import { clearOfflineData } from '../offline/offline-keys';
 
 export interface AuthUser {
   name: string;
@@ -174,6 +175,21 @@ export class AuthService {
     this._accessToken.set(null);
     this._currentUser.set(null);
     this.setSignedInHint(false);
+    this._offline.set(false);
+    // Offline-Einkaufsliste gehört zur Sitzung – beim Abmelden (oder abgelaufener Sitzung) vom Gerät löschen
+    clearOfflineData();
+  }
+
+  /** Beim Start ohne Netz (22.11.2026): die Sitzung ist nicht ungültig, nur nicht prüfbar. Dann nicht abmelden, sondern
+   * die Offline-Ansicht zeigen (auth.guard → /offline); mit Netz lädt die Seite neu. */
+  private readonly _offline = signal(false);
+  readonly offline = this._offline.asReadonly();
+  markOffline(): void {
+    this._offline.set(true);
+  }
+  /** War die Person zuletzt angemeldet (Hinweis-Cookie für den Webserver)? */
+  hasSignedInHint(): boolean {
+    return (this.document.cookie ?? '').split(';').some((c) => c.trim() === `${SIGNED_IN_HINT}=1`);
   }
 
   requestPasswordReset(email: string): Observable<{ detail: string }> {

@@ -5,7 +5,7 @@
   --muted: var(--text-secondary);
   --line: var(--border-subtle);
   --hover: var(--surface-hover);
-  --link: var(--brand-primary);
+  --link: var(--text-link);
   --r-sm: var(--radius-sm);
   --r-md: var(--radius-md);
   --r-lg: var(--radius-lg);
@@ -47,7 +47,7 @@
   padding: 0 16px;
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
-  background: #fff;
+  background: var(--surface-card);
   color: var(--ink);
   font: inherit;
   font-size: 14px;
@@ -78,7 +78,7 @@
   padding: 8px;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  background: #fff;
+  background: var(--surface-card);
   box-shadow: 0 12px 28px -12px rgb(20 33 67 / 25%);
   list-style: none;
 }
@@ -197,7 +197,7 @@ button:focus-visible {
   flex-shrink: 0;
   border-radius: 50%;
   background: var(--info-soft);
-  color: var(--brand-primary);
+  color: var(--text-link);
 }
 .invite-hint__icon app-icon {
   width: 18px;
@@ -212,7 +212,7 @@ button:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  color: var(--brand-primary);
+  color: var(--text-link);
   font-size: var(--fs-secondary);
   font-weight: var(--fw-semibold);
   white-space: nowrap;
@@ -296,7 +296,7 @@ button:focus-visible {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   background: var(--surface-app);
-  color: var(--brand-primary);
+  color: var(--text-link);
   font: inherit;
   font-weight: 600;
   text-align: left;

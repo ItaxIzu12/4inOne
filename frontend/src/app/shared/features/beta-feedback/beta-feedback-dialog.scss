@@ -57,7 +57,7 @@
 }
 .bf-option[aria-pressed='true'] {
   background: var(--brand-primary);
-  border-color: var(--brand-primary);
+  border-color: var(--text-link);
   color: var(--surface);
 }
 .bf-option:focus-visible {

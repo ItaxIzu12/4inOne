@@ -1,0 +1,140 @@
+/* Dunkelmodus (22.11.2026): dieselben Token-Namen wie in styles.css, nur dunkle Werte. Gilt, wenn das System dunkel
+   eingestellt ist (außer man hat in den Einstellungen „Hell“ gewählt) oder wenn „Dunkel“ gewählt ist
+   (core/theme/theme.service.ts setzt data-theme an <html>). Komponenten verwenden Tokens; Weiß auf farbigen Knöpfen
+   bleibt weiß, deshalb ist die Hauptfarbe im Dunkeln ein helleres Waldgrün statt Weiß (Kontrast weiß darauf ≥ 7:1). */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --surface-app: #111715;
+    --surface-card: #192220;
+    --surface-elevated: #1f2926;
+    --surface-hover: #24302c;
+    --surface-pressed: #2a3632;
+    --surface-sunken: #141c1a;
+
+    --text-primary: #e8ede9;
+    --text-secondary: #a9b5b0;
+    --text-muted: #a9b5b0;
+    --text-on-accent: #ffffff;
+
+    --border-subtle: #2a3532;
+    --border-default: #33403c;
+    --border-strong: #4d5c57;
+    --border-control: #6f7d78;
+
+    --brand-primary: #2f6b5d;
+    --brand-primary-hover: #37786a;
+    --accent-evergreen: #5cc79c;
+
+    --finance-accent: #5cc79c;
+    --finance-soft: #17302a;
+    --household-accent: #ec8fa8;
+    --household-soft: #35212a;
+    --organization-accent: #e3ab5f;
+    --organization-soft: #33281a;
+    --travel-accent: #8db8e4;
+    --travel-soft: #1b2939;
+    --finance-fill: #1f7a5c;
+    --household-fill: #9c3f59;
+    --organization-fill: #8a5718;
+    --travel-fill: #3f6f9f;
+
+    --success: #6fd3a0;
+    --success-soft: #173327;
+    --warning: #f0c46a;
+    --warning-soft: #332a14;
+    --error: #f2998f;
+    --error-soft: #3a1d1b;
+    --info: #9cc3f5;
+    --info-soft: #1a2a40;
+
+    --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-overlay: 0 14px 32px -12px rgba(0, 0, 0, 0.7);
+    --focus-ring: 3px solid #8fd6b8;
+    --mint: #1d3329;
+    --accent-ink: #ffffff;
+    --color-amber-ink: #e3ab5f;
+    --color-amber-glow: #c98f59;
+    --text-link: #8fd6b8;
+    --text-link-hover: #b2e6cf;
+    --chart-red: #f0798c;
+    --chart-red-soft: #3a1e25;
+    --chart-blue: #7fb0f0;
+    --chart-blue-soft: #1a2a40;
+    --chart-amber: #f0b45a;
+    --chart-amber-soft: #352915;
+    --chart-green: #6fd3a0;
+    --chart-green-soft: #173327;
+    --chart-track: #2a3632;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --surface-app: #111715;
+  --surface-card: #192220;
+  --surface-elevated: #1f2926;
+  --surface-hover: #24302c;
+  --surface-pressed: #2a3632;
+  --surface-sunken: #141c1a;
+
+  --text-primary: #e8ede9;
+  --text-secondary: #a9b5b0;
+  --text-muted: #a9b5b0;
+  --text-on-accent: #ffffff;
+
+  --border-subtle: #2a3532;
+  --border-default: #33403c;
+  --border-strong: #4d5c57;
+  --border-control: #6f7d78;
+
+  --brand-primary: #2f6b5d;
+  --brand-primary-hover: #37786a;
+  --accent-evergreen: #5cc79c;
+
+  --finance-accent: #5cc79c;
+  --finance-soft: #17302a;
+  --household-accent: #ec8fa8;
+  --household-soft: #35212a;
+  --organization-accent: #e3ab5f;
+  --organization-soft: #33281a;
+  --travel-accent: #8db8e4;
+  --travel-soft: #1b2939;
+  --finance-fill: #1f7a5c;
+  --household-fill: #9c3f59;
+  --organization-fill: #8a5718;
+  --travel-fill: #3f6f9f;
+
+  --success: #6fd3a0;
+  --success-soft: #173327;
+  --warning: #f0c46a;
+  --warning-soft: #332a14;
+  --error: #f2998f;
+  --error-soft: #3a1d1b;
+  --info: #9cc3f5;
+  --info-soft: #1a2a40;
+
+  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-overlay: 0 14px 32px -12px rgba(0, 0, 0, 0.7);
+  --focus-ring: 3px solid #8fd6b8;
+  --mint: #1d3329;
+  --accent-ink: #ffffff;
+  --color-amber-ink: #e3ab5f;
+  --color-amber-glow: #c98f59;
+  --text-link: #8fd6b8;
+  --text-link-hover: #b2e6cf;
+  --chart-red: #f0798c;
+  --chart-red-soft: #3a1e25;
+  --chart-blue: #7fb0f0;
+  --chart-blue-soft: #1a2a40;
+  --chart-amber: #f0b45a;
+  --chart-amber-soft: #352915;
+  --chart-green: #6fd3a0;
+  --chart-green-soft: #173327;
+  --chart-track: #2a3632;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}

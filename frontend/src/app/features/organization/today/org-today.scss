@@ -8,7 +8,7 @@
   margin-bottom: var(--space-5);
   padding: 26px 28px 24px;
   border-radius: 20px var(--radius-sm) 20px 20px;
-  background: var(--organization-accent, #85561a);
+  background: var(--organization-fill);
   color: #fff;
 }
 .day-hero__date {
@@ -56,7 +56,7 @@
   min-height: 30px;
   padding: 0 12px;
   border-radius: 999px;
-  background: color-mix(in srgb, #000 22%, var(--organization-accent, #85561a));
+  background: color-mix(in srgb, #000 22%, var(--organization-fill));
   color: #fff;
   font-size: var(--fs-meta);
   font-weight: 600;
@@ -66,8 +66,8 @@
   height: 15px;
 }
 .day-hero__chip--late {
-  background: #fff;
-  color: #8f1f3c;
+  background: var(--surface-card);
+  color: var(--error);
 }
 
 // ---------- Raster ----------
@@ -140,8 +140,8 @@
   padding: 0 12px;
   border: 0;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--cat) 14%, #fff);
-  color: color-mix(in srgb, var(--cat) 60%, #1a1d2b);
+  background: color-mix(in srgb, var(--cat) 14%, var(--surface-card));
+  color: color-mix(in srgb, var(--cat) 60%, light-dark(#1a1d2b, #acb2cd));
   font: inherit;
   font-size: var(--fs-meta);
   font-weight: 600;
@@ -193,7 +193,7 @@
   border: 0;
   border-left: 4px solid var(--cat);
   border-radius: 4px var(--radius-md) var(--radius-md) 4px;
-  background: color-mix(in srgb, var(--cat) 10%, #fff);
+  background: color-mix(in srgb, var(--cat) 10%, var(--surface-card));
   color: var(--text);
   font: inherit;
   text-align: left;

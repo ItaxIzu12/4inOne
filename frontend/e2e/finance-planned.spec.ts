@@ -15,15 +15,15 @@ for (const width of [360, 390, 430, 768, 1440]) {
     await expect(breakdown).toContainText('Monatsbudget');
     await expect(breakdown).toContainText('Bereits ausgegeben');
     await expect(breakdown).toContainText('Verfügbar');
-    const plannedLink = breakdown.getByRole('button', { name: /geplante Ausgaben im .* anzeigen/ });
+    const plannedLink = breakdown.getByRole('button', { name: /^Geplant.* anzeigen$/ });
     // erst auf den nächsten Monat warten — sonst liest der Test noch das Label des laufenden Monats
     const next = new Date();
     next.setDate(1);
     next.setMonth(next.getMonth() + 1);
     const nextMonth = next.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
-    await expect(plannedLink).toHaveAttribute('aria-label', new RegExp(`im ${nextMonth} anzeigen`));
-    const label = (await plannedLink.getAttribute('aria-label'))!;
-    const total = label.split(' geplante')[0];
+    // WCAG 2.5.3: vorgelesen wird der sichtbare Text („Geplant 1 Ausgabe“) plus „im <Monat> anzeigen“
+    await expect(plannedLink).toHaveAccessibleName(new RegExp(`^Geplant.* im ${nextMonth} anzeigen$`));
+    const total = (await plannedLink.locator('xpath=ancestor::div[1]/dd').innerText()).replace(/^[−-]\s*/, '').trim();
     // Kategorie-Budgets: ausgegeben · geplant · Budget — in Worten, kein horizontales Überlaufen
     await expect(page.locator('.budget-row__nums').filter({ hasText: 'geplant' }).first()).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -47,7 +47,7 @@ for (const width of [360, 390, 430, 768, 1440]) {
 test('a category budget opens its transactions; a planned recurring row can be booked from the form', async ({ page }) => {
   await nextMonthBudgets(page, 1440);
   const wohnen = page.locator('.budget-row', { hasText: 'Wohnen' });
-  await expect(wohnen).toHaveAttribute('aria-label', /Wohnen: Budget .* ausgegeben, .* geplante Ausgaben, .* verfügbar/);
+  await expect(wohnen).toHaveAccessibleName(/^Wohnen .* verfügbar .* ausgegeben .* geplant .* Transaktionen dieser Kategorie anzeigen$/);
   await wohnen.click();
   await expect(page.locator('.tx-switch [aria-pressed="true"]')).toHaveText('Ausgaben');
   const rows = page.locator('#all-rows .transaction');

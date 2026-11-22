@@ -39,7 +39,7 @@
 .people-tab[aria-selected='true'] {
   border-color: color-mix(in srgb, var(--brand-primary) 45%, white);
   background: var(--info-soft);
-  color: var(--brand-primary);
+  color: var(--text-link);
   font-weight: var(--fw-semibold);
 }
 
@@ -107,7 +107,7 @@
 .people-card__title--small app-icon {
   width: 20px;
   height: 20px;
-  color: var(--brand-primary);
+  color: var(--text-link);
 }
 .people-card__badge {
   display: grid;
@@ -116,7 +116,7 @@
   height: 40px;
   border-radius: var(--radius-md);
   background: var(--info-soft);
-  color: var(--brand-primary);
+  color: var(--text-link);
 }
 .people-count {
   display: inline-grid;
@@ -143,7 +143,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--brand-primary);
+  color: var(--text-link);
   font-size: var(--fs-secondary);
   font-weight: var(--fw-semibold);
   cursor: pointer;
@@ -169,7 +169,7 @@
 .people-avatar[data-tone='1'] { background: var(--household-soft); color: var(--household-accent); }
 .people-avatar[data-tone='2'] { background: var(--travel-soft); color: var(--travel-accent); }
 .people-avatar[data-tone='3'] { background: var(--organization-soft); color: var(--organization-accent); }
-.people-avatar[data-tone='4'] { background: var(--warning-soft); color: #8a5a00; }
+.people-avatar[data-tone='4'] { background: var(--warning-soft); color: var(--warning); }
 .people-avatar--pending {
   background: var(--surface-sunken);
   color: var(--text-secondary);

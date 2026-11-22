@@ -60,7 +60,7 @@
 .hp-avatar[data-tone='1'] { background: var(--household-soft); color: var(--household-accent); }
 .hp-avatar[data-tone='2'] { background: var(--travel-soft); color: var(--travel-accent); }
 .hp-avatar[data-tone='3'] { background: var(--organization-soft); color: var(--organization-accent); }
-.hp-avatar[data-tone='4'] { background: var(--warning-soft); color: #8a5a00; }
+.hp-avatar[data-tone='4'] { background: var(--warning-soft); color: var(--warning); }
 .hp-avatar--more {
   background: var(--surface-sunken);
   color: var(--text-secondary);

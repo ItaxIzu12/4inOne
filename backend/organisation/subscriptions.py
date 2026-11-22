@@ -12,12 +12,15 @@ Sicherheit (Server ruft eine von Nutzern genannte Adresse auf – SSRF):
 - Weiterleitungen höchstens 3, jede wird neu geprüft; Zeitlimit 10 s, höchstens 3 MB, höchstens 2000 Termine.
 
 Wiederholungen werden beim Abruf für ein Fenster (60 Tage zurück bis 1 Jahr voraus) in einzelne Termine aufgelöst:
-FREQ=DAILY/WEEKLY/MONTHLY/YEARLY mit INTERVAL, COUNT, UNTIL, bei WEEKLY auch BYDAY, dazu EXDATE. Regeln, die mehr
-verlangen (BYSETPOS, BYMONTHDAY …), werden nicht geraten: dann erscheint nur der erste Termin.
+FREQ=DAILY/WEEKLY/MONTHLY/YEARLY mit INTERVAL, COUNT, UNTIL und EXDATE. Regeln, die mehr
+verlangen, werden nicht geraten. Unterstützt sind auch Rang-Regeln wie „jeden ersten Montag“ (BYDAY=1MO), „letzter
+Freitag“ (-1FR), Monatstage (BYMONTHDAY), Monate (BYMONTH) und BYSETPOS; nicht unterstützt (dann nur der erste Termin):
+BYYEARDAY, BYWEEKNO, BYHOUR/BYMINUTE.
 """
 
 from __future__ import annotations
 
+import calendar
 import ipaddress
 import re
 import socket
@@ -31,7 +34,6 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from core.recurrence import add_months
 
 MAX_BYTES = 3 * 1024 * 1024
 MAX_EVENTS = 2000
@@ -200,11 +202,51 @@ def _duration(value: str) -> timedelta | None:
     return -delta if m[1] == '-' else delta
 
 
+def _ints(value: str, low: int, high: int) -> list[int] | None:
+    """„1,15,-1“ → [1, 15, -1]; None bei ungültigen Werten (dann wird die Regel nicht geraten)."""
+    try:
+        numbers = [int(v) for v in value.split(',') if v.strip()]
+    except ValueError:
+        return None
+    return numbers if numbers and all(low <= abs(n) <= high and n != 0 for n in numbers) else None
+
+
+def _byday(value: str) -> list[tuple[int | None, int]] | None:
+    """„MO,WE“ → [(None, 0), (None, 2)]; „1MO,-1FR“ → [(1, 0), (-1, 4)]."""
+    specs = []
+    for part in value.split(','):
+        m = re.match(r'^([+-]?\d{1,2})?(MO|TU|WE|TH|FR|SA|SU)$', part.strip())
+        if not m:
+            return None
+        specs.append((int(m[1]) if m[1] else None, WEEKDAYS[m[2]]))
+    return specs
+
+
+def _month_days(year: int, month: int, monthdays: list[int] | None, byday: list[tuple[int | None, int]] | None, default_day: int) -> list[date]:
+    """Tage eines Monats nach BYMONTHDAY bzw. BYDAY (mit Rang wie „1MO“ oder „-1FR“); ungültige Tage entfallen (RFC 5545)."""
+    last = calendar.monthrange(year, month)[1]
+    days: set[int] = set()
+    if monthdays:
+        days |= {d if d > 0 else last + 1 + d for d in monthdays}
+    elif byday:
+        for rank, weekday in byday:
+            matches = [d for d in range(1, last + 1) if date(year, month, d).weekday() == weekday]
+            if rank is None:
+                days |= set(matches)
+            elif 1 <= abs(rank) <= len(matches):
+                days.add(matches[rank - 1] if rank > 0 else matches[rank])
+    else:
+        days.add(default_day)
+    return [date(year, month, d) for d in sorted(days) if 1 <= d <= last]
+
+
 def _starts(first: datetime, rule: dict, window_end: datetime, limit: int) -> list[datetime] | None:
-    """Beginn aller Vorkommen bis window_end (COUNT zählt ab dem ersten Termin) — None, wenn die Regel zu komplex ist."""
+    """Beginn aller Vorkommen bis window_end (COUNT zählt ab dem ersten Termin) — None, wenn die Regel nicht unterstützt
+    ist (dann erscheint nur der erste Termin). Unterstützt: FREQ=DAILY/WEEKLY/MONTHLY/YEARLY mit INTERVAL, COUNT, UNTIL,
+    BYDAY (bei MONTHLY/YEARLY auch mit Rang wie 1MO oder -1FR), BYMONTHDAY, BYMONTH und BYSETPOS."""
     freq = rule.get('FREQ')
-    allowed = {'FREQ', 'INTERVAL', 'COUNT', 'UNTIL', 'WKST'} | ({'BYDAY'} if freq == 'WEEKLY' else set())
-    if freq not in ('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY') or set(rule) - allowed:
+    supported = {'FREQ', 'INTERVAL', 'COUNT', 'UNTIL', 'WKST', 'BYDAY', 'BYMONTHDAY', 'BYMONTH', 'BYSETPOS'}
+    if freq not in ('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY') or set(rule) - supported:
         return None
     try:
         interval = max(1, int(rule.get('INTERVAL', '1')))
@@ -218,41 +260,58 @@ def _starts(first: datetime, rule: dict, window_end: datetime, limit: int) -> li
             return None
         if len(rule['UNTIL'].strip()) == 8:  # nur Datum: der ganze Tag zählt
             until = until + timedelta(days=1) - timedelta(seconds=1)
-    byday = None
-    if 'BYDAY' in rule:
-        try:
-            byday = sorted({WEEKDAYS[d.strip()] for d in rule['BYDAY'].split(',')})
-        except KeyError:
-            return None  # z. B. „1MO“ – nicht unterstützt
+    byday = _byday(rule['BYDAY']) if 'BYDAY' in rule else None
+    monthdays = _ints(rule['BYMONTHDAY'], 1, 31) if 'BYMONTHDAY' in rule else None
+    months = _ints(rule['BYMONTH'], 1, 12) if 'BYMONTH' in rule else None
+    setpos = _ints(rule['BYSETPOS'], 1, 366) if 'BYSETPOS' in rule else None
+    if ('BYDAY' in rule and byday is None) or ('BYMONTHDAY' in rule and monthdays is None) \
+            or ('BYMONTH' in rule and (months is None or any(m < 0 for m in months))) or ('BYSETPOS' in rule and setpos is None):
+        return None
+    if byday and freq in ('DAILY', 'WEEKLY') and any(rank is not None for rank, _ in byday):
+        return None  # Rang („1MO“) nur bei Monat/Jahr sinnvoll
+    if setpos and freq not in ('MONTHLY', 'YEARLY'):
+        return None
+
     wall = first.replace(tzinfo=None)
     zone = first.tzinfo
+    clock = wall.time()
     result: list[datetime] = []
-    step = 0
-    while len(result) < limit:
-        if freq == 'WEEKLY' and byday:
+
+    def period_dates(step: int) -> list[date]:
+        if freq == 'DAILY':
+            day = wall.date() + timedelta(days=step * interval)
+            ok = (not byday or day.weekday() in {w for _, w in byday}) and (not months or day.month in months)
+            return [day] if ok else []
+        if freq == 'WEEKLY':
             week_start = wall.date() - timedelta(days=wall.weekday()) + timedelta(weeks=step * interval)
-            candidates = [datetime.combine(week_start + timedelta(days=d), wall.time()) for d in byday]
-        elif freq == 'DAILY':
-            candidates = [wall + timedelta(days=step * interval)]
-        elif freq == 'WEEKLY':
-            candidates = [wall + timedelta(weeks=step * interval)]
-        else:
-            months = step * interval * (12 if freq == 'YEARLY' else 1)
-            candidates = [datetime.combine(add_months(wall.date(), months), wall.time())]
-        done = False
-        for candidate in candidates:
-            if candidate < wall:
+            weekdays = sorted({w for _, w in byday}) if byday else [wall.weekday()]
+            return [d for d in (week_start + timedelta(days=w) for w in weekdays) if not months or d.month in months]
+        if freq == 'MONTHLY':
+            index = wall.month - 1 + step * interval
+            year, month = wall.year + index // 12, index % 12 + 1
+            if months and month not in months:
+                return []
+            days = _month_days(year, month, monthdays, byday, wall.day)
+        else:  # YEARLY
+            year = wall.year + step * interval
+            days = [d for m in (months or [wall.month]) for d in _month_days(year, m, monthdays, byday, wall.day)]
+        if setpos:
+            picked = {days[p - 1] if p > 0 else days[p] for p in setpos if 1 <= abs(p) <= len(days)}
+            days = sorted(picked)
+        return days
+
+    for step in range(5000):
+        candidates = period_dates(step)
+        if candidates and datetime.combine(candidates[0], clock).replace(tzinfo=zone) > window_end:
+            break
+        for day in candidates:
+            moment = datetime.combine(day, clock)
+            if moment < wall:
                 continue
-            aware = candidate.replace(tzinfo=zone)
-            if (until and aware > until) or aware > window_end or (count is not None and len(result) >= count):
-                done = True
-                break
+            aware = moment.replace(tzinfo=zone)
+            if (until and aware > until) or aware > window_end or (count is not None and len(result) >= count) or len(result) >= limit:
+                return result
             result.append(aware)
-        if done:
-            break
-        step += 1
-        if step > 5000:
-            break
     return result
 
 

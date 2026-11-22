@@ -220,11 +220,11 @@
 .people-choice.is-on {
   border-color: color-mix(in srgb, var(--brand-primary) 45%, white);
   background: var(--info-soft);
-  color: var(--brand-primary);
+  color: var(--text-link);
   font-weight: var(--fw-semibold);
 }
 .people-choice.is-on app-icon {
-  color: var(--brand-primary);
+  color: var(--text-link);
 }
 .people-choice:has(input:focus-visible) {
   outline: var(--focus-ring);

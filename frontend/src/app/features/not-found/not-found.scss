@@ -55,7 +55,7 @@ h1 {
 }
 @media (hover: hover) and (pointer: fine) {
   .btn:hover {
-    background: #22332f;
+    background: var(--brand-primary-hover);
   }
   .btn--quiet:hover {
     background: var(--line);

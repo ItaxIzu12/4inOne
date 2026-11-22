@@ -5,8 +5,11 @@
   display: block;
   color: var(--text-primary);
   // Dieselbe Reisefarbe wie Navigation und Startseite (Token), vorher eigenes #2563eb.
-  --accent: var(--travel-accent);
-  --accent-hover: color-mix(in srgb, var(--travel-accent) 85%, #000);
+  --accent: var(--travel-fill);
+  // Dunkelmodus: Flächen mit weißer Schrift nehmen die Füllfarbe, Text und Links die lesbare Textvariante.
+  --text-link: var(--travel-accent);
+  --text-link-hover: color-mix(in srgb, var(--travel-accent) 85%, var(--text-primary));
+  --accent-hover: color-mix(in srgb, var(--travel-fill) 85%, #000);
   --accent-soft: var(--travel-soft);
 }
 .reisen-page {
@@ -31,7 +34,7 @@
   height: 60px;
   border-radius: var(--radius-lg);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--text-link);
 }
 .heading-icon app-icon {
   width: 32px;
@@ -107,16 +110,16 @@ textarea:focus-visible {
 }
 .secondary {
   font-weight: 600; // wie Sekundär-Buttons in allen Bereichen
-  border: 1px solid #d7e4fb;
-  background: #f1f6ff;
-  color: var(--accent-hover);
+  border: 1px solid light-dark(#d7e4fb, #2c384f);
+  background: light-dark(#f1f6ff, #1d273a);
+  color: var(--text-link-hover);
 }
 // Reiter: ruhige Leiste mit Symbol, aktiv blau unterstrichen (wie Organisation und Finanzen).
 .tabs {
   display: flex;
   gap: 6px;
   margin: 22px 0 0;
-  border-bottom: 1px solid #e6eaf2;
+  border-bottom: 1px solid light-dark(#e6eaf2, #363b44);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -139,11 +142,11 @@ textarea:focus-visible {
   height: 18px;
 }
 .tabs button:hover {
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 .tabs button[aria-selected='true'] {
-  border-bottom-color: var(--accent);
-  color: var(--accent-hover);
+  border-bottom-color: var(--text-link);
+  color: var(--text-link-hover);
   font-weight: 600;
 }
 .back {
@@ -155,7 +158,7 @@ textarea:focus-visible {
   padding: 0 4px 0 0;
   border: 0;
   background: none;
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-size: var(--fs-secondary);
   font-weight: 600;
 }
@@ -200,20 +203,20 @@ textarea:focus-visible {
   border-radius: 50%;
 }
 .status--green {
-  background: #e3f6ea;
-  color: #17723f;
+  background: light-dark(#e3f6ea, #1f3828);
+  color: light-dark(#17723f, #91e9b7);
 }
 .status--blue {
-  background: #e6efff;
-  color: var(--accent-hover);
+  background: light-dark(#e6efff, #1d273a);
+  color: var(--text-link-hover);
 }
 .status--gray {
   background: var(--surface-sunken);
   color: var(--text-secondary);
 }
 .status--red {
-  background: #fde8eb;
-  color: #a32038;
+  background: var(--error-soft);
+  color: var(--error);
 }
 .card-state {
   display: grid;
@@ -224,13 +227,13 @@ textarea:focus-visible {
   padding: 36px 20px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--surface-card);
   text-align: center;
 }
 .card-state app-icon {
   width: 32px;
   height: 32px;
-  color: var(--accent);
+  color: var(--text-link);
 }
 .card-state h2,
 .card-state p {
@@ -244,7 +247,7 @@ textarea:focus-visible {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-size: var(--fs-secondary);
   font-weight: 600;
   text-align: left;
@@ -281,13 +284,13 @@ textarea:focus-visible {
 .budget-plan app-icon {
   width: 20px;
   height: 20px;
-  color: #39465c;
+  color: light-dark(#39465c, #adb9cc);
 }
 .budget-plan input {
   width: 100%;
   min-height: 44px;
   padding: 0 12px;
-  border: 1px solid #d9dee6;
+  border: 1px solid light-dark(#d9dee6, #393c42);
   border-radius: var(--radius-md);
   text-align: right;
 }
@@ -300,7 +303,7 @@ textarea:focus-visible {
   background: none;
   padding: 0;
   min-height: 32px;
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-size: var(--fs-meta);
   font-weight: 600;
 }
@@ -329,7 +332,7 @@ textarea:focus-visible {
 .empty > app-icon {
   width: 34px;
   height: 34px;
-  color: var(--accent);
+  color: var(--text-link);
   margin-bottom: 14px;
 }
 .empty p {
@@ -352,7 +355,7 @@ textarea:focus-visible {
   color: var(--text-secondary);
 }
 .icon-btn:hover {
-  background: #f1f6fb;
+  background: light-dark(#f1f6fb, #1e2b39);
   color: var(--text-primary);
 }
 .icon-btn app-icon {
@@ -370,7 +373,7 @@ textarea:focus-visible {
   gap: 10px;
   min-height: 56px;
   padding: 4px 0;
-  border-top: 1px solid #eef4fb;
+  border-top: 1px solid light-dark(#eef4fb, #303c4a);
 }
 .list > .row:first-child {
   border-top: 0;
@@ -387,9 +390,9 @@ textarea:focus-visible {
   min-width: 0;
   min-height: 44px;
   padding: 0 14px;
-  border: 1.5px solid #d7e8fb;
+  border: 1.5px solid light-dark(#d7e8fb, #2c3c4f);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   font-size: var(--fs-body);
 }
@@ -401,7 +404,7 @@ textarea:focus-visible {
 }
 .field-error {
   margin: 0 0 12px;
-  color: #b3261e;
+  color: var(--error);
   font-size: var(--fs-meta);
   font-weight: 700;
 }
@@ -434,8 +437,8 @@ textarea:focus-visible {
   width: 56px;
   height: 56px;
   border-radius: var(--radius-lg);
-  background: #f1faff;
-  color: var(--accent);
+  background: light-dark(#f1faff, #1d2f3a);
+  color: var(--text-link);
 }
 .smart-setup h2 {
   margin: 0;

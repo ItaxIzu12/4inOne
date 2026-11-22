@@ -4,7 +4,7 @@
 }
 .toast {
   --tone: var(--success, #2e7d4f);
-  --tone-soft: color-mix(in srgb, var(--tone) 12%, #fff);
+  --tone-soft: color-mix(in srgb, var(--tone) 12%, var(--surface-card));
   // Rechner: oben in der Mitte; Handy: oben über die volle Breite, siehe unten
   position: fixed;
   z-index: 100;
@@ -35,7 +35,7 @@
   visibility: visible;
 }
 .toast[data-tone='warning'] {
-  --tone: #a86500;
+  --tone: var(--warning);
 }
 .toast[data-tone='error'] {
   --tone: var(--danger, #b3261e);

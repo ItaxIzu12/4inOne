@@ -1,0 +1,47 @@
+<main id="main-content" class="off" tabindex="-1">
+  <header class="off__head">
+    <app-brand />
+  </header>
+  <section class="off__card" aria-labelledby="off-title">
+    <p class="off__kicker"><app-icon name="info" aria-hidden="true" />Kein Netz</p>
+    <h1 id="off-title">Deine Einkaufsliste – offline</h1>
+    @if (snapshot(); as snap) {
+      <p class="off__lead">Stand vom {{ snap.savedAt | date: 'dd.MM. HH:mm' }} Uhr. Abhaken wird gespeichert und übertragen, sobald du wieder Netz hast@if (pending()) { ({{ pending() === 1 ? '1 Änderung wartet' : pending() + ' Änderungen warten' }})}.</p>
+      @if (snap.lists.length > 1) {
+        <div class="off__lists" role="group" aria-label="Einkaufsliste wählen">
+          @for (l of snap.lists; track l.id) {
+            @if (snap.overviews[l.id + '']) {
+              <button type="button" [attr.aria-pressed]="listId() === l.id + ''" (click)="listId.set(l.id + '')">{{ l.name }}</button>
+            }
+          }
+        </div>
+      }
+      @if (overview(); as o) {
+        <ul class="off__items" [attr.aria-label]="o.list.name">
+          @for (item of open(); track item.id) {
+            <li>
+              <app-done-toggle [done]="false" [label]="item.name + ' abhaken'" (toggle)="toggle(item)" />
+              <span class="off__text"><b>{{ item.name }}</b>@if (item.quantity || sectionLabel(item.section)) {<small>{{ item.quantity }}{{ item.quantity && sectionLabel(item.section) ? ' · ' : '' }}{{ sectionLabel(item.section) }}</small>}</span>
+            </li>
+          } @empty {
+            <li class="off__empty">Alles erledigt.</li>
+          }
+        </ul>
+        @if (done().length) {
+          <h2 class="off__sub">Im Wagen ({{ done().length }})</h2>
+          <ul class="off__items off__items--done">
+            @for (item of done(); track item.id) {
+              <li>
+                <app-done-toggle [done]="true" [label]="item.name + ' wieder offen'" (toggle)="toggle(item)" />
+                <span class="off__text"><b>{{ item.name }}</b></span>
+              </li>
+            }
+          </ul>
+        }
+      }
+    } @else {
+      <p class="off__lead">Auf diesem Gerät ist noch keine Einkaufsliste gespeichert. Öffne Haushalt › Einkaufen einmal mit Netz – danach ist sie auch offline da.</p>
+    }
+    <button type="button" class="off__retry" (click)="retry()"><app-icon name="repeat" aria-hidden="true" />Erneut verbinden</button>
+  </section>
+</main>

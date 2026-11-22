@@ -15,7 +15,7 @@
   padding: 28px 32px 24px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--surface-card);
 }
 .fin-hero__top {
   display: flex;
@@ -110,7 +110,7 @@
   background: var(--text-secondary);
 }
 .hero-stat__dot--income {
-  background: var(--finance-accent);
+  background: var(--finance-fill);
 }
 .hero-stat__dot--expense {
   background: var(--fin-red);
@@ -122,10 +122,10 @@
   background: var(--text-primary);
 }
 .hero-stat__dot--variable {
-  background: color-mix(in srgb, var(--text-primary) 30%, #fff);
+  background: color-mix(in srgb, var(--text-primary) 30%, var(--surface-card));
 }
 .hero-stat__dot--goal {
-  background: var(--finance-accent);
+  background: var(--finance-fill);
 }
 .fin-hero__sub.is-good {
   color: var(--finance-accent);
@@ -139,7 +139,7 @@
   height: 8px;
   overflow: hidden;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--text-primary) 18%, #fff);
+  background: color-mix(in srgb, var(--text-primary) 18%, var(--surface-card));
 }
 .split-bar__fixed {
   display: block;
@@ -219,7 +219,7 @@
     box-shadow 150ms ease-out;
 }
 .seg button[aria-pressed='true'] {
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   font-weight: 600;
   box-shadow: 0 1px 2px rgb(23 37 35 / 0.12);
@@ -302,8 +302,8 @@
   margin-top: 8px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: #fff;
-  color: var(--accent);
+  background: var(--surface-card);
+  color: var(--text-link);
   font: inherit;
   font-size: var(--fs-secondary);
   font-weight: 600;

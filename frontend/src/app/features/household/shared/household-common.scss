@@ -78,9 +78,9 @@ h3 {
   background: var(--accent-hover);
 }
 .btn-secondary {
-  border: 1px solid #f0c7bb;
+  border: 1px solid light-dark(#f0c7bb, #4b3630);
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 .btn-primary:disabled,
 .btn-secondary:disabled {
@@ -92,7 +92,7 @@ h3 {
   padding: 0 4px;
   border: 0;
   background: none;
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font: inherit;
   font-size: var(--fs-secondary);
   cursor: pointer;
@@ -181,7 +181,7 @@ textarea:focus-visible {
 }
 .pill--accent {
   background: var(--lavender);
-  color: var(--accent);
+  color: var(--text-link);
 }
 .empty {
   padding: 24px 0 8px;
@@ -273,7 +273,7 @@ textarea:focus-visible {
 }
 .segmented button[aria-checked='true'] {
   background: var(--surface);
-  color: var(--accent);
+  color: var(--text-link);
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(41, 55, 78, 0.12);
 }
@@ -304,7 +304,7 @@ textarea:focus-visible {
   flex-shrink: 0;
   border-radius: var(--radius-md);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--text-link);
 }
 .row__link {
   display: flex;

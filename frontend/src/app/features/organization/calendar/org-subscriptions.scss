@@ -53,7 +53,7 @@ h3 {
   border-radius: 14px;
 }
 .subs__row {
-  --dot: #5b6b7f;
+  --dot: var(--text-secondary);
   display: grid;
   grid-template-columns: 12px minmax(0, 1fr) auto;
   gap: 12px;
@@ -132,7 +132,7 @@ h3 {
   padding: 0 12px;
   border: 1px solid var(--border-default);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   font: inherit;
   font-size: var(--fs-secondary);
@@ -140,7 +140,7 @@ h3 {
   cursor: pointer;
 }
 .soft--danger {
-  border-color: color-mix(in srgb, var(--danger, #b3261e) 40%, #fff);
+  border-color: color-mix(in srgb, var(--danger, #b3261e) 40%, var(--surface-card));
   color: var(--danger, #b3261e);
 }
 .subs__form {
@@ -159,7 +159,7 @@ h3 {
   padding: 0 12px;
   border: 1px solid var(--border-control, #b9c0bc);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   font: inherit;
 }

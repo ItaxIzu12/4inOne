@@ -13,10 +13,7 @@ import { ConnectionsApi } from './shared/features/connections/connections-api.se
 import { DemoConnectionsApi } from './shared/features/connections/demo-connections-api';
 import { DemoFxService, FxService } from './core/fx/fx.service';
 import { DemoHomeCurrency, HomeCurrency } from './core/fx/home-currency';
-import { DemoFinanzenDataProvider } from './features/finance/data/demo-finance-data-provider';
 import { DemoPrivateFinanceApi } from './features/finance/data/demo-private-finance-api';
-import { FINANZEN_DATA_PROVIDER } from './features/finance/data/finance-data-provider';
-import { FinanzenStateService } from './features/finance/data/finance-state.service';
 import { PrivateFinanceApi } from './features/finance/data/private-finance-api.service';
 import { DemoHaushaltDataProvider } from './features/household/data/demo-household-data-provider';
 import { HAUSHALT_DATA_PROVIDER } from './features/household/data/household-data-provider';
@@ -28,7 +25,6 @@ import { ReisenApi } from './features/travel/data/travel-api.service';
 /** Alle Demo-Dienste (nur unter /demo) – auch für Tests, die die Demo als Ganzes prüfen. */
 export const DEMO_PROVIDERS: Provider[] = [
   { provide: DEMO_MODE, useValue: true },
-  { provide: FINANZEN_DATA_PROVIDER, useClass: DemoFinanzenDataProvider },
   { provide: HAUSHALT_DATA_PROVIDER, useClass: DemoHaushaltDataProvider },
   { provide: PrivateFinanceApi, useClass: DemoPrivateFinanceApi },
   { provide: OrganisationApi, useClass: DemoOrganisationApi },
@@ -43,7 +39,6 @@ export const DEMO_PROVIDERS: Provider[] = [
   { provide: ConnectionsApi, useClass: DemoConnectionsApi },
   // Connection Engine V2 in der Demo: abgeleitete Verbindungen aus den Demo-Daten (nur im Browser)
   { provide: AutoLinksApi, useClass: DemoAutoLinksApi },
-  FinanzenStateService,
 ];
 
 /**

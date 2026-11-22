@@ -35,7 +35,7 @@
 }
 .section-switch [aria-pressed='true'] {
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 .row.is-retired .row__name b {
   color: var(--text-muted);
@@ -122,7 +122,7 @@ small {
   color: var(--text-muted);
 }
 .search:focus-within {
-  border-color: var(--accent);
+  border-color: var(--text-link);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .search app-icon {
@@ -195,10 +195,10 @@ small {
   margin-top: 2px;
 }
 .row:hover {
-  background: #fafbfc;
+  background: light-dark(#fafbfc, #252b31);
 }
 .row.is-selected {
-  background: #fef4f1;
+  background: light-dark(#fef4f1, #3a241d);
 }
 .row.is-selected::before {
   content: '';
@@ -208,7 +208,7 @@ small {
   left: -20px;
   width: 3px;
   border-radius: 0 3px 3px 0;
-  background: var(--household-accent);
+  background: var(--household-fill);
 }
 .row__main {
   display: grid;
@@ -231,7 +231,7 @@ small {
   height: 44px;
   border-radius: var(--radius-md);
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 .thumb app-icon {
   width: 22px;
@@ -268,10 +268,10 @@ small {
   font-variant-numeric: tabular-nums;
 }
 .is-due {
-  color: #b45309;
+  color: light-dark(#b45309, #eeb68b);
 }
 .is-late {
-  color: #c8102e;
+  color: light-dark(#c8102e, #ee8b9b);
 }
 
 // Status-Pille
@@ -293,20 +293,20 @@ small {
   background: currentColor;
 }
 .pill--laeuft {
-  background: #e3f6ec;
-  color: #1a7a43;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .pill--bald {
-  background: #fdf1dc;
-  color: #8a4b00;
+  background: var(--warning-soft);
+  color: light-dark(#8a4b00, #eec18b);
 }
 .pill--verpasst {
-  background: #fde2e2;
-  color: #b4142f;
+  background: var(--error-soft);
+  color: var(--error);
 }
 .pill--offen {
   background: var(--surface-sunken);
-  color: #4b5567;
+  color: var(--text-secondary);
 }
 .empty {
   padding: 24px 12px;
@@ -332,7 +332,7 @@ small {
   height: 72px;
   border-radius: var(--radius-lg);
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 .photo app-icon {
   width: 38px;
@@ -383,7 +383,7 @@ small {
 }
 .detail-tabs button[aria-selected='true'] {
   border-bottom-color: var(--household-accent);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-weight: 600;
 }
 .detail__panel {
@@ -429,10 +429,10 @@ small {
   color: #e08a00;
 }
 .state--verpasst i {
-  color: #d61f3c;
+  color: light-dark(#d61f3c, #ee8b9b);
 }
 .state--offen i {
-  color: #8a93a3;
+  color: light-dark(#8a93a3, #a9b5b0);
 }
 .notes {
   margin: 4px 0 8px;
@@ -493,7 +493,7 @@ small {
     border: 1px solid transparent;
   }
   .row.is-selected {
-    border-color: #f3cdc2;
+    border-color: light-dark(#f3cdc2, #4c352f);
   }
   .row.is-selected::before,
   .row__menu,
@@ -542,7 +542,7 @@ small {
   .row__chevron {
     width: 16px;
     height: 16px;
-    color: #8a93a3;
+    color: light-dark(#8a93a3, #a9b5b0);
   }
 }
 // Raster nach verfügbarer Breite (nicht Fenster): Liste braucht ~600 px, sonst steht das Detail darunter.
@@ -701,7 +701,7 @@ small {
   padding: 0 14px;
   border: 1px solid var(--border-default);
   border-radius: 999px;
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   font: inherit;
   font-size: var(--fs-secondary);

@@ -52,7 +52,7 @@
   color: #fff;
 }
 .aside__brand:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--surface-card);
   outline-offset: 6px;
 }
 .aside__body {
@@ -374,7 +374,7 @@ h1 {
   padding: 0 18px;
   border: 1px solid var(--border-control);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   font: inherit;
   font-size: 16px;
@@ -434,7 +434,7 @@ input:not([type='checkbox']) {
   padding: 0 16px;
   border: 1px solid var(--border-control);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   font: inherit;
   font-size: 16px;
@@ -444,7 +444,7 @@ input:not([type='checkbox']):hover {
   border-color: var(--text-secondary);
 }
 input:not([type='checkbox']):focus-visible {
-  border-color: var(--brand-primary);
+  border-color: var(--text-link);
   outline: 2px solid var(--brand-primary);
   outline-offset: 1px;
 }

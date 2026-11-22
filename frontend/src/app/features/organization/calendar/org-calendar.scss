@@ -3,7 +3,7 @@
 .cal {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--surface-card);
 }
 .toolbar {
   display: flex;
@@ -35,8 +35,8 @@
   cursor: pointer;
 }
 .views [aria-pressed='true'] {
-  background: #fff;
-  color: var(--accent-hover, var(--accent));
+  background: var(--surface-card);
+  color: var(--text-link-hover);
   box-shadow: 0 1px 2px rgba(30, 20, 60, 0.08);
 }
 .nav {
@@ -88,8 +88,8 @@
   padding: 0 12px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: #fff;
-  color: var(--accent-hover, var(--accent));
+  background: var(--surface-card);
+  color: var(--text-link-hover);
   font: inherit;
   font-size: var(--fs-secondary);
   font-weight: 600;
@@ -146,7 +146,7 @@
   background: var(--surface-hover);
 }
 .cell.is-outside {
-  color: #6b6880;
+  color: light-dark(#6b6880, #b8b6c4);
 }
 .cell.is-selected {
   background: var(--accent-soft, #f1eefb);
@@ -187,7 +187,7 @@
   position: relative;
   z-index: 1;
   border-left: 0;
-  background: color-mix(in srgb, var(--cat, var(--c-sonstiges)) 18%, #fff);
+  background: color-mix(in srgb, var(--cat, var(--c-sonstiges)) 18%, var(--surface-card));
   color: var(--text);
   font-weight: 600;
 }
@@ -348,7 +348,7 @@
 .week__head[aria-pressed='true'] b,
 .strip__day[aria-pressed='true'] b {
   background: var(--accent-soft, #f1eefb);
-  color: var(--accent-hover, var(--accent));
+  color: var(--text-link-hover);
 }
 .week__head b.is-today,
 .strip__day b.is-today {
@@ -397,7 +397,7 @@
   border: 0;
   border-left: 3px solid var(--cat);
   border-radius: 3px var(--radius-sm) var(--radius-sm) 3px;
-  background: color-mix(in srgb, var(--cat) 10%, #fff);
+  background: color-mix(in srgb, var(--cat) 10%, var(--surface-card));
   color: var(--text);
   font: inherit;
   text-align: left;
@@ -406,7 +406,7 @@
 .week__ev--span {
   position: relative;
   z-index: 1;
-  background: color-mix(in srgb, var(--cat) 18%, #fff);
+  background: color-mix(in srgb, var(--cat) 18%, var(--surface-card));
 }
 .week__ev--start {
   margin-right: -7px;
@@ -551,7 +551,7 @@
 
 // Woche und Monat: Tage als Gruppen; am Rechner scrollt die Agenda neben dem Kalender in sich.
 .agenda__day {
-  background: #fff; // für die mitlaufende Tageszeile beim Scrollen
+  background: var(--surface-card); // für die mitlaufende Tageszeile beim Scrollen
 }
 .agenda__day + .agenda__day {
   margin-top: 6px;
@@ -574,7 +574,7 @@
   font-weight: 700;
 }
 .agenda__date.is-today {
-  color: var(--accent-hover, var(--accent));
+  color: var(--text-link-hover);
 }
 .more-btn {
   display: inline-flex;
@@ -584,10 +584,10 @@
   min-height: 44px;
   margin: 4px 0;
   padding: 0 10px;
-  border: 1px dashed #dcd8ea;
+  border: 1px dashed light-dark(#dcd8ea, #3a3744);
   border-radius: var(--radius-md);
   background: none;
-  color: var(--accent-hover, var(--accent));
+  color: var(--text-link-hover);
   font: inherit;
   font-size: var(--fs-secondary);
   font-weight: 600;

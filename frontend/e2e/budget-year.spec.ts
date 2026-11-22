@@ -79,7 +79,7 @@ for (const width of [320, 360, 390, 1440]) {
     await expect(bars).toHaveCount(12);
     await expect(card.locator('.bar[aria-current="true"]')).toHaveClass(/bar--current/);
     // Jede Säule erklärt sich in Worten (nicht nur über Farbe)
-    expect(await bars.first().getAttribute('aria-label')).toMatch(new RegExp(`^Januar ${year}, .+\\. Monat anzeigen$`));
+    await expect(bars.first()).toHaveAccessibleName(new RegExp(`^J(an)? ?: Januar ${year}, .+\\. Monat anzeigen$`));
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     // Eine Reihe, eine Zeitachse: alle Säulen auf derselben Höhe. Trefferfläche hoch genug und ab 360 px mindestens
     // 24 px breit (WCAG 2.2 Zielgröße); darunter gilt die Ausnahme „gleichwertige Bedienung“ (Monatsauswahl, Dialog).
@@ -96,7 +96,7 @@ for (const width of [320, 360, 390, 1440]) {
 
     // Ein abgeschlossener Monat: angezeigt wird er oben, die Säule bleibt markiert und fokussiert
     const held = card.locator('.bar--held').first();
-    const name = (await held.getAttribute('aria-label'))!.split(',')[0];
+    const name = (await held.locator('.sr-only').innerText()).replace(/^:\s*/, '').split(',')[0];
     await held.click();
     await expect(page.locator('.fin-hero--budget .kpi__hint').first()).toContainText(`für ${name}`);
     await expect(held).toHaveAttribute('aria-current', 'true');

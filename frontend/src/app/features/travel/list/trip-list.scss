@@ -18,7 +18,7 @@
 .group__count {
   padding: 1px 8px;
   border-radius: 999px;
-  background: #eef1f6;
+  background: light-dark(#eef1f6, #242a33);
   color: var(--text-secondary);
   font-size: var(--fs-caption);
   font-weight: 600;
@@ -59,7 +59,7 @@
   font-weight: 600;
 }
 .when--live {
-  color: #17723f;
+  color: light-dark(#17723f, #91e9b7);
 }
 .when--past {
   color: var(--text-secondary);
@@ -160,7 +160,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--travel-accent);
+  background: var(--travel-fill);
 }
 // „Neue Reise“: gestrichelt, ruhig — dieselbe Höhe wie die Karten
 // Kalenderblatt: Monat als Band, Tag groß
@@ -171,12 +171,12 @@
   width: 48px;
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface-card);
   text-align: center;
 }
 .leaf small {
   padding: 2px 0;
-  background: var(--travel-accent);
+  background: var(--travel-fill);
   color: #fff;
   font-size: 11px;
   font-weight: 700;

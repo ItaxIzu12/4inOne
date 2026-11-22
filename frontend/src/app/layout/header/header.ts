@@ -58,11 +58,9 @@ export class Header {
     return route.snapshot.data;
   });
 
-  // `sidebarNav: true` (Dashboard/Finanzen, siehe app.routes.ts und
-  // layout/sidebar-nav) blendet die redundante Modul-Reiter-Zeile hier aus
-  // — die neue Sidebar übernimmt die Navigation für diese beiden Seiten ab
-  // 960px, die vorhandene Bottom-Nav darunter. Haushalt/Organisation haben
-  // (noch) keine eigene Sidebar und behalten diese Zeile unverändert.
+  // `sidebarNav: true` (Bereiche mit der Seitenleiste der App-Hülle, siehe app-area.routes.ts) blendet die
+  // redundante Modul-Reiter-Zeile hier aus — die Seitenleiste (layout/app-shell) übernimmt die Navigation ab
+  // 960px, die Bottom-Nav darunter.
   protected readonly showDashboardNav = computed(
     () => this.routeData()['dashboardNav'] === true && this.routeData()['sidebarNav'] !== true,
   );

@@ -1,8 +1,5 @@
 import { Routes } from '@angular/router';
 import { onboardingGuard } from './core/onboarding/onboarding.guard';
-import { FINANZEN_DATA_PROVIDER } from './features/finance/data/finance-data-provider';
-import { FinanzenStateService } from './features/finance/data/finance-state.service';
-import { RealFinanzenDataProvider } from './features/finance/data/real-finance-data-provider';
 import { HAUSHALT_DATA_PROVIDER } from './features/household/data/household-data-provider';
 import { RealHaushaltDataProvider } from './features/household/data/real-household-data-provider';
 
@@ -14,9 +11,7 @@ export const APP_AREA_ROUTES: Routes = [
   {
     path: '',
     providers: [
-      { provide: FINANZEN_DATA_PROVIDER, useClass: RealFinanzenDataProvider },
       { provide: HAUSHALT_DATA_PROVIDER, useClass: RealHaushaltDataProvider },
-      FinanzenStateService,
     ],
     children: [
       {

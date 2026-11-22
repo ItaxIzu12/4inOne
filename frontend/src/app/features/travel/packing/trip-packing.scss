@@ -30,16 +30,16 @@
   padding: 0 12px;
   border: 1px solid var(--border-default);
   border-radius: 999px;
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-secondary);
   font: inherit;
   font-size: var(--fs-secondary); // wie die Filter-Chips in den Aufgaben
   cursor: pointer;
 }
 .chips button[aria-pressed='true'] {
-  border-color: #b9cdf3;
+  border-color: light-dark(#b9cdf3, #2e384c);
   background: var(--blue-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-weight: 600;
 }
 .quick {
@@ -235,8 +235,8 @@
   font-size: var(--fs-secondary);
 }
 .soft--danger {
-  border-color: #f2c4cd;
-  color: #a32038;
+  border-color: light-dark(#f2c4cd, #4b3035);
+  color: var(--error);
 }
 @media (max-width: 560px) {
   // Artikel über die volle Breite, darunter Kategorie und „Hinzufügen“.
@@ -326,7 +326,7 @@
 .cat-tile.is-full .cat-tile__ring i {
   -webkit-mask: none;
   mask: none;
-  background: var(--travel-accent);
+  background: var(--travel-fill);
 }
 .cat-tile.is-full .cat-tile__ring app-icon {
   color: #fff;
@@ -363,7 +363,7 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: var(--travel-accent);
+  background: var(--travel-fill);
   color: #fff;
 }
 .all-packed app-icon {
@@ -429,7 +429,7 @@
   padding: 0 14px;
   border: 1px solid var(--border-default);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   font: inherit;
   font-size: var(--fs-secondary);

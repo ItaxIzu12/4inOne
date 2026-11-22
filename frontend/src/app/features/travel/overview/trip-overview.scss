@@ -65,11 +65,11 @@
   height: 12px;
   border: 2px solid var(--travel-accent);
   border-radius: 50%;
-  background: #fff;
+  background: var(--surface-card);
 }
 .track__task.is-late .track__dot {
-  border-color: #b3261e;
-  background: #b3261e;
+  border-color: var(--error);
+  background: var(--error);
 }
 .track__text {
   display: grid;
@@ -91,7 +91,7 @@
   width: 28px;
   height: 28px;
   border: 0;
-  background: var(--travel-accent);
+  background: var(--travel-fill);
   color: #fff;
 }
 .track__depart .track__dot app-icon {
@@ -143,7 +143,7 @@
   font-size: var(--fs-body);
 }
 .tile-card__value.is-over {
-  color: #b3261e;
+  color: var(--error);
 }
 .tile-card__go {
   display: inline-flex;
@@ -186,10 +186,10 @@
   color: var(--travel-accent);
 }
 .ring--budget.is-over i {
-  background: conic-gradient(#b3261e var(--p, 0%), #fdecea 0);
+  background: conic-gradient(var(--error) var(--p, 0%), var(--error-soft) 0);
 }
 .ring--budget.is-over app-icon {
-  color: #b3261e;
+  color: var(--error);
 }
 .avatars {
   display: flex;
@@ -202,7 +202,7 @@
   width: 32px;
   height: 32px;
   margin-left: -8px;
-  border: 2px solid #fff;
+  border: 2px solid var(--surface-card);
   border-radius: 50%;
   background: var(--travel-soft);
   color: var(--blue-text);

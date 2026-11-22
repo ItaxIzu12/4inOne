@@ -28,7 +28,7 @@ h2 {
   height: 44px;
   border-radius: 14px;
   background: var(--accent-soft, var(--lavender, #e9e5f6));
-  color: var(--accent);
+  color: var(--text-link);
   box-shadow: 0 6px 12px -8px var(--accent);
 }
 .modal-form__icon app-icon {
@@ -57,7 +57,7 @@ h2 {
   margin: 0;
   padding: 10px 12px;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--danger) 10%, #fff);
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface-card));
   color: var(--danger);
   font-size: 14px;
   font-weight: 700;
@@ -110,7 +110,7 @@ h2 {
   background: var(--accent-hover, var(--accent));
 }
 .mf-btn--soft {
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text);
   box-shadow: inset 0 0 0 1.5px var(--border-strong, #b9c0ce);
 }

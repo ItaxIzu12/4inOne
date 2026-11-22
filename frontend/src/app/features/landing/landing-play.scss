@@ -28,7 +28,7 @@
   color: var(--on-dark);
 }
 .play :focus-visible {
-  outline-color: #fff;
+  outline-color: var(--surface-card);
 }
 .play__head {
   display: grid;
@@ -86,8 +86,8 @@
   height: 16px;
 }
 .pick[aria-pressed='true'] {
-  border-color: #fff;
-  background: #fff;
+  border-color: var(--surface-card);
+  background: var(--surface-card);
   color: var(--forest);
 }
 .stepper {
@@ -120,8 +120,8 @@
   color: #fff;
 }
 .stepper .is-current .stepper__no {
-  border-color: #fff;
-  background: #fff;
+  border-color: var(--surface-card);
+  background: var(--surface-card);
   color: var(--forest);
 }
 .stepper .is-done .stepper__no {
@@ -329,7 +329,7 @@
   padding: 0 18px;
   border: 0;
   border-radius: 999px;
-  background: #fff;
+  background: var(--surface-card);
   color: var(--forest);
   font: inherit;
   font-size: 14px;
@@ -351,7 +351,7 @@
 .sug__link.is-on {
   background: transparent;
   color: #fff;
-  box-shadow: inset 0 0 0 1.5px #fff;
+  box-shadow: inset 0 0 0 1.5px var(--surface-card);
 }
 .preview {
   margin-bottom: 16px;
@@ -522,7 +522,7 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .pick:not([aria-pressed='true']):hover {
-    border-color: #fff;
+    border-color: var(--surface-card);
   }
   .sug__link:not(.is-on):hover {
     background: var(--ground-2);

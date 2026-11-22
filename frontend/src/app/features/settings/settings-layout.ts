@@ -2,11 +2,12 @@ import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
 
-export type SettingsSection = 'overview' | 'profil' | 'sicherheit' | 'geraete';
+export type SettingsSection = 'overview' | 'profil' | 'freigaben' | 'sicherheit' | 'geraete';
 
 const NAV: { key: SettingsSection | 'rechtliches'; label: string; icon: IconName; route: string; fragment?: string }[] = [
   { key: 'overview', label: 'Übersicht', icon: 'home', route: '/einstellungen' },
   { key: 'profil', label: 'Profil', icon: 'user', route: '/einstellungen/profil' },
+  { key: 'freigaben', label: 'Wer sieht was', icon: 'people', route: '/einstellungen/freigaben' },
   { key: 'sicherheit', label: 'Sicherheit', icon: 'lock', route: '/einstellungen/zwei-faktor' },
   { key: 'geraete', label: 'Geräte', icon: 'monitor', route: '/einstellungen/sitzungen' },
   { key: 'rechtliches', label: 'Rechtliches', icon: 'file-text', route: '/einstellungen', fragment: 'rechtliches' },

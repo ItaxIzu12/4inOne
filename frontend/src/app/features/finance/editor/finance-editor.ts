@@ -456,10 +456,10 @@ export class FinanceEditor {
         },
       });
   }
-  /** Ü1: gelöschte Transaktion mit denselben Angaben neu anlegen. */
+  /** Ü1: gelöschte Transaktion zurückholen – dieselbe Buchung (gleiche ID), nichts wird neu angelegt. */
   private restore(t: FinanceTransaction) {
     this.ctx.api
-      .save('transactions', { amount: t.amount, type: t.type, category: t.category, date: t.date, note: t.note, currency: t.currency || 'EUR', recurring: !!t.recurring })
+      .restoreTransaction(t.id)
       .pipe(takeUntilDestroyed(this.ctx.destroy))
       .subscribe({
         next: () => {

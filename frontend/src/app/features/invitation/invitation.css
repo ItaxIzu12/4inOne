@@ -5,12 +5,12 @@
   justify-items: center;
   gap: 28px;
   padding: 48px 20px;
-  background: linear-gradient(160deg, #f6f9ff, #eefaf3);
+  background: linear-gradient(160deg, light-dark(#f6f9ff, #1d273a), light-dark(#eefaf3, #1e3829));
 }
 .inv-brand {
   font-size: 24px;
   font-weight: 700;
-  color: #142143;
+  color: light-dark(#142143, #99ade1);
   text-decoration: none;
 }
 .inv-card {
@@ -18,9 +18,9 @@
   gap: 16px;
   width: min(520px, 100%);
   padding: 28px;
-  border: 1px solid #e3e9f4;
+  border: 1px solid light-dark(#e3e9f4, #343a47);
   border-radius: 22px;
-  background: #fff;
+  background: var(--surface-card);
 }
 .inv-card h1 {
   margin: 0;
@@ -51,9 +51,9 @@
   cursor: pointer;
 }
 .inv-button--ghost {
-  border-color: #cfd8e8;
-  background: #fff;
-  color: #142143;
+  border-color: light-dark(#cfd8e8, #363b45);
+  background: var(--surface-card);
+  color: light-dark(#142143, #99ade1);
 }
 .inv-button:disabled {
   opacity: 0.6;

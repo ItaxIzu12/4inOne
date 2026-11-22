@@ -13,7 +13,7 @@
 }
 .limit__icon {
   grid-area: icon;
-  color: #3d4a5c;
+  color: var(--text-secondary);
 }
 .limit__name {
   grid-area: name;
@@ -75,7 +75,7 @@ app-finance-period {
   padding: 24px 28px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--surface-card);
 }
 .review__head {
   display: flex;

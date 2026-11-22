@@ -35,7 +35,7 @@
 
 .nav-item svg { transition: transform 0.15s ease; }
 .nav-item .kompass-icon { font-size: 22px; }
-.nav-item.active { color: var(--accent); }
+.nav-item.active { color: var(--text-link); }
 .nav-item.active svg { transform: translateY(-1px); }
 
 @media (max-width: 860px) {

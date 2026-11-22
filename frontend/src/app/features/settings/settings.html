@@ -83,6 +83,19 @@
         </section>
       }
 
+      <!-- Darstellung (22.11.2026): gilt für dieses Gerät -->
+      <section class="settings-group" id="darstellung" aria-labelledby="settings-darstellung">
+        <h2 class="settings-group__title" id="settings-darstellung">Darstellung</h2>
+        <div class="settings-theme" role="radiogroup" aria-labelledby="settings-darstellung">
+          @for (o of themeOptions; track o.value) {
+            <button type="button" role="radio" class="settings-theme__option" [attr.aria-checked]="theme.choice() === o.value" (click)="theme.set(o.value)">
+              <app-icon [name]="o.icon" aria-hidden="true" />{{ o.label }}
+            </button>
+          }
+        </div>
+        <p class="settings-theme__hint">„System“ folgt der Einstellung deines Geräts. Die Wahl gilt nur auf diesem Gerät.</p>
+      </section>
+
       <button type="button" class="settings-logout" (click)="logout()">
         <icon-logout />Abmelden
       </button>

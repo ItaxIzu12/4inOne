@@ -4,7 +4,7 @@
   padding: 22px;
   border: 1px solid var(--border-subtle);
   border-radius: 20px;
-  background: #fff;
+  background: var(--surface-card);
 }
 .profile-field {
   display: grid;
@@ -38,7 +38,7 @@
 }
 .profile-error {
   margin: 0;
-  color: #b3261e;
+  color: var(--error);
 }
 .profile-saved {
   margin: 0;
@@ -87,7 +87,7 @@
   line-height: 1.5;
 }
 .data-export__error {
-  color: #b3261e !important;
+  color: var(--error) !important;
 }
 .data-export__button {
   display: inline-flex;
@@ -98,7 +98,7 @@
   padding: 0 20px;
   border: 1px solid var(--border-strong);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   font: inherit;
   font-weight: 700;
@@ -132,7 +132,7 @@
 .danger-zone h2 {
   margin: 0;
   font-size: 16px;
-  color: #8c1d14;
+  color: light-dark(#8c1d14, #ee928b);
 }
 .danger-zone p {
   margin: 0;
@@ -144,19 +144,19 @@
   justify-self: start;
   min-height: 44px;
   padding: 0 20px;
-  border: 1px solid #b3261e;
+  border: 1px solid var(--error);
   border-radius: 12px;
-  background: #fff;
-  color: #b3261e;
+  background: var(--surface-card);
+  color: var(--error);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
 }
 .danger-zone__button:hover {
-  background: #fdeceb;
+  background: light-dark(#fdeceb, #3a1f1d);
 }
 .danger-zone__button:focus-visible {
-  outline: 2px solid #b3261e;
+  outline: 2px solid var(--error);
   outline-offset: 2px;
 }
 
@@ -177,7 +177,7 @@
 }
 .delete-account__error {
   margin: 0;
-  color: #b3261e;
+  color: var(--error);
   font-weight: 600;
 }
 .delete-account__actions {
@@ -205,7 +205,7 @@
 }
 .delete-account__cancel {
   border: 1px solid var(--border-control);
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
 }
 .delete-account__cancel:focus-visible,
@@ -214,8 +214,8 @@
   outline-offset: 2px;
 }
 .delete-account__confirm {
-  border: 1px solid #b3261e;
-  background: #b3261e;
+  border: 1px solid var(--error);
+  background: var(--error);
   color: #fff;
 }
 .delete-account__confirm:disabled,

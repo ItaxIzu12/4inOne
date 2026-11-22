@@ -8,7 +8,7 @@
   height: 60px;
   border-radius: var(--radius-lg);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--text-link);
 }
 .wallet app-icon {
   width: 34px;
@@ -57,9 +57,9 @@ h3 {
   border-color: #9fcbb3;
 }
 .secondary {
-  border: 1px solid #c9e3d4;
-  background: #eef8f2;
-  color: #225f43;
+  border: 1px solid light-dark(#c9e3d4, #36443c);
+  background: light-dark(#eef8f2, #213529);
+  color: light-dark(#225f43, #9ddcbf);
 }
 .soft {
   min-height: var(--control-height);
@@ -67,7 +67,7 @@ h3 {
   border: 0;
   border-radius: var(--radius-md);
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-weight: 600;
 }
 .primary app-icon,
@@ -84,7 +84,7 @@ h3 {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--accent);
+  color: var(--text-link);
   font: inherit;
   font-size: var(--fs-secondary);
   font-weight: 500;
@@ -129,7 +129,7 @@ h3 {
   border: 0;
   border-radius: var(--radius-md);
   background: none;
-  color: #3d5248;
+  color: light-dark(#3d5248, #b3c6bd);
   cursor: pointer;
 }
 .month-step app-icon {
@@ -168,7 +168,7 @@ h3 {
   margin: 10px 0 14px;
 }
 .is-good {
-  color: #1a7a43 !important;
+  color: var(--success) !important;
 }
 .is-bad {
   color: var(--fin-red) !important;
@@ -177,14 +177,14 @@ h3 {
   color: var(--fin-red);
 }
 .positive {
-  color: #1a7a43;
+  color: var(--success);
 }
 .card {
   min-width: 0;
   padding: 20px 22px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--surface-card);
 }
 .card-head {
   display: flex;
@@ -246,7 +246,7 @@ h3 {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--cat) 13%, #fff);
+  background: color-mix(in srgb, var(--cat) 13%, var(--surface-card));
   color: var(--cat);
 }
 .tile app-icon {
@@ -262,7 +262,7 @@ h3 {
 .chev {
   width: 16px;
   height: 16px;
-  color: #8a93a3;
+  color: light-dark(#8a93a3, #a9b5b0);
 }
 // ---------- Kennzahlen ----------
 .kpis {
@@ -285,7 +285,7 @@ h3 {
   padding: 20px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--surface-card);
 }
 .kpi__icon {
   display: grid;
@@ -295,14 +295,14 @@ h3 {
   height: 48px;
   border-radius: var(--radius-lg);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--text-link);
 }
 .kpi__icon app-icon {
   width: 24px;
   height: 24px;
 }
 .kpi__label {
-  color: #3d4a5c;
+  color: var(--text-secondary);
   font-size: var(--fs-secondary);
 }
 .kpi__value {
@@ -327,7 +327,7 @@ h3 {
   height: 8px;
   margin: 8px 0 4px;
   border-radius: 999px;
-  background: #e8edea;
+  background: var(--chart-track);
   overflow: hidden;
 }
 .budget-bar > span {
@@ -370,7 +370,7 @@ h3 {
   cursor: pointer;
 }
 .row-btn:hover {
-  background: #f8faf9;
+  background: light-dark(#f8faf9, #272f2b);
 }
 .row-text {
   display: grid;
@@ -422,7 +422,7 @@ h3 {
 }
 .pct {
   min-width: 44px;
-  color: var(--accent);
+  color: var(--text-link);
   font-weight: 600;
   text-align: right;
 }
@@ -452,7 +452,7 @@ h3 {
   height: 34px;
   border-radius: 50%;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--text-link);
 }
 .hint__icon app-icon {
   width: 18px;
@@ -595,19 +595,19 @@ input:focus-visible {
   padding: 0 14px;
   border: 1px solid var(--border-default);
   border-radius: 999px;
-  background: #fff;
-  color: #2c3a4e;
+  background: var(--surface-card);
+  color: var(--text-primary);
   font: inherit;
   font-size: var(--fs-secondary);
   cursor: pointer;
 }
 .cat-chip:hover {
-  border-color: #b9cdc4;
+  border-color: var(--border-strong);
 }
 .cat-chip[aria-pressed='true'] {
-  border-color: var(--accent);
+  border-color: var(--text-link);
   background: var(--accent-soft);
-  color: #14532f;
+  color: var(--finance-accent);
   font-weight: 600;
   box-shadow: inset 0 0 0 1px var(--accent);
 }

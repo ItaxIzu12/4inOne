@@ -24,12 +24,12 @@
   cursor: pointer;
 }
 .stat--routines {
-  --tone: #1f8a4c;
-  --tone-soft: #e3f6ec;
+  --tone: var(--chart-green);
+  --tone-soft: var(--chart-green-soft);
 }
 .stat--devices {
-  --tone: #2f6fbf;
-  --tone-soft: #e6f0fc;
+  --tone: var(--chart-blue);
+  --tone-soft: var(--chart-blue-soft);
 }
 .stat:hover {
   border-color: color-mix(in srgb, var(--tone) 45%, var(--border));
@@ -81,7 +81,7 @@
   right: 14px;
   width: 16px;
   height: 16px;
-  color: #8a93a3;
+  color: light-dark(#8a93a3, #a9b5b0);
 }
 
 .stat:focus-visible {
@@ -90,16 +90,16 @@
 }
 // Weitere Tönungen für die Kennzahlen der Reiter
 .stat--green {
-  --tone: #1f8a4c;
-  --tone-soft: #e3f6ec;
+  --tone: var(--chart-green);
+  --tone-soft: var(--chart-green-soft);
 }
 .stat--blue {
-  --tone: #2f6fbf;
-  --tone-soft: #e6f0fc;
+  --tone: var(--chart-blue);
+  --tone-soft: var(--chart-blue-soft);
 }
 .stat--amber {
-  --tone: #b86e00;
-  --tone-soft: #fdf1dc;
+  --tone: var(--chart-amber);
+  --tone-soft: var(--chart-amber-soft);
 }
 @media (max-width: 1180px) {
   .stats {

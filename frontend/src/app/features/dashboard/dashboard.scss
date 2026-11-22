@@ -11,8 +11,8 @@
   --text: var(--text-primary);
   --muted: var(--text-secondary);
   --hover: var(--surface-hover);
-  --link: var(--brand-primary);
-  --late: #b3261e;
+  --link: var(--text-link);
+  --late: var(--error);
   --card-r: var(--radius-lg);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   color: var(--text);

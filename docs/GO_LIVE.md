@@ -36,7 +36,10 @@ Die Einrichtung des Servers Schritt für Schritt (von null): [`deploy/ANLEITUNG.
    schickt nichts doppelt; Probelauf mit `--dry-run`) und stündlich `python manage.py refresh_calendar_subscriptions`
    (O3, ruft abonnierte ICS-Kalender neu ab). Der Server braucht dafür ausgehendes HTTPS (Port 443); interne Adressen
    blockt der Code selbst (organisation/subscriptions.py) – zusätzlich eine Egress-Regel gegen interne Netze ist sinnvoll.
-   Migrationen vorher: `connections 0006`, `core 0021`, `organisation 0009`. In der Datenschutzerklärung nennen: die
+   Migrationen vorher: `connections 0006`, `core 0021`, `organisation 0009`.
+   Offline-Einkaufsliste: der Produktions-Build enthält `ngsw-worker.js`/`ngsw.json` – nginx liefert sie ohne Cache aus
+   (Regel in `deploy/nginx/4inone.conf`). In der Datenschutzerklärung nennen: die zuletzt geladene Einkaufsliste liegt
+   im Browser des Geräts und wird beim Abmelden gelöscht. In der Datenschutzerklärung nennen: die
    Erinnerungs-E-Mail enthält Titel von Terminen/Aufgaben; beim Abo ruft der Server die angegebene Adresse ab.
 4b. **Anmeldung mit Google/Apple** (optional): Zugangsdaten und Rückruf-Adressen nach [`SOCIAL_LOGIN.md`](SOCIAL_LOGIN.md), `OAUTH_CALLBACK_BASE` auf die HTTPS-Adresse; in der Datenschutzerklärung Google und Apple als Anmeldewege nennen (es werden nur Name und E-Mail übertragen).
 4a. **Fehler-Monitoring:** GlitchTip auf dem Server einrichten und `SENTRY_DSN` setzen, Admin-Zugang per

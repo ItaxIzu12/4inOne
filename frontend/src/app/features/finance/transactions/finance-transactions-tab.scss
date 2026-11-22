@@ -30,7 +30,7 @@
   align-items: flex-end;
   justify-content: center;
   gap: 4px;
-  border-bottom: 1px solid #d9dfe3;
+  border-bottom: 1px solid light-dark(#d9dfe3, #3a3e40);
 }
 .bar {
   width: min(16px, 28%);
@@ -41,7 +41,7 @@
 }
 .bar--month {
   width: min(34px, 60%);
-  background: #cfd5dd;
+  background: light-dark(#cfd5dd, #272b2f);
 }
 .bar--month.is-current {
   background: #2f9a5d;
@@ -129,7 +129,7 @@
   padding: 0 12px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-muted);
 }
 .transaction-search input {
@@ -142,7 +142,7 @@
   font: inherit;
 }
 .transaction-search:focus-within {
-  border-color: var(--accent);
+  border-color: var(--text-link);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 @media (max-width: 760px) {
@@ -223,7 +223,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--accent);
+  color: var(--text-link);
   font-weight: 600;
 }
 

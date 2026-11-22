@@ -32,7 +32,7 @@
   padding: 0 4px;
   border: 0;
   background: none;
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font: inherit;
   font-size: var(--fs-secondary);
   font-weight: 600;
@@ -46,7 +46,7 @@
 
 .quick-cat__error {
   margin: 0;
-  color: #8f2a3d;
+  color: var(--error);
   font-size: var(--fs-meta);
 }
 
@@ -54,7 +54,7 @@
   padding: 8px 0;
   border: 0;
   background: none;
-  color: #216648;
+  color: light-dark(#216648, #9bdfc1);
 }
 
 // ---------- Allgemeine Bausteine ----------
@@ -63,7 +63,7 @@
   padding: 10px 14px;
   border-radius: var(--radius-md);
   background: var(--fin-red-soft);
-  color: #8f2a3d;
+  color: var(--error);
   font-size: var(--fs-secondary);
   line-height: 1.45;
 }
@@ -84,7 +84,7 @@
   gap: 4px;
   padding: 4px;
   border-radius: var(--radius-md);
-  background: #f1f4f3;
+  background: light-dark(#f1f4f3, #222524);
 }
 
 .kind-toggle button {
@@ -92,7 +92,7 @@
   border: 0;
   border-radius: var(--radius-md);
   background: none;
-  color: #3e4a5c;
+  color: light-dark(#3e4a5c, #b0baca);
   font: inherit;
   font-size: var(--fs-body);
   font-weight: 600;
@@ -100,13 +100,13 @@
 }
 
 .kind-toggle button[aria-pressed='true'] {
-  background: #fff;
+  background: var(--surface-card);
   box-shadow: 0 1px 3px rgb(22 46 41 / 12%);
   color: var(--fin-red);
 }
 
 .kind-toggle button.is-income[aria-pressed='true'] {
-  color: var(--accent);
+  color: var(--text-link);
 }
 
 .amount-input {
@@ -153,7 +153,7 @@
 }
 
 .amount-input::placeholder {
-  color: color-mix(in srgb, var(--text-secondary) 55%, #fff);
+  color: color-mix(in srgb, var(--text-secondary) 55%, var(--surface-card));
 }
 
 // F1: Vorschlag aus früheren Buchungen – leise Zeile unter den Kategorie-Chips, „Übernehmen“ als Textknopf.
@@ -181,7 +181,7 @@
   padding: 0 4px;
   border: 0;
   background: none;
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font: inherit;
   font-weight: 600;
   text-decoration: underline;

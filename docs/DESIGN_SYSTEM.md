@@ -1434,3 +1434,23 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
   - O3: `organization/calendar/org-subscriptions.{ts,html,scss}`, `OrganisationApi.subscriptions/subscribe/
     refreshSubscription/unsubscribe/subscribedEvents`, `PersonalEvent.subscription`; Abo-Termine als
     `subscribedEvents` in `organization.ts`. Keine neuen Tokens.
+
+- **Dritte Runde (22.11.2026):**
+  - Dunkelmodus: `shared/styles/theme-dark.css` (in `angular.json › styles`), `core/theme/theme.service.ts` (`ThemeService`, Wahl in
+    `localStorage › 4io-darstellung`, `data-theme` an `<html>`, Routen mit `data.theme = 'light'` bleiben hell),
+    Einstellungen-Gruppe `#darstellung` (`.settings-theme`, `.settings-theme__option`). Neue Tokens: `--text-link`,
+    `--text-link-hover`, `--chart-red|blue|amber|green` (+ `-soft`), `--chart-track`; `:root { color-scheme: light }` als
+    Grundlage für `light-dark()`. Bereiche: `--accent` = `--*-fill` (Flächen), `--text-link` = `--*-accent` (Text).
+    Start-Leitfaden und Onboarding: `--c` (Text) und `--c-fill` (Flächen). Neues Symbol `moon`.
+  - Offline: `core/offline/offline-keys.ts`, `features/household/shared/offline-shopping.ts`, Klasse `.offline-note`
+    (`shopping-offline.scss`), Seite `features/offline/offline-page` (`/offline`), Service Worker (`ngsw-config.json`,
+    nur App-Dateien, nie API-Antworten).
+  - Wer sieht was: `features/sharing/sharing.{ts,html,css}` (`.share-card`, `.share-who`, `.share-rows`, `.share-rules`,
+    `.share-link`, `.share-note`), Route `/einstellungen/freigaben`, Eintrag in `settings-layout`.
+  - Entfernt (F5): `layout/sidebar-nav/*`, `finance/data/finance-api.service.ts`, `finance-state.service.ts`,
+    `finance-data-provider.ts`, `real-/demo-finance-data-provider.ts`, `demo-insights.ts`.
+  - Dunkelmodus geprüft (22.11.2026): `e2e/dark-mode-a11y.spec.ts` – axe-core WCAG 2.0–2.2 A/AA auf 21 Seiten und 5 Dialogen,
+    je 390 und 1440 px, ohne Befund. Dabei behoben (galt teils auch hell): Kopfkarten-Texte auf Farbflächen wieder
+    weiß, Chips mischen Schwarz in die Füllfarbe statt in die Textfarbe, `--accent-hover` nie als Schriftfarbe,
+    Kalendermarke „Schiefer“ kontrastreicher, und WCAG 2.5.3 „Label in Name“ im Budget-Reiter (Kategorie-Zeilen,
+    „Geplant“, Monatssäulen der Jahreskarte: sichtbarer Text zuerst, Zusatzinfo als `.sr-only`).

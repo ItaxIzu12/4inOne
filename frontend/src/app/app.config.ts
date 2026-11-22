@@ -1,4 +1,5 @@
-import { ApplicationConfig, DOCUMENT, ErrorHandler, PLATFORM_ID, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, DOCUMENT, ErrorHandler, PLATFORM_ID, inject, isDevMode, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { provideServiceWorker } from '@angular/service-worker';
 import { isPlatformBrowser } from '@angular/common';
 import { provideClientHydration, withNoIncrementalHydration } from '@angular/platform-browser';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
@@ -9,11 +10,13 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { accessLostInterceptor } from './core/access/access-lost.interceptor';
 import { AuthService } from './core/auth/auth.service';
+import { isNetworkError } from './core/offline/offline-keys';
 import { PageViews } from './core/analytics/page-views';
 import { SeoTitleStrategy } from './core/seo/seo-title-strategy';
 import { DEMO_ONLY } from './core/demo-only';
 import { ChunkLoadRecovery } from './core/navigation/chunk-load-recovery';
 import { MonitoringErrorHandler } from './core/monitoring/monitoring';
+import { ThemeService } from './core/theme/theme.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -40,7 +43,18 @@ export const appConfig: ApplicationConfig = {
       // Testversion nur mit Demo (GitHub Pages): kein Backend, also auch keine Zählung
       if (isPlatformBrowser(inject(PLATFORM_ID)) && !DEMO_ONLY) inject(PageViews).start();
     }),
+    // Darstellung Hell/Dunkel/System sofort beim Start anwenden (core/theme/theme.service.ts)
+    provideAppInitializer(() => {
+      inject(ThemeService);
+    }),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor, accessLostInterceptor])),
+    // Offline-Einkaufsliste (22.11.2026): Der Service Worker hält nur die App-Dateien bereit, damit 4inOne auch ohne
+    // Netz startet (/offline). API-Antworten speichert er nie. Nur im Produktions-Build, nie in der Demo-Testversion
+    // und nur für Personen, die angemeldet waren (Hinweis-Cookie) – öffentliche Besucher bekommen keinen.
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode() && !DEMO_ONLY && typeof document !== 'undefined' && /(?:^|;\s*)4io_signed_in=1/.test(document.cookie),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
     // Ohne diesen Initializer geht das Access-Token (nur im Speicher,
     // ARCHITEKTUR.md §3.1) bei JEDEM Seiten-Reload verloren, obwohl das
     // httpOnly-Refresh-Cookie noch gültig ist — ein eigentlich angemeldeter
@@ -53,7 +67,9 @@ export const appConfig: ApplicationConfig = {
       const auth = inject(AuthService);
       const doc = inject(DOCUMENT);
       // Kein gültiges Refresh-Cookie: auch den Hinweis für den Webserver entfernen (forceLogout)
-      return firstValueFrom(auth.refresh().pipe(catchError(() => of(auth.forceLogout())))).then(() => {
+      // Ohne Netz ist die Sitzung nicht ungültig, nur nicht prüfbar: angemeldet bleiben (Offline-Einkaufsliste, /offline)
+      const failed = (error: unknown) => (isNetworkError(error) && auth.hasSignedInHint() ? auth.markOffline() : auth.forceLogout());
+      return firstValueFrom(auth.refresh().pipe(catchError((error) => of(failed(error))))).then(() => {
         if (auth.isAuthenticated() && servedPrerenderedLanding(doc)) return reloadForApp(doc);
         return undefined;
       });

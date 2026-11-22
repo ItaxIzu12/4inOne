@@ -5,7 +5,7 @@
   display: block;
   // Layout richtet sich nach der Breite der Karte, nicht des Fensters (Tablet mit Seitenleiste ist schmal)
   container-type: inline-size;
-  --pass: var(--travel-accent, #36608b);
+  --pass: var(--travel-fill, #3d6b9a);
   --pass-deep: color-mix(in srgb, #000 24%, var(--pass));
   --pass-text: color-mix(in srgb, #fff 93%, transparent);
 }
@@ -157,8 +157,8 @@ button.pass__chip:hover {
   height: 14px;
 }
 .pass__chip.is-strong {
-  background: #fff;
-  color: #9b1c1c;
+  background: var(--surface-card);
+  color: var(--error);
 }
 // Abrissteil hinter der Perforation, mit Einkerbungen oben und unten
 .pass__stub {
@@ -208,7 +208,7 @@ button.pass__chip:hover {
   height: 8px;
   margin-right: 6px;
   border-radius: 50%;
-  background: #7ee0a8;
+  background: light-dark(#7ee0a8, #1d3a29);
   content: '';
 }
 

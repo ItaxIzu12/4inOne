@@ -13,7 +13,7 @@
   padding: 10px 12px;
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-secondary);
   font-size: 14px;
 }
@@ -29,7 +29,7 @@
   font-weight: 700;
 }
 .mfa-steps .is-current {
-  border-color: var(--brand-primary);
+  border-color: var(--text-link);
   color: var(--text-primary);
   font-weight: 600;
 }
@@ -49,10 +49,10 @@
   padding: 24px;
   border: 1px solid var(--border-subtle);
   border-radius: 20px;
-  background: #fff;
+  background: var(--surface-card);
 }
 .mfa-card--ok {
-  border-color: #b9dfc9;
+  border-color: light-dark(#b9dfc9, #35453c);
 }
 .mfa-card h2 {
   margin: 0;
@@ -75,8 +75,8 @@
   font-weight: 700;
 }
 .mfa-badge--ok {
-  background: #e3f4ea;
-  color: #1e5c3b;
+  background: light-dark(#e3f4ea, #21362a);
+  color: light-dark(#1e5c3b, #9bdebb);
 }
 
 .mfa-scan {
@@ -95,7 +95,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 8px;
-  background: #fff;
+  background: var(--surface-card);
 }
 .mfa-manual {
   display: grid;
@@ -184,7 +184,7 @@
   cursor: pointer;
 }
 .mfa-button--ghost {
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   border-color: var(--border-control);
 }

@@ -77,7 +77,7 @@
   font-weight: 700;
 }
 .circle__more {
-  background: #fff !important;
+  background: var(--surface-card) !important;
   color: var(--brand-primary, #172523) !important;
 }
 @media (prefers-reduced-motion: no-preference) {

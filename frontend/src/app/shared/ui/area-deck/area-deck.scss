@@ -170,7 +170,7 @@
   gap: 2px 12px;
   padding: 8px 10px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface-card);
   font-size: var(--deck-small, 15px);
 }
 .preview__label {
@@ -185,7 +185,7 @@
   font-variant-numeric: tabular-nums;
 }
 .preview__rows li.is-late .preview__value {
-  color: #b3261e; // 6,2:1 auf Weiß, dazu steht „überfällig“ als Wort
+  color: var(--error); // 6,2:1 auf Weiß, dazu steht „überfällig“ als Wort
 }
 .preview__rows li.is-next .preview__value {
   color: #1e40af;

@@ -18,7 +18,7 @@ import { Component } from '@angular/core';
       font-size: 27px;
       font-weight: 750;
       letter-spacing: -1px;
-      color: #121826;
+      color: var(--text-primary, #121826);
     }
     .mark {
       display: grid;

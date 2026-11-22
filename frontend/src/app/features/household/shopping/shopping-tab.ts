@@ -3,7 +3,7 @@ import { HouseholdPeople } from '../shared/household-people.service';
 import { ScopeNote } from '../../../shared/ui/scope-note/scope-note';
 import { ErrorNoticeDirective } from '../../../shared/ui/error-notice/error-notice';
 import { AmountInput } from '../../../shared/ui/directives/amount-input';
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, Injector, afterNextRender, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HouseholdInviteModalService } from '../../../core/household/household-invite-modal.service';
@@ -35,6 +35,10 @@ import {
 } from './shopping-logic';
 import { RowMenu, RowMenuItem } from '../shared/row-menu';
 import { parseMoneyInput } from '../../../shared/ui/currency/money-input';
+import { AuthService } from '../../../core/auth/auth.service';
+import { DEMO_MODE } from '../../../core/demo-context';
+import { isNetworkError } from '../../../core/offline/offline-keys';
+import { OfflineShopping } from '../shared/offline-shopping';
 
 const MODE_STORAGE_KEY = 'kompass.einkaufsmodus';
 
@@ -80,9 +84,9 @@ function formatEuro(value: number): string {
 @Component({
   selector: 'app-einkauf-tab',
   standalone: true,
-  imports: [DoneToggle, ErrorNoticeDirective, AmountInput, DecimalPipe, AppIcon, Field, Modal, ModalForm, AppSelect, RowMenu, ScopeNote],
+  imports: [DoneToggle, ErrorNoticeDirective, AmountInput, DatePipe, DecimalPipe, AppIcon, Field, Modal, ModalForm, AppSelect, RowMenu, ScopeNote],
   templateUrl: './shopping-tab.html',
-  styleUrls: ['../shared/household-common.scss', './shopping-tab.scss', './shopping-tiles.scss'],
+  styleUrls: ['../shared/household-common.scss', './shopping-tab.scss', './shopping-tiles.scss', './shopping-offline.scss'],
 })
 export class EinkaufTab {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
@@ -98,6 +102,47 @@ export class EinkaufTab {
   protected readonly currentId = signal<Id | null>(null);
   protected readonly data = signal<ShoppingOverviewDto | null>(null);
   protected readonly loadError = signal(false);
+  // ---------- Offline (22.11.2026): letzter Stand auf dem Gerät, Abhaken wird ohne Netz gemerkt ----------
+  private readonly offlineStore = inject(OfflineShopping);
+  private readonly auth = inject(AuthService);
+  private readonly demoMode = inject(DEMO_MODE);
+  /** Zeitpunkt des gezeigten Offline-Stands (ISO) – null = online, alles aktuell. */
+  protected readonly offlineSince = signal<string | null>(null);
+  protected readonly pendingCount = signal(this.offlineStore.pending().length);
+  private owner(): string | null {
+    return this.demoMode ? null : (this.auth.currentUser()?.email ?? null);
+  }
+  /** Ohne Netz: den gespeicherten Stand zeigen (falls vorhanden). */
+  private showOffline(listId: Id | null): boolean {
+    const owner = this.owner();
+    const snap = owner ? this.offlineStore.snapshot(owner) : null;
+    if (!snap) return false;
+    const overview = snap.overviews[String(listId ?? '')] ?? snap.overviews[String(snap.lists[0]?.id ?? '')] ?? Object.values(snap.overviews)[0];
+    if (!overview) return false;
+    this.lists.set(snap.lists);
+    this.currentId.set(overview.list.id);
+    this.data.set(overview);
+    this.loadError.set(false);
+    this.offlineSince.set(snap.savedAt);
+    return true;
+  }
+  /** Jeder Online-Stand (geladen, hinzugefügt, abgehakt) wird für unterwegs mitgespeichert. */
+  private readonly keepOffline = effect(() => {
+    const data = this.data();
+    const lists = this.lists();
+    if (!data || this.offlineSince()) return;
+    const owner = untracked(() => this.owner());
+    if (owner) this.offlineStore.save(owner, lists, data);
+  });
+  /** Gemerktes Abhaken übertragen, dann neu laden. */
+  private syncPending(then: () => void): void {
+    if (!this.offlineStore.pending().length || this.demoMode) return then();
+    this.offlineStore.flush((c) => this.provider.updateItem(c.id, { is_checked: c.is_checked })).subscribe((sent) => {
+      this.pendingCount.set(this.offlineStore.pending().length);
+      if (sent) this.saved.emit(sent === 1 ? '1 Änderung von unterwegs übertragen.' : `${sent} Änderungen von unterwegs übertragen.`);
+      then();
+    });
+  }
   protected readonly actionError = signal<string | null>(null);
   protected readonly shoppingMode = signal(readMode());
   /**
@@ -239,13 +284,21 @@ export class EinkaufTab {
       if (document.visibilityState === 'visible' && !this.completeOpen() && !this.editing() && !this.listFormOpen()) this.load();
     };
     document.addEventListener('visibilitychange', onVisible);
+    // Wieder Netz: Gemerktes übertragen und aktuellen Stand holen
+    const onOnline = () => this.load();
+    window.addEventListener('online', onOnline);
     inject(DestroyRef).onDestroy(() => {
+      window.removeEventListener('online', onOnline);
       document.removeEventListener('visibilitychange', onVisible);
       this.settleTimers.forEach((timer) => clearTimeout(timer));
     });
   }
 
   protected load(): void {
+    this.syncPending(() => this.fetch());
+  }
+
+  private fetch(): void {
     if (this.archived() === null) this.loadArchived();
     this.provider.getShoppingLists().subscribe({
       next: (lists) => {
@@ -253,7 +306,9 @@ export class EinkaufTab {
         const current = lists.find((l) => l.id === this.currentId()) ?? lists[0];
         this.loadList(current?.id ?? null);
       },
-      error: () => this.loadError.set(true),
+      error: (e: unknown) => {
+        if (!(isNetworkError(e) && this.showOffline(this.currentId()))) this.loadError.set(true);
+      },
     });
   }
 
@@ -263,8 +318,11 @@ export class EinkaufTab {
         this.currentId.set(data.list.id);
         this.data.set(data);
         this.loadError.set(false);
+        this.offlineSince.set(null);
       },
-      error: () => this.loadError.set(true),
+      error: (e: unknown) => {
+        if (!(isNetworkError(e) && this.showOffline(id))) this.loadError.set(true);
+      },
     });
   }
 
@@ -421,12 +479,24 @@ export class EinkaufTab {
     if (this.shoppingMode()) this.setSettling(item.id, checked);
     this.patchLocal(item.id, { is_checked: checked });
     this.actionError.set(null);
+    // Offline: lokal abhaken und merken – übertragen wird beim nächsten Netz (syncPending)
+    if (this.offlineSince() && this.owner()) {
+      this.offlineStore.queue(item, checked);
+      this.pendingCount.set(this.offlineStore.pending().length);
+      return;
+    }
     this.provider.updateItem(item.id, { is_checked: checked }).subscribe({
       next: (updated) => {
         this.patchLocal(item.id, updated);
         this.touchCurrent();
       },
-      error: () => {
+      error: (e: unknown) => {
+        if (isNetworkError(e) && this.owner()) {
+          this.offlineStore.queue(item, checked);
+          this.pendingCount.set(this.offlineStore.pending().length);
+          this.offlineSince.set(this.offlineStore.snapshot(this.owner())?.savedAt ?? new Date().toISOString());
+          return;
+        }
         this.setSettling(item.id, false);
         this.patchLocal(item.id, { is_checked: item.is_checked });
         this.actionError.set(`„${item.name}“ konnte nicht gespeichert werden. Bitte noch einmal versuchen.`);

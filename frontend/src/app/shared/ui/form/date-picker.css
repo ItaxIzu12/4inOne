@@ -24,7 +24,7 @@
 }
 .dp__trigger:focus-visible,
 .dp__trigger[aria-expanded='true'] {
-  border-color: var(--accent);
+  border-color: var(--text-link);
   outline: 2px solid var(--accent);
   outline-offset: -1.5px;
 }
@@ -43,7 +43,7 @@
   width: 20px;
   height: 20px;
   fill: none;
-  stroke: var(--accent);
+  stroke: var(--text-link);
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -115,7 +115,7 @@
   border: 0;
   border-radius: 10px;
   background: none;
-  color: var(--accent);
+  color: var(--text-link);
   font: inherit;
   font-size: 22px;
   line-height: 1;
@@ -185,7 +185,7 @@
   border-top: 1px solid var(--border, #dfe4ed);
   border-radius: 0 0 10px 10px;
   background: none;
-  color: var(--accent);
+  color: var(--text-link);
   font: inherit;
   font-size: 14px;
   font-weight: 700;

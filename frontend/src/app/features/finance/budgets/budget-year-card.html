@@ -23,7 +23,6 @@
           [class]="'bar bar--' + b.tone"
           [class.is-selected]="b.month === selected()"
           [attr.aria-current]="b.month === selected() ? 'true' : null"
-          [attr.aria-label]="b.label + '. Monat anzeigen'"
           (click)="monthPick.emit(b.month)"
         >
           <span class="bar__track" aria-hidden="true">
@@ -37,7 +36,8 @@
               <span class="bar__save" [style.bottom.%]="b.fill" [style.height.%]="b.save"></span>
             }
           </span>
-          <span class="bar__name" aria-hidden="true"><span class="bar__short">{{ b.short }}</span><span class="bar__letter">{{ b.letter }}</span></span>
+          <!-- WCAG 2.5.3: vorgelesen wird der sichtbare Monatsname, die Werte folgen unsichtbar -->
+          <span class="bar__name"><span class="bar__short">{{ b.short }}</span><span class="bar__letter">{{ b.letter }}</span></span><span class="sr-only">: {{ b.label }}. Monat anzeigen</span>
         </button>
       </li>
     }

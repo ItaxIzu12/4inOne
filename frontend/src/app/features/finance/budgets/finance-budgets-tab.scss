@@ -18,7 +18,7 @@
   overflow-wrap: anywhere;
 }
 .budget-row__left {
-  color: var(--accent);
+  color: var(--text-link);
   font-size: var(--fs-secondary);
   font-weight: var(--fw-semibold);
   font-variant-numeric: tabular-nums;
@@ -52,7 +52,7 @@
   font-weight: 500;
 }
 .tone--ok {
-  color: var(--accent);
+  color: var(--text-link);
 }
 .tone--warn {
   color: var(--fin-amber);
@@ -64,10 +64,10 @@
   background: var(--fin-red-soft);
 }
 .status--warn {
-  background: #fff8e8;
+  background: light-dark(#fff8e8, #3a311d);
 }
 .status--ok {
-  background: #f1faf4;
+  background: light-dark(#f1faf4, #203728);
 }
 .status--over .status__icon {
   color: var(--fin-red);

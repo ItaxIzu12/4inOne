@@ -169,11 +169,11 @@ h2 {
 .so__row:focus-visible,
 .so__hide:focus-visible,
 .so__demo:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--surface-card);
   outline-offset: 2px;
 }
 .so__row:focus-visible {
-  outline-color: var(--brand-primary);
+  outline-color: var(--text-link);
   outline-offset: -2px;
 }
 @media (hover: hover) and (pointer: fine) {

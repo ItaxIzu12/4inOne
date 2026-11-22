@@ -14,7 +14,7 @@
   padding: 0 10px 0 12px;
   border: 1px solid var(--border-default, #dde1da);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface-card);
 }
 .gs:focus-within {
   border-color: var(--brand-primary, #172523);
@@ -65,7 +65,7 @@ kbd {
   padding: 8px;
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
-  background: #fff;
+  background: var(--surface-card);
   box-shadow: var(--shadow-overlay, 0 18px 40px -20px rgb(23 37 35 / 0.35));
 }
 .gs__note {
@@ -89,7 +89,7 @@ kbd {
   text-transform: uppercase;
 }
 .gs__item {
-  --c: var(--brand-primary);
+  --c: var(--text-link);
   --soft: var(--surface-sunken);
   display: flex;
   align-items: center;

@@ -104,7 +104,7 @@
   white-space: nowrap;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
-.login-button:hover { color: var(--accent); border-color: var(--accent); }
+.login-button:hover { color: var(--text-link); border-color: var(--text-link); }
 
 /* ---------- Mobiles Hamburger-Menü ---------- */
 .menu-toggle {
@@ -181,7 +181,7 @@
 
 .mobile-menu__login {
   justify-content: center;
-  color: var(--accent);
+  color: var(--text-link);
   border: 1.5px solid var(--border-strong);
 }
 

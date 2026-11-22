@@ -4,9 +4,9 @@
   display: block;
   --line: var(--border-subtle);
   --blue: var(--travel-accent);
-  --blue-text: var(--accent-hover);
+  --blue-text: var(--text-link-hover);
   --blue-soft: var(--travel-soft);
-  --green: #1f9d55;
+  --green: var(--chart-green);
   --text-muted: var(--text-secondary);
 }
 .card {
@@ -83,12 +83,12 @@ small {
   height: 26px;
 }
 .tile--green {
-  background: #e8f7ee;
-  color: #1f7a44;
+  background: light-dark(#e8f7ee, #203729);
+  color: light-dark(#1f7a44, #95e4b5);
 }
 .tile--violet {
-  background: #f1ebfc;
-  color: #6d3fc4;
+  background: light-dark(#f1ebfc, #271d3a);
+  color: light-dark(#6d3fc4, #b29ae0);
 }
 .status {
   display: inline-flex;
@@ -108,26 +108,26 @@ small {
   border-radius: 50%;
 }
 .status--green {
-  background: #e3f6ea;
-  color: #17723f;
+  background: light-dark(#e3f6ea, #1f3828);
+  color: light-dark(#17723f, #91e9b7);
 }
 .status--blue {
-  background: #e6efff;
-  color: var(--accent-hover);
+  background: light-dark(#e6efff, #1d273a);
+  color: var(--text-link-hover);
 }
 .status--gray {
   background: var(--surface-sunken);
   color: var(--text-secondary);
 }
 .status--red {
-  background: #fde8eb;
-  color: #a32038;
+  background: var(--error-soft);
+  color: var(--error);
 }
 .bar {
   display: block;
   height: 6px;
   border-radius: 999px;
-  background: #e8ecf3;
+  background: light-dark(#e8ecf3, #242933);
   overflow: hidden;
 }
 .bar > span {
@@ -169,7 +169,7 @@ small {
   padding: 0 16px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   font: inherit;
   font-size: var(--fs-secondary);
@@ -177,8 +177,8 @@ small {
   cursor: pointer;
 }
 .soft:hover {
-  border-color: #c7d4ea;
-  background: #f8faff;
+  border-color: light-dark(#c7d4ea, #333b47);
+  background: light-dark(#f8faff, #1d253a);
 }
 .soft app-icon {
   width: 18px;
@@ -211,7 +211,7 @@ small {
   flex: 0 0 18px;
   width: 18px;
   height: 18px;
-  color: #8a93a3;
+  color: light-dark(#8a93a3, #a9b5b0);
 }
 .empty {
   display: grid;
@@ -227,7 +227,7 @@ small {
   color: var(--blue);
 }
 .late {
-  color: #c4214a !important;
+  color: var(--error) !important;
 }
 .num {
   font-variant-numeric: tabular-nums;

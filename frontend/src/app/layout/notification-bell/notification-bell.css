@@ -11,16 +11,16 @@
   width: 44px;
   height: 44px;
   padding: 0;
-  border: 1px solid #e1e7f0;
+  border: 1px solid light-dark(#e1e7f0, #363c44);
   border-radius: 50%;
-  background: #fff;
-  color: #1f2a44;
+  background: var(--surface-card);
+  color: light-dark(#1f2a44, #a4b3d5);
   cursor: pointer;
 }
 .bell-trigger:hover,
 .bell-trigger[aria-expanded='true'] {
-  border-color: #c9d5e8;
-  background: #fbfcfe;
+  border-color: light-dark(#c9d5e8, #353b46);
+  background: light-dark(#fbfcfe, #1d273a);
 }
 .bell-trigger app-icon {
   width: 21px;
@@ -36,7 +36,7 @@
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
-  border: 2px solid #fff;
+  border: 2px solid var(--surface-card);
   border-radius: var(--radius-pill);
   background: var(--brand-primary);
   color: #fff;
@@ -127,7 +127,7 @@
 }
 .bell-item__icon[data-scope='CONTACT'] {
   background: var(--info-soft);
-  color: var(--brand-primary);
+  color: var(--text-link);
 }
 .bell-item__icon[data-scope='DONE'] {
   background: var(--success-soft);
@@ -141,7 +141,7 @@
   align-items: center;
   gap: var(--space-1);
   min-height: 44px;
-  color: var(--brand-primary);
+  color: var(--text-link);
   font-size: var(--fs-secondary);
   font-weight: var(--fw-semibold);
   text-decoration: none;
@@ -240,7 +240,7 @@
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: var(--brand-primary);
+  color: var(--text-link);
   font-size: var(--fs-secondary);
   font-weight: var(--fw-semibold);
   text-decoration: none;

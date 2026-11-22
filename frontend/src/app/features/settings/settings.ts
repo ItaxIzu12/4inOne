@@ -1,3 +1,4 @@
+import { ThemeChoice, ThemeService } from '../../core/theme/theme.service';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -77,6 +78,12 @@ export class Einstellungen {
 
   // ---------- Startleitfäden (21.11.2026): ausgeblendete wieder einblenden (gespeichert im Konto) ----------
   protected readonly guide = inject(GuideService);
+  protected readonly theme = inject(ThemeService);
+  protected readonly themeOptions: { value: ThemeChoice; label: string; icon: IconName }[] = [
+    { value: 'system', label: 'System', icon: 'settings' },
+    { value: 'light', label: 'Hell', icon: 'sun' },
+    { value: 'dark', label: 'Dunkel', icon: 'moon' },
+  ];
   protected readonly guideRows = computed(() => {
     const status = this.guide.status();
     if (!status) return null;

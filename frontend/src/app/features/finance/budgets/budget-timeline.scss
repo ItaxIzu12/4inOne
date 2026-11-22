@@ -149,7 +149,7 @@ h2 {
 }
 // „Aktuell“ als zweite, kleine Zeile — so bleibt jede Monatszeile gleich hoch und der Betrag frei.
 .budget-month__now {
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-size: var(--fs-caption);
   font-weight: var(--fw-semibold);
   white-space: nowrap;
@@ -183,7 +183,7 @@ h2 {
 .budget-month.is-selected .budget-month__mark {
   width: 18px;
   height: 18px;
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   opacity: 1;
 }
 

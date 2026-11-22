@@ -9,7 +9,7 @@
   padding: 6px 6px 6px 16px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg, 16px);
-  background: #fff;
+  background: var(--surface-card);
   box-shadow: 0 1px 2px rgb(23 37 35 / 0.06);
 }
 .quick:focus-within {
@@ -63,7 +63,7 @@
   padding: 0 12px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--surface-card);
 }
 .search app-icon {
   width: 18px;
@@ -83,7 +83,7 @@
   outline: none;
 }
 .search:focus-within {
-  border-color: var(--accent);
+  border-color: var(--text-link);
 }
 .group + .group {
   margin-top: 24px;
@@ -117,7 +117,7 @@
   min-width: 0;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg, 16px);
-  background: #fff;
+  background: var(--surface-card);
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 .note:hover {
@@ -202,7 +202,7 @@
   border: 0;
   border-radius: var(--radius-md);
   background: none;
-  color: #8592a6;
+  color: light-dark(#8592a6, #a9b5b0);
   cursor: pointer;
 }
 .pin:hover {
@@ -238,8 +238,8 @@
   padding: 0 14px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: #fff;
-  color: var(--accent-hover, var(--accent));
+  background: var(--surface-card);
+  color: var(--text-link-hover);
   font: inherit;
   font-size: var(--fs-secondary);
   font-weight: 600;

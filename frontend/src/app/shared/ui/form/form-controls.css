@@ -25,7 +25,7 @@ app-field textarea {
 app-field input:focus-visible,
 app-field select:focus-visible,
 app-field textarea:focus-visible {
-  border-color: var(--accent);
+  border-color: var(--text-link);
   outline: 2px solid var(--accent);
   outline-offset: -1.5px; /* legt sich über den Rahmen statt daneben */
 }

@@ -23,7 +23,7 @@ import {
 } from './private-finance-api.service';
 import { ImportRow } from '../transactions/finance-import';
 
-// Sicherheitskritisch wie demo-finance-data-provider.ts (dieselbe Regel gilt hier): diese Datei importiert KEINEN
+// Sicherheitskritisch (gilt für alle Demo-Dienste): diese Datei importiert KEINEN
 // HttpClient. Sie ersetzt PrivateFinanceApi nur für die öffentliche Demo-Route (siehe app.routes.ts) und hält ihren
 // gesamten Zustand im Speicher dieser einen Instanz — ein Reload verwirft ihn, das ist im Demo-Modus korrekt.
 //
@@ -342,10 +342,22 @@ export class DemoPrivateFinanceApi {
     const list = this.listFor(resource) as { id: number }[];
     const index = list.findIndex((row) => row.id === id);
     if (index === -1) return throwError(() => ({ status: 404 }));
-    list.splice(index, 1);
+    const [removed] = list.splice(index, 1);
+    if (resource === 'transactions') this.deletedTxs.set(id, removed as FinanceTransaction);
     // Wie im Backend: ein gelöschtes Ziel nimmt seine Einzahlungen mit, das Geld ist wieder frei.
     if (resource === 'goals') this.contributionList = this.contributionList.filter((c) => c.goal !== id);
     return of(undefined);
+  }
+
+  /** Ü1: wie backend „wiederherstellen“ – die gelöschte Buchung kommt mit derselben ID zurück. */
+  private readonly deletedTxs = new Map<number, FinanceTransaction>();
+  restoreTransaction(id: number): Observable<FinanceTransaction> {
+    const row = this.deletedTxs.get(id);
+    if (!row) return throwError(() => ({ status: 404 }));
+    this.deletedTxs.delete(id);
+    this.txs.push(row);
+    this.txs.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    return of({ ...row });
   }
 
   /** Jede Änderung des gesparten Betrags zählt in dem Monat, in dem sie passiert (backend _record). */

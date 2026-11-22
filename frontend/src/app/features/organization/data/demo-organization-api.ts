@@ -25,7 +25,7 @@ import {
 import { expandEvents, localDay } from '../shared/organization-logic';
 import { EventImportRow } from '../calendar/org-import';
 
-// Sicherheitskritisch wie demo-finance-data-provider.ts: diese Datei importiert KEINEN HttpClient. Sie ersetzt
+// Sicherheitskritisch wie demo-private-finance-api.ts: diese Datei importiert KEINEN HttpClient. Sie ersetzt
 // OrganisationApi nur für die öffentliche Demo-Route (siehe app.routes.ts) und hält ihren gesamten Zustand im
 // Speicher dieser einen Instanz — ein Reload verwirft ihn, das ist im Demo-Modus korrekt. Demo-Daten gelangen nie
 // in ein echtes Konto.

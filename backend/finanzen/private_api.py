@@ -280,6 +280,26 @@ class PrivateTransactionViewSet(PrivateViewSet):
     def perform_destroy(self, instance):
         instance.soft_delete()
 
+    # Ü1: „Rückgängig“ nach dem Löschen – die weich gelöschte Buchung kommt mit derselben ID zurück (nichts wird neu
+    # angelegt). Nur eigene Buchungen und nur kurz nach dem Löschen; danach bleibt sie gelöscht (Aufbewahrung wie bisher).
+    RESTORE_WINDOW = timedelta(minutes=10)
+
+    @action(detail=True, methods=['post'], url_path='wiederherstellen')
+    def restore(self, request, pk=None):
+        try:
+            pk_value = int(pk)
+        except (TypeError, ValueError):
+            return Response({'detail': 'Nicht gefunden.'}, status=404)
+        row = Transaction.all_objects.filter(
+            owner=request.user, pk=pk_value, deleted_at__isnull=False,
+            deleted_at__gte=timezone.now() - self.RESTORE_WINDOW,
+        ).first()
+        if row is None:
+            return Response({'detail': 'Diese Transaktion lässt sich nicht mehr wiederherstellen.'}, status=404)
+        row.deleted_at = None
+        row.save(update_fields=['deleted_at'])
+        return Response(self.get_serializer(row).data)
+
 class PrivateCategoryViewSet(PrivateViewSet):
     queryset = Category.objects.order_by('name')
     serializer_class = PrivateCategorySerializer

@@ -1,0 +1,78 @@
+/* Wer sieht was: je Bereich eine weiße Karte (Radius 20) mit Symbol in der Bereichsfarbe, die Antwort „Nur du“ /
+   „Du und …“ fett, darunter Personen als Zeilen und die Regeln in einem Satz. */
+.share-list {
+  display: grid;
+  gap: 14px;
+}
+.share-card {
+  --c: var(--text-link);
+  --soft: var(--surface-sunken);
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--surface-card);
+}
+.share-card[data-area='finance'] { --c: var(--finance-accent); --soft: var(--finance-soft); }
+.share-card[data-area='household'] { --c: var(--household-accent); --soft: var(--household-soft); }
+.share-card[data-area='organization'] { --c: var(--organization-accent); --soft: var(--organization-soft); }
+.share-card[data-area='travel'] { --c: var(--travel-accent); --soft: var(--travel-soft); }
+.share-card__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--c);
+}
+.share-card__icon app-icon { width: 22px; height: 22px; }
+.share-card__body { display: grid; gap: 8px; min-width: 0; }
+.share-card h2 { margin: 0; font-size: 18px; letter-spacing: -0.01em; }
+.share-who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-weight: 700;
+}
+.share-who app-icon { width: 16px; height: 16px; color: var(--text-secondary); }
+.share-muted { margin: 0; color: var(--text-secondary); font-size: var(--fs-secondary); line-height: 1.5; }
+.share-rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+}
+.share-rows li { display: grid; gap: 2px; padding: 10px 14px; }
+.share-rows li + li { border-top: 1px solid var(--border-subtle); }
+.share-rows span { color: var(--text-secondary); font-size: var(--fs-secondary); overflow-wrap: anywhere; }
+.share-rules { margin: 0; padding-left: 18px; color: var(--text-secondary); font-size: var(--fs-secondary); line-height: 1.6; }
+.share-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  min-height: 44px;
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.share-link app-icon { width: 16px; height: 16px; }
+.share-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+}
+.share-note app-icon { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 2px; }
+@media (max-width: 640px) {
+  .share-card { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 18px; }
+}

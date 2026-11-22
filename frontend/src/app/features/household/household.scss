@@ -6,9 +6,12 @@
   // Bereichsfarbe Haushalt (docs/DESIGN_SYSTEM.md: Beere, Token --household-accent). Nur hier
   // überschrieben — die Kindkomponenten erben die Variablen. Kontrast:
   // Beere auf Weiß 6,4:1, weiß auf Beere 6,4:1, Beere auf der Tönung 5,5:1.
-  --accent: var(--household-accent);
-  --accent-glow: var(--household-accent);
-  --accent-hover: color-mix(in srgb, var(--household-accent) 85%, #000);
+  --accent: var(--household-fill);
+  // Dunkelmodus: Flächen mit weißer Schrift nehmen die Füllfarbe, Text und Links die lesbare Textvariante.
+  --text-link: var(--household-accent);
+  --text-link-hover: color-mix(in srgb, var(--household-accent) 85%, var(--text-primary));
+  --accent-glow: var(--household-fill);
+  --accent-hover: color-mix(in srgb, var(--household-fill) 85%, #000);
   --accent-soft: var(--household-soft);
   --lavender: var(--household-soft);
   // Kleinster Lesetext im Haushalt 13 px statt 12 (Zusatzzeilen, Marken, Zähler) — wie in Finanzen.
@@ -17,7 +20,7 @@
 .hh-main {
   // Dunkleres Grau als in der Shell: Sekundärtext hält so auf Weiß, Grau und
   // Coral mindestens 5,2:1.
-  --text-muted: #56627a;
+  --text-muted: var(--text-secondary);
   max-width: var(--content-max-width);
   margin: 0 auto;
   padding: 34px var(--content-padding-x) var(--space-8);
@@ -35,7 +38,7 @@
   height: 52px;
   border-radius: var(--radius-lg);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--text-link);
   box-shadow: none;
 }
 .page-head__icon app-icon {
@@ -88,9 +91,9 @@
   gap: 5px;
   margin: 28px 0 22px;
   padding: 5px;
-  border: 1px solid #f3dde8;
+  border: 1px solid light-dark(#f3dde8, #47333d);
   border-radius: var(--radius-lg);
-  background: #fefaf8;
+  background: light-dark(#fefaf8, #3a271d);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -118,7 +121,7 @@
 }
 .subtab.is-active {
   background: var(--household-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-weight: 600;
   box-shadow: none;
 }
@@ -128,7 +131,7 @@
     margin: 22px 0 22px;
     padding: 0;
     border: 0;
-    border-bottom: 1px solid #ece6ea;
+    border-bottom: 1px solid light-dark(#ece6ea, #403a3e);
     border-radius: 0;
     background: none;
   }
@@ -148,10 +151,10 @@
     height: 19px;
   }
   .subtab:hover {
-    color: var(--accent-hover);
+    color: var(--text-link-hover);
   }
   .subtab.is-active {
-    border-bottom-color: var(--accent);
+    border-bottom-color: var(--text-link);
     background: none;
   }
 }

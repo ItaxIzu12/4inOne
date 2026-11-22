@@ -16,5 +16,7 @@ export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  return auth.isAuthenticated() || router.parseUrl('/login');
+  if (auth.isAuthenticated()) return true;
+  // Start ohne Netz: nicht zur Anmeldung, sondern zur Offline-Einkaufsliste (22.11.2026)
+  return router.parseUrl(auth.offline() ? '/offline' : '/login');
 };

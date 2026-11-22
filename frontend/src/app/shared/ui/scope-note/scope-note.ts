@@ -24,7 +24,7 @@ import { AppIcon } from '../icons/app-icon';
     }
     /* Verweis auf den anderen Bereich (vom Aufrufer eingesetzt) */
     :host ::ng-deep a {
-      color: var(--accent-hover, var(--accent));
+      color: var(--text-link-hover);
       font-weight: 600;
       text-decoration: underline;
       text-underline-offset: 2px;
@@ -35,7 +35,7 @@ import { AppIcon } from '../icons/app-icon';
       width: 16px;
       height: 16px;
       margin-top: 2px;
-      color: var(--accent);
+      color: var(--text-link);
     }
   `,
 })

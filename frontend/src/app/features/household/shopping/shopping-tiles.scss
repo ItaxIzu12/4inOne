@@ -106,7 +106,7 @@
 .tile--done .tile__icon {
   width: 20px;
   height: 20px;
-  color: var(--accent);
+  color: var(--text-link);
 }
 .tile--done .tile__name {
   color: var(--text-secondary);
@@ -128,10 +128,10 @@
   right: 6px;
   width: 14px;
   height: 14px;
-  color: var(--accent);
+  color: var(--text-link);
 }
 .tile--suggest:hover:not(:disabled) {
-  border-color: var(--accent);
+  border-color: var(--text-link);
 }
 .tiles__empty {
   grid-column: 1 / -1;

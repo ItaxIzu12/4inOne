@@ -17,6 +17,8 @@ const ALL_ROUTES: Routes = [
     data: {
       shell: 'bare',
       hideHeader: true,
+      // Website-Seiten bleiben hell (eigenes Editorial-Design), auch im Dunkelmodus (core/theme/theme.service.ts)
+      theme: 'light',
       description:
         'Finanzen, Haushalt, Termine und Reisen an einem Ort. Was zusammengehört, verknüpfst du – und entscheidest selbst, was du teilst.',
     },
@@ -56,6 +58,14 @@ const ALL_ROUTES: Routes = [
   {
     path: 'einladung/:token',
     loadComponent: () => import('./features/invitation/invitation').then((m) => m.Einladung),
+    data: { shell: 'bare', hideHeader: true },
+  },
+  {
+    // Start ohne Netz (22.11.2026): gespeicherte Einkaufsliste. Der Service Worker hält alle App-Teile vorrätig
+    // (ngsw-config.json › „/*.js“), deshalb lädt auch diese Seite ohne Netz nach.
+    path: 'offline',
+    title: 'Offline | 4inOne',
+    loadComponent: () => import('./features/offline/offline-page').then((m) => m.OfflinePage),
     data: { shell: 'bare', hideHeader: true },
   },
   {
@@ -124,6 +134,14 @@ const ALL_ROUTES: Routes = [
     data: { shell: 'bare', hideHeader: true },
   },
   {
+    // Wer sieht was (22.11.2026): Übersicht der Freigaben je Bereich, nur lesen
+    path: 'einstellungen/freigaben',
+    title: 'Wer sieht was | 4inOne',
+    loadComponent: () => import('./features/sharing/sharing').then((m) => m.Sharing),
+    canActivate: [authGuard],
+    data: { shell: 'bare', hideHeader: true },
+  },
+  {
     path: 'einstellungen/sitzungen',
     title: 'Angemeldete Geräte | 4inOne',
     loadComponent: () => import('./features/sessions/sessions').then((m) => m.Sitzungen),
@@ -134,6 +152,7 @@ const ALL_ROUTES: Routes = [
     path: 'impressum',
     title: 'Impressum | 4inOne',
     data: {
+      theme: 'light',
       shell: 'bare',
       hideHeader: true,
       description: 'Impressum von 4inOne: Anbieter, Kontakt und Verantwortliche.',
@@ -144,6 +163,7 @@ const ALL_ROUTES: Routes = [
     path: 'datenschutz',
     title: 'Datenschutzerklärung | 4inOne',
     data: {
+      theme: 'light',
       shell: 'bare',
       hideHeader: true,
       description:
@@ -154,7 +174,7 @@ const ALL_ROUTES: Routes = [
   {
     path: 'nutzungsbedingungen',
     title: 'Nutzungsbedingungen | 4inOne',
-    data: { shell: 'bare', hideHeader: true, description: 'Die Nutzungsbedingungen von 4inOne.' },
+    data: { theme: 'light', shell: 'bare', hideHeader: true, description: 'Die Nutzungsbedingungen von 4inOne.' },
     loadComponent: () =>
       import('./features/terms/terms').then(
         (m) => m.Nutzungsbedingungen,
@@ -164,6 +184,7 @@ const ALL_ROUTES: Routes = [
     path: 'barrierefreiheit',
     title: 'Barrierefreiheit | 4inOne',
     data: {
+      theme: 'light',
       shell: 'bare',
       hideHeader: true,
       description: 'Erklärung zur Barrierefreiheit von 4inOne und wie du Barrieren melden kannst.',
@@ -183,7 +204,7 @@ const ALL_ROUTES: Routes = [
     path: '**',
     title: 'Seite nicht gefunden | 4inOne',
     loadComponent: () => import('./features/not-found/not-found').then((m) => m.NotFound),
-    data: { shell: 'bare', hideHeader: true, notFound: true },
+    data: { theme: 'light', shell: 'bare', hideHeader: true, notFound: true },
   },
 ];
 

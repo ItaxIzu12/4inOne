@@ -6,8 +6,8 @@
   display: grid;
   gap: 16px;
   margin-bottom: 20px;
-  --line: #edf0f4;
-  --text-muted: #5a6577;
+  --line: var(--border-subtle);
+  --text-muted: var(--text-secondary);
 }
 // In der Übersicht steht der Umschalter mit der Datumsauswahl der Seite in einer Zeile (finance-overview-tab.scss setzt
 // den Wirt auf flex); alles Weitere dieser Ansicht nimmt die volle Breite.
@@ -26,9 +26,9 @@
 .card {
   min-width: 0;
   padding: 18px 20px;
-  border: 1px solid #e7ebef;
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--surface-card);
 }
 .card h2 {
   margin: 0 0 10px;
@@ -45,7 +45,7 @@
   white-space: nowrap;
 }
 .minus {
-  color: #b3263e;
+  color: light-dark(#b3263e, #e892a0);
 }
 .plus {
   color: var(--success);
@@ -92,7 +92,7 @@
   width: 40px;
   height: 40px;
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--cat) 13%, #fff);
+  background: color-mix(in srgb, var(--cat) 13%, var(--surface-card));
   color: var(--cat);
 }
 .tile app-icon {
@@ -142,7 +142,7 @@
   grid-column: 1 / -1;
   height: 6px;
   border-radius: 999px;
-  background: #edf1ef;
+  background: light-dark(#edf1ef, #222524);
   overflow: hidden;
 }
 .tops__bar span {
@@ -161,11 +161,11 @@
 .empty app-icon {
   width: 30px;
   height: 30px;
-  color: var(--accent, var(--finance-accent));
+  color: var(--text-link);
 }
 .empty p {
   margin: 0;
-  color: #2b3a33;
+  color: light-dark(#2b3a33, #b3c7bd);
   font-size: var(--fs-body);
   font-weight: 600;
 }
@@ -176,7 +176,7 @@
   min-height: var(--control-height);
   border: 0;
   background: none;
-  color: var(--accent-hover, var(--finance-accent));
+  color: var(--text-link-hover);
   font: inherit;
   font-size: var(--fs-secondary);
   font-weight: 600;
@@ -233,8 +233,8 @@
 .note--info {
   padding: 10px 14px;
   border-radius: var(--radius-md);
-  background: #eef4fd;
-  color: #24406b;
+  background: light-dark(#eef4fd, #1d283a);
+  color: light-dark(#24406b, #9cb6de);
 }
 .range-empty {
   padding: 32px 20px;
@@ -249,8 +249,8 @@
   padding: 0 18px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  background: #fff;
-  color: var(--accent-hover, var(--finance-accent));
+  background: var(--surface-card);
+  color: var(--text-link-hover);
   font: inherit;
   font-size: var(--fs-secondary);
   font-weight: 600;
@@ -291,7 +291,7 @@ button:focus-visible {
   padding: 0 4px;
   border: 0;
   background: none;
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font: inherit;
   font-size: var(--fs-secondary);
   font-weight: 600;

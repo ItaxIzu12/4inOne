@@ -1,25 +1,30 @@
 // Startleitfaden (21.11.2026), aus dem Finanzen-Leitfaden verallgemeinert: weiße Karte, Fortschritt in der
 // Bereichsfarbe, Schritte als große Tippflächen, nächster Schritt zusätzlich als Hauptknopf. Nur vorhandene Tokens.
 :host {
-  --c: var(--brand-primary);
+  --c: var(--text-link);
+  --c-fill: var(--brand-primary);
   --soft: var(--surface-sunken);
   display: block;
   margin-bottom: 20px;
 }
 :host(.guide--finanzen) {
   --c: var(--finance-accent);
+  --c-fill: var(--finance-fill);
   --soft: var(--finance-soft);
 }
 :host(.guide--haushalt) {
   --c: var(--household-accent);
+  --c-fill: var(--household-fill);
   --soft: var(--household-soft);
 }
 :host(.guide--organisation) {
   --c: var(--organization-accent);
+  --c-fill: var(--organization-fill);
   --soft: var(--organization-soft);
 }
 :host(.guide--reisen) {
   --c: var(--travel-accent);
+  --c-fill: var(--travel-fill);
   --soft: var(--travel-soft);
 }
 .guide__card {
@@ -82,7 +87,7 @@ h2 {
   transition: background-color 240ms ease-out;
 }
 .guide__bar li.is-done {
-  background: var(--c);
+  background: var(--c-fill);
 }
 .guide__intro {
   max-width: 60ch;
@@ -128,12 +133,12 @@ h2 {
   font-weight: 700;
 }
 .is-next .guide__check {
-  border-color: var(--c);
+  border-color: var(--c-fill);
   color: var(--c);
 }
 .is-done .guide__check {
-  border-color: var(--c);
-  background: var(--c);
+  border-color: var(--c-fill);
+  background: var(--c-fill);
   color: #fff;
 }
 .guide__check app-icon {
@@ -214,7 +219,7 @@ h2 {
   padding: 0 20px;
   border: 0;
   border-radius: 12px;
-  background: var(--c);
+  background: var(--c-fill);
   color: #fff;
   font: inherit;
   font-size: 16px;

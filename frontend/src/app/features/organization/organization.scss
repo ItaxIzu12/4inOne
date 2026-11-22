@@ -5,9 +5,12 @@
   display: block;
   color: var(--text-primary);
   // Dieselbe Organisationsfarbe wie Navigation und Startseite (Token), vorher eigenes #6d3fc4.
-  --accent: var(--organization-accent);
-  --accent-glow: var(--organization-accent);
-  --accent-hover: color-mix(in srgb, var(--organization-accent) 85%, #000);
+  --accent: var(--organization-fill);
+  // Dunkelmodus: Flächen mit weißer Schrift nehmen die Füllfarbe, Text und Links die lesbare Textvariante.
+  --text-link: var(--organization-accent);
+  --text-link-hover: color-mix(in srgb, var(--organization-accent) 85%, var(--text-primary));
+  --accent-glow: var(--organization-fill);
+  --accent-hover: color-mix(in srgb, var(--organization-fill) 85%, #000);
   --accent-soft: var(--organization-soft);
   --lavender: var(--organization-soft);
   // Kleinste Schrift im Bereich 13 px (wie Haushalt und Finanzen) — 12 px war auf dem Handy zu klein.
@@ -35,7 +38,7 @@
   height: 60px;
   border-radius: var(--radius-lg);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--text-link);
 }
 .heading-icon app-icon {
   width: 32px;
@@ -77,9 +80,9 @@
   height: 20px;
 }
 .secondary {
-  border: 1px solid #e4d9f4;
+  border: 1px solid light-dark(#e4d9f4, #3b3149);
   background: var(--accent-soft);
-  color: #5a3388;
+  color: light-dark(#5a3388, #ba9fdb);
 }
 // Reiter: am Rechner ruhige Leiste mit Symbol, aktiv lila unterstrichen.
 .tabs {
@@ -110,11 +113,11 @@
   height: 18px;
 }
 .tabs button:hover {
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 .tabs button[aria-selected='true'] {
-  border-bottom-color: var(--accent);
-  color: var(--accent-hover);
+  border-bottom-color: var(--text-link);
+  color: var(--text-link-hover);
   font-weight: 600;
 }
 .tabs button:focus-visible,
@@ -131,8 +134,8 @@
   margin: 0 0 14px;
   padding: 10px 14px;
   border-radius: var(--radius-md);
-  background: #fde8eb;
-  color: #8f2a3d;
+  background: var(--error-soft);
+  color: var(--error);
   font-size: var(--fs-secondary);
 }
 @media (max-width: 1100px) {
@@ -170,7 +173,7 @@
   // Fünf Reiter auf 390 px ohne Scrollen, Symbole nur am Rechner.
   .tabs {
     gap: 0;
-    border: 1px solid #ebe5f6;
+    border: 1px solid light-dark(#ebe5f6, #3a3348);
     background: var(--surface-hover);
   }
   .tabs button {
@@ -225,7 +228,7 @@
   flex: 0 0 16px;
   width: 16px;
   height: 16px;
-  color: var(--accent);
+  color: var(--text-link);
 }
 
 // Kalender-Import: leise Zeile unter dem Kalender — die Hauptaktion bleibt „Termin hinzufügen“.
@@ -246,7 +249,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--accent);
+  color: var(--text-link);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -301,7 +304,7 @@
   height: 15px;
 }
 .cal-choice__chip[aria-pressed='true'] {
-  border-color: var(--brand-primary);
+  border-color: var(--text-link);
   box-shadow: inset 0 0 0 1px var(--brand-primary);
 }
 .cal-choice__chip:disabled {

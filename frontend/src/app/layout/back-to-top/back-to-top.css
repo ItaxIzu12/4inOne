@@ -31,7 +31,7 @@
 .back-to-top:hover {
   background: var(--accent);
   color: var(--accent-ink);
-  border-color: var(--accent);
+  border-color: var(--text-link);
 }
 
 /* Handy: über der unteren Navigation (app-shell .mobile-nav, ab 760 px abwärts). */

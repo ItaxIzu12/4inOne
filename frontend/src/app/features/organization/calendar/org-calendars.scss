@@ -48,12 +48,12 @@
   border-color: var(--border-strong);
 }
 .cal-chip[aria-pressed='true'] {
-  border-color: var(--brand-primary);
+  border-color: var(--text-link);
   background: var(--brand-primary);
   color: #fff;
 }
 .cal-chip[aria-pressed='true'] .cal-dot {
-  box-shadow: 0 0 0 2px #fff;
+  box-shadow: 0 0 0 2px var(--surface-card);
 }
 // Für mich freigegebener Kalender einer Person: Initiale statt Farbpunkt
 .cal-avatar {
@@ -64,8 +64,8 @@
   height: 22px;
   margin-left: -6px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--cal) 16%, #fff);
-  color: color-mix(in srgb, var(--cal) 70%, #172523);
+  background: color-mix(in srgb, var(--cal) 16%, var(--surface-card));
+  color: color-mix(in srgb, var(--cal) 70%, var(--text-primary));
   font-size: var(--fs-meta);
   font-weight: 700;
 }
@@ -177,8 +177,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--cal) 14%, #fff);
-  color: color-mix(in srgb, var(--cal) 70%, #172523);
+  background: color-mix(in srgb, var(--cal) 14%, var(--surface-card));
+  color: color-mix(in srgb, var(--cal) 70%, var(--text-primary));
   font-size: var(--fs-meta);
   font-weight: 700;
 }

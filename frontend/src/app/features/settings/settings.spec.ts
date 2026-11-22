@@ -27,7 +27,7 @@ describe('Einstellungen', () => {
   it('groups the settings under headings and links every row', () => {
     const el = render();
     const titles = Array.from(el.querySelectorAll('.settings-group__title')).map((h) => h.textContent?.trim());
-    expect(titles).toEqual(['Konto', 'Sicherheit', 'Datenschutz und Rechtliches']);
+    expect(titles).toEqual(['Konto', 'Sicherheit', 'Datenschutz und Rechtliches', 'Darstellung']);
     const links = Array.from(el.querySelectorAll('a.settings-row')).map((a) => a.getAttribute('href'));
     expect(links).toEqual([
       '/einstellungen/profil',

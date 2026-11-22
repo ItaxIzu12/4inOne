@@ -22,16 +22,16 @@
   padding: 0 12px;
   border: 1px solid var(--border-default);
   border-radius: 999px;
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-secondary);
   font: inherit;
   font-size: var(--fs-secondary); // wie die Filter-Chips in den Aufgaben
   cursor: pointer;
 }
 .chips button[aria-pressed='true'] {
-  border-color: #b9cdf3;
+  border-color: light-dark(#b9cdf3, #2e384c);
   background: var(--blue-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-weight: 600;
 }
 .chips .num {
@@ -89,7 +89,7 @@
 }
 .quick__more:hover {
   background: var(--blue-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 .quick__more app-icon {
   width: 18px;
@@ -220,7 +220,7 @@
   height: 32px;
   border-radius: 50%;
   background: var(--blue-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-size: var(--fs-caption);
   font-weight: 700;
 }
@@ -306,7 +306,7 @@
   font-weight: 600;
 }
 .tl-head.is-late {
-  color: #a12323;
+  color: var(--error);
 }
 .tl-rows {
   position: relative;
@@ -334,12 +334,12 @@
   margin-top: -5px;
   border: 2px solid var(--travel-accent);
   border-radius: 50%;
-  background: #fff;
+  background: var(--surface-card);
   content: '';
 }
 .tl-rows.is-late .row::before {
-  border-color: #b3261e;
-  background: #b3261e;
+  border-color: var(--error);
+  background: var(--error);
 }
 .tl-depart {
   display: flex;
@@ -362,7 +362,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--travel-accent);
+  background: var(--travel-fill);
   color: #fff;
 }
 .tl-depart__icon app-icon {

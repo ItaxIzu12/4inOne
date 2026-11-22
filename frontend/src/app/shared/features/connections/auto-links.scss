@@ -68,7 +68,7 @@
   line-height: 1.4;
 }
 .al__problem {
-  color: #8a5a00;
+  color: var(--warning);
 }
 .al__preview app-icon,
 .al__problem app-icon {
@@ -130,7 +130,7 @@
   font-size: var(--fs-meta);
 }
 .al__pending--warn {
-  color: #8a5a00;
+  color: var(--warning);
 }
 .al__note,
 .al__error {

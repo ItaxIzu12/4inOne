@@ -9,7 +9,7 @@
   margin-bottom: var(--space-5);
   padding: 26px 28px 24px;
   border-radius: 20px var(--radius-sm) 20px 20px;
-  background: var(--household-accent, #ab445f);
+  background: var(--household-fill);
   color: #fff;
 }
 .hero__date {
@@ -45,7 +45,7 @@
   min-height: 30px;
   padding: 0 12px;
   border-radius: 999px;
-  background: color-mix(in srgb, #000 22%, var(--household-accent, #ab445f));
+  background: color-mix(in srgb, #000 22%, var(--household-fill));
   color: #fff;
   font-size: var(--fs-meta);
   font-weight: 600;
@@ -56,8 +56,8 @@
   stroke-width: 2.5;
 }
 .hero__chip--late {
-  background: #fff;
-  color: #8f1f3c;
+  background: var(--surface-card);
+  color: var(--error);
 }
 .hero__fair {
   display: grid;
@@ -89,13 +89,13 @@
   height: 30px;
   padding: 0 10px;
   border-radius: 8px;
-  background: #fff;
-  color: #8f1f3c;
+  background: var(--surface-card);
+  color: var(--error);
   font-size: var(--fs-meta);
   white-space: nowrap;
 }
 .hero__fairbar li:nth-child(2n) {
-  background: color-mix(in srgb, #000 28%, var(--household-accent, #ab445f));
+  background: color-mix(in srgb, #000 28%, var(--household-fill));
   color: #fff;
 }
 .hero__fairbar li b {
@@ -192,7 +192,7 @@
   font-size: var(--fs-meta);
 }
 .room--3 .room__state {
-  color: #8f1f3c;
+  color: var(--error);
   font-weight: 600;
 }
 .rooms__title small {
@@ -239,7 +239,7 @@
 // ---------- Erledigt-Moment: Kästchen füllt sich mit Haken, Titel wird durchgestrichen, Zeile blendet aus ----------
 .task.is-done .box {
   border-color: var(--household-accent, #ab445f);
-  background: var(--household-accent, #ab445f);
+  background: var(--household-fill);
   opacity: 1;
 }
 .task.is-done .task__name {

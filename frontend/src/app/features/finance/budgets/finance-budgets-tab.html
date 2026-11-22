@@ -31,8 +31,8 @@
           @if (plannedTotal() > 0) {
             <div>
               <dt>
-                <button type="button" class="breakdown__link" [attr.aria-label]="eur(plannedTotal()) + ' geplante Ausgaben im ' + monthLabel() + ' anzeigen'" (click)="showTransactions('planned')">
-                  Geplant<small>{{ plannedItems().length }} {{ plannedItems().length === 1 ? 'Ausgabe' : 'Ausgaben' }}</small>
+                <button type="button" class="breakdown__link" (click)="showTransactions('planned')">
+                  Geplant<small>{{ plannedItems().length }} {{ plannedItems().length === 1 ? 'Ausgabe' : 'Ausgaben' }}</small><span class="sr-only"> im {{ monthLabel() }} anzeigen</span>
                 </button>
                 <app-term-hint term="Geplant" [text]="plannedHint" />
               </dt>
@@ -92,7 +92,6 @@
             <button
               type="button"
               class="row-btn budget-row"
-              [attr.aria-label]="b.category.name + ': Budget ' + eur(b.limit) + ', ' + eur(b.spent) + ' ausgegeben' + (b.planned ? ', ' + eur(b.planned) + ' geplante Ausgaben' : '') + ', ' + (b.left >= 0 ? eur(b.left) + ' verfügbar' : eur(-b.left) + ' über dem Budget') + ', ' + budgetStatus(b) + '. Transaktionen dieser Kategorie anzeigen'"
               (click)="showTransactions('expenses', b.category.id)"
             >
               <span class="tile" aria-hidden="true" [style.--cat]="b.category.color"><app-icon [name]="categoryIcon(b.category.name)" /></span>
@@ -111,6 +110,8 @@
                   <small class="budget-row__status" [class]="'budget-row__status tone--' + b.tone">@if (b.tone !== 'ok') { {{ budgetStatus(b) }} · }{{ b.pct }} %</small>
                 </span>
               </span>
+              <!-- WCAG 2.5.3: vorgelesen wird der sichtbare Text, der Status und das Ziel folgen unsichtbar -->
+              <span class="sr-only">@if (b.tone === 'ok') {, {{ budgetStatus(b) }}}. Transaktionen dieser Kategorie anzeigen</span>
               <app-icon class="chev" name="arrow" aria-hidden="true" />
             </button>
           </li>

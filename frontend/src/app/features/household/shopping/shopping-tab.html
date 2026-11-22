@@ -4,6 +4,13 @@
     <button type="button" class="btn-primary" (click)="load()">Erneut versuchen</button>
   </div>
 } @else if (data(); as d) {
+  @if (offlineSince(); as since) {
+    <!-- Offline: letzter Stand vom Gerät; Abhaken wird gemerkt und beim nächsten Netz übertragen -->
+    <p class="offline-note" role="status">
+      <app-icon name="info" aria-hidden="true" />
+      <span><b>Du bist offline.</b> Stand von {{ since | date: 'HH:mm' }} Uhr. Abhaken wird gespeichert und übertragen, sobald du wieder Netz hast@if (pendingCount()) { ({{ pendingCount() === 1 ? '1 Änderung wartet' : pendingCount() + ' Änderungen warten' }})}. Neue Artikel gehen erst wieder mit Netz.</span>
+    </p>
+  }
   <div class="shop">
     <!-- Alle Listen -->
     <nav class="lists" aria-labelledby="lists-heading">

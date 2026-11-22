@@ -70,7 +70,7 @@
   padding: 18px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--surface-card);
   text-align: left;
 }
 .goal-cards .goal .tile {
@@ -133,7 +133,7 @@
 @media (hover: hover) and (pointer: fine) {
   .goal-cards .goal:hover {
     border-color: var(--border-strong, #cfd5cd);
-    background: #fff;
+    background: var(--surface-card);
   }
 }
 

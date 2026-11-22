@@ -58,8 +58,8 @@
   padding: 0 14px;
   border: 1px solid var(--line-strong, var(--border-default));
   border-radius: var(--radius-md);
-  background: #fff;
-  color: var(--accent-hover, var(--finance-accent));
+  background: var(--surface-card);
+  color: var(--text-link-hover);
   font: inherit;
   font-size: var(--fs-secondary);
   font-weight: 600;
@@ -99,7 +99,7 @@
   align-items: center;
   gap: 6px;
   margin: -8px 0 14px;
-  color: #a32038;
+  color: var(--error);
   font-size: var(--fs-secondary);
   font-weight: 600;
 }
@@ -111,12 +111,12 @@
   padding: 2px;
   border: 1px solid var(--line-strong, var(--border-default));
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--surface-card);
   box-shadow: 0 1px 2px rgba(16, 32, 24, 0.04);
 }
 .month-step:hover {
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 .month-step:focus-visible {
   outline: 2px solid var(--accent);
@@ -133,7 +133,7 @@
   top: 12px;
   bottom: 12px;
   width: 1px;
-  background: #e8ecea;
+  background: light-dark(#e8ecea, #232524);
   content: '';
 }
 .month-pick::before {

@@ -27,9 +27,9 @@
   height: 16px;
 }
 .view-chip[aria-pressed='true'] {
-  border-color: var(--accent);
+  border-color: var(--text-link);
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-weight: 600;
 }
 .view-chip__count {
@@ -40,8 +40,8 @@
   font-weight: 700;
 }
 .view-chip__count.is-late {
-  background: #fde2e2;
-  color: #a12323;
+  background: var(--error-soft);
+  color: var(--error);
 }
 .field-error {
   margin: 0 0 12px;
@@ -80,7 +80,7 @@
   outline: none;
 }
 .search:focus-within {
-  border-bottom-color: var(--accent);
+  border-bottom-color: var(--text-link);
 }
 
 .tasks {
@@ -120,7 +120,7 @@
   cursor: pointer;
 }
 .task__main:hover {
-  background: #f8faf9;
+  background: light-dark(#f8faf9, #272f2b);
 }
 .task__title {
   font-size: var(--fs-body);
@@ -140,7 +140,7 @@
 }
 .task__meta .late,
 .task__meta .is-high {
-  color: #a12323;
+  color: var(--error);
   font-weight: 600;
 }
 .task.is-done .task__title {
@@ -222,7 +222,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -241,12 +241,12 @@
   font-weight: 700;
 }
 .group-head.is-late {
-  color: #a12323;
+  color: var(--error);
 }
 .group-head app-icon {
   width: 16px;
   height: 16px;
-  color: var(--accent);
+  color: var(--text-link);
 }
 .group-head__count {
   color: var(--text-muted);
@@ -262,7 +262,7 @@
   margin-right: 6px;
   border-radius: 50%;
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-size: 12px;
   font-weight: 700;
 }

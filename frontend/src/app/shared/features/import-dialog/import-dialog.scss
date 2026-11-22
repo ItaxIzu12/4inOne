@@ -2,7 +2,7 @@
 .imp-intro,
 .imp-note {
   margin: 0;
-  color: #4a5568;
+  color: light-dark(#4a5568, #b2bac8);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -16,10 +16,10 @@
   gap: 14px;
   min-height: 84px;
   padding: 16px 18px;
-  border: 1.5px dashed color-mix(in srgb, var(--accent, var(--finance-accent)) 40%, #ffffff);
+  border: 1.5px dashed color-mix(in srgb, var(--accent, var(--finance-accent)) 40%, var(--surface-card));
   border-radius: 14px;
-  background: color-mix(in srgb, var(--accent, var(--finance-accent)) 5%, #ffffff);
-  color: #162e29;
+  background: color-mix(in srgb, var(--accent, var(--finance-accent)) 5%, var(--surface-card));
+  color: light-dark(#162e29, #a5d4ca);
   cursor: pointer;
 }
 .imp-file:hover {
@@ -33,7 +33,7 @@
   flex: 0 0 26px;
   width: 26px;
   height: 26px;
-  color: var(--accent, var(--finance-accent));
+  color: var(--text-link);
 }
 .imp-file span {
   display: grid;
@@ -42,7 +42,7 @@
   overflow-wrap: anywhere;
 }
 .imp-file small {
-  color: #56627a;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 // Unsichtbar, aber per Tastatur und Screenreader bedienbar (die Fläche ist das Label).
@@ -54,7 +54,7 @@
 }
 .imp-summary {
   margin: 0;
-  color: #162e29;
+  color: light-dark(#162e29, #a5d4ca);
   font-size: 15px;
 }
 .imp-rows {
@@ -69,21 +69,21 @@
   align-items: center;
   gap: 10px;
   min-height: 48px;
-  border-top: 1px solid #edf0f2;
+  border-top: 1px solid light-dark(#edf0f2, #3a3e41);
   font-size: 14px;
 }
 .imp-rows li:first-child {
   border-top: 0;
 }
 .imp-rows li.is-off {
-  color: #6b7486;
+  color: light-dark(#6b7486, #b5bac4);
 }
 .imp-rows li.is-off b {
   font-weight: 500;
   text-decoration: line-through;
 }
 .imp-rows__date {
-  color: #56627a;
+  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
 .imp-rows__text {
@@ -96,21 +96,21 @@
   white-space: nowrap;
 }
 .imp-rows__text small {
-  color: #56627a;
+  color: var(--text-secondary);
   font-size: 12.5px;
 }
 .imp-rows__amount {
-  color: #a3243b;
+  color: light-dark(#a3243b, #e792a2);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   white-space: nowrap;
 }
 .imp-rows__amount.is-income {
-  color: #17723f;
+  color: light-dark(#17723f, #91e9b7);
 }
 .imp-more {
   margin: 0;
-  color: #56627a;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 .imp-again {
@@ -119,7 +119,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--accent, var(--finance-accent));
+  color: var(--text-link);
   font: inherit;
   font-size: 14px;
   font-weight: 600;

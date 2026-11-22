@@ -24,6 +24,8 @@
 /* Keine Kursive: auch kein künstlich geneigter Ersatz durch den Browser. */
 :root {
   font-synthesis-style: none;
+  /* Grundlage für light-dark() in den Komponenten; Dunkel setzt shared/styles/theme-dark.css */
+  color-scheme: light;
 }
 em,
 i,
@@ -80,6 +82,19 @@ cite {
   --organization-on: #ffffff;
   --travel-fill: #3d6b9a;
   --travel-on: #ffffff;
+
+  /* ---------- Links und Diagrammfarben (22.11.2026, Dunkelmodus: dunkle Werte in shared/styles/theme-dark.css) ---------- */
+  --text-link: #172523;
+  --text-link-hover: #22332f;
+  --chart-red: #c6324b;
+  --chart-red-soft: #fde8eb;
+  --chart-blue: #2f6fbf;
+  --chart-blue-soft: #e6f0fc;
+  --chart-amber: #a35f00;
+  --chart-amber-soft: #fdf1dc;
+  --chart-green: #1f8a4c;
+  --chart-green-soft: #e3f6ec;
+  --chart-track: #e8edea;
 
   /* ---------- Status: überall dieselbe Bedeutung ---------- */
   --success: #1e7a4d;

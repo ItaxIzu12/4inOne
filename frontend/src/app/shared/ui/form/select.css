@@ -24,7 +24,7 @@
 }
 .select__trigger:focus-visible,
 .select__trigger[aria-expanded='true'] {
-  border-color: var(--accent);
+  border-color: var(--text-link);
   outline: 2px solid var(--accent);
   outline-offset: -1.5px;
 }
@@ -65,7 +65,7 @@
   transform: rotate(180deg);
 }
 .select__check {
-  color: var(--accent);
+  color: var(--text-link);
 }
 
 /* Liegt in der Top Layer des Browsers (Popover); die Position setzt popover.ts. */

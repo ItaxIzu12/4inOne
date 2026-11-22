@@ -8,17 +8,20 @@
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   // Bereichsfarbe Finanzen (grün): Dialoge, Dropdowns und Kalender erben sie. Kontrast 6,3:1 auf Weiß, 5,5:1 auf der Tönung.
-  --accent: var(--finance-accent);
-  --accent-glow: var(--finance-accent);
-  --accent-hover: color-mix(in srgb, var(--finance-accent) 85%, #000);
+  --accent: var(--finance-fill);
+  // Dunkelmodus: Flächen mit weißer Schrift nehmen die Füllfarbe, Text und Links die lesbare Textvariante.
+  --text-link: var(--finance-accent);
+  --text-link-hover: color-mix(in srgb, var(--finance-accent) 85%, var(--text-primary));
+  --accent-glow: var(--finance-fill);
+  --accent-hover: color-mix(in srgb, var(--finance-fill) 85%, #000);
   --accent-soft: var(--finance-soft);
   --lavender: var(--finance-soft);
-  --fin-red: #c6324b;
-  --fin-red-soft: #fde8eb;
-  --fin-blue: #2f6fbf;
-  --fin-blue-soft: #e6f0fc;
-  --fin-amber: #a35f00;
-  --fin-amber-soft: #fdf1dc;
+  --fin-red: var(--chart-red);
+  --fin-red-soft: var(--chart-red-soft);
+  --fin-blue: var(--chart-blue);
+  --fin-blue-soft: var(--chart-blue-soft);
+  --fin-amber: var(--chart-amber);
+  --fin-amber-soft: var(--chart-amber-soft);
   --line: var(--border-subtle);
 }
 .finance-page {
@@ -45,11 +48,11 @@
   gap: 12px;
 }
 .tabs button:hover {
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 .tabs [aria-selected='true'] {
-  border-bottom-color: var(--accent);
-  color: var(--accent-hover);
+  border-bottom-color: var(--text-link);
+  color: var(--text-link-hover);
   font-weight: 600;
 }
 // Monat: rechts neben den Reitern.
@@ -62,13 +65,13 @@
   padding: 10px 14px;
   border-radius: var(--radius-md);
   background: var(--fin-red-soft);
-  color: #8f2a3d;
+  color: var(--error);
   font-size: var(--fs-secondary);
   line-height: 1.45;
 }
 .alert-note--plan {
   background: var(--fin-amber-soft);
-  color: #7a4700;
+  color: light-dark(#7a4700, #eec58b);
 }
 
 // Reiter mit Symbolen brauchen die Breite: der Monat rutscht in eine eigene Zeile.
@@ -106,8 +109,8 @@
     height: 44px;
   }
   .tabs {
-    border: 1px solid #dcece3;
-    background: #f7fcf9;
+    border: 1px solid light-dark(#dcece3, #37443c);
+    background: light-dark(#f7fcf9, #213629);
   }
   // Fünf Reiter sollen auf 390 px ohne Scrollen passen (wie im Haushalt).
   .tabs {
@@ -121,7 +124,7 @@
     font-size: var(--fs-meta);
   }
   .tabs [aria-selected='true'] {
-    background: #e3f5e9;
+    background: light-dark(#e3f5e9, #203728);
   }
   // Wie Organisation: auf dem Handy nur Text, damit fünf Reiter ohne Scrollen passen.
   .tabs button {

@@ -282,7 +282,7 @@ h1 {
     transform: translateX(4px);
   }
   .btn--ink:hover {
-    background: #22332f;
+    background: var(--brand-primary-hover);
   }
   .btn--outline:hover {
     background: var(--ink);

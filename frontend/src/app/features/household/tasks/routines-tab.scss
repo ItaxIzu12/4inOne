@@ -45,13 +45,13 @@
   cursor: pointer;
 }
 .chip:hover {
-  border-color: #f0c7bb;
+  border-color: light-dark(#f0c7bb, #4b3630);
   color: var(--text);
 }
 .chip.is-active {
-  border-color: #f3cdc2;
+  border-color: light-dark(#f3cdc2, #4c352f);
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-weight: 600;
 }
 .chip app-icon {
@@ -144,8 +144,8 @@
   height: 40px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: #fafbfc;
-  color: #3d4a63;
+  background: light-dark(#fafbfc, #252b31);
+  color: light-dark(#3d4a63, #adb8cc);
 }
 .row__icon app-icon {
   width: 21px;
@@ -190,8 +190,8 @@ small {
   color: var(--household-accent);
 }
 .badge--late {
-  background: #fde2e2;
-  color: #a4161a;
+  background: var(--error-soft);
+  color: light-dark(#a4161a, #ee8b8e);
 }
 .row__who {
   display: flex;
@@ -216,8 +216,8 @@ small {
   font-weight: 700;
 }
 .avatar--blue {
-  background: #e6eefc;
-  color: #2a5bb8;
+  background: light-dark(#e6eefc, #1d273a);
+  color: light-dark(#2a5bb8, #93b0e6);
 }
 .avatar--rose {
   background: var(--household-soft);
@@ -264,7 +264,7 @@ small {
 }
 .row--paused .avatar {
   background: var(--surface-sunken);
-  color: #4b5567;
+  color: var(--text-secondary);
 }
 
 .empty {

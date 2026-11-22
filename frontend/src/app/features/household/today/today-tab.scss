@@ -59,7 +59,7 @@
   padding: 1px 8px;
   border-radius: 999px;
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-size: var(--fs-meta);
   text-align: center;
 }
@@ -82,7 +82,7 @@
   height: 15px;
 }
 .head-link:hover {
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 ul {
   margin: 0;
@@ -112,7 +112,7 @@ ul {
   font-size: var(--fs-secondary);
 }
 .hint--warn {
-  color: #a12323;
+  color: var(--error);
 }
 
 // ---------- Heute fällig ----------
@@ -148,18 +148,18 @@ ul {
   padding: 3px 10px;
   border-radius: var(--radius-sm);
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-size: var(--fs-caption);
   font-weight: 600;
   white-space: nowrap;
 }
 .tag--warn {
-  background: #fde2e2;
-  color: #a12323;
+  background: var(--error-soft);
+  color: var(--error);
 }
 .tag--prio {
-  background: #fdf1dc;
-  color: #7a4300;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 .add {
   display: inline-flex;
@@ -169,7 +169,7 @@ ul {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font: inherit;
   font-size: var(--fs-secondary);
   font-weight: 600;
@@ -201,7 +201,7 @@ ul {
   border-top: 0;
 }
 .soon:hover .soon__text b {
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 .soon__icon {
   display: grid;
@@ -210,11 +210,11 @@ ul {
   height: 40px;
   border-radius: var(--radius-md);
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 .soon__icon--warn {
-  background: #fdf1dc;
-  color: #7a4300;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 .soon__icon app-icon {
   width: 20px;
@@ -256,7 +256,7 @@ ul {
 .shop__preview li {
   padding: 4px 10px;
   border-radius: 999px;
-  background: #f3f5f8;
+  background: var(--surface-sunken);
   font-size: var(--fs-meta);
 }
 .shop__preview .shop__more {
@@ -296,7 +296,7 @@ ul {
   height: 64px;
   border-radius: var(--radius-lg);
   background: var(--accent-soft);
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
 }
 .welcome__icon app-icon {
   width: 32px;

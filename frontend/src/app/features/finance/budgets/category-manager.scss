@@ -50,19 +50,19 @@ input {
   padding: 0 12px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--surface-card);
   color: inherit;
   font: inherit;
   font-size: var(--fs-body);
 }
 input:focus-visible {
-  border-color: var(--accent);
+  border-color: var(--text-link);
   outline: 3px solid var(--accent-soft);
   outline-offset: 0;
 }
 input[readonly] {
   border-color: transparent;
-  background: #f4f6f8;
+  background: light-dark(#f4f6f8, #262b31);
   font-weight: 600;
 }
 .limit input {
@@ -97,11 +97,11 @@ input[readonly] {
   border: 0;
   border-radius: var(--radius-md);
   background: none;
-  color: #6b7385;
+  color: light-dark(#6b7385, #b6bac4);
 }
 .drop:hover {
-  background: #fdecef;
-  color: #b0203f;
+  background: light-dark(#fdecef, #3a1d22);
+  color: light-dark(#b0203f, #eb8fa3);
 }
 .drop app-icon {
   width: 19px;
@@ -111,7 +111,7 @@ input[readonly] {
   grid-template-columns: 10px minmax(0, 1fr) auto;
   padding: 8px 10px 8px 0;
   border-radius: var(--radius-md);
-  background: #fdf3f5;
+  background: light-dark(#fdf3f5, #3a1d23);
 }
 .is-removed .dot {
   opacity: 0.45;
@@ -123,11 +123,11 @@ input[readonly] {
   margin: 0 0 0 10px;
 }
 .removed b {
-  color: #575e6e;
+  color: light-dark(#575e6e, #b5bac4);
   text-decoration: line-through;
 }
 .removed small {
-  color: #8f2a3d;
+  color: var(--error);
   font-size: var(--fs-meta);
 }
 .undo {
@@ -135,8 +135,8 @@ input[readonly] {
   padding: 0 12px;
   border: 0;
   border-radius: var(--radius-md);
-  background: #fff;
-  color: var(--accent-hover);
+  background: var(--surface-card);
+  color: var(--text-link-hover);
   font-size: var(--fs-secondary);
   font-weight: 600;
 }
@@ -150,7 +150,7 @@ input[readonly] {
   border: 1px dashed var(--accent);
   border-radius: var(--radius-md);
   background: none;
-  color: var(--accent-hover);
+  color: var(--text-link-hover);
   font-size: var(--fs-secondary);
   font-weight: 600;
 }

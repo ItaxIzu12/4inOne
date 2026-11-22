@@ -14,7 +14,7 @@
   box-shadow: 0 6px 14px -8px rgb(23 37 35 / 0.35);
   padding: 16px 18px;
   border-radius: 18px var(--radius-sm) 18px 18px;
-  background: var(--travel-accent, #36608b);
+  background: var(--travel-fill);
   color: #fff;
 }
 .ticket-preview__route {
@@ -77,7 +77,7 @@
   height: 24px;
   border-radius: 50%;
   background: var(--travel-soft);
-  color: var(--accent-hover, #2b4f75);
+  color: var(--text-link-hover);
   font-size: var(--fs-meta);
   font-weight: 700;
 }
@@ -106,7 +106,7 @@
   padding: 0 14px;
   border: 1px solid var(--border-default, #dde1da);
   border-radius: 999px;
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   font: inherit;
   font-size: var(--fs-secondary);
@@ -126,16 +126,16 @@
 .transport-chip[aria-pressed='true'] {
   border-color: var(--travel-accent);
   background: var(--travel-soft);
-  color: var(--accent-hover, #2b4f75);
+  color: var(--text-link-hover);
   font-weight: 600;
   box-shadow: inset 0 0 0 1px var(--travel-accent);
 }
 .category-chip app-icon {
-  color: color-mix(in srgb, var(--c, #8a93a3) 80%, #172523);
+  color: color-mix(in srgb, var(--c, #8a93a3) 80%, var(--text-primary));
 }
 .category-chip[aria-pressed='true'] {
   border-color: var(--c, #8a93a3);
-  background: color-mix(in srgb, var(--c, #8a93a3) 12%, #fff);
+  background: color-mix(in srgb, var(--c, #8a93a3) 12%, var(--surface-card));
   font-weight: 600;
   box-shadow: inset 0 0 0 1px var(--c, #8a93a3);
 }

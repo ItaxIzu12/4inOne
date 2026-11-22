@@ -88,8 +88,10 @@ def test_parse_expands_simple_rules_honours_exdate_and_skips_cancelled():
     assert holidays.all_day and holidays.starts_at.date().isoformat() == '2026-10-26'
     assert holidays.ends_at.date().isoformat() == '2026-10-30'  # letzter Tag, nicht der Folgetag
     assert all(r.title != 'Abgesagt' for r in rows)
-    # Zu komplexe Regel (BYDAY=1MO bei MONTHLY): nur der erste Termin, nichts geraten
-    assert [r.title for r in rows].count('Jeden ersten Montag') == 1
+    # „Jeden ersten Montag“ (BYDAY=1MO): Dezember 2026 bis Fensterende – jeweils der erste Montag des Monats
+    firsts = [r.starts_at.date() for r in rows if r.title == 'Jeden ersten Montag']
+    assert firsts[:3] == [datetime(2026, 12, 7).date(), datetime(2027, 1, 4).date(), datetime(2027, 2, 1).date()]
+    assert all(d.weekday() == 0 and d.day <= 7 for d in firsts)
     yoga = [r.starts_at.astimezone(BERLIN).strftime('%a %d.%m.') for r in rows if r.title == 'Yoga']
     assert yoga == ['Mon 23.11.', 'Wed 25.11.', 'Mon 30.11.', 'Wed 02.12.']
     assert next(r for r in rows if r.title == 'Yoga').ends_at - next(r for r in rows if r.title == 'Yoga').starts_at == timedelta(hours=1)
@@ -181,3 +183,28 @@ def test_invalid_link_is_refused_and_at_most_five_subscriptions():
     with mock.patch.object(subscriptions, 'fetch', return_value=ICS):
         r = _client(anna).post('/api/v1/organisation/abos/', {'name': 'Zu viel', 'url': 'https://cal.example.com/b.ics'}, format='json')
     assert r.status_code == 400 and 'höchstens 5' in r.data['detail']
+
+
+def _rule_dates(rule: str, start: str = '20261130T090000') -> list[str]:
+    text = f"BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:z\nSUMMARY:R\nDTSTART;TZID=Europe/Berlin:{start}\nRRULE:{rule}\nEND:VEVENT\nEND:VCALENDAR\n"
+    return [r.starts_at.astimezone(BERLIN).strftime('%Y-%m-%d') for r in subscriptions.parse(text, BERLIN, NOW)]
+
+
+def test_rank_monthday_month_and_setpos_rules():
+    # letzter Freitag im Monat
+    assert _rule_dates('FREQ=MONTHLY;BYDAY=-1FR;COUNT=3') == ['2026-12-25', '2027-01-29', '2027-02-26']
+    # am 15. und am Monatsletzten
+    assert _rule_dates('FREQ=MONTHLY;BYMONTHDAY=15,-1;COUNT=4') == ['2026-11-30', '2026-12-15', '2026-12-31', '2027-01-15']
+    # letzter Werktag im Monat
+    assert _rule_dates('FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1;COUNT=3') == ['2026-11-30', '2026-12-31', '2027-01-29']
+    # jedes Jahr am zweiten Sonntag im Mai (Muttertag)
+    assert _rule_dates('FREQ=YEARLY;BYMONTH=5;BYDAY=2SU', '20260510T100000') == ['2027-05-09']
+    # der 31. fällt in kurzen Monaten aus statt auf den 30. zu rutschen
+    assert _rule_dates('FREQ=MONTHLY;COUNT=3', '20261231T090000') == ['2026-12-31', '2027-01-31', '2027-03-31']
+    # werktags täglich
+    assert _rule_dates('FREQ=DAILY;BYDAY=MO,TU,WE,TH,FR;COUNT=3', '20261204T090000') == ['2026-12-04', '2026-12-07', '2026-12-08']
+
+
+def test_unsupported_rules_show_only_the_first_date():
+    assert _rule_dates('FREQ=YEARLY;BYWEEKNO=20') == ['2026-11-30']
+    assert _rule_dates('FREQ=WEEKLY;BYDAY=1MO') == ['2026-11-30']

@@ -318,4 +318,8 @@ export class PrivateFinanceApi {
   delete(resource: 'transactions' | 'budgets' | 'goals', id: number) {
     return this.http.delete(`${this.base}/${resource}/${id}/`);
   }
+  /** Ü1: gelöschte Transaktion zurückholen (dieselbe ID, nur kurz nach dem Löschen). */
+  restoreTransaction(id: number) {
+    return this.http.post<FinanceTransaction>(`${this.base}/transactions/${id}/wiederherstellen/`, {});
+  }
 }

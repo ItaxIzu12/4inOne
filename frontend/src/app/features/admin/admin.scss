@@ -75,7 +75,7 @@
 }
 .admin__button--soft {
   border: 1px solid var(--border-strong);
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
 }
 .admin__button app-icon {
@@ -195,14 +195,14 @@
   padding: 0 14px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-pill);
-  background: #fff;
+  background: var(--surface-card);
   color: var(--text-primary);
   font: inherit;
   font-size: var(--fs-secondary);
   cursor: pointer;
 }
 .admin__chip[aria-pressed='true'] {
-  border-color: var(--brand-primary);
+  border-color: var(--text-link);
   background: var(--brand-primary);
   color: #fff;
   font-weight: 600;

@@ -1,0 +1,89 @@
+<app-shell>
+  <main id="main-content" class="settings-page" tabindex="-1">
+    <app-settings-layout active="freigaben" heading="Wer sieht was" lead="Für jeden Bereich auf einen Blick, wer Zugriff hat. Ändern kannst du es im jeweiligen Bereich.">
+      @if (loading()) {
+        <p class="share-muted" aria-live="polite">Wird zusammengestellt …</p>
+      } @else {
+        <div class="share-list">
+          <section class="share-card" data-area="finance" aria-labelledby="sh-fin">
+            <span class="share-card__icon" aria-hidden="true"><app-icon name="finance" /></span>
+            <div class="share-card__body">
+              <h2 id="sh-fin">Finanzen</h2>
+              <p class="share-who"><app-icon name="lock" aria-hidden="true" />Nur du</p>
+              <p class="share-muted">Buchungen, Budgets und Sparziele sieht niemand außer dir – auch nicht dein Haushalt. Ein abgeschlossener Einkauf wird eine Ausgabe in deinen eigenen Finanzen.</p>
+            </div>
+          </section>
+
+          <section class="share-card" data-area="household" aria-labelledby="sh-hh">
+            <span class="share-card__icon" aria-hidden="true"><app-icon name="household" /></span>
+            <div class="share-card__body">
+              <h2 id="sh-hh">Haushalt</h2>
+              @if (members(); as m) {
+                @if (others(m).length) {
+                  <p class="share-who"><app-icon name="people" aria-hidden="true" />Du und {{ others(m).length === 1 ? others(m)[0].name : others(m).length + ' weitere' }}</p>
+                  <ul class="share-rows">
+                    @for (p of others(m); track p.id) {<li><b>{{ p.name }}</b><span>{{ p.role_label }}</span></li>}
+                  </ul>
+                  <ul class="share-rules">
+                    <li>Aufgaben, Routinen und Einkauf: alle im Haushalt.</li>
+                    <li>Zuhause (Geräte, Verträge): nur Erwachsene, keine Kind-Konten.</li>
+                    <li>Vertragsbeträge: nur die Person, die sie eingetragen hat.</li>
+                  </ul>
+                } @else {
+                  <p class="share-who"><app-icon name="lock" aria-hidden="true" />Nur du</p>
+                  <p class="share-muted">Noch niemand ist in deinem Haushalt. Wen du einlädst, sieht Aufgaben, Routinen und Einkauf – Geräte und Verträge nur als Erwachsene:r.</p>
+                }
+              } @else {
+                <p class="share-muted">Konnte gerade nicht geladen werden.</p>
+              }
+              <a class="share-link" routerLink="/familie">In Personen & Gruppen verwalten<app-icon name="arrow" aria-hidden="true" /></a>
+            </div>
+          </section>
+
+          <section class="share-card" data-area="organization" aria-labelledby="sh-org">
+            <span class="share-card__icon" aria-hidden="true"><app-icon name="calendar" /></span>
+            <div class="share-card__body">
+              <h2 id="sh-org">Organisation</h2>
+              <p class="share-muted">Termine, Aufgaben und Notizen sind privat – nur was du bewusst teilst, sehen andere.</p>
+              @let s = shares();
+              <ul class="share-rows">
+                <li>
+                  <b>Dein Kalender</b>
+                  <span>@if (s?.given?.length) {freigegeben für @for (p of s!.given; track p.user_id; let last = $last) {{{ p.name }} ({{ role[p.role] }}){{ last ? '' : ', ' }}}} @else {für niemanden freigegeben}</span>
+                </li>
+                @for (c of calendars(); track c.id) {
+                  <li><b>{{ c.name }}</b><span>gemeinsamer Kalender · {{ calendarPeople(c) }}</span></li>
+                }
+                @if (s?.received?.length) {
+                  <li><b>Für dich freigegeben</b><span>@for (p of s!.received; track p.user_id; let last = $last) {{{ p.name }}{{ last ? '' : ', ' }}}</span></li>
+                }
+              </ul>
+              <a class="share-link" routerLink="/organisation" [queryParams]="{ tab: 'calendar' }">Kalender teilen<app-icon name="arrow" aria-hidden="true" /></a>
+            </div>
+          </section>
+
+          <section class="share-card" data-area="travel" aria-labelledby="sh-tr">
+            <span class="share-card__icon" aria-hidden="true"><app-icon name="travel" /></span>
+            <div class="share-card__body">
+              <h2 id="sh-tr">Reisen</h2>
+              @if (sharedTrips().length) {
+                <ul class="share-rows">
+                  @for (t of sharedTrips(); track t.id) {<li><b>{{ t.title }}</b><span>mit {{ tripPeople(t) }}</span></li>}
+                </ul>
+              } @else {
+                <p class="share-who"><app-icon name="lock" aria-hidden="true" />Nur du</p>
+              }
+              <p class="share-muted">
+                @if (ownTrips()) {{{ ownTrips() === 1 ? '1 weitere Reise' : ownTrips() + ' weitere Reisen' }} siehst nur du. }
+                Mitreisende sehen nur diese eine Reise – nie deinen Haushalt oder deine Finanzen.
+              </p>
+              <a class="share-link" routerLink="/reisen">Zu den Reisen<app-icon name="arrow" aria-hidden="true" /></a>
+            </div>
+          </section>
+
+          <p class="share-note"><app-icon name="link" aria-hidden="true" />Verknüpfungen zwischen Bereichen geben nie Zugang: Jede Person sieht nur, was sie im jeweiligen Bereich ohnehin sehen darf.</p>
+        </div>
+      }
+    </app-settings-layout>
+  </main>
+</app-shell>
