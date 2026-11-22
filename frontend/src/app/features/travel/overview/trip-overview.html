@@ -51,6 +51,9 @@
   </section>
 
   <div class="side">
+    @if (t.transport_type === 'FLIGHT') {
+      <app-boarding-passes [trip]="t" />
+    }
     <button type="button" class="card tile-card" (click)="openTab.emit('packliste')">
       <span class="ring" [style.--p]="packPct() + '%'" aria-hidden="true"><i></i><b class="num">{{ packingTotal() ? packPct() + '%' : '–' }}</b></span>
       <span class="tile-card__text">
@@ -89,6 +92,9 @@
         <span class="tile-card__go">In der Planung verwalten<app-icon name="arrow" aria-hidden="true" /></span>
       </span>
     </button>
+    @if (t.transport_type !== 'FLIGHT') {
+      <app-boarding-passes [trip]="t" />
+    }
   </div>
 </div>
 

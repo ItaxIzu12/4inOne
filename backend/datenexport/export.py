@@ -49,6 +49,7 @@ from organisation.models import (
     SharedCalendar, CalendarSubscription, SubscribedEvent,
 )
 from reisen.models import (
+    BoardingPass,
     PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripSettlement, TripTask,
 )
 
@@ -241,6 +242,8 @@ class _Export:
             'budget': self.rows(TripBudgetCategory._base_manager.filter(trip__in=trips)),
             'ausgaben': self.rows(TripExpense._base_manager.filter(trip__in=trips)),
             'beglichen': self.rows(TripSettlement._base_manager.filter(trip__in=trips)),
+            # Eigene Bordkarten: Angaben ja, der Code selbst nicht (Buchungscode, nur verschlüsselt gespeichert)
+            'bordkarten': self.rows(BoardingPass._base_manager.filter(owner=user), exclude=('barcode_ciphertext',)),
         })
 
         verknuepfungen = self.section('Verknüpfungen', {

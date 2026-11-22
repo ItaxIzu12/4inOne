@@ -5,11 +5,14 @@
  */
 export const OFFLINE_SNAPSHOT_KEY = '4io-offline-einkauf';
 export const OFFLINE_QUEUE_KEY = '4io-offline-einkauf-warteschlange';
+/** Bordkarten (Schritt 1, docs/BORDKARTE_KONZEPT.md): damit sie am Gate auch ohne Netz da sind. */
+export const OFFLINE_BOARDING_KEY = '4io-offline-bordkarten';
 
 export function clearOfflineData(): void {
   try {
     localStorage.removeItem(OFFLINE_SNAPSHOT_KEY);
     localStorage.removeItem(OFFLINE_QUEUE_KEY);
+    localStorage.removeItem(OFFLINE_BOARDING_KEY);
   } catch {
     /* Speicher gesperrt (privates Fenster) – dann gab es auch nichts zu löschen */
   }

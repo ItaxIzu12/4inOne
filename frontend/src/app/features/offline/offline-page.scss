@@ -121,3 +121,35 @@ h1 {
   width: 18px;
   height: 18px;
 }
+
+// Bordkarten offline (Schritt 1, docs/BORDKARTE_KONZEPT.md)
+.off__title2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+}
+.off__pass {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  app-icon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    color: var(--text-link, currentColor);
+  }
+  &:focus-visible {
+    outline: 3px solid var(--focus-ring, var(--brand-primary, #172523));
+    outline-offset: 2px;
+  }
+}

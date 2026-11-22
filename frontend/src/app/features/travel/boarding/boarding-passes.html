@@ -1,0 +1,30 @@
+<section class="card bp" aria-labelledby="bp-title">
+  <div class="card-head">
+    <h2 id="bp-title" class="card-title"><app-icon name="ticket" aria-hidden="true" />Bordkarten</h2>
+  </div>
+  @if (passes().length) {
+    <ul class="bp__list">
+      @for (p of passes(); track p.id) {
+        <li>
+          <button type="button" class="bp__item" (click)="openId.set(p.id)">
+            <app-icon name="ticket" aria-hidden="true" />
+            <span class="bp__text"><b>{{ route(p) }}</b>@if (meta(p)) {<small class="num">{{ meta(p) }}</small>}</span>
+            <span class="bp__go">Zeigen<app-icon name="arrow" aria-hidden="true" /></span>
+          </button>
+        </li>
+      }
+    </ul>
+  } @else if (loaded()) {
+    <p class="bp__empty">Nach dem Online-Check-in die Bordkarte der Airline hinzufügen – als Wallet-Datei (.pkpass) oder Screenshot. Sie ist dann auch ohne Netz da.</p>
+  }
+  <label class="bp__add" [class.is-busy]="busy()">
+    <input type="file" accept=".pkpass,application/vnd.apple.pkpass,image/*" (change)="pick($event)" [disabled]="busy()" />
+    <app-icon name="plus" aria-hidden="true" />{{ busy() ? 'Wird gelesen …' : 'Bordkarte hinzufügen' }}
+  </label>
+  <p class="bp__note">Nur du siehst deine Bordkarten, auch bei geteilten Reisen. Nach der Reise werden sie gelöscht.</p>
+  <p class="bp__msg" role="status" aria-live="polite">{{ message() }}</p>
+</section>
+
+@if (open(); as p) {
+  <app-boarding-pass-view [pass]="p" [tripTitle]="trip().title" (closed)="openId.set(null)" (remove)="remove($event)" />
+}

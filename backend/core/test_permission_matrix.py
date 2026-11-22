@@ -506,6 +506,7 @@ DETAIL_VIEW_COVERAGE = {
     'ShareReceivedView': 'organisation/test_calendar_shares.py (only shares made for me)',
     'SubscriptionDetailView': 'organisation/test_subscriptions.py (foreign ids → 404, only own subscriptions)',
     'SubscriptionRefreshView': 'organisation/test_subscriptions.py (foreign ids → 404)',
+    'BoardingPassDetailView': 'reisen/test_boarding.py (only the owner deletes, also on shared trips)',
 }
 
 

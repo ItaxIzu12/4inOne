@@ -1,0 +1,55 @@
+@let p = pass();
+<div class="bpv" role="dialog" aria-modal="true" aria-labelledby="bpv-title">
+  <div class="bpv__bar">
+    <button #closeBtn type="button" class="bpv__close" (click)="close()"><app-icon name="arrow-left" aria-hidden="true" />Zurück</button>
+    @if (canDelete()) {
+      @if (confirmDelete()) {
+        <span class="bpv__confirm" role="group" aria-label="Bordkarte löschen?">
+          <button #dangerBtn type="button" class="bpv__danger" (click)="remove.emit(p)">Löschen</button>
+          <button type="button" class="bpv__ghost" (click)="confirmDelete.set(false)">Behalten</button>
+        </span>
+      } @else {
+        <button type="button" class="bpv__ghost" (click)="askDelete()"><app-icon name="trash" aria-hidden="true" />Löschen</button>
+      }
+    }
+  </div>
+
+  <article class="pass">
+    <header class="pass__head">
+      <span>{{ p.airline_name || 'Bordkarte' }}@if (p.flight_number) { · <b>{{ p.flight_number }}</b>}</span>
+      <span class="num">{{ passDate(p.flight_date) }}</span>
+    </header>
+    <h2 id="bpv-title" class="pass__route">
+      <span class="pass__place"><b>{{ p.from_code || '–' }}</b><small>{{ p.from_name }}</small></span>
+      <app-icon name="travel" class="pass__plane" aria-hidden="true" />
+      <span class="pass__place pass__place--to"><b>{{ p.to_code || '–' }}</b><small>{{ p.to_name }}</small></span>
+      <span class="sr-only">{{ ' Bordkarte ' + (p.from_name || p.from_code) + ' nach ' + (p.to_name || p.to_code) }}</span>
+    </h2>
+    @if (p.boarding_time || p.departure_time || p.gate || p.seat) {
+      <dl class="pass__facts">
+        @if (p.boarding_time) { <div><dt>Boarding</dt><dd class="num">{{ p.boarding_time }}</dd></div> }
+        @if (p.departure_time) { <div><dt>Abflug</dt><dd class="num">{{ p.departure_time }}</dd></div> }
+        @if (p.gate) { <div><dt>Gate</dt><dd>{{ p.gate }}</dd></div> }
+        @if (p.seat) { <div><dt>Sitz</dt><dd>{{ p.seat }}</dd></div> }
+      </dl>
+    }
+    <div class="pass__perf" aria-hidden="true"></div>
+    <div class="pass__code" [class.pass__code--linear]="p.format === 'CODE128' || p.format === 'PDF417'">
+      <canvas #code role="img" [attr.aria-label]="'Code der Airline zum Scannen (' + p.format + ')'"></canvas>
+      @if (codeError()) {
+        <p class="pass__error">Der Code lässt sich nicht anzeigen. Zeig bitte die Bordkarte der Airline.</p>
+      }
+    </div>
+    <dl class="pass__foot">
+      <div><dt>Name</dt><dd>{{ p.passenger_name || '–' }}</dd></div>
+      @if (p.group) { <div><dt>Gruppe</dt><dd>{{ p.group }}</dd></div> }
+      @if (p.sequence) { <div><dt>Seq.</dt><dd class="num">{{ p.sequence }}</dd></div> }
+      @if (p.pnr_hint) { <div><dt>Buchung</dt><dd>{{ p.pnr_hint }}</dd></div> }
+    </dl>
+  </article>
+
+  <p class="bpv__hint">
+    <app-icon name="sun" aria-hidden="true" />
+    {{ awake() ? 'Bildschirm bleibt an.' : 'Bildschirm nicht sperren lassen.' }} Bildschirm hell stellen. Im Zweifel die Bordkarte der Airline zeigen.
+  </p>
+</div>

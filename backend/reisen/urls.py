@@ -21,4 +21,11 @@ router.register('expenses', TripExpenseViewSet, basename='reisen-expense')
 router.register('budget-categories', TripBudgetCategoryViewSet, basename='reisen-budget-category')
 router.register('participants', TripParticipantViewSet, basename='reisen-participant')
 router.register('settlements', TripSettlementViewSet, basename='reisen-settlement')
-urlpatterns = [path('', include(router.urls))]
+from .boarding_views import BoardingPassDetailView, BoardingPassListView
+
+urlpatterns = [
+    # Bordkarten (Schritt 1, docs/BORDKARTE_KONZEPT.md) – nur die eigenen
+    path('boarding-passes/', BoardingPassListView.as_view(), name='reisen-boarding-passes'),
+    path('boarding-passes/<int:pk>/', BoardingPassDetailView.as_view(), name='reisen-boarding-pass'),
+    path('', include(router.urls)),
+]

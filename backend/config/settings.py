@@ -297,6 +297,8 @@ REST_FRAMEWORK = {
         'search': f"{env.int('RATE_LIMIT_SEARCH', default=120)}/min",
         # Kalender-Abo anlegen/aktualisieren ruft fremde Server ab (organisation/subscription_views.py), je Person.
         'calendar_subscription': f"{env.int('RATE_LIMIT_CALENDAR_SUBSCRIPTION', default=20)}/hour",
+        # Bordkarten importieren (reisen/boarding_views.py), je Person.
+        'boarding_pass': f"{env.int('RATE_LIMIT_BOARDING_PASS', default=60)}/hour",
         # Beta-Rückmeldungen (core/feedback_views.py), je Person.
         'beta_feedback': f"{env.int('RATE_LIMIT_BETA_FEEDBACK', default=20)}/hour",
         # Berichte (CSV/PDF, finanzen/views.py) — enthalten vollständige

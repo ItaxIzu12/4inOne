@@ -2,6 +2,22 @@
   <header class="off__head">
     <app-brand />
   </header>
+  @if (passes.length) {
+    <section class="off__card off__passes" aria-labelledby="off-passes">
+      <p class="off__kicker"><app-icon name="ticket" aria-hidden="true" />Auch ohne Netz</p>
+      <h2 id="off-passes" class="off__title2">Deine Bordkarten</h2>
+      <ul class="off__items">
+        @for (entry of passes; track entry.pass.id) {
+          <li>
+            <button type="button" class="off__pass" (click)="openPass.set(entry.pass)">
+              <span class="off__text"><b>{{ entry.pass.from_code }} → {{ entry.pass.to_code }}@if (entry.pass.flight_number) { · {{ entry.pass.flight_number }}}</b><small>{{ entry.title }}@if (entry.pass.flight_date) { · {{ passDate(entry.pass.flight_date) }}}</small></span>
+              <app-icon name="arrow" aria-hidden="true" />
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
   <section class="off__card" aria-labelledby="off-title">
     <p class="off__kicker"><app-icon name="info" aria-hidden="true" />Kein Netz</p>
     <h1 id="off-title">Deine Einkaufsliste – offline</h1>
@@ -45,3 +61,6 @@
     <button type="button" class="off__retry" (click)="retry()"><app-icon name="repeat" aria-hidden="true" />Erneut verbinden</button>
   </section>
 </main>
+@if (openPass(); as p) {
+  <app-boarding-pass-view [pass]="p" [canDelete]="false" (closed)="openPass.set(null)" />
+}

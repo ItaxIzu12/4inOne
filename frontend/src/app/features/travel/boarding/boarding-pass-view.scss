@@ -1,0 +1,207 @@
+// Bordkarte im Vollbild (Schritt 1): eine Fläche in der Reisefarbe wie die Reise-Bordkarte (trip-pass.scss), der Code
+// selbst immer schwarz auf Weiß – auch im dunklen Modus, sonst lesen Scanner ihn nicht.
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: block;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface-app, #f6f4ef);
+  color: var(--text-primary);
+  --pass: var(--travel-fill, #3d6b9a);
+  --pass-text: color-mix(in srgb, #fff 93%, transparent);
+}
+.bpv {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 460px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: max(12px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+}
+.bpv__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.bpv__close,
+.bpv__ghost,
+.bpv__danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  app-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+.bpv__danger {
+  border-color: transparent;
+  background: var(--error, #b3261e);
+  color: #fff;
+}
+.bpv__confirm {
+  display: inline-flex;
+  gap: 8px;
+}
+:is(.bpv__close, .bpv__ghost, .bpv__danger):focus-visible {
+  outline: 3px solid var(--focus-ring, var(--brand-primary, #172523));
+  outline-offset: 2px;
+}
+
+.pass {
+  overflow: hidden;
+  border-radius: 22px;
+  background: var(--pass);
+  color: #fff;
+}
+.pass__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 0;
+  color: var(--pass-text);
+  font-size: 0.875rem;
+}
+.pass__route {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 14px 20px 6px;
+  color: #fff; // globale Überschriftenfarbe gilt nicht auf der Reisefläche
+  font-weight: inherit;
+}
+.pass__place {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  b {
+    font-size: clamp(2.25rem, 12vw, 3rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+  small {
+    overflow: hidden;
+    color: var(--pass-text);
+    font-size: 0.875rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+.pass__place--to {
+  align-items: flex-end;
+  text-align: right;
+}
+.pass__plane {
+  width: 26px;
+  height: 26px;
+}
+.pass__facts,
+.pass__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 12px 20px 18px;
+  div {
+    min-width: 0;
+  }
+  dt {
+    color: var(--pass-text);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  dd {
+    margin: 2px 0 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+}
+.pass__facts {
+  justify-content: space-between;
+}
+// Perforation mit Einkerbungen in der Seitenfarbe
+.pass__perf {
+  position: relative;
+  height: 0;
+  border-top: 2px dashed color-mix(in srgb, #fff 45%, transparent);
+  margin: 0 18px;
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: -12px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--surface-app, #f6f4ef);
+  }
+  &::before {
+    left: -30px;
+  }
+  &::after {
+    right: -30px;
+  }
+}
+.pass__code {
+  display: grid;
+  place-items: center;
+  margin: 18px 20px 4px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #fff;
+  color: #000;
+  canvas {
+    display: block;
+    width: min(100%, 260px);
+    height: auto;
+    image-rendering: pixelated;
+  }
+}
+.pass__code--linear canvas {
+  width: 100%;
+}
+.pass__error {
+  margin: 0;
+  color: #1f1f1f;
+  font-size: 0.9375rem;
+  text-align: center;
+}
+.bpv__hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  app-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+  }
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

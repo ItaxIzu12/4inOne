@@ -325,3 +325,43 @@ class TripParticipant(models.Model):
 
     def __str__(self) -> str:
         return f'{self.user} @ {self.trip} ({self.role})'
+
+
+class BoardingPass(models.Model):
+    """Bordkarte (Schritt 1, docs/BORDKARTE_KONZEPT.md): der echte Code der Airline, importiert von der Person selbst.
+
+    Gehört genau einer Person (`owner`) – auch bei geteilten Reisen sehen Mitreisende sie nie: Buchungscode + Name
+    erlauben bei vielen Airlines das Umbuchen. Der Code-Inhalt liegt nur verschlüsselt vor (reisen/boarding.py); kurz
+    nach der Reise löscht `cleanup_expired` die Bordkarte."""
+
+    class Format(models.TextChoices):
+        QR = 'QR', 'QR-Code'
+        AZTEC = 'AZTEC', 'Aztec'
+        PDF417 = 'PDF417', 'PDF417'
+        CODE128 = 'CODE128', 'Code 128'
+
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='boarding_passes')
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='boarding_passes')
+    barcode_format = models.CharField(max_length=8, choices=Format.choices)
+    barcode_ciphertext = models.TextField()
+    source = models.CharField(max_length=8, default='image')  # pkpass | image
+    passenger_name = models.CharField(max_length=60, blank=True, default='')
+    pnr_hint = models.CharField(max_length=8, blank=True, default='')  # gekürzt, z. B. „K7••••“
+    airline_name = models.CharField(max_length=60, blank=True, default='')
+    flight_number = models.CharField(max_length=12, blank=True, default='')
+    from_code = models.CharField(max_length=3, blank=True, default='')
+    from_name = models.CharField(max_length=60, blank=True, default='')
+    to_code = models.CharField(max_length=3, blank=True, default='')
+    to_name = models.CharField(max_length=60, blank=True, default='')
+    flight_date = models.DateField(null=True, blank=True)
+    boarding_time = models.CharField(max_length=20, blank=True, default='')
+    departure_time = models.CharField(max_length=20, blank=True, default='')
+    gate = models.CharField(max_length=10, blank=True, default='')
+    seat = models.CharField(max_length=6, blank=True, default='')
+    group = models.CharField(max_length=10, blank=True, default='')
+    sequence = models.CharField(max_length=6, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['flight_date', 'id']
+        indexes = [models.Index(fields=['owner', 'trip'])]

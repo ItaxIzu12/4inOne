@@ -22,6 +22,9 @@ class Command(BaseCommand):
         from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
         from core.idempotency import LIFETIME as IDEMPOTENCY_LIFETIME
+        from django.db.models import Q
+
+        from reisen.models import BoardingPass
         from core.models import BetaFeedback, ContactInvite, IdempotencyRecord, Notification, PasswordResetToken, UserSession
 
         now = timezone.now()
@@ -36,6 +39,10 @@ class Command(BaseCommand):
             'gelesene Benachrichtigungen älter als 90 Tage': Notification.objects.filter(read_at__lt=now - timedelta(days=90)),
             'abgelaufene Kontakt-Einladungen älter als 30 Tage': ContactInvite.objects.filter(
                 accepted_at__isnull=True, expires_at__lt=now - timedelta(days=30)
+            ),
+            # Bordkarten (Buchungscode!) nur bis 2 Tage nach Reiseende bzw. Flugtag aufbewahren
+            'Bordkarten nach der Reise': BoardingPass.objects.filter(
+                Q(trip__end_date__lt=now.date() - timedelta(days=2)) | Q(flight_date__lt=now.date() - timedelta(days=2))
             ),
             'Beta-Rückmeldungen nach Ablauf der Aufbewahrung': BetaFeedback.objects.filter(
                 created_at__lt=now - timedelta(days=settings.BETA_FEEDBACK_RETENTION_DAYS)

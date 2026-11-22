@@ -6,6 +6,9 @@ import { Brand } from '../../shared/ui/brand/brand';
 import { ShoppingItemDto } from '../household/data/household-api.service';
 import { SECTIONS } from '../household/shared/household-logic';
 import { OfflineShopping, OfflineSnapshot } from '../household/shared/offline-shopping';
+import { BoardingPassView } from '../travel/boarding/boarding-pass-view';
+import { BoardingPass, passDate } from '../travel/shared/boarding-logic';
+import { offlinePasses } from '../travel/shared/boarding-offline';
 
 /**
  * /offline (22.11.2026): Start ohne Netz. Die Sitzung lässt sich nicht prüfen, also zeigt 4inOne nur, was ohnehin auf
@@ -14,7 +17,7 @@ import { OfflineShopping, OfflineSnapshot } from '../household/shared/offline-sh
  */
 @Component({
   selector: 'app-offline-page',
-  imports: [AppIcon, Brand, DatePipe, DoneToggle],
+  imports: [AppIcon, BoardingPassView, Brand, DatePipe, DoneToggle],
   templateUrl: './offline-page.html',
   styleUrl: './offline-page.scss',
 })
@@ -30,6 +33,10 @@ export class OfflinePage {
   });
   readonly open = computed(() => (this.overview()?.items ?? []).filter((i) => !i.is_checked));
   readonly done = computed(() => (this.overview()?.items ?? []).filter((i) => i.is_checked));
+  /** Bordkarten (Schritt 1): auf diesem Gerät gemerkt, damit sie am Gate ohne Netz da sind. */
+  readonly passes = offlinePasses();
+  readonly openPass = signal<BoardingPass | null>(null);
+  protected readonly passDate = passDate;
   readonly sectionLabel = (key: string) => SECTIONS.find((s) => s.key === key)?.label ?? '';
 
   constructor() {

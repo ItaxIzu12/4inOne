@@ -4,6 +4,7 @@ import { ConnectionsSection } from '../../../shared/features/connections/connect
 import { Trip, TripTask } from '../data/travel-api.service';
 import { TRANSPORT_LABELS, cancellationInfo, dueLabel, filterTasks, formatMoney, initials, localDay, nights, peopleLabel, percent, transportIcon, tripDays, tripPhase, urgentTasks } from '../shared/travel-logic';
 import { TripPass } from '../shared/trip-pass';
+import { BoardingPasses } from '../boarding/boarding-passes';
 
 export type TripTab = 'uebersicht' | 'ablauf' | 'planung' | 'packliste' | 'budget';
 
@@ -19,7 +20,7 @@ const NEXT_TASKS = 4;
  */
 @Component({
   selector: 'app-trip-overview',
-  imports: [AppIcon, ConnectionsSection, TripPass],
+  imports: [AppIcon, BoardingPasses, ConnectionsSection, TripPass],
   templateUrl: './trip-overview.html',
   styleUrls: ['../shared/trip-common.scss', './trip-overview.scss'],
 })

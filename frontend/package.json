@@ -24,6 +24,7 @@
     "@angular/service-worker": "^22.2.5",
     "@angular/ssr": "^22.2.6",
     "@sentry/browser": "10.78.0",
+    "bwip-js": "^4.11.4",
     "motion": "^14.12.0",
     "rxjs": "~7.8.2",
     "tslib": "^2.9.1"

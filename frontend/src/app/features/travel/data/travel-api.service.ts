@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../../core/api.config';
+import { BarcodeFormat, BoardingPass } from '../shared/boarding-logic';
 import { CurrencyCode } from '../../../shared/ui/currency/currencies';
 
 /** Reisen V1: in Planung → bestätigt (gebucht) → abgeschlossen, oder abgesagt. Kein Entwurf; „Unterwegs“ ergibt
@@ -280,6 +281,26 @@ export class ReisenApi {
     return this.http
       .get<{ contacts: { id: number; name: string }[] }>(`${API_BASE_URL}/contacts/`)
       .pipe(map((r) => r.contacts.map((c) => ({ id: c.id, name: c.name }))));
+  }
+  // ---------- Bordkarten (Schritt 1, docs/BORDKARTE_KONZEPT.md) – nur die eigenen ----------
+  /** Echte Bordkarten werden für das Gate offline auf dem Gerät gemerkt (die Demo nicht). */
+  readonly cachesOffline = true;
+  boardingPasses(tripId: number) {
+    return this.http.get<BoardingPass[]>(`${API_BASE_URL}/reisen/boarding-passes/`, { params: new HttpParams().set('trip', tripId) });
+  }
+  /** Wallet-Datei (.pkpass): der Server liest den Code und die Angaben. */
+  uploadBoardingPass(tripId: number, file: File) {
+    const body = new FormData();
+    body.append('trip', String(tripId));
+    body.append('file', file);
+    return this.http.post<BoardingPass>(`${API_BASE_URL}/reisen/boarding-passes/`, body);
+  }
+  /** Code aus einem Screenshot (im Browser gelesen). */
+  addBoardingPassCode(tripId: number, format: BarcodeFormat, message: string) {
+    return this.http.post<BoardingPass>(`${API_BASE_URL}/reisen/boarding-passes/`, { trip: tripId, format, message });
+  }
+  deleteBoardingPass(id: number) {
+    return this.http.delete<void>(`${API_BASE_URL}/reisen/boarding-passes/${id}/`);
   }
   participants(tripId: number) {
     return this.http.get<TripParticipant[]>(`${this.base}/participants/`, {

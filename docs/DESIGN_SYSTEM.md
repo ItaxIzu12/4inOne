@@ -1454,3 +1454,18 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
     weiß, Chips mischen Schwarz in die Füllfarbe statt in die Textfarbe, `--accent-hover` nie als Schriftfarbe,
     Kalendermarke „Schiefer“ kontrastreicher, und WCAG 2.5.3 „Label in Name“ im Budget-Reiter (Kategorie-Zeilen,
     „Geplant“, Monatssäulen der Jahreskarte: sichtbarer Text zuerst, Zusatzinfo als `.sr-only`).
+
+- **Bordkarten, Schritt 1 (22.11.2026, `docs/BORDKARTE_KONZEPT.md`):**
+  - `features/travel/boarding/boarding-passes.*` (`app-boarding-passes`, Karte in der Reise-Übersicht: `.bp__list`,
+    `.bp__item`, `.bp__add` = Datei-Knopf mit unsichtbarem `<input type=file>` darüber, `.bp__msg` als `role=status`).
+  - `features/travel/boarding/boarding-pass-view.*` (`app-boarding-pass-view`, Vollbild-Dialog `.bpv`, Karte `.pass`
+    mit `.pass__route`, `.pass__facts`, `.pass__perf`, `.pass__code`, `.pass__foot`; Fokus bleibt im Dialog, Escape
+    schließt, Wake Lock wo verfügbar). Code mit `bwip-js` (MIT, lazy über `import('bwip-js/browser')`, eigener Chunk,
+    vom Service Worker für offline mit vorgeladen); Fläche des Codes immer `#fff`/`#000`.
+  - Logik: `features/travel/shared/boarding-logic.ts` (Typ `BoardingPass`, `parseBcbp` wie `backend/reisen/boarding.py`,
+    `DETECTOR_FORMATS`, `BWIP_FORMATS`), Offline-Kopie `boarding-offline.ts` (Schlüssel `OFFLINE_BOARDING_KEY` in
+    `core/offline/offline-keys.ts`, gelöscht durch `clearOfflineData`). Screenshot-Import über den Browser-
+    `BarcodeDetector` (Chrome/Android/macOS); fehlt er (Safari, Firefox), Hinweis auf die Wallet-Datei.
+  - Demo: Beispielkarte im Sommerurlaub (Sophie, „Beispiel-Airline“ XY 1234, DUS → VRN), `.pkpass` mit Hinweis.
+  - Geprüft: `e2e/boarding-pass.spec.ts` (Chromium + Mobile Safari, axe WCAG 2.2 AA hell/dunkel, 390/1440 px). Keine
+    neuen Tokens; Symbole `ticket`, `travel`, `sun`, `trash`, `arrow-left` vorhanden.

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { ContactOption, PackingItem, Trip, TripBalances, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripSettlement, TripTask } from './travel-api.service';
 import { computeBalances } from '../shared/travel-logic';
+import { BarcodeFormat, BoardingPass, maskedPnr, parseBcbp } from '../shared/boarding-logic';
 import { DEMO_RATES } from '../../../core/fx/fx.service';
 import { HomeCurrency } from '../../../core/fx/home-currency';
 
@@ -539,4 +540,62 @@ export class DemoReisenApi {
     this.participantList.splice(index, 1);
     return of(undefined);
   }
+
+  // ---------- Bordkarten (Schritt 1): eine erfundene Beispielkarte für den Sommerurlaub, nur im Speicher ----------
+  readonly cachesOffline = false;
+  private boardingList: BoardingPass[] = [demoBoardingPass(2, dateOnly(SUMMER))];
+  boardingPasses(tripId: number): Observable<BoardingPass[]> {
+    if (!this.tripList.some((t) => t.id === tripId)) return throwError(() => ({ status: 404 }));
+    return of(this.boardingList.filter((b) => b.trip === tripId).map((b) => ({ ...b })));
+  }
+  uploadBoardingPass(_tripId: number, _file: File): Observable<BoardingPass> {
+    return throwError(() => ({ status: 400, error: { detail: 'Wallet-Dateien liest die Demo nicht – nimm zum Ausprobieren einen Screenshot der Bordkarte.' } }));
+  }
+  addBoardingPassCode(tripId: number, format: BarcodeFormat, message: string): Observable<BoardingPass> {
+    if (!this.tripList.some((t) => t.id === tripId)) return throwError(() => ({ status: 404 }));
+    const data = parseBcbp(message);
+    const pass: BoardingPass = {
+      ...demoBoardingPass(tripId, data?.flight_date ?? null),
+      id: this.nextId++,
+      format,
+      message,
+      airline_name: '',
+      from_name: '',
+      to_name: '',
+      boarding_time: '',
+      departure_time: '',
+      gate: '',
+      group: '',
+      source: 'image',
+      passenger_name: data?.passenger_name ?? '',
+      pnr_hint: maskedPnr(data?.pnr ?? ''),
+      flight_number: data?.flight_number ?? '',
+      from_code: data?.from_code ?? '',
+      to_code: data?.to_code ?? '',
+      seat: data?.seat ?? '',
+      sequence: data?.sequence ?? '',
+    };
+    this.boardingList.push(pass);
+    return of({ ...pass });
+  }
+  deleteBoardingPass(id: number): Observable<void> {
+    const index = this.boardingList.findIndex((b) => b.id === id);
+    if (index === -1) return throwError(() => ({ status: 404 }));
+    this.boardingList.splice(index, 1);
+    return of(undefined);
+  }
+}
+
+/** Erfundene Beispiel-Bordkarte (Sophie, „Beispiel-Airline“ XY 1234, Düsseldorf → Verona) mit einem gültig
+ * aufgebauten IATA-Code – lesbar, aber an keinem Gate gültig. */
+function demoBoardingPass(trip: number, flightDate: string | null): BoardingPass {
+  const d = flightDate ? new Date(`${flightDate}T12:00`) : new Date();
+  const day = Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 0)) / 86_400_000);
+  const message = `M1${'MUSTER/SOPHIE'.padEnd(20)}EK7X2PQ DUSVRNXY 1234 ${String(day).padStart(3, '0')}Y014C00067100`;
+  return {
+    id: 1, trip, format: 'AZTEC', message, source: 'pkpass', passenger_name: 'Sophie Muster', pnr_hint: 'K7••••',
+    airline_name: 'Beispiel-Airline', flight_number: 'XY 1234', from_code: 'DUS', from_name: 'Düsseldorf', to_code: 'VRN',
+    to_name: 'Verona', flight_date: flightDate, boarding_time: '06:30', departure_time: '07:10', gate: 'B42', seat: '14C',
+    group: '3', sequence: '67',
+  };
 }

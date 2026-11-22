@@ -36,6 +36,7 @@ export default defineConfig({
         'connections-demo.spec.ts',
         'mobile-domain-controls.spec.ts',
         'accessibility.spec.ts',
+        'boarding-pass.spec.ts',
       ],
     },
   ],
