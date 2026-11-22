@@ -4,6 +4,8 @@ import { Observable, of, throwError } from 'rxjs';
 import {
   CalendarColor,
   CalendarRole,
+  CalendarSubscription,
+  SubscribedEventDto,
   DayRange,
   EventImportResult,
   EventInput,
@@ -113,6 +115,35 @@ export class DemoOrganisationApi {
   // unverändert (Object.is-Vergleich).
   events(range: DayRange): Observable<PersonalEvent[]> {
     return of(expandEvents(this.eventList, range.start, range.end));
+  }
+  // ---------- O3: Kalender-Abo (Demo: ein festes Beispiel mit gesetzlichen Feiertagen, kein echter Abruf) ----------
+  private readonly demoSubscription: CalendarSubscription = {
+    id: 1, name: 'Feiertage Deutschland', color: 'slate', host: 'Beispieldaten', last_synced_at: new Date().toISOString(), last_error: '', event_count: 0,
+  };
+  private demoHolidays(): SubscribedEventDto[] {
+    const year = new Date().getFullYear();
+    const fixed: [string, string][] = [['01-01', 'Neujahr'], ['05-01', 'Tag der Arbeit'], ['10-03', 'Tag der Deutschen Einheit'], ['12-25', '1. Weihnachtstag'], ['12-26', '2. Weihnachtstag']];
+    return [year, year + 1].flatMap((y) =>
+      fixed.map(([md, title], i) => ({
+        id: y * 10 + i, title, starts_at: new Date(`${y}-${md}T00:00`).toISOString(), ends_at: null, all_day: true, location: '',
+        subscription: 1, subscription_name: this.demoSubscription.name, color: 'slate' as CalendarColor,
+      })),
+    );
+  }
+  subscriptions(): Observable<CalendarSubscription[]> {
+    return of([{ ...this.demoSubscription, event_count: this.demoHolidays().length }]);
+  }
+  subscribe(): Observable<CalendarSubscription> {
+    return throwError(() => ({ status: 400, error: { url: ['In der Demo lässt sich kein echter Kalender abonnieren – das geht in deinem Konto.'] } }));
+  }
+  refreshSubscription(): Observable<CalendarSubscription> {
+    return of({ ...this.demoSubscription, last_synced_at: new Date().toISOString(), event_count: this.demoHolidays().length });
+  }
+  unsubscribe(): Observable<void> {
+    return throwError(() => ({ status: 400, error: { detail: 'Das Beispiel-Abo bleibt in der Demo bestehen.' } }));
+  }
+  subscribedEvents(range: DayRange): Observable<SubscribedEventDto[]> {
+    return of(this.demoHolidays().filter((e) => localDay(new Date(e.starts_at)) >= range.start && localDay(new Date(e.starts_at)) <= range.end));
   }
   event(id: number): Observable<PersonalEvent> {
     const found = this.eventList.find((e) => e.id === id);

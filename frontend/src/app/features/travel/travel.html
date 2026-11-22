@@ -138,6 +138,8 @@
               (edit)="openPackingEditor($event)"
               (add)="openPackingEditor()"
               (suggest)="openSuggestionsForSelected('packing')"
+              [copySources]="copySources()"
+              (copyFrom)="openCopyPacking($event)"
               (reset)="resetPacking()"
             />
           }

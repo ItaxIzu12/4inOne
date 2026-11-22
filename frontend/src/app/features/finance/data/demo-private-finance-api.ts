@@ -132,6 +132,16 @@ export class DemoPrivateFinanceApi {
       })));
   }
 
+  /** R3: Reisebudget im Abreisemonat, wenn die Demo-Reise mit Finanzen verbunden ist (wie backend trip_planned). */
+  private tripPlanned(month: string, rows: { note: string; type: string }[], today: string) {
+    if (month < today.slice(0, 7)) return [];
+    const links = this.injector?.get(AutoLinksApi, null) as unknown as { activeTripFinance?: () => { title: string; start_date: string; amount: string }[] } | null;
+    const booked = new Set(rows.filter((t) => t.type === 'EXPENSE').map((t) => (t.note ?? '').trim().toLocaleLowerCase('de')));
+    return (links?.activeTripFinance?.() ?? [])
+      .filter((t) => t.start_date.startsWith(month) && !booked.has(t.title.trim().toLocaleLowerCase('de')))
+      .map((t) => ({ kind: 'TRIP' as const, key: `trip:${t.title}`, id: null, source_id: null, title: t.title.trim(), category: null, amount: t.amount, date: t.start_date }));
+  }
+
   private nextId = 1000;
   private categoryList: FinanceCategory[] = CATEGORIES.map((c) => ({ ...c }));
   private txs: FinanceTransaction[] = [5, 4, 3, 2, 1, 0]
@@ -377,6 +387,7 @@ export class DemoPrivateFinanceApi {
     const planned = [
       ...plannedItems(this.txs, month, today).filter((p) => p.kind !== 'RECURRING' || !covered.has(p.title.trim().toLocaleLowerCase('de'))),
       ...contracts,
+      ...this.tripPlanned(month, rows, today),
     ];
     const plannedTotal = planned.reduce((sum, p) => sum + Number(p.amount), 0);
     // Ausgegeben = bis heute gebucht; zukünftig datierte Transaktionen stecken in „geplant“ (nie doppelt).

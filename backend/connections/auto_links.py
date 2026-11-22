@@ -37,6 +37,7 @@ SOURCE_TYPE = {
     AutoKind.DEVICE_MAINTENANCE: ObjectType.DEVICE,
     AutoKind.TRIP_CALENDAR: ObjectType.TRIP,
     AutoKind.TRIP_ITINERARY: ObjectType.TRIP,
+    AutoKind.TRIP_FINANCE: ObjectType.TRIP,
     AutoKind.SAVINGS_REMINDER: ObjectType.SAVINGS_GOAL,
     AutoKind.HOUSEHOLD_TASKS: 'HOUSEHOLD',
 }
@@ -44,7 +45,7 @@ SOURCE_TYPE = {
 KINDS_FOR_SOURCE = {
     ObjectType.CONTRACT: [AutoKind.CONTRACT_FINANCE, AutoKind.CONTRACT_REMINDER],
     ObjectType.DEVICE: [AutoKind.DEVICE_MAINTENANCE],
-    ObjectType.TRIP: [AutoKind.TRIP_CALENDAR, AutoKind.TRIP_ITINERARY],
+    ObjectType.TRIP: [AutoKind.TRIP_CALENDAR, AutoKind.TRIP_ITINERARY, AutoKind.TRIP_FINANCE],
     ObjectType.SAVINGS_GOAL: [AutoKind.SAVINGS_REMINDER],
     'HOUSEHOLD': [AutoKind.HOUSEHOLD_TASKS],
 }
@@ -185,6 +186,25 @@ def trip_problem(trip) -> str:
     return 'Die Reise ist abgesagt.' if getattr(trip, 'status', '') == 'CANCELLED' else ''
 
 
+FINANCE_CURRENCY = 'EUR'
+TRIP_OWNER_ONLY = 'Nur wer die Reise angelegt hat'
+
+
+def trip_finance_problem(trip, user) -> str:
+    """R3: Das Reisebudget erscheint als geplante Ausgabe im Monat der Abreise – nur mit eingetragenem Budget in Euro
+    (Finanzen rechnet in Euro) und nur für die Person, die die Reise angelegt hat (das Budget gilt der ganzen Gruppe;
+    wie viel davon jemand selbst trägt, weiß 4inOne nicht — es wird nichts geraten)."""
+    if trip.owner_id != user.pk:
+        return f'{TRIP_OWNER_ONLY}, kann ihr Budget in Finanzen planen – es gilt für die ganze Reisegruppe.'
+    if getattr(trip, 'status', '') == 'CANCELLED':
+        return 'Die Reise ist abgesagt.'
+    if trip.budget_amount is None or trip.budget_amount <= 0:
+        return 'Trage zuerst ein Reisebudget ein — ohne Betrag gibt es nichts zu planen.'
+    if trip.currency != FINANCE_CURRENCY:
+        return f'Das Reisebudget ist in {trip.currency} – Finanzen plant nur Beträge in Euro.'
+    return ''
+
+
 def describe(user, kind: str, source) -> tuple[str, str]:
     """(Vorschau, Problem): was genau in welchem Bereich erscheint — oder warum nichts erscheinen kann."""
     if kind == AutoKind.CONTRACT_FINANCE:
@@ -231,6 +251,13 @@ def describe(user, kind: str, source) -> tuple[str, str]:
         points = '1 Programmpunkt' if count == 1 else f'{count} Programmpunkte'
         return (f'Organisation › Kalender: {points} mit Uhrzeit, z. B. „{first.title}“ am {_de(when.date())} um '
                 f'{when:%H:%M}.', '')
+    if kind == AutoKind.TRIP_FINANCE:
+        problem = trip_finance_problem(source, user)
+        if problem:
+            return '', problem
+        month = f'{MONTHS[source.start_date.month - 1]} {source.start_date.year}'
+        return (f'Finanzen › Geplant: {_euro(source.budget_amount)} im {month} (Abreise) — keine Buchung. Eine Ausgabe '
+                f'mit dem Namen „{source.title}“ in diesem Monat ersetzt den Planwert.', '')
     if kind == AutoKind.SAVINGS_REMINDER:
         day, problem = savings_day(source)
         if not day:
@@ -259,7 +286,10 @@ def link_state(user, link: AutoLink | None, kind: str, source) -> dict:
         'preview': preview,
         'problem': problem,
         # Anlegen ist auch mit Problem erlaubt (z. B. Frist kommt später) — außer der Betrag gehört jemand anderem
-        'available': not (kind == AutoKind.CONTRACT_FINANCE and problem.startswith('Den Betrag hat jemand anderes')),
+        'available': not (
+            (kind == AutoKind.CONTRACT_FINANCE and problem.startswith('Den Betrag hat jemand anderes'))
+            or (kind == AutoKind.TRIP_FINANCE and problem.startswith(TRIP_OWNER_ONLY))
+        ),
     }
 
 
@@ -359,6 +389,27 @@ def contract_planned(user, start: date, end: date, month_rows) -> list[dict]:
         for day in contract_payment_days(entry, start, end):
             items.append({'kind': 'CONTRACT', 'key': f'contract:{entry.pk}', 'id': None, 'source_id': entry.pk,
                           'title': entry.name.strip(), 'category': None, 'amount': cost_on(entry, day), 'date': day})
+    return items
+
+
+def trip_planned(user, start: date, end: date, month_rows) -> list[dict]:
+    """R3 für finanzen.private_api.planned_expenses: verbundene Reisen mit Budget als „Geplant“ im Abreisemonat.
+
+    Wie bei Verträgen nur laufender und künftige Monate; eine Ausgabe mit dem Reisenamen als Notiz im selben Monat
+    ersetzt den Planwert (nie doppelt). Reiseausgaben selbst (Reisen › Budget) werden nicht in Finanzen gebucht."""
+    if start < timezone.localdate().replace(day=1):
+        return []
+    links = _active(user, AutoKind.TRIP_FINANCE)
+    if not links:
+        return []
+    booked = {(note or '').strip().casefold() for note in month_rows.filter(type='EXPENSE').values_list('description', flat=True)}
+    items = []
+    for trip in _visible_sources(user, AutoKind.TRIP_FINANCE, set(links)).values():
+        if trip_finance_problem(trip, user) or trip.title.strip().casefold() in booked:
+            continue
+        if start <= trip.start_date < end:
+            items.append({'kind': 'TRIP', 'key': f'trip:{trip.pk}', 'id': None, 'source_id': trip.pk,
+                          'title': trip.title.strip(), 'category': None, 'amount': trip.budget_amount, 'date': trip.start_date})
     return items
 
 

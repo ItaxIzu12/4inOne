@@ -144,3 +144,27 @@
     font-size: var(--fs-secondary, 15px);
   }
 }
+
+// Ü1: Aktion in der Meldung („Rückgängig“) – Textknopf in Tinte, 44 px, zwischen Text und ×
+.toast:has(.toast__action) {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 8px 10px;
+}
+.toast__action {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-md, 12px);
+  background: none;
+  color: var(--brand-primary, var(--text-primary));
+  font: inherit;
+  font-size: var(--fs-secondary, 15px);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.toast__action:hover {
+  background: var(--surface-hover);
+}

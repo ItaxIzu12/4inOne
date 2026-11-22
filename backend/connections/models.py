@@ -113,6 +113,7 @@ class AutoKind(models.TextChoices):
     DEVICE_MAINTENANCE = 'DEVICE_MAINTENANCE', 'Wartungserinnerung'                # CON-04
     TRIP_CALENDAR = 'TRIP_CALENDAR', 'Reisezeitraum im Kalender'                   # CON-07
     TRIP_ITINERARY = 'TRIP_ITINERARY', 'Tagesablauf im Kalender'                   # Programmpunkte mit Uhrzeit
+    TRIP_FINANCE = 'TRIP_FINANCE', 'Reisebudget in Finanzen planen'                # R3 (22.11.2026)
     SAVINGS_REMINDER = 'SAVINGS_REMINDER', 'Sparziel-Erinnerung'                   # CON-10
 
 

@@ -3,7 +3,8 @@ import { Component, DestroyRef, computed, inject, input, output, signal } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ImportDialog, ImportPreview } from '../../../shared/features/import-dialog/import-dialog';
 import { CsvFormatError, IMPORT_MAX_BYTES, ImportRow, decodeCsv, parseCsv } from './finance-import';
-import { ImportResult, PrivateFinanceApi } from '../data/private-finance-api.service';
+import { FALLBACK_CATEGORY, FinanceTransaction, ImportResult, PrivateFinanceApi } from '../data/private-finance-api.service';
+import { prefillImportCategories } from '../shared/category-suggestion';
 
 const PREVIEW_ROWS = 8;
 
@@ -38,6 +39,9 @@ export class FinanceImportDialog {
   private api = inject(PrivateFinanceApi);
   private destroy = inject(DestroyRef);
   readonly open = input.required<boolean>();
+  /** F1: Bisherige Buchungen und Kategorien – daraus ergänzt der Import fehlende Kategorien (nur im Browser). */
+  readonly history = input<readonly FinanceTransaction[]>([]);
+  readonly categories = input<readonly { id: number; name: string }[]>([]);
   readonly closed = output<void>();
   readonly imported = output<number>();
 
@@ -77,7 +81,7 @@ export class FinanceImportDialog {
         };
       }),
       more: Math.max(0, p.rows.length - PREVIEW_ROWS),
-      note: 'Unbekannte Kategorien landen in „Sonstiges“ – du kannst sie danach ändern.',
+      note: 'Kategorien ergänzt 4inOne aus deinen früheren Buchungen mit demselben Empfänger. Alles andere landet in „Sonstiges“ – du kannst es danach ändern.',
     };
   });
   private file: File | null = null;
@@ -106,6 +110,9 @@ export class FinanceImportDialog {
       .then((bytes) => {
         const parsed = parseCsv(decodeCsv(bytes));
         if (!parsed.rows.length) throw new CsvFormatError('In der Datei wurde keine Transaktion gefunden.');
+        const categories = this.categories();
+        const skip = new Set(categories.filter((c) => c.name === FALLBACK_CATEGORY).map((c) => c.id));
+        parsed.rows = prefillImportCategories(parsed.rows, this.history(), (id) => categories.find((c) => c.id === id)?.name, skip);
         this.api
           .importTransactions(parsed.rows, true)
           .pipe(takeUntilDestroyed(this.destroy))

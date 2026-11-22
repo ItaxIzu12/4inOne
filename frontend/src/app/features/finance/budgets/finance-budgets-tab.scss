@@ -160,3 +160,15 @@
     flex: none;
   }
 }
+
+// F4: Bezug der Kategorie-Budgets zum Monatsbudget, eine leise Zeile unter der Überschrift.
+.cat-allocation {
+  margin: -6px 0 14px;
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+  line-height: 1.45;
+}
+.cat-allocation.is-over {
+  color: var(--text-primary);
+  font-weight: 600;
+}

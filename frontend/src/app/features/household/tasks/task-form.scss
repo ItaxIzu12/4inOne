@@ -1,0 +1,37 @@
+// H3: „Mehr Angaben“ – Textknopf mit Zusammenfassung, darunter die optionalen Felder.
+.more-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 4px;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.more-toggle app-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--household-accent);
+}
+.more-toggle span {
+  display: grid;
+  gap: 2px;
+}
+.more-toggle small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: 400;
+}
+.more {
+  display: grid;
+  gap: 16px;
+}

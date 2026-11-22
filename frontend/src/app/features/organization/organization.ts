@@ -29,6 +29,7 @@ import { AttachmentField } from '../../shared/features/attachments/attachment-fi
 import { OrgTasks } from './tasks/org-tasks';
 import { OrgNotes } from './notes/org-notes';
 import { OrgImportDialog } from './calendar/org-import-dialog';
+import { OrgSubscriptions } from './calendar/org-subscriptions';
 import { OrgToday } from './today/org-today';
 import { GuideService } from '../../core/onboarding/guide.service';
 import { GuideStep, StartGuide } from '../../shared/features/start-guide/start-guide';
@@ -85,7 +86,7 @@ function apiFieldError(error: unknown, field: string): string {
   standalone: true,
   imports: [
     MobileAction, ErrorNoticeDirective, AppShell, AppIcon, ConnectionsSection, Field, ModalForm, ReactiveFormsModule,
-    AppSelect, AppDatePicker, AppTimePicker, OrgCalendar, OrgCalendars, OrgDaySheet, AttachmentField, PlaceInput, OrgHouseholdTasks, OrgTasks, OrgNotes, OrgToday, ScopeNote, OrgImportDialog, SaveFeedback, StartGuide,
+    AppSelect, AppDatePicker, AppTimePicker, OrgCalendar, OrgCalendars, OrgDaySheet, AttachmentField, PlaceInput, OrgHouseholdTasks, OrgTasks, OrgNotes, OrgToday, ScopeNote, OrgImportDialog, OrgSubscriptions, SaveFeedback, StartGuide,
   ],
   templateUrl: './organization.html',
   styleUrl: './organization.scss',
@@ -155,11 +156,14 @@ export class Organisation {
     }
   }
   readonly derivedEvents = signal<PersonalEvent[]>([]);
+  /** O3: Termine aus abonnierten Kalendern – nur lesbar, gehören zu „Alle“ und „Nur meine“. */
+  readonly subscribedEvents = signal<PersonalEvent[]>([]);
+  readonly subscriptionsOpen = signal(false);
   readonly visibleEvents = computed(() => {
     const filter = this.calendarFilter();
     const own = this.events();
     // Abgeleitetes gehört zu „Alle“ und „Nur meine“ (es stammt aus meinen Verbindungen), nicht zu fremden Kalendern
-    const list = filter === 'all' || filter === 'mine' ? [...own, ...this.derivedEvents()] : own;
+    const list = filter === 'all' || filter === 'mine' ? [...own, ...this.derivedEvents(), ...this.subscribedEvents()] : own;
     if (filter === 'all') return list;
     if (filter === 'mine') return list.filter((e) => !e.calendar && !e.shared_by);
     if (typeof filter === 'string') return list.filter((e) => !e.calendar && e.shared_by === Number(filter.slice(1)));
@@ -305,6 +309,10 @@ export class Organisation {
     if (this.range) this.loadEvents(this.range);
   }
 
+  /** O3: Abo angelegt, aktualisiert oder entfernt → Kalender neu laden. */
+  onSubscriptionsChanged() {
+    if (this.range) this.loadEvents(this.range);
+  }
   onImported(created: number) {
     this.notice.set(created === 1 ? '1 Termin importiert.' : `${created} Termine importiert.`);
     if (this.range) this.loadEvents(this.range);
@@ -317,6 +325,19 @@ export class Organisation {
         if (this.range === range) this.derivedEvents.set(items.flatMap((item, i) => derivedEvent(item, i) ?? []));
       },
       error: () => this.derivedEvents.set([]),
+    });
+    this.api.subscribedEvents(range).pipe(takeUntilDestroyed(this.destroy)).subscribe({
+      next: (rows) => {
+        if (this.range !== range) return;
+        this.subscribedEvents.set(
+          rows.map((e, i) => ({
+            id: -500_000 - i, title: e.title, starts_at: e.starts_at, ends_at: e.ends_at, all_day: e.all_day, recurrence: '',
+            location: e.location, description: '', category: 'sonstiges', calendar: null, calendar_name: `Abo · ${e.subscription_name}`,
+            calendar_color: e.color, created_by: '', can_edit: false, subscription: e.subscription,
+          })),
+        );
+      },
+      error: () => this.subscribedEvents.set([]),
     });
     this.eventsLoading.set(this.events().length === 0);
     this.eventsError.set('');
@@ -411,6 +432,14 @@ export class Organisation {
     }
     const kind = q.get('kind');
     const id = Number(q.get('id'));
+    // O4: Treffer der Suche öffnet auch eine Notiz (?kind=note&id=…).
+    if (kind === 'note' && id) {
+      this.tab.set('notes');
+      void this.router.navigate([], { relativeTo: this.route, queryParams: { kind: null, id: null, tab: 'notes' }, queryParamsHandling: 'merge', replaceUrl: true });
+      const note = this.notes().find((n) => n.id === id);
+      if (note) this.openNote(note);
+      return;
+    }
     if ((kind !== 'event' && kind !== 'task') || !id) return;
     // Eine einzige Navigation: Reiter setzen und die Adresse aufräumen. Zwei getrennte Navigationen
     // (Reiter, dann kind/id leeren) überschreiben sich gegenseitig und lassen kind= stehen.

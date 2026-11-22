@@ -224,10 +224,16 @@
             @if (query() || status()) {
               <p class="muted">Nichts passt zu diesen Filtern.</p>
               <button type="button" class="btn-link" (click)="showStatus('')">Filter zurücksetzen</button>
-            } @else if (isContracts()) {
-              <p class="muted">Strom, Internet, Handy, Versicherungen … Leg Verträge ab – 4inOne erinnert rechtzeitig an die Kündigungsfrist.</p>
             } @else {
-              <p class="muted">Waschmaschine, Heizung, Kühlschrank … Leg Geräte ab – 4inOne erinnert an Wartung und Garantieende.</p>
+              <p class="muted">{{ isContracts()
+                ? 'Leg Verträge ab – 4inOne zeigt rechtzeitig die Kündigungsfrist unter „Heute“. Fang mit einem typischen an:'
+                : 'Leg Geräte ab – 4inOne zeigt Wartung und Garantieende unter „Heute“. Fang mit einem typischen an:' }}</p>
+              <!-- H2: Vorlagen öffnen das Formular vorausgefüllt; angelegt wird erst mit „Speichern“. -->
+              <div class="templates__chips templates__chips--empty">
+                @for (t of templates(); track t.key) {
+                  <button type="button" class="templates__chip" (click)="openTemplate(t)"><app-icon name="plus" aria-hidden="true" />{{ t.label ?? t.name }}</button>
+                }
+              </div>
             }
           </li>
         }
@@ -455,6 +461,20 @@
   (deleted)="deleteEditing()"
 >
   <app-scope-note scope="shared">{{ folderAudience() }}</app-scope-note>
+  <!-- H2: Vorlagen nur beim Anlegen – füllen Name, Kategorie und übliche Fristen vor, alles bleibt änderbar. -->
+  @if (editingId() === null) {
+    <div class="templates" role="group" aria-labelledby="folder-templates-l">
+      <span id="folder-templates-l" class="templates__label">Schnell anlegen</span>
+      <div class="templates__chips">
+        @for (t of templates(); track t.key) {
+          <button type="button" class="templates__chip" [attr.aria-pressed]="activeTemplate() === t.key" (click)="applyTemplate(t)">{{ t.label ?? t.name }}</button>
+        }
+      </div>
+      @if (activeTemplate() && formKind() === 'vertrag') {
+        <p class="templates__hint">Übliche Werte vorausgefüllt – prüfe Kündigungsfrist und Laufzeit in deinem Vertrag.</p>
+      }
+    </div>
+  }
   <div class="field-row">
     <app-field label="Name">
       <input

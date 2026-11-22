@@ -81,7 +81,7 @@ test('3 · Finanzen: Monatsbudget, Einnahme, Sparziel', async () => {
   await p.locator('.tx-switch').getByRole('button', { name: 'Einnahmen', exact: true }).click();
   await p.getByRole('button', { name: 'Transaktion erfassen', exact: true }).click();
   await p.getByLabel('Betrag in EUR', { exact: true }).fill('2400');
-  await p.getByLabel('Notiz (optional)').fill('Gehalt');
+  await p.getByLabel('Wofür? (optional)').fill('Gehalt');
   await p.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(p.getByRole('dialog')).toHaveCount(0);
   await expect(p.getByText('Gehalt').first()).toBeVisible();

@@ -848,6 +848,22 @@ export class Dashboard {
         },
       });
     }
+    // O2/R4: fällige Reiseaufgaben gehören wie Haushaltsaufgaben in das eine „Heute“.
+    for (const task of data?.reisen?.tasks ?? []) {
+      rows.push({
+        order: task.overdue ? `0${task.due_date}` : task.due_time ? `1${task.due_time}` : '2',
+        row: {
+          title: task.title,
+          mobile: task.title,
+          time: task.overdue ? ddmm(task.due_date) : (task.due_time ?? 'Heute'),
+          note: task.overdue ? `${task.trip_title} · überfällig` : `Reise · ${task.trip_title}`,
+          icon: 'travel',
+          tone: 'travel',
+          link: { path: ['/reisen'], query: { trip: task.trip_id, tab: 'planung' } },
+          late: task.overdue,
+        },
+      });
+    }
     // Nur Fristen, die HEUTE enden — spätere stehen unter „Für dich“, nicht in der Tagesliste.
     for (const deadline of (data?.haushalt?.deadlines ?? []).filter((d) => d.days === 0)) {
       rows.push({

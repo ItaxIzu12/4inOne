@@ -48,7 +48,7 @@ for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.route('http://localhost:8000/api/**', (route) => route.abort());
     await page.goto('/demo/organisation?tab=calendar');
-    await page.getByRole('button', { name: 'Kalender importieren' }).click();
+    await page.getByRole('button', { name: 'Einmal importieren' }).click();
     const dialog = page.getByRole('dialog');
     await page.locator('#import-ics').setInputFiles({ name: 'kalender.ics', mimeType: 'text/calendar', buffer: Buffer.from(ics()) });
 
@@ -71,7 +71,7 @@ test('the imported events show in the calendar, and importing again finds them a
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.route('http://localhost:8000/api/**', (route) => route.abort());
   await page.goto('/demo/organisation?tab=calendar');
-  await page.getByRole('button', { name: 'Kalender importieren' }).click();
+  await page.getByRole('button', { name: 'Einmal importieren' }).click();
   await page.locator('#import-ics').setInputFiles({ name: 'kalender.ics', mimeType: 'text/calendar', buffer: Buffer.from(ics()) });
   await page.getByRole('dialog').getByRole('button', { name: '4 importieren' }).click();
   // Erst wenn der Dialog zu ist, die Ansicht wechseln — sonst geht der Klick unter Last ins Leere.
@@ -83,7 +83,7 @@ test('the imported events show in the calendar, and importing again finds them a
   await page.getByRole('button', { name: 'Nächster Tag' }).click();
   await expect(page.locator('app-org-calendar')).toContainText('Elternabend');
 
-  await page.getByRole('button', { name: 'Kalender importieren' }).click();
+  await page.getByRole('button', { name: 'Einmal importieren' }).click();
   await page.locator('#import-ics').setInputFiles({ name: 'kalender.ics', mimeType: 'text/calendar', buffer: Buffer.from(ics()) });
   await expect(page.getByRole('dialog').locator('.imp-summary')).toContainText('0 Termine neu');
   await expect(page.getByRole('dialog').locator('.imp-summary')).toContainText('4 schon im Kalender');
@@ -92,7 +92,7 @@ test('the imported events show in the calendar, and importing again finds them a
 test('a file that is not a calendar gets a clear message', async ({ page }) => {
   await page.route('http://localhost:8000/api/**', (route) => route.abort());
   await page.goto('/demo/organisation?tab=calendar');
-  await page.getByRole('button', { name: 'Kalender importieren' }).click();
+  await page.getByRole('button', { name: 'Einmal importieren' }).click();
   await page.locator('#import-ics').setInputFiles({ name: 'liste.ics', mimeType: 'text/calendar', buffer: Buffer.from('Hallo') });
   await expect(page.getByText('Das ist keine Kalenderdatei (.ics).')).toBeVisible();
 });

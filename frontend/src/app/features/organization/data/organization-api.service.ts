@@ -35,8 +35,31 @@ export interface PersonalEvent {
   /** Abgeleitet (Connection Engine V2): kein eigener Termin, sondern aus Vertrag/Gerät/Reise/Sparziel berechnet —
    * nur lesbar, Klick öffnet die Quelle. */
   derived?: { kind: string; source_type: string; source_id: number; domain: string };
+  /** O3: Termin aus einem abonnierten Kalender (nur lesbar, Änderungen nur in der Quelle). */
+  subscription?: number;
 }
-export type EventInput = Omit<PersonalEvent, 'id' | 'series_starts_at' | 'calendar_name' | 'calendar_color' | 'created_by' | 'can_edit' | 'shared_by' | 'derived'>;
+/** O3 – abonnierter Kalender (ICS-Link, nur lesend). Der Link selbst kommt nie zurück, nur der Rechnername. */
+export interface CalendarSubscription {
+  id: number;
+  name: string;
+  color: CalendarColor;
+  host: string;
+  last_synced_at: string | null;
+  last_error: string;
+  event_count: number;
+}
+export interface SubscribedEventDto {
+  id: number;
+  title: string;
+  starts_at: string;
+  ends_at: string | null;
+  all_day: boolean;
+  location: string;
+  subscription: number;
+  subscription_name: string;
+  color: CalendarColor;
+}
+export type EventInput = Omit<PersonalEvent, 'id' | 'series_starts_at' | 'calendar_name' | 'calendar_color' | 'created_by' | 'can_edit' | 'shared_by' | 'derived' | 'subscription'>;
 
 // ---------- Gemeinsame Kalender (31.10.2026, backend/organisation/calendars.py) ----------
 export type CalendarColor = 'amber' | 'blue' | 'green' | 'rose' | 'violet' | 'slate';
@@ -160,6 +183,24 @@ export class OrganisationApi {
   }
   event(id: number) {
     return this.http.get<PersonalEvent>(`${this.base}/events/${id}/`);
+  }
+  // ---------- O3: Kalender-Abo ----------
+  subscriptions() {
+    return this.http.get<CalendarSubscription[]>(`${this.base}/abos/`);
+  }
+  subscribe(data: { name: string; url: string }) {
+    return this.http.post<CalendarSubscription>(`${this.base}/abos/`, data);
+  }
+  refreshSubscription(id: number) {
+    return this.http.post<CalendarSubscription>(`${this.base}/abos/${id}/aktualisieren/`, {});
+  }
+  unsubscribe(id: number) {
+    return this.http.delete<void>(`${this.base}/abos/${id}/`);
+  }
+  subscribedEvents(range: DayRange) {
+    return this.http.get<SubscribedEventDto[]>(`${this.base}/abos/termine/`, {
+      params: { start: range.start, end: range.end, timezone: organisationTimezone() },
+    });
   }
   /** Kalenderdatei übernehmen (Termine aus org-import.ts); dryRun = nur prüfen für die Vorschau. */
   importEvents(rows: EventImportRow[], dryRun: boolean) {

@@ -23,6 +23,10 @@ export class TripPacking {
   readonly add = output<void>();
   readonly suggest = output<void>();
   readonly reset = output<void>();
+  /** R2: frühere Reisen mit Packliste – daraus lässt sich eine Auswahl übernehmen. */
+  readonly copySources = input<{ id: number; label: string }[]>([]);
+  readonly copyFrom = output<number>();
+  readonly copyOpen = signal(false);
 
   readonly view = signal<PackingView>('all');
   readonly collapsed = signal<ReadonlySet<PackingCategory>>(new Set());

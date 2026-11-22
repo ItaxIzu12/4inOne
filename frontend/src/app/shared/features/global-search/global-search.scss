@@ -1,0 +1,172 @@
+// O4 – Globale Suche: Feld wie die frühere Kopfzeilen-Suche (weiß, Rand, Radius 12), Trefferliste als schwebende
+// Karte darunter; je Treffer Bereichssymbol in der Bereichsfarbe, Titel und Kontext.
+:host {
+  display: block;
+  position: relative;
+  flex: 1;
+  max-width: 560px;
+}
+.gs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 46px;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--border-default, #dde1da);
+  border-radius: 12px;
+  background: #fff;
+}
+.gs:focus-within {
+  border-color: var(--brand-primary, #172523);
+  box-shadow: 0 0 0 3px rgb(23 37 35 / 0.1);
+}
+.gs__icon {
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+.gs__icon app-icon {
+  width: 19px;
+  height: 19px;
+}
+.gs__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 6px;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 15px;
+}
+.gs__input::placeholder {
+  color: var(--text-secondary);
+}
+kbd {
+  padding: 3px 7px;
+  border: 1px solid var(--border-default, #dde1da);
+  border-radius: 6px;
+  background: var(--surface-sunken, #f1f3ef);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.gs__panel {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--shadow-overlay, 0 18px 40px -20px rgb(23 37 35 / 0.35));
+}
+.gs__note {
+  margin: 0;
+  padding: 14px 12px;
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+}
+.gs__group + .gs__group {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+}
+.gs__head {
+  margin: 0;
+  padding: 6px 10px 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.gs__item {
+  --c: var(--brand-primary);
+  --soft: var(--surface-sunken);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.gs__item[data-domain='finanzen'] {
+  --c: var(--finance-accent);
+  --soft: var(--finance-soft);
+}
+.gs__item[data-domain='haushalt'] {
+  --c: var(--household-accent);
+  --soft: var(--household-soft);
+}
+.gs__item[data-domain='organisation'] {
+  --c: var(--organization-accent);
+  --soft: var(--organization-soft);
+}
+.gs__item[data-domain='reisen'] {
+  --c: var(--travel-accent);
+  --soft: var(--travel-soft);
+}
+.gs__item.is-active {
+  background: var(--surface-hover, #f1f3ef);
+}
+.gs__tile {
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--soft);
+  color: var(--c);
+}
+.gs__tile app-icon {
+  width: 17px;
+  height: 17px;
+}
+.gs__text {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.gs__text b {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gs__text small {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  :host {
+    order: 3;
+    flex: 1 1 100%;
+    max-width: none;
+  }
+  kbd {
+    display: none;
+  }
+}

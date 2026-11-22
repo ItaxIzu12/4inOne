@@ -1,3 +1,4 @@
+import { GlobalSearch } from '../shared/features/global-search/global-search';
 import { ErrorNoticeDirective } from '../shared/ui/error-notice/error-notice';
 import { Component, DestroyRef, input, output, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -20,7 +21,7 @@ import { DEMO_ONLY } from '../core/demo-only';
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [ErrorNoticeDirective, RouterLink, RouterLinkActive, BackToTop, BetaFeedbackDialog, Brand, AppIcon, NotificationBell, IconInfo, IconLegal, IconLogout, IconProfile, IconSettings, IconTwoFactor],
+  imports: [GlobalSearch, ErrorNoticeDirective, RouterLink, RouterLinkActive, BackToTop, BetaFeedbackDialog, Brand, AppIcon, NotificationBell, IconInfo, IconLegal, IconLogout, IconProfile, IconSettings, IconTwoFactor],
   templateUrl: './app-shell.html',
   styleUrls: ['./app-shell.scss', './app-shell-late.scss'],
 })
@@ -42,7 +43,6 @@ export class AppShell {
   readonly todayDate = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }).format(this.today);
   readonly todayShort = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'short' }).format(this.today);
   readonly todayIso = `${this.today.getFullYear()}-${String(this.today.getMonth() + 1).padStart(2, '0')}-${String(this.today.getDate()).padStart(2, '0')}`;
-  private readonly dashboardSearch = viewChild<ElementRef<HTMLInputElement>>('dashboardSearch');
   private readonly topbar = viewChild<ElementRef<HTMLElement>>('topbar');
   private readonly destroyRef = inject(DestroyRef);
 
@@ -60,19 +60,9 @@ export class AppShell {
       this.destroyRef.onDestroy(() => observer.disconnect());
     });
   }
-  /**
-   * Suche in der Kopfzeile vorerst aus (21.10.2026, Nutzerwunsch): Feld und ⌘K sind ausgeblendet, die Logik
-   * (Startseite filtert über ?q=, siehe dashboard.ts) bleibt erhalten. Zum Einschalten auf true setzen.
-   */
-  readonly searchEnabled = false;
-  @HostListener('document:keydown', ['$event'])
-  focusDashboardSearch(event: KeyboardEvent) {
-    if (!this.searchEnabled) return;
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-      event.preventDefault();
-      this.dashboardSearch()?.nativeElement.focus();
-    }
-  }
+  /** O4 (22.11.2026): Suche über alle Bereiche in der Kopfzeile wieder an – Treffer kommen vom Server
+   * (backend/connections/search.py), ⌘K/Strg+K springt hinein (app-global-search). */
+  readonly searchEnabled = true;
 
   readonly auth = inject(AuthService);
   private router = inject(Router);

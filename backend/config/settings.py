@@ -293,6 +293,10 @@ REST_FRAMEWORK = {
         'haushalt_write': f"{env.int('RATE_LIMIT_HAUSHALT_WRITE', default=120)}/min",
         # Ortssuche beim Tippen (core/places.py) — je Person; Photon ist ein Gemeinschaftsdienst.
         'places': f"{env.int('RATE_LIMIT_PLACES', default=60)}/min",
+        # Globale Suche beim Tippen (connections/search.py), je Person.
+        'search': f"{env.int('RATE_LIMIT_SEARCH', default=120)}/min",
+        # Kalender-Abo anlegen/aktualisieren ruft fremde Server ab (organisation/subscription_views.py), je Person.
+        'calendar_subscription': f"{env.int('RATE_LIMIT_CALENDAR_SUBSCRIPTION', default=20)}/hour",
         # Beta-Rückmeldungen (core/feedback_views.py), je Person.
         'beta_feedback': f"{env.int('RATE_LIMIT_BETA_FEEDBACK', default=20)}/hour",
         # Berichte (CSV/PDF, finanzen/views.py) — enthalten vollständige

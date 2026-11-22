@@ -31,6 +31,13 @@ Die Einrichtung des Servers Schritt für Schritt (von null): [`deploy/ANLEITUNG.
    nur hinter genau einem vertrauenswürdigen Proxy.
 4. **Täglicher Cron-Job:** `python manage.py prune_website` (löscht abgelaufene Zähler der Besucherzählung) und
    `python manage.py prune_auth_events` (Anmelde-Ereignisse nach 90 Tagen) — beide in `deploy/systemd/4inone-prune.service`.
+4c. **Erinnerungen und Kalender-Abos (seit 22.11.2026):** täglich um 7 Uhr `python manage.py send_reminder_emails`
+   (O1, nur an Personen, die „Erinnerung per E-Mail“ im Profil eingeschaltet haben; mehrfaches Ausführen am selben Tag
+   schickt nichts doppelt; Probelauf mit `--dry-run`) und stündlich `python manage.py refresh_calendar_subscriptions`
+   (O3, ruft abonnierte ICS-Kalender neu ab). Der Server braucht dafür ausgehendes HTTPS (Port 443); interne Adressen
+   blockt der Code selbst (organisation/subscriptions.py) – zusätzlich eine Egress-Regel gegen interne Netze ist sinnvoll.
+   Migrationen vorher: `connections 0006`, `core 0021`, `organisation 0009`. In der Datenschutzerklärung nennen: die
+   Erinnerungs-E-Mail enthält Titel von Terminen/Aufgaben; beim Abo ruft der Server die angegebene Adresse ab.
 4b. **Anmeldung mit Google/Apple** (optional): Zugangsdaten und Rückruf-Adressen nach [`SOCIAL_LOGIN.md`](SOCIAL_LOGIN.md), `OAUTH_CALLBACK_BASE` auf die HTTPS-Adresse; in der Datenschutzerklärung Google und Apple als Anmeldewege nennen (es werden nur Name und E-Mail übertragen).
 4a. **Fehler-Monitoring:** GlitchTip auf dem Server einrichten und `SENTRY_DSN` setzen, Admin-Zugang per
    `manage.py monitoring_admin` — [`MONITORING.md`](MONITORING.md#auf-dem-server). In der Datenschutzerklärung nennen.

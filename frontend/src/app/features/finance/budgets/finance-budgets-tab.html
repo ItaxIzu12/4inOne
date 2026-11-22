@@ -34,6 +34,7 @@
                 <button type="button" class="breakdown__link" [attr.aria-label]="eur(plannedTotal()) + ' geplante Ausgaben im ' + monthLabel() + ' anzeigen'" (click)="showTransactions('planned')">
                   Geplant<small>{{ plannedItems().length }} {{ plannedItems().length === 1 ? 'Ausgabe' : 'Ausgaben' }}</small>
                 </button>
+                <app-term-hint term="Geplant" [text]="plannedHint" />
               </dt>
               <dd>− {{ eur(plannedTotal()) }}</dd>
             </div>
@@ -69,11 +70,21 @@
 <div class="grid grid--chart" [class.grid--single]="!showBudgetStatus()">
   <section class="card" aria-labelledby="catbudget-h">
     <div class="card-head">
-      <h2 id="catbudget-h">Kategorie-Budgets</h2>
+      <h2 id="catbudget-h">Kategorie-Budgets<app-term-hint term="Kategorie-Budgets" [text]="categoryHint" /></h2>
       @if (catBudgets().length) {
         <button type="button" class="soft" (click)="openCategories()"><app-icon name="tag" />Kategorien verwalten</button>
       }
     </div>
+    <!-- F4: Bezug zum Monatsbudget sichtbar machen – Kategorie-Budgets teilen es auf, sie kommen nicht dazu. -->
+    @if (allocation(); as a) {
+      <p class="cat-allocation" [class.is-over]="a.over > 0">
+        @if (a.over > 0) {
+          {{ eur(a.split) }} auf Kategorien verteilt – {{ eur(a.over) }} mehr als dein Monatsbudget von {{ eur(a.total) }}.
+        } @else {
+          {{ eur(a.split) }} von {{ eur(a.total) }} Monatsbudget auf Kategorien verteilt.
+        }
+      </p>
+    }
     @if (catBudgets().length) {
                     <ul class="rows">
         @for (b of catBudgets(); track b.category.id) {
@@ -108,7 +119,7 @@
     } @else {
       <div class="cat-empty">
         <h3>Noch keine Kategorie-Budgets</h3>
-        <p class="muted">Teile dein Monatsbudget optional auf Kategorien auf.</p>
+        <p class="muted">Teile dein Monatsbudget optional auf Kategorien auf, z. B. 400 € für Lebensmittel. Das kommt nicht dazu, sondern ist ein Teil davon.</p>
         <button type="button" class="soft" (click)="openCategories()"><app-icon name="plus" />Kategorie-Budget hinzufügen</button>
       </div>
     }

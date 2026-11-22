@@ -40,20 +40,9 @@
           <time class="mobile-date" [attr.datetime]="todayIso">{{ todayShort }}</time>
         </div>
       </div>
-      <!-- Globale Kopfzeile: Datum auf jeder Seite; die Suche ist vorerst aus (searchEnabled in app-shell.ts). -->
+      <!-- Globale Kopfzeile: Datum auf jeder Seite und die Suche über alle Bereiche (O4, app-global-search). -->
       @if (searchEnabled) {
-      <form class="dashboard-search" role="search" (submit)="$event.preventDefault(); submitSearch(dashboardSearch.value)">
-        <button type="submit" class="search-submit" aria-label="Im Überblick suchen"><app-icon name="search" /></button>
-        <input
-          #dashboardSearch
-          type="search"
-          [value]="searchValue()"
-          [attr.aria-label]="isDemoRoute() ? 'Demo-Überblick durchsuchen' : 'Deinen Überblick durchsuchen'"
-          placeholder="Im Überblick suchen …"
-          (input)="onSearchInput(dashboardSearch.value)"
-        />
-        <kbd aria-hidden="true">⌘ K</kbd>
-      </form>
+        <app-global-search [demo]="isDemoRoute()" />
       }
       <time class="dashboard-date" [attr.datetime]="todayIso">
         <span class="dashboard-date__icon" aria-hidden="true"><app-icon name="calendar" /></span>

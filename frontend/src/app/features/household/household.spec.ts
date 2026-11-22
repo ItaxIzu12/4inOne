@@ -108,7 +108,7 @@ describe('Haushalt (Demo)', () => {
       Array.from(compiled.querySelectorAll<HTMLButtonElement>('app-aufgaben-tab .view-chip')).find((c) => text(c).startsWith(label))!;
 
     expect(Array.from(compiled.querySelectorAll('app-aufgaben-tab .view-chip')).map(text)).toEqual([
-      'Alle', 'Heute 2', 'Überfällig 1', 'Wiederkehrend 8', 'Erledigt',
+      'Alle', 'Heute 2', 'Überfällig 1', 'Routinen 8', 'Erledigt',
     ]);
     chip('Heute').click();
     fixture.detectChanges();
@@ -121,12 +121,12 @@ describe('Haushalt (Demo)', () => {
     expect(chip('Überfällig').getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('“Wiederkehrend” shows the recurring tasks with stats, streak and pausing via the row menu', () => {
+  it('“Routinen” shows the recurring tasks with stats, streak and pausing via the row menu', () => {
     const fixture = TestBed.createComponent(Haushalt);
     fixture.detectChanges();
     openTab(fixture, 'aufgaben');
     const compiled = fixture.nativeElement as HTMLElement;
-    (Array.from(compiled.querySelectorAll<HTMLButtonElement>('app-aufgaben-tab .view-chip')).find((c) => text(c).startsWith('Wiederkehrend'))!).click();
+    (Array.from(compiled.querySelectorAll<HTMLButtonElement>('app-aufgaben-tab .view-chip')).find((c) => text(c).startsWith('Routinen'))!).click();
     fixture.detectChanges();
 
     const titles = Array.from(compiled.querySelectorAll('app-routinen-tab .title-text')).map(text);
@@ -189,7 +189,7 @@ describe('Haushalt (Demo)', () => {
     expect(compiled.querySelector('button[aria-label="Winterreifen-Termin vereinbaren als erledigt markieren"]')).not.toBeNull();
   });
 
-  it('a task that is not yet due cannot be marked done, but can still be edited', () => {
+  it('a routine due tomorrow can already be marked done (H1) and can still be edited', () => {
     const fixture = TestBed.createComponent(Haushalt);
     fixture.detectChanges();
     let compiled = fixture.nativeElement as HTMLElement;
@@ -199,7 +199,8 @@ describe('Haushalt (Demo)', () => {
     openTab(fixture, 'aufgaben');
     compiled = fixture.nativeElement as HTMLElement;
     const taskCheck = compiled.querySelector('button[aria-label*="Müll rausbringen"]') as HTMLButtonElement;
-    expect(taskCheck.disabled).toBe(true);
+    expect(taskCheck.disabled).toBe(false);
+    expect(taskCheck.getAttribute('aria-label')).toBe('Müll rausbringen als erledigt markieren');
     (taskCheck.closest('li')!.querySelector('.task__main') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(text(compiled.querySelector('app-modal-form h2'))).toBe('Aufgabe bearbeiten');

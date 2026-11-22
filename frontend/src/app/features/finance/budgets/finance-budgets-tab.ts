@@ -26,6 +26,10 @@ export class FinanceBudgetsTab {
   protected readonly month = this.ctx.month;
   protected readonly budgets = this.ctx.budgets;
   protected readonly savingsHint = this.ctx.savingsHint;
+  protected readonly plannedHint = this.ctx.plannedHint;
+  /** F4: Kategorie-Budgets sind ein Teil des Monatsbudgets, kein zweites Budget – ein Satz, dort erklärt, wo der Begriff steht. */
+  readonly categoryHint =
+    'Ein Kategorie-Budget ist ein Teil deines Monatsbudgets, z. B. für Lebensmittel. Es kommt nicht zum Monatsbudget dazu, sondern teilt es auf.';
   protected readonly plannedSaved = this.ctx.plannedSaved;
   protected readonly plannedItems = this.ctx.plannedItems;
   protected readonly plannedTotal = this.ctx.plannedTotal;
@@ -70,6 +74,15 @@ export class FinanceBudgetsTab {
   readonly spentShare = computed(() => this.ctx.percent(this.used(), this.ctx.summary()?.total));
   /** Budgetstatus nur bei echten Überschreitungen — „fast ausgeschöpft“ steht schon in der Kategorie-Zeile. */
   readonly overCategories = computed(() => this.ctx.catBudgets().filter((b) => b.left < 0));
+  /** F4: Wie viel des Monatsbudgets auf Kategorien aufgeteilt ist (Summe der Kategorie-Limits). */
+  readonly allocation = computed(() => {
+    const budget = this.ctx.activeBudget();
+    const categories = this.ctx.catBudgets();
+    if (!budget || !categories.length) return null;
+    const split = categories.reduce((sum, b) => sum + b.limit, 0);
+    const total = Number(budget.amount);
+    return { split, total, over: Math.max(0, split - total) };
+  });
   readonly showBudgetStatus = computed(() => this.overCategories().length > 0 || !!this.ctx.overBudget());
   /** Drilldown: aus einer Budgetzahl direkt zur passenden, gefilterten Transaktionsliste desselben Monats — ein Klick. */
   showTransactions(kind: TransactionKind, categoryId?: number) {

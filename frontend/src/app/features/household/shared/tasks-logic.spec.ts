@@ -1,5 +1,5 @@
 import { TaskDto } from '../data/household-api.service';
-import { dueLabel, durationLabel, filterTasks, initials, NO_FILTERS, room } from './tasks-logic';
+import { dueLabel, durationLabel, filterTasks, initials, NO_FILTERS, notYetCompletable, room } from './tasks-logic';
 
 const today = new Date(2026, 9, 4); // Sonntag, 4. Oktober 2026
 const t = (id: number, over: Partial<TaskDto> = {}): TaskDto =>
@@ -43,5 +43,23 @@ describe('Aufgaben-Reiter: Anzeigeregeln', () => {
     expect(ids({ person: 'none' })).toEqual([2]);
     expect(ids({ priority: 'hoch', status: 'today' })).toEqual([1]);
     expect(ids({ status: 'overdue' })).toEqual([2]);
+  });
+});
+
+describe('vorzeitig abhaken (H1)', () => {
+  const today = new Date(2026, 2, 10); // 10.03.2026
+  const t = (due_date: string | null, extra: Partial<{ recurrence: 'daily' | 'weekly' | 'monthly' | 'yearly' | null; recurrence_days: number | null; recurrence_months: number | null }> = {}) => ({
+    due_date, recurrence: null, recurrence_days: null, recurrence_months: null, ...extra,
+  });
+  it('einmalige Aufgaben jederzeit', () => {
+    expect(notYetCompletable(t('2026-04-01'), today)).toBe(false);
+  });
+  it('Routinen bis zu zwei Tage vorher, tägliche nur am Tag selbst', () => {
+    expect(notYetCompletable(t('2026-03-12', { recurrence: 'weekly' }), today)).toBe(false);
+    expect(notYetCompletable(t('2026-03-13', { recurrence: 'weekly' }), today)).toBe(true);
+    expect(notYetCompletable(t('2026-03-11', { recurrence: 'daily' }), today)).toBe(true);
+    expect(notYetCompletable(t('2026-03-10', { recurrence: 'daily' }), today)).toBe(false);
+    expect(notYetCompletable(t('2026-03-11', { recurrence_days: 2 }), today)).toBe(false);
+    expect(notYetCompletable(t('2026-03-12', { recurrence_days: 2 }), today)).toBe(true);
   });
 });

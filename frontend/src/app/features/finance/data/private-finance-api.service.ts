@@ -77,7 +77,8 @@ export interface PlannedItem {
   /** TRANSACTION: echte Transaktion mit Datum nach heute (id gesetzt). RECURRING: aus einer wiederkehrenden
    * Ausgabe berechnet, noch keine Transaktion (source_id = die zuletzt gebuchte). */
   /** CONTRACT: Vertragskosten aus dem Haushalt (Connection Engine V2), nur berechnet — source_id = Vertrag. */
-  kind: 'TRANSACTION' | 'RECURRING' | 'CONTRACT';
+  /** TRIP: Reisebudget im Abreisemonat (R3, Verbindung „Reisebudget in Finanzen planen“) — source_id = Reise. */
+  kind: 'TRANSACTION' | 'RECURRING' | 'CONTRACT' | 'TRIP';
   /** Zuordnung wie im Backend: Notiz (klein, ohne Ränder) | Kategorie-ID. */
   key: string;
   id: number | null;

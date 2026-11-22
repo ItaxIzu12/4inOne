@@ -274,3 +274,38 @@ class PersonalFile(models.Model):
     class Meta:
         ordering = ['-used_at', '-id']
         indexes = [models.Index(fields=['owner', 'used_at'])]
+
+
+class CalendarSubscription(models.Model):
+    """O3 (22.11.2026): Ein fremder Kalender (z. B. Google, Outlook, iCloud, Schulferien), nur lesend per ICS-Link
+    abonniert. Der Server ruft ihn regelmäßig ab (organisation/subscriptions.py, Befehl refresh_calendar_subscriptions);
+    Änderungen in 4inOne gehen nie zurück. Nur die Person, die abonniert hat, sieht die Termine. Der Link ist oft
+    geheim (er enthält einen Schlüssel) – er wird nie vollständig zurückgegeben, nur der Rechnername."""
+
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='calendar_subscriptions')
+    name = models.CharField(max_length=60)
+    url = models.URLField(max_length=1000)
+    color = models.CharField(max_length=8, choices=CalendarColor.choices, default=CalendarColor.SLATE)
+    last_synced_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.CharField(max_length=240, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name', 'id']
+
+
+class SubscribedEvent(models.Model):
+    """Ein Termin aus einem abonnierten Kalender – wird bei jedem Abruf vollständig ersetzt, nie von Hand geändert."""
+
+    subscription = models.ForeignKey(CalendarSubscription, on_delete=models.CASCADE, related_name='events')
+    uid = models.CharField(max_length=255, blank=True, default='')
+    title = models.CharField(max_length=120)
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField(null=True, blank=True)
+    all_day = models.BooleanField(default=False)
+    location = models.CharField(max_length=240, blank=True, default='')
+    recurrence = models.CharField(max_length=8, choices=Recurrence.choices, blank=True, default='')
+
+    class Meta:
+        ordering = ['starts_at', 'id']
+        indexes = [models.Index(fields=['subscription', 'starts_at'])]

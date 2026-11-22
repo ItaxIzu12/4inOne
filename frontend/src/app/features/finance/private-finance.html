@@ -1,5 +1,5 @@
-<app-save-feedback [message]="notice()" (dismissed)="notice.set('')" />
-<app-finance-import-dialog [open]="importOpen()" (closed)="importOpen.set(false)" (imported)="onImported($event)" />
+<app-save-feedback [message]="notice()" [actionLabel]="noticeAction()?.actionLabel ?? ''" (action)="runNoticeAction()" (dismissed)="notice.set(''); noticeAction.set(null)" />
+<app-finance-import-dialog [open]="importOpen()" [history]="transactions()" [categories]="categories()" (closed)="importOpen.set(false)" (imported)="onImported($event)" />
 <app-shell
   ><main id="main-content" class="finance-page domain-page" [class.finance-overview]="tab() === 'overview'" tabindex="-1">
     <div class="domain-sticky">

@@ -170,7 +170,7 @@
           <button class="row-btn transaction" [class.is-planned]="row.planned" (click)="openRow(row)">
             <span class="tile" aria-hidden="true" [style.--cat]="categoryColor(row.category)"><app-icon [name]="categoryIcon(categoryName(row.category))" /></span>
             <span class="row-text transaction-copy"
-              ><b>{{ rowTitle(row) }}</b><small>{{ categoryName(row.category) }}{{ row.recurring ? ' • monatlich' : '' }}@if (row.plannedItem?.kind === 'CONTRACT') { • <span class="planned-tag"><app-icon name="household" aria-hidden="true" />aus Haushalt › Vertrag</span>}@if (row.planned) { • <span class="planned-tag"><app-icon name="clock" aria-hidden="true" />Geplant</span>}</small></span
+              ><b>{{ rowTitle(row) }}</b><small>{{ categoryName(row.category) }}{{ row.recurring ? ' • monatlich' : '' }}@if (row.plannedItem?.kind === 'CONTRACT') { • <span class="planned-tag"><app-icon name="household" aria-hidden="true" />aus Haushalt › Vertrag</span>}@if (row.plannedItem?.kind === 'TRIP') { • <span class="planned-tag"><app-icon name="travel" aria-hidden="true" />aus Reisen › Budget</span>}@if (row.planned) { • <span class="planned-tag"><app-icon name="clock" aria-hidden="true" />Geplant</span>}</small></span
             ><strong [class.negative]="row.type === 'EXPENSE' && !row.planned" [class.planned-amount]="row.planned" [class.positive]="row.type === 'INCOME'">{{ row.type === 'EXPENSE' ? '−' : '+' }}{{ money(row.amount) }}</strong>
           </button>
         </li>

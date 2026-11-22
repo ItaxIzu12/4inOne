@@ -1,3 +1,4 @@
+import { Feedback } from '../../../shared/ui/save-feedback/save-feedback';
 import { DoneToggle } from '../../../shared/ui/done-toggle/done-toggle';
 import { ErrorNoticeDirective } from '../../../shared/ui/error-notice/error-notice';
 import { Component, computed, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
@@ -7,20 +8,20 @@ import { LinkHints, connectionHints } from '../../../shared/features/connections
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { Id, MemberLoadDto, TaskDto, TaskRoom } from '../data/household-api.service';
 import { HAUSHALT_DATA_PROVIDER } from '../data/household-data-provider';
-import { recurrenceLabel, relativeDay, todayIso } from '../shared/household-logic';
-import { NO_FILTERS, PRIORITY_LABEL, TaskFilters, dueLabel, durationLabel, filterTasks, initials, room } from '../shared/tasks-logic';
+import { recurrenceLabel, relativeDay } from '../shared/household-logic';
+import { NO_FILTERS, PRIORITY_LABEL, TaskFilters, dueLabel, durationLabel, filterTasks, initials, notYetCompletable, room } from '../shared/tasks-logic';
 import { TaskGroup, groupTasks } from '../shared/home-logic';
 import { RoutinenTab } from './routines-tab';
 import { TaskForm, TaskFormChange } from './task-form';
 
-/** Ansichten im Reiter Aufgaben — „Wiederkehrend“ ersetzt den früheren Reiter Routinen. */
+/** Ansichten im Reiter Aufgaben — „Routinen“ (Filter) ersetzt den früheren eigenen Reiter. */
 export type AufgabenView = 'alle' | 'heute' | 'ueberfaellig' | 'wiederkehrend' | 'erledigt';
 export const AUFGABEN_VIEWS: AufgabenView[] = ['alle', 'heute', 'ueberfaellig', 'wiederkehrend', 'erledigt'];
 const VIEW_LABEL: Record<AufgabenView, string> = {
   alle: 'Alle',
   heute: 'Heute',
   ueberfaellig: 'Überfällig',
-  wiederkehrend: 'Wiederkehrend',
+  wiederkehrend: 'Routinen',
   erledigt: 'Erledigt',
 };
 const VIEW_STATUS: Record<AufgabenView, TaskFilters['status']> = {
@@ -35,7 +36,7 @@ const VIEW_STATUS: Record<AufgabenView, TaskFilters['status']> = {
  * Haushaltsaufgaben — derselbe Aufbau wie Organisation → Aufgaben: Ansichten
  * (mit Anzahl), darüber eine Suche, darunter eine ruhige Liste (Haken, Titel,
  * darunter Fälligkeit · Raum · Zuständig · Dauer · Priorität). Gemeinsame
- * Haushaltsangaben stehen in der Zeile statt in Spalten. „Wiederkehrend“ zeigt
+ * Haushaltsangaben stehen in der Zeile statt in Spalten. „Routinen“ zeigt
  * die Serien mit „Wer macht wie viel“ (routinen-tab). Das Formular teilt sich
  * der Reiter mit den wiederkehrenden Aufgaben (task-form.ts).
  */
@@ -50,10 +51,10 @@ export class AufgabenTab {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  readonly saved = output<string>();
+  readonly saved = output<Feedback>();
   /** Steigt bei jedem „Neue Aufgabe“ im Seitenkopf; > 0 öffnet das Formular. */
   readonly newRequest = input(0);
-  /** Alle · Heute · Überfällig · Wiederkehrend · Erledigt — in der URL (?ansicht=). */
+  /** Alle · Heute · Überfällig · Routinen · Erledigt — in der URL (?ansicht=). */
   readonly view = model<AufgabenView>('alle');
   /** Raumfilter (aus „Heute“ › Räume); leer = alle Räume. Zwei-Wege, damit „Alle Räume“ ihn zurücksetzt. */
   readonly room = model<TaskRoom | ''>('');
@@ -70,7 +71,7 @@ export class AufgabenTab {
   protected readonly initials = initials;
   protected readonly views = AUFGABEN_VIEWS;
   protected readonly viewLabel = VIEW_LABEL;
-  /** „Aufgabe hinzufügen“ in der Ansicht Wiederkehrend öffnet das Formular der Routinen. */
+  /** „Aufgabe hinzufügen“ in der Ansicht Routinen öffnet das Formular der Routinen. */
   protected readonly routineRequest = signal(0);
 
   protected readonly tasks = signal<TaskDto[] | null>(null);
@@ -83,11 +84,10 @@ export class AufgabenTab {
 
   private readonly taskForm = viewChild.required<TaskForm>('taskForm');
   protected readonly relativeDay = relativeDay;
-  /** Noch nicht fällig: erst heute oder überfällig lässt sich abhaken — sonst könnte man eine wiederkehrende
-   * Aufgabe beliebig oft hintereinander „erledigen“ und sich Punkte/Fälligkeit vordatieren, ohne dass die Zeit
-   * dafür wirklich vergangen ist. Aufgaben ohne Datum sind davon nicht betroffen. */
+  /** H1: Einmalige Aufgaben lassen sich jederzeit abhaken, Routinen bis zu zwei Tage vor dem Termin – aber nie so
+   * früh, dass man sich Erledigungen „vorarbeiten“ könnte (siehe tasks-logic › notYetCompletable). */
   protected notYetDue(task: TaskDto): boolean {
-    return !!task.due_date && task.due_date > todayIso();
+    return notYetCompletable(task);
   }
   protected readonly recurrenceLabel = recurrenceLabel;
 
@@ -134,7 +134,7 @@ export class AufgabenTab {
   protected readonly emptyText = computed(() => {
     if (this.search().trim()) return `Keine Aufgabe passt zu „${this.search().trim()}“.`;
     return {
-      alle: 'Keine offenen Aufgaben. Leg eine Aufgabe an oder richte eine wiederkehrende Aufgabe ein.',
+      alle: 'Keine offenen Aufgaben. Leg eine Aufgabe an oder richte eine Routine ein.',
       heute: 'Heute ist nichts fällig.',
       ueberfaellig: 'Nichts überfällig – alles im Griff.',
       wiederkehrend: '',
@@ -270,7 +270,8 @@ export class AufgabenTab {
     this.reloadLoad();
     this.loadDone();
     if (updated.is_done) {
-      this.saved.emit(`„${task.title}“ erledigt.`);
+      // Ü1: einmalige Aufgabe – einige Sekunden „Rückgängig“ (öffnet sie über den vorhandenen Endpunkt wieder)
+      this.saved.emit({ message: `„${task.title}“ erledigt.`, actionLabel: 'Rückgängig', action: () => this.reopen(updated) });
     } else {
       const next = updated.due_date ? relativeDay(updated.due_date) : '';
       const who = updated.assigned_to_name && updated.rotate ? ` · ${updated.assigned_to_name} ist dran` : '';

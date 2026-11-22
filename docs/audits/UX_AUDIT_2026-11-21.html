@@ -1,0 +1,537 @@
+<title>4inOne UX-Audit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ein ruhiger Prüfbericht im 4inOne-Stil — Inhaltsverzeichnis links (Rechner), eine Spalte am Handy;
+   Bereichsfarben nur als Marken, Belegart als kleine Schilder, Skizzen als beschnittene App-Ausschnitte. */
+:root {
+  --ink: #172523;          /* Tinte / Deep Forest */
+  --paper: #f7f7f4;        /* Porzellan */
+  --card: #ffffff;
+  --line: #e2e6e1;
+  --muted: #56635f;
+  --soft: #eef1ec;
+  --finance: #17694f;  --finance-soft: #e4f1ea;
+  --household: #ab445f; --household-soft: #f8e7ec;
+  --organization: #9a641e; --organization-soft: #f6ecdc;
+  --travel: #36608b; --travel-soft: #e3ecf6;
+  --ok: #1d7a4e; --ok-soft: #e3f3ea;
+  --warn: #8a5a00; --warn-soft: #fbf0d9;
+  --crit: #b3261e; --crit-soft: #fbe6e4;
+  --idea: #4b5a8c; --idea-soft: #e9ecf7;
+  --shadow: 0 1px 2px rgba(23,37,35,.06), 0 18px 40px -26px rgba(23,37,35,.35);
+  --display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ink: #e8ece9; --paper: #121816; --card: #1a2220; --line: #2b3532; --muted: #a3afab; --soft: #212b28;
+  --finance: #5cc79c; --finance-soft: #18302a; --household: #ec8fa8; --household-soft: #33202a;
+  --organization: #e0aa5e; --organization-soft: #33281a; --travel: #8cb6e2; --travel-soft: #1b2838;
+  --ok: #6fd3a0; --ok-soft: #173327; --warn: #f0c46a; --warn-soft: #332a14; --crit: #f19a91; --crit-soft: #3a1d1b;
+  --idea: #aab5e8; --idea-soft: #232842; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 18px 40px -26px rgba(0,0,0,.8); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ink: #e8ece9; --paper: #121816; --card: #1a2220; --line: #2b3532; --muted: #a3afab; --soft: #212b28;
+  --finance: #5cc79c; --finance-soft: #18302a; --household: #ec8fa8; --household-soft: #33202a;
+  --organization: #e0aa5e; --organization-soft: #33281a; --travel: #8cb6e2; --travel-soft: #1b2838;
+  --ok: #6fd3a0; --ok-soft: #173327; --warn: #f0c46a; --warn-soft: #332a14; --crit: #f19a91; --crit-soft: #3a1d1b;
+  --idea: #aab5e8; --idea-soft: #232842; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 18px 40px -26px rgba(0,0,0,.8); color-scheme: dark }
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+a { color: inherit; }
+.wrap { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 48px; max-width: 1180px; margin: 0 auto;
+  padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; font-size: 14px; }
+nav.toc p { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+nav.toc ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; counter-reset: toc; }
+nav.toc a { display: flex; gap: 10px; align-items: baseline; padding: 6px 8px; border-radius: 8px; text-decoration: none; color: var(--muted); }
+nav.toc a:hover, nav.toc a:focus-visible { background: var(--soft); color: var(--ink); outline: none; }
+nav.toc a span { font-family: var(--mono); font-size: 12px; min-width: 18px; }
+main { min-width: 0; display: grid; gap: 56px; }
+header.top { display: grid; gap: 14px; }
+.eyebrow { margin: 0; color: var(--muted); font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+h1 { margin: 0; font-family: var(--display); font-size: clamp(32px, 4.4vw, 46px); line-height: 1.05; letter-spacing: -.03em; font-weight: 800; text-wrap: balance; }
+h2 { margin: 0 0 6px; font-family: var(--display); font-size: clamp(24px, 2.8vw, 30px); letter-spacing: -.02em; line-height: 1.15; text-wrap: balance; }
+h3 { margin: 22px 0 8px; font-size: 18px; letter-spacing: -.01em; }
+p { margin: 0 0 12px; max-width: 70ch; }
+.lead { font-size: 18px; color: var(--muted); max-width: 64ch; }
+section { display: grid; gap: 14px; scroll-margin-top: 24px; }
+.muted { color: var(--muted); }
+small, .small { font-size: 14px; }
+
+/* Belegart */
+.ev { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; vertical-align: 1px; }
+.ev::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.ev-code { background: var(--ok-soft); color: var(--ok); }
+.ev-risk { background: var(--warn-soft); color: var(--warn); }
+.ev-test { background: var(--soft); color: var(--muted); }
+.ev-idea { background: var(--idea-soft); color: var(--idea); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 14px; color: var(--muted); }
+
+/* Kurzfazit */
+.verdict { display: grid; gap: 16px; padding: 24px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.verdict h2 { font-size: 22px; }
+.answers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.answer { padding: 14px 16px; border-radius: 12px; background: var(--soft); display: grid; gap: 4px; }
+.answer b { font-size: 15px; }
+.answer .state { font-weight: 700; font-size: 15px; }
+.state.yes { color: var(--ok); } .state.part { color: var(--warn); }
+.scores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.score { padding: 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); display: grid; gap: 6px; }
+.score .area { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.dot { width: 10px; height: 10px; border-radius: 5px 5px 2px 5px; flex: none; }
+.score .num { font-family: var(--display); font-size: 34px; font-weight: 800; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.score .num small { font-size: 15px; color: var(--muted); font-weight: 600; letter-spacing: 0; }
+.bar { height: 5px; border-radius: 3px; background: var(--soft); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 3px; }
+.score p { margin: 0; font-size: 14px; color: var(--muted); }
+
+/* Bereichskopf */
+.area-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.area-head .big { font-family: var(--display); font-weight: 800; font-size: 20px; padding: 4px 12px; border-radius: 10px; font-variant-numeric: tabular-nums; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.box { padding: 16px 18px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); min-width: 0; }
+.box h4 { margin: 0 0 8px; font-size: 15px; }
+.box ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 15px; }
+.box li { padding-left: 2px; }
+.inv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 22px; margin: 0; padding: 0; list-style: none; font-size: 15px; }
+.inv li { display: flex; gap: 8px; align-items: baseline; }
+.inv li::before { content: "✓"; color: var(--ok); font-weight: 700; flex: none; }
+
+/* Empfehlungen */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 760px; }
+th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-top: 1px solid var(--line); }
+thead th { border-top: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; background: var(--soft); }
+td code, p code, li code { font-family: var(--mono); font-size: 12.5px; background: var(--soft); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+.prio { display: inline-block; min-width: 30px; text-align: center; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 12.5px; font-family: var(--mono); }
+.p0 { background: var(--crit-soft); color: var(--crit); }
+.p1 { background: var(--warn-soft); color: var(--warn); }
+.p2 { background: var(--soft); color: var(--muted); }
+.effort { font-size: 13px; color: var(--muted); white-space: nowrap; }
+td .id { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+/* Skizzen (stageshow-Prinzipien: ein Brennpunkt, echte Wörter nur dort, Rest Platzhalter, Ausschnitt statt Miniatur) */
+figure.sketch { margin: 4px 0 0; display: grid; gap: 10px; }
+.stage { position: relative; height: 330px; overflow: hidden; border-radius: 18px; background: var(--soft); border: 1px solid var(--line); }
+.stage::after { content: ""; position: absolute; inset: auto 0 0 0; height: 70px; background: linear-gradient(to bottom, transparent, var(--soft)); pointer-events: none; }
+figcaption { font-size: 14px; color: var(--muted); max-width: 70ch; }
+figcaption b { color: var(--ink); }
+.app { position: absolute; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+.app-bar { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); font-weight: 700; }
+.app-bar .ico { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 13px; color: #fff; }
+.ph { display: block; height: 9px; border-radius: 5px; background: var(--soft); }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); }
+.row .ring { width: 20px; height: 20px; border-radius: 50%; border: 1.6px solid #8592a6; flex: none; }
+.row .grow { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.row b { font-size: 15px; font-weight: 600; }
+.row small { color: var(--muted); font-size: 13px; }
+.time { font-family: var(--mono); font-size: 13px; color: var(--muted); width: 44px; flex: none; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+.note { position: absolute; display: flex; gap: 8px; align-items: center; font-size: 13px; font-weight: 600; color: var(--ink); background: var(--card); border: 1px solid var(--line); padding: 6px 10px; border-radius: 10px; box-shadow: var(--shadow); }
+.note::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--idea); }
+.toast { position: absolute; display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 12px; background: var(--ink); color: var(--paper); font-size: 14px; font-weight: 600; box-shadow: var(--shadow); }
+.toast u { text-decoration: underline; text-underline-offset: 3px; }
+.field { display: grid; gap: 6px; padding: 0 18px; }
+.field label { font-size: 13px; font-weight: 700; }
+.input { height: 44px; border-radius: 10px; border: 1px solid #b9c0bc; display: flex; align-items: center; padding: 0 12px; font-size: 15px; }
+.metric { display: grid; gap: 4px; padding: 14px 16px; border-radius: 12px; background: var(--soft); min-width: 0; }
+.metric b { font-family: var(--display); font-size: 22px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.metric small { color: var(--muted); font-size: 13px; }
+.mbar { height: 5px; border-radius: 3px; background: var(--card); overflow: hidden; }
+.mbar i { display: block; height: 100%; border-radius: 3px; }
+
+/* Fahrplan */
+.steps { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
+.steps li { display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 14px; padding: 16px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); }
+.steps li::before { counter-increment: step; content: counter(step); width: 34px; height: 34px; border-radius: 10px; background: var(--ink); color: var(--paper); display: grid; place-items: center; font-weight: 800; }
+.steps h4 { margin: 4px 0 4px; font-size: 16px; }
+.steps p { margin: 0; font-size: 15px; color: var(--muted); }
+.cols3 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.freq { padding: 16px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); display: grid; gap: 6px; align-content: start; }
+.freq b { font-size: 15px; }
+.freq p { margin: 0; font-size: 14px; color: var(--muted); }
+.freq .verdict-chip { justify-self: start; }
+
+@media (max-width: 960px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-block: 24px 64px; }
+  nav.toc { position: static; }
+  nav.toc ol { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .scores, .cols3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .answers, .pair, .inv { grid-template-columns: minmax(0, 1fr); }
+  .stage { height: 360px; }
+  .hide-sm { display: none; }
+}
+@media (max-width: 420px) {
+  .scores, .cols3, nav.toc ol { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Inhalt">
+    <p>Inhalt</p>
+    <ol>
+      <li><a href="#fazit"><span>00</span>Kurzfazit</a></li>
+      <li><a href="#bestand"><span>01</span>Bestandsaufnahme</a></li>
+      <li><a href="#finanzen"><span>02</span>Finanzen</a></li>
+      <li><a href="#haushalt"><span>03</span>Haushalt</a></li>
+      <li><a href="#organisation"><span>04</span>Organisation</a></li>
+      <li><a href="#reisen"><span>05</span>Reisen</a></li>
+      <li><a href="#mobil"><span>06</span>Mobile Bedienung</a></li>
+      <li><a href="#uebergreifend"><span>07</span>Bereichsübergreifend</a></li>
+      <li><a href="#bindung"><span>08</span>Langfristige Nutzung</a></li>
+      <li><a href="#prioritaeten"><span>09</span>Prioritäten &amp; Aufwand</a></li>
+      <li><a href="#reihenfolge"><span>10</span>Umsetzungsreihenfolge</a></li>
+      <li><a href="#methode"><span>11</span>Methode &amp; Grenzen</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="top">
+      <p class="eyebrow">UX-Audit · Stand 21.11.2026 · nur Analyse, keine Änderungen</p>
+      <h1>4inOne: Was trägt, was fehlt, was zuerst</h1>
+      <p class="lead">Geprüft wurden die vier Hauptbereiche und ihr Zusammenspiel – am Quellcode, mit einer automatischen Prüfung aller Demo-Seiten und einem vollständigen Durchlauf als Erstnutzerin gegen das echte Backend. Jede Aussage trägt ihre Belegart.</p>
+      <div class="legend" role="list" aria-label="Belegarten">
+        <span role="listitem"><span class="ev ev-code">Im Code bestätigt</span></span>
+        <span role="listitem"><span class="ev ev-risk">Abgeleitetes UX-Risiko</span></span>
+        <span role="listitem"><span class="ev ev-test">Nur per Nutzertest prüfbar</span></span>
+        <span role="listitem"><span class="ev ev-idea">Neue Produktidee</span></span>
+      </div>
+    </header>
+
+    <!-- 00 Kurzfazit -->
+    <section id="fazit" aria-labelledby="fazit-h">
+      <div class="verdict">
+        <h2 id="fazit-h">Die Leitfrage, kurz beantwortet</h2>
+        <div class="answers">
+          <div class="answer"><b>Beim ersten Öffnen verstehen?</b><span class="state yes">Ja</span><span class="small muted">Demo ohne Anmeldung, Onboarding mit erstem echten Eintrag, Startleitfäden in allen vier Bereichen.</span></div>
+          <div class="answer"><b>In wenigen Minuten produktiv?</b><span class="state yes">Ja</span><span class="small muted">Der Erstnutzer-Durchlauf (11 Schritte, alle Bereiche) läuft vollständig durch; jeder Leitfaden führt direkt ins passende Formular.</span></div>
+          <div class="answer"><b>Nach sechs Monaten noch gern?</b><span class="state part">Gefährdet</span><span class="small muted">Es fehlen Erinnerungen außerhalb der App, ein lernender Finanz-Eintrag, eine Suche und ein Kalenderabgleich. Genau das entscheidet über tägliche Nutzung.</span></div>
+        </div>
+        <div class="scores" role="list" aria-label="Bewertung je Bereich">
+          <div class="score" role="listitem"><span class="area"><i class="dot" style="background:var(--finance)"></i>Finanzen</span><span class="num">7<small> / 10</small></span><span class="bar"><i style="width:70%;background:var(--finance)"></i></span><p>Klar bei „Noch verfügbar“, aber viele Begriffe und zu viel Handarbeit.</p></div>
+          <div class="score" role="listitem"><span class="area"><i class="dot" style="background:var(--household)"></i>Haushalt</span><span class="num">7<small> / 10</small></span><span class="bar"><i style="width:70%;background:var(--household)"></i></span><p>Stark im Alltag, Dialoge teils überladen, Fristen nur in der App.</p></div>
+          <div class="score" role="listitem"><span class="area"><i class="dot" style="background:var(--organization)"></i>Organisation</span><span class="num">6<small> / 10</small></span><span class="bar"><i style="width:60%;background:var(--organization)"></i></span><p>Soll der tägliche Grund sein – ohne Erinnerungen und Kalenderabgleich ist er es nicht.</p></div>
+          <div class="score" role="listitem"><span class="area"><i class="dot" style="background:var(--travel)"></i>Reisen</span><span class="num">8<small> / 10</small></span><span class="bar"><i style="width:80%;background:var(--travel)"></i></span><p>Der reifste Bereich; Budget steht neben Finanzen statt darin.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 01 Bestandsaufnahme -->
+    <section id="bestand" aria-labelledby="bestand-h">
+      <h2 id="bestand-h">Bestandsaufnahme: was tatsächlich da ist</h2>
+      <p class="muted">Aus Datenmodellen (<code>backend/*/models.py</code>), Komponenten und dem Erstnutzer-Durchlauf. Alles in dieser Liste ist <span class="ev ev-code">Im Code bestätigt</span>.</p>
+      <div class="pair">
+        <div class="box"><h4 style="color:var(--finance)">Finanzen</h4><ul class="inv">
+          <li>„Noch verfügbar“ mit Tagessatz</li><li>Monatsbudget mit Zeitraum</li><li>Kategorie-Limits, Jahreskarte</li><li>Geplante Ausgaben getrennt von Buchungen</li><li>Fixkosten, wiederkehrend</li><li>Sparziele mit Zieldatum, Monatsrate, Beiträgen</li><li>CSV-Import (Trennzeichen, Soll/Haben, IBAN entfernt)</li><li>Monatsrückblick, Begriffserklärungen</li></ul></div>
+        <div class="box"><h4 style="color:var(--household)">Haushalt</h4><ul class="inv">
+          <li>Heute: fällig, überfällig, nach Räumen</li><li>Aufgaben mit Raum, Aufwand, Dauer, Priorität</li><li>Routinen, Reihum, Verteilung („wer macht wie viel“)</li><li>Mehrere Einkaufslisten, Ladenbereiche</li><li>Artikel-Gedächtnis mit Vorschlägen</li><li>Einkauf abschließen → Ausgabe in Finanzen</li><li>Geräte: Garantie, Wartung, Anhänge</li><li>Verträge: Kosten, Frist, Verlängerung, Erinnerung</li></ul></div>
+        <div class="box"><h4 style="color:var(--organization)">Organisation</h4><ul class="inv">
+          <li>Heute mit Tageslinie und freier Zeit</li><li>Kalender Tag/Woche/Monat</li><li>Geteilte Kalender mit Rollen</li><li>ICS-Import (einmalig, ohne Abgleich)</li><li>Aufgaben mit Projekt, Wiederholung, Priorität</li><li>Haushaltsaufgaben eingeblendet (eine Quelle)</li><li>Notizen mit Anheften, Schnellnotiz, Anhängen</li><li>Startseite: Heute aus Organisation + Haushalt</li></ul></div>
+        <div class="box"><h4 style="color:var(--travel)">Reisen</h4><ul class="inv">
+          <li>Bordkarte mit Countdown und Stand</li><li>Fünf Reiter inkl. Budget</li><li>Ablauf mit Programmpunkten → Kalender</li><li>Planung mit Zuständigkeit</li><li>Packliste mit Kategorien</li><li>Regelbasierte Vorlagen (Art, Wetter, Transport)</li><li>Mehrere Währungen, „Wer schuldet wem“</li><li>Mitreisende mit Rollen</li></ul></div>
+      </div>
+      <p class="small muted">Querschnitt: Connection Engine mit sieben automatischen Verbindungen (Vertrag → geplante Kosten, Kündigungs-, Wartungs- und Sparziel-Erinnerung im Kalender, Haushaltsaufgaben in Organisation, Reisezeitraum und Tagesablauf im Kalender) plus manuelle und vorgeschlagene Verknüpfungen. Datenexport (DSGVO), Zwei-Faktor, Google/Apple-Anmeldung.</p>
+      <p class="small muted"><b>Nicht vorhanden</b> <span class="ev ev-code">Im Code bestätigt</span>: Erinnerungen per E-Mail oder Push (Mails nur für Anmeldung und Einladungen, die Glocke kennt nur Einladungen) · Suche (<code>layout/app-shell.ts › searchEnabled = false</code>) · Kalenderabgleich · lernende Kategorien · Offline-Betrieb (nur Manifest, kein Service Worker) · Dunkelmodus · Packliste aus früherer Reise · Verbindung Reiseausgaben ↔ Finanzen.</p>
+    </section>
+
+    <!-- 02 Finanzen -->
+    <section id="finanzen" aria-labelledby="fin-h">
+      <div class="area-head"><h2 id="fin-h">Finanzen</h2><span class="big" style="background:var(--finance-soft);color:var(--finance)">7 / 10</span></div>
+      <p>Die Übersicht beantwortet die wichtigste Frage – <b>wie viel ist noch da?</b> – mit einer großen Zahl und einem Tagessatz. Geplante Ausgaben und Sparbeiträge sind im Code sauber von Buchungen getrennt und werden erklärt. Die Schwäche liegt in der Menge der Begriffe und in der Handarbeit: Jede Ausgabe wird von vorn getippt.</p>
+      <div class="pair">
+        <div class="box"><h4>Stärken</h4><ul>
+          <li>„Noch verfügbar“ berücksichtigt geplante Ausgaben und Sparbeiträge, nie doppelt gezählt (<code>recurring_planned</code>). <span class="ev ev-code">Code</span></li>
+          <li>Fachbegriffe mit (i)-Erklärung an Ort und Stelle (<code>shared/ui/term-hint</code>). <span class="ev ev-code">Code</span></li>
+          <li>Neues Konto ohne Nullen-Wüste: Startleitfaden statt leerer Kennzahlen. <span class="ev ev-code">Code</span></li>
+          <li>CSV-Import entfernt IBAN-Spalten, bevor etwas gespeichert wird. <span class="ev ev-code">Code</span></li>
+        </ul></div>
+        <div class="box"><h4>Schwächen</h4><ul>
+          <li>Viele parallele Begriffe: Monatsbudget, Kategorie-Limit, geplant, Fixkosten, wiederkehrend, Sparbeitrag. <span class="ev ev-risk">Risiko</span></li>
+          <li>Kein Vorschlag aus früheren Buchungen; der Import übernimmt nur eine vorhandene Kategoriespalte. <span class="ev ev-code">Code</span></li>
+          <li>„Kommt jeden Monat wieder“ wirkt nur bei Ausgaben; bei Einnahmen ist es nur eine Markierung. <span class="ev ev-code">Code</span></li>
+          <li>Zeitraum-Umschalter (Tag/Woche/Monat/Benutzerdefiniert) über dem Inhalt erhöht die Komplexität der Übersicht. <span class="ev ev-risk">Risiko</span></li>
+          <li>Eingefrorene Haushaltsfinanzen (<code>Account</code>, <code>Budget</code>, <code>RecurringDeduction</code>, ADR-001) leben weiter im Code. <span class="ev ev-code">Code</span></li>
+        </ul></div>
+      </div>
+      <p class="small"><b>Erstnutzer</b> verstehen die Übersicht schnell, stolpern aber über die Begriffsvielfalt im Budget-Reiter <span class="ev ev-test">Nutzertest</span>. <b>Langzeitnutzer</b> ermüden an der manuellen Erfassung – das ist der wahrscheinlichste Abbruchgrund in diesem Bereich <span class="ev ev-risk">Risiko</span>.</p>
+
+      <figure class="sketch">
+        <div class="stage" aria-hidden="true">
+          <div class="app" style="left:6%;right:-4%;top:28px;bottom:-30px">
+            <div class="app-bar"><span class="ico" style="background:var(--finance)">€</span>Ausgabe erfassen</div>
+            <div style="display:grid;gap:14px;padding:18px 0">
+              <div class="field"><label>Betrag</label><div class="input" style="font-size:22px;font-weight:700">48,30 €</div></div>
+              <div class="field"><label>Wofür?</label><div class="input">REWE</div></div>
+              <div style="padding:0 18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <span class="chip" style="background:var(--finance);color:#fff">● Lebensmittel</span>
+                <span class="small muted">wie deine letzten 4 Einkäufe bei REWE</span>
+              </div>
+              <div style="padding:0 18px;display:flex;gap:8px"><span class="ph" style="width:70px;height:30px;border-radius:999px"></span><span class="ph" style="width:90px;height:30px;border-radius:999px"></span><span class="ph hide-sm" style="width:80px;height:30px;border-radius:999px"></span></div>
+            </div>
+          </div>
+          <span class="note" style="left:calc(6% + 18px);top:6px">Vorgeschlagen aus eigenen Buchungen</span>
+        </div>
+        <figcaption><b>Skizze F1 – Erfassung, die mitlernt</b> <span class="ev ev-idea">Idee</span>. Tippt man „REWE“, schlägt 4inOne die Kategorie vor, die man dort zuletzt gewählt hat. Rein im Frontend aus den bereits geladenen Buchungen möglich, ohne neue API; dieselbe Zuordnung kann der CSV-Import nutzen.</figcaption>
+      </figure>
+
+      <h3>Empfehlungen</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>ID</th><th>Empfehlung</th><th>Beleg</th><th>Prio</th><th>Aufwand</th><th>Betrifft</th></tr></thead>
+        <tbody>
+          <tr><td class="id">F1</td><td>Kategorie- und Betragsvorschlag aus eigenen früheren Buchungen (Beschreibung → Kategorie); im CSV-Import dieselbe Zuordnung als Vorbelegung.</td><td><span class="ev ev-idea">Idee</span></td><td><span class="prio p0">P0</span></td><td class="effort">mittel</td><td><code>finance/editor/finance-editor.*</code>, <code>finance/transactions/finance-import*.ts</code></td></tr>
+          <tr><td class="id">F2</td><td>„Kommt jeden Monat wieder“ bei Einnahmen ausblenden oder – mit Freigabe – als geplante Einnahme rechnen. Heute verspricht die Option mehr, als sie tut.</td><td><span class="ev ev-code">Code</span></td><td><span class="prio p1">P1</span></td><td class="effort">klein / mittel</td><td><code>finance-editor.html</code>; Backend <code>recurring_planned</code> nur mit Freigabe</td></tr>
+          <tr><td class="id">F3</td><td>Übersicht entlasten: Zeitraum-Umschalter standardmäßig auf „Monat“ und in die Transaktionen verlegen; Übersicht zeigt nur „Noch verfügbar“, Ausgaben, Handlungsbedarf.</td><td><span class="ev ev-risk">Risiko</span></td><td><span class="prio p1">P1</span></td><td class="effort">mittel</td><td><code>finance/overview/finance-period.*</code>, <code>finance-overview-tab.*</code></td></tr>
+          <tr><td class="id">F4</td><td>Begriffe bündeln: Kategorie-Limits als „Teil des Monatsbudgets“ zeigen; ein Glossar-Satz je Begriff im Budget-Reiter statt mehrerer Hinweiskarten.</td><td><span class="ev ev-risk">Risiko</span></td><td><span class="prio p1">P1</span></td><td class="effort">klein</td><td><code>finance/budgets/finance-budgets-tab.*</code></td></tr>
+          <tr><td class="id">F5</td><td>Eingefrorene Haushaltsfinanzen aufräumen oder sichtbar als „Archiv“ kennzeichnen; Route <code>/haushaltsfinanzen</code> prüfen.</td><td><span class="ev ev-code">Code</span></td><td><span class="prio p2">P2</span></td><td class="effort">mittel</td><td><code>backend/finanzen/models.py</code>, <code>app-area.routes.ts</code> – nur mit Freigabe</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 03 Haushalt -->
+    <section id="haushalt" aria-labelledby="hh-h">
+      <div class="area-head"><h2 id="hh-h">Haushalt</h2><span class="big" style="background:var(--household-soft);color:var(--household)">7 / 10</span></div>
+      <p>Haushalt ist im Alltag der durchdachteste Bereich: Räume, Aufwand, Reihum und die Verteilung „wer macht wie viel“ machen ihn für Paare und WGs stark; der Einkauf merkt sich Artikel und schlägt sie vor. Die Kehrseite ist Dichte: Der Aufgabendialog bietet sieben Planungsangaben, und Verträge erinnern nur innerhalb der App.</p>
+      <div class="pair">
+        <div class="box"><h4>Stärken</h4><ul>
+          <li>Eine Datenquelle für Haushaltsaufgaben – Organisation blendet sie ein, statt sie zu kopieren. <span class="ev ev-code">Code</span></li>
+          <li>Einkauf abschließen erzeugt eine Ausgabe in Finanzen (<code>ShoppingTrip.transaction</code>). <span class="ev ev-code">Code</span></li>
+          <li>Verträge mit Kündigungsfrist, Verlängerung, Preisänderung und Erinnerung im Kalender. <span class="ev ev-code">Code</span></li>
+          <li>Optionale Angaben im Aufgabendialog sind gruppiert („Planung und weitere Angaben“). <span class="ev ev-code">Code</span></li>
+        </ul></div>
+        <div class="box"><h4>Schwächen</h4><ul>
+          <li>Aufgaben, die noch nicht fällig sind, lassen sich nicht abhaken („noch nicht abhakbar“). Wer früher putzt, kann es nicht eintragen. <span class="ev ev-code">Code</span> <span class="ev ev-test">Nutzertest</span></li>
+          <li>Routinen sind eine eigene Ansicht innerhalb von Aufgaben – zwei Orte für „wiederkehrend“. <span class="ev ev-risk">Risiko</span></li>
+          <li>Zuhause startet leer; typische Verträge (Strom, Internet, Handy, Versicherung) müssen von Grund auf angelegt werden. <span class="ev ev-code">Code</span></li>
+          <li>Kündigungsfristen erinnern nur im Kalender der App – wer die App nicht öffnet, verpasst die Frist. <span class="ev ev-code">Code</span></li>
+        </ul></div>
+      </div>
+      <p class="small"><b>Gemeinsame Nutzung</b> ohne Überladung gelingt bereits gut: Personen-Avatare und Reihum erscheinen erst, wenn jemand eingeladen ist (Satz „Nur du – noch niemand sonst im Haushalt“) <span class="ev ev-code">Code</span>. <b>Haushalt ↔ Organisation:</b> Beide zeigen dieselbe Aufgabe; Haushalt ordnet nach Raum und Person, Organisation nach Tag. Das ist der richtige Weg und sollte so bleiben.</p>
+      <h3>Empfehlungen</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>ID</th><th>Empfehlung</th><th>Beleg</th><th>Prio</th><th>Aufwand</th><th>Betrifft</th></tr></thead>
+        <tbody>
+          <tr><td class="id">H1</td><td>Vorzeitig abhaken erlauben (mit Satz „Nächste Fälligkeit verschiebt sich auf …“) – zuerst klären, ob das Backend es ebenfalls sperrt.</td><td><span class="ev ev-code">Code</span> <span class="ev ev-test">Nutzertest</span></td><td><span class="prio p1">P1</span></td><td class="effort">klein–mittel</td><td><code>household/tasks/tasks-tab.*</code>, Regel in <code>backend/haushalt</code> prüfen</td></tr>
+          <tr><td class="id">H2</td><td>Optionale Vorlagen in Zuhause: Strom, Internet, Handy, Kfz-/Haftpflicht, Waschmaschine – füllen nur Name, Kategorie und übliche Frist vor.</td><td><span class="ev ev-idea">Idee</span></td><td><span class="prio p1">P1</span></td><td class="effort">klein</td><td><code>household/home/home-tab.*</code> (nur Frontend)</td></tr>
+          <tr><td class="id">H3</td><td>Aufgabendialog: beim ersten Mal nur Titel, Wann, Wer zeigen; Aufwand, Dauer, Raum, Priorität erst auf „Mehr Angaben“.</td><td><span class="ev ev-risk">Risiko</span></td><td><span class="prio p2">P2</span></td><td class="effort">klein</td><td><code>household/tasks/task-form.*</code></td></tr>
+          <tr><td class="id">H4</td><td>Routinen und wiederkehrende Aufgaben sprachlich vereinheitlichen („Routine“ überall) und die Ansicht als Filter statt als eigener Bereich zeigen.</td><td><span class="ev ev-risk">Risiko</span></td><td><span class="prio p2">P2</span></td><td class="effort">mittel</td><td><code>household/tasks/routines-tab.*</code></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 04 Organisation -->
+    <section id="organisation" aria-labelledby="org-h">
+      <div class="area-head"><h2 id="org-h">Organisation</h2><span class="big" style="background:var(--organization-soft);color:var(--organization)">6 / 10</span></div>
+      <p>Organisation soll der Grund sein, 4inOne täglich zu öffnen. Die Bausteine sind gut: Tageslinie mit freier Zeit, Aufgaben nach Tag oder Projekt, Schnellnotiz, geteilte Kalender mit Rollen. Aber zwei Dinge verhindern tägliche Nutzung: <b>Niemand erinnert an den Termin</b>, und <b>der echte Kalender bleibt woanders</b>. Der ICS-Import ist einmalig – danach laufen zwei Kalender auseinander.</p>
+      <div class="pair">
+        <div class="box"><h4>Stärken</h4><ul>
+          <li>„Heute“ zeigt Termine in Folge und die Zeit dazwischen; Haushaltsaufgaben sind eingebunden. <span class="ev ev-code">Code</span></li>
+          <li>ICS-Import verändert unbekannte Wiederholungsregeln nicht stillschweigend. <span class="ev ev-code">Code</span></li>
+          <li>Notizen: anheften, Schnellnotiz ohne Dialog, Aufzählung per „-“. <span class="ev ev-code">Code</span></li>
+        </ul></div>
+        <div class="box"><h4>Schwächen</h4><ul>
+          <li>Keine Erinnerung vor Terminen oder fälligen Aufgaben außerhalb der App (keine Mail, kein Push). <span class="ev ev-code">Code</span></li>
+          <li>Kein Kalenderabgleich; Import nur einmalig. <span class="ev ev-code">Code</span></li>
+          <li>Keine Suche über Termine, Aufgaben, Notizen. <span class="ev ev-code">Code</span></li>
+          <li>Drei „Heute“: Startseite, Haushalt › Heute, Organisation › Heute – unklar, welches der tägliche Einstieg ist. <span class="ev ev-risk">Risiko</span></li>
+        </ul></div>
+      </div>
+
+      <figure class="sketch">
+        <div class="stage" aria-hidden="true">
+          <div class="app" style="left:-3%;right:16%;top:44px;bottom:-30px">
+            <div class="app-bar"><span class="ico" style="background:var(--organization)">◷</span>Heute · Samstag</div>
+            <div class="row"><span class="time">09:30</span><span class="grow"><b>Elternabend</b><small>Schule · mit Lena</small></span></div>
+            <div class="row"><span class="ring"></span><span class="grow"><b>Online-Check-in Lissabon</b><small>Reisen · bis morgen</small></span><span class="chip" style="background:var(--travel-soft);color:var(--travel)">Reise</span></div>
+            <div class="row"><span class="ring"></span><span class="grow"><span class="ph" style="width:55%"></span><span class="ph" style="width:30%"></span></span></div>
+            <div class="row"><span class="ring"></span><span class="grow"><span class="ph" style="width:48%"></span><span class="ph" style="width:26%"></span></span></div>
+          </div>
+          <div class="toast" style="right:4%;top:14px;max-width:min(320px,80%);flex-direction:column;align-items:flex-start;gap:4px;background:var(--card);color:var(--ink);border:1px solid var(--line)">
+            <span class="small muted" style="font-weight:600">4inOne · E-Mail um 7:00</span>
+            <span>Heute: Elternabend 09:30, 1 Aufgabe aus Reisen fällig</span>
+          </div>
+        </div>
+        <figcaption><b>Skizze O1 – Ein Tag, an den 4inOne erinnert</b> <span class="ev ev-idea">Idee</span>. Eine tägliche oder wöchentliche Zusammenfassung per E-Mail (später Web-Push) holt Nutzer zurück; Reiseaufgaben mit Fälligkeit erscheinen im selben „Heute“. Heute zeigt die Startseite nur Organisation und Haushalt <span class="ev ev-code">Code</span>.</figcaption>
+      </figure>
+
+      <h3>Empfehlungen</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>ID</th><th>Empfehlung</th><th>Beleg</th><th>Prio</th><th>Aufwand</th><th>Betrifft</th></tr></thead>
+        <tbody>
+          <tr><td class="id">O1</td><td>Erinnerungen außerhalb der App: tägliche Zusammenfassung per E-Mail (abschaltbar), Erinnerung an Kündigungsfristen; später Web-Push. Neue Backend-Aufgabe – nur mit deiner Freigabe.</td><td><span class="ev ev-code">fehlt</span> <span class="ev ev-idea">Idee</span></td><td><span class="prio p0">P0</span></td><td class="effort">groß</td><td>neuer Management-Befehl in <code>backend/core</code>, Einstellungen in <code>features/settings</code></td></tr>
+          <tr><td class="id">O2</td><td>Ein „Heute“ als Einstieg: Startseite sammelt Termine, Aufgaben aus Organisation, Haushalt <b>und Reisen</b>; die Bereichs-„Heute“ bleiben Detailansichten mit Verweis zurück.</td><td><span class="ev ev-code">Code</span> <span class="ev ev-risk">Risiko</span></td><td><span class="prio p1">P1</span></td><td class="effort">mittel</td><td><code>features/dashboard/dashboard.ts</code> (<code>today</code>), <code>organisation/views.py › today_data</code></td></tr>
+          <tr><td class="id">O3</td><td>Kalender-Abo lesen (ICS-URL, nur lesend, regelmäßig aktualisiert) und die Grenze klar benennen: „Änderungen in 4inOne gehen nicht zurück zu Google“.</td><td><span class="ev ev-idea">Idee</span></td><td><span class="prio p1">P1</span></td><td class="effort">groß</td><td><code>organization/calendar/org-import*</code>, Backend-Abruf – nur mit Freigabe</td></tr>
+          <tr><td class="id">O4</td><td>Suche einschalten (Termine, Aufgaben, Notizen zuerst); der Schalter existiert bereits.</td><td><span class="ev ev-code">Code</span></td><td><span class="prio p1">P1</span></td><td class="effort">mittel–groß</td><td><code>layout/app-shell.ts › searchEnabled</code>, <code>docs/GLOBAL_SEARCH.md</code></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 05 Reisen -->
+    <section id="reisen" aria-labelledby="tr-h">
+      <div class="area-head"><h2 id="tr-h">Reisen</h2><span class="big" style="background:var(--travel-soft);color:var(--travel)">8 / 10</span></div>
+      <p>Reisen ist der reifste Bereich. Die Bordkarte beantwortet „wie weit bin ich?“ mit Countdown, offenen Aufgaben, Packstand und Restbudget. Vorlagen nach Reiseart, Wetter und Transport sparen echte Arbeit, „Wer schuldet wem“ löst ein reales Problem. Was fehlt: Wiederverwendung und die Brücke zu Finanzen.</p>
+      <div class="pair">
+        <div class="box"><h4>Stärken</h4><ul>
+          <li>Vorbereitungsstand auf einen Blick (Bordkarte: Aufgaben, gepackt, übrig). <span class="ev ev-code">Code</span></li>
+          <li>Vorschläge sind auswählbar, nichts wird ungefragt übernommen; Begründung ehrlich ohne „KI“. <span class="ev ev-code">Code</span></li>
+          <li>Mehrere Währungen mit Kurs zum Ausgabetag; Abrechnung zwischen Mitreisenden. <span class="ev ev-code">Code</span></li>
+          <li>4inOne schlägt passende Sparziele zur Verknüpfung vor. <span class="ev ev-code">Code</span></li>
+        </ul></div>
+        <div class="box"><h4>Schwächen</h4><ul>
+          <li>Keine Packliste aus einer früheren Reise übernehmen – jede Reise beginnt mit Vorlagen von vorn. <span class="ev ev-code">Code</span></li>
+          <li>Reiseausgaben stehen bewusst neben Finanzen; das Monatsbudget kennt die Reise nicht. <span class="ev ev-code">Code</span></li>
+          <li>„Dringend“ wird nicht hervorgehoben – vier offene Aufgaben wirken gleich, auch wenn eine morgen fällig ist. <span class="ev ev-risk">Risiko</span></li>
+          <li>Fünf Reiter pro Reise sind am Handy knapp. <span class="ev ev-test">Nutzertest</span></li>
+        </ul></div>
+      </div>
+
+      <figure class="sketch">
+        <div class="stage" aria-hidden="true">
+          <div class="app" style="left:5%;right:-5%;top:30px;bottom:-30px">
+            <div class="app-bar"><span class="ico" style="background:var(--travel)">✈</span>Lissabon · noch 12 Tage</div>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:16px 18px">
+              <div class="metric"><small>Gepackt</small><b>12 / 24</b><span class="mbar"><i style="width:50%;background:var(--travel)"></i></span></div>
+              <div class="metric" style="background:var(--crit-soft)"><small style="color:var(--crit)">Dringend</small><b style="color:var(--crit)">1</b><small>Check-in bis morgen</small></div>
+              <div class="metric"><small>Budget übrig</small><b>720 €</b><small>von 900 €</small></div>
+            </div>
+            <div class="row"><span class="ring"></span><span class="grow"><b>Online-Check-in</b><small>bis morgen · Sophie</small></span><span class="chip" style="background:var(--crit-soft);color:var(--crit)">Dringend</span></div>
+            <div class="row"><span class="ring"></span><span class="grow"><span class="ph" style="width:46%"></span><span class="ph" style="width:24%"></span></span></div>
+          </div>
+        </div>
+        <figcaption><b>Skizze R1 – Abreise-Check</b> <span class="ev ev-idea">Idee</span> auf Basis vorhandener Daten. Drei Antworten vor jeder Reise: Was ist gepackt, was ist dringend (fällig in ≤ 2 Tagen), wie steht das Budget. Alle drei Werte liegen schon vor; neu ist nur die Hervorhebung von „dringend“.</figcaption>
+      </figure>
+
+      <h3>Empfehlungen</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>ID</th><th>Empfehlung</th><th>Beleg</th><th>Prio</th><th>Aufwand</th><th>Betrifft</th></tr></thead>
+        <tbody>
+          <tr><td class="id">R1</td><td>„Dringend“ (fällig in ≤ 2 Tagen) auf Bordkarte und Übersicht hervorheben.</td><td><span class="ev ev-risk">Risiko</span></td><td><span class="prio p1">P1</span></td><td class="effort">klein</td><td><code>travel/shared/trip-pass.*</code>, <code>travel/overview/trip-overview.*</code></td></tr>
+          <tr><td class="id">R2</td><td>Packliste aus einer früheren Reise übernehmen (Auswahl wie bei den Vorschlägen).</td><td><span class="ev ev-idea">Idee</span></td><td><span class="prio p1">P1</span></td><td class="effort">mittel</td><td><code>travel/travel.ts</code> (Vorschlags-Dialog), ggf. Endpunkt – mit Freigabe</td></tr>
+          <tr><td class="id">R3</td><td>Reisebudget als geplante Ausgabe im Monatsbudget zeigen – analog zur Verbindung „Vertrag in Finanzen planen“; optional, abschaltbar.</td><td><span class="ev ev-code">fehlt</span> <span class="ev ev-idea">Idee</span></td><td><span class="prio p1">P1</span></td><td class="effort">groß</td><td>Connection Engine (<code>backend/connections</code>), <code>finance</code> – nur mit Freigabe</td></tr>
+          <tr><td class="id">R4</td><td>Reiseaufgaben mit Fälligkeit in „Heute“ der Startseite aufnehmen (siehe O2).</td><td><span class="ev ev-code">Code</span></td><td><span class="prio p1">P1</span></td><td class="effort">klein–mittel</td><td><code>features/dashboard/dashboard.ts</code></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 06 Mobil -->
+    <section id="mobil" aria-labelledby="mob-h">
+      <h2 id="mob-h">Mobile Bedienung</h2>
+      <p>Automatisch geprüft wurden alle Demo-Seiten und Reiter bei 390 px und 1440 px: <b>keine Verstöße gegen WCAG 2.2 AA (axe), kein Querscrollen, keine Konsolenfehler</b> <span class="ev ev-code">Code</span>. Untere Navigation mit fünf Zielen, Formulare als Blatt von unten, Tippflächen ≥ 44 px, runder Haken überall links.</p>
+      <div class="pair">
+        <div class="box"><h4>Gut am Handy</h4><ul>
+          <li>Klare Hauptaktion je Bereich als Knopf unten; bei Leitfäden ausgeblendet, um nichts zu verdecken.</li>
+          <li>Wischbare Filterzeilen mit sichtbarem Hinweis am Rand (Kalender).</li>
+          <li>Anmeldung als Sheet mit Kopf in Deep Forest statt weißer Fläche.</li>
+        </ul></div>
+        <div class="box"><h4>Zu prüfen</h4><ul>
+          <li>Lange Seiten (Startseite, Finanzen-Übersicht) – wichtig steht oben, Rest erst nach viel Scrollen. <span class="ev ev-risk">Risiko</span></li>
+          <li>Der schwebende Knopf liegt beim Scrollen über Listenenden; Listen brauchen genug Abstand unten. <span class="ev ev-risk">Risiko</span></li>
+          <li>Lange Dialoge (Aufgabe, Vertrag) brauchen viel Scrollen bis „Speichern“. <span class="ev ev-test">Nutzertest</span></li>
+          <li>Kein Offline-Betrieb: im Supermarkt ohne Netz ist die Einkaufsliste leer. <span class="ev ev-code">Code</span></li>
+        </ul></div>
+      </div>
+    </section>
+
+    <!-- 07 Übergreifend -->
+    <section id="uebergreifend" aria-labelledby="ue-h">
+      <h2 id="ue-h">Bereichsübergreifende Konsistenz</h2>
+      <div class="tbl"><table style="min-width:640px">
+        <thead><tr><th>Aspekt</th><th>Stand</th><th>Beleg</th></tr></thead>
+        <tbody>
+          <tr><td>Seitenköpfe, Reiter</td><td>Einheitlich: Bereichskopf mit Symbol, Reiter überall als echte Reiter (tablist).</td><td><span class="ev ev-code">Code</span></td></tr>
+          <tr><td>Dialoge, Löschen</td><td>Ein Dialogbaustein (<code>shared/ui/form/modal-form</code>) mit Rückfrage im Dialog. Kein Rückgängig nach dem Löschen oder Abhaken – obwohl Buchungen intern weich gelöscht werden (<code>deleted_at</code>).</td><td><span class="ev ev-code">Code</span></td></tr>
+          <tr><td>Speichern</td><td>Einheitliche Rückmeldung (<code>shared/ui/save-feedback</code>).</td><td><span class="ev ev-code">Code</span></td></tr>
+          <tr><td>Haken, Abhaken</td><td>Ein runder Haken links überall; ein gemeinsamer Abhak-Knopf (<code>shared/ui/done-toggle</code>).</td><td><span class="ev ev-code">Code</span></td></tr>
+          <tr><td>Währung, Datum</td><td>Zentrale Formatierung (<code>shared/ui/currency</code>, <code>shared/utils/dates</code>).</td><td><span class="ev ev-code">Code</span></td></tr>
+          <tr><td>Suche, Filter</td><td>Filter je Bereich unterschiedlich gebaut; globale Suche abgeschaltet.</td><td><span class="ev ev-code">Code</span></td></tr>
+          <tr><td>Freigaben</td><td>Drei Modelle nebeneinander: Haushalt (Rollen), Reise (Teilnehmer), Kalender (Freigaben). Für Nutzer schwer zu überblicken, wer was sieht.</td><td><span class="ev ev-code">Code</span> <span class="ev ev-test">Nutzertest</span></td></tr>
+          <tr><td>Doppelte Orte</td><td>Drei „Heute“; Routinen getrennt von Aufgaben; Einkaufsausgaben in Finanzen, Reiseausgaben nicht.</td><td><span class="ev ev-risk">Risiko</span></td></tr>
+        </tbody>
+      </table></div>
+
+      <figure class="sketch">
+        <div class="stage" style="height:250px" aria-hidden="true">
+          <div class="app" style="left:6%;right:-4%;top:26px;bottom:-30px">
+            <div class="app-bar"><span class="ico" style="background:var(--organization)">✎</span>Notizen</div>
+            <div class="row"><span class="grow"><span class="ph" style="width:44%"></span><span class="ph" style="width:70%"></span></span></div>
+            <div class="row"><span class="grow"><span class="ph" style="width:36%"></span><span class="ph" style="width:62%"></span></span></div>
+          </div>
+          <div class="toast" style="left:50%;transform:translateX(-50%);bottom:28px;z-index:2;white-space:nowrap">„Geschenkideen“ gelöscht <u>Rückgängig</u></div>
+        </div>
+        <figcaption><b>Skizze Ü1 – Rückgängig statt Angst</b> <span class="ev ev-idea">Idee</span>. Nach Löschen oder Abhaken einige Sekunden „Rückgängig“ anbieten; die Rückfrage im Dialog kann dann bei harmlosen Einträgen entfallen. Bei endgültigen Aktionen (Konto löschen) bleibt die Bestätigung.</figcaption>
+      </figure>
+      <p><b>Connection Engine:</b> Sie bleibt im Hintergrund und erklärt sich in einem Satz („Verbinden heißt: 4inOne zeigt es dort an …“). Das ist richtig so – sie sollte kein eigener Bereich werden. Ausbaustufe mit größtem Nutzen: <b>Reise ↔ Finanzen</b> (R3), weil dort heute doppelt gerechnet wird.</p>
+    </section>
+
+    <!-- 08 Bindung -->
+    <section id="bindung" aria-labelledby="bi-h">
+      <h2 id="bi-h">Langfristige Nutzung</h2>
+      <div class="cols3">
+        <div class="freq"><b>Täglich</b><span class="ev ev-risk verdict-chip">schwach gestützt</span><p>Termine, Aufgaben, Schnellerfassung. Ohne Erinnerung und Kalenderabgleich fehlt der Anlass, die App zu öffnen.</p></div>
+        <div class="freq"><b>Wöchentlich</b><span class="ev ev-code verdict-chip">gut gestützt</span><p>Haushaltsplanung, Einkauf mit Gedächtnis, Verteilung. Stärkster Wiederkehr-Grund heute.</p></div>
+        <div class="freq"><b>Monatlich</b><span class="ev ev-risk verdict-chip">teilweise</span><p>Budget und Sparziele klar; Rückblick vorhanden. Erfassungsaufwand bremst.</p></div>
+        <div class="freq"><b>Gelegentlich</b><span class="ev ev-code verdict-chip">gut gestützt</span><p>Reisen mit Vorlagen, Abrechnung, Bordkarte – überzeugend, aber selten.</p></div>
+      </div>
+      <h3>Warum Nutzer nach einigen Wochen aufhören könnten</h3>
+      <div class="box"><ul>
+        <li><b>Vergessen:</b> Nichts holt sie zurück – keine Mail, kein Push. <span class="ev ev-code">Code</span></li>
+        <li><b>Doppelte Kalender:</b> Termine müssen zusätzlich zum gewohnten Kalender gepflegt werden. <span class="ev ev-code">Code</span></li>
+        <li><b>Tipp-Müdigkeit in Finanzen:</b> jede Ausgabe von vorn, kein Lernen. <span class="ev ev-code">Code</span></li>
+        <li><b>Wachsende Datenmenge ohne Suche:</b> nach Monaten ist das Wiederfinden mühsam. <span class="ev ev-code">Code</span></li>
+        <li><b>Unklare Freigaben:</b> Familien zögern, wenn nicht sichtbar ist, wer was sieht. <span class="ev ev-test">Nutzertest</span></li>
+      </ul></div>
+    </section>
+
+    <!-- 09 Prioritäten -->
+    <section id="prioritaeten" aria-labelledby="pr-h">
+      <h2 id="pr-h">Prioritäten und Aufwand</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Prio</th><th>ID</th><th>Empfehlung</th><th>Aufwand</th><th>API/DB</th></tr></thead>
+        <tbody>
+          <tr><td><span class="prio p0">P0</span></td><td class="id">O1</td><td>Erinnerungen außerhalb der App (E-Mail-Zusammenfassung, Fristen)</td><td class="effort">groß</td><td>ja – Freigabe nötig</td></tr>
+          <tr><td><span class="prio p0">P0</span></td><td class="id">F1</td><td>Erfassung lernt aus eigenen Buchungen</td><td class="effort">mittel</td><td>nein</td></tr>
+          <tr><td><span class="prio p0">P0</span></td><td class="id">T</td><td>Nutzertest mit 5 Personen (Erstnutzung, Woche 2)</td><td class="effort">klein</td><td>nein</td></tr>
+          <tr><td><span class="prio p1">P1</span></td><td class="id">Ü1</td><td>Rückgängig nach Löschen und Abhaken</td><td class="effort">mittel</td><td>teilweise</td></tr>
+          <tr><td><span class="prio p1">P1</span></td><td class="id">O2 · R4</td><td>Ein „Heute“ inkl. Reiseaufgaben</td><td class="effort">mittel</td><td>nein</td></tr>
+          <tr><td><span class="prio p1">P1</span></td><td class="id">O4</td><td>Suche (Organisation zuerst)</td><td class="effort">mittel–groß</td><td>ja</td></tr>
+          <tr><td><span class="prio p1">P1</span></td><td class="id">R1 · F2 · F4 · H2</td><td>Kleine Klarheits-Gewinne: dringend, Einnahmen-Option, Budgetbegriffe, Zuhause-Vorlagen</td><td class="effort">klein</td><td>nein</td></tr>
+          <tr><td><span class="prio p1">P1</span></td><td class="id">H1 · F3 · R2</td><td>Vorzeitig abhaken, Übersicht entlasten, Packliste übernehmen</td><td class="effort">klein–mittel</td><td>teilweise</td></tr>
+          <tr><td><span class="prio p1">P1</span></td><td class="id">O3 · R3</td><td>Kalender-Abo (lesend), Reisebudget in Finanzen</td><td class="effort">groß</td><td>ja – Freigabe nötig</td></tr>
+          <tr><td><span class="prio p2">P2</span></td><td class="id">H3 · H4 · F5</td><td>Dialog verschlanken, Routinen-Begriff, Altlast Haushaltsfinanzen</td><td class="effort">klein–mittel</td><td>F5 ja</td></tr>
+          <tr><td><span class="prio p2">P2</span></td><td class="id">—</td><td>Offline-Einkaufsliste (Service Worker), Dunkelmodus, englische Klassennamen</td><td class="effort">groß</td><td>nein</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 10 Reihenfolge -->
+    <section id="reihenfolge" aria-labelledby="rf-h">
+      <h2 id="rf-h">Empfohlene Umsetzungsreihenfolge</h2>
+      <ol class="steps">
+        <li><div><h4>Nutzertest vorbereiten und parallel laufen lassen</h4><p>Fünf Personen ohne Technikbezug: Erstnutzung (30 Min.) und ein Termin nach zwei Wochen. Klärt die mit „Nutzertest“ markierten Punkte, bevor groß gebaut wird.</p></div></li>
+        <li><div><h4>Schnelle Klarheit ohne API (1–2 Wochen)</h4><p>F1 Erfassung lernt, R1 dringend, F2 Einnahmen-Option, F4 Budgetbegriffe, H2 Zuhause-Vorlagen, O2/R4 ein „Heute“.</p></div></li>
+        <li><div><h4>Vertrauen im Umgang (1–2 Wochen)</h4><p>Ü1 Rückgängig, H1 vorzeitig abhaken (nach Klärung der Backend-Regel), F3 Übersicht entlasten.</p></div></li>
+        <li><div><h4>Rückkehr-Anlass schaffen – mit deiner Freigabe</h4><p>O1 E-Mail-Zusammenfassung und Fristen-Erinnerung, dann O4 Suche.</p></div></li>
+        <li><div><h4>Bereiche enger verbinden – mit deiner Freigabe</h4><p>R3 Reisebudget in Finanzen, R2 Packliste übernehmen, O3 Kalender-Abo.</p></div></li>
+        <li><div><h4>Feinschliff</h4><p>P2-Punkte: Dialoge verschlanken, Altlasten, Offline-Liste, Dunkelmodus.</p></div></li>
+      </ol>
+    </section>
+
+    <!-- 11 Methode -->
+    <section id="methode" aria-labelledby="me-h">
+      <h2 id="me-h">Methode und Grenzen</h2>
+      <div class="box"><ul>
+        <li><b>Quellcode:</b> Datenmodelle aller vier Bereiche, Komponenten, Verbindungsregeln, Startseiten-Logik (<code>dashboard.ts</code>, <code>organisation/views.py › today_data</code>).</li>
+        <li><b>Automatische Prüfung:</b> alle Demo-Seiten und Reiter bei 390 und 1440 px – axe (WCAG 2.2 AA), Querscrollen, Konsolenfehler, Tippflächen, Seitentitel.</li>
+        <li><b>Erstnutzer-Durchlauf:</b> 11 Schritte gegen echtes Backend mit frischer Datenbank (<code>e2e-fullstack/erstnutzer.spec.ts</code>), inklusive Abschottung zweier Konten.</li>
+        <li><b>Nicht geprüft:</b> echte Nutzer, Ladezeiten unter Last, Verhalten mit großen Datenmengen, Screenreader von Hand. Bewertungen 1–10 sind Experteneinschätzungen, keine Messwerte.</li>
+        <li><b>Skizzen:</b> nachgebaute Ansichten nach den Regeln von <code>stageshow</code> (ein Brennpunkt, Platzhalter statt Fülltext, Ausschnitt statt Miniatur). Sie zeigen Ideen, keine fertigen Entwürfe.</li>
+      </ul></div>
+    </section>
+  </main>
+</div>

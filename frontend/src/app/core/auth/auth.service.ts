@@ -15,6 +15,8 @@ export interface AuthUser {
   is_admin?: boolean;
   /** Konto löschen: false = Konto nur über Google/Apple → Bestätigung mit der E-Mail-Adresse statt Passwort. */
   has_password?: boolean;
+  /** O1: Erinnerung per E-Mail – 'off' (Standard), 'daily' oder 'weekly' (montags). */
+  reminder_email?: 'off' | 'daily' | 'weekly';
 }
 
 export type SocialProvider = 'google' | 'apple';
@@ -203,7 +205,7 @@ export class AuthService {
   }
 
   /** Eigenen Namen ändern; die Anzeige (Menü, Begrüßung) folgt sofort. */
-  updateProfile(changes: { name?: string; home_currency?: string }): Observable<AuthUser> {
+  updateProfile(changes: { name?: string; home_currency?: string; reminder_email?: AuthUser['reminder_email'] }): Observable<AuthUser> {
     return this.http
       .patch<AuthUser>(`${API_BASE_URL}/auth/me/`, changes)
       .pipe(tap((user) => this._currentUser.set(user)));

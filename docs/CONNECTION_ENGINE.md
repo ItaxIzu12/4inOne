@@ -284,6 +284,20 @@ keine Buchungen, keine Zahlungen. V1-Verbindungen bleiben unverändert.
 - Demo rechnet dieselben zwei Vorschläge selbst (connection-relevance.ts `dueDuring`, `URGENT_EVERY_DAYS`);
   test_demo_mirror.py prüft auch Pflegewörter, Reise-Vertrags-Wortteile und die 3-Tage-Grenze.
 
+## Reisebudget in Finanzen – TRIP_FINANCE (22.11.2026, R3 aus dem UX-Audit)
+
+Neue abgeleitete Verbindung an der Reise: „Reisebudget in Finanzen als geplant zeigen“. Das eingetragene Reisebudget
+erscheint im Abreisemonat unter Finanzen › Geplant (`planned_items` mit `kind: 'TRIP'`, Marke „aus Reisen › Budget“)
+und mindert „Noch verfügbar“ wie jeder andere geplante Posten. Regeln (`connections/auto_links.trip_finance_problem`,
+gespiegelt in `shared/features/connections/auto-link-rules.ts › tripFinance`):
+
+- nur die Person, die die Reise angelegt hat (das Budget gilt der ganzen Gruppe; ihr eigener Anteil wäre geraten);
+- nur mit Budget > 0 und in Euro (Finanzen rechnet in Euro); abgesagte Reisen nie;
+- nur laufender und künftige Monate; eine Ausgabe mit dem Reisenamen als Notiz im Abreisemonat ersetzt den Planwert.
+
+Reiseausgaben (Reisen › Budget) werden weiterhin nicht in Finanzen gebucht. Migration `connections 0006` erweitert
+die erlaubten Arten (Constraint `auto_link_kind_valid`). Tests: `test_auto_links.py` (R3) und die Matrix.
+
 ## Later: Automations
 
 Automations may act on connected objects only when the behavior is transparent, permission-safe and user-controlled.

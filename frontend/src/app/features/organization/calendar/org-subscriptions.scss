@@ -1,0 +1,190 @@
+// O3 – Kalender abonnieren: Kopf mit Symbol in Organisationsfarbe, Liste der Abos mit Farbpunkt, Formular darunter.
+.subs {
+  display: grid;
+  gap: 18px;
+  padding: 4px 2px 8px;
+}
+.subs__head {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.subs__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--organization-soft);
+  color: var(--organization-accent);
+}
+.subs__icon app-icon {
+  width: 22px;
+  height: 22px;
+}
+h2 {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+h3 {
+  margin: 0 0 2px;
+  font-size: 16px;
+}
+.subs__lead,
+.subs__help,
+.subs__muted {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-secondary);
+  line-height: 1.45;
+}
+.subs__help {
+  font-size: var(--fs-meta);
+}
+.subs__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+}
+.subs__row {
+  --dot: #5b6b7f;
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 10px 10px 14px;
+}
+.subs__row + .subs__row {
+  border-top: 1px solid var(--border-subtle);
+}
+.subs__row[data-color='green'] { --dot: #2e8b57; }
+.subs__row[data-color='blue'] { --dot: #2f6fb5; }
+.subs__row[data-color='amber'] { --dot: #b8741a; }
+.subs__row[data-color='rose'] { --dot: #c4456f; }
+.subs__row[data-color='violet'] { --dot: #7451b8; }
+.subs__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+.subs__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.subs__text b {
+  overflow-wrap: anywhere;
+}
+.subs__text small {
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+}
+.subs__error {
+  margin: 0;
+  color: var(--danger, #b3261e) !important;
+  font-size: var(--fs-meta);
+}
+.subs__notice {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--success-soft, #e3f3ea);
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+}
+.subs__actions,
+.subs__confirm {
+  display: flex;
+  gap: 4px;
+}
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.icon-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.icon-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.icon-btn app-icon {
+  width: 18px;
+  height: 18px;
+}
+.soft {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.soft--danger {
+  border-color: color-mix(in srgb, var(--danger, #b3261e) 40%, #fff);
+  color: var(--danger, #b3261e);
+}
+.subs__form {
+  display: grid;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+.subs__form label {
+  margin-top: 4px;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+}
+.subs__form input {
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid var(--border-control, #b9c0bc);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text-primary);
+  font: inherit;
+}
+.subs__form input[aria-invalid='true'] {
+  border-color: var(--danger, #b3261e);
+}
+.primary {
+  justify-self: start;
+  min-height: 46px;
+  margin-top: 6px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--organization-fill, var(--brand-primary));
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.primary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+@media (max-width: 640px) {
+  .primary {
+    justify-self: stretch;
+  }
+}

@@ -36,6 +36,22 @@
         <p class="profile-hint">Reisebudgets und Ausgaben zeigen zusätzlich einen ungefähren Wert in dieser Währung.</p>
       </div>
 
+      <!-- O1: Erinnerung per E-Mail – freiwillig, Standard aus -->
+      <div class="profile-field">
+        <span class="profile-label" id="profile-reminder">Erinnerung per E-Mail</span>
+        <app-select
+          ariaLabelledby="profile-reminder"
+          [options]="reminderOptions"
+          [value]="reminder()"
+          (valueChange)="reminder.set($any($event)); saved.set(false)"
+        />
+        <p class="profile-hint">
+          Eine kurze E-Mail mit deinen Terminen und fälligen Aufgaben von heute sowie Fristen wie Kündigung oder Wartung.
+          Kommt nur, wenn etwas ansteht, und enthält die Titel deiner Einträge.
+          @if (reminder() !== 'off' && !emailVerified()) { <b>Bestätige zuerst deine E-Mail-Adresse – vorher wird nichts verschickt.</b> }
+        </p>
+      </div>
+
       @if (error()) {
         <p id="profile-error" class="profile-error"  [appErrorNotice]="error()" [persistentError]="true">{{ error() }}</p>
       }

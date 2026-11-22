@@ -302,8 +302,22 @@ class UserPreference(models.Model):
     """Persönliche Anzeige-Einstellungen eines Nutzers — die einzige Stelle für die Heimatwährung (Umrechnungen in
     Reisen). Fehlt der Datensatz, gilt DEFAULT_HOME_CURRENCY."""
 
+    class ReminderEmail(models.TextChoices):
+        OFF = 'off', 'Aus'
+        DAILY = 'daily', 'Täglich'
+        WEEKLY = 'weekly', 'Wöchentlich (montags)'
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='preference')
     home_currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default=DEFAULT_HOME_CURRENCY)
+    # O1 (22.11.2026): Erinnerung per E-Mail – freiwillig, Standard aus (core/reminders.py, Befehl send_reminder_emails).
+    reminder_email = models.CharField(max_length=6, choices=ReminderEmail.choices, default=ReminderEmail.OFF)
+    # Tag des letzten Versands – verhindert doppelte E-Mails, wenn der Befehl öfter läuft.
+    reminder_last_sent = models.DateField(null=True, blank=True)
+
+
+def reminder_email_for(user) -> str:
+    preference = UserPreference.objects.filter(user=user).only('reminder_email').first()
+    return preference.reminder_email if preference else UserPreference.ReminderEmail.OFF
 
 
 def home_currency_for(user) -> str:

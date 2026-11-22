@@ -2,7 +2,7 @@ import { Component, computed, input, output } from '@angular/core';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { ConnectionsSection } from '../../../shared/features/connections/connections-section';
 import { Trip, TripTask } from '../data/travel-api.service';
-import { TRANSPORT_LABELS, cancellationInfo, dueLabel, filterTasks, formatMoney, initials, localDay, nights, peopleLabel, percent, transportIcon, tripDays, tripPhase } from '../shared/travel-logic';
+import { TRANSPORT_LABELS, cancellationInfo, dueLabel, filterTasks, formatMoney, initials, localDay, nights, peopleLabel, percent, transportIcon, tripDays, tripPhase, urgentTasks } from '../shared/travel-logic';
 import { TripPass } from '../shared/trip-pass';
 
 export type TripTab = 'uebersicht' | 'ablauf' | 'planung' | 'packliste' | 'budget';
@@ -59,6 +59,8 @@ export class TripOverview {
       .slice(0, NEXT_TASKS)
       .map((task) => ({ task, due: dueLabel(task.due_date, this.today), during: !!task.due_date && task.due_date >= this.trip().start_date })),
   );
+  /** R1: dringend = überfällig oder in höchstens zwei Tagen fällig; als Marke auf der Bordkarte. */
+  readonly urgentCount = computed(() => urgentTasks(this.tasks(), this.today).length);
   readonly moreTasks = computed(() => Math.max(0, this.tasksOpen() - NEXT_TASKS));
   /** Wo die Abreise-Marke in der Linie steht: vor der ersten Aufgabe, die in die Reise fällt oder kein Datum hat. */
   readonly departIndex = computed(() => {

@@ -1,0 +1,57 @@
+<app-modal [open]="open()" labelledBy="subs-title" closeLabel="Kalender abonnieren schließen" (closed)="closed.emit()">
+  <div class="subs">
+    <header class="subs__head">
+      <span class="subs__icon" aria-hidden="true"><app-icon name="calendar" /></span>
+      <div>
+        <h2 id="subs-title">Kalender abonnieren</h2>
+        <p class="subs__lead">Termine aus Google, Outlook oder iCloud nur lesend einblenden. 4inOne holt sie etwa stündlich neu – Änderungen in 4inOne gehen nicht zurück.</p>
+      </div>
+    </header>
+
+    @if (items(); as rows) {
+      @if (rows.length) {
+        <ul class="subs__list" aria-label="Deine abonnierten Kalender">
+          @for (sub of rows; track sub.id) {
+            <li class="subs__row" [attr.data-color]="sub.color">
+              <i class="subs__dot" aria-hidden="true"></i>
+              <span class="subs__text">
+                <b>{{ sub.name }}</b>
+                <small>{{ sub.host }} · {{ sub.event_count === 1 ? '1 Termin' : sub.event_count + ' Termine' }} · {{ synced(sub) }}</small>
+                @if (sub.last_error) {<small class="subs__error">Letzter Abruf: {{ sub.last_error }}</small>}
+                @if (rowError()?.id === sub.id) {<small class="subs__error" role="alert">{{ rowError()!.text }}</small>}
+              </span>
+              @if (confirmRemove() === sub.id) {
+                <span class="subs__confirm" role="group" [attr.aria-label]="sub.name + ' entfernen?'">
+                  <button type="button" class="soft" (click)="confirmRemove.set(null)">Behalten</button>
+                  <button type="button" class="soft soft--danger" [disabled]="rowBusy() === sub.id" (click)="remove(sub)">Entfernen</button>
+                </span>
+              } @else {
+                <span class="subs__actions">
+                  <button type="button" class="icon-btn" [disabled]="rowBusy() !== null" [attr.aria-label]="sub.name + ' jetzt aktualisieren'" (click)="refresh(sub)"><app-icon name="repeat" aria-hidden="true" /></button>
+                  <button type="button" class="icon-btn" [attr.aria-label]="sub.name + ' entfernen'" (click)="confirmRemove.set(sub.id)"><app-icon name="trash" aria-hidden="true" /></button>
+                </span>
+              }
+            </li>
+          }
+        </ul>
+      }
+    } @else {
+      <p class="subs__muted" aria-live="polite">Abos werden geladen …</p>
+    }
+
+    @if (notice()) {<p class="subs__notice" role="status">{{ notice() }}</p>}
+
+    <form class="subs__form" (submit)="subscribe($event)" novalidate>
+      <h3>Neuen Kalender abonnieren</h3>
+      <label for="sub-name">Name</label>
+      <input id="sub-name" type="text" maxlength="60" placeholder="z. B. Arbeit oder Schulferien" autocomplete="off" [value]="name()" (input)="name.set($any($event.target).value); error.set('')" />
+      <label for="sub-url">Link zum Kalender (ICS)</label>
+      <input id="sub-url" type="url" inputmode="url" maxlength="1000" placeholder="https://… oder webcal://…" autocomplete="off" spellcheck="false"
+        [attr.aria-invalid]="error() ? 'true' : null" [attr.aria-describedby]="error() ? 'sub-error sub-help' : 'sub-help'"
+        [value]="url()" (input)="url.set($any($event.target).value); error.set('')" />
+      <p id="sub-help" class="subs__help">Google Kalender: Einstellungen › dein Kalender › „Geheime Adresse im iCal-Format“. Outlook: Einstellungen › Kalender › Freigegebene Kalender › „Kalender veröffentlichen“ (ICS). Der Link bleibt privat und wird nicht wieder angezeigt.</p>
+      @if (error()) {<p id="sub-error" class="subs__error" role="alert">{{ error() }}</p>}
+      <button type="submit" class="primary" [disabled]="busy()">{{ busy() ? 'Wird abgerufen …' : 'Abonnieren' }}</button>
+    </form>
+  </div>
+</app-modal>

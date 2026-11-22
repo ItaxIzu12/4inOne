@@ -227,9 +227,20 @@ export function tripValue(expense: Pick<TripExpense, 'amount' | 'amount_trip' | 
 
 // ---------- Planung ----------
 /** „Heute“ (auch für Überfälliges) oder „12. März“ — für die Aufgabenliste. */
+/** R1: Als dringend gilt, was überfällig ist oder in höchstens so vielen Tagen fällig wird (heute, morgen, übermorgen). */
+export const URGENT_DAYS = 2;
+export function isUrgent(date: string | null, today: string): boolean {
+  return !!date && date <= addDays(today, URGENT_DAYS);
+}
+/** Offene Aufgaben, die dringend sind (für die Marke auf der Bordkarte). */
+export function urgentTasks(tasks: TripTask[], today: string): TripTask[] {
+  return tasks.filter((t) => t.status === 'OPEN' && isUrgent(t.due_date, today));
+}
 export function dueLabel(date: string | null, today: string): { text: string; urgent: boolean } {
   if (!date) return { text: 'Ohne Datum', urgent: false };
   if (date <= today) return { text: date < today ? 'Überfällig' : 'Heute', urgent: true };
+  if (date === addDays(today, 1)) return { text: 'Morgen', urgent: true };
+  if (date === addDays(today, 2)) return { text: 'Übermorgen', urgent: true };
   return { text: noon(date).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' }), urgent: false };
 }
 export type TaskView = 'open' | 'done' | 'mine';

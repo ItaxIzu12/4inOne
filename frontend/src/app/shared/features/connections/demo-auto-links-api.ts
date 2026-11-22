@@ -24,6 +24,7 @@ import {
   savingsReminder,
   savingsReminderDay,
   tripCalendar,
+  tripFinance,
   tripItinerary,
 } from './auto-link-rules';
 import { AutoKind, AutoLinkState, AutoSourceType, AutoStatus, DerivedCalendarItem, LinkedHouseholdTask } from './auto-links-api.service';
@@ -38,7 +39,7 @@ interface DemoLink {
 const KINDS_FOR: Record<AutoSourceType, AutoKind[]> = {
   CONTRACT: ['CONTRACT_FINANCE', 'CONTRACT_REMINDER'],
   DEVICE: ['DEVICE_MAINTENANCE'],
-  TRIP: ['TRIP_CALENDAR', 'TRIP_ITINERARY'],
+  TRIP: ['TRIP_CALENDAR', 'TRIP_ITINERARY', 'TRIP_FINANCE'],
   SAVINGS_GOAL: ['SAVINGS_REMINDER'],
   HOUSEHOLD: ['HOUSEHOLD_TASKS'],
 };
@@ -48,6 +49,7 @@ const LABEL: Record<AutoKind, string> = {
   DEVICE_MAINTENANCE: 'Wartungserinnerung',
   TRIP_CALENDAR: 'Reisezeitraum im Kalender',
   TRIP_ITINERARY: 'Tagesablauf im Kalender',
+  TRIP_FINANCE: 'Reisebudget in Finanzen planen',
   SAVINGS_REMINDER: 'Sparziel-Erinnerung',
   HOUSEHOLD_TASKS: 'Haushaltsaufgaben in Organisation',
 };
@@ -118,6 +120,10 @@ export class DemoAutoLinksApi {
         const t = this.trips().find((x) => String(x.id) === source);
         return t ? tripItinerary(t.status, this.tripEvents(t.id).length) : null;
       }
+      case 'TRIP_FINANCE': {
+        const t = this.trips().find((x) => String(x.id) === source);
+        return t ? tripFinance(t.title, t.start_date, t.status, t.budget_amount, t.currency, t.my_role === 'OWNER') : null;
+      }
       case 'SAVINGS_REMINDER': {
         const g = this.goals().find((x) => String(x.id) === source);
         return g ? savingsReminder(g.title, g.target_date, g.plan_end_month) : null;
@@ -130,7 +136,10 @@ export class DemoAutoLinksApi {
     const d = this.describe(kind, source) ?? { preview: '', problem: '' };
     return {
       kind, label: LABEL[kind], link_id: link?.id ?? null, status: link?.status ?? null, preview: d.preview, problem: d.problem,
-      available: !(kind === 'CONTRACT_FINANCE' && d.problem.startsWith('Den Betrag hat jemand anderes')),
+      available: !(
+        (kind === 'CONTRACT_FINANCE' && d.problem.startsWith('Den Betrag hat jemand anderes')) ||
+        (kind === 'TRIP_FINANCE' && d.problem.startsWith('Nur wer die Reise angelegt hat'))
+      ),
     };
   }
 
@@ -225,6 +234,13 @@ export class DemoAutoLinksApi {
   }
 
   /** Für die Finanzen-Demo: aktive Verträge mit Plan (CON-01). */
+  /** R3: verbundene Reisen mit Budget in Euro (wie backend trip_planned) – für die Demo-Finanzen. */
+  activeTripFinance(): { title: string; start_date: string; amount: string }[] {
+    const ids = this.links.filter((l) => l.kind === 'TRIP_FINANCE' && l.status === 'ACTIVE').map((l) => l.source);
+    return this.trips()
+      .filter((t) => ids.includes(String(t.id)) && !tripFinance(t.title, t.start_date, t.status, t.budget_amount, t.currency, t.my_role === 'OWNER').problem)
+      .map((t) => ({ title: t.title, start_date: t.start_date, amount: t.budget_amount ?? '0' }));
+  }
   activeContractFinance(): ContractFacts[] {
     const ids = this.links.filter((l) => l.kind === 'CONTRACT_FINANCE' && l.status === 'ACTIVE').map((l) => l.source);
     return this.folder().filter((e) => e.kind === 'vertrag' && ids.includes(String(e.id))).map((e) => ({ ...this.facts(e), name: e.name }));

@@ -1,12 +1,20 @@
-<div class="bar">
-  <div class="switch seg" role="group" aria-label="Zeitraum der Übersicht">
-    @for (p of periods; track p) {
-      <button type="button" [attr.aria-pressed]="period() === p" (click)="select(p)">{{ labels[p] }}</button>
-    }
+@if (showSwitch()) {
+  <div class="bar">
+    <div class="switch seg" role="group" aria-label="Zeitraum der Übersicht">
+      @for (p of periods; track p) {
+        <button type="button" [attr.aria-pressed]="period() === p" (click)="select(p)">{{ labels[p] }}</button>
+      }
+    </div>
   </div>
-</div>
+}
 <!-- Datumsauswahl der Seite, direkt unter dem Zeitraum-Umschalter -->
 <ng-content />
+@if (!showSwitch()) {
+  <!-- F3: weniger Bedienelemente über der Hauptzahl – andere Zeiträume nur auf Wunsch -->
+  <button type="button" class="period-more" [attr.aria-expanded]="false" (click)="expand()">
+    <app-icon name="calendar" aria-hidden="true" />Anderer Zeitraum
+  </button>
+}
 
 @if (period() !== 'month') {
   @let t = totals();

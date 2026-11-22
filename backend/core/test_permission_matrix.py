@@ -504,6 +504,8 @@ DETAIL_VIEW_COVERAGE = {
     'AutoLinkDetailView': 'connections/tests/test_auto_links.py (QA-10/11: only own links, revoked source → 404)',
     'ShareGivenView': 'organisation/test_calendar_shares.py (only own shares, role change, ending)',
     'ShareReceivedView': 'organisation/test_calendar_shares.py (only shares made for me)',
+    'SubscriptionDetailView': 'organisation/test_subscriptions.py (foreign ids → 404, only own subscriptions)',
+    'SubscriptionRefreshView': 'organisation/test_subscriptions.py (foreign ids → 404)',
 }
 
 

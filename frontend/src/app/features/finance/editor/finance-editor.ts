@@ -1,4 +1,4 @@
-import { Component, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, afterNextRender, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { savingsReminder } from '../../../shared/features/connections/auto-link-rules';
 import { AutoLinks } from '../../../shared/features/connections/auto-links';
 import { ConnectionsSection } from '../../../shared/features/connections/connections-section';
@@ -10,10 +10,11 @@ import { ModalForm } from '../../../shared/ui/form/modal-form';
 import { AppSelect, SelectOption } from '../../../shared/ui/form/select';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { SubmissionKey } from '../../../shared/utils/idempotency';
-import { GoalPreview, MAX_CATEGORY_NAME, SavingsGoal, budgetOverride, euros, goalCovers, planRange } from '../data/private-finance-api.service';
+import { FALLBACK_CATEGORY, FinanceTransaction, GoalPreview, MAX_CATEGORY_NAME, SavingsGoal, budgetOverride, euros, goalCovers, planRange } from '../data/private-finance-api.service';
 import { fixedKey } from '../shared/finance-tabs';
+import { suggestCategory } from '../shared/category-suggestion';
 import { DatePipe } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
 import { map, of, switchMap } from 'rxjs';
 import { FINANCE_CONTEXT, Resource } from '../finance-context';
@@ -100,6 +101,47 @@ export class FinanceEditor {
     return `${noun} ${this.ctx.editId() ? 'bearbeiten' : 'erstellen'}`;
   });
   readonly maxCategoryName = MAX_CATEGORY_NAME;
+
+  // F1 – Erfassung, die mitlernt: Kategorie aus früheren Buchungen mit demselben Text vorschlagen.
+  private readonly formValue = toSignal(this.ctx.form.valueChanges, { initialValue: this.ctx.form.getRawValue() });
+  /** Hat die Person in diesem Dialog selbst einen Text getippt bzw. selbst eine Kategorie gewählt? */
+  private readonly noteTyped = signal(false);
+  private readonly categoryPicked = signal(false);
+  readonly suggestion = computed(() => {
+    if (this.ctx.editor() !== 'transactions') return null;
+    const v = this.formValue();
+    const categories = this.ctx.categories();
+    const skip = new Set(categories.filter((c) => c.name === FALLBACK_CATEGORY).map((c) => c.id));
+    const found = suggestCategory(v.note ?? '', v.type === 'INCOME' ? 'INCOME' : 'EXPENSE', this.ctx.transactions(), { exclude: this.ctx.editId(), skip });
+    const category = found && categories.find((c) => c.id === found.category);
+    return found && category ? { ...found, value: String(category.id), name: category.name, color: category.color } : null;
+  });
+  constructor() {
+    // Neuer Dialog: wieder von vorn lernen.
+    effect(() => {
+      this.ctx.editor();
+      this.ctx.editId();
+      untracked(() => {
+        this.noteTyped.set(false);
+        this.categoryPicked.set(false);
+      });
+    });
+    // Nur bei einer neuen Buchung, nur nach eigenem Tippen und nie gegen eine selbst gewählte Kategorie.
+    effect(() => {
+      const found = this.suggestion();
+      if (!found || !this.noteTyped() || this.categoryPicked() || this.ctx.editId()) return;
+      untracked(() => {
+        if (this.ctx.form.controls.category.value !== found.value) this.ctx.form.controls.category.setValue(found.value);
+      });
+    });
+  }
+  noteInput() {
+    this.noteTyped.set(true);
+  }
+  pickCategory(value: string) {
+    this.categoryPicked.set(true);
+    this.ctx.form.controls.category.setValue(value);
+  }
   startQuickCategory() {
     this.ctx.quickCategory.set('');
     this.ctx.quickCategoryError.set('');
@@ -222,7 +264,8 @@ export class FinanceEditor {
         date: v.date,
         note: v.note,
         currency: 'EUR',
-        recurring: v.recurring,
+        // „Kommt jeden Monat wieder“ plant nur Ausgaben ein; eine alte Markierung an einer Einnahme bleibt unverändert.
+        recurring: v.type === 'EXPENSE' ? v.recurring : !!this.ctx.transactions().find((t) => t.id === this.ctx.editId())?.recurring,
       };
     } else if (resource === 'budgets') {
       if (amount === null || !v.month) {
@@ -413,11 +456,26 @@ export class FinanceEditor {
         },
       });
   }
+  /** Ü1: gelöschte Transaktion mit denselben Angaben neu anlegen. */
+  private restore(t: FinanceTransaction) {
+    this.ctx.api
+      .save('transactions', { amount: t.amount, type: t.type, category: t.category, date: t.date, note: t.note, currency: t.currency || 'EUR', recurring: !!t.recurring })
+      .pipe(takeUntilDestroyed(this.ctx.destroy))
+      .subscribe({
+        next: () => {
+          this.ctx.remember('Transaktion wiederhergestellt.', t.date.slice(0, 7));
+          this.ctx.load();
+        },
+        error: () => this.ctx.error.set('Die Transaktion konnte nicht wiederhergestellt werden.'),
+      });
+  }
   remove() {
     const resource = this.ctx.editor(),
       id = this.ctx.editId();
     if (!resource || !id || this.saving()) return;
     this.saving.set(true);
+    // Ü1: Eine gelöschte Transaktion lässt sich einige Sekunden lang wiederherstellen (neu angelegt mit denselben Angaben).
+    const deleted = resource === 'transactions' ? this.ctx.transactions().find((t) => t.id === id) : undefined;
     this.ctx.api
       .delete(resource, id)
       .pipe(takeUntilDestroyed(this.ctx.destroy))
@@ -426,7 +484,8 @@ export class FinanceEditor {
           this.saving.set(false);
           this.ctx.editor.set(null);
           const noun = { transactions: 'Transaktion', budgets: 'Monatsbudget', goals: 'Sparziel' }[resource];
-          this.ctx.remember(`${noun} gelöscht.`, resource === 'goals' ? null : this.ctx.month());
+          const undo = deleted ? { message: '', actionLabel: 'Rückgängig', action: () => this.restore(deleted) } : undefined;
+          this.ctx.remember(`${noun} gelöscht.`, resource === 'goals' ? null : this.ctx.month(), undo);
           this.ctx.load();
         },
         error: () => {

@@ -672,3 +672,58 @@ small {
   --att-soft: var(--household-soft);
   --att-on: var(--household-on);
 }
+
+// ---------- H2: Vorlagen (Formular „Neu“ und leere Liste) ----------
+.templates {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.templates__label {
+  color: var(--text-primary);
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+}
+.templates__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.templates__chips--empty {
+  justify-content: center;
+  margin-top: 12px;
+}
+.templates__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  cursor: pointer;
+}
+.templates__chip app-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--household-accent);
+}
+.templates__chip:hover {
+  border-color: color-mix(in srgb, var(--household-accent) 40%, var(--border-default));
+}
+.templates__chip[aria-pressed='true'] {
+  border-color: var(--household-accent);
+  background: var(--household-soft);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--household-accent);
+}
+.templates__hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  line-height: 1.4;
+}

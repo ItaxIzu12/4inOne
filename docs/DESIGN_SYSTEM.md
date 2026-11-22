@@ -1394,3 +1394,43 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
 - **Ordnerstruktur der Bereiche (21.11.2026):** Haushalt, Organisation und Reisen wie Finanzen gegliedert — ein
   Unterordner je Reiter, `data/`, `shared/` (Regeln: docs/ARCHITECTURE.md › Bereichsordner). Stile und Komponenten
   unverändert, nur verschoben; `finance-periods` und `aufgaben-logic` liegen jetzt im jeweiligen `shared/`.
+
+- **Audit-Punkte F1, F2, F4, R1, H2 (21.11.2026, nur Frontend, keine API- oder Datenbankänderung):**
+  - F1: Logik in `features/finance/shared/category-suggestion.ts` (`suggestCategory`, `keyWord`, `prefillImportCategories`,
+    Tests daneben). Gleicher Text (ohne Groß-/Kleinschreibung) zählt zuerst, sonst das erste aussagekräftige Wort
+    (Füllwörter wie „SEPA“, „Lastschrift“, „PayPal“ übersprungen); häufigste Kategorie gewinnt, bei Gleichstand die zuletzt
+    benutzte; „Sonstiges“ nie. Dialog `editor/finance-editor`: Feld „Wofür?“ (`#booking-note`) vor den Chips, neue Klasse
+    `.suggest-note` / `.suggest-note__apply` in `finance-editor.scss`; Vorauswahl nur bei neuer Buchung, nach eigenem Tippen
+    und ohne selbst gewählte Kategorie (`noteTyped`, `categoryPicked`). Import: `FinanceImportDialog` bekommt
+    `[history]`/`[categories]`, das Backend ordnet Namen wie bisher per `casefold` zu.
+  - F2: `finance-editor.html` blendet `.check-row` „Kommt jeden Monat wieder“ bei Einnahmen aus; `save()` sendet bei
+    Einnahmen den bisherigen Wert der Buchung (neu: `false`).
+  - F4: `budgets/finance-budgets-tab` — `app-term-hint` an „Kategorie-Budgets“ und „Geplant“ (`plannedHint` aus dem
+    Kontext), neue Zeile `.cat-allocation` (`.is-over`) aus `allocation()`.
+  - R1: `travel/shared/travel-logic.ts` — `URGENT_DAYS = 2`, `isUrgent`, `urgentTasks`; `dueLabel` kennt „Morgen“ und
+    „Übermorgen“ (urgent). `TripPass` hat die Eingabe `tasksUrgent` (Marke `.pass__chip.is-strong`), `TripOverview` reicht
+    `urgentCount()` durch. Test `shared/trip-pass.spec.ts`.
+  - H2: `household/home/home-templates.ts` (`HOME_TEMPLATES`, `templatesFor`); `home-tab` mit `templates()`,
+    `applyTemplate()`, `openTemplate()`, `activeTemplate`; neue Klassen `.templates`, `.templates__chips(--empty)`,
+    `.templates__chip`, `.templates__hint` in `home-tab.scss`. Keine neuen Tokens.
+
+- **Audit-Schwächen, zweite Runde (22.11.2026):**
+  - F3: `finance/overview/finance-period` – `expanded`, `showSwitch()`, `expand()`; neue Klasse `.period-more`. Browser-Tests
+    klicken zuerst „Anderer Zeitraum“.
+  - O2/R4: `dashboard.ts › liveRows` nimmt `reisen.tasks` aus `GET /api/v1/today/` (neu: `backend/connections/today.py`,
+    Typ `TodayTripTask`).
+  - R2: `travel/packing/trip-packing` – Eingabe `copySources`, Ausgabe `copyFrom`, Klassen `.copy`, `.copy__list`,
+    `.copy__item`; `travel.ts › copySources()`, `openCopyPacking()`, `smartSetupSource` (Kopf/Basis des Vorschlags-Dialogs).
+  - Ü1: `shared/ui/save-feedback` – Eingabe `actionLabel`, Ausgabe `action`, Klasse `.toast__action`; Typen `Feedback`,
+    `FeedbackAction`, `feedbackText()`, `feedbackAction()`. Container schließen die Meldung und führen dann die Aktion aus
+    (`runNoticeAction`, `runSaveAction`).
+  - H1: `household/shared/tasks-logic.ts › notYetCompletable`, `EARLY_DAYS = 2` (in `tasks-tab`, `routines-tab`).
+  - H3: `household/tasks/task-form` – `moreOpen`, `moreSummary()`, neue Datei `task-form.scss` (`.more-toggle`, `.more`).
+  - H4: Ansichtsname `Routinen` (Schlüssel bleibt `wiederkehrend` für die Adresse `?ansicht=`).
+  - O4: `shared/features/global-search/` (Komponente + Service), siehe docs/GLOBAL_SEARCH.md.
+  - R3: Verbindungsart `TRIP_FINANCE` in `auto-links*.ts`, `auto-link-rules.ts › tripFinance`, Demo
+    `activeTripFinance()`; `PlannedItem.kind` kennt `'TRIP'`.
+  - O1: `features/profile` – `reminderOptions`, `reminder`; `AuthUser.reminder_email`.
+  - O3: `organization/calendar/org-subscriptions.{ts,html,scss}`, `OrganisationApi.subscriptions/subscribe/
+    refreshSubscription/unsubscribe/subscribedEvents`, `PersonalEvent.subscription`; Abo-Termine als
+    `subscribedEvents` in `organization.ts`. Keine neuen Tokens.

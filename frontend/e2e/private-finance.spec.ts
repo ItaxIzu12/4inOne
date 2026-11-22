@@ -154,7 +154,7 @@ for (const width of [390, 1440]) {
     await newBooking(page);
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('48,32');
     await page.getByRole('button', { name: 'Standardkategorien anlegen' }).click();
-    await page.getByLabel('Notiz (optional)').fill('Supermarkt');
+    await page.getByLabel('Wofür? (optional)').fill('Supermarkt');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await overview(page);
     await expect(page.locator('.kpis')).toContainText('2.951,68 €');
@@ -165,7 +165,7 @@ for (const width of [390, 1440]) {
     // „+ Transaktion“ auf „Einnahmen“ startet bereits als Einnahme
     await expect(page.getByRole('group', { name: 'Typ' }).getByRole('button', { name: 'Einnahme', pressed: true })).toBeVisible();
     await page.getByLabel('Betrag in EUR', { exact: true }).fill('3100');
-    await page.getByLabel('Notiz (optional)').fill('Gehalt');
+    await page.getByLabel('Wofür? (optional)').fill('Gehalt');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await overview(page);
     // Einnahme erhöht das verfügbare Budget und wird sichtbar bestätigt

@@ -57,5 +57,5 @@ test('a category budget opens its transactions; a planned recurring row can be b
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('heading', { name: 'Transaktion erstellen' })).toBeVisible();
   await expect(dialog.locator('.planned-note')).toContainText('Geplante wiederkehrende Ausgabe „Miete“');
-  await expect(dialog.getByLabel('Notiz (optional)')).toHaveValue('Miete');
+  await expect(dialog.getByLabel('Wofür? (optional)')).toHaveValue('Miete');
 });

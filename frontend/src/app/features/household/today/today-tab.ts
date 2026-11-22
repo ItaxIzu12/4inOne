@@ -1,3 +1,4 @@
+import { Feedback } from '../../../shared/ui/save-feedback/save-feedback';
 import { DoneToggle } from '../../../shared/ui/done-toggle/done-toggle';
 import { ErrorNoticeDirective } from '../../../shared/ui/error-notice/error-notice';
 import { Component, computed, inject, output, signal } from '@angular/core';
@@ -61,7 +62,7 @@ export class UebersichtTab {
         alt: { label: 'Oder einen Vertrag hinzufügen', icon: 'finance' } },
     ];
   });
-  readonly saved = output<string>();
+  readonly saved = output<Feedback>();
   readonly openTab = output<HaushaltTabKey>();
   readonly openZuhause = output<ZuhauseSection>();
   readonly create = output<HaushaltCreate>();
@@ -164,16 +165,30 @@ export class UebersichtTab {
         this.justDone.set(task.id);
         const calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
         setTimeout(() => this.load(), calm ? 0 : 520);
-        this.saved.emit(
-          updated.is_done || !updated.due_date
-            ? `„${task.title}“ erledigt.`
-            : `„${task.title}“ erledigt · wieder fällig ${relativeDay(updated.due_date)}.`,
-        );
+        if (updated.is_done) {
+          // Ü1: einmalige Aufgabe – einige Sekunden „Rückgängig“
+          this.saved.emit({ message: `„${task.title}“ erledigt.`, actionLabel: 'Rückgängig', action: () => this.undoComplete(updated) });
+        } else {
+          this.saved.emit(
+            updated.due_date ? `„${task.title}“ erledigt · wieder fällig ${relativeDay(updated.due_date)}.` : `„${task.title}“ erledigt.`,
+          );
+        }
       },
       error: () => {
         this.completing.set(null);
         this.actionError.set(`„${task.title}“ konnte nicht abgehakt werden. Bitte noch einmal versuchen.`);
       },
+    });
+  }
+
+  /** Ü1: abgehakte einmalige Aufgabe wieder öffnen (vorhandener Endpunkt „wieder-oeffnen“). */
+  private undoComplete(task: TaskDto): void {
+    this.provider.reopenTask(task.id).subscribe({
+      next: () => {
+        this.load();
+        this.saved.emit(`„${task.title}“ ist wieder offen.`);
+      },
+      error: () => this.actionError.set(`„${task.title}“ konnte nicht wieder geöffnet werden.`),
     });
   }
 

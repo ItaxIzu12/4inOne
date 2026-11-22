@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../../core/api.config';
 
 /** Connection Engine V2 (backend connections/auto_links.py): abgeleitete Verbindungen — eine Quelle, kein Kopieren. */
-export type AutoKind = 'CONTRACT_FINANCE' | 'CONTRACT_REMINDER' | 'DEVICE_MAINTENANCE' | 'TRIP_CALENDAR' | 'TRIP_ITINERARY' | 'SAVINGS_REMINDER' | 'HOUSEHOLD_TASKS';
+export type AutoKind = 'CONTRACT_FINANCE' | 'CONTRACT_REMINDER' | 'DEVICE_MAINTENANCE' | 'TRIP_CALENDAR' | 'TRIP_ITINERARY' | 'TRIP_FINANCE' | 'SAVINGS_REMINDER' | 'HOUSEHOLD_TASKS';
 export type AutoSourceType = 'CONTRACT' | 'DEVICE' | 'TRIP' | 'SAVINGS_GOAL' | 'HOUSEHOLD';
 export type AutoStatus = 'ACTIVE' | 'PAUSED';
 

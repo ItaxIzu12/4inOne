@@ -1,7 +1,7 @@
 import { IconName } from '../../../shared/ui/icons/app-icon';
 import { calendarWeek } from '../../../shared/utils/dates/calendar-week';
 import { TaskDto, TaskPriority, TaskRoom } from '../data/household-api.service';
-import { daysUntil, isoDate } from './household-logic';
+import { addDaysIso, daysUntil, isoDate } from './household-logic';
 
 /**
  * Anzeigeregeln des Aufgaben-Reiters — reine Funktionen, damit sie einzeln
@@ -101,4 +101,26 @@ export function filterTasks(tasks: TaskDto[], filters: TaskFilters, today: Date 
     }
     return true;
   });
+}
+
+/** Abstand einer Wiederholung in Tagen (ungefähr bei Monaten); null = einmalige Aufgabe. */
+function intervalDays(task: Pick<TaskDto, 'recurrence' | 'recurrence_days' | 'recurrence_months'>): number | null {
+  if (task.recurrence_days) return task.recurrence_days;
+  if (task.recurrence_months) return task.recurrence_months * 30;
+  const simple: Record<string, number> = { daily: 1, weekly: 7, monthly: 30, yearly: 365 };
+  return task.recurrence ? (simple[task.recurrence] ?? null) : null;
+}
+/** So viele Tage vor dem Termin darf eine Routine schon abgehakt werden. */
+export const EARLY_DAYS = 2;
+/**
+ * H1 – Vorzeitig abhaken: Einmalige Aufgaben jederzeit. Routinen bis zu zwei Tage vor dem Termin, aber nie so früh,
+ * dass derselbe Termin nach dem Abhaken schon wieder abhakbar wäre (tägliche Routine: nur am Tag selbst) – so kann
+ * man sich keine Erledigungen „vorarbeiten“.
+ */
+export function notYetCompletable(task: Pick<TaskDto, 'due_date' | 'recurrence' | 'recurrence_days' | 'recurrence_months'>, today: Date = new Date()): boolean {
+  if (!task.due_date) return false;
+  const interval = intervalDays(task);
+  if (interval === null) return false;
+  const early = Math.max(0, Math.min(EARLY_DAYS, interval - 1));
+  return task.due_date > addDaysIso(early, today);
 }

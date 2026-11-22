@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Injector, afterNextRender, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
@@ -170,6 +170,16 @@ export class FinancePeriodView {
   /** Start- und Enddatum vertauscht eingegeben: mit einem Klick richtigstellen. */
   swapRange() {
     this.range.update((r) => ({ from: r.to, to: r.from }));
+  }
+  /** F3: Die Übersicht ist zuerst die Monats-/Budgetansicht. Tag, Woche und eigener Zeitraum stehen hinter
+   * „Anderer Zeitraum“; der Umschalter erscheint nur auf Wunsch oder solange ein anderer Zeitraum gewählt ist. */
+  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly injector = inject(Injector);
+  readonly expanded = signal(false);
+  readonly showSwitch = computed(() => this.expanded() || this.period() !== 'month');
+  expand() {
+    this.expanded.set(true);
+    afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>('.seg button[aria-pressed="true"]')?.focus(), { injector: this.injector });
   }
   select(period: FinancePeriod) {
     this.period.set(period);

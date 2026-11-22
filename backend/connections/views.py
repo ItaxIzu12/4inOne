@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 
 from connections import link_suggestions, services, suggestions, trip_overview
 from connections.today import today_overview
+from connections.search import search as global_search
 from connections.serializers import (
     MAX_ID,
     CandidateQuerySerializer,
@@ -17,7 +18,7 @@ from connections.serializers import (
     SuggestionKeySerializer,
     SuggestionQuerySerializer,
 )
-from connections.throttling import ConnectionsWriteRateThrottle
+from connections.throttling import ConnectionsWriteRateThrottle, SearchRateThrottle
 
 
 class ConnectionsView(APIView):
@@ -169,6 +170,16 @@ class TodayOverviewView(ConnectionsView):
 
     def get(self, request):
         return Response(today_overview(request.user, request.query_params.get('timezone', 'Europe/Berlin')))
+
+
+class SearchView(ConnectionsView):
+    """GET /api/v1/search/?q=… — O4: Treffer aus allen Bereichen, nur was die Person ohnehin sehen darf."""
+
+    def get_throttles(self):
+        return [SearchRateThrottle()]
+
+    def get(self, request):
+        return Response(global_search(request.user, request.query_params.get('q', '')))
 
 
 class TripRemindersView(ConnectionsView):

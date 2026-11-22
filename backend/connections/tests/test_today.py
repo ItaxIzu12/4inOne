@@ -13,7 +13,7 @@ from core.models import Household, HouseholdMembership
 from finanzen.models import MonthlyBudget, Transaction
 from haushalt.models import FolderEntry, ShoppingItem, ShoppingList, Task as HouseholdTask
 from organisation.models import PersonalTask
-from reisen.models import Trip, TripEvent, TripParticipant
+from reisen.models import Trip, TripEvent, TripParticipant, TripTask
 
 pytestmark = pytest.mark.django_db
 
@@ -84,7 +84,7 @@ def test_today_shows_nothing_of_other_people(world):
     assert for_ben['organisation']['items'] == []
     assert [t['title'] for t in for_ben['haushalt']['tasks']] == ['Bens Aufgabe']
     assert for_ben['finanzen']['expenses'] == '0.00'
-    assert for_ben['reisen'] == {'current': None, 'upcoming': None, 'events': []}
+    assert for_ben['reisen'] == {'current': None, 'upcoming': None, 'events': [], 'tasks': []}
     assert for_ben['suggestions'] == []
 
     # Ohne Haushalt kein Haushaltsabschnitt, statt einer leeren Karte.
@@ -125,3 +125,22 @@ def test_unknown_timezone_and_anonymous_are_rejected(world):
     assert client.get(URL).status_code == 401
     client.force_authenticate(world['anna'])
     assert client.get(URL, {'timezone': 'Mars/Olympus'}).status_code == 400
+
+
+def test_due_trip_tasks_for_me_or_nobody_are_in_today(world):
+    anna, clara = world['anna'], world['clara']
+    today = timezone.localdate()
+    trip = Trip.objects.create(owner=anna, title='Lissabon', start_date=today + timedelta(days=5), end_date=today + timedelta(days=8))
+    TripParticipant.objects.create(trip=trip, user=clara, role=TripParticipant.Role.EDITOR)
+    TripTask.objects.create(trip=trip, title='Online Check-in', due_date=today, assignee=anna)
+    TripTask.objects.create(trip=trip, title='Reisepass prüfen', due_date=today - timedelta(days=1))
+    TripTask.objects.create(trip=trip, title='Claras Aufgabe', due_date=today, assignee=clara)
+    TripTask.objects.create(trip=trip, title='Später', due_date=today + timedelta(days=2))
+    TripTask.objects.create(trip=trip, title='Erledigt', due_date=today, status=TripTask.Status.DONE)
+
+    tasks = _get(anna)['reisen']['tasks']
+
+    assert [(t['title'], t['overdue'], t['trip_title']) for t in tasks] == [
+        ('Reisepass prüfen', True, 'Lissabon'),
+        ('Online Check-in', False, 'Lissabon'),
+    ]

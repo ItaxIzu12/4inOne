@@ -5,8 +5,8 @@ import { AppSelect } from '../../../shared/ui/form/select';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { Id, MemberLoadDto, RoutineStatsDto, TaskDto } from '../data/household-api.service';
 import { HAUSHALT_DATA_PROVIDER } from '../data/household-data-provider';
-import { relativeDay, todayIso } from '../shared/household-logic';
-import { avatarTone, initials, room } from '../shared/tasks-logic';
+import { relativeDay } from '../shared/household-logic';
+import { avatarTone, initials, notYetCompletable, room } from '../shared/tasks-logic';
 import {
   Frequency,
   ROUTINE_CHIPS,
@@ -132,9 +132,9 @@ export class RoutinenTab {
     });
   }
 
-  /** Noch nicht fällig: abhaken erst ab dem Fälligkeitstag (wie im Aufgaben-Reiter). */
+  /** H1: wie im Aufgaben-Reiter – Routinen bis zu zwei Tage vor dem Termin abhakbar. */
   private notYetDue(task: TaskDto): boolean {
-    return !!task.due_date && task.due_date > todayIso();
+    return notYetCompletable(task);
   }
 
   private menuItems(task: TaskDto): RowMenuItem[] {

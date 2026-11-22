@@ -7,7 +7,7 @@ Jeder Abschnitt nutzt dieselbe Sichtbarkeitsregel wie seine Domain
 - Haushalt: fällige Aufgaben für mich oder niemanden, Ordnerfristen der
   nächsten Tage (nicht für Kind-Konten, wie im Haushaltsordner selbst),
   offene Einkäufe.
-- Reisen: Termine heute, laufende und bald beginnende Reisen.
+- Reisen: Termine heute, fällige Reiseaufgaben (für mich oder niemanden), laufende und bald beginnende Reisen.
 - Finanzen: nur die EIGENEN privaten Zahlen des Monats.
 - Vorschläge: die wichtigsten offenen (connections/suggestions.py).
 
@@ -27,7 +27,7 @@ from finanzen.services import month_bounds
 from haushalt import services as haushalt_services
 from haushalt.models import ShoppingItem, Task as HouseholdTask
 from organisation.views import today_data
-from reisen.models import Trip, TripEvent
+from reisen.models import Trip, TripEvent, TripTask
 
 DEADLINE_DAYS = 14
 TRIP_LEAD_DAYS = 14
@@ -98,6 +98,14 @@ def _reisen(user, today, tz):
         .order_by('starts_at', 'id')[:LIST_LIMIT]
     )
 
+    # Fällige Reiseaufgaben (heute oder überfällig) — wie im Haushalt nur meine oder noch niemandem zugeteilte.
+    due_tasks = (
+        TripTask.objects.filter(trip__in=trips, status=TripTask.Status.OPEN, due_date__lte=today)
+        .filter(Q(assignee=user) | Q(assignee__isnull=True))
+        .select_related('trip')
+        .order_by('due_date', 'due_time', 'id')[:LIST_LIMIT]
+    )
+
     def trip_info(trip):
         if trip is None:
             return None
@@ -123,6 +131,18 @@ def _reisen(user, today, tz):
                 'location': event.location,
             }
             for event in events
+        ],
+        'tasks': [
+            {
+                'id': task.pk,
+                'trip_id': task.trip_id,
+                'trip_title': task.trip.title,
+                'title': task.title,
+                'due_date': task.due_date.isoformat(),
+                'due_time': task.due_time.strftime('%H:%M') if task.due_time else None,
+                'overdue': task.due_date < today,
+            }
+            for task in due_tasks
         ],
     }
 

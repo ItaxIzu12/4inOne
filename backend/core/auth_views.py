@@ -30,7 +30,7 @@ from core.mfa_views import MfaVerifyRateThrottle, user_has_mfa_enabled, verify_m
 from core.models import Household, HouseholdMembership, PasswordResetToken, UserSession
 from core.throttling import LocalCacheThrottle
 from .currencies import CURRENCY_CHOICES
-from .models import UserPreference, home_currency_for
+from .models import UserPreference, home_currency_for, reminder_email_for
 
 REFRESH_COOKIE_NAME = 'refresh_token'
 PASSWORD_RESET_TOKEN_LIFETIME = timezone.timedelta(minutes=30)
@@ -91,13 +91,15 @@ def _session_id_from_cookie(request) -> str | None:
 
 def _user_payload(user) -> dict:
     """Für die Begrüßung/Initialen im Frontend (Header, Dashboard) — bewusst
-    nur Name/E-Mail und die Heimatwährung (Umrechnungen in Reisen), keine weiteren Felder (Datenminimierung)."""
+    nur Name/E-Mail, Heimatwährung (Umrechnungen in Reisen) und die Erinnerungs-Einstellung (Datenminimierung)."""
     from core.email_verification import is_verified
 
     return {
         'name': user.first_name,
         'email': user.email,
         'home_currency': home_currency_for(user),
+        # O1: Erinnerung per E-Mail ('off' | 'daily' | 'weekly').
+        'reminder_email': reminder_email_for(user),
         # Ob Kontakt-Einladungen schon in der App erscheinen dürfen (core/email_verification.py).
         'email_verified': is_verified(user),
         # Admin-Panel (monitoring/): nur der Schalter fürs Menü — die Rechte prüft jeder Admin-Endpunkt selbst.
@@ -587,6 +589,7 @@ class SessionDetailView(APIView):
 class ProfileSerializer(serializers.Serializer):
     name = serializers.CharField(min_length=2, max_length=150, required=False)
     home_currency = serializers.ChoiceField(choices=CURRENCY_CHOICES, required=False)
+    reminder_email = serializers.ChoiceField(choices=UserPreference.ReminderEmail.choices, required=False)
 
     def validate(self, attrs):
         if not attrs:
@@ -612,6 +615,8 @@ class ProfileView(APIView):
             request.user.save(update_fields=['first_name'])
         if 'home_currency' in data:
             UserPreference.objects.update_or_create(user=request.user, defaults={'home_currency': data['home_currency']})
+        if 'reminder_email' in data:
+            UserPreference.objects.update_or_create(user=request.user, defaults={'reminder_email': data['reminder_email']})
         return Response(_user_payload(request.user))
 
     def get_throttles(self):

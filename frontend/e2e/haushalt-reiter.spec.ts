@@ -65,7 +65,7 @@ test('Heute: due tasks, upcoming deadlines (30 days) and the shopping summary', 
 test('recurring tasks: pausing via the row menu and filtering paused ones', async ({ page }) => {
   await page.route('http://localhost:8000/api/**', (route) => route.abort());
   await page.goto('/demo/haushalt?tab=aufgaben');
-  await page.getByRole('button', { name: 'Wiederkehrend' }).click();
+  await page.getByRole('button', { name: 'Routinen' }).click();
   await expect(page).toHaveURL(/ansicht=wiederkehrend/);
   await expect(page.getByRole('switch')).toHaveCount(0); // kein Schalter rechts — Pausieren steht im Menü
   await page.getByRole('button', { name: 'Aktionen für Küche sauber halten' }).click();

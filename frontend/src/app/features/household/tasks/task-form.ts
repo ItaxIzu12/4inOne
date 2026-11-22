@@ -1,3 +1,4 @@
+import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { HouseholdPeople } from '../shared/household-people.service';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { ConnectionsSection } from '../../../shared/features/connections/connections-section';
@@ -41,9 +42,9 @@ export interface TaskFormChange {
 @Component({
   selector: 'app-task-form',
   standalone: true,
-  imports: [ConnectionsSection, Field, ModalForm, AppSelect, AppDatePicker, AppTimePicker, ScopeNote],
+  imports: [AppIcon, ConnectionsSection, Field, ModalForm, AppSelect, AppDatePicker, AppTimePicker, ScopeNote],
   templateUrl: './task-form.html',
-  styleUrls: ['../shared/household-common.scss'],
+  styleUrls: ['../shared/household-common.scss', './task-form.scss'],
 })
 export class TaskForm {
   private readonly provider = inject(HAUSHALT_DATA_PROVIDER);
@@ -93,6 +94,20 @@ export class TaskForm {
   protected readonly formError = signal<string | null>(null);
   protected readonly formSaving = signal(false);
 
+  /** H3: Beschreibung, Uhrzeit, Aufwand, Raum, Dauer und Priorität stehen hinter „Mehr Angaben“ – beim Bearbeiten
+   * aufgeklappt, sobald eine davon gesetzt ist. */
+  protected readonly moreOpen = signal(false);
+  protected readonly moreSummary = computed(() => {
+    const parts = [
+      this.formDescription().trim() ? 'Beschreibung' : '',
+      this.formTime() ? `${this.formTime()} Uhr` : '',
+      this.formRoom() ? (this.roomOptions.find((o) => o.value === this.formRoom())?.label ?? '') : '',
+      this.formDuration() ? `${this.formDuration()} Min.` : '',
+      this.formPriority() !== 'mittel' ? `Priorität ${this.formPriority()}` : '',
+    ].filter(Boolean);
+    return parts.length ? parts.join(' · ') : 'Beschreibung, Uhrzeit, Aufwand, Raum, Dauer, Priorität';
+  });
+
   protected readonly canRotate = computed(() => this.formRecurrence() !== null && this.members().length >= 2);
 
   openNew(): void {
@@ -111,6 +126,7 @@ export class TaskForm {
     this.formRotate.set(false);
     this.formRotation.set([]);
     this.formError.set(null);
+    this.moreOpen.set(false);
     this.formOpen.set(true);
   }
 
@@ -129,6 +145,9 @@ export class TaskForm {
     this.formRotate.set(task.rotate);
     this.formRotation.set([...task.rotation_member_ids]);
     this.formError.set(null);
+    this.moreOpen.set(
+      !!(task.description || task.due_time || task.room || task.duration_minutes || (task.priority && task.priority !== 'mittel') || task.effort !== 1),
+    );
     this.formOpen.set(true);
   }
 

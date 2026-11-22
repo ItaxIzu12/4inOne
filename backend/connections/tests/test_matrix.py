@@ -118,6 +118,10 @@ def _auto_source(world, kind):
         TripEvent.objects.create(trip=trip, title='Kolosseum', starts_at=timezone.now() + timedelta(days=11))
         prefix = 'trip:' if kind == AutoKind.TRIP_CALENDAR else 'trip-event:'
         return trip.pk, in_calendar(prefix), trip.delete
+    if kind == AutoKind.TRIP_FINANCE:
+        trip = Trip.objects.create(owner=anna, title='Rom', destination='Rom', start_date=today, end_date=today + timedelta(days=2), budget_amount=Decimal('600'))
+        planned = lambda: any(i['kind'] == 'TRIP' for i in _client(anna).get('/api/v1/finanzen/private/summary/', {'month': today.strftime('%Y-%m')}).data['planned_items'])  # noqa: E731
+        return trip.pk, planned, trip.delete
     if kind == AutoKind.SAVINGS_REMINDER:
         goal = SavingsGoal.objects.create(owner=anna, title='Fahrrad', target_amount=Decimal('800'), target_date=today + timedelta(days=60))
         return goal.pk, in_calendar('goal:'), goal.delete

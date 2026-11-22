@@ -411,7 +411,7 @@ def test_trip_itinerary_shows_program_points_with_time_only_when_linked_and_only
     assert ice['context'] == 'Berlin'
 
     states = _client(anna).get(AUTO, {'source_type': 'TRIP', 'source_id': trip.pk}).data
-    assert [s['kind'] for s in states] == ['TRIP_CALENDAR', 'TRIP_ITINERARY']
+    assert [s['kind'] for s in states] == ['TRIP_CALENDAR', 'TRIP_ITINERARY', 'TRIP_FINANCE']
     assert states[1]['preview'].startswith('Organisation › Kalender: 2 Programmpunkte mit Uhrzeit')
 
     # Zeitraum der Abfrage zählt
@@ -488,3 +488,40 @@ def test_free_cancellation_deadline_appears_as_reminder_until_it_has_passed(w):
     assert not [i for i in _calendar(anna, today - timedelta(days=5), today + timedelta(days=30)) if i['key'].startswith('trip-cancel')]
     Trip.objects.filter(pk=trip.pk).update(free_cancellation_until=today + timedelta(days=4), status='CANCELLED')
     assert not [i for i in _calendar(anna, today, today + timedelta(days=30)) if i['key'].startswith('trip-cancel')]
+
+
+# --------------------------------------------------------------------------- R3: Reisebudget in Finanzen (22.11.2026)
+
+def _trip_planned(user, month: date):
+    data = _client(user).get(SUMMARY, {'month': _month(month)}).data
+    return [i for i in data['planned_items'] if i['kind'] == 'TRIP']
+
+
+def test_trip_budget_is_planned_in_the_departure_month_and_a_booking_replaces_it(w):
+    anna, today = w['anna'], timezone.localdate()
+    start = _next_month(today) + timedelta(days=9)
+    trip = Trip.objects.create(owner=anna, title='Lissabon', start_date=start, end_date=start + timedelta(days=4), budget_amount=Decimal('900'))
+    state = _link(anna, 'TRIP_FINANCE', trip.pk)
+    assert state['preview'].startswith('Finanzen › Geplant: 900,00 €')
+
+    assert _trip_planned(anna, today) == []
+    planned = _trip_planned(anna, start)
+    assert [(p['title'], p['amount'], p['date']) for p in planned] == [('Lissabon', '900.00', start.isoformat())]
+    # „Noch verfügbar“ zieht es ab wie jeden anderen geplanten Posten
+    Transaction.objects.create(owner=anna, type='EXPENSE', amount=Decimal('850'), description='Lissabon', datum=start)
+    assert _trip_planned(anna, start) == []
+
+
+def test_trip_budget_needs_an_owner_euros_and_an_amount(w):
+    anna, ben, today = w['anna'], w['ben'], timezone.localdate()
+    trip = Trip.objects.create(owner=anna, title='Davos', start_date=today, end_date=today, currency='CHF', budget_amount=Decimal('500'))
+    TripParticipant.objects.create(trip=trip, user=ben, role=TripParticipant.Role.EDITOR)
+    no_budget = Trip.objects.create(owner=anna, title='Ohne', start_date=today, end_date=today)
+
+    states = {s['kind']: s for s in _client(anna).get(AUTO, {'source_type': 'TRIP', 'source_id': trip.pk}).data}
+    assert states['TRIP_FINANCE']['problem'].startswith('Das Reisebudget ist in CHF')
+    other = {s['kind']: s for s in _client(ben).get(AUTO, {'source_type': 'TRIP', 'source_id': trip.pk}).data}
+    assert other['TRIP_FINANCE']['available'] is False
+    _link(ben, 'TRIP_FINANCE', trip.pk, expect=403)
+    _link(anna, 'TRIP_FINANCE', no_budget.pk)
+    assert _trip_planned(anna, today) == []

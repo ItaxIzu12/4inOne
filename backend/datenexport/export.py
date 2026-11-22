@@ -46,7 +46,7 @@ from haushalt.models import (
 )
 from organisation.models import (
     CalendarEvent, CalendarMember, CalendarShare, EventShare, PersonalEvent, PersonalFile, PersonalNote, PersonalTask,
-    SharedCalendar,
+    SharedCalendar, CalendarSubscription, SubscribedEvent,
 )
 from reisen.models import (
     PackingItem, Trip, TripBudgetCategory, TripEvent, TripExpense, TripParticipant, TripSettlement, TripTask,
@@ -166,6 +166,7 @@ class _Export:
                 'letzte_anmeldung': _plain(user.last_login),
                 'zwei_faktor_aktiv': any(d.confirmed for d in devices_for_user(user, confirmed=None)),
                 'heimatwaehrung': preference.home_currency if preference else None,
+                'erinnerung_per_email': preference.reminder_email if preference else 'off',
             },
             'einstellungen': self.rows(UserPreference._base_manager.filter(user=user)),
             'onboarding': self.rows(OnboardingProfile._base_manager.filter(user=user)),
@@ -217,6 +218,9 @@ class _Export:
             'termine': self.rows(PersonalEvent._base_manager.filter(owner=user)),
             'termin_freigaben': self.rows(EventShare._base_manager.filter(event__owner=user)),
             'kalender': self.rows(SharedCalendar._base_manager.filter(owner=user)),
+            # O3: abonnierte Kalender (mit dem eigenen Link) und ihre zuletzt abgerufenen Termine
+            'kalender_abos': self.rows(CalendarSubscription._base_manager.filter(owner=user)),
+            'kalender_abo_termine': self.rows(SubscribedEvent._base_manager.filter(subscription__owner=user)),
             'kalender_mitglieder': self.rows(CalendarMember._base_manager.filter(calendar__owner=user)),
             'kalender_freigaben': self.rows(CalendarShare._base_manager.filter(Q(owner=user) | Q(grantee=user))),
             # nur der Verweis: welche Kalender/Termine anderer mit dir geteilt sind — deren Inhalt gehört den anderen

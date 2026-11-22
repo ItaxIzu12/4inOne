@@ -28,6 +28,8 @@ export class TripPass {
   readonly packingTotal = input<number | null>(null);
   readonly tasksOpen = input<number | null>(null);
   readonly tasksTotal = input<number | null>(null);
+  /** R1: offene Aufgaben, die überfällig sind oder in höchstens zwei Tagen fällig werden (nur im Detail bekannt). */
+  readonly tasksUrgent = input<number | null>(null);
   readonly budgetSpent = input<number | null>(null);
   readonly budgetTotal = input<number | null>(null);
   readonly open = output<number>();
@@ -79,6 +81,8 @@ export class TripPass {
     // Reine Info-Marke (kein Reiter dahinter); in den letzten 3 Tagen hervorgehoben.
     const cancel = cancellationInfo(this.trip(), this.today);
     if (cancel?.soon) chips.push({ tab: null, text: `Kostenlos stornierbar bis ${cancel.date}`, strong: cancel.days <= 3 });
+    const urgent = this.tasksUrgent() ?? 0;
+    if (urgent) chips.push({ tab: 'planung', text: urgent === 1 ? '1 Aufgabe dringend' : `${urgent} Aufgaben dringend`, strong: true });
     if (c.tasksTotal) chips.push({ tab: 'planung', text: c.tasksOpen ? (c.tasksOpen === 1 ? '1 Aufgabe offen' : `${c.tasksOpen} Aufgaben offen`) : 'Aufgaben erledigt', strong: false });
     if (c.packingTotal) chips.push({ tab: 'packliste', text: c.packed === c.packingTotal ? 'Alles gepackt' : `${c.packed}/${c.packingTotal} gepackt`, strong: false });
     if (c.budget) {

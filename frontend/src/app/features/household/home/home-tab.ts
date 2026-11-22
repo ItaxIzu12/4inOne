@@ -15,6 +15,7 @@ import { AppIcon, IconName } from '../../../shared/ui/icons/app-icon';
 import { ConnectionsSection } from '../../../shared/features/connections/connections-section';
 import { MONTH_ABBR } from '../../../shared/ui/form/date-utils';
 import { NextDeadline, devicesByRoom, nextDeadlines } from '../shared/home-logic';
+import { HomeTemplate, templatesFor } from './home-templates';
 import { AppDatePicker } from '../../../shared/ui/form/date-picker';
 import { Field } from '../../../shared/ui/form/field';
 import { AppSelect, SelectOption } from '../../../shared/ui/form/select';
@@ -413,6 +414,27 @@ export class OrdnerTab {
     this.fillForm({ kind: this.kind(), name: '', ...EMPTY_ENTRY });
   }
 
+  // H2: Vorlagen – füllen nur Name, Kategorie und übliche Fristen vor; gespeichert wird erst mit „Speichern“.
+  protected readonly templates = computed(() => templatesFor(this.formOpen() ? this.formKind() : this.kind()));
+  protected readonly activeTemplate = signal<string | null>(null);
+  protected openTemplate(template: HomeTemplate): void {
+    this.openNew();
+    this.applyTemplate(template);
+  }
+  protected applyTemplate(template: HomeTemplate): void {
+    this.activeTemplate.set(template.key);
+    this.formName.set(template.name);
+    this.formCategory.set(template.category);
+    if (template.kind === 'vertrag') {
+      this.formNotice.set(template.noticeMonths ? String(template.noticeMonths) : '');
+      this.formNoticeUnit.set('MONTHS');
+      this.formBilling.set(template.billing ?? 'MONTHLY');
+      this.formAutoRenewal.set(!!template.autoRenewal);
+    } else {
+      this.setMaintenanceBasis(this.formLastMaintenance(), template.maintenanceMonths ? String(template.maintenanceMonths) : '');
+    }
+  }
+
   protected openEdit(entry: FolderEntryDto): void {
     this.editingId.set(entry.id);
     this.formAttachments.set(entry.attachments ?? []);
@@ -438,6 +460,7 @@ export class OrdnerTab {
   }
 
   private fillForm(entry: FolderEntryInput): void {
+    this.activeTemplate.set(null);
     this.formKind.set(entry.kind);
     this.formName.set(entry.name);
     this.formProvider.set(entry.provider);

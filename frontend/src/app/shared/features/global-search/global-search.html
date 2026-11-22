@@ -1,0 +1,58 @@
+<div class="gs" role="search">
+  <span class="gs__icon" aria-hidden="true"><app-icon name="search" /></span>
+  <input
+    #field
+    type="search"
+    class="gs__input"
+    role="combobox"
+    aria-autocomplete="list"
+    aria-controls="gs-results"
+    [attr.aria-expanded]="open() && query().trim().length >= minLength"
+    [attr.aria-activedescendant]="active() >= 0 ? 'gs-item-' + active() : null"
+    [attr.aria-label]="demo() ? 'Demo durchsuchen' : 'In 4inOne suchen'"
+    placeholder="Suchen …"
+    autocomplete="off"
+    (input)="onInput($any($event.target).value)"
+    (focus)="open.set(true)"
+    (keydown)="onKeydown($event)"
+  />
+  <kbd aria-hidden="true">⌘ K</kbd>
+  @if (query().trim().length >= minLength) {
+    <p class="sr-only" aria-live="polite">{{ status() }}</p>
+  }
+
+  @if (open() && query().trim().length >= minLength) {
+    <div id="gs-results" class="gs__panel" role="listbox" [attr.aria-label]="'Suchergebnisse für ' + query()">
+      @if (loading() && !result()) {
+        <p class="gs__note">Suche …</p>
+      } @else if (failed()) {
+        <p class="gs__note">Die Suche hat gerade nicht geklappt. Bitte versuche es erneut.</p>
+      } @else if (!total()) {
+        <p class="gs__note">Nichts gefunden für „{{ query().trim() }}“.</p>
+      } @else {
+        @for (group of result()!.groups; track group.type) {
+          <div class="gs__group" role="group" [attr.aria-labelledby]="'gs-h-' + group.type">
+            <p class="gs__head" [id]="'gs-h-' + group.type">{{ group.label }}</p>
+            @for (item of group.items; track item.type + item.id) {
+              @let i = indexOf(item);
+              <div
+                class="gs__item"
+                role="option"
+                [id]="'gs-item-' + i"
+                [attr.aria-selected]="active() === i"
+                [class.is-active]="active() === i"
+                [attr.data-domain]="item.domain"
+                (pointerdown)="$event.preventDefault()"
+                (click)="go(item)"
+                (mouseenter)="active.set(i)"
+              >
+                <span class="gs__tile" aria-hidden="true"><app-icon [name]="icon(item.domain)" /></span>
+                <span class="gs__text"><b>{{ item.title }}</b><small>{{ item.subtitle }}</small></span>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+</div>

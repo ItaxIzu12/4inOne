@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AppShell } from '../../layout/app-shell';
 import { MembershipChanges } from '../../core/access/membership-changes';
 import { AppIcon, IconName } from '../../shared/ui/icons/app-icon';
-import { SaveFeedback } from '../../shared/ui/save-feedback/save-feedback';
+import { Feedback, SaveFeedback, feedbackAction, feedbackText } from '../../shared/ui/save-feedback/save-feedback';
 import { AufgabenTab, AufgabenView, AUFGABEN_VIEWS } from './tasks/tasks-tab';
 import { EinkaufTab } from './shopping/shopping-tab';
 import { OrdnerTab } from './home/home-tab';
@@ -37,7 +37,7 @@ const LEGACY_TABS: Record<string, { tab: HaushaltTab; section?: ZuhauseSection; 
  * Haushalt-Modul: Heute · Aufgaben · Einkaufen · Zuhause (Geräte | Verträge).
  * Diese Komponente ist nur die Seitenhülle; die Bereiche sind eigene
  * Komponenten, die ihre Daten über HAUSHALT_DATA_PROVIDER beziehen (Demo oder
- * echte API, je nach Route). Wiederkehrende Aufgaben (früher „Routinen“) sind
+ * echte API, je nach Route). Routinen (wiederkehrende Aufgaben) sind
  * eine Ansicht im Reiter Aufgaben — kein eigenes System.
  */
 @Component({
@@ -166,12 +166,22 @@ export class Haushalt {
   }
 
   /** Dauer und Ausblenden übernimmt app-save-feedback selbst (pausiert bei Zeiger/Fokus). */
-  protected showSaved(message: string): void {
-    this.saveMessage.set(message);
+  /** Ü1: Aktion der aktuellen Meldung (z. B. „Rückgängig“ nach dem Abhaken). */
+  protected readonly saveAction = signal<ReturnType<typeof feedbackAction>>(null);
+  protected showSaved(feedback: Feedback): void {
+    this.saveAction.set(feedbackAction(feedback));
+    this.saveMessage.set(feedbackText(feedback));
     this.saveStamp.update((n) => n + 1); // gleiche Meldung zweimal → startet neu
   }
 
+  protected runSaveAction(): void {
+    const action = this.saveAction();
+    this.dismissSaved();
+    action?.action();
+  }
+
   protected dismissSaved(): void {
+    this.saveAction.set(null);
     this.saveMessage.set('');
   }
 }

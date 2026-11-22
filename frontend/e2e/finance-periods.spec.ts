@@ -11,6 +11,7 @@ for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.route('http://localhost:8000/api/**', (r) => r.abort());
     await page.goto('/demo/finanzen');
+  await page.getByRole('button', { name: 'Anderer Zeitraum' }).click(); // F3: Umschalter erst auf Wunsch
     const switcher = page.getByRole('group', { name: 'Zeitraum der Übersicht' });
     // Standard: Monat — mit der Monatsauswahl unter dem Umschalter
     await expect(switcher.getByRole('button', { name: 'Monat' })).toHaveAttribute('aria-pressed', 'true');
@@ -90,6 +91,7 @@ for (const width of [390, 1440]) {
 test('the day view switches to the expenses tab from the empty state', async ({ page }) => {
   await page.route('http://localhost:8000/api/**', (r) => r.abort());
   await page.goto('/demo/finanzen');
+  await page.getByRole('button', { name: 'Anderer Zeitraum' }).click(); // F3: Umschalter erst auf Wunsch
   const view = page.locator('app-finance-period');
   // Die Datumsauswahl steht unter dem Zeitraum-Umschalter, für jeden Zeitraum an derselben Stelle.
   const nav = page.locator('.date-row');
@@ -104,6 +106,7 @@ test('the day view switches to the expenses tab from the empty state', async ({ 
 test('another day never says "Heute": labels carry the date, and the month in view is named', async ({ page }) => {
   await page.route('http://localhost:8000/api/**', (r) => r.abort());
   await page.goto('/demo/finanzen');
+  await page.getByRole('button', { name: 'Anderer Zeitraum' }).click(); // F3: Umschalter erst auf Wunsch
   await page.getByRole('group', { name: 'Zeitraum der Übersicht' }).getByRole('button', { name: 'Tag', exact: true }).click();
   const view = page.locator('app-finance-period');
   // Die Datumsauswahl steht unter dem Zeitraum-Umschalter, für jeden Zeitraum an derselben Stelle.
@@ -145,6 +148,7 @@ test('another day never says "Heute": labels carry the date, and the month in vi
 test('custom period: Bis before Von is refused, the future shows only booked items, and only a whole month has a budget', async ({ page }) => {
   await page.route('http://localhost:8000/api/**', (r) => r.abort());
   await page.goto('/demo/finanzen');
+  await page.getByRole('button', { name: 'Anderer Zeitraum' }).click(); // F3: Umschalter erst auf Wunsch
   await page.getByRole('group', { name: 'Zeitraum der Übersicht' }).getByRole('button', { name: 'Benutzerdefiniert' }).click();
   const view = page.locator('app-finance-period');
   // Die Datumsauswahl steht unter dem Zeitraum-Umschalter, für jeden Zeitraum an derselben Stelle.
@@ -196,6 +200,7 @@ test('the jump-back button follows the period: current day, week or month', asyn
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.route('http://localhost:8000/api/**', (route) => route.abort());
   await page.goto('/demo/finanzen');
+  await page.getByRole('button', { name: 'Anderer Zeitraum' }).click(); // F3: Umschalter erst auf Wunsch
   const switcher = page.getByRole('group', { name: 'Zeitraum der Übersicht' });
   const nav = page.locator('.date-row');
   const jump = nav.locator('.to-today');
@@ -223,6 +228,7 @@ test('day, week and month share one date: zooming keeps you where you are', asyn
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.route('http://localhost:8000/api/**', (route) => route.abort());
   await page.goto('/demo/finanzen');
+  await page.getByRole('button', { name: 'Anderer Zeitraum' }).click(); // F3: Umschalter erst auf Wunsch
   const switcher = page.getByRole('group', { name: 'Zeitraum der Übersicht' });
   const nav = page.locator('.date-row');
   // Zwei Monate weiter, dann in die Woche: sie liegt im gewählten Monat (am 1.), nicht in der aktuellen Woche

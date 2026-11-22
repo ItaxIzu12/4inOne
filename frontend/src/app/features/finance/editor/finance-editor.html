@@ -32,7 +32,7 @@
   @if (editor() === 'transactions') {
     @if (plannedSource(); as source) {
       <p class="planned-note" role="note">
-        <app-icon name="clock" aria-hidden="true" />{{ source.kind === 'CONTRACT' ? 'Geplante Vertragskosten' : 'Geplante wiederkehrende Ausgabe' }} „{{ source.title }}“. Speichern erfasst sie als
+        <app-icon name="clock" aria-hidden="true" />{{ source.kind === 'CONTRACT' ? 'Geplante Vertragskosten' : source.kind === 'TRIP' ? 'Geplantes Reisebudget' : 'Geplante wiederkehrende Ausgabe' }} „{{ source.title }}“. Speichern erfasst sie als
         Transaktion am {{ source.date | date: 'dd.MM.yyyy' }} — danach zählt sie als ausgegeben statt geplant.
       </p>
     }
@@ -62,6 +62,10 @@
         [attr.data-autofocus]="editId() ? null : ''"
       />
     </app-field>
+    <!-- Text vor der Kategorie: aus früheren Buchungen mit demselben Text schlägt 4inOne die Kategorie vor (F1). -->
+    <app-field label="Wofür?" [optional]="true">
+      <input id="booking-note" formControlName="note" maxlength="255" autocomplete="off" placeholder="z. B. REWE, Miete, Gehalt" (input)="noteInput()" />
+    </app-field>
     @if (categories().length) {
       <div class="cat-field">
         <span class="cat-field__label" id="booking-category-label">Kategorie</span>
@@ -71,10 +75,21 @@
               type="button"
               class="cat-chip"
               [attr.aria-pressed]="form.controls.category.value === c.value"
-              (click)="form.controls.category.setValue(c.value)"
+              (click)="pickCategory(c.value)"
             ><i class="dot" [style.background]="c.color" aria-hidden="true"></i>{{ c.label }}</button>
           }
         </div>
+        @if (suggestion(); as s) {
+          <p class="suggest-note" role="status">
+            <app-icon name="repeat" aria-hidden="true" />
+            @if (form.controls.category.value === s.value) {
+              <span>Vorgeschlagen aus {{ s.matches === 1 ? 'einer früheren Buchung' : s.matches + ' früheren Buchungen' }} mit diesem Text.</span>
+            } @else {
+              <span>Bisher meist <b>{{ s.name }}</b>.</span>
+              <button type="button" class="suggest-note__apply" (click)="pickCategory(s.value)">Übernehmen</button>
+            }
+          </p>
+        }
       </div>
       @if (quickCategory() === null) {
         <button type="button" id="booking-new-category" class="quick-cat__toggle" (click)="startQuickCategory()">
@@ -118,15 +133,13 @@
         <p class="field-hint">Diese Ausgabe gilt bis zu ihrem Datum als geplant und zählt dann als ausgegeben.</p>
       }
     </app-field>
-    <app-field label="Notiz" [optional]="true">
-      <input id="booking-note" formControlName="note" maxlength="255" />
-    </app-field>
-    <label class="check-row">
-      <input type="checkbox" formControlName="recurring" />
-      <span>Kommt jeden Monat wieder<small>{{ form.value.type === 'INCOME'
-        ? 'z. B. Gehalt – wird in der Liste als „monatlich“ markiert, aber nicht gebucht.'
-        : 'z. B. Miete oder Abo – wird jeden Monat im Budget eingeplant, aber nicht gebucht.' }}</small></span>
-    </label>
+    <!-- Nur bei Ausgaben: Sie werden jeden Monat im Budget eingeplant. Bei Einnahmen hätte die Option keine Wirkung (F2). -->
+    @if (form.value.type !== 'INCOME') {
+      <label class="check-row">
+        <input type="checkbox" formControlName="recurring" />
+        <span>Kommt jeden Monat wieder<small>z. B. Miete oder Abo – wird jeden Monat im Budget eingeplant, aber nicht gebucht.</small></span>
+      </label>
+    }
   } @else if (editor() === 'budgets') {
     <!-- Beim Ändern ist der Startmonat gesperrt (sonst verschiebt man das Budget aus seinem Monat); anderer Zeitraum = neues Budget. -->
     <app-field

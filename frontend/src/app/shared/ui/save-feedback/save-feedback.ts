@@ -3,6 +3,22 @@ import { AppIcon } from '../icons/app-icon';
 
 export type FeedbackTone = 'success' | 'warning' | 'error';
 
+/** Ü1: Rückmeldung mit Aktion („Rückgängig“). Ein einfacher Text bleibt weiterhin möglich. */
+export interface FeedbackAction {
+  message: string;
+  actionLabel: string;
+  action: () => void;
+}
+export type Feedback = string | FeedbackAction;
+/** Meldungstext einer Rückmeldung (Text oder Text mit Aktion). */
+export function feedbackText(feedback: Feedback | null | undefined): string {
+  return !feedback ? '' : typeof feedback === 'string' ? feedback : feedback.message;
+}
+/** Die Aktion einer Rückmeldung oder null. */
+export function feedbackAction(feedback: Feedback | null | undefined): FeedbackAction | null {
+  return feedback && typeof feedback !== 'string' ? feedback : null;
+}
+
 /** Lesezeit: 5 s Grundzeit, bei langen Meldungen etwas länger (höchstens 9 s). */
 export function feedbackDuration(message: string): number {
   return Math.min(9000, 5000 + Math.max(0, message.length - 60) * 40);
@@ -39,6 +55,9 @@ export function feedbackTone(message: string): FeedbackTone {
         <span class="toast__icon" aria-hidden="true"><app-icon [name]="tone() === 'success' ? 'check' : 'info'" /></span>
       }
       <p class="toast__text" role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
+      @if (message() && actionLabel()) {
+        <button type="button" class="toast__action" (click)="runAction()">{{ actionLabel() }}</button>
+      }
       @if (message()) {
         <button type="button" class="toast__close" aria-label="Meldung schließen" (click)="dismissed.emit()">
           <app-icon name="close" aria-hidden="true" />
@@ -62,6 +81,13 @@ export class SaveFeedback {
   readonly toneOverride = input<FeedbackTone | undefined>(undefined, { alias: 'tone' });
   protected readonly tone = computed(() => this.toneOverride() ?? feedbackTone(this.message()));
   readonly dismissed = output<void>();
+  /** Ü1: optionaler Aktionsknopf (z. B. „Rückgängig“) – solange die Meldung steht. */
+  readonly actionLabel = input('');
+  readonly action = output<void>();
+  /** Die Seite schließt die Meldung selbst und führt dann die Aktion aus (die eine neue Meldung zeigen darf). */
+  protected runAction(): void {
+    this.action.emit();
+  }
 
   protected readonly paused = signal(false);
   /** Wechselt bei jeder neuen Meldung, damit die Zeitleiste neu startet. */

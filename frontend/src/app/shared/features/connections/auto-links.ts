@@ -11,7 +11,7 @@ let uid = 0;
 const KINDS_FOR: Record<AutoSourceType, AutoKind[]> = {
   CONTRACT: ['CONTRACT_FINANCE', 'CONTRACT_REMINDER'],
   DEVICE: ['DEVICE_MAINTENANCE'],
-  TRIP: ['TRIP_CALENDAR', 'TRIP_ITINERARY'],
+  TRIP: ['TRIP_CALENDAR', 'TRIP_ITINERARY', 'TRIP_FINANCE'],
   SAVINGS_GOAL: ['SAVINGS_REMINDER'],
   HOUSEHOLD: ['HOUSEHOLD_TASKS'],
 };
@@ -22,6 +22,7 @@ const TARGET: Record<AutoKind, { label: string; path: string; query: Record<stri
   DEVICE_MAINTENANCE: { label: 'Im Kalender ansehen', path: '/organisation', query: { tab: 'calendar' } },
   TRIP_CALENDAR: { label: 'Im Kalender ansehen', path: '/organisation', query: { tab: 'calendar' } },
   TRIP_ITINERARY: { label: 'Im Kalender ansehen', path: '/organisation', query: { tab: 'calendar' } },
+  TRIP_FINANCE: { label: 'In Finanzen ansehen', path: '/finanzen', query: { tab: 'transactions', art: 'planned' } },
   SAVINGS_REMINDER: { label: 'Im Kalender ansehen', path: '/organisation', query: { tab: 'calendar' } },
   HOUSEHOLD_TASKS: { label: 'Aufgaben ansehen', path: '/organisation', query: { tab: 'tasks' } },
 };

@@ -41,6 +41,17 @@ export interface TodayTripEvent {
   location: string;
 }
 
+/** Fällige Reiseaufgabe (heute oder überfällig), für mich oder noch niemandem zugeteilt. */
+export interface TodayTripTask {
+  id: number;
+  trip_id: number;
+  trip_title: string;
+  title: string;
+  due_date: string;
+  due_time: string | null;
+  overdue: boolean;
+}
+
 /**
  * „Heute“ aus allen Bereichen — backend/connections/today.py. Jeder Abschnitt
  * enthält nur, was die Person in der jeweiligen Domain sehen darf; `haushalt`
@@ -56,7 +67,7 @@ export interface TodayOverview {
     deadlines: TodayDeadline[];
     shopping_open: number;
   } | null;
-  reisen: { current: TodayTrip | null; upcoming: TodayTrip | null; events: TodayTripEvent[] };
+  reisen: { current: TodayTrip | null; upcoming: TodayTrip | null; events: TodayTripEvent[]; tasks?: TodayTripTask[] };
   finanzen: { month: string; budget: string | null; expenses: string; available: string | null; spent_today: string };
   suggestions: SuggestionDto[];
   /** Höchstens ein starker Verknüpfungs-Vorschlag — oder null. */

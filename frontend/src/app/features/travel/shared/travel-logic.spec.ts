@@ -14,6 +14,7 @@ import {
   budgetRows,
   countdown,
   dueLabel,
+  urgentTasks,
   filterTasks,
   formatMoney,
   groupTrips,
@@ -162,8 +163,19 @@ describe('reisen-logic', () => {
     const today = '2026-03-01';
     expect(dueLabel('2026-03-01', today)).toEqual({ text: 'Heute', urgent: true });
     expect(dueLabel('2026-02-27', today)).toEqual({ text: 'Überfällig', urgent: true });
+    expect(dueLabel('2026-03-02', today)).toEqual({ text: 'Morgen', urgent: true });
+    expect(dueLabel('2026-03-03', today)).toEqual({ text: 'Übermorgen', urgent: true });
+    expect(dueLabel('2026-03-04', today)).toEqual({ text: '4. März', urgent: false });
     expect(dueLabel('2026-03-12', today)).toEqual({ text: '12. März', urgent: false });
     expect(dueLabel(null, today)).toEqual({ text: 'Ohne Datum', urgent: false });
+  });
+
+  it('counts open tasks due within two days as urgent (R1)', () => {
+    const today = '2026-03-01';
+    const task = (id: number, due_date: string | null, status: 'OPEN' | 'DONE' = 'OPEN') =>
+      ({ id, trip: 1, title: 'x', due_date, due_time: null, status, note: '', assignee: null, assignee_name: '' }) as TripTask;
+    const tasks = [task(1, '2026-02-20'), task(2, '2026-03-03'), task(3, '2026-03-04'), task(4, null), task(5, '2026-03-01', 'DONE')];
+    expect(urgentTasks(tasks, today).map((t) => t.id)).toEqual([1, 2]);
   });
 
   it('parses budget amounts the way people type them', () => {

@@ -149,12 +149,27 @@ export function tripItinerary(status: string, eventCount: number): AutoPreview {
   return { preview: `Organisation › Kalender: ${eventCount === 1 ? '1 Programmpunkt' : eventCount + ' Programmpunkte'} mit Uhrzeit.`, problem: '' };
 }
 
+/** R3 – wie backend connections/auto_links.trip_finance_problem / describe(TRIP_FINANCE). */
+export function tripFinance(title: string, start: string | null, status: string, budget: string | null, currency: string, isOwner: boolean): AutoPreview {
+  if (!isOwner) return { preview: '', problem: 'Nur wer die Reise angelegt hat, kann ihr Budget in Finanzen planen – es gilt für die ganze Reisegruppe.' };
+  if (status === 'CANCELLED') return { preview: '', problem: 'Die Reise ist abgesagt.' };
+  if (!budget || Number(budget) <= 0) return { preview: '', problem: 'Trage zuerst ein Reisebudget ein — ohne Betrag gibt es nichts zu planen.' };
+  if (currency && currency !== 'EUR') return { preview: '', problem: `Das Reisebudget ist in ${currency} – Finanzen plant nur Beträge in Euro.` };
+  if (!start) return { preview: '', problem: '' };
+  const month = `${MONTHS[Number(start.slice(5, 7)) - 1]} ${start.slice(0, 4)}`;
+  return {
+    preview: `Finanzen › Geplant: ${euro(budget)} im ${month} (Abreise) — keine Buchung. Eine Ausgabe mit dem Namen „${title}“ in diesem Monat ersetzt den Planwert.`,
+    problem: '',
+  };
+}
+
 export const AUTO_LABEL: Record<AutoKind, string> = {
   CONTRACT_FINANCE: 'In Finanzen als geplante Kosten zeigen',
   CONTRACT_REMINDER: 'Kündigungserinnerung im Kalender',
   DEVICE_MAINTENANCE: 'Wartungserinnerung im Kalender',
   TRIP_CALENDAR: 'Reisezeitraum im Kalender zeigen',
   TRIP_ITINERARY: 'Tagesablauf im Kalender zeigen',
+  TRIP_FINANCE: 'Reisebudget in Finanzen als geplant zeigen',
   SAVINGS_REMINDER: 'Im Kalender daran erinnern',
   HOUSEHOLD_TASKS: 'Haushaltsaufgaben hier zeigen',
 };

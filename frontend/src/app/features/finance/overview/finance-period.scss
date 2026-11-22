@@ -280,3 +280,24 @@ button:focus-visible {
     width: 100%;
   }
 }
+
+// F3: „Anderer Zeitraum“ – leiser Textknopf neben bzw. unter der Datumsauswahl statt vier Umschalter-Feldern.
+:host > .period-more {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--accent-hover);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.period-more app-icon {
+  width: 16px;
+  height: 16px;
+}

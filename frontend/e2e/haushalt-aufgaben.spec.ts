@@ -12,7 +12,7 @@ for (const width of [390, 820, 1280, 1440]) {
 
     await expect(page.getByLabel('Aufgaben durchsuchen')).toBeVisible();
     await expect(page.getByRole('group', { name: 'Aufgaben anzeigen' }).getByRole('button')).toHaveText([
-      /Alle/, /Heute/, /Überfällig/, /Wiederkehrend/, /Erledigt/,
+      /Alle/, /Heute/, /Überfällig/, /Routinen/, /Erledigt/,
     ]);
     await expect(page.locator('app-aufgaben-tab .task').first()).toContainText('Pflanzen gießen');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

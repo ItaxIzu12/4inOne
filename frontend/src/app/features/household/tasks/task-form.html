@@ -21,16 +21,7 @@
     />
   </app-field>
   <app-scope-note scope="shared">{{ people?.audience() || 'Für den ganzen Haushalt – alle Mitglieder sehen diese Aufgabe.' }}</app-scope-note>
-<fieldset class="form-section"><legend>Planung und weitere Angaben</legend>
-  <app-field label="Beschreibung" [optional]="true">
-    <input
-      id="task-description"
-      type="text"
-      maxlength="500"
-      [value]="formDescription()"
-      (input)="formDescription.set($any($event.target).value)"
-    />
-  </app-field>
+<fieldset class="form-section"><legend>Wann und wer?</legend>
 
   <div class="field-row">
     <app-field label="Wie oft?">
@@ -54,54 +45,9 @@
     </app-field>
   }
 
-  <app-field label="Uhrzeit" [optional]="true">
-    <app-time-picker [clearable]="true" [disabled]="!formDue()" [value]="formTime()" (valueChange)="formTime.set($event)" />
-  </app-field>
 
-  <fieldset class="field">
-    <legend>Aufwand</legend>
-    <div class="segmented" role="radiogroup" aria-label="Aufwand">
-      @for (effort of effortOptions; track effort) {
-        <button
-          type="button"
-          role="radio"
-          [attr.aria-checked]="formEffort() === effort"
-          (click)="formEffort.set(effort)"
-        >
-          {{ effortLabels[effort] }}
-        </button>
-      }
-    </div>
-  </fieldset>
 
-  <div class="field-row">
-    <app-field label="Raum" [optional]="true">
-      <app-select [options]="roomOptions" [value]="formRoom()" (valueChange)="formRoom.set($any($event))" />
-    </app-field>
-    <app-field label="Dauer in Minuten" [optional]="true">
-      <input
-        id="task-duration"
-        type="number"
-        inputmode="numeric"
-        min="1"
-        max="600"
-        placeholder="z. B. 15"
-        [value]="formDuration()"
-        (input)="formDuration.set($any($event.target).value)"
-      />
-    </app-field>
-  </div>
 
-  <fieldset class="field">
-    <legend>Priorität</legend>
-    <div class="segmented" role="radiogroup" aria-label="Priorität">
-      @for (p of priorityOptions; track p.value) {
-        <button type="button" role="radio" [attr.aria-checked]="formPriority() === p.value" (click)="formPriority.set(p.value)">
-          {{ p.label }}
-        </button>
-      }
-    </div>
-  </fieldset>
 
   @if (!formRotate() || !canRotate()) {
     <app-field label="Zuständig">
@@ -131,6 +77,70 @@
     }
   } @else if (formRecurrence() && members().length < 2) {
     <p class="field-hint">„Reihum wechseln“ gibt es, sobald mindestens zwei Personen im Haushalt sind.</p>
+  }
+
+  <!-- H3: Feinheiten erst auf Wunsch – beim ersten Anlegen reichen Was, Wie oft, Wann und Wer. -->
+  <button type="button" class="more-toggle" [attr.aria-expanded]="moreOpen()" aria-controls="task-more" (click)="moreOpen.set(!moreOpen())">
+    <app-icon [name]="moreOpen() ? 'chevron-down' : 'plus'" aria-hidden="true" />
+    <span>{{ moreOpen() ? 'Weniger Angaben' : 'Mehr Angaben' }}<small>{{ moreSummary() }}</small></span>
+  </button>
+  @if (moreOpen()) {
+    <div id="task-more" class="more">
+  <app-field label="Beschreibung" [optional]="true">
+    <input
+      id="task-description"
+      type="text"
+      maxlength="500"
+      [value]="formDescription()"
+      (input)="formDescription.set($any($event.target).value)"
+    />
+  </app-field>
+  <app-field label="Uhrzeit" [optional]="true">
+    <app-time-picker [clearable]="true" [disabled]="!formDue()" [value]="formTime()" (valueChange)="formTime.set($event)" />
+  </app-field>
+  <fieldset class="field">
+    <legend>Aufwand</legend>
+    <div class="segmented" role="radiogroup" aria-label="Aufwand">
+      @for (effort of effortOptions; track effort) {
+        <button
+          type="button"
+          role="radio"
+          [attr.aria-checked]="formEffort() === effort"
+          (click)="formEffort.set(effort)"
+        >
+          {{ effortLabels[effort] }}
+        </button>
+      }
+    </div>
+  </fieldset>
+  <div class="field-row">
+    <app-field label="Raum" [optional]="true">
+      <app-select [options]="roomOptions" [value]="formRoom()" (valueChange)="formRoom.set($any($event))" />
+    </app-field>
+    <app-field label="Dauer in Minuten" [optional]="true">
+      <input
+        id="task-duration"
+        type="number"
+        inputmode="numeric"
+        min="1"
+        max="600"
+        placeholder="z. B. 15"
+        [value]="formDuration()"
+        (input)="formDuration.set($any($event.target).value)"
+      />
+    </app-field>
+  </div>
+  <fieldset class="field">
+    <legend>Priorität</legend>
+    <div class="segmented" role="radiogroup" aria-label="Priorität">
+      @for (p of priorityOptions; track p.value) {
+        <button type="button" role="radio" [attr.aria-checked]="formPriority() === p.value" (click)="formPriority.set(p.value)">
+          {{ p.label }}
+        </button>
+      }
+    </div>
+  </fieldset>
+    </div>
   }
 
   @if (editingId() !== null) {

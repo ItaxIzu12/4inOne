@@ -12,7 +12,7 @@ import { budgetBand, categoryVisual, daysLeftInMonth, splitAmount } from './shar
 import { axis, budgetsFromSummary, categoryIcon, dayLabel, compareDay, deltaEuro, deltaLabel, goalIcon, goalPercent, incomeSources, insights, monthName, monthReview, monthTotal, monthTotalUntil, recurringItems, savedInMonth, savedUntil, shiftYm, sourceIcon, weeklyBars } from './shared/finance-tabs';
 import { defaultDateInMonth, display } from '../../shared/ui/form/date-utils';
 import { SelectOption } from '../../shared/ui/form/select';
-import { SaveFeedback } from '../../shared/ui/save-feedback/save-feedback';
+import { FeedbackAction, SaveFeedback } from '../../shared/ui/save-feedback/save-feedback';
 import { FinanceImportDialog } from './transactions/finance-import-dialog';
 import { PrivateFinanceApi, FinanceCategory, FinanceTransaction, PlannedItem, FinanceBudget, SavingsGoal, FinanceSummary, FinanceYearSummary, SavingsContributionDto, financeMonth, budgetCovers, budgetRange, budgetSpan, planRange, euros, UNCATEGORISED_COLOR } from './data/private-finance-api.service';
 import { CategoryManager } from './budgets/category-manager';
@@ -165,7 +165,9 @@ export class PrivateFinance {
   /** Sätze der Warnung vor dem Speichern eines Sparziels (wartet auf Bestätigung), sonst null. */
   readonly goalWarning = signal<string[] | null>(null);
   readonly overrun = signal<{ available: string; over: string } | null>(null);
-  private pending: { text: string; month: string | null } | null = null;
+  private pending: { text: string; month: string | null; action?: FeedbackAction } | null = null;
+  /** Ü1: Aktion der aktuellen Meldung (z. B. „Rückgängig“ nach dem Löschen einer Transaktion). */
+  readonly noticeAction = signal<FeedbackAction | null>(null);
   readonly error = signal('');
   readonly formError = signal('');
   readonly editor = signal<Resource | null>(null);
@@ -380,10 +382,10 @@ export class PrivateFinance {
       .filter((t) => t.date.startsWith(this.month()))
       .map((t) => (t.type === 'EXPENSE' && t.date > today ? { ...t, planned: true } : t));
     const virtual: ListRow[] = this.plannedItems()
-      .filter((i) => i.kind === 'RECURRING' || i.kind === 'CONTRACT')
+      .filter((i) => i.kind === 'RECURRING' || i.kind === 'CONTRACT' || i.kind === 'TRIP')
       .map((i, n) => ({
         // Verträge: eigener ID-Bereich, damit sie nie mit wiederkehrenden Zeilen zusammenfallen
-        id: i.kind === 'CONTRACT' ? -1_000_000 - n : -(i.source_id ?? 0), amount: i.amount, type: 'EXPENSE',
+        id: i.kind === 'CONTRACT' ? -1_000_000 - n : i.kind === 'TRIP' ? -2_000_000 - n : -(i.source_id ?? 0), amount: i.amount, type: 'EXPENSE',
         category: i.category as number, date: i.date, note: i.title, currency: 'EUR', recurring: i.kind === 'RECURRING',
         planned: true, plannedItem: i,
       }));
@@ -520,6 +522,7 @@ export class PrivateFinance {
           this.loading.set(false);
           this.announcePending(r.summary);
           this.openGoalFromQuery();
+          this.openTransactionFromQuery();
           this.openNewFromQuery();
           if (this.budgetFocus) {
             const target = this.budgetFocus;
@@ -539,8 +542,14 @@ export class PrivateFinance {
   }
   /** Merkt sich die Meldung; sie erscheint, sobald die neuen Zahlen geladen sind. `month`: der Monat der
    * Buchung — nur wenn er angezeigt wird, ändert sich der verfügbare Betrag sichtbar. null = kein Bezug. */
-  remember(text: string, month: string | null) {
-    this.pending = { text, month };
+  runNoticeAction() {
+    const action = this.noticeAction();
+    this.noticeAction.set(null);
+    this.notice.set('');
+    action?.action();
+  }
+  remember(text: string, month: string | null, action?: FeedbackAction) {
+    this.pending = { text, month, action };
   }
   private announcePending(summary: FinanceSummary) {
     const pending = this.pending;
@@ -560,6 +569,7 @@ export class PrivateFinance {
       text += ` Achtung: Du liegst ${euros(summary.available.slice(1))} über deinem Monatsbudget.`;
     }
     // Dauer und Ausblenden übernimmt app-save-feedback (pausiert bei Zeiger/Fokus)
+    this.noticeAction.set(pending.action ?? null);
     this.notice.set(text);
   }
   /** Deep-Link (?goal=<id>) aus „Verknüpft“: zeigt das Sparziel und öffnet es.
@@ -571,6 +581,16 @@ export class PrivateFinance {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { neu: null }, queryParamsHandling: 'merge', replaceUrl: true });
     this.selectTab('transactions');
     this.open('transactions');
+  }
+  /** O4: Treffer der Suche (?buchung=<id>) öffnet die Buchung im Dialog; die Adresse wird aufgeräumt. */
+  private openTransactionFromQuery() {
+    const id = Number(this.route.snapshot.queryParamMap.get('buchung'));
+    if (!id) return;
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { buchung: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    const tx = this.transactions().find((t) => t.id === id);
+    if (!tx) return;
+    this.selectTab('transactions');
+    this.open('transactions', tx);
   }
   private openGoalFromQuery() {
     const params = this.route.snapshot.queryParamMap;

@@ -4,11 +4,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '../../core/auth/auth.service';
+import { AuthService, AuthUser } from '../../core/auth/auth.service';
 import { AppShell } from '../../layout/app-shell';
 import { SettingsLayout } from '../settings/settings-layout';
 import { Modal } from '../../shared/ui/modal/modal';
-import { AppSelect } from '../../shared/ui/form/select';
+import { AppSelect, SelectOption } from '../../shared/ui/form/select';
 import { CURRENCY_OPTIONS } from '../../shared/ui/currency/currencies';
 import { ACCOUNT_DEFAULT_HOME_CURRENCY } from '../../core/fx/home-currency';
 
@@ -32,9 +32,18 @@ export class Profil {
   protected readonly saved = signal(false);
   protected readonly currencyOptions = CURRENCY_OPTIONS;
   protected readonly homeCurrency = signal(this.auth.currentUser()?.home_currency ?? ACCOUNT_DEFAULT_HOME_CURRENCY);
+  /** O1: Erinnerung per E-Mail. Standard aus; die E-Mail enthält die Titel der Termine, Aufgaben und Fristen. */
+  protected readonly reminderOptions: SelectOption[] = [
+    { value: 'off', label: 'Aus' },
+    { value: 'daily', label: 'Jeden Morgen' },
+    { value: 'weekly', label: 'Jeden Montag' },
+  ];
+  protected readonly reminder = signal<NonNullable<AuthUser['reminder_email']>>(this.auth.currentUser()?.reminder_email ?? 'off');
+  private readonly reminderChanged = computed(() => this.reminder() !== (this.auth.currentUser()?.reminder_email ?? 'off'));
+  protected readonly emailVerified = computed(() => this.auth.currentUser()?.email_verified !== false);
   private readonly nameChanged = computed(() => this.name().trim() !== (this.auth.currentUser()?.name ?? ''));
   private readonly currencyChanged = computed(() => this.homeCurrency() !== (this.auth.currentUser()?.home_currency ?? ACCOUNT_DEFAULT_HOME_CURRENCY));
-  protected readonly changed = computed(() => this.nameChanged() || this.currencyChanged());
+  protected readonly changed = computed(() => this.nameChanged() || this.currencyChanged() || this.reminderChanged());
 
   protected save(): void {
     if (this.saving()) return;
@@ -46,14 +55,16 @@ export class Profil {
     }
     this.error.set('');
     this.saving.set(true);
-    const changes: { name?: string; home_currency?: string } = {};
+    const changes: { name?: string; home_currency?: string; reminder_email?: AuthUser['reminder_email'] } = {};
     if (this.nameChanged()) changes.name = name;
     if (this.currencyChanged()) changes.home_currency = this.homeCurrency();
+    if (this.reminderChanged()) changes.reminder_email = this.reminder();
     this.auth.updateProfile(changes).subscribe({
       next: (user) => {
         this.saving.set(false);
         this.name.set(user.name);
         this.homeCurrency.set(user.home_currency ?? ACCOUNT_DEFAULT_HOME_CURRENCY);
+        this.reminder.set(user.reminder_email ?? 'off');
         this.saved.set(true);
       },
       error: (e: unknown) => {

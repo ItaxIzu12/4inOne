@@ -404,3 +404,44 @@
     min-height: 104px;
   }
 }
+
+// R2: Packliste aus früherer Reise – aufklappbare Liste der Reisen.
+.copy {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.copy__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: min(100%, 420px);
+}
+.copy__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+.copy__item app-icon {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+.copy__item:hover {
+  border-color: var(--travel-accent, var(--border-strong));
+}

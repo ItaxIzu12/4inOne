@@ -1,5 +1,5 @@
 import { AutoLinks } from '../../shared/features/connections/auto-links';
-import { tripCalendar, tripItinerary } from '../../shared/features/connections/auto-link-rules';
+import { tripCalendar, tripFinance, tripItinerary } from '../../shared/features/connections/auto-link-rules';
 import { SubmissionKey } from '../../shared/utils/idempotency';
 import { ErrorNoticeDirective } from '../../shared/ui/error-notice/error-notice';
 import { AmountInput } from '../../shared/ui/directives/amount-input';
@@ -269,6 +269,13 @@ export class Reisen {
     return {
       TRIP_CALENDAR: tripCalendar(v.title.trim(), v.start_date || null, v.end_date || null, v.status, v.free_cancellation_until || null),
       TRIP_ITINERARY: tripItinerary(v.status, this.editTripId() && this.editTripId() === this.selectedTripId() ? this.events().length : 0),
+      // R3: Budget und Währung stehen nicht im Reise-Dialog, sondern in Reise › Budget – Vorschau aus der gespeicherten Reise.
+      TRIP_FINANCE: ((saved) =>
+        saved
+          ? tripFinance(v.title.trim(), v.start_date || null, v.status, saved.budget_amount, saved.currency, saved.my_role === 'OWNER')
+          : { preview: '', problem: 'Lege die Reise zuerst an und trage in „Budget“ ein Reisebudget ein.' })(
+        this.trips().find((t) => t.id === this.editTripId()),
+      ),
     };
   });
   // Ortsvorschläge beim Tippen (Reiseziel, Abreiseort, Unterkunft) sind in Reisen vorerst aus (Nutzerwunsch
@@ -904,7 +911,45 @@ export class Reisen {
     () => this.smartSetupPackingChecked().filter(Boolean).length + this.smartSetupTasksChecked().filter(Boolean).length,
   );
   readonly smartSetupAllSelected = computed(() => this.smartSetupSelected() === this.smartSetupTotal());
+  /** R2: Ist gesetzt, stammen die Vorschläge aus der Packliste dieser früheren Reise statt aus der Vorlage. */
+  readonly smartSetupSource = signal<Trip | null>(null);
+  /** R2: andere Reisen mit Packliste, jüngste zuerst (höchstens fünf). */
+  readonly copySources = computed(() =>
+    this.trips()
+      .filter((t) => t.id !== this.selectedTripId() && t.packing_total > 0)
+      .sort((a, b) => b.start_date.localeCompare(a.start_date))
+      .slice(0, 5)
+      .map((t) => ({ id: t.id, label: `${t.title} · ${t.packing_total === 1 ? '1 Ding' : t.packing_total + ' Dinge'}` })),
+  );
+  openCopyPacking(sourceId: number): void {
+    const trip = this.selectedTrip();
+    const source = this.trips().find((t) => t.id === sourceId);
+    if (!trip || !source) return;
+    const existing = new Set(this.packing().map((i) => i.title.toLocaleLowerCase('de')));
+    this.actionError.set('');
+    this.api
+      .packingItems(source.id)
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: (items) => {
+          const packing = items
+            .filter((i) => !existing.has(i.title.toLocaleLowerCase('de')))
+            .map((i) => ({ title: i.title, quantity: i.quantity, category: i.category }));
+          this.smartSetupScope.set('packing');
+          this.smartSetupSuggestions.set({ packing, tasks: [] });
+          this.smartSetupPackingChecked.set(packing.map(() => true));
+          this.smartSetupTasksChecked.set([]);
+          this.smartSetupError.set('');
+          this.smartSetupSource.set(source);
+          this.smartSetupReview.set(true);
+          this.smartSetupTrip.set(trip);
+        },
+        error: () => this.actionError.set(`Die Packliste von „${source.title}“ konnte nicht geladen werden. Bitte versuche es erneut.`),
+      });
+  }
   readonly smartSetupHead = computed(() => {
+    const source = this.smartSetupSource();
+    if (source) return { title: `Packliste von „${source.title}“`, icon: 'luggage' as IconName, empty: 'Alles aus dieser Packliste steht schon auf deiner.' };
     const scope = this.smartSetupScope();
     if (scope === 'tasks') return { title: 'Vorschläge für die Planung', icon: 'list' as IconName, empty: 'Alle vorgeschlagenen Aufgaben stehen schon in deiner Planung.' };
     if (scope === 'packing') return { title: 'Vorschläge für die Packliste', icon: 'luggage' as IconName, empty: 'Alle vorgeschlagenen Dinge stehen schon auf deiner Packliste.' };
@@ -914,6 +959,8 @@ export class Reisen {
   readonly smartSetupBasis = computed(() => {
     const trip = this.smartSetupTrip();
     if (!trip) return '';
+    const source = this.smartSetupSource();
+    if (source) return `Aus deiner Reise ${source.title} (${shortRange(source)}). Wähle aus, was du übernehmen möchtest – alles ist zunächst ungepackt.`;
     const label = (options: SelectOption[], value: string) => (value ? options.find((o) => o.value === value)?.label : undefined);
     const facts = [
       label(this.travelTypeOptions, trip.travel_type),
@@ -959,6 +1006,7 @@ export class Reisen {
       packing: scope === 'tasks' ? [] : all.packing.filter((i) => !hasItem(i.title)),
       tasks: scope === 'packing' ? [] : all.tasks.filter((t) => !hasTask(t.title)),
     };
+    this.smartSetupSource.set(null);
     this.smartSetupScope.set(scope);
     this.smartSetupSuggestions.set(suggestions);
     this.smartSetupPackingChecked.set(suggestions.packing.map(() => true));

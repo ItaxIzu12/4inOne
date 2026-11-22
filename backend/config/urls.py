@@ -18,7 +18,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
-from connections.views import TodayOverviewView
+from connections.views import SearchView, TodayOverviewView
 from datenexport.views import DataExportView
 from finanzen.views import OnboardingStatusView
 from core.onboarding_views import OnboardingGuideView, OnboardingProfileView
@@ -50,6 +50,7 @@ urlpatterns = [
     path('api/v1/reisen/', include('reisen.urls')),
     path('api/v1/connections/', include('connections.urls')),
     path('api/v1/today/', TodayOverviewView.as_view(), name='today-overview'),
+    path('api/v1/search/', SearchView.as_view(), name='global-search'),
     path('api/v1/fx/rates/', ExchangeRatesView.as_view(), name='fx-rates'),
     path('api/v1/places/', PlacesView.as_view(), name='places'),
     path('api/v1/feedback/', BetaFeedbackView.as_view(), name='beta-feedback'),

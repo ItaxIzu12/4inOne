@@ -8,6 +8,21 @@
         <button type="button" class="primary" (click)="add.emit()"><app-icon name="plus" />Artikel hinzufügen</button>
         <button type="button" class="soft" (click)="suggest.emit()"><app-icon name="bulb" />Vorlage verwenden</button>
       </div>
+    @if (copySources().length) {
+      <!-- R2: Packliste einer früheren Reise übernehmen (Auswahl im selben Dialog wie die Vorlage) -->
+      <div class="copy">
+        <button type="button" class="link" [attr.aria-expanded]="copyOpen()" aria-controls="pk-copy-list" (click)="copyOpen.set(!copyOpen())">
+          <app-icon name="repeat" />Aus früherer Reise übernehmen
+        </button>
+        @if (copyOpen()) {
+          <ul id="pk-copy-list" class="copy__list">
+            @for (c of copySources(); track c.id) {
+              <li><button type="button" class="copy__item" (click)="copyFrom.emit(c.id); copyOpen.set(false)">{{ c.label }}<app-icon name="arrow" aria-hidden="true" /></button></li>
+            }
+          </ul>
+        }
+      </div>
+    }
     }
   </section>
 } @else {
@@ -96,6 +111,21 @@
   @if (canEdit()) {
     <div class="foot">
       <button type="button" class="link" (click)="suggest.emit()"><app-icon name="bulb" />Vorlage verwenden</button>
+      @if (copySources().length) {
+        <!-- R2: Packliste einer früheren Reise übernehmen (Auswahl im selben Dialog wie die Vorlage) -->
+        <div class="copy">
+          <button type="button" class="link" [attr.aria-expanded]="copyOpen()" aria-controls="pk-copy-list" (click)="copyOpen.set(!copyOpen())">
+            <app-icon name="repeat" />Aus früherer Reise übernehmen
+          </button>
+          @if (copyOpen()) {
+            <ul id="pk-copy-list" class="copy__list">
+              @for (c of copySources(); track c.id) {
+                <li><button type="button" class="copy__item" (click)="copyFrom.emit(c.id); copyOpen.set(false)">{{ c.label }}<app-icon name="arrow" aria-hidden="true" /></button></li>
+              }
+            </ul>
+          }
+        </div>
+      }
       @if (packed() > 0) {
         @if (confirmReset()) {
           <div class="confirm" role="alert">
