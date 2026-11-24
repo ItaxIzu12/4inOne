@@ -15,13 +15,13 @@
       }
     </ul>
   } @else if (loaded()) {
-    <p class="bp__empty">Nach dem Online-Check-in die Bordkarte der Airline hinzufügen – als Wallet-Datei (.pkpass) oder Screenshot. Sie ist dann auch ohne Netz da.</p>
+    <p class="bp__empty">Nach dem Online-Check-in die Bordkarte der Airline hinzufügen – als Wallet-Datei (.pkpass), PDF oder Screenshot. Sie ist dann auch ohne Netz da.</p>
   }
   <label class="bp__add" [class.is-busy]="busy()">
-    <input type="file" accept=".pkpass,application/vnd.apple.pkpass,image/*" (change)="pick($event)" [disabled]="busy()" />
+    <input type="file" accept=".pkpass,application/vnd.apple.pkpass,.pdf,application/pdf,image/*" (change)="pick($event)" [disabled]="busy()" />
     <app-icon name="plus" aria-hidden="true" />{{ busy() ? 'Wird gelesen …' : 'Bordkarte hinzufügen' }}
   </label>
-  <p class="bp__note">Nur du siehst deine Bordkarten, auch bei geteilten Reisen. Nach der Reise werden sie gelöscht.</p>
+  <p class="bp__note">Nur du siehst deine Bordkarten, auch bei geteilten Reisen. Gespeichert wird nur der Code, nicht das Bild oder PDF; nach der Reise wird er gelöscht.</p>
   <p class="bp__msg" role="status" aria-live="polite">{{ message() }}</p>
 </section>
 

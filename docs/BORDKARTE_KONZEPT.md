@@ -9,18 +9,24 @@ und 3 sind Ideen und werden erst nach ausdrücklicher Freigabe gebaut.
 
 - **Wo:** Reise öffnen › Übersicht › Karte „Bordkarten“ › „Bordkarte hinzufügen“. Demo: Reise „Italien Sommerurlaub“.
 - **Wallet-Datei (.pkpass):** der Server liest Code, Strecke, Gate, Boarding, Gruppe. Funktioniert in jedem Browser.
-- **Screenshot:** der Code wird im Browser gelesen (das Bild verlässt das Gerät nicht). Geht nur, wo der Browser
-  `BarcodeDetector` kann (Chrome am Mac und Android); **iPhone/Safari und Firefox können das nicht** – dort erscheint
-  der Hinweis auf die Wallet-Datei. Aus einem Screenshot kommen nur die Angaben im Code (Strecke, Flug, Datum, Sitz,
-  Name), kein Gate und keine Boardingzeit.
+- **Screenshot:** zuerst liest der Browser den Code selbst (Chrome am Mac, Android – das Bild bleibt auf dem Gerät).
+  Kann er das nicht (iPhone/Safari, Firefox) oder findet er nichts, liest der Server den Code (zxing-cpp); das Bild
+  wird nur im Speicher gelesen und nicht gespeichert. Aus einem Screenshot kommen nur die Angaben im Code (Strecke,
+  Flug, Datum, Sitz, Name), kein Gate und keine Boardingzeit.
+- **PDF-Bordkarte:** der Server rastert die ersten drei Seiten (pypdfium2) und liest den Code wie beim Screenshot;
+  auch hier wird das PDF nicht gespeichert. Grenzen: 10 MB, keine passwortgeschützten PDFs.
 - **Anzeige:** Vollbild, echter Code schwarz auf Weiß, Bildschirm bleibt an (wo der Browser es kann).
 - **Offline:** die eigenen Karten liegen auf dem Gerät und stehen auch auf `/offline`; beim Abmelden gelöscht.
-- **Sicherheit:** nur die eigene Person (auch bei geteilten Reisen), Code verschlüsselt (Schlüssel aus `SECRET_KEY`;
-  ein neuer `SECRET_KEY` macht gespeicherte Karten unlesbar), Buchungscode gekürzt, höchstens 20 Karten je Reise,
-  `cleanup_expired` löscht zwei Tage nach Flug bzw. Reiseende.
-- **Technik:** `backend/reisen/boarding.py`, `boarding_views.py`, Modell `BoardingPass` (Migration `reisen 0015`);
-  Frontend `features/travel/boarding/*`, `shared/boarding-logic.ts`, `shared/boarding-offline.ts`.
-- **Noch offen:** PDF-Bordkarten; Screenshot-Lesen auch in Safari (bräuchte eine eigene Lese-Bibliothek).
+- **Sicherheit:** nur die eigene Person (auch bei geteilten Reisen), Code verschlüsselt, Buchungscode gekürzt,
+  höchstens 20 Karten je Reise, `cleanup_expired` löscht zwei Tage nach Flug bzw. Reiseende.
+- **Schlüssel:** `BOARDING_PASS_KEYS` (eigener Schlüssel, der erste verschlüsselt, weitere entschlüsseln noch), sonst
+  vom `SECRET_KEY` abgeleitet. Beim Wechsel des `SECRET_KEY` den alten in `SECRET_KEY_FALLBACKS` eintragen – dann
+  bleiben gespeicherte Karten lesbar (und niemand wird abgemeldet). Siehe `.env.example`.
+- **Technik:** `backend/reisen/boarding.py`, `boarding_views.py`, Modell `BoardingPass` (Migration `reisen 0015`),
+  Python-Pakete `zxing-cpp` 3.1.1 (Apache-2.0) und `pypdfium2` 5.14.0 (BSD/Apache); Frontend
+  `features/travel/boarding/*`, `shared/boarding-logic.ts`, `shared/boarding-offline.ts`, `bwip-js` (MIT).
+- **Tests:** `backend/reisen/test_boarding.py`, `frontend/e2e/boarding-pass.spec.ts` (Demo),
+  `frontend/e2e-fullstack/bordkarte.spec.ts` (echtes Backend, Browser ohne BarcodeDetector, Screenshot und PDF).
 
 Ziel: Buchung einmal übernehmen statt abtippen, Flugzeiten und Check-in im Blick behalten und nach dem
 Online-Check-in die **echte** Bordkarte der Airline in 4inOne zeigen — auch ohne Netz am Gate.
@@ -87,7 +93,6 @@ Online-Check-in die **echte** Bordkarte der Airline in 4inOne zeigen — auch oh
 
 - **Mail-Weiterleitung oder nur Hochladen?** Weiterleiten ist bequemer, braucht aber einen Mail-Empfang auf dem Server.
 - **Flugdaten-Dienst und Budget** — erst bei Schritt 3 nötig; vorher Anbieter und Kosten vergleichen.
-- **PDF-Bordkarten** — Schritt 1 liest Wallet-Dateien und Bilder; PDF folgt, wenn sich das im Test als nötig zeigt.
 
 ## Grenzen der Skizze
 

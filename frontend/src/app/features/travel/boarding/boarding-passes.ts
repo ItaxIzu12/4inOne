@@ -2,7 +2,7 @@ import { Component, DestroyRef, computed, effect, inject, input, signal } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { ReisenApi, Trip } from '../data/travel-api.service';
-import { BoardingPass, DETECTOR_FORMATS, passDate } from '../shared/boarding-logic';
+import { BarcodeFormat, BoardingPass, DETECTOR_FORMATS, passDate } from '../shared/boarding-logic';
 import { saveOfflinePasses } from '../shared/boarding-offline';
 import { BoardingPassView } from './boarding-pass-view';
 
@@ -25,8 +25,9 @@ function errorText(error: unknown): string {
 
 /**
  * Reise › Übersicht › „Bordkarten“ (Schritt 1, docs/BORDKARTE_KONZEPT.md): die eigenen Bordkarten dieser Reise. Rein
- * kommt die echte Bordkarte der Airline – als Wallet-Datei (.pkpass, der Server liest sie) oder als Screenshot (der
- * Code wird hier im Browser gelesen, das Bild verlässt das Gerät nicht). Nur die eigene Person sieht ihre Karten.
+ * kommt die echte Bordkarte der Airline – als Wallet-Datei (.pkpass), PDF oder Screenshot. Screenshots liest zuerst
+ * der Browser selbst (BarcodeDetector, Bild bleibt auf dem Gerät); kann er das nicht, liest der Server den Code und
+ * verwirft Bild bzw. PDF sofort. Nur die eigene Person sieht ihre Karten.
  */
 @Component({
   selector: 'app-boarding-passes',
@@ -78,35 +79,39 @@ export class BoardingPasses {
     input.value = '';
     if (!file) return;
     this.message.set('');
-    if (/\.pkpass$/i.test(file.name) || file.type === 'application/vnd.apple.pkpass') {
-      this.save(this.api.uploadBoardingPass(this.trip().id, file));
+    const isImage = file.type.startsWith('image/');
+    const isKnown = isImage || /\.(pkpass|pdf)$/i.test(file.name) || ['application/pdf', 'application/vnd.apple.pkpass'].includes(file.type);
+    if (!isKnown) {
+      this.message.set('Bitte eine Wallet-Datei (.pkpass), eine PDF-Bordkarte oder einen Screenshot wählen.');
       return;
     }
-    if (!file.type.startsWith('image/')) {
-      this.message.set('Bitte eine Wallet-Datei (.pkpass) oder einen Screenshot der Bordkarte wählen.');
-      return;
+    if (isImage) {
+      // Zuerst hier auf dem Gerät lesen (Chrome, Android); klappt das nicht, liest der Server das Bild (Safari, Firefox)
+      this.busy.set(true);
+      const found = await this.readLocally(file);
+      if (found) {
+        this.save(this.api.addBoardingPassCode(this.trip().id, found.format, found.message));
+        return;
+      }
     }
+    // Wallet-Datei, PDF oder Bild ohne Ergebnis: der Server liest es (gespeichert wird nur der Code)
+    this.save(this.api.uploadBoardingPass(this.trip().id, file));
+  }
+
+  /** Code mit dem BarcodeDetector des Browsers lesen; null, wenn es den nicht gibt oder er nichts findet. */
+  private async readLocally(file: File): Promise<{ format: BarcodeFormat; message: string } | null> {
     const Detector = (globalThis as { BarcodeDetector?: BarcodeDetectorCtor }).BarcodeDetector;
-    if (!Detector) {
-      this.message.set('Dieser Browser kann Codes in Bildern nicht lesen. Nimm die Wallet-Datei (.pkpass) aus der Airline-App oder -Mail.');
-      return;
-    }
-    this.busy.set(true);
+    if (!Detector) return null;
     try {
       const supported = (await Detector.getSupportedFormats?.()) ?? Object.keys(DETECTOR_FORMATS);
       const formats = Object.keys(DETECTOR_FORMATS).filter((f) => supported.includes(f));
+      if (!formats.length) return null;
       const bitmap = await createImageBitmap(file);
       const found = (await new Detector({ formats }).detect(bitmap)).find((b) => DETECTOR_FORMATS[b.format] && b.rawValue);
       bitmap.close?.();
-      if (!found) {
-        this.busy.set(false);
-        this.message.set('Im Bild wurde kein Code gefunden. Nimm einen scharfen Screenshot, auf dem der ganze Code zu sehen ist.');
-        return;
-      }
-      this.save(this.api.addBoardingPassCode(this.trip().id, DETECTOR_FORMATS[found.format], found.rawValue));
+      return found ? { format: DETECTOR_FORMATS[found.format], message: found.rawValue } : null;
     } catch {
-      this.busy.set(false);
-      this.message.set('Das Bild ließ sich nicht lesen. Versuch einen anderen Screenshot oder die Wallet-Datei.');
+      return null;
     }
   }
 

@@ -124,3 +124,99 @@ def test_cleanup_removes_passes_after_the_trip():
     keep = BoardingPass.objects.create(owner=anna, trip=soon, barcode_format='QR', barcode_ciphertext=boarding.encrypt('y'))
     call_command('cleanup_expired')
     assert list(BoardingPass.objects.values_list('pk', flat=True)) == [keep.pk]
+
+
+# --------------------------------------------------------------------------- Screenshot, PDF, Schlüsselwechsel
+
+
+def _png_qr(message):
+    import qrcode
+
+    buf = io.BytesIO()
+    qrcode.make(message).get_image().convert('RGB').save(buf, 'PNG')
+    buf.seek(0)
+    buf.name = 'bordkarte.png'
+    return buf
+
+
+def _pdf_with(drawing_code: str, message: str):
+    """Einseitiges PDF mit dem Code in der Mitte (wie eine ausgedruckte Bordkarte)."""
+    from reportlab.graphics import renderPDF
+    from reportlab.graphics.barcode import createBarcodeDrawing
+    from reportlab.lib.units import mm
+    from reportlab.pdfgen import canvas
+
+    buf = io.BytesIO()
+    pdf = canvas.Canvas(buf)
+    pdf.drawString(30 * mm, 270 * mm, 'Bordkarte – Beispiel-Airline XY 1234')
+    kwargs = {'barWidth': 0.5 * mm, 'barHeight': 20 * mm, 'humanReadable': False} if drawing_code == 'Code128' else {'width': 60 * mm, 'height': 60 * mm}
+    renderPDF.draw(createBarcodeDrawing(drawing_code, value=message, **kwargs), pdf, 30 * mm, 150 * mm)
+    pdf.showPage()
+    pdf.save()
+    buf.seek(0)
+    buf.name = 'bordkarte.pdf'
+    return buf
+
+
+def test_screenshot_is_read_on_the_server_when_the_browser_cannot():
+    anna = _user('anna')
+    trip = Trip.objects.create(owner=anna, title='Lissabon', start_date=date(2026, 12, 4), end_date=date(2026, 12, 6))
+    r = _client(anna).post(URL, {'trip': trip.pk, 'file': _png_qr(bcbp())}, format='multipart')
+    assert r.status_code == 201, r.data
+    assert (r.data['format'], r.data['message'], r.data['seat'], r.data['source']) == ('QR', bcbp(), '14C', 'image')
+
+
+def test_pdf_boarding_passes_qr_and_code128():
+    anna = _user('anna')
+    trip = Trip.objects.create(owner=anna, title='Lissabon', start_date=date(2026, 12, 4), end_date=date(2026, 12, 6))
+    r = _client(anna).post(URL, {'trip': trip.pk, 'file': _pdf_with('QR', bcbp())}, format='multipart')
+    assert r.status_code == 201, r.data
+    assert r.data['message'] == bcbp() and r.data['to_code'] == 'LIS'
+    r = _client(anna).post(URL, {'trip': trip.pk, 'file': _pdf_with('Code128', 'ZUG-4711-WAGEN-7')}, format='multipart')
+    assert r.status_code == 201, r.data
+    assert (r.data['format'], r.data['message']) == ('CODE128', 'ZUG-4711-WAGEN-7')
+
+
+def test_unreadable_images_and_pdfs_get_a_clear_message():
+    from PIL import Image
+
+    anna = _user('anna')
+    trip = Trip.objects.create(owner=anna, title='Lissabon', start_date=date(2026, 12, 4), end_date=date(2026, 12, 6))
+    blank = io.BytesIO()
+    Image.new('RGB', (400, 300), 'white').save(blank, 'PNG')
+    blank.seek(0); blank.name = 'leer.png'
+    r = _client(anna).post(URL, {'trip': trip.pk, 'file': blank}, format='multipart')
+    assert r.status_code == 400 and 'kein Code' in r.data['detail']
+    broken = io.BytesIO(b'%PDF-1.7 kaputt'); broken.name = 'x.pdf'
+    r = _client(anna).post(URL, {'trip': trip.pk, 'file': broken}, format='multipart')
+    assert r.status_code == 400 and 'PDF' in r.data['detail']
+    junk = io.BytesIO(b'\x00\x01nichts'); junk.name = 'x.png'
+    r = _client(anna).post(URL, {'trip': trip.pk, 'file': junk}, format='multipart')
+    assert r.status_code == 400 and 'Bild' in r.data['detail']
+    assert BoardingPass.objects.count() == 0
+
+
+def test_huge_images_are_refused_before_decoding(monkeypatch):
+    from PIL import Image
+
+    monkeypatch.setattr(boarding, 'MAX_SCAN_PIXELS', 1000)
+    buf = io.BytesIO()
+    Image.new('RGB', (100, 100), 'white').save(buf, 'PNG')
+    with pytest.raises(boarding.BoardingPassError, match='zu groß'):
+        boarding.read_code(buf.getvalue())
+
+
+def test_key_rotation_keeps_stored_passes_readable(settings):
+    settings.BOARDING_PASS_KEYS = []
+    settings.SECRET_KEY = 'alter-schluessel-' + 'x' * 40
+    token = boarding.encrypt('CODE')
+    # SECRET_KEY gewechselt, der alte steht als Fallback: lesbar
+    settings.SECRET_KEY, settings.SECRET_KEY_FALLBACKS = 'neuer-schluessel-' + 'y' * 40, ['alter-schluessel-' + 'x' * 40]
+    assert boarding.decrypt(token) == 'CODE'
+    # Eigener Bordkarten-Schlüssel: neue Karten damit, alte bleiben über den SECRET_KEY lesbar
+    settings.BOARDING_PASS_KEYS = ['bordkarten-schluessel-1']
+    newer = boarding.encrypt('NEU')
+    assert boarding.decrypt(token) == 'CODE' and boarding.decrypt(newer) == 'NEU'
+    # …und überlebt danach jeden SECRET_KEY-Wechsel
+    settings.SECRET_KEY, settings.SECRET_KEY_FALLBACKS = 'ganz-neu-' + 'z' * 40, []
+    assert boarding.decrypt(newer) == 'NEU' and boarding.decrypt(token) is None

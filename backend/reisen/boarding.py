@@ -5,9 +5,13 @@ importiert (Wallet-Datei .pkpass oder Screenshot, ausgelesen im Browser). Hier l
 - das Lesen des IATA-Standards BCBP (Bar Coded Boarding Pass, Pflichtteil: Name, Buchungscode, Strecke, Flug, Datum,
   Sitz, Sequenz),
 - das Lesen einer Wallet-Datei (.pkpass = ZIP mit pass.json),
+- das Lesen des Codes aus einem Screenshot oder einer PDF-Bordkarte (zxing-cpp; PDF-Seiten gerastert mit pypdfium2) –
+  nur für Browser ohne eigenen BarcodeDetector (Safari, Firefox) und für PDFs; Bild und PDF werden nur im Speicher
+  gelesen und nie abgelegt,
 - die Verschlüsselung des Codes: Buchungscode + Name erlauben bei vielen Airlines das Umbuchen, deshalb liegt der Code
-  nur verschlüsselt in der Datenbank (Schlüssel aus SECRET_KEY abgeleitet; ein neuer SECRET_KEY macht alte
-  Bordkarten unlesbar – sie sind ohnehin nur bis kurz nach der Reise gespeichert).
+  nur verschlüsselt in der Datenbank. Schlüssel: settings.BOARDING_PASS_KEYS (der erste verschlüsselt), sonst aus
+  SECRET_KEY abgeleitet; entschlüsselt wird auch mit allen älteren Schlüsseln und SECRET_KEY_FALLBACKS, damit ein
+  Schlüsselwechsel gespeicherte Karten nicht unlesbar macht.
 """
 
 from __future__ import annotations
@@ -21,13 +25,17 @@ import zipfile
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import Fernet, InvalidToken, MultiFernet
 from django.conf import settings
 from django.utils import timezone
 
 MAX_MESSAGE = 2000
 MAX_PKPASS_BYTES = 5 * 1024 * 1024
 MAX_PASS_JSON_BYTES = 512 * 1024
+MAX_SCAN_BYTES = 10 * 1024 * 1024  # Screenshot oder PDF
+MAX_SCAN_PIXELS = 40_000_000  # größere Bilder sind kein Screenshot, sondern ein Risiko (Dekompressionsbombe)
+MAX_SCAN_SIDE = 4000  # länger wird verkleinert; reicht für jeden Bordkarten-Code
+MAX_PDF_PAGES = 3
 FORMATS = ('QR', 'AZTEC', 'PDF417', 'CODE128')
 PKPASS_FORMATS = {
     'PKBarcodeFormatQR': 'QR', 'PKBarcodeFormatAztec': 'AZTEC', 'PKBarcodeFormatPDF417': 'PDF417',
@@ -42,9 +50,16 @@ class BoardingPassError(Exception):
 # --------------------------------------------------------------------------- Verschlüsselung
 
 
-def _fernet() -> Fernet:
-    key = hashlib.sha256(f'4inone-bordkarte:{settings.SECRET_KEY}'.encode()).digest()
-    return Fernet(base64.urlsafe_b64encode(key))
+def _key(secret: str) -> Fernet:
+    return Fernet(base64.urlsafe_b64encode(hashlib.sha256(f'4inone-bordkarte:{secret}'.encode()).digest()))
+
+
+def _fernet() -> MultiFernet:
+    """Der erste Schlüssel verschlüsselt; entschlüsselt wird mit allen (eigene Bordkarten-Schlüssel, dann SECRET_KEY und
+    seine Fallbacks)."""
+    secrets = [*getattr(settings, 'BOARDING_PASS_KEYS', []), settings.SECRET_KEY, *getattr(settings, 'SECRET_KEY_FALLBACKS', [])]
+    unique = list(dict.fromkeys(s for s in secrets if s))
+    return MultiFernet([_key(s) for s in unique])
 
 
 def encrypt(message: str) -> str:
@@ -202,3 +217,64 @@ def parse_pkpass(data: bytes, today: date | None = None) -> tuple[str, str, Pass
     if not data_.passenger_name:
         data_.passenger_name = _field_value(all_fields, 'passenger', 'name', 'passagier')[0][:60]
     return fmt, message, data_
+
+
+# --------------------------------------------------------------------------- Screenshot und PDF
+
+
+ZXING_FORMATS = {'QRCode': 'QR', 'Aztec': 'AZTEC', 'AztecCode': 'AZTEC', 'PDF417': 'PDF417', 'CompactPDF417': 'PDF417', 'Code128': 'CODE128'}
+
+
+def _images_from_pdf(data: bytes):
+    import pypdfium2 as pdfium  # erst hier laden: nur für PDF-Bordkarten nötig
+
+    try:
+        pdf = pdfium.PdfDocument(data)
+    except pdfium.PdfiumError:
+        raise BoardingPassError('Das PDF lässt sich nicht öffnen (beschädigt oder mit Passwort geschützt).')
+    try:
+        for index in range(min(len(pdf), MAX_PDF_PAGES)):
+            page = pdf[index]
+            width, height = page.get_size()
+            scale = min(4.0, MAX_SCAN_SIDE / max(width, height, 1))  # ~ 288 dpi, höchstens 4000 px
+            yield page.render(scale=scale).to_pil()
+    finally:
+        pdf.close()
+
+
+def _image_from_bytes(data: bytes):
+    from PIL import Image, ImageOps, UnidentifiedImageError
+
+    try:
+        with Image.open(io.BytesIO(data)) as probe:
+            if probe.width * probe.height > MAX_SCAN_PIXELS:
+                raise BoardingPassError('Das Bild ist zu groß. Nimm einen normalen Screenshot der Bordkarte.')
+        image = ImageOps.exif_transpose(Image.open(io.BytesIO(data)))
+        image.load()
+    except BoardingPassError:
+        raise
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError, ValueError):
+        raise BoardingPassError('Das ist kein lesbares Bild. Nimm einen Screenshot (PNG oder JPG) oder die Wallet-Datei.')
+    image = image.convert('RGB')
+    if max(image.size) > MAX_SCAN_SIDE:
+        image.thumbnail((MAX_SCAN_SIDE, MAX_SCAN_SIDE))
+    return image
+
+
+def read_code(data: bytes) -> tuple[str, str]:
+    """(Format, Code-Inhalt) aus einem Screenshot oder einer PDF-Bordkarte. Bild und PDF werden nur hier im Speicher
+    gelesen und nicht gespeichert."""
+    import zxingcpp
+
+    if len(data) > MAX_SCAN_BYTES:
+        raise BoardingPassError('Die Datei ist zu groß (höchstens 10 MB).')
+    is_pdf = data[:5] == b'%PDF-'
+    images = _images_from_pdf(data) if is_pdf else [_image_from_bytes(data)]
+    wanted = (zxingcpp.BarcodeFormat.QRCode, zxingcpp.BarcodeFormat.Aztec, zxingcpp.BarcodeFormat.PDF417, zxingcpp.BarcodeFormat.Code128)
+    for image in images:
+        for barcode in zxingcpp.read_barcodes(image, formats=wanted):
+            fmt = ZXING_FORMATS.get(barcode.format.name)
+            if fmt and barcode.valid and barcode.text:
+                return fmt, barcode.text[:MAX_MESSAGE]
+    where = 'Im PDF' if is_pdf else 'Im Bild'
+    raise BoardingPassError(f'{where} wurde kein Code gefunden. Nimm eine scharfe Aufnahme, auf der der ganze Code zu sehen ist – oder die Wallet-Datei.')

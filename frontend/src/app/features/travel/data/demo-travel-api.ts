@@ -549,7 +549,7 @@ export class DemoReisenApi {
     return of(this.boardingList.filter((b) => b.trip === tripId).map((b) => ({ ...b })));
   }
   uploadBoardingPass(_tripId: number, _file: File): Observable<BoardingPass> {
-    return throwError(() => ({ status: 400, error: { detail: 'Wallet-Dateien liest die Demo nicht – nimm zum Ausprobieren einen Screenshot der Bordkarte.' } }));
+    return throwError(() => ({ status: 400, error: { detail: 'Die Demo hat keinen Server: Wallet-Dateien, PDFs und Screenshots, die der Browser nicht selbst lesen kann (Safari, Firefox), liest erst die echte App. In Chrome klappt ein Screenshot auch hier.' } }));
   }
   addBoardingPassCode(tripId: number, format: BarcodeFormat, message: string): Observable<BoardingPass> {
     if (!this.tripList.some((t) => t.id === tripId)) return throwError(() => ({ status: 404 }));

@@ -2,7 +2,8 @@
 sehen darf.
 
 GET    /api/v1/reisen/boarding-passes/?trip=<id>   eigene Bordkarten dieser Reise (mit entschlüsseltem Code)
-POST   /api/v1/reisen/boarding-passes/             multipart `file` (.pkpass) + `trip`, oder JSON {trip, format, message}
+POST   /api/v1/reisen/boarding-passes/             multipart `file` + `trip` – Wallet-Datei (.pkpass), Screenshot oder PDF
+                                                   (Art am Inhalt erkannt) –, oder JSON {trip, format, message}
 DELETE /api/v1/reisen/boarding-passes/<id>/
 """
 
@@ -84,10 +85,16 @@ class BoardingPassListView(_View):
             return Response({'detail': f'Höchstens {MAX_PER_TRIP} Bordkarten je Reise.'}, status=400)
         try:
             if upload is not None:
-                if upload.size > boarding.MAX_PKPASS_BYTES:
-                    raise boarding.BoardingPassError('Die Datei ist zu groß (höchstens 5 MB).')
-                fmt, message, data = boarding.parse_pkpass(upload.read())
-                source = 'pkpass'
+                if upload.size > boarding.MAX_SCAN_BYTES:
+                    raise boarding.BoardingPassError('Die Datei ist zu groß (höchstens 10 MB).')
+                raw = upload.read()
+                if raw[:4] == b'PK\x03\x04' or upload.name.lower().endswith('.pkpass'):  # ZIP = Wallet-Datei
+                    fmt, message, data = boarding.parse_pkpass(raw)
+                    source = 'pkpass'
+                else:  # Screenshot oder PDF: Code lesen, Bild/PDF selbst wird nicht gespeichert
+                    fmt, message = boarding.read_code(raw)
+                    data = boarding.parse_bcbp(message) or boarding.PassData()
+                    source = 'image'
             else:
                 body = CodeInput(data=request.data)
                 body.is_valid(raise_exception=True)

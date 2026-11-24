@@ -19,6 +19,9 @@ djangorestframework_simplejwt==5.5.1
 iniconfig==2.3.1
 packaging==26.3
 Pillow==13.0.0
+# Bordkarte (reisen/boarding.py): Code aus Screenshot/PDF lesen – zxing-cpp (Apache-2.0), PDF rastern – pypdfium2 (BSD/Apache)
+zxing-cpp==3.1.1
+pypdfium2==5.14.0
 pluggy==1.7.0
 psycopg2-binary==2.9.13
 pycparser==3.12

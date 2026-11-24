@@ -31,6 +31,12 @@ environ.Env.read_env(BASE_DIR / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
+# Schlüsselwechsel ohne Abmelden aller Personen: alte Schlüssel hier (Django prüft Signaturen auch damit; die Bordkarten
+# bleiben ebenfalls lesbar, reisen/boarding.py).
+SECRET_KEY_FALLBACKS = env.list('SECRET_KEY_FALLBACKS', default=[])
+# Bordkarten (reisen/boarding.py): eigener Schlüssel unabhängig vom SECRET_KEY. Der erste verschlüsselt, alle weiteren
+# (und SECRET_KEY samt Fallbacks) entschlüsseln noch – so lässt er sich wechseln, ohne gespeicherte Karten zu verlieren.
+BOARDING_PASS_KEYS = env.list('BOARDING_PASS_KEYS', default=[])
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Bewusst: DEBUG ist standardmäßig False und muss aktiv per .env auf True

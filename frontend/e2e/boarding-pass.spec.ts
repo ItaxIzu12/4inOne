@@ -41,7 +41,7 @@ for (const width of [390, 1440]) {
   }
 }
 
-test('Bordkarte per Screenshot hinzufügen und löschen (ohne BarcodeDetector: Hinweis)', async ({ page }) => {
+test('Bordkarte per Screenshot hinzufügen und löschen (ohne BarcodeDetector: Server, in der Demo ein Hinweis)', async ({ page }) => {
   await prepare(page, 'light');
   await page.goto('/demo/reisen?trip=2');
   const hasDetector = await page.evaluate(() => 'BarcodeDetector' in window);
@@ -50,8 +50,8 @@ test('Bordkarte per Screenshot hinzufügen und löschen (ohne BarcodeDetector: H
   const buffer = await bwipjs.toBuffer({ bcid: 'qrcode', text: 'M1MUSTER/MAX          EZZ9YQ1 DUSVRNXY 1235 192Y015A00068100', scale: 6, paddingwidth: 10, paddingheight: 10, backgroundcolor: 'FFFFFF' });
   await page.getByLabel('Bordkarte hinzufügen').setInputFiles({ name: 'bordkarte.png', mimeType: 'image/png', buffer });
   if (!hasDetector) {
-    // z. B. Safari: Codes in Bildern kann der Browser nicht lesen → Hinweis auf die Wallet-Datei
-    await expect(page.getByRole('status').filter({ hasText: 'Wallet' })).toContainText('Wallet-Datei (.pkpass)');
+    // z. B. Safari: der Browser kann Codes in Bildern nicht lesen → in der echten App liest der Server, die Demo erklärt das
+    await expect(page.getByRole('status').filter({ hasText: 'Demo' })).toContainText('liest erst die echte App');
     return;
   }
 
@@ -65,9 +65,14 @@ test('Bordkarte per Screenshot hinzufügen und löschen (ohne BarcodeDetector: H
   await expect(page.getByRole('region', { name: 'Bordkarten' }).getByRole('listitem')).toHaveCount(1);
 });
 
-test('Wallet-Datei in der Demo: verständlicher Hinweis statt Fehler', async ({ page }) => {
-  await prepare(page, 'light');
-  await page.goto('/demo/reisen?trip=2');
-  await page.getByLabel('Bordkarte hinzufügen').setInputFiles({ name: 'karte.pkpass', mimeType: 'application/vnd.apple.pkpass', buffer: Buffer.from('x') });
-  await expect(page.getByRole('status').filter({ hasText: 'Screenshot' })).toContainText('Wallet-Dateien liest die Demo nicht');
-});
+for (const file of [
+  { name: 'karte.pkpass', mimeType: 'application/vnd.apple.pkpass' },
+  { name: 'karte.pdf', mimeType: 'application/pdf' },
+]) {
+  test(`${file.name} in der Demo: verständlicher Hinweis statt Fehler`, async ({ page }) => {
+    await prepare(page, 'light');
+    await page.goto('/demo/reisen?trip=2');
+    await page.getByLabel('Bordkarte hinzufügen').setInputFiles({ ...file, buffer: Buffer.from('x') });
+    await expect(page.getByRole('status').filter({ hasText: 'Demo' })).toContainText('Die Demo hat keinen Server');
+  });
+}

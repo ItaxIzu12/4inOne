@@ -288,7 +288,7 @@ export class ReisenApi {
   boardingPasses(tripId: number) {
     return this.http.get<BoardingPass[]>(`${API_BASE_URL}/reisen/boarding-passes/`, { params: new HttpParams().set('trip', tripId) });
   }
-  /** Wallet-Datei (.pkpass): der Server liest den Code und die Angaben. */
+  /** Wallet-Datei (.pkpass), PDF oder Screenshot: der Server liest den Code (und bei Wallet-Dateien die Angaben). */
   uploadBoardingPass(tripId: number, file: File) {
     const body = new FormData();
     body.append('trip', String(tripId));

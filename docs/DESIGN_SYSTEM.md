@@ -1464,8 +1464,11 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
     vom Service Worker für offline mit vorgeladen); Fläche des Codes immer `#fff`/`#000`.
   - Logik: `features/travel/shared/boarding-logic.ts` (Typ `BoardingPass`, `parseBcbp` wie `backend/reisen/boarding.py`,
     `DETECTOR_FORMATS`, `BWIP_FORMATS`), Offline-Kopie `boarding-offline.ts` (Schlüssel `OFFLINE_BOARDING_KEY` in
-    `core/offline/offline-keys.ts`, gelöscht durch `clearOfflineData`). Screenshot-Import über den Browser-
-    `BarcodeDetector` (Chrome/Android/macOS); fehlt er (Safari, Firefox), Hinweis auf die Wallet-Datei.
-  - Demo: Beispielkarte im Sommerurlaub (Sophie, „Beispiel-Airline“ XY 1234, DUS → VRN), `.pkpass` mit Hinweis.
+    `core/offline/offline-keys.ts`, gelöscht durch `clearOfflineData`). Screenshot zuerst über den Browser-
+    `BarcodeDetector` (Chrome/Android/macOS); fehlt er (Safari, Firefox) oder findet nichts, liest der Server
+    (`reisen/boarding.py › read_code`, zxing-cpp). PDFs immer über den Server (pypdfium2). Datei-Auswahl nimmt
+    `.pkpass`, `.pdf` und Bilder.
+  - Demo: Beispielkarte im Sommerurlaub (Sophie, „Beispiel-Airline“ XY 1234, DUS → VRN); `.pkpass`, PDF und
+    Screenshots ohne BarcodeDetector mit Hinweis „Die Demo hat keinen Server …“.
   - Geprüft: `e2e/boarding-pass.spec.ts` (Chromium + Mobile Safari, axe WCAG 2.2 AA hell/dunkel, 390/1440 px). Keine
     neuen Tokens; Symbole `ticket`, `travel`, `sun`, `trash`, `arrow-left` vorhanden.
