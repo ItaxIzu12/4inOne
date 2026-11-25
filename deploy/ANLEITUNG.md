@@ -1,5 +1,7 @@
 # 4inOne live stellen — Schritt für Schritt von null
 
+> Alternative mit Docker Compose (z. B. für den eigenen Mini-PC): [`deploy/docker/ANLEITUNG.md`](docker/ANLEITUNG.md).
+
 Für einen eigenen Linux-Server (Ubuntu 24.04 LTS) mit nginx. Jeder Schritt baut auf dem vorigen auf. Befehle mit
 `sudo` brauchen Administratorrechte, alle anderen laufen als Benutzer `deploy`.
 
@@ -260,14 +262,33 @@ Einmal von Hand testen:
 /srv/4inone/deploy/scripts/backup.sh
 ```
 
-Dann beide Zeitpläne einschalten (Backup 02:45 Uhr, Aufräumen 03:30 Uhr):
+Dann alle Zeitpläne einschalten:
+
+| Timer | Wann | Was |
+|---|---|---|
+| `4inone-backup` | täglich 02:45 | verschlüsseltes Backup (oben) |
+| `4inone-cleanup` | täglich 03:15 | abgelaufene Tokens, Sitzungen, Idempotenz-Schlüssel, alte Benachrichtigungen, Bordkarten nach der Reise (`cleanup_expired`), verwaiste Verbindungen (`prune_connections`) |
+| `4inone-prune` | täglich 03:30 | alte Besucherzähler und Anmelde-Ereignisse |
+| `4inone-reminders` | täglich 07:00 | Erinnerungen per E-Mail (nur wer sie eingeschaltet hat; braucht den Mailserver aus Schritt 5) |
+| `4inone-calendars` | stündlich | abonnierte Kalender neu abrufen (braucht ausgehendes HTTPS) |
 
 ```bash
-sudo cp /srv/4inone/deploy/systemd/4inone-{backup,prune}.{service,timer} /etc/systemd/system/
+sudo cp /srv/4inone/deploy/systemd/4inone-{backup,cleanup,prune,reminders,calendars}.{service,timer} /etc/systemd/system/
+sudo systemd-analyze verify /etc/systemd/system/4inone-*.service /etc/systemd/system/4inone-*.timer
 sudo systemctl daemon-reload
-sudo systemctl enable --now 4inone-backup.timer 4inone-prune.timer
+sudo systemctl enable --now 4inone-{backup,cleanup,prune,reminders,calendars}.timer
 systemctl list-timers | grep 4inone
 ```
+
+Einmal von Hand auslösen und das Ergebnis ansehen (Probeläufe ohne Wirkung: `--dry-run` bei `cleanup_expired`,
+`prune_connections`, `send_reminder_emails`):
+
+```bash
+sudo systemctl start 4inone-cleanup.service && journalctl -u 4inone-cleanup -n 20 --no-pager
+```
+
+Ein neuer Wartungsbefehl braucht immer einen Zeitplan hier; der Test `backend/core/test_deploy_schedule.py` schlägt
+sonst fehl.
 
 ### Backup zurückspielen (einmal ausprobieren, bevor du es brauchst!)
 

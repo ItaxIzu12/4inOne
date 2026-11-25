@@ -1456,9 +1456,9 @@ Handy zwei). Darunter Tagesliste und die einzelne Kontextkarte. Dadurch bleiben 
     „Geplant“, Monatssäulen der Jahreskarte: sichtbarer Text zuerst, Zusatzinfo als `.sr-only`).
 
 - **Bordkarten, Schritt 1 (22.11.2026, `docs/BORDKARTE_KONZEPT.md`):**
-  - `features/travel/boarding/boarding-passes.*` (`app-boarding-passes`, Karte in der Reise-Übersicht: `.bp__list`,
+  - `features/travel/shared/boarding/boarding-passes.*` (`app-boarding-passes`, Karte in der Reise-Übersicht: `.bp__list`,
     `.bp__item`, `.bp__add` = Datei-Knopf mit unsichtbarem `<input type=file>` darüber, `.bp__msg` als `role=status`).
-  - `features/travel/boarding/boarding-pass-view.*` (`app-boarding-pass-view`, Vollbild-Dialog `.bpv`, Karte `.pass`
+  - `features/travel/shared/boarding/boarding-pass-view.*` (`app-boarding-pass-view`, Vollbild-Dialog `.bpv`, Karte `.pass`
     mit `.pass__route`, `.pass__facts`, `.pass__perf`, `.pass__code`, `.pass__foot`; Fokus bleibt im Dialog, Escape
     schließt, Wake Lock wo verfügbar). Code mit `bwip-js` (MIT, lazy über `import('bwip-js/browser')`, eigener Chunk,
     vom Service Worker für offline mit vorgeladen); Fläche des Codes immer `#fff`/`#000`.

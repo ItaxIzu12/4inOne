@@ -160,7 +160,7 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 44 
 | HH-06 | Zwei Personen bearbeiten gleichzeitig dieselbe Liste | P1 | A/M | ❌ |
 | HH-07 | Ordner Vertrag: Kündigungsfrist, Verlängerung, neuer Preis ab Datum → Finanzen geplant | P0 | A | ✅ `test_ordner.py`, Connections |
 | HH-08 | Ordner Gerät: Wartungsintervall, nächste Wartung, Garantie | P1 | A | ✅ |
-| HH-09 | Anhänge: PDF/JPG/PNG/WEBP, 10 MB, 0 Byte, falsche Endung (exe als .pdf), HEIC abgelehnt, Löschen löscht Datei auf Platte | P0 | A | ✅ `test_ordner_anhaenge.py` (gleiche Prüfung wie `organisation/files.py`) |
+| HH-09 | Anhänge: PDF/JPG/PNG/WEBP, 10 MB, 0 Byte, falsche Endung (exe als .pdf), HEIC abgelehnt, Löschen löscht Datei auf Platte | P0 | A | ✅ `test_ordner_anhaenge.py` (gleiche Prüfung wie `core/files.py`) |
 | HH-10 | Personen im Haushalt, Fairness nur ab 2 Mitgliedern | P1 | A/E | ✅ `test_fairness_and_defaults.py`, `household-people.spec.ts` |
 | HH-11 | Haushalt verlassen / Mitglied entfernen → Daten bleiben beim Haushalt | P0 | A | 🟡 |
 
@@ -236,7 +236,7 @@ Bestandsaufnahme des Codes (80 Backend-Testdateien, 78 Unit-Spezifikationen, 44 
 | SEC-02 | XSS über Dateinamen, ICS-/CSV-Import, PDF-Bericht | P0 | A | 🟡 |
 | SEC-03 | SQL-Injection in Suche/Filtern (`' OR 1=1--`) | P0 | A | ✅ ORM, Stichprobe 🟡 |
 | SEC-04 | CSV-Injection im Finanz-Export: Beschreibung „=HYPERLINK(…)“, „+“, „-“, „@“ wird als Text exportiert | P1 | A | ✅ behoben 15.11.: `finanzen/reports.py` `_text_cell`, Test `test_csv_cells_from_users_never_become_spreadsheet_formulas` |
-| SEC-05 | Uploads: Inhalt statt Endung prüfen, SVG mit Skript, Polyglot-Dateien, Pixel-Bombe, EXIF/GPS in Fotos | P0 | A | ✅ `organisation/files.py` (Inhaltserkennung, Neukodierung ohne Fotodaten, 10 MB) — Pixel-Bombe 🟡 |
+| SEC-05 | Uploads: Inhalt statt Endung prüfen, SVG mit Skript, Polyglot-Dateien, Pixel-Bombe, EXIF/GPS in Fotos | P0 | A | ✅ `core/files.py` (Inhaltserkennung, Neukodierung ohne Fotodaten, 10 MB) — Pixel-Bombe 🟡 |
 | SEC-06 | Datei-Auslieferung mit `Content-Disposition: attachment` + `nosniff` (kein Ausführen im Browser) | P0 | A | 🟡 |
 | SEC-07 | SSRF über Ortssuche (`PLACES_PROVIDER_URL` fest, keine Nutzer-URL) | P1 | A | ✅ `core/test_places.py` |
 | SEC-08 | Offene Weiterleitung über `?next=`/Login-Redirect | P1 | A/E | ❌ |

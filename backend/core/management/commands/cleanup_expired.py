@@ -22,9 +22,8 @@ class Command(BaseCommand):
         from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
         from core.idempotency import LIFETIME as IDEMPOTENCY_LIFETIME
-        from django.db.models import Q
 
-        from reisen.models import BoardingPass
+        from core import registry
         from core.models import BetaFeedback, ContactInvite, IdempotencyRecord, Notification, PasswordResetToken, UserSession
 
         now = timezone.now()
@@ -40,14 +39,13 @@ class Command(BaseCommand):
             'abgelaufene Kontakt-Einladungen älter als 30 Tage': ContactInvite.objects.filter(
                 accepted_at__isnull=True, expires_at__lt=now - timedelta(days=30)
             ),
-            # Bordkarten (Buchungscode!) nur bis 2 Tage nach Reiseende bzw. Flugtag aufbewahren
-            'Bordkarten nach der Reise': BoardingPass.objects.filter(
-                Q(trip__end_date__lt=now.date() - timedelta(days=2)) | Q(flight_date__lt=now.date() - timedelta(days=2))
-            ),
             'Beta-Rückmeldungen nach Ablauf der Aufbewahrung': BetaFeedback.objects.filter(
                 created_at__lt=now - timedelta(days=settings.BETA_FEEDBACK_RETENTION_DAYS)
             ),
         }
+        # Löschregeln der Bereiche, z. B. Bordkarten nach der Reise (core/registry.py › CLEANUP_RULES)
+        for rules in registry.hooks(registry.CLEANUP_RULES):
+            groups.update(rules(now))
         with transaction.atomic():
             for label, queryset in groups.items():
                 count = queryset.count()

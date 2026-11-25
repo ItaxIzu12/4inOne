@@ -29,9 +29,11 @@ Die Einrichtung des Servers Schritt für Schritt (von null): [`deploy/ANLEITUNG.
    Mailserver), `RATE_LIMIT_CACHE=database` + einmal `manage.py createcachetable`,
    `PRIVATE_MEDIA_ROOT` auf ein gesichertes Volume, `ADMIN_URL_PATH` auf einen eigenen Wert, `BEHIND_PROXY=True`
    nur hinter genau einem vertrauenswürdigen Proxy.
-4. **Täglicher Cron-Job:** `python manage.py prune_website` (löscht abgelaufene Zähler der Besucherzählung) und
-   `python manage.py prune_auth_events` (Anmelde-Ereignisse nach 90 Tagen) — beide in `deploy/systemd/4inone-prune.service`.
-4c. **Erinnerungen und Kalender-Abos (seit 22.11.2026):** täglich um 7 Uhr `python manage.py send_reminder_emails`
+4. **Zeitpläne (systemd-Timer, `deploy/ANLEITUNG.md` › 8):** `4inone-backup` (02:45), `4inone-cleanup` (03:15:
+   `cleanup_expired` + `prune_connections` – Löschzusagen wie Bordkarten nach der Reise), `4inone-prune` (03:30:
+   `prune_website`, `prune_auth_events`), `4inone-reminders` (07:00), `4inone-calendars` (stündlich). Alle aktiv:
+   `systemctl list-timers | grep 4inone` zeigt fünf Einträge.
+4c. **Erinnerungen und Kalender-Abos (seit 22.11.2026, Timer `4inone-reminders` und `4inone-calendars`):** täglich um 7 Uhr `python manage.py send_reminder_emails`
    (O1, nur an Personen, die „Erinnerung per E-Mail“ im Profil eingeschaltet haben; mehrfaches Ausführen am selben Tag
    schickt nichts doppelt; Probelauf mit `--dry-run`) und stündlich `python manage.py refresh_calendar_subscriptions`
    (O3, ruft abonnierte ICS-Kalender neu ab). Der Server braucht dafür ausgehendes HTTPS (Port 443); interne Adressen

@@ -63,9 +63,11 @@ class HouseholdMemberDetailView(APIView):
                 return Response({'detail': 'Deinen eigenen Haushalt kannst du nicht verlassen.'}, status=400)
         elif mine.role != HouseholdMembership.Role.ADMIN or target.role == HouseholdMembership.Role.ADMIN:
             return Response({'detail': 'Dafür fehlt dir die Berechtigung.'}, status=403)
-        from haushalt.services import remove_member_assignments
+        from core import registry
 
         with transaction.atomic():
-            remove_member_assignments(target.household, target.user)
+            # Bereiche räumen Zuweisungen der Person auf (Haushalt: Aufgaben), core/registry.py › MEMBER_REMOVED
+            for cleanup in registry.hooks(registry.MEMBER_REMOVED):
+                cleanup(target.household, target.user)
             target.delete()
         return Response(status=204)

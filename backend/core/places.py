@@ -44,22 +44,13 @@ def clean_query(raw: str) -> str:
 
 def own_places(user, query: str, kind: str = 'place') -> list[str]:
     """Bisher verwendete Orte der Person — neueste zuerst, ohne Dubletten (Groß/Klein egal)."""
-    from organisation.models import PersonalEvent
-    from reisen.models import Trip
+    from core import registry
 
     needle = query.casefold()
     candidates: list[tuple[str, object]] = []
-    trips = (Trip.objects.filter(owner=user) | Trip.objects.filter(participants__user=user)).distinct()
-    if kind == 'lodging':
-        for accommodation, stamp in trips.exclude(accommodation='').values_list('accommodation', 'updated_at').order_by('-updated_at')[:100]:
-            candidates.append((accommodation, stamp))
-        return _dedupe(candidates, needle)
-    for location, stamp in PersonalEvent.objects.filter(owner=user).exclude(location='').values_list('location', 'updated_at').order_by('-updated_at')[:300]:
-        candidates.append((location, stamp))
-    for destination, departure, stamp in trips.values_list('destination', 'departure', 'updated_at').order_by('-updated_at')[:100]:
-        for value in (destination, departure):
-            if value:
-                candidates.append((value, stamp))
+    # Termine (Organisation) und Reisen melden ihre Orte selbst an (core/registry.py › PLACE_SOURCES)
+    for source in registry.hooks(registry.PLACE_SOURCES):
+        candidates.extend(source(user, kind))
     return _dedupe(candidates, needle)
 
 

@@ -527,16 +527,15 @@ def planned_expenses(user, start, end, rows) -> list[dict]:
          'title': t.description.strip(), 'category': t.category_id, 'amount': t.amount, 'date': t.datum}
         for t in rows.filter(type='EXPENSE', datum__gt=today).only('description', 'category_id', 'amount', 'datum')
     ]
-    from connections.auto_links import contract_planned, trip_planned
+    from core import registry
 
-    # Verträge aus dem Haushalt, wenn verbunden (Connection Engine V2, CON-01) — nur berechnet, nie gebucht.
+    # Abgeleitete Planwerte aus der Connection Engine (angemeldet in connections/apps.py, core/registry.py ›
+    # PLANNED_EXPENSES): verbundene Verträge (CON-01) und Reisebudgets (R3) — nur berechnet, nie gebucht.
     # Ein verbundener Vertrag ist die Quelle: er ersetzt eine gleichnamige wiederkehrende Planung (sonst doppelt).
-    contracts = contract_planned(user, start, end, rows)
-    covered = {item['title'].strip().casefold() for item in contracts}
+    derived = [source(user, start, end, rows) for source in registry.hooks(registry.PLANNED_EXPENSES)]
+    covered = {item['title'].strip().casefold() for replaces, items in derived if replaces for item in items}
     recurring = [item for item in recurring_planned(user, start, end, rows) if item['title'].strip().casefold() not in covered]
-    # R3: Reisebudget im Abreisemonat, wenn die Reise mit Finanzen verbunden ist — ebenfalls nur berechnet.
-    trips = trip_planned(user, start, end, rows)
-    items = dated + recurring + contracts + trips
+    items = dated + recurring + [item for _, part in derived for item in part]
     items.sort(key=lambda i: (i['date'], i['title'].lower(), i['id'] or 0))
     return items
 

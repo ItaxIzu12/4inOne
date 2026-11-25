@@ -1,0 +1,11 @@
+# 4inOne (Docker): alte Besucherzähler und Anmelde-Ereignisse löschen. Aktivieren: sudo systemctl enable --now 4inone-docker-prune.timer
+[Unit]
+Description=4inOne (Docker): alte Besucherzähler und Anmelde-Ereignisse löschen
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+Unit=4inone-docker@prune.service
+
+[Install]
+WantedBy=timers.target

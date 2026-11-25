@@ -9,7 +9,7 @@ from django.db.models.signals import post_delete
 from django.utils import timezone
 
 
-def _revoke_open_invitations(scope_type: str):
+def revoke_open_invitations(scope_type: str):
     def handler(sender, instance, **kwargs):
         from core.models import Invitation
 
@@ -22,12 +22,7 @@ def _revoke_open_invitations(scope_type: str):
 
 def connect() -> None:
     from core.models import Household, Invitation
-    from organisation.models import SharedCalendar
-    from reisen.models import Trip
 
-    post_delete.connect(_revoke_open_invitations(Invitation.Scope.HOUSEHOLD), sender=Household, weak=False,
+    # Reisen und gemeinsame Kalender verbinden sich selbst (reisen/core_hooks.py, organisation/core_hooks.py)
+    post_delete.connect(revoke_open_invitations(Invitation.Scope.HOUSEHOLD), sender=Household, weak=False,
                         dispatch_uid='invitations-household-deleted')
-    post_delete.connect(_revoke_open_invitations(Invitation.Scope.TRIP), sender=Trip, weak=False,
-                        dispatch_uid='invitations-trip-deleted')
-    post_delete.connect(_revoke_open_invitations(Invitation.Scope.CALENDAR), sender=SharedCalendar, weak=False,
-                        dispatch_uid='invitations-calendar-deleted')

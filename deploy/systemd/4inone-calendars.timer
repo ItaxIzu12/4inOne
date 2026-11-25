@@ -1,0 +1,12 @@
+# Stündlich (mit bis zu 5 Minuten Streuung, damit nicht alle Abrufe zur vollen Stunde laufen).
+# Aktivieren: sudo systemctl enable --now 4inone-calendars.timer
+[Unit]
+Description=4inOne: Kalender-Abos stündlich aktualisieren
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

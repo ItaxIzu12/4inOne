@@ -309,7 +309,7 @@ class UserPreference(models.Model):
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='preference')
     home_currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default=DEFAULT_HOME_CURRENCY)
-    # O1 (22.11.2026): Erinnerung per E-Mail – freiwillig, Standard aus (core/reminders.py, Befehl send_reminder_emails).
+    # O1 (22.11.2026): Erinnerung per E-Mail – freiwillig, Standard aus (connections/reminders.py, Befehl send_reminder_emails).
     reminder_email = models.CharField(max_length=6, choices=ReminderEmail.choices, default=ReminderEmail.OFF)
     # Tag des letzten Versands – verhindert doppelte E-Mails, wenn der Befehl öfter läuft.
     reminder_last_sent = models.DateField(null=True, blank=True)

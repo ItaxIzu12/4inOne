@@ -24,7 +24,7 @@ und 3 sind Ideen und werden erst nach ausdrücklicher Freigabe gebaut.
   bleiben gespeicherte Karten lesbar (und niemand wird abgemeldet). Siehe `.env.example`.
 - **Technik:** `backend/reisen/boarding.py`, `boarding_views.py`, Modell `BoardingPass` (Migration `reisen 0015`),
   Python-Pakete `zxing-cpp` 3.1.1 (Apache-2.0) und `pypdfium2` 5.14.0 (BSD/Apache); Frontend
-  `features/travel/boarding/*`, `shared/boarding-logic.ts`, `shared/boarding-offline.ts`, `bwip-js` (MIT).
+  `features/travel/shared/boarding/*`, `shared/boarding-logic.ts`, `shared/boarding-offline.ts`, `bwip-js` (MIT).
 - **Tests:** `backend/reisen/test_boarding.py`, `frontend/e2e/boarding-pass.spec.ts` (Demo),
   `frontend/e2e-fullstack/bordkarte.spec.ts` (echtes Backend, Browser ohne BarcodeDetector, Screenshot und PDF).
 

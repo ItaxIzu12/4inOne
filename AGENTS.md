@@ -30,32 +30,70 @@ If implementation, old mockups or historical notes conflict, use this priority:
 6. `docs/DATA_MODEL.md`
 7. `docs/DESIGN_SYSTEM.md`
 8. `docs/ARCHITECTURE.md`
-9. `docs/SECURITY.md`
-10. `docs/ROADMAP.md`
-11. current code, where it does not conflict with the above
+9. `docs/AI_INTEGRATION.md`
+10. `docs/SECURITY.md`
+11. `docs/ROADMAP.md`
+12. current code, where it does not conflict with the above
 
 ## Technology direction
 
-- Frontend: Angular
-- Backend: Python + Django
-- Database now: SQLite
-- Database later: PostgreSQL
-- Infrastructure later: Docker
+- Frontend: Angular + TypeScript (standalone components, Signals), responsive web app and PWA
+- Backend: Python + Django + Django REST Framework (REST API)
+- Database: PostgreSQL 16 in development (`docker-compose.yml`), CI and production; SQLite only as a fallback without
+  `DATABASE_URL` (`manage.py check --deploy` forbids it in production)
+- Infrastructure: Docker Compose for local services; production today via systemd + nginx (`deploy/`); a production
+  Compose for the self-hosted GEEKOM GT1 Mega is planned (`docs/ARCHITECTURE.md` › Phase 3)
 - Optional future worker/queue only when an actual background requirement exists
+
+## Architecture rules (target architecture: `docs/ARCHITECTURE.md` § 3)
+
+- 4inOne is a **modular monolith**: one Django project, one app per domain, one Angular app with domain folders, one
+  own PostgreSQL database. No microservices, no database shared with other applications.
+- Dependency direction: domain apps (`finanzen`, `haushalt`, `organisation`, `reisen`) use `core`/`integrations`, never
+  each other; cross-domain behaviour goes through `connections` or a domain's public interface. New code must not add
+  new violations; existing exceptions are listed in `docs/ARCHITECTURE.md` § 1.3 and are reduced step by step.
+- Business rules are deterministic. AI may add suggestions, never replace a rule or change data on its own.
+- External services (including the future **Personal AI Core**) only via the backend (`integrations/`), with timeout,
+  switch and defined failure behaviour. The Personal AI Core is a separate system: every basic feature must work
+  without it (`docs/AI_INTEGRATION.md`).
+- **Shared Personal AI Integration Standard** (`docs/AI_INTEGRATION.md` § 0): all AI goes through the one adapter
+  `integrations/ai` (versioned REST, capability discovery via `/v1/capabilities`, provider `core` or `mock`); no models,
+  OCR engines or AI SDKs embedded in 4inOne; models are swappable without app changes; permissions and data selection
+  stay in the domain service; development uses the mock provider while the Core is unavailable. A newly needed
+  capability is added to the catalogue (`docs/AI_INTEGRATION.md` § 4.5) as an extension of the shared Core — never as
+  an isolated AI solution inside 4inOne.
+- Architecture changes (new apps, moved responsibilities, new infrastructure) need the user's approval and are
+  documented in `docs/ARCHITECTURE.md` in the same step.
 
 The versions already installed in the repository are authoritative. Do not upgrade major dependencies without a concrete reason.
 
-## Required workflow before substantial changes
+## Required workflow before substantial changes (Feature-Protokoll, seit 24.11.2026)
 
-1. Inspect the existing codebase.
-2. Read relevant project documentation.
-3. Identify reusable components, services, APIs and models.
-4. Check whether the requested behavior already exists.
-5. Propose the smallest safe implementation.
-6. Preserve working functionality unless the requirement explicitly changes it.
-7. Implement in small, reviewable steps.
-8. Add or update tests.
-9. Run build/typecheck/tests relevant to the change.
+Every new feature description from the user is a domain requirement inside the existing architecture
+(`docs/ARCHITECTURE.md`). Work through it end to end without unnecessary questions when it is clearly described:
+
+1. Analyse the requirement.
+2. Inspect the existing code and read the relevant project/architecture documentation.
+3. Identify reusable modules, components, services, APIs and models; check whether the behaviour already exists.
+4. Check dependencies and the impact on existing features (permissions, Connection Engine, demo, offline, export).
+5. Make a short implementation plan; choose the smallest safe implementation.
+6. Implement the required backend and frontend parts in small, reviewable steps, preserving working functionality.
+7. Create database migrations where needed — additive only; destructive changes (drop/rename/data loss) need approval.
+8. Use existing API patterns and design components (`docs/DESIGN_SYSTEM.md`); no duplicate implementations.
+9. Use the Personal AI Core only through `integrations/ai` as described in `docs/AI_INTEGRATION.md` (switchable,
+   suggestions only, no hard-coded provider) and only for capabilities the user has approved.
+10. Write and run automated tests (backend pytest, frontend unit, build, relevant e2e incl. accessibility).
+11. Fix the failures found and re-run.
+12. Update the documentation (domain doc, `docs/ARCHITECTURE.md` if structure changes, design docs for UI changes).
+13. Check security (authorization, input limits, secrets), performance and resource use (target: GEEKOM GT1 Mega,
+    `docs/ARCHITECTURE.md` § 7).
+14. Hand the changes over for review: summary, files, commands run with their real results, open points, migrations.
+    Commit, push or deploy only when the user asks.
+
+Binding rules: no unnecessary architecture changes; no duplicated features; no hard-coded AI providers; no unrequested
+removal of existing features; no destructive database changes and no production deployment without approval; never
+report tests that were not run or results that did not happen; every extension fits the modular structure
+(`docs/ARCHITECTURE.md` § 3). Features the user has explicitly deferred stay deferred until they approve them.
 
 Do not rewrite the project only to make it resemble a theoretical architecture diagram.
 
@@ -134,7 +172,7 @@ Do not:
 - introduce AI as a novelty tab;
 - silently modify user data;
 - store long-lived secrets in insecure browser storage;
-- implement Celery/Redis/Neo4j/event buses before a concrete need exists;
+- implement Celery, a message broker, Neo4j or event buses before a concrete need exists (Redis is used only as a cache);
 - build a huge generic permissions framework before the product requires it;
 - copy demo data into real accounts by default;
 - add broad cross-domain foreign keys that make future evolution difficult.

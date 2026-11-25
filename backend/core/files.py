@@ -8,7 +8,18 @@ import re
 import unicodedata
 import zipfile
 
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from PIL import Image, ImageOps, UnidentifiedImageError
+
+
+
+def private_storage():
+    """Private Ablage AUSSERHALB von MEDIA_ROOT und ohne URL: Dateien sind nie direkt erreichbar, nur über Endpunkte
+    mit Rechteprüfung (docs/SECURITY.md). Als Funktion, damit Migrationen keinen rechnerspezifischen Pfad festschreiben.
+    Seit 24.11.2026 hier statt in organisation/models.py (gemeinsam für Organisation und Haushalt)."""
+    return FileSystemStorage(location=settings.PRIVATE_MEDIA_ROOT, base_url=None)
+
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB je Datei
 QUOTA = 500 * 1024 * 1024  # 500 MB je Person

@@ -1,0 +1,126 @@
+# 4inOne — Produktionsbetrieb mit Docker Compose (Ziel: GEEKOM GT1 Mega, docs/ARCHITECTURE.md § 7, Phase 3).
+#
+# Ergänzt den systemd-Weg (deploy/ANLEITUNG.md), ersetzt ihn nicht. Anleitung: deploy/docker/ANLEITUNG.md.
+#   cd /srv/4inone && docker compose -f deploy/docker/compose.yml --env-file /srv/4inone-data/docker.env up -d --build
+#
+# Grundsätze: eigene PostgreSQL-Datenbank nur für 4inOne; nur „web“ ist von außen erreichbar; Daten in festen
+# Verzeichnissen unter DATA_DIR (einfach zu sichern); Zugangsdaten nur aus env-Dateien, nie im Image;
+# Speicher- und CPU-Grenzen je Dienst, damit der Personal AI Core auf demselben Gerät genug Platz behält.
+name: 4inone-prod
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"   # SSD schonen: höchstens 3 × 10 MB Log je Dienst
+    max-file: "3"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER fehlt in der env-Datei}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt in der env-Datei}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB fehlt in der env-Datei}
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale=C.UTF-8
+      TZ: Europe/Berlin
+    # Klein gehalten für eine Person bzw. Familie
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=30", "-c", "effective_cache_size=384MB"]
+    volumes:
+      - ${DATA_DIR:?DATA_DIR fehlt in der env-Datei}/postgres:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 512m
+    cpus: 1.0
+    logging: *logging
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Nur Cache: keine Platte, feste Obergrenze
+    command: ["redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru", "--save", "", "--appendonly", "no"]
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 96m
+    cpus: 0.25
+    logging: *logging
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/backend.Dockerfile
+    image: 4inone-backend:local
+    restart: unless-stopped
+    env_file:
+      - ${ENV_FILE:?ENV_FILE fehlt in der env-Datei (Pfad zu den Django-Einstellungen)}
+    environment:
+      # Ergeben sich aus dem Aufbau und haben Vorrang vor der Django-env-Datei
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      PRIVATE_MEDIA_ROOT: /data/private_media
+      BEHIND_PROXY: "True"
+      RATE_LIMIT_CACHE: database
+      # Ein Wert für nginx und Django (Django erwartet den Schrägstrich am Ende)
+      ADMIN_URL_PATH: ${ADMIN_URL_PATH}/
+    volumes:
+      - ${DATA_DIR}/private_media:/data/private_media
+    networks: [internal]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 8000), 3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    cpus: 1.5
+    logging: *logging
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/web.Dockerfile
+    image: 4inone-web:local
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: ${SERVER_NAME:?SERVER_NAME fehlt in der env-Datei}
+      ADMIN_URL_PATH: ${ADMIN_URL_PATH:?ADMIN_URL_PATH fehlt in der env-Datei}
+      # Nur diese beiden Platzhalter ersetzen; nginx-Variablen wie $host bleiben unberührt
+      NGINX_ENVSUBST_FILTER: "^(SERVER_NAME|ADMIN_URL_PATH)$"
+    ports:
+      - "${BIND_ADDRESS:-0.0.0.0}:${HTTP_PORT:-80}:80"
+      - "${BIND_ADDRESS:-0.0.0.0}:${HTTPS_PORT:-443}:443"
+    volumes:
+      - ${DATA_DIR}/certs:/etc/nginx/certs:ro
+    networks: [internal, edge]
+    depends_on:
+      backend:
+        condition: service_healthy
+    mem_limit: 64m
+    cpus: 0.5
+    logging: *logging
+
+networks:
+  # Datenbank, Redis und Django sprechen nur untereinander und mit „web“. Der Personal AI Core wird später über ein
+  # eigenes Netz angebunden (docs/AI_INTEGRATION.md), nie über eine gemeinsame Datenbank.
+  internal: {}
+  edge: {}

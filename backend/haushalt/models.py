@@ -339,7 +339,7 @@ def folder_file_path(instance, filename):
 
 
 def _private_storage():
-    from organisation.models import private_storage
+    from core.files import private_storage
 
     return private_storage()
 
@@ -349,7 +349,7 @@ class FolderAttachment(models.Model):
 
     Sichtbar für alle erwachsenen Haushaltsmitglieder wie der Eintrag selbst (Kind-Konten haben keinen Zugriff auf den
     Ordner). Anhängen darf, wer den Eintrag bearbeiten darf; löschen nur, wer hochgeladen hat, und Haushalts-Admins.
-    Prüfung, Neukodierung ohne Fotodaten und Grenzen: organisation/files.py."""
+    Prüfung, Neukodierung ohne Fotodaten und Grenzen: core/files.py."""
 
     entry = models.ForeignKey(FolderEntry, on_delete=models.CASCADE, related_name='attachments')
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')

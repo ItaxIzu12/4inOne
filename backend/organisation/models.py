@@ -1,7 +1,6 @@
 import uuid
 
 from django.conf import settings
-from django.core.files.storage import FileSystemStorage
 from django.db import models
 
 from core.models import Household
@@ -231,11 +230,11 @@ class PersonalNote(models.Model):
         indexes = [models.Index(fields=['owner', 'updated_at'])]
 
 
-# Private Ablage AUSSERHALB von MEDIA_ROOT und ohne URL: Dateien sind nie direkt
-# erreichbar, nur über den Endpunkt mit Eigentümer-Prüfung (docs/SECURITY.md).
+# Private Ablage: core/files.py. Der Name bleibt hier, weil Migration 0004 auf organisation.models.private_storage zeigt.
 def private_storage():
-    # Als Funktion, damit Migrationen keinen rechnerspezifischen Pfad festschreiben.
-    return FileSystemStorage(location=settings.PRIVATE_MEDIA_ROOT, base_url=None)
+    from core.files import private_storage as storage
+
+    return storage()
 
 
 def private_file_path(instance, filename):
@@ -254,7 +253,7 @@ class FileCategory(models.TextChoices):
 
 class PersonalFile(models.Model):
     """Eine private Datei (Unterlagen, Bilder, Checklisten). Typ wird beim
-    Hochladen am Inhalt geprüft, nicht am Dateinamen (organisation/files.py)."""
+    Hochladen am Inhalt geprüft, nicht am Dateinamen (core/files.py)."""
 
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_files')
     file = models.FileField(storage=private_storage, upload_to=private_file_path, max_length=200)

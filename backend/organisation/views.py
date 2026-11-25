@@ -13,7 +13,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.exceptions import NotFound, PermissionDenied
 from . import calendars
-from . import files as file_rules
+from core import files as file_rules
 from . import services
 from .models import FileCategory, PersonalEvent, PersonalFile, PersonalNote, PersonalTask
 from .serializers import PersonalEventSerializer, PersonalFileSerializer, PersonalNoteSerializer, PersonalTaskSerializer

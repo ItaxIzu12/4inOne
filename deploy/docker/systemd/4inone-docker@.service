@@ -1,0 +1,13 @@
+# 4inOne im Docker-Betrieb: eine wiederkehrende Aufgabe (%i = backup|cleanup|prune|reminders|calendars).
+# Gestartet von den Timern 4inone-docker-*.timer; die Befehle stehen in deploy/docker/run-task.sh.
+[Unit]
+Description=4inOne (Docker): Aufgabe %i
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=deploy
+ExecStart=/srv/4inone/deploy/docker/run-task.sh %i
+TimeoutStartSec=30min

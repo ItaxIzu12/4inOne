@@ -1,0 +1,11 @@
+# 4inOne (Docker): abgelaufene Daten und verwaiste Verbindungen löschen. Aktivieren: sudo systemctl enable --now 4inone-docker-cleanup.timer
+[Unit]
+Description=4inOne (Docker): abgelaufene Daten und verwaiste Verbindungen löschen
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+Persistent=true
+Unit=4inone-docker@cleanup.service
+
+[Install]
+WantedBy=timers.target

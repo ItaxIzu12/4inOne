@@ -1,4 +1,4 @@
-"""O1: Erinnerungen per E-Mail verschicken (core/reminders.py). Gedacht für einen täglichen Cron-Lauf, z. B. 7 Uhr:
+"""O1: Erinnerungen per E-Mail verschicken (connections/reminders.py). Gedacht für einen täglichen Cron-Lauf, z. B. 7 Uhr:
 
     python manage.py send_reminder_emails
 
@@ -7,7 +7,7 @@ Mehrfaches Ausführen am selben Tag schickt nichts doppelt. Mit --dry-run wird n
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from core.reminders import send_due_reminders
+from connections.reminders import send_due_reminders
 
 
 class Command(BaseCommand):

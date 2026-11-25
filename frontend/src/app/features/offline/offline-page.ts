@@ -6,7 +6,7 @@ import { Brand } from '../../shared/ui/brand/brand';
 import { ShoppingItemDto } from '../household/data/household-api.service';
 import { SECTIONS } from '../household/shared/household-logic';
 import { OfflineShopping, OfflineSnapshot } from '../household/shared/offline-shopping';
-import { BoardingPassView } from '../travel/boarding/boarding-pass-view';
+import { BoardingPassView } from '../travel/shared/boarding/boarding-pass-view';
 import { BoardingPass, passDate } from '../travel/shared/boarding-logic';
 import { offlinePasses } from '../travel/shared/boarding-offline';
 

@@ -1,4 +1,5 @@
-"""O1 – Erinnerung per E-Mail (22.11.2026).
+"""O1 – Erinnerung per E-Mail (22.11.2026; seit 24.11.2026 in connections, weil sie Organisation, Haushalt und Reisen
+zusammenfasst – docs/ARCHITECTURE.md § 3.1).
 
 Freiwillig und standardmäßig aus (UserPreference.reminder_email). Wer sie einschaltet, bekommt morgens eine kurze
 Zusammenfassung — täglich oder wöchentlich am Montag:

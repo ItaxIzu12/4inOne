@@ -400,6 +400,23 @@ AXES_VERBOSE = False
 # Mechanismus) statt über eine selbstgebaute Redis-Lösung — weniger
 # Angriffsfläche/Komplexität für den MVP, siehe ARCHITEKTUR.md §2.1.
 REDIS_URL = env('REDIS_URL', default='redis://localhost:6379/0')
+
+# Personal AI Core (docs/AI_INTEGRATION.md, integrations/ai/): standardmäßig AUS. Ohne diese Werte macht 4inOne keinen
+# einzigen KI-Aufruf, und jede Funktion arbeitet wie ohne KI. Nur das Backend spricht mit dem Core.
+AI_ENABLED = env.bool('AI_ENABLED', default=False)
+# Provider des Adapters: 'core' = Personal AI Core (REST), 'mock' = feste Antworten für die Entwicklung (nie in Produktion)
+AI_PROVIDER = env('AI_PROVIDER', default='core')
+# Kennung dieser Anwendung gegenüber dem gemeinsamen Core (Anwendungskontexte getrennt halten)
+AI_APPLICATION_ID = env('AI_APPLICATION_ID', default='4inone')
+AI_CAPABILITY_CACHE_SECONDS = env.int('AI_CAPABILITY_CACHE_SECONDS', default=300)  # GET /v1/capabilities zwischenspeichern
+AI_CORE_URL = env('AI_CORE_URL', default='').rstrip('/')
+AI_CORE_TOKEN = env('AI_CORE_TOKEN', default='')
+AI_CORE_TOKEN_FILE = env('AI_CORE_TOKEN_FILE', default='')  # z. B. Docker-Secret statt Variable
+AI_CORE_CA_BUNDLE = env('AI_CORE_CA_BUNDLE', default='')  # eigenes Zertifikat des Core im Heimnetz
+AI_CAPABILITIES = env.list('AI_CAPABILITIES', default=[])  # Erlaubt-Liste; leer = keine Fähigkeit aktiv
+AI_TIMEOUT_SECONDS = env.float('AI_TIMEOUT_SECONDS', default=8.0)  # unter dem gunicorn-Timeout von 30 s
+AI_MAX_REQUEST_BYTES = env.int('AI_MAX_REQUEST_BYTES', default=2_000_000)
+AI_MAX_RESPONSE_BYTES = env.int('AI_MAX_RESPONSE_BYTES', default=256_000)
 # Ortsvorschläge (core/places.py): Photon (komoot, OpenStreetMap). Leer = nur eigene Orte, nichts geht nach außen.
 PLACES_PROVIDER_URL = env('PLACES_PROVIDER_URL', default='https://photon.komoot.io/api/')
 

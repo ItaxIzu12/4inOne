@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APIClient
 
-from organisation import files as file_rules
+from core import files as file_rules
 from organisation.models import PersonalFile, PersonalNote
 
 pytestmark = pytest.mark.django_db

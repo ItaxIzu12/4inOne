@@ -1,0 +1,19 @@
+# Datenschutz-Aufräumen: abgelaufene Tokens, Sitzungen, Idempotenz-Schlüssel, alte erledigte Benachrichtigungen,
+# Bordkarten zwei Tage nach Flug/Reiseende (cleanup_expired) und verwaiste Verbindungen (prune_connections).
+# Eigener Dienst (nicht in 4inone-prune.service), damit ein Fehler dort diese Löschungen nicht verhindert.
+# Ausgelöst von 4inone-cleanup.timer. Probelauf: manage.py cleanup_expired --dry-run
+[Unit]
+Description=4inOne: abgelaufene Daten und verwaiste Verbindungen löschen
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/srv/4inone/backend
+ExecStart=/srv/4inone/backend/.venv/bin/python manage.py cleanup_expired
+ExecStart=/srv/4inone/backend/.venv/bin/python manage.py prune_connections
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/4inone-data

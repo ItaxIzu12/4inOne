@@ -19,8 +19,8 @@ from django.utils import timezone
 
 from core.models import Household, HouseholdMembership
 from core.recurrence import add_months, next_after
-from finanzen import services as finanzen_services
-from finanzen.models import Category
+from finanzen import public as finanzen
+from finanzen.public import Category
 from haushalt.models import (
     SECTION_ORDER,
     FolderEntry,
@@ -283,7 +283,7 @@ def complete_shopping(
     transaction = None
     if amount is not None:
         category_name = None if category is not None else _dominant_category_name(checked)
-        transaction = finanzen_services.book_shopping_expense(
+        transaction = finanzen.book_shopping_expense(
             user, amount, [item.name for item in checked], category, category_name
         )
 
@@ -303,7 +303,7 @@ def complete_shopping(
 def _dominant_category_name(items: list[ShoppingItem]) -> str | None:
     """Wenn die Mehrheit der abgehakten Einträge Kleidung ist, soll die
     Ausgabe auch als „Kleidung" erscheinen statt immer als die
-    Standard-Kategorie (finanzen_services.PRIVATE_SHOPPING_CATEGORY). Für
+    Standard-Kategorie (finanzen.PRIVATE_SHOPPING_CATEGORY). Für
     alle anderen Ladenbereiche bleibt es beim Standard."""
     clothing = sum(1 for item in items if item.section == Section.CLOTHING)
     if clothing * 2 > len(items):
@@ -508,7 +508,7 @@ def month_load(household: Household) -> list[dict]:
     """Lastanzeige: Aufwandspunkte und Anzahl erledigter Aufgaben pro
     Mitglied im laufenden Monat. Alle Mitglieder erscheinen, auch mit 0 —
     gerade das macht eine ungleiche Verteilung sichtbar."""
-    start, end = finanzen_services.month_bounds()
+    start, end = finanzen.month_bounds()
     rows = (
         TaskCompletion.objects.filter(household=household, done_at__date__gte=start, done_at__date__lt=end)
         .values('done_by_id')

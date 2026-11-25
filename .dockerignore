@@ -1,0 +1,27 @@
+# Build-Kontext für deploy/docker/*.Dockerfile ist das ganze Repository. Nichts davon gehört in ein Image:
+# Geheimnisse, Daten, Sicherungen, lokale Umgebungen und Werkzeug-Ordner.
+**/.env
+**/.env.*
+**/*.env
+!**/.env.example
+.git
+.github
+.claude
+.agents
+backups
+monitoring
+design-system
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+backend/.venv
+backend/venv
+backend/db.sqlite3
+backend/private_media
+backend/media
+frontend/node_modules
+frontend/dist
+frontend/.angular
+frontend/test-results
+frontend/playwright-report
+**/.DS_Store

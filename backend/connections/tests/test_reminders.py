@@ -11,7 +11,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from core.models import Household, HouseholdMembership, UserPreference
-from core.reminders import due_today, send_due_reminders
+from connections.reminders import due_today, send_due_reminders
 from haushalt.models import FolderEntry, Task as HouseholdTask
 from organisation.models import PersonalTask
 from reisen.models import Trip, TripTask

@@ -1,0 +1,18 @@
+# Erinnerungen per E-Mail (send_reminder_emails): nur an Personen, die „Erinnerung per E-Mail“ im Profil eingeschaltet
+# haben. Mehrfaches Ausführen am selben Tag schickt nichts doppelt. Braucht einen echten Mailserver (EMAIL_HOST …).
+# Ausgelöst von 4inone-reminders.timer. Probelauf: manage.py send_reminder_emails --dry-run
+[Unit]
+Description=4inOne: Erinnerungen per E-Mail senden
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/srv/4inone/backend
+ExecStart=/srv/4inone/backend/.venv/bin/python manage.py send_reminder_emails
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/4inone-data

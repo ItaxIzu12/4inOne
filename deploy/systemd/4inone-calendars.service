@@ -1,0 +1,20 @@
+# Abonnierte Kalender (ICS-Links) neu abrufen (refresh_calendar_subscriptions). Nur Abos, die älter als 50 Minuten
+# sind; interne Adressen blockt der Code selbst (organisation/subscriptions.py). Braucht ausgehendes HTTPS.
+# Ausgelöst von 4inone-calendars.timer.
+[Unit]
+Description=4inOne: abonnierte Kalender aktualisieren
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/srv/4inone/backend
+ExecStart=/srv/4inone/backend/.venv/bin/python manage.py refresh_calendar_subscriptions
+# Ein hängender Kalender-Server darf den nächsten Lauf nicht blockieren
+TimeoutStartSec=15min
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/4inone-data

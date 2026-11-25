@@ -2,8 +2,12 @@
 
 **Stand:** 04.11.2026 · **Status: vorbereitet, nicht begonnen — auf Wunsch zurückgestellt (06.11.2026), bis du die App selbst gründlich getestet hast.** Beginn erst, wenn das Qualitäts-Gate
 (`docs/RELEASE_READINESS.md`) erfüllt und die Beta (Phase 5, `docs/beta/`) ausgewertet ist.
-**Freigegebene Technik (Nutzerentscheidung 04.11.2026):** `pypdf` (PDF-Text), Tesseract + `pytesseract` (OCR, Deutsch),
-Ollama mit lokalem Vision-Modell — alles lokal, nichts an externe Dienste. Installation erst beim Start der Phase.
+**Freigegebene Technik (Nutzerentscheidung 04.11.2026), angepasst an den gemeinsamen Personal-AI-Integrationsstandard
+(25.11.2026, `docs/AI_INTEGRATION.md` § 0):** `pypdf` liest die Textebene von PDFs in 4inOne (kein Modell). OCR
+(Tesseract, Deutsch) und das lokale Vision-/Sprachmodell (Ollama) laufen **im Personal AI Core** und werden über die
+Fähigkeiten `ocr` und `extract_document` (Katalog `AI_INTEGRATION.md` § 4.5) über `integrations/ai` angesprochen — 4inOne
+bindet sie nicht selbst ein. Weiterhin alles lokal auf dem eigenen Gerät, nichts an externe Dienste. In der Entwicklung
+`AI_PROVIDER=mock`.
 
 ## 1. Grundsatz
 
@@ -15,9 +19,9 @@ Ein Scan bucht nie, legt nie Stammdaten ohne Bestätigung an und erfindet keine 
 
 | Schritt | Wo | Regel |
 |---|---|---|
-| 1. Hochladen | Vertrag/Gerät hinzufügen › „Aus Foto oder PDF ausfüllen“ | JPEG/PNG/HEIC/PDF, ≤ 10 MB, ≤ 10 Seiten; Prüfung wie `organisation/files.py prepare_upload` (Magic Bytes, EXIF/Standort entfernen) |
-| 2. Text | Django, Hintergrund-Job | PDF mit Textebene → `pypdf`; sonst Seiten als Bild → Tesseract `deu+eng` |
-| 3. Felder | Ollama, lokal | Prompt mit festem JSON-Schema; Antwort mit **Pydantic** prüfen; ungültig → Felder leer, nicht raten |
+| 1. Hochladen | Vertrag/Gerät hinzufügen › „Aus Foto oder PDF ausfüllen“ | JPEG/PNG/HEIC/PDF, ≤ 10 MB, ≤ 10 Seiten; Prüfung wie `core/files.py prepare_upload` (Magic Bytes, EXIF/Standort entfernen) |
+| 2. Text | Django, Hintergrund-Job | PDF mit Textebene → `pypdf`; sonst Seiten als Bild → Fähigkeit `ocr` im Personal AI Core (Tesseract `deu+eng`) |
+| 3. Felder | Personal AI Core, Fähigkeit `extract_document` | Festes JSON-Schema; Antwort in 4inOne mit dem Ergebnis-Serializer der Fähigkeit prüfen (`integrations/ai`); ungültig → Felder leer, nicht raten |
 | 4. Abgleich | Django | Jedes Feld nur übernehmen, wenn es **wörtlich** im extrahierten Text belegt ist (Fundstelle gespeichert); sonst „unsicher“ |
 | 5. Prüfen | bestehender Dialog, vorausgefüllt | unsichere/fehlende Felder markiert („Bitte prüfen“), Fundstelle als Zitat; nichts gespeichert, bis „Speichern“ |
 | 6. Speichern | bestehende API | wie manuelles Anlegen; Datei nur als Anhang, wenn die Person es **ankreuzt** |
@@ -40,7 +44,7 @@ Produktfoto ohne lesbares Typenschild. Seriennummer ist kein eindeutiger Schlüs
 - Nur angemeldet, eigene Drosselung (z. B. 10 Scans/Stunde), Größen- und Seitenlimit, Zeitlimit je Job.
 - Uploads in `PRIVATE_MEDIA_ROOT/scan-tmp/`, nie öffentlich ausgeliefert; Löschung nach Abschluss, spätestens nach
   24 h (`cleanup_expired`). Extrahierter Text nur bis zum Speichern, danach verworfen.
-- Ollama nur auf `localhost`, kein Internetzugriff des Modells. Im SaaS-Betrieb Verarbeitungsort in der
+- Modelle nur im Personal AI Core auf demselben Gerät (internes Netz), kein Internetzugriff des Modells. Im SaaS-Betrieb Verarbeitungsort in der
   Datenschutzerklärung nennen (Server ≠ Gerät der Person).
 - Logs ohne Dokumentinhalte (nur Job-ID, Dauer, Ergebnisart).
 

@@ -10,6 +10,10 @@ For visual work, inspect existing Angular components, CSS/SCSS/tokens and the cu
 
 For backend work, inspect existing Django apps, serializers/forms/views/services and permission checks before creating new patterns.
 
+For every new feature request, follow the Feature-Protokoll in `AGENTS.md` and check it against the target architecture
+(`docs/ARCHITECTURE.md` § 3 and the compatibility checklist § 9). Anything involving AI follows `docs/AI_INTEGRATION.md`:
+backend only, switchable, suggestions only; the app must work fully while the Personal AI Core is unavailable.
+
 ## Do not
 
 - create a replacement project;
@@ -41,4 +45,5 @@ After substantial work, report:
 2. behavior added/changed;
 3. tests/build commands run;
 4. unresolved issues or assumptions;
-5. whether any migration is required.
+5. whether any migration is required;
+6. security, performance or resource effects worth knowing (or “none”).

@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 from core.models import HouseholdMembership
 from core.recurrence import add_months
-from finanzen.models import Category
+from finanzen.public import Category
 from haushalt import services
 from haushalt.models import FolderEntry, ItemMemory, Section, ShoppingItem, ShoppingList, Task
 

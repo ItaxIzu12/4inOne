@@ -1,5 +1,7 @@
 # 4inOne — Optional AI Direction
 
+> Konkrete Schnittstelle, Konfiguration und Regeln für die spätere Anbindung an den Personal AI Core: [`AI_INTEGRATION.md`](AI_INTEGRATION.md) (24.11.2026).
+
 AI is not required for the core product and should not become a separate novelty feature.
 
 ## Useful future roles

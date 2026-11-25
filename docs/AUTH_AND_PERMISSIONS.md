@@ -221,7 +221,7 @@ Code: `organisation/calendars.py` (`sharing_owner_ids`, `shared_with_me_ids`, `v
 ## Fotos & PDF an Geräten und Verträgen (31.10.2026)
 
 Code: `haushalt/models.py` `FolderAttachment`, `FolderEntryViewSet.add_attachment` / `.attachment`, Prüfung
-`organisation/files.py` `prepare_upload` (gemeinsam mit Notiz-Anhängen). Tests: `haushalt/test_ordner_anhaenge.py`.
+`core/files.py` `prepare_upload` (gemeinsam mit Notiz-Anhängen). Tests: `haushalt/test_ordner_anhaenge.py`.
 
 - **Sehen** wie der Eintrag: alle erwachsenen Mitglieder des Haushalts; Kind-Konten 403 (`NoChildAccount`), andere
   Haushalte 404. Inhalt nur über die API (privater Speicher, `nosniff`, `sandbox`-CSP, `no-store`).

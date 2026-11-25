@@ -1,9 +1,9 @@
 import { Component, DestroyRef, computed, effect, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AppIcon } from '../../../shared/ui/icons/app-icon';
-import { ReisenApi, Trip } from '../data/travel-api.service';
-import { BarcodeFormat, BoardingPass, DETECTOR_FORMATS, passDate } from '../shared/boarding-logic';
-import { saveOfflinePasses } from '../shared/boarding-offline';
+import { AppIcon } from '../../../../shared/ui/icons/app-icon';
+import { ReisenApi, Trip } from '../../data/travel-api.service';
+import { BarcodeFormat, BoardingPass, DETECTOR_FORMATS, passDate } from '../boarding-logic';
+import { saveOfflinePasses } from '../boarding-offline';
 import { BoardingPassView } from './boarding-pass-view';
 
 interface DetectedBarcode {
@@ -33,7 +33,7 @@ function errorText(error: unknown): string {
   selector: 'app-boarding-passes',
   imports: [AppIcon, BoardingPassView],
   templateUrl: './boarding-passes.html',
-  styleUrls: ['../shared/trip-common.scss', './boarding-passes.scss'],
+  styleUrls: ['../trip-common.scss', './boarding-passes.scss'],
 })
 export class BoardingPasses {
   private readonly api = inject(ReisenApi);

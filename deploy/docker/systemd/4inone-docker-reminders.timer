@@ -1,0 +1,11 @@
+# 4inOne (Docker): Erinnerungen per E-Mail. Aktivieren: sudo systemctl enable --now 4inone-docker-reminders.timer
+[Unit]
+Description=4inOne (Docker): Erinnerungen per E-Mail
+
+[Timer]
+OnCalendar=*-*-* 07:00:00
+Persistent=true
+Unit=4inone-docker@reminders.service
+
+[Install]
+WantedBy=timers.target

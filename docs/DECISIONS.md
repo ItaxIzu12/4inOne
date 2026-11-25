@@ -107,3 +107,23 @@ ausgegeben, geplant, verfügbar je Kategorie). Code: `finanzen/private_api.py` (
 ## D18 — Alte Finanzoberfläche entfernt
 
 Die eingefrorene Haushaltsfinanzoberfläche und ihr Link wurden entfernt. Alte Frontend-Adressen werden auf `/finanzen` weitergeleitet. Historische Daten und die serverseitige Schreibsperre bleiben erhalten; keine Datenlöschung oder Migration.
+
+## D19 — Modularer Monolith und Zielarchitektur (24.11.2026)
+
+4inOne bleibt ein modularer Monolith mit einer eigenen PostgreSQL-Datenbank. Die Zielarchitektur (Schichten,
+Abhängigkeitsregeln, öffentliche Schnittstellen je Bereich) steht in `docs/ARCHITECTURE.md` § 3; neue Funktionen müssen
+dazu passen. Umbauten nach dem Maßnahmenplan (§ 4) beginnen erst nach Freigabe durch den Nutzer. Bestehende Funktionen
+und Daten bleiben erhalten; Migrationen sind additiv, destruktive nur mit Freigabe.
+
+## D20 — Personal AI Core ist ein eigenes System (24.11.2026)
+
+Ergänzt D15. KI kommt später aus dem separat entwickelten Personal AI Core auf demselben Gerät. 4inOne spricht ihn nur
+über das Backend an (authentifizierte API, eigenes versioniertes Format, kein fest verdrahteter Anbieter), ist ohne ihn
+voll funktionsfähig (`AI_ENABLED=False` ist Standard) und lässt KI nur Vorschläge machen; Buchungen und sensible Daten
+ändert sie nie selbst. Einzelheiten: `docs/AI_INTEGRATION.md`.
+
+**Ergänzung 25.11.2026 — gemeinsamer Personal-AI-Integrationsstandard:** Alle Anwendungen am Personal AI Core nutzen
+dieselbe versionierte REST-Schnittstelle mit Fähigkeiten-Abfrage (`/v1/capabilities`). In 4inOne gibt es genau einen
+Adapter (`integrations/ai`) mit den Providern `core` und `mock` (Entwicklung); keine eingebundenen Modelle oder
+OCR-Engines (auch Smart Scan nutzt den Core). Neue Fähigkeiten werden im Katalog `docs/AI_INTEGRATION.md` § 4.5
+beschrieben und als Erweiterung des gemeinsamen Core umgesetzt.

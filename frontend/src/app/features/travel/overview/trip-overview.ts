@@ -4,7 +4,7 @@ import { ConnectionsSection } from '../../../shared/features/connections/connect
 import { Trip, TripTask } from '../data/travel-api.service';
 import { TRANSPORT_LABELS, cancellationInfo, dueLabel, filterTasks, formatMoney, initials, localDay, nights, peopleLabel, percent, transportIcon, tripDays, tripPhase, urgentTasks } from '../shared/travel-logic';
 import { TripPass } from '../shared/trip-pass';
-import { BoardingPasses } from '../boarding/boarding-passes';
+import { BoardingPasses } from '../shared/boarding/boarding-passes';
 
 export type TripTab = 'uebersicht' | 'ablauf' | 'planung' | 'packliste' | 'budget';
 

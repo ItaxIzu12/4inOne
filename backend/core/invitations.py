@@ -48,12 +48,15 @@ def display_name(user) -> str:
     return user.first_name or user.email.split('@')[0]
 
 
-def _range(start: date, end: date) -> str:
+def date_range(start: date, end: date) -> str:
     if start == end:
         return f'{start.day}. {_MONTHS[start.month - 1]} {start.year}'
     if (start.year, start.month) == (end.year, end.month):
         return f'{start.day}.–{end.day}. {_MONTHS[end.month - 1]} {end.year}'
     return f'{start.day}. {_MONTHS[start.month - 1]} – {end.day}. {_MONTHS[end.month - 1]} {end.year}'
+
+
+_range = date_range  # alter Name, intern weiter benutzt
 
 
 # --------------------------------------------------------------------------- Bereiche (Allowlist)
@@ -94,88 +97,17 @@ def _household_scope() -> Scope:
     )
 
 
-def _trip_scope() -> Scope:
-    from reisen.models import Trip, TripParticipant
-
-    def can_invite(user, trip) -> bool:
-        return trip.owner_id == user.pk or TripParticipant.objects.filter(
-            trip=trip, user=user, role=TripParticipant.Role.OWNER
-        ).exists()
-
-    def add(user, trip, role):
-        TripParticipant.objects.create(trip=trip, user=user, role=role)
-
-    return Scope(
-        roles={TripParticipant.Role.VIEWER: 'Kann ansehen', TripParticipant.Role.EDITOR: 'Kann bearbeiten'},
-        default_role=TripParticipant.Role.VIEWER,
-        load=lambda pk: Trip.objects.filter(pk=pk).first(),
-        title=lambda trip: trip.title,
-        detail=lambda trip: _range(trip.start_date, trip.end_date),
-        can_invite=can_invite,
-        is_member=lambda user, trip: trip.owner_id == user.pk
-        or TripParticipant.objects.filter(trip=trip, user=user).exists(),
-        add_member=add,
-    )
-
-
-def _calendar_scope() -> Scope:
-    """Gemeinsamer Kalender (31.10.2026): einladen darf nur die Besitzerin/der Besitzer; Rollen wie bei Reisen.
-    Die Mitgliedschaft gibt nur Sicht auf die Termine DIESES Kalenders — nie auf private Termine."""
-    from organisation.calendars import MAX_MEMBERS_PER_CALENDAR
-    from organisation.models import CalendarMember, SharedCalendar
-
-    def add(user, calendar, role):
-        if CalendarMember.objects.filter(calendar=calendar).count() >= MAX_MEMBERS_PER_CALENDAR:
-            raise InvitationError('Dieser Kalender hat schon die größtmögliche Zahl an Mitgliedern.')
-        CalendarMember.objects.create(calendar=calendar, user=user, role=role)
-
-    return Scope(
-        roles={CalendarMember.Role.VIEWER: 'Kann ansehen', CalendarMember.Role.EDITOR: 'Kann bearbeiten'},
-        default_role=CalendarMember.Role.VIEWER,
-        load=lambda pk: SharedCalendar.objects.filter(pk=pk).first(),
-        title=lambda calendar: calendar.name,
-        detail=lambda calendar: 'Gemeinsamer Kalender',
-        can_invite=lambda user, calendar: calendar.owner_id == user.pk,
-        is_member=lambda user, calendar: CalendarMember.objects.filter(calendar=calendar, user=user).exists(),
-        add_member=add,
-    )
-
-
-def _my_calendar_scope() -> Scope:
-    """Freigabe des eigenen Kalenders (wie Outlook, 31.10.2026). `scope_id` ist das Konto der freigebenden Person;
-    freigeben kann nur sie selbst. Angenommen sieht die eingeladene Person nur Termine, die ausdrücklich mit ihr
-    geteilt werden — private Termine nie."""
-    from django.contrib.auth import get_user_model
-
-    from organisation.models import CalendarShare
-
-    def add(user, owner, role):
-        CalendarShare.objects.create(owner=owner, grantee=user, role=role)
-
-    return Scope(
-        roles={CalendarShare.Role.VIEWER: 'Kann ansehen', CalendarShare.Role.EDITOR: 'Kann bearbeiten'},
-        default_role=CalendarShare.Role.VIEWER,
-        load=lambda pk: get_user_model().objects.filter(pk=pk, is_active=True).first(),
-        title=lambda owner: f'Kalender von {display_name(owner)}',
-        detail=lambda owner: 'Kalenderfreigabe',
-        can_invite=lambda user, owner: user.pk == owner.pk,
-        # Die freigebende Person „gehört dazu“ (sonst sähe sie ihre eigenen gesendeten Einladungen nicht).
-        is_member=lambda user, owner: user.pk == owner.pk
-        or CalendarShare.objects.filter(owner=owner, grantee=user).exists(),
-        add_member=add,
-    )
-
-
+# Haushalt gehört zu core; Reise und Kalender melden ihre Bereiche selbst an (reisen/core_hooks.py,
+# organisation/core_hooks.py → core/registry.py), damit core keinen Fachbereich importiert.
 _SCOPES: dict[str, Callable[[], Scope]] = {
     Invitation.Scope.HOUSEHOLD: _household_scope,
-    Invitation.Scope.TRIP: _trip_scope,
-    Invitation.Scope.CALENDAR: _calendar_scope,
-    Invitation.Scope.MY_CALENDAR: _my_calendar_scope,
 }
 
 
 def scope_for(scope_type: str) -> Scope:
-    factory = _SCOPES.get(scope_type)
+    from core import registry
+
+    factory = _SCOPES.get(scope_type) or registry.invitation_scope(scope_type)
     if factory is None:
         raise InvitationError('Dorthin kann man nicht einladen.', field='scope_type')
     return factory()

@@ -1,5 +1,5 @@
 """Read-only cross-domain eligibility; completing setup only writes preferences."""
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
@@ -11,9 +11,9 @@ from core.throttling import LocalCacheThrottle
 
 
 def has_user_data(user):
-    from finanzen.models import Budget, Category, RecurringDeduction, Transaction, MonthlyBudget, SavingsGoal
-    from haushalt.models import FolderEntry, ShoppingItem, ShoppingTrip, Task, TaskCompletion
-    from organisation.models import CalendarEvent, PersonalEvent, PersonalTask
+    """Hat die Person schon etwas eingetragen? Die Bereiche prüfen ihre eigenen Daten (core/registry.py ›
+    HAS_USER_DATA); core kennt nur Haushalt und Einkommen."""
+    from core import registry
 
     # Older records without author information count only in the user's sole-member homes.
     personal = Household.objects.annotate(member_total=Count('members')).filter(member_total=1, members=user)
@@ -21,23 +21,7 @@ def has_user_data(user):
         return True
     if personal.filter(monthly_buffer__gt=0).exists():
         return True
-    checks = [
-        MonthlyBudget.objects.filter(owner=user),
-        SavingsGoal.objects.filter(owner=user),
-        PersonalEvent.objects.filter(owner=user),
-        PersonalTask.objects.filter(owner=user),
-        Transaction.objects.filter(Q(created_by=user) | Q(account__household__in=personal)),
-        RecurringDeduction.objects.filter(Q(created_by=user) | Q(household__in=personal)),
-        Category.objects.filter(household__in=personal).filter(Q(is_default=False) | Q(monthly_goal__isnull=False)),
-        Budget.objects.filter(household__in=personal),
-        ShoppingItem.objects.filter(Q(added_by=user) | Q(shopping_list__household__in=personal)),
-        ShoppingTrip.objects.filter(Q(completed_by=user) | Q(household__in=personal)),
-        TaskCompletion.objects.filter(Q(done_by=user) | Q(household__in=personal)),
-        Task.objects.filter(Q(created_by=user) | Q(assigned_to=user) | Q(household__in=personal)),
-        FolderEntry.objects.filter(Q(created_by=user) | Q(household__in=personal)),
-        CalendarEvent.objects.filter(Q(created_by=user) | Q(household__in=personal)),
-    ]
-    return any(query.exists() for query in checks)
+    return any(check(user, personal) for check in registry.hooks(registry.HAS_USER_DATA))
 
 
 class OnboardingInput(serializers.Serializer):
@@ -90,43 +74,16 @@ GUIDE_AREAS = ('start', 'finanzen', 'haushalt', 'organisation', 'reisen')
 
 
 def guide_steps(user) -> dict:
-    """Welche Startschritte je Bereich schon erledigt sind — nur aus echten Daten, die die Person sehen darf
-    (wie has_user_data oben: Fach-Apps erst hier importieren, core hängt sonst nicht von ihnen ab)."""
+    """Welche Startschritte je Bereich schon erledigt sind — nur aus echten Daten, die die Person sehen darf. Jeder
+    Bereich liefert seinen Teil selbst (core/registry.py › GUIDE_STEPS)."""
+    from core import registry
     from core.households import active_household
-    from finanzen.models import MonthlyBudget, SavingsGoal, Transaction
-    from haushalt.models import FolderEntry, ShoppingItem, Task
-    from organisation.models import CalendarEvent, PersonalEvent, PersonalNote, PersonalTask
-    from reisen.models import PackingItem, Trip, TripBudgetCategory
 
     household = active_household(user)
-    trips = Trip.objects.filter(Q(owner=user) | Q(participants__user=user)).distinct()
-    latest_trip = trips.order_by('-start_date', '-id').values_list('id', flat=True).first()
-    return {
-        'finanzen': {
-            'budget': MonthlyBudget.objects.filter(owner=user).exists(),
-            'transaction': Transaction.objects.filter(owner=user).exists(),
-            'goal': SavingsGoal.objects.filter(owner=user).exists(),
-        },
-        'haushalt': {
-            'task': household is not None and Task.objects.filter(household=household).exists(),
-            'shopping': household is not None and ShoppingItem.objects.filter(shopping_list__household=household).exists(),
-            'folder': household is not None and FolderEntry.objects.filter(household=household).exists(),
-        },
-        'organisation': {
-            'event': PersonalEvent.objects.filter(owner=user).exists()
-            or (household is not None and CalendarEvent.objects.filter(household=household).exists()),
-            'task': PersonalTask.objects.filter(owner=user).exists(),
-            'note': PersonalNote.objects.filter(owner=user).exists(),
-        },
-        'reisen': {
-            'trip': latest_trip is not None,
-            'packing': PackingItem.objects.filter(trip__in=trips).exists(),
-            'budget': trips.filter(budget_amount__isnull=False).exists()
-            or TripBudgetCategory.objects.filter(trip__in=trips).exists(),
-            # Ziel für „Packliste“/„Budget“: die zuletzt beginnende sichtbare Reise (nie eine fremde ID)
-            'trip_id': latest_trip,
-        },
-    }
+    steps: dict = {}
+    for contribute in registry.hooks(registry.GUIDE_STEPS):
+        steps.update(contribute(user, household))
+    return steps
 
 
 class GuideInput(serializers.Serializer):

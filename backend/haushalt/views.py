@@ -530,7 +530,7 @@ class FolderEntryViewSet(_WriteThrottleMixin, ModelViewSet):
     @action(detail=True, methods=['post'], url_path='anhaenge')
     def add_attachment(self, request, pk=None):
         """Foto oder PDF anhängen: wer den Eintrag sieht und bearbeiten darf (Mitglied, kein Kind-Konto)."""
-        from organisation import files as file_rules
+        from core import files as file_rules
 
         entry = self.get_object()
         upload = request.FILES.get('file')

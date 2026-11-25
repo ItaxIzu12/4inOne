@@ -87,8 +87,8 @@ def _shared_by_person(user, people: list) -> tuple[dict, dict, dict]:
     Nur Bereiche, die der anfragende Nutzer selbst sehen darf: gemeinsame Haushalte (beide Mitglied), Reisen,
     an denen beide beteiligt sind, gemeinsame Kalender (beide Mitglied) und Kalenderfreigaben in beide Richtungen. Einladen nur in den eigenen aktiven Haushalt (als Admin) und in kommende
     Reisen, die der Nutzer verwalten darf — dieselben Regeln wie core/invitations.py."""
+    from core import registry
     from core.households import active_membership
-    from reisen.models import Trip, TripParticipant
 
     ids = {p.pk for p in people}
     shared: dict[int, list[dict]] = {pk: [] for pk in ids}
@@ -117,59 +117,9 @@ def _shared_by_person(user, people: list) -> tuple[dict, dict, dict]:
                 {**entry, 'invitation_id': open_invites[key]} if key in open_invites else entry
             )
 
-    trips = (
-        Trip.objects.filter(Q(owner=user) | Q(participants__user=user))
-        .distinct()
-        .prefetch_related('participants')
-        .order_by('start_date', 'id')
-    )
-    today = timezone.localdate()
-    for trip in trips:
-        involved = {trip.owner_id} | {p.user_id for p in trip.participants.all()}
-        manages = trip.owner_id == user.pk or any(
-            p.user_id == user.pk and p.role == TripParticipant.Role.OWNER for p in trip.participants.all()
-        )
-        entry = {'kind': 'TRIP', 'id': trip.pk, 'title': trip.title}
-        for pk in ids:
-            key = (pk, 'TRIP', trip.pk)
-            if pk in involved:
-                shared[pk].append(entry)
-            elif key in open_invites:
-                pending[pk].append({**entry, 'invitation_id': open_invites[key]})
-            elif manages and trip.end_date >= today:
-                addable[pk].append(entry)
-
-    # Gemeinsame Kalender (31.10.2026): geteilt, wenn beide Mitglied sind; einladen nur in eigene Kalender.
-    from organisation.models import SharedCalendar
-
-    for calendar in SharedCalendar.objects.filter(members__user=user).prefetch_related('members').order_by('name', 'id'):
-        members = {m.user_id for m in calendar.members.all()}
-        entry = {'kind': 'CALENDAR', 'id': calendar.pk, 'title': calendar.name}
-        for pk in ids:
-            key = (pk, 'CALENDAR', calendar.pk)
-            if pk in members:
-                shared[pk].append(entry)
-            elif key in open_invites:
-                pending[pk].append({**entry, 'invitation_id': open_invites[key]})
-            elif calendar.owner_id == user.pk:
-                addable[pk].append(entry)
-
-    # Kalenderfreigaben (Outlook-ähnlich): mein Kalender für die Person, ihr Kalender für mich.
-    from organisation.models import CalendarShare
-
-    given = set(CalendarShare.objects.filter(owner=user, grantee_id__in=ids).values_list('grantee_id', flat=True))
-    received = set(CalendarShare.objects.filter(grantee=user, owner_id__in=ids).values_list('owner_id', flat=True))
-    mine_entry = {'kind': 'MY_CALENDAR', 'id': user.pk, 'title': 'Dein Kalender'}
-    for p in people:
-        key = (p.pk, 'MY_CALENDAR', user.pk)
-        if p.pk in given:
-            shared[p.pk].append(mine_entry)
-        elif key in open_invites:
-            pending[p.pk].append({**mine_entry, 'invitation_id': open_invites[key]})
-        else:
-            addable[p.pk].append(mine_entry)
-        if p.pk in received:
-            shared[p.pk].append({'kind': 'MY_CALENDAR', 'id': p.pk, 'title': f'Kalender von {_display_name(p)}'})
+    # Reisen, gemeinsame Kalender und Kalenderfreigaben melden sich selbst an (core/registry.py › CONTACT_SHARING)
+    for contribute in registry.hooks(registry.CONTACT_SHARING):
+        contribute(user, people, ids, open_invites, shared, addable, pending)
     return shared, addable, pending
 
 

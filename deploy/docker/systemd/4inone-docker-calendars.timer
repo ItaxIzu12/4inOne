@@ -1,0 +1,12 @@
+# 4inOne (Docker): Kalender-Abos aktualisieren. Aktivieren: sudo systemctl enable --now 4inone-docker-calendars.timer
+[Unit]
+Description=4inOne (Docker): Kalender-Abos aktualisieren
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5min
+Persistent=true
+Unit=4inone-docker@calendars.service
+
+[Install]
+WantedBy=timers.target

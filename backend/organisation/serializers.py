@@ -167,7 +167,7 @@ class PersonalFileSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'content_type', 'size', 'note', 'created_at', 'updated_at', 'used_at']
 
     def validate_name(self, value):
-        from .files import clean_name
+        from core.files import clean_name
         return clean_name(value)
 
     def validate_category(self, value):

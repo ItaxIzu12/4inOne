@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, HostListener, effect, inject, input, output, signal, viewChild } from '@angular/core';
-import { AppIcon } from '../../../shared/ui/icons/app-icon';
-import { BWIP_FORMATS, BoardingPass, passDate } from '../shared/boarding-logic';
+import { AppIcon } from '../../../../shared/ui/icons/app-icon';
+import { BWIP_FORMATS, BoardingPass, passDate } from '../boarding-logic';
 
 interface WakeLockLike {
   release(): Promise<void>;
