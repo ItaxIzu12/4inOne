@@ -69,8 +69,8 @@ Die Einrichtung des Servers Schritt für Schritt (von null): [`deploy/ANLEITUNG.
    `inlineCritical: false` (`angular.json`) und Hydration ohne Event-Replay (`withNoIncrementalHydration()` in
    `app.config.ts`) — beides würde sonst Inline-Skripte ins HTML legen. Ein e2e-Test prüft das
    (`landing-journey.spec.ts`). Liegt die API auf einer anderen Domain, diese in `connect-src` ergänzen.
-7. **Django-Admin-Gestaltung:** es gibt noch kein `STATIC_ROOT`/`collectstatic` — der Admin läuft, aber ohne CSS.
-   Bei Bedarf `STATIC_ROOT` setzen, `collectstatic` ausführen und in nginx `location /static/` darauf zeigen lassen.
+7. **Django-Admin-Gestaltung (seit 25.11.2026):** `STATIC_ROOT` = `backend/staticfiles/`; `collectstatic` läuft in
+   `deploy/scripts/update.sh` bzw. im Image `web`; nginx liefert `/static/` aus (beide Konfigurationen).
 
 ## Bereits erledigt
 

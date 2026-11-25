@@ -222,6 +222,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+# Ziel von `collectstatic` (Django-Admin-CSS/-JS). nginx liefert es unter /static/ aus (deploy/nginx/4inone.conf,
+# deploy/docker/); Django selbst liefert bei DEBUG=False keine statischen Dateien. Die Angular-App ist davon getrennt.
+STATIC_ROOT = Path(env('STATIC_ROOT', default=str(BASE_DIR / 'staticfiles')))
 
 # Private Dateien (Organisation › Dateien): eigener Ordner, KEINE MEDIA_URL —
 # Zugriff nur über die API mit Eigentümer-Prüfung.

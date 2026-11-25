@@ -42,10 +42,11 @@ def trip_scope() -> Scope:
 
 
 # ------------------------------------------------------------------ Personen & Gruppen (core/contact_views.py)
-def contact_sharing(user, people, ids, open_invites, shared, addable, pending) -> None:
+def contact_sharing(ctx: registry.SharingContext) -> None:
     """Reisen, an denen beide beteiligt sind; einladen nur in kommende Reisen, die der Nutzer verwalten darf."""
     from reisen.models import Trip, TripParticipant
 
+    user = ctx.user
     trips = (
         Trip.objects.filter(Q(owner=user) | Q(participants__user=user))
         .distinct()
@@ -59,14 +60,8 @@ def contact_sharing(user, people, ids, open_invites, shared, addable, pending) -
             p.user_id == user.pk and p.role == TripParticipant.Role.OWNER for p in trip.participants.all()
         )
         entry = {'kind': 'TRIP', 'id': trip.pk, 'title': trip.title}
-        for pk in ids:
-            key = (pk, 'TRIP', trip.pk)
-            if pk in involved:
-                shared[pk].append(entry)
-            elif key in open_invites:
-                pending[pk].append({**entry, 'invitation_id': open_invites[key]})
-            elif manages and trip.end_date >= today:
-                addable[pk].append(entry)
+        for pk in ctx.ids:
+            ctx.classify(pk, entry, member=pk in involved, can_invite=manages and trip.end_date >= today)
 
 
 # ------------------------------------------------------------------ Ortsvorschläge (core/places.py)

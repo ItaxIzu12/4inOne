@@ -118,8 +118,9 @@ def _shared_by_person(user, people: list) -> tuple[dict, dict, dict]:
             )
 
     # Reisen, gemeinsame Kalender und Kalenderfreigaben melden sich selbst an (core/registry.py › CONTACT_SHARING)
+    ctx = registry.SharingContext(user, people, ids, open_invites, shared, addable, pending)
     for contribute in registry.hooks(registry.CONTACT_SHARING):
-        contribute(user, people, ids, open_invites, shared, addable, pending)
+        contribute(ctx)
     return shared, addable, pending
 
 

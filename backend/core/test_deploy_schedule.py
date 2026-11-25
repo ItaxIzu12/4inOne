@@ -91,3 +91,22 @@ def test_docker_setup_keeps_secrets_and_data_out_of_images():
     # Nur „web“ veröffentlicht Ports; Datenbank und Redis nie
     assert compose.count('ports:') == 1
     assert 'POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?' in compose  # kommt aus der env-Datei, kein Standardwert
+
+
+# ------------------------------------------------------------------ Statische Dateien des Admins (§ 10.3 C)
+def test_collectstatic_gathers_admin_css(settings, tmp_path):
+    """Ohne STATIC_ROOT/collectstatic liefe der Django-Admin in Produktion ohne CSS (DEBUG=False liefert nichts aus)."""
+    from django.core.management import call_command
+
+    settings.STATIC_ROOT = tmp_path / 'staticfiles'
+    call_command('collectstatic', interactive=False, verbosity=0)
+    assert (settings.STATIC_ROOT / 'admin' / 'css' / 'base.css').is_file()
+
+
+def test_nginx_serves_static_in_both_variants():
+    native = (ROOT / 'deploy' / 'nginx' / '4inone.conf').read_text(encoding='utf-8')
+    docker = (DOCKER / 'nginx' / '4inone.conf.template').read_text(encoding='utf-8')
+    assert 'alias /srv/4inone/backend/staticfiles/;' in native
+    assert 'alias /usr/share/nginx/static/;' in docker
+    assert 'COPY --from=static /app/staticfiles/ /usr/share/nginx/static/' in (DOCKER / 'web.Dockerfile').read_text(encoding='utf-8')
+    assert 'collectstatic --noinput' in (ROOT / 'deploy' / 'scripts' / 'update.sh').read_text(encoding='utf-8')

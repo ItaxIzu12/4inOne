@@ -166,6 +166,7 @@ Danach einmalig:
 .venv/bin/python manage.py migrate
 .venv/bin/python manage.py createcachetable
 .venv/bin/python manage.py createsuperuser
+.venv/bin/python manage.py collectstatic --noinput   # Admin-CSS, nginx liefert es unter /static/ aus
 .venv/bin/python manage.py check --deploy
 ```
 
@@ -360,6 +361,6 @@ Details und weitere Punkte stehen in [`docs/GO_LIVE.md`](../docs/GO_LIVE.md).
 | Anmeldung klappt, nach dem Neuladen bist du wieder abgemeldet | Seite läuft nicht über HTTPS (Cookies sind `Secure`) oder `CSRF_TRUSTED_ORIGINS` passt nicht zur Domain |
 | `502 Bad Gateway` | Django läuft nicht. Ursache steht in `journalctl -u 4inone -n 50` |
 | Seite ohne Gestaltung, Konsole meldet CSP | Build mit geänderter `angular.json` (`inlineCritical`) oder Hydration mit Event-Replay. Der e2e-Test `landing-journey.spec.ts` warnt davor |
-| Admin ohne CSS | erwartet, solange es kein `collectstatic` gibt (`docs/GO_LIVE.md` Punkt 7) |
+| Admin ohne CSS | `collectstatic` vergessen: `.venv/bin/python manage.py collectstatic --noinput` (macht `update.sh` von selbst) |
 | Mails kommen nicht an | SMTP-Zugangsdaten, oder SPF/DKIM der Absender-Domain fehlen |
 | Daten weg nach Neuinstallation | `DATABASE_URL` fehlte: Django lief still auf SQLite |

@@ -264,7 +264,8 @@ Tests plus neue Architekturtests abgesichert.
 
 1. `core/registry.py` mit den Anmeldepunkten `HAS_USER_DATA`, `GUIDE_STEPS`, `PLACE_SOURCES`, `CONTACT_SHARING`,
    `CLEANUP_RULES`, `MEMBER_REMOVED`, `PLANNED_EXPENSES` und den Einladungsarten; Bereiche melden sich in
-   `<bereich>/core_hooks.py` an. Code unverändert verschoben, Reihenfolge der Ausgaben über `order` stabil. (S3)
+   `<bereich>/core_hooks.py` an. Seit 25.11.2026 typisiert (`Protocol` je Anmeldepunkt, Signaturprüfung beim Start,
+   Vertragstest `core/test_registry.py`). Code unverändert verschoben, Reihenfolge der Ausgaben über `order` stabil. (S3)
 2. Dateiablage und Upload-Prüfung nach `core/files.py`; `organisation.models.private_storage` bleibt als
    Weiterleitung, weil eine Migration auf den Namen zeigt. (S4)
 3. `finanzen/public.py` (`book_shopping_expense`, `Category`, `month_bounds`, `PRIVATE_SHOPPING_CATEGORY`);
@@ -495,8 +496,8 @@ Beschreibung.
 |---|---|---|---|
 | K1 ✅ | **Frontend-Trennung nicht analysiert.** § 1 hat nur Backend-Imports gezählt. Im Frontend: `household` nutzt `finance/data` (Einkauf → Ausgabe, entspricht `finanzen.public`), `dashboard` und `offline` nutzen `data/`/`shared/` mehrerer Bereiche (gewollt) – aber `dashboard` importiert `organization/today/org-day-logic`, also die Interna eines Reiters. `npm run check:architecture` prüft nur Reiter innerhalb eines Bereichs. | `grep "from '../organization/today"` in `features/dashboard` | **Behoben 25.11.2026 (A):** `org-day-logic` nach `organization/shared/`; Bereichsregel in `check-architecture.mjs` |
 | K2 ✅ | **Betriebsdateien werden in CI nicht geprüft.** Der nginx-Regex-Fehler (`{8}` ohne Anführungszeichen) stand seit Wochen in `deploy/nginx/4inone.conf` und fiel erst beim Docker-Probelauf auf. systemd-Units und `run-task.sh` sind auf keinem Linux gelaufen. | Phase 3 | **Behoben 25.11.2026 (B):** `deploy/ci/check-deploy.sh` + CI-Job `deploy`; Gegenproben: alter Regex-Fehler, Timer-Tippfehler, falscher Programmpfad werden erkannt |
-| K3 | **Admin ohne CSS** in beiden Betriebsvarianten (kein `STATIC_ROOT`/`collectstatic`, keine `/static/`-Regel). War in `deploy/ANLEITUNG.md` als „erwartet“ vermerkt, fehlte aber in § 2. | `config/settings.py` (nur `STATIC_URL`) | niedrig, aber sichtbar |
-| K4 | **Registry-Signaturen nur dokumentiert, nicht typisiert.** `CONTACT_SHARING` bekommt sieben Argumente und verändert drei Wörterbücher; ein Tippfehler fällt erst im Test des Aufrufers auf. | `core/registry.py` | niedrig; durch Tests abgedeckt |
+| K3 ✅ | **Admin ohne CSS** in beiden Betriebsvarianten (kein `STATIC_ROOT`/`collectstatic`, keine `/static/`-Regel). War in `deploy/ANLEITUNG.md` als „erwartet“ vermerkt, fehlte aber in § 2. | `config/settings.py` (nur `STATIC_URL`) | **Behoben 25.11.2026 (C):** `STATIC_ROOT`, `collectstatic` in `update.sh` und im Image `web`, nginx `/static/` in beiden Varianten; im Container geprüft (`/static/admin/css/base.css` → 200) |
+| K4 ✅ | **Registry-Signaturen nur dokumentiert, nicht typisiert.** `CONTACT_SHARING` bekommt sieben Argumente und verändert drei Wörterbücher; ein Tippfehler fällt erst im Test des Aufrufers auf. | `core/registry.py` | **Behoben 25.11.2026 (D):** `Protocol` je Anmeldepunkt, Signaturprüfung beim Anmelden (App-Start), `SharingContext` mit `classify()` statt sieben Argumenten, Vertragstest `core/test_registry.py` |
 | K5 | **Docker-Weg nur auf macOS (Docker Desktop) geprobt**, nicht auf dem GEEKOM: Dateirechte von Bind-Mounts (UID 10001), `age`-Verschlüsselung und systemd-Timer ungetestet. | `deploy/docker/ANLEITUNG.md` | beim Umzug einmal real prüfen |
 | K6 | **KI-Gerüst vor der ersten Fähigkeit.** Provider, Capability API und Katalog stehen, obwohl noch keine Fähigkeit freigegeben ist. Ausdrücklich gewünscht (gemeinsamer Standard), aber es darf nicht weiter wachsen. | `integrations/ai/` | Regel: keine weitere KI-Infrastruktur bis zur ersten freigegebenen Fähigkeit |
 | K7 | **Regeln waren verstreut und teils doppelt** (AGENTS „Domain independence“ und „Architecture rules“, CLAUDE.md, § 9; „Produktions-Compose geplant“ veraltet). | `AGENTS.md` vor 25.11. | behoben: `AGENTS.md` neu um zehn Prinzipien geordnet, `CLAUDE.md` nur Ergänzungen |
@@ -516,8 +517,8 @@ Beschreibung.
 |---|---|---|---|
 | **A** ✅ 25.11. | Frontend-Bereichsregel prüfen: `check-architecture.mjs` erweitern (andere Bereiche nur über `data/`/`shared/`), `org-day-logic` nach `organization/shared/` verschieben (K1) | Trennung auch im Frontend abgesichert | S |
 | **B** ✅ 25.11. | CI-Job „Betrieb“: `nginx -t` für beide Konfigurationen (nginx-Container), `docker compose config`, `systemd-analyze verify` und `shellcheck` auf dem Ubuntu-Runner (K2) | Fehler wie der Regex fallen vor dem Server auf | S–M |
-| **C** | Statische Dateien des Admins: `STATIC_ROOT`, `collectstatic` im Update bzw. Image, `/static/`-Regel in nginx (K3) | Admin benutzbar | S |
-| **D** | Registry typisieren: `Protocol`-Typen je Anmeldepunkt, `CONTACT_SHARING` mit kleinem Kontext-Objekt statt sieben Argumenten (K4) | weniger stille Fehler | S |
+| **C** ✅ 25.11. | Statische Dateien des Admins: `STATIC_ROOT`, `collectstatic` im Update bzw. Image, `/static/`-Regel in nginx (K3) | Admin benutzbar | S |
+| **D** ✅ 25.11. | Registry typisieren: `Protocol`-Typen je Anmeldepunkt, `CONTACT_SHARING` mit kleinem Kontext-Objekt statt sieben Argumenten (K4) | weniger stille Fehler | S |
 | **E** | Erster echter Lauf auf dem GEEKOM nach `deploy/docker/ANLEITUNG.md` mit Checkliste (K5) | Betrieb verifiziert | M, braucht das Gerät |
 
 Nicht vorgeschlagen: weitere KI-Infrastruktur (K6), Vereinheitlichung der Demo-Logik (K8), Microservices oder

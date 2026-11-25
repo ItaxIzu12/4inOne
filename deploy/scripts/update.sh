@@ -27,6 +27,7 @@ echo "== 3/6 Backup vor der Datenbank-Änderung"
 echo "== 4/6 Datenbank und Prüfung"
 cd backend
 .venv/bin/python manage.py migrate --noinput
+.venv/bin/python manage.py collectstatic --noinput   # Django-Admin-CSS nach backend/staticfiles/
 .venv/bin/python manage.py check --deploy   # Fehler brechen ab; Warnungen beim ersten Mal einzeln prüfen
 cd ..
 

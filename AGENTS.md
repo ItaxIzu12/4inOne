@@ -102,7 +102,7 @@ Look here before writing something new:
 | Area-internal shared logic/styles | `features/<area>/shared/`, API in `features/<area>/data/` |
 | Auth, households, members, notifications, currency, recurrence, idempotency, uploads | `backend/core/` (`files.py`, `recurrence.py`, `idempotency.py`, `fx.py`, `notifications.py`) |
 | Area functions for other areas | `backend/<area>/public.py` (exists for `finanzen`) |
-| Area knowledge needed by `core` | `backend/core/registry.py` hooks, registered in `<area>/core_hooks.py` |
+| Area knowledge needed by `core` | `backend/core/registry.py` hooks (typed `Protocol`s, checked at start-up; contract `core/test_registry.py`), registered in `<area>/core_hooks.py` |
 | Cross-area links, derived entries, suggestions, Today, search | `backend/connections/` (`registry.py`, `auto_links.py`) |
 | Outside services | `backend/integrations/` (AI: `integrations/ai`) |
 

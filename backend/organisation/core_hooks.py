@@ -62,40 +62,30 @@ def my_calendar_scope() -> Scope:
 
 
 # ------------------------------------------------------------------ Personen & Gruppen (core/contact_views.py)
-def contact_sharing_calendars(user, people, ids, open_invites, shared, addable, pending) -> None:
+def contact_sharing_calendars(ctx: registry.SharingContext) -> None:
     """Gemeinsame Kalender (31.10.2026): geteilt, wenn beide Mitglied sind; einladen nur in eigene Kalender."""
     from organisation.models import SharedCalendar
 
-    for calendar in SharedCalendar.objects.filter(members__user=user).prefetch_related('members').order_by('name', 'id'):
+    calendars = SharedCalendar.objects.filter(members__user=ctx.user).prefetch_related('members').order_by('name', 'id')
+    for calendar in calendars:
         members = {m.user_id for m in calendar.members.all()}
         entry = {'kind': 'CALENDAR', 'id': calendar.pk, 'title': calendar.name}
-        for pk in ids:
-            key = (pk, 'CALENDAR', calendar.pk)
-            if pk in members:
-                shared[pk].append(entry)
-            elif key in open_invites:
-                pending[pk].append({**entry, 'invitation_id': open_invites[key]})
-            elif calendar.owner_id == user.pk:
-                addable[pk].append(entry)
+        for pk in ctx.ids:
+            ctx.classify(pk, entry, member=pk in members, can_invite=calendar.owner_id == ctx.user.pk)
 
 
-def contact_sharing_my_calendar(user, people, ids, open_invites, shared, addable, pending) -> None:
+def contact_sharing_my_calendar(ctx: registry.SharingContext) -> None:
     """Kalenderfreigaben (Outlook-ähnlich): mein Kalender für die Person, ihr Kalender für mich."""
     from organisation.models import CalendarShare
 
-    given = set(CalendarShare.objects.filter(owner=user, grantee_id__in=ids).values_list('grantee_id', flat=True))
-    received = set(CalendarShare.objects.filter(grantee=user, owner_id__in=ids).values_list('owner_id', flat=True))
+    user = ctx.user
+    given = set(CalendarShare.objects.filter(owner=user, grantee_id__in=ctx.ids).values_list('grantee_id', flat=True))
+    received = set(CalendarShare.objects.filter(grantee=user, owner_id__in=ctx.ids).values_list('owner_id', flat=True))
     mine_entry = {'kind': 'MY_CALENDAR', 'id': user.pk, 'title': 'Dein Kalender'}
-    for p in people:
-        key = (p.pk, 'MY_CALENDAR', user.pk)
-        if p.pk in given:
-            shared[p.pk].append(mine_entry)
-        elif key in open_invites:
-            pending[p.pk].append({**mine_entry, 'invitation_id': open_invites[key]})
-        else:
-            addable[p.pk].append(mine_entry)
+    for p in ctx.people:
+        ctx.classify(p.pk, mine_entry, member=p.pk in given, can_invite=True)
         if p.pk in received:
-            shared[p.pk].append({'kind': 'MY_CALENDAR', 'id': p.pk, 'title': f'Kalender von {display_name(p)}'})
+            ctx.shared[p.pk].append({'kind': 'MY_CALENDAR', 'id': p.pk, 'title': f'Kalender von {display_name(p)}'})
 
 
 # ------------------------------------------------------------------ Ortsvorschläge (core/places.py)
