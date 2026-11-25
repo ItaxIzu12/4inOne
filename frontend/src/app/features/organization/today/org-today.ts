@@ -4,7 +4,7 @@ import { AppIcon } from '../../../shared/ui/icons/app-icon';
 import { LinkHints, connectionHints } from '../../../shared/features/connections/link-hints';
 import { PersonalEvent, PersonalNote, PersonalTask } from '../data/organization-api.service';
 import { eventCategory, eventsOn, localDay, noteLines, noteTitle } from '../shared/organization-logic';
-import { DAY_END_MIN, clock, dayLine, nextUp, span, tasksForToday } from './org-day-logic';
+import { DAY_END_MIN, clock, dayLine, nextUp, span, tasksForToday } from '../shared/org-day-logic';
 
 /**
  * Organisation › Heute — „Dein Tag, Stunde für Stunde“ (31.10.2026). Kopfkarte in der Organisationsfarbe (Termine

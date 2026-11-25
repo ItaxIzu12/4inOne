@@ -137,7 +137,7 @@ Abgeleitete Arten heute: `CONTRACT_FINANCE`, `CONTRACT_REMINDER`, `DEVICE_MAINTE
 | Ebene | Heute |
 |---|---|
 | Entwicklung | `docker-compose.yml`: PostgreSQL 16 + Redis, nur `127.0.0.1`; Django/Angular laufen auf dem Rechner. `scripts/dev-db.sh` (init/up/dump/migrate). |
-| Server | `deploy/ANLEITUNG.md`: Ubuntu, PostgreSQL und Redis nativ, gunicorn (3 Worker) per systemd, nginx mit strikter CSP, Let's Encrypt. |
+| Server | `deploy/ANLEITUNG.md`: Ubuntu, PostgreSQL und Redis nativ, gunicorn (3 Worker) per systemd, nginx mit strikter CSP, Let's Encrypt. Seit 24.11.2026 alternativ `deploy/docker/` (Compose, 2 Worker, Grenzen je Dienst). |
 | Backup | `deploy/scripts/backup.sh`: `pg_dump` + Dateien, verschlüsselt mit `age` (öffentlicher Schlüssel auf dem Server), 14 Tage lokal, optional `rsync` an einen zweiten Ort; Rücksicherung beschrieben und testbar. |
 | Zeitpläne | systemd-Timer (seit 24.11.2026 vollständig): Backup 02:45, Aufräumen 03:15 (`cleanup_expired`, `prune_connections`), 03:30 (`prune_website`, `prune_auth_events`), Erinnerungen 07:00, Kalender-Abos stündlich. |
 | Geheimnisse | `backend/.env` (nicht im Repository), `.env.example` dokumentiert jede Variable. |
@@ -424,7 +424,8 @@ Seitenordner: `settings/`, `profile/`, `sessions/`, `people/` (Personen & Gruppe
 `accessibility/`, `forgot-password/`, `reset-password/`, `verify-email/`, `invitation/`.
 
 Regeln: Ein Reiter importiert nie aus einem anderen Reiter — nur aus `../shared/`, `../data/` oder dem globalen
-`app/shared` bzw. `app/core`. Was zwei Reiter brauchen, wandert nach `shared/` des Bereichs; was zwei Bereiche
+`app/shared` bzw. `app/core`. Von außerhalb eines Bereichs (anderer Bereich, Dashboard, Offline-Seite …) nur über
+dessen `data/` oder `shared/` (seit 25.11.2026, geprüft mit `npm run check:architecture`, auch in CI). Was zwei Reiter brauchen, wandert nach `shared/` des Bereichs; was zwei Bereiche
 brauchen, nach `app/shared/` (UI-Bausteine) bzw. `app/core/` (Dienste, Zustand). Prüfbar mit
 `grep -rE "from '\.\./[a-z]+/" features/<area>/<reiter>` (erlaubt sind nur `shared` und `data`).
 
@@ -471,7 +472,8 @@ Vor dem Plan jeder neuen Funktion (Feature-Protokoll in `AGENTS.md`) kurz prüfe
 
 1. **Ort:** Gehört die Funktion in einen bestehenden Bereich, in `core` (bereichsneutral), in `connections`
    (bereichsübergreifend) oder in `integrations` (externer Dienst)? Neue Apps nur mit Freigabe.
-2. **Abhängigkeiten:** Kein neuer Import zwischen den vier Bereichen und keiner von `core` in einen Bereich (§ 3.1).
+2. **Abhängigkeiten:** Backend: kein neuer Import zwischen den vier Bereichen (außer über `public.py`) und keiner von
+   `core` in einen Bereich (§ 3.1). Frontend: andere Bereiche nur über deren `data/` oder `shared/`, nie über Reiter.
 3. **Wiederverwendung:** Gibt es schon Modell, Service, Endpunkt oder UI-Baustein dafür (`shared/ui`, `shared/features`,
    Bereichs-`shared/`)? Dann erweitern statt neu bauen.
 4. **Querverbindungen:** Über eine Verbindung oder eine abgeleitete Ansicht (`connections/registry.py`), nie als
@@ -481,3 +483,43 @@ Vor dem Plan jeder neuen Funktion (Feature-Protokoll in `AGENTS.md`) kurz prüfe
    wo betroffen.
 7. **KI:** Funktioniert alles ohne Personal AI Core? KI nur als abschaltbarer Vorschlag über `integrations/ai`.
 8. **Ressourcen:** Keine neuen Dauerdienste ohne Bedarf; externe Aufrufe mit Timeout; Budget § 7 im Blick.
+
+## 10. Kritische Überprüfung (25.11.2026)
+
+Rückblick auf Analyse (§ 1–2) und Umsetzung (Phase 0–4, KI-Standard). Geprüft gegen den Code, nicht gegen die eigene
+Beschreibung.
+
+### 10.1 Was die Analyse übersehen oder zu positiv dargestellt hat
+
+| ID | Befund | Beleg | Bewertung |
+|---|---|---|---|
+| K1 ✅ | **Frontend-Trennung nicht analysiert.** § 1 hat nur Backend-Imports gezählt. Im Frontend: `household` nutzt `finance/data` (Einkauf → Ausgabe, entspricht `finanzen.public`), `dashboard` und `offline` nutzen `data/`/`shared/` mehrerer Bereiche (gewollt) – aber `dashboard` importiert `organization/today/org-day-logic`, also die Interna eines Reiters. `npm run check:architecture` prüft nur Reiter innerhalb eines Bereichs. | `grep "from '../organization/today"` in `features/dashboard` | **Behoben 25.11.2026 (A):** `org-day-logic` nach `organization/shared/`; Bereichsregel in `check-architecture.mjs` |
+| K2 ✅ | **Betriebsdateien werden in CI nicht geprüft.** Der nginx-Regex-Fehler (`{8}` ohne Anführungszeichen) stand seit Wochen in `deploy/nginx/4inone.conf` und fiel erst beim Docker-Probelauf auf. systemd-Units und `run-task.sh` sind auf keinem Linux gelaufen. | Phase 3 | **Behoben 25.11.2026 (B):** `deploy/ci/check-deploy.sh` + CI-Job `deploy`; Gegenproben: alter Regex-Fehler, Timer-Tippfehler, falscher Programmpfad werden erkannt |
+| K3 | **Admin ohne CSS** in beiden Betriebsvarianten (kein `STATIC_ROOT`/`collectstatic`, keine `/static/`-Regel). War in `deploy/ANLEITUNG.md` als „erwartet“ vermerkt, fehlte aber in § 2. | `config/settings.py` (nur `STATIC_URL`) | niedrig, aber sichtbar |
+| K4 | **Registry-Signaturen nur dokumentiert, nicht typisiert.** `CONTACT_SHARING` bekommt sieben Argumente und verändert drei Wörterbücher; ein Tippfehler fällt erst im Test des Aufrufers auf. | `core/registry.py` | niedrig; durch Tests abgedeckt |
+| K5 | **Docker-Weg nur auf macOS (Docker Desktop) geprobt**, nicht auf dem GEEKOM: Dateirechte von Bind-Mounts (UID 10001), `age`-Verschlüsselung und systemd-Timer ungetestet. | `deploy/docker/ANLEITUNG.md` | beim Umzug einmal real prüfen |
+| K6 | **KI-Gerüst vor der ersten Fähigkeit.** Provider, Capability API und Katalog stehen, obwohl noch keine Fähigkeit freigegeben ist. Ausdrücklich gewünscht (gemeinsamer Standard), aber es darf nicht weiter wachsen. | `integrations/ai/` | Regel: keine weitere KI-Infrastruktur bis zur ersten freigegebenen Fähigkeit |
+| K7 | **Regeln waren verstreut und teils doppelt** (AGENTS „Domain independence“ und „Architecture rules“, CLAUDE.md, § 9; „Produktions-Compose geplant“ veraltet). | `AGENTS.md` vor 25.11. | behoben: `AGENTS.md` neu um zehn Prinzipien geordnet, `CLAUDE.md` nur Ergänzungen |
+| K8 | Demo-Provider wiederholen Fachlogik (S10) – unverändert, bewusst. | `features/*/data/demo-*` | bleibt, E2E fangen Abweichungen ab |
+
+### 10.2 Was sich bestätigt hat
+
+- Backend-Schichten: `core/test_architecture.py` findet keine Verstöße; er hat beim Einführen einen echten Fall
+  gefunden (Finanzen → `connections`), der behoben ist.
+- Connection Engine: „abgeleitet statt kopiert“ verhindert Duplikate und Ketten; Rechte je Lesen.
+- Alle Suiten grün nach jedem Schritt; CI auf GitHub für `5c397ad` erfolgreich (Backend, Frontend, Browser).
+- KI-unabhängig: `AI_ENABLED=False` Standard, alle Tests laufen ohne KI.
+
+### 10.3 Vorgeschlagene nächste Schritte (je einzeln nach Freigabe, Tests nach jedem Schritt)
+
+| Schritt | Inhalt | Nutzen | Aufwand |
+|---|---|---|---|
+| **A** ✅ 25.11. | Frontend-Bereichsregel prüfen: `check-architecture.mjs` erweitern (andere Bereiche nur über `data/`/`shared/`), `org-day-logic` nach `organization/shared/` verschieben (K1) | Trennung auch im Frontend abgesichert | S |
+| **B** ✅ 25.11. | CI-Job „Betrieb“: `nginx -t` für beide Konfigurationen (nginx-Container), `docker compose config`, `systemd-analyze verify` und `shellcheck` auf dem Ubuntu-Runner (K2) | Fehler wie der Regex fallen vor dem Server auf | S–M |
+| **C** | Statische Dateien des Admins: `STATIC_ROOT`, `collectstatic` im Update bzw. Image, `/static/`-Regel in nginx (K3) | Admin benutzbar | S |
+| **D** | Registry typisieren: `Protocol`-Typen je Anmeldepunkt, `CONTACT_SHARING` mit kleinem Kontext-Objekt statt sieben Argumenten (K4) | weniger stille Fehler | S |
+| **E** | Erster echter Lauf auf dem GEEKOM nach `deploy/docker/ANLEITUNG.md` mit Checkliste (K5) | Betrieb verifiziert | M, braucht das Gerät |
+
+Nicht vorgeschlagen: weitere KI-Infrastruktur (K6), Vereinheitlichung der Demo-Logik (K8), Microservices oder
+Warteschlangen.
+

@@ -76,6 +76,14 @@ jobs:
       - run: npx ng build
       - run: npm run build:pages
 
+  deploy:
+    # Betriebsdateien (nginx, Compose, systemd, Skripte) vor dem Server prüfen – docs/ARCHITECTURE.md § 10.3 B
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - run: deploy/ci/check-deploy.sh
+
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 30

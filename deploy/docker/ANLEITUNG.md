@@ -23,6 +23,8 @@ Zeitpläne: systemd-Timer auf dem Gerät → deploy/docker/run-task.sh → `dock
 Nur `web` hat Ports nach außen. Datenbank und Redis sind von außen nicht erreichbar. Das Backend läuft ohne Root,
 mit schreibgeschütztem Dateisystem (nur `/data/private_media` und `/tmp` beschreibbar).
 
+Vor dem Einspielen geänderter Betriebsdateien: `deploy/ci/check-deploy.sh` (läuft auch in CI, Job `deploy`).
+
 ## 1. Einmalig vorbereiten
 
 ```bash

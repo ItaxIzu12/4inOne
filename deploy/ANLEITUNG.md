@@ -1,6 +1,7 @@
 # 4inOne live stellen — Schritt für Schritt von null
 
 > Alternative mit Docker Compose (z. B. für den eigenen Mini-PC): [`deploy/docker/ANLEITUNG.md`](docker/ANLEITUNG.md).
+> Geänderte nginx-, systemd- oder Compose-Dateien prüft `deploy/ci/check-deploy.sh` (auch in CI, Job `deploy`).
 
 Für einen eigenen Linux-Server (Ubuntu 24.04 LTS) mit nginx. Jeder Schritt baut auf dem vorigen auf. Befehle mit
 `sudo` brauchen Administratorrechte, alle anderen laufen als Benutzer `deploy`.

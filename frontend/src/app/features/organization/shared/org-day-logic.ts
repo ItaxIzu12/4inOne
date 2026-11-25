@@ -1,5 +1,5 @@
 import { PersonalEvent, PersonalTask } from '../data/organization-api.service';
-import { localDay } from '../shared/organization-logic';
+import { localDay } from './organization-logic';
 
 /**
  * Organisation › Heute — „Dein Tag, Stunde für Stunde“ (31.10.2026). Reine Rechnungen aus den echten Terminen und
