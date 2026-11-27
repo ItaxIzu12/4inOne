@@ -5,7 +5,7 @@ Last reviewed: 25.11.2026.
 
 ## Mission
 
-Veyora (formerly 4inOne; brand rules: `docs/BRAND.md`) is a personal life-management app for **Finanzen, Haushalt, Organisation and Reisen**.
+Veyora (formerly 4inOne; brand rules: `docs/BRAND_GUIDELINES.md`) is a personal life-management app for **Finanzen, Haushalt, Organisation and Reisen**.
 
 Every area must work well on its own. The product becomes distinctive when it can represent that two or more things from different areas belong to the same real-life context.
 

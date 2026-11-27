@@ -132,7 +132,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--text-primary); 
 }
 .dashboard-search:focus-within {
   border-color: var(--text-primary);
-  box-shadow: 0 0 0 3px rgb(23 37 35 / 0.1);
+  box-shadow: 0 0 0 3px rgb(16 24 32 / 0.1);
 }
 .search-submit {
   display: grid;

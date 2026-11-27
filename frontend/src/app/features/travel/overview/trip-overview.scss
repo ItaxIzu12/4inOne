@@ -28,7 +28,7 @@
 }
 .link:focus-visible,
 .tile-card:focus-visible {
-  outline: 2px solid var(--brand-primary, #172523);
+  outline: 2px solid var(--brand-primary, #101820);
   outline-offset: 2px;
 }
 // ---------- Linie bis zur Abreise ----------
@@ -126,7 +126,7 @@
 }
 .tile-card:hover {
   border-color: color-mix(in srgb, var(--travel-accent) 30%, var(--border-subtle));
-  box-shadow: 0 6px 16px rgb(23 37 35 / 0.06);
+  box-shadow: 0 6px 16px rgb(16 24 32 / 0.06);
 }
 .tile-card__text {
   display: grid;

@@ -3,12 +3,12 @@
 :host {
   display: block;
   margin-top: 24px;
-  --year-held: var(--finance-accent, #17694f);
+  --year-held: var(--finance-accent, #0e7957);
   --year-over: var(--fin-red, #c6324b);
-  --year-current: color-mix(in srgb, var(--finance-accent, #17694f) 45%, var(--surface-card));
+  --year-current: color-mix(in srgb, var(--finance-accent, #0e7957) 45%, var(--surface-card));
   --year-free: color-mix(in srgb, var(--text-secondary, #52615b) 45%, var(--surface-card));
   --year-save: var(--fin-blue, var(--chart-blue));
-  --year-plan: color-mix(in srgb, var(--finance-accent, #17694f) 11%, var(--surface-card));
+  --year-plan: color-mix(in srgb, var(--finance-accent, #0e7957) 11%, var(--surface-card));
   --year-height: 132px;
 }
 .year {
@@ -55,7 +55,7 @@
   text-underline-offset: 3px;
 }
 .year__edit:focus-visible {
-  outline: 2px solid var(--brand-primary, #172523);
+  outline: 2px solid var(--brand-primary, #101820);
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -124,7 +124,7 @@
   background: var(--surface-hover);
 }
 .bar:focus-visible {
-  outline: 2px solid var(--brand-primary, #172523);
+  outline: 2px solid var(--brand-primary, #101820);
   outline-offset: 1px;
 }
 .bar__track {
@@ -247,7 +247,7 @@
 }
 .key--plan {
   background: var(--year-plan);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--finance-accent, #17694f) 22%, var(--surface-card));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--finance-accent, #0e7957) 22%, var(--surface-card));
 }
 
 // ---------- Handy: eine Reihe, Anfangsbuchstaben; „Budgets je Monat“ als Fußzeile der Karte ----------

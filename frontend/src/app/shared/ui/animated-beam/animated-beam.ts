@@ -5,7 +5,7 @@ import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject
  * Magic UI, nach Angular übertragen). Das SVG liegt absolut im `container` (der `position: relative` haben muss)
  * und hinter den verbundenen Elementen; der Verlauf wird bei jeder Größenänderung neu berechnet.
  *
- *   <app-animated-beam [container]="stage" [from]="a" [to]="b" color="#17694f" [delay]="0.4" />
+ *   <app-animated-beam [container]="stage" [from]="a" [to]="b" color="#0e7957" [delay]="0.4" />
  *
  * Bei reduzierter Bewegung bleibt nur die ruhende Linie. Rein dekorativ: aria-hidden.
  */
@@ -48,7 +48,7 @@ import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject
       stroke-linecap: round;
     }
     .beam__base {
-      stroke: var(--beam-base, rgb(23 37 35 / 0.12));
+      stroke: var(--beam-base, rgb(16 24 32 / 0.12));
       stroke-width: 1.5;
     }
     .beam__pulse {
@@ -90,7 +90,7 @@ import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject
       animation: beam-in 180ms ease-out both;
     }
     .is-preview .beam__base {
-      stroke: var(--beam-preview, rgb(23 37 35 / 0.4));
+      stroke: var(--beam-preview, rgb(16 24 32 / 0.4));
       stroke-width: 1.75;
       stroke-dasharray: 4 7;
     }
@@ -116,7 +116,7 @@ export class AnimatedBeam {
   readonly container = input.required<HTMLElement>();
   readonly from = input.required<HTMLElement>();
   readonly to = input.required<HTMLElement>();
-  readonly color = input('#3d6b9a');
+  readonly color = input('#197390');
   /** Biegung der Linie in px (positiv nach oben). */
   readonly curvature = input(0);
   readonly delay = input(0);

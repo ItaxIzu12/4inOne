@@ -184,11 +184,11 @@
 }
 .group-by button[aria-pressed='true'] {
   background: var(--surface-card);
-  box-shadow: 0 1px 2px rgb(23 37 35 / 0.12);
+  box-shadow: 0 1px 2px rgb(16 24 32 / 0.12);
   color: var(--text);
 }
 .group-by button:focus-visible {
-  outline: 2px solid var(--brand-primary, #172523);
+  outline: 2px solid var(--brand-primary, #101820);
   outline-offset: 1px;
 }
 // Gruppenkopf: Fälligkeit oder Projekt, rechts die Anzahl

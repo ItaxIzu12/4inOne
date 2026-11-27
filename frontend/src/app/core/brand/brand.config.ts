@@ -1,28 +1,49 @@
 /**
- * Markenidentität Veyora (Rebranding Phase 1, 28.11.2026; docs/BRAND.md). Die EINE Stelle für Produktname, Leitsatz,
- * Beschreibung und Seitentitel im Frontend. Farben stehen bewusst NICHT hier, sondern als Tokens in styles.css und
- * shared/styles (docs/DESIGN_SYSTEM.md) – sonst gäbe es zwei Quellen für dieselben Werte.
+ * Markenidentität Veyora (Rebranding 28.11.2026; docs/BRAND_GUIDELINES.md). Die EINE Stelle für Produktname, Claim,
+ * Beschreibung, Bereiche, Logo-Farben und -Dateien, SEO-Angaben und Beschriftungen im Frontend.
  *
- * Fließtexte (Landing, Rechtsseiten, Hinweise) nennen „Veyora“ direkt; `npm run check:brand` verhindert, dass der
- * alte Name dort wieder auftaucht.
+ * Farben: Die reinen Markenfarben (Logo, Teilen-Bild, Icons) stehen hier. Die Oberfläche nutzt die semantischen
+ * Tokens in styles.css (`--logo-*` = dieselben Werte, `--*-accent`/`--*-fill` = kontrastgeprüfte Varianten);
+ * `npm run check:brand` prüft, dass `--logo-*` und diese Datei übereinstimmen.
+ *
+ * Keine Importe: scripts/brand-assets.mts liest die Datei direkt mit Node (Icons, Teilen-Bild).
  */
 export type BrandSection = 'finance' | 'household' | 'organization' | 'travel';
+export type BrandContext = 'global' | BrandSection;
+
+export interface BrandSectionInfo {
+  /** Name in der (deutschen) App. */
+  readonly label: string;
+  /** Name der Marke für Marketing und Markenunterlagen. */
+  readonly brandName: string;
+  /** Reine Markenfarbe (Logo-Element, nicht für Text). */
+  readonly logoColor: string;
+}
 
 export interface BrandConfig {
-  /** Sichtbarer Produktname. */
   readonly name: string;
-  /** Technische Kurzform für neue Bezeichner (Dateinamen von Downloads u. Ä.). Bestehende technische Namen bleiben,
-   *  siehe docs/REBRANDING_MIGRATION.md. */
+  /** Technische Kurzform für neue Bezeichner (Downloads, neue Variablen `VEYORA_…`). docs/NAMING_CONVENTIONS.md */
   readonly slug: string;
   /** Deutscher Leitsatz in der App. */
   readonly tagline: string;
-  /** Internationaler Claim der Marke (Marketing, Markenunterlagen). */
+  /** Internationaler Claim. */
   readonly claim: string;
-  /** Standard-Beschreibung für Suchmaschinen und Teilen-Vorschau. */
   readonly description: string;
-  /** Sichtbare Namen der vier Bereiche in der (deutschen) App. */
-  readonly sections: Readonly<Record<BrandSection, string>>;
-  /** Barrierefreie Beschriftungen rund um die Marke. */
+  readonly sections: Readonly<Record<BrandSection, BrandSectionInfo>>;
+  /** Neutrale Markenfarben. */
+  readonly neutrals: { readonly midnight: string; readonly graphite: string; readonly ivory: string; readonly white: string };
+  readonly fonts: { readonly brand: string; readonly ui: string };
+  readonly logo: {
+    readonly symbol: string;
+    readonly symbolMonoDark: string;
+    readonly symbolMonoLight: string;
+    readonly lockupHorizontal: string;
+    readonly lockupVertical: string;
+    readonly favicon: string;
+    readonly appIcon: string;
+    readonly maskableIcon: string;
+  };
+  readonly seo: { readonly ogImage: string; readonly themeColor: string; readonly backgroundColor: string };
   readonly a11y: { readonly homeLink: string; readonly logo: string };
 }
 
@@ -33,7 +54,25 @@ export const BRAND: BrandConfig = {
   claim: 'Life, connected.',
   description:
     'Finanzen, Haushalt, Termine und Reisen an einem Ort. Was zusammengehört, verknüpfst du – und entscheidest selbst, was du teilst.',
-  sections: { finance: 'Finanzen', household: 'Haushalt', organization: 'Organisation', travel: 'Reisen' },
+  sections: {
+    finance: { label: 'Finanzen', brandName: 'Veyora Finance', logoColor: '#13A274' },
+    household: { label: 'Haushalt', brandName: 'Veyora Home', logoColor: '#F59A42' },
+    organization: { label: 'Organisation', brandName: 'Veyora Planner', logoColor: '#7864E7' },
+    travel: { label: 'Reisen', brandName: 'Veyora Travel', logoColor: '#2197BE' },
+  },
+  neutrals: { midnight: '#101820', graphite: '#29323B', ivory: '#F7F6F2', white: '#FFFFFF' },
+  fonts: { brand: 'Manrope', ui: 'Inter' },
+  logo: {
+    symbol: 'brand/veyora-symbol.svg',
+    symbolMonoDark: 'brand/veyora-symbol-mono-dark.svg',
+    symbolMonoLight: 'brand/veyora-symbol-mono-light.svg',
+    lockupHorizontal: 'brand/veyora-lockup-horizontal.svg',
+    lockupVertical: 'brand/veyora-lockup-vertical.svg',
+    favicon: 'favicon.svg',
+    appIcon: 'icon-512.png',
+    maskableIcon: 'icon-maskable-512.png',
+  },
+  seo: { ogImage: 'og-image.png', themeColor: '#101820', backgroundColor: '#F7F6F2' },
   a11y: { homeLink: 'Veyora – Startseite', logo: 'Veyora' },
 };
 

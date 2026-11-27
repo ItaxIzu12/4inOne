@@ -39,11 +39,11 @@
     transform 160ms ease;
 }
 .next__item:hover {
-  border-color: color-mix(in srgb, var(--household-accent, #ab445f) 45%, var(--border));
+  border-color: color-mix(in srgb, var(--household-accent, #955e28) 45%, var(--border));
   transform: translateY(-1px);
 }
 .next__item:focus-visible {
-  outline: 2px solid var(--brand-primary, #172523);
+  outline: 2px solid var(--brand-primary, #101820);
   outline-offset: 2px;
 }
 // Datum als Kalenderblatt: Tag groß, Monat klein — bald fällig in der Haushaltsfarbe
@@ -97,7 +97,7 @@
   flex: none;
   width: 16px;
   height: 16px;
-  color: var(--household-accent, #ab445f);
+  color: var(--household-accent, #955e28);
 }
 .next__text small {
   color: var(--text-secondary);
@@ -123,7 +123,7 @@
 .room-head app-icon {
   width: 16px;
   height: 16px;
-  color: var(--household-accent, #ab445f);
+  color: var(--household-accent, #955e28);
 }
 .room-head span {
   color: var(--text-muted);

@@ -5,7 +5,7 @@
   display: block;
   // Layout richtet sich nach der Breite der Karte, nicht des Fensters (Tablet mit Seitenleiste ist schmal)
   container-type: inline-size;
-  --pass: var(--travel-fill, #3d6b9a);
+  --pass: var(--travel-fill, #197390);
   --pass-deep: color-mix(in srgb, #000 24%, var(--pass));
   --pass-text: color-mix(in srgb, #fff 93%, transparent);
 }
@@ -30,12 +30,12 @@
   transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease;
 }
 .pass--button:hover {
-  box-shadow: 0 14px 30px rgb(23 37 35 / 0.16);
+  box-shadow: 0 14px 30px rgb(16 24 32 / 0.16);
   transform: translateY(-2px);
 }
 .pass:focus-visible,
 .pass__chip:focus-visible {
-  outline: 3px solid var(--brand-primary, #172523);
+  outline: 3px solid var(--brand-primary, #101820);
   outline-offset: 3px;
 }
 .pass__main {
@@ -179,7 +179,7 @@ button.pass__chip:hover {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--surface-app, #f7f7f4);
+  background: var(--surface-app, #f7f6f2);
   content: '';
 }
 .pass__stub::before {

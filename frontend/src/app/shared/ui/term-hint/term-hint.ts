@@ -61,10 +61,10 @@ import { AppIcon } from '../icons/app-icon';
       height: 16px;
     }
     .hint-btn[aria-expanded='true'] {
-      color: var(--text-primary, #172523);
+      color: var(--text-primary, #101820);
     }
     .hint-btn:focus-visible {
-      outline: 2px solid var(--brand-primary, #172523);
+      outline: 2px solid var(--brand-primary, #101820);
       outline-offset: 2px;
     }
     .bubble__text {
@@ -76,7 +76,7 @@ import { AppIcon } from '../icons/app-icon';
       max-width: min(280px, calc(100vw - 48px));
       padding: 10px 12px;
       border-radius: 10px;
-      background: var(--text-primary, #172523);
+      background: var(--text-primary, #101820);
       color: #fff;
       font-size: 13px;
       font-weight: 400;
@@ -84,7 +84,7 @@ import { AppIcon } from '../icons/app-icon';
       letter-spacing: 0;
       text-align: left;
       white-space: normal;
-      box-shadow: 0 8px 24px -12px rgb(23 37 35 / 0.45);
+      box-shadow: 0 8px 24px -12px rgb(16 24 32 / 0.45);
     }
     .bubble__text b {
       font-weight: 600;

@@ -35,7 +35,7 @@
   height: 16px;
 }
 .view-switch button:focus-visible {
-  outline: 2px solid var(--brand-primary, #172523);
+  outline: 2px solid var(--brand-primary, #101820);
   outline-offset: 1px;
 }
 
@@ -80,7 +80,7 @@
   transform: scale(0.96);
 }
 .tile:focus-visible {
-  outline: 2px solid var(--brand-primary, #172523);
+  outline: 2px solid var(--brand-primary, #101820);
   outline-offset: 2px;
 }
 .tile__icon {

@@ -2,7 +2,7 @@
 
 // Öffentliche Startseite (22.10.2026, „Produkt im Mittelpunkt“) — Grundgerüst: Tokens, Browser-Flächen, Kopf, Knöpfe,
 // Hero mit der Produktbühne (echtes Dashboard am Rechner, davor das Handy). Welt „Editorial hell“: warmweißer Grund,
-// Tinte, Schibsted Grotesk, die vier Bereichsfarben nur dort, wo sie etwas bedeuten.
+// Tinte, Manrope/Inter, die vier Bereichsfarben nur dort, wo sie etwas bedeuten.
 // Abschnitte: landing-sections.scss · Fragen, Abschluss und Breiten: landing-end.scss.
 :host {
   @include editorial.tokens;
@@ -222,7 +222,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 22px;
   background: var(--ground-2);
-  box-shadow: 0 30px 60px -30px rgb(23 37 35 / 0.28);
+  box-shadow: 0 30px 60px -30px rgb(16 24 32 / 0.28);
 }
 .frame img {
   display: block;
@@ -243,7 +243,7 @@ h1 {
   padding: 7px;
   border-radius: 36px;
   background: var(--ink);
-  box-shadow: 0 30px 50px -24px rgb(23 37 35 / 0.45);
+  box-shadow: 0 30px 50px -24px rgb(16 24 32 / 0.45);
 }
 .stage__phone img {
   display: block;

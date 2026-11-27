@@ -96,12 +96,12 @@
 }
 .later-card:hover {
   border-color: color-mix(in srgb, var(--travel-accent) 30%, var(--border-subtle));
-  box-shadow: 0 8px 20px rgb(23 37 35 / 0.07);
+  box-shadow: 0 8px 20px rgb(16 24 32 / 0.07);
   transform: translateY(-2px);
 }
 .later-card:focus-visible,
 .row:focus-visible {
-  outline: 2px solid var(--brand-primary, #172523);
+  outline: 2px solid var(--brand-primary, #101820);
   outline-offset: 2px;
 }
 .later-card__head {

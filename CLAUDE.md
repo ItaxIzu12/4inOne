@@ -18,6 +18,9 @@ The user describes features in plain language and expects the architecture to be
 
 - Read the documentation for the area (`docs/*_V1.md`) and inspect the existing code before changing it.
 - Visual work: read `DESIGN.md`; inspect existing Angular components, CSS/SCSS tokens and the installed icon system.
+- Brand: the product is **Veyora** (`docs/BRAND_GUIDELINES.md`, `docs/LOGO_USAGE.md`, `docs/NAMING_CONVENTIONS.md`);
+  logo only via `<app-brand>`, page titles via `brandTitle()`, colors via tokens. Old technical `4inone` names stay
+  unless `docs/REBRANDING_MIGRATION.md` says otherwise. After logo/color changes run `npm run brand:assets`.
 - Backend work: inspect existing apps, serializers, views, services and permission checks before creating patterns.
 
 ## Do not
@@ -44,7 +47,7 @@ The user describes features in plain language and expects the architecture to be
 
 - Backend: `backend/.venv/bin/python -m pytest -q`, `manage.py check`, `manage.py makemigrations --check --dry-run`
   (test databases only, never the user's development database).
-- Frontend: `npm run check:architecture`, `npx ng test --watch=false`, `npx ng build`, Playwright specs of the touched
+- Frontend: `npm run check:architecture`, `npm run check:brand`, `npx ng test --watch=false`, `npx ng build`, Playwright specs of the touched
   area (`npx playwright test e2e/<spec> --project=chromium`), full-stack specs with
   `-c playwright.fullstack.config.ts` when backend and frontend interact.
 - UI changes: check in the browser preview (desktop and 390 px, light and dark) and run the axe checks.

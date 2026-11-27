@@ -107,10 +107,10 @@ export function connectionHints(type: ConnectionObjectType, ids: () => readonly 
       width: 13px;
       height: 13px;
     }
-    .dom-reisen { --hint-soft: var(--travel-soft, #e4ebf3); --hint-text: var(--travel-accent, #36608b); }
-    .dom-finanzen { --hint-soft: var(--finance-soft, #e4efe9); --hint-text: var(--finance-accent, #17694f); }
-    .dom-haushalt { --hint-soft: var(--household-soft, #f6e8ec); --hint-text: var(--household-accent, #ab445f); }
-    .dom-organisation { --hint-soft: var(--organization-soft, #f5ecdf); --hint-text: var(--organization-accent, #85561a); }
+    .dom-reisen { --hint-soft: var(--travel-soft, #e4f3f7); --hint-text: var(--travel-accent, #197390); }
+    .dom-finanzen { --hint-soft: var(--finance-soft, #e3f4ee); --hint-text: var(--finance-accent, #0e7957); }
+    .dom-haushalt { --hint-soft: var(--household-soft, #fef3e8); --hint-text: var(--household-accent, #955e28); }
+    .dom-organisation { --hint-soft: var(--organization-soft, #efecfc); --hint-text: var(--organization-accent, #6a59cc); }
     .hint--more { --hint-soft: var(--surface-hover, #f1f3ef); --hint-text: var(--text-secondary, #52615b); }
     .sr-only {
       position: absolute;

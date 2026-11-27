@@ -11,7 +11,7 @@
   display: grid;
   gap: 6px;
   margin: 0 0 4px;
-  box-shadow: 0 6px 14px -8px rgb(23 37 35 / 0.35);
+  box-shadow: 0 6px 14px -8px rgb(16 24 32 / 0.35);
   padding: 16px 18px;
   border-radius: 18px var(--radius-sm) 18px 18px;
   background: var(--travel-fill);
@@ -145,7 +145,7 @@
 }
 .transport-chip:focus-visible,
 .category-chip:focus-visible {
-  outline: 2px solid var(--brand-primary, #172523);
+  outline: 2px solid var(--brand-primary, #101820);
   outline-offset: 2px;
 }
 @media (prefers-reduced-motion: reduce) {

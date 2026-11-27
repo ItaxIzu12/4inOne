@@ -124,9 +124,10 @@ def test_summary_marks_uncategorised_expenses_like_sonstiges(client_user):
 
 
 def test_migration_recolors_existing_categories_by_meaning():
-    """0019 färbt nach Bedeutung, 0023 zieht Reisen/Wohnen auf die Bereichs-Tokens nach."""
+    """0019 färbt nach Bedeutung, 0023 und 0024 ziehen auf die Bereichs-Tokens nach."""
     first = import_module('finanzen.migrations.0019_category_colors_by_meaning')
     tokens = import_module('finanzen.migrations.0023_category_colors_area_tokens')
+    veyora = import_module('finanzen.migrations.0024_category_colors_veyora')
     user = get_user_model().objects.create_user(username='mig')
     reisen = Category.objects.create(owner=user, name='Reisen', color='#1f5c41')
     eigene = Category.objects.create(owner=user, name='Haustier', color='#3a8a63')
@@ -134,6 +135,7 @@ def test_migration_recolors_existing_categories_by_meaning():
 
     first.recolor(django_apps, None)
     tokens.recolor(django_apps, None)
+    veyora.recolor(django_apps, None)
 
     reisen.refresh_from_db(); eigene.refresh_from_db(); household_cat.refresh_from_db()
     assert reisen.color == cc.REISEN
@@ -142,13 +144,15 @@ def test_migration_recolors_existing_categories_by_meaning():
 
 
 def test_migrations_together_keep_the_same_mapping_as_the_live_code():
-    """Die Migrationen kopieren die Zuordnung absichtlich. 0019 gefolgt von 0023
+    """Die Migrationen kopieren die Zuordnung absichtlich. 0019, dann 0023, dann 0024
     muss genau die Farben des laufenden Codes ergeben."""
     first = import_module('finanzen.migrations.0019_category_colors_by_meaning')
     tokens = import_module('finanzen.migrations.0023_category_colors_area_tokens')
+    veyora = import_module('finanzen.migrations.0024_category_colors_veyora')
     for name in ['Reisen', 'Wohnen', 'Lebensmittel', 'Mobilität', 'Freizeit', 'Gesundheit', 'Sonstiges', 'Kino', 'xyz']:
         color = first.color_for_name(name)
-        assert tokens.CHANGES.get(color, color) == cc.color_for_name(name)
+        color = tokens.CHANGES.get(color, color)
+        assert veyora.CHANGES.get(color, color) == cc.color_for_name(name)
 
 
 def test_token_migration_only_touches_old_automatic_colors_and_is_reversible():
@@ -169,6 +173,28 @@ def test_token_migration_only_touches_old_automatic_colors_and_is_reversible():
     tokens.restore(django_apps, None)
     alt_reisen.refresh_from_db(); alt_wohnen.refresh_from_db()
     assert (alt_reisen.color, alt_wohnen.color) == ('#2e8aef', '#c2336f')
+
+
+def test_veyora_migration_only_touches_old_automatic_colors_and_is_reversible():
+    veyora = import_module('finanzen.migrations.0024_category_colors_veyora')
+    user = get_user_model().objects.create_user(username='mig3')
+    reisen = Category.objects.create(owner=user, name='Urlaub', color='#3D6B9A')  # Großschreibung egal
+    wohnen = Category.objects.create(owner=user, name='Miete', color='#ab445f')
+    essen = Category.objects.create(owner=user, name='Supermarkt', color='#eb6834')
+    eigene_farbe = Category.objects.create(owner=user, name='Reisekasse', color='#123456')
+    household_cat = Category.objects.create(household=user_household(), name='Wohnen', color='#ab445f')
+
+    veyora.recolor(django_apps, None)
+    for c in (reisen, wohnen, essen, eigene_farbe, household_cat):
+        c.refresh_from_db()
+    assert (reisen.color, wohnen.color, essen.color) == ('#197390', '#ab632b', '#a8326e')
+    assert eigene_farbe.color == '#123456'
+    assert household_cat.color == '#ab445f'
+
+    veyora.restore(django_apps, None)
+    for c in (reisen, wohnen, essen):
+        c.refresh_from_db()
+    assert (reisen.color, wohnen.color, essen.color) == ('#3d6b9a', '#ab445f', '#eb6834')
 
 
 def user_household():

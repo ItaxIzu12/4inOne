@@ -3,6 +3,7 @@ import { ErrorNoticeDirective } from '../shared/ui/error-notice/error-notice';
 import { Component, DestroyRef, input, output, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IsActiveMatchOptions, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { BrandContext } from '../core/brand/brand.config';
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
 import { BackToTop } from './back-to-top/back-to-top';
@@ -18,6 +19,14 @@ import { IconSettings } from '../shared/ui/icons/icon-settings';
 import { IconTwoFactor } from '../shared/ui/icons/icon-two-factor';
 import { NotificationBell } from './notification-bell/notification-bell';
 import { DEMO_ONLY } from '../core/demo-only';
+/** URL-Abschnitt → Logo-Kontext. */
+const AREA_CONTEXT: Record<string, BrandContext> = {
+  finanzen: 'finance',
+  haushalt: 'household',
+  organisation: 'organization',
+  reisen: 'travel',
+};
+
 @Component({
   selector: 'app-shell',
   standalone: true,
@@ -78,6 +87,12 @@ export class AppShell {
   readonly isDemoRoute = computed(() => {
     const url = (this.currentUrl()?.urlAfterRedirects ?? this.router.url).split('?')[0].split('#')[0];
     return url === '/demo' || url.startsWith('/demo/');
+  });
+  /** Bereich der aktuellen Seite für das Logo (docs/LOGO_USAGE.md): dort bleibt das passende Element voll. */
+  readonly brandContext = computed<BrandContext>(() => {
+    const url = (this.currentUrl()?.urlAfterRedirects ?? this.router.url).split(/[?#]/)[0].replace(/^\/demo(?=\/)/, '');
+    const area = url.split('/')[1];
+    return AREA_CONTEXT[area] ?? 'global';
   });
   readonly name = computed(() => this.isDemoRoute() ? 'Sophie' : this.auth.currentUser()?.name || 'Mein Konto');
   /** „Mira Neu“ → „MN“, „Sophie“ → „S“. */

@@ -79,8 +79,8 @@ const H = 300;
   styles: `
     :host {
       display: block;
-      --curve-line: var(--finance-accent, #17694f);
-      --curve-fill: color-mix(in srgb, var(--finance-accent, #17694f) 11%, transparent);
+      --curve-line: var(--finance-accent, #0e7957);
+      --curve-fill: color-mix(in srgb, var(--finance-accent, #0e7957) 11%, transparent);
       --curve-pace: var(--text-secondary, #52615b);
       --curve-base: var(--border-subtle, #e6e9e3);
       --curve-height: 180px;

@@ -262,7 +262,7 @@
 .head-link:focus-visible,
 .day-task__main:focus-visible,
 .note-mini__body:focus-visible {
-  outline: 2px solid var(--brand-primary, #172523);
+  outline: 2px solid var(--brand-primary, #101820);
   outline-offset: 2px;
 }
 .line__empty {
@@ -324,7 +324,7 @@
   padding: 14px;
   border: 0;
   border-radius: var(--radius-md);
-  background: var(--organization-soft, #f5ecdf);
+  background: var(--organization-soft, #efecfc);
   color: var(--text);
   font: inherit;
   text-align: left;

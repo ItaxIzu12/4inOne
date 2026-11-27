@@ -125,7 +125,7 @@ h2 {
   left: 0;
   border-radius: 999px;
   background: var(--card);
-  box-shadow: 0 1px 2px rgb(23 37 35 / 0.08);
+  box-shadow: 0 1px 2px rgb(16 24 32 / 0.08);
   transition:
     transform 320ms var(--ease),
     width 320ms var(--ease);
@@ -177,7 +177,7 @@ h2 {
 .tab[aria-selected='true'] {
   background: var(--card);
   color: var(--ink);
-  box-shadow: 0 1px 2px rgb(23 37 35 / 0.08);
+  box-shadow: 0 1px 2px rgb(16 24 32 / 0.08);
 }
 .tab[aria-selected='true'] .tab__icon {
   background: var(--c);

@@ -159,11 +159,11 @@
     transform 160ms ease;
 }
 .room:hover {
-  border-color: color-mix(in srgb, var(--household-accent, #ab445f) 45%, var(--border));
+  border-color: color-mix(in srgb, var(--household-accent, #955e28) 45%, var(--border));
   transform: translateY(-1px);
 }
 .room:focus-visible {
-  outline: 2px solid var(--brand-primary, #172523);
+  outline: 2px solid var(--brand-primary, #101820);
   outline-offset: 2px;
 }
 .room__icon {
@@ -173,8 +173,8 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  background: var(--household-soft, #f6e8ec);
-  color: var(--household-accent, #ab445f);
+  background: var(--household-soft, #fef3e8);
+  color: var(--household-accent, #955e28);
 }
 .room__icon app-icon {
   width: 20px;
@@ -238,7 +238,7 @@
 
 // ---------- Erledigt-Moment: Kästchen füllt sich mit Haken, Titel wird durchgestrichen, Zeile blendet aus ----------
 .task.is-done .box {
-  border-color: var(--household-accent, #ab445f);
+  border-color: var(--household-accent, #955e28);
   background: var(--household-fill);
   opacity: 1;
 }

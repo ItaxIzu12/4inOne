@@ -1,13 +1,13 @@
 // Globaler Fuß „Soft Editorial“: Porcelain, feine Linie oben, Marke links, Link-Spalten rechts, ©-Leiste unten.
 // Von außen anpassbar über --tf-ink, --tf-muted, --tf-line, --tf-ground und die Bereichsfarben --tf-finance/…
-// Kontraste: Forest #172523 auf Porcelain 14,8:1 · Sekundärtext #52615b 6,4:1.
+// Kontraste: Forest #101820 auf Porcelain 14,8:1 · Sekundärtext #52615b 6,4:1.
 :host {
   display: block; // keine eigenen --tf-*-Werte hier: sie würden die von der Seite geerbten überschreiben
 }
 .tf {
   border-top: 1px solid var(--tf-line, #dde1da);
-  background: var(--tf-ground, #f7f7f4);
-  color: var(--tf-ink, #172523);
+  background: var(--tf-ground, #f7f6f2);
+  color: var(--tf-ink, #101820);
 }
 .tf__inner,
 .tf__bar-inner {
@@ -96,7 +96,7 @@ p {
   margin-inline: -10px;
   padding: 0 10px;
   border-radius: 10px;
-  color: var(--tf-ink, #172523);
+  color: var(--tf-ink, #101820);
   font-size: 15px;
   font-weight: 500;
   text-decoration: none;
@@ -118,16 +118,16 @@ p {
   content: '';
 }
 .tone-finance {
-  --tone: var(--tf-finance, #17694f);
+  --tone: var(--tf-finance, #0e7957);
 }
 .tone-household {
-  --tone: var(--tf-household, #ab445f);
+  --tone: var(--tf-household, #955e28);
 }
 .tone-organisation {
-  --tone: var(--tf-organisation, #9a641e);
+  --tone: var(--tf-organisation, #6a59cc);
 }
 .tone-travel {
-  --tone: var(--tf-travel, #3d6b9a);
+  --tone: var(--tf-travel, #197390);
 }
 .tf__bar {
   border-top: 1px solid var(--tf-line, #dde1da);
@@ -142,7 +142,7 @@ p {
   padding-block: 20px calc(24px + env(safe-area-inset-bottom));
 }
 :focus-visible {
-  outline: 2px solid var(--tf-ink, #172523);
+  outline: 2px solid var(--tf-ink, #101820);
   outline-offset: 2px;
 }
 @media (hover: hover) and (pointer: fine) {

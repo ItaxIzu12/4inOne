@@ -313,7 +313,7 @@ export function taskTimeline(
 
 // ---------- Budget: Farben je Kategorie (gestapelter Balken, immer mit Beschriftung) ----------
 export const BUDGET_COLOR: Record<BudgetCategory, string> = {
-  UNTERKUNFT: '#36608b',
+  UNTERKUNFT: '#197390',
   TRANSPORT: '#5b8fc7',
   ESSEN: '#d9822b',
   AKTIVITAETEN: '#2e9b57',

@@ -13,7 +13,7 @@
   outline: none;
 }
 .auth ::selection {
-  background: var(--finance-soft, #e4efe9);
+  background: var(--finance-soft, #e3f4ee);
   color: var(--text-primary);
 }
 .auth input {
@@ -108,16 +108,16 @@
   border-radius: 5px 5px 2px 5px;
 }
 .dot--finance {
-  background: #0f9d6b;
+  background: var(--logo-finance);
 }
 .dot--household {
-  background: #e04f78;
+  background: var(--logo-household);
 }
 .dot--organisation {
-  background: #e3961a;
+  background: var(--logo-organization);
 }
 .dot--travel {
-  background: #3b6fe0;
+  background: var(--logo-travel);
 }
 
 // Beispielansicht „Heute“: weiße Karte wie in der App, leicht angehoben

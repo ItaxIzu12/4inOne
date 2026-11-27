@@ -222,7 +222,7 @@
   background: var(--surface-card);
   color: var(--text-primary);
   font-weight: 600;
-  box-shadow: 0 1px 2px rgb(23 37 35 / 0.12);
+  box-shadow: 0 1px 2px rgb(16 24 32 / 0.12);
 }
 @media (hover: hover) and (pointer: fine) {
   .seg button:not([aria-pressed='true']):hover {
@@ -314,6 +314,6 @@
   background: var(--surface-hover);
 }
 .show-more:focus-visible {
-  outline: 2px solid var(--brand-primary, #172523);
+  outline: 2px solid var(--brand-primary, #101820);
   outline-offset: 2px;
 }

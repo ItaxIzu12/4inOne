@@ -1,6 +1,6 @@
 # Veyora Product Specification V2
 
-**Veyora — Dein Alltag. Alles verbunden.** (Claim: *Life, connected.* · vormals 4inOne, siehe `docs/BRAND.md`)
+**Veyora — Dein Alltag. Alles verbunden.** (Claim: *Life, connected.* · vormals 4inOne, siehe `docs/BRAND_GUIDELINES.md`)
 
 This package is the current product and implementation source of truth for the existing Veyora project (formerly 4inOne).
 

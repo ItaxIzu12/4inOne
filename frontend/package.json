@@ -11,7 +11,8 @@
     "seo": "node scripts/seo.mjs",
     "build:pages": "node scripts/build-pages.mjs",
     "check:architecture": "node scripts/check-architecture.mjs",
-    "check:brand": "node scripts/check-brand.mjs"
+    "check:brand": "node scripts/check-brand.mjs",
+    "brand:assets": "node scripts/brand-assets.mts"
   },
   "private": true,
   "packageManager": "npm@11.16.0",

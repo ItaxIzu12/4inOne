@@ -64,16 +64,16 @@ h2 {
   background: rgba(255, 255, 255, 0.18);
 }
 .so__seg--finanzen.is-done {
-  background: #0f9d6b;
+  background: var(--logo-finance);
 }
 .so__seg--haushalt.is-done {
-  background: #e04f78;
+  background: var(--logo-household);
 }
 .so__seg--organisation.is-done {
-  background: #e3961a;
+  background: var(--logo-organization);
 }
 .so__seg--reisen.is-done {
-  background: #3b6fe0;
+  background: var(--logo-travel);
 }
 .so__intro {
   max-width: 60ch;
@@ -109,16 +109,16 @@ h2 {
   border-radius: 6px 6px 2px 6px;
 }
 .so__dot--finanzen {
-  background: #0f9d6b;
+  background: var(--logo-finance);
 }
 .so__dot--haushalt {
-  background: #e04f78;
+  background: var(--logo-household);
 }
 .so__dot--organisation {
-  background: #e3961a;
+  background: var(--logo-organization);
 }
 .so__dot--reisen {
-  background: #3b6fe0;
+  background: var(--logo-travel);
 }
 .so__copy {
   display: grid;

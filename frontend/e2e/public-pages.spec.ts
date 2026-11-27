@@ -50,9 +50,9 @@ test('legal pages have their own title and no app navigation; footer links are l
   const links = page.getByRole('navigation', { name: 'Rechtliches' }).getByRole('link');
   await expect(links).toHaveCount(4);
   // Rechtsseiten im Stil der Startseite: Hausschrift, keine Kursive, warmweißer Grund
-  expect(await page.locator('h1').evaluate((h) => getComputedStyle(h).fontFamily)).toContain('Schibsted Grotesk');
+  expect(await page.locator('h1').evaluate((h) => getComputedStyle(h).fontFamily)).toContain('Manrope');
   expect(await page.evaluate(() => [...document.querySelectorAll('body *')].filter((e) => getComputedStyle(e).fontStyle === 'italic').length)).toBe(0);
-  expect(await page.locator('app-public-shell').evaluate((h) => getComputedStyle(h).backgroundColor)).toBe('rgb(247, 247, 244)'); // Porcelain (Soft Editorial)
+  expect(await page.locator('app-public-shell').evaluate((h) => getComputedStyle(h).backgroundColor)).toBe('rgb(247, 246, 242)'); // Ivory (Veyora)
   for (const box of await links.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))) {
     expect(box).toBeGreaterThanOrEqual(44);
   }

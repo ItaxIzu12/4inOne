@@ -6,36 +6,36 @@
 //   :host { @include editorial.tokens; }
 
 @mixin tokens {
-  --ground: #f7f7f4;
+  --ground: #f7f6f2;
   --ground-2: #ecefea;
   --card: #ffffff;
-  --ink: #172523;
+  --ink: #101820;
   --ink-soft: #52615b; // 6,1:1 auf --ground, 5,6:1 auf --ground-2
-  --forest: #172523; // dunkle Bänder (Verknüpfen, Abschluss)
-  --evergreen: #17694f; // Akzent: Links, Fortschritt, aktive Zustände
+  --forest: #101820; // dunkle Bänder (Verknüpfen, Abschluss)
+  --evergreen: #0e7957; // Akzent: Links, Fortschritt, aktive Zustände
   --line: #dde1da;
-  // Eine Schrift für alles (global, styles.css): Schibsted Grotesk — Überschriften kräftig, Text ruhig
-  --display: var(--font-display, 'Schibsted Grotesk', sans-serif);
-  --sans: var(--font-body, 'Schibsted Grotesk', sans-serif);
+  // Schriften global (styles.css): Manrope für Überschriften, Inter für Text
+  --display: var(--font-display, 'Manrope', sans-serif);
+  --sans: var(--font-body, 'Inter', sans-serif);
   --radius: 20px;
-  --shadow: 0 1px 2px rgb(23 37 35 / 0.05), 0 12px 32px -8px rgb(23 37 35 / 0.14);
-  --shadow-lift: 0 2px 4px rgb(23 37 35 / 0.06), 0 24px 48px -12px rgb(23 37 35 / 0.22);
+  --shadow: 0 1px 2px rgb(16 24 32 / 0.05), 0 12px 32px -8px rgb(16 24 32 / 0.14);
+  --shadow-lift: 0 2px 4px rgb(16 24 32 / 0.06), 0 24px 48px -12px rgb(16 24 32 / 0.22);
   --gutter: clamp(20px, 4vw, 48px);
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   // Vier Bereiche (gedeckt, nur für Symbole, Balken, Beschriftungen, kleine Flächen): Fläche · Text (≥ 4,5:1 auf
   // Weiß, Porcelain und Sage) · Tönung. Das Logo (shared/ui/brand) behält seine eigenen Farben.
-  --finance: #17694f;
-  --finance-deep: #17694f;
-  --finance-tint: #e4efe9;
-  --household: #ab445f;
-  --household-deep: #ab445f;
-  --household-tint: #f6e8ec;
-  --organisation: #9a641e;
-  --organisation-deep: #85561a;
-  --organisation-tint: #f5ecdf;
-  --travel: #3d6b9a;
-  --travel-deep: #36608b;
-  --travel-tint: #e4ebf3;
+  --finance: #0e7957;
+  --finance-deep: #0e7957;
+  --finance-tint: #e3f4ee;
+  --household: #955e28;
+  --household-deep: #955e28;
+  --household-tint: #fef3e8;
+  --organisation: #6a59cc;
+  --organisation-deep: #6a59cc;
+  --organisation-tint: #efecfc;
+  --travel: #197390;
+  --travel-deep: #197390;
+  --travel-tint: #e4f3f7;
   // Der globale Fuß (layout/tile-footer) übernimmt die Farben
   --tf-ink: var(--ink);
   --tf-muted: var(--ink-soft);
@@ -63,27 +63,27 @@
 // Erwartet die Farb-Tokens aus `tokens` (oder Fallbacks).
 @mixin area-tones {
   .tone-finance {
-    --c: var(--finance, #17694f);
-    --c-deep: var(--finance-deep, #17694f);
-    --c-tint: var(--finance-tint, #e4efe9);
+    --c: var(--finance, #0e7957);
+    --c-deep: var(--finance-deep, #0e7957);
+    --c-tint: var(--finance-tint, #e3f4ee);
     --c-on: #fff;
   }
   .tone-household {
-    --c: var(--household, #ab445f);
-    --c-deep: var(--household-deep, #ab445f);
-    --c-tint: var(--household-tint, #f6e8ec);
+    --c: var(--household, #955e28);
+    --c-deep: var(--household-deep, #955e28);
+    --c-tint: var(--household-tint, #fef3e8);
     --c-on: #fff;
   }
   .tone-organisation {
-    --c: var(--organisation, #9a641e);
-    --c-deep: var(--organisation-deep, #85561a);
-    --c-tint: var(--organisation-tint, #f5ecdf);
+    --c: var(--organisation, #6a59cc);
+    --c-deep: var(--organisation-deep, #6a59cc);
+    --c-tint: var(--organisation-tint, #efecfc);
     --c-on: #fff; // 5,0:1 auf Ocker
   }
   .tone-travel {
-    --c: var(--travel, #3d6b9a);
-    --c-deep: var(--travel-deep, #36608b);
-    --c-tint: var(--travel-tint, #e4ebf3);
+    --c: var(--travel, #197390);
+    --c-deep: var(--travel-deep, #197390);
+    --c-tint: var(--travel-tint, #e4f3f7);
     --c-on: #fff;
   }
 }

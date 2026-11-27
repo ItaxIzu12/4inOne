@@ -106,7 +106,7 @@ export class Landing {
         { title: 'Kontoauszug importieren', text: 'Als Datei, mit Vorschau vor dem Speichern. Ohne Bankverbindung.' },
       ],
       demo: '/demo/finanzen',
-      shot: { name: 'finanzen', desk: [320, 100, 820], phone: [905, 580, 490, 305], alt: 'Finanzen in der Demo: Restbudget, Einnahmen, Ausgaben und Gespartes im Oktober, darunter die Monatsübersicht und der Budgetstatus je Kategorie.' },
+      shot: { name: 'finanzen', desk: [320, 100, 820], phone: [350, 340, 620, 290], alt: 'Finanzen in der Demo: noch verfügbar im Oktober 662,30 €, etwa 66 € pro Tag, darunter Einnahmen, Ausgaben, Gespartes und die Ausgabenkurve.' },
     },
     {
       key: 'haushalt',
@@ -121,7 +121,7 @@ export class Landing {
         { title: 'Geräte und Verträge', text: 'Garantien, Wartungen und Kündigungsfristen rechtzeitig im Blick.' },
       ],
       demo: '/demo/haushalt',
-      shot: { name: 'haushalt', desk: [320, 100, 800], phone: [335, 585, 520, 280], alt: 'Haushalt in der Demo: heute fällige Aufgaben, die nächsten Fristen für Geschirrspüler, Strom und Heizung und 33 offene Artikel auf der Einkaufsliste.' },
+      shot: { name: 'haushalt', desk: [320, 100, 800], phone: [336, 250, 580, 180], alt: 'Haushalt in der Demo: 3 Aufgaben heute mit etwa 45 Minuten, darunter die Räume nach Dringlichkeit und die heute fälligen Aufgaben.' },
     },
     {
       key: 'organisation',
@@ -136,7 +136,7 @@ export class Landing {
         { title: 'Notizen und Dateien', text: 'Alles zu einem Vorhaben an einer Stelle.' },
       ],
       demo: '/demo/organisation',
-      shot: { name: 'organisation', desk: [320, 100, 1090], phone: [1062, 340, 336, 290], alt: 'Organisation in der Demo: Monatskalender Oktober mit Terminen wie Zahnarzt, Badminton und Teammeeting.' },
+      shot: { name: 'organisation', desk: [320, 100, 1090], phone: [1076, 450, 320, 300], alt: 'Organisation in der Demo: Monatskalender Oktober mit Terminen wie Zahnarzt, Badminton und Teammeeting.' },
     },
     {
       key: 'reisen',
@@ -151,7 +151,7 @@ export class Landing {
         { title: 'Budget und Mitreisende', text: 'Teile genau diese Reise mit den Menschen, die mitfahren.' },
       ],
       demo: '/demo/reisen',
-      shot: { name: 'reisen', desk: [320, 100, 1090], phone: [325, 195, 460, 300], alt: 'Reisen in der Demo: die Wochenendreise nach Berlin in 12 Tagen mit 4 offenen Aufgaben und 12 von 24 gepackten Sachen, danach Gardasee und Davos.' },
+      shot: { name: 'reisen', desk: [320, 100, 1090], phone: [330, 232, 700, 240], alt: 'Reisen in der Demo: die Wochenendreise von Düsseldorf nach Berlin als Bordkarte, in 12 Tagen, mit 4 offenen Aufgaben und 12 von 24 gepackten Sachen, danach Davos und Gardasee.' },
     },
   ];
 
@@ -409,4 +409,4 @@ export class Landing {
   }
 }
 
-const TONE_COLOR: Record<AreaTone, string> = { finance: '#17694f', household: '#ab445f', organisation: '#9a641e', travel: '#3d6b9a' };
+const TONE_COLOR: Record<AreaTone, string> = { finance: '#0e7957', household: '#955e28', organisation: '#6a59cc', travel: '#197390' };

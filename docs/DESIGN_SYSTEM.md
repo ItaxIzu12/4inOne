@@ -20,18 +20,23 @@ Complex underneath, simple on top. Weniger Elemente, bessere Ordnung — keine D
 
 ### Marke, Bereiche, Status
 
-- Marke: `--brand-primary #245fb0` (Links, Fokusring, Startseite).
-- Bereiche — **Akzente, keine Flächenfüller** (Symbol, kleiner Aktiv-Indikator, kleine Statusinfo):
-  Finanzen `--finance-accent #0b6e4b` · Haushalt `--household-accent #a8325a` · Organisation
-  `--organization-accent #8a5800` · Reisen `--travel-accent #2453b4`; je `--*-soft` als helle Fläche
-  (`#e4f4ec` · `#fce8ee` · `#fcefd9` · `#e7edfb`). Das sind die dunklen Textvarianten der Logo-Farben
-  `#0f9d6b` · `#e04f78` · `#e3961a` · `#3b6fe0` (Flächen, Logo, Startseite; seit 21.10.2026).
+- Marke (Veyora, 28.11.2026): `--brand-primary #101820` Midnight (Knöpfe, Fokus), Hover `#29323b` Graphite;
+  `--text-primary #101820`, `--surface-app #f7f6f2` Ivory. Logo-Farben als `--logo-finance #13a274` · `--logo-household
+  #f59a42` · `--logo-organization #7864e7` · `--logo-travel #2197be` (= `core/brand/brand.config.ts`, geprüft von
+  `npm run check:brand`) – nur Logo, Farbpunkte, Dekor, nie Text (2,2–4,4:1 auf Weiß).
+- Bereiche — **Akzente, keine Flächenfüller** (Symbol, kleiner Aktiv-Indikator, kleine Statusinfo), abgedunkelt aus
+  den Logo-Farben: Finanzen `--finance-accent #0e7957` · Haushalt `--household-accent #955e28` · Organisation
+  `--organization-accent #6a59cc` · Reisen `--travel-accent #197390` (≥ 4,6:1 auf Weiß, Ivory und Sage; `--*-fill`
+  gleich, weißer Text darauf ≥ 5,3:1); je `--*-soft` als helle Fläche (`#e3f4ee` · `#fef3e8` · `#efecfc` · `#e4f3f7`,
+  Akzent darauf ≥ 4,6:1). Dunkelmodus: `#5cc79c` · `#f2a35c` · `#a99bf2` · `#6cc3e0` (≥ 6,3:1 auf den Karten).
 - Status überall gleich: `--success #1e7a4d`, `--warning #8a5a00`, `--error #b3261e` (= `--danger`), `--info #245fb0`,
   je mit `--*-soft`. Status nie nur über Farbe (immer Text dazu). Badges sparsam, nur für echten Status.
 
 ### Typografie
 
-Schibsted Grotesk (`--font-body` = `--font-display`, selbst gehostet, keine Kursive; seit 21.10.2026). Vier Gewichte:
+Seit 28.11.2026 (Veyora): **Inter** für die Oberfläche (`--font-body`) und **Manrope** für Marke und Überschriften
+(`--font-brand` = `--font-display`), beide variabel, selbst gehostet unter `public/fonts/{inter,manrope}` (OFL, je zwei
+Teildateien nach Zeichenbereich, vorgeladen), keine Kursive. Davor Schibsted Grotesk. Vier Gewichte:
 400 `--fw-regular`, 500 `--fw-medium`, 600 `--fw-semibold`, 700 `--fw-bold`.
 
 | Rolle | Token | Größe |
@@ -145,13 +150,28 @@ Abstand — nie nur über Farbe.
 
 ### Referenz und Migrationsstand
 
+- **Veyora-Logo, Farben und Schrift (28.11.2026, Phase 2):** Orbit-Zeichen nach der Vorlage
+  `docs/brand/veyora-orbit-reference.webp` als Konstruktion (`shared/ui/brand/orbit.ts`: vier gleiche Elemente aus
+  Zuleitung, 135°-Bogen r = 108 und Diagonale, Strich 68, je um 90° gedreht; Reisen liegt zuletzt oben). `<app-brand>`
+  zeichnet es inline mit `--logo-*`, Name in Manrope 700; `context` (`global` · `finance` · `household` ·
+  `organization` · `travel`, in der App-Shell aus der URL) lässt die drei anderen Elemente auf 42 % Deckkraft gehen
+  (240 ms, ohne Übergang bei reduzierter Bewegung, keine Dauerbewegung); `wordmark=false` = nur Zeichen mit
+  `aria-label`. Alle Dateien aus `npm run brand:assets` (`scripts/brand-assets.mts`): `public/brand/` (Zeichen farbig,
+  einfarbig hell/dunkel mit 18er-Lücken an den Überlagerungen, Lockups horizontal/hell/mit Claim/vertikal mit
+  eingebetteter Manrope), `favicon.svg/.ico` (kräftige Kleinvariante, Strich 84), `apple-touch-icon.png`,
+  `icon-192/512.png`, `icon-maskable-512.png` (Zeichen in 60 % auf Ivory), `og-image.png`. Manifest: Theme Midnight,
+  Hintergrund Ivory, Maskable-Icon; `id`/`start_url` unverändert. Farben und Schrift siehe Tokens oben; feste
+  Altwerte in Komponenten (Bereichsfarben, Deep Forest `#172523` → Midnight, Porcelain → Ivory) ersetzt; Farbpunkte
+  in Login und „Dein Start“ nutzen `--logo-*`. Landing-Screenshots (`public/images/landing`) neu aus der Demo
+  (22.10.2026 08:30, 1440 × 900 und @2x, Handy 390 × 844 @2x), Ausschnitte und Alternativtexte angepasst. Regeln:
+  `docs/LOGO_USAGE.md`, `docs/BRAND_GUIDELINES.md`.
 - **Rebranding zu Veyora, Phase 1 (28.11.2026):** sichtbarer Produktname überall „Veyora“ (Seitentitel, Manifest
   `name`/`short_name`, Open-Graph-Angaben, `<app-brand>`-Schriftzug, Fließtexte, E-Mails, Export, Berichte). Name,
   Leitsatz, Claim „Life, connected.“, Beschreibung und Bereichsnamen stehen typisiert in `core/brand/brand.config.ts`;
   Seitentitel über `brandTitle('Seite')`. Farben bleiben bewusst Tokens (keine zweite Farbquelle). Teilen-Bild
   `public/og-image.png` mit neuem Namen neu erzeugt, Gestaltung unverändert. Zeichen, Farben, Schrift, Bereichsnamen
   und Landing-Screenshots (`public/images/landing`) unverändert; sie folgen mit dem Orbit-Logo bzw. in Phase 2.
-  `npm run check:brand` (auch in CI) verhindert den alten Namen im Frontend. Regeln: `docs/BRAND.md`.
+  `npm run check:brand` (auch in CI) verhindert den alten Namen im Frontend. Regeln: `docs/BRAND_GUIDELINES.md`.
 - **Hausschrift Instrument Sans (11.10.2026):** ersetzt Helvetica überall (App, Login, Landingpage; auch `select` und
   `textarea`). Eine variable WOFF2-Datei (Gewicht 400–700, Breite 75–100 %, 89 KB) aus dem offiziellen Projekt
   `github.com/Instrument/instrument-sans`, selbst gehostet unter `public/fonts/instrument-sans/` mit `OFL.txt` — kein

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Markenprüfung (Rebranding Phase 1, 28.11.2026; docs/BRAND.md, docs/REBRANDING_MIGRATION.md): Der alte Produktname
+// Markenprüfung (Rebranding Phase 1, 28.11.2026; docs/BRAND_GUIDELINES.md, docs/REBRANDING_MIGRATION.md): Der alte Produktname
 // „4inOne“ darf im Frontend (src, public, Tests) nicht mehr sichtbar auftauchen. Ausnahmen sind technische Namen, die
 // bewusst bleiben (Repository-URL, GitHub-Pages-Pfad, Domain in Testdaten) – sie stehen unten mit Grund.
 // Aufruf: `npm run check:brand` (läuft auch in CI). Exit-Code 1 bei Treffern.
@@ -44,8 +44,17 @@ for (const dir of DIRS) {
   }
 }
 
+// Logo-Farben: --logo-* in styles.css müssen den Werten in brand.config.ts entsprechen (eine Quelle, kein Auseinanderlaufen).
+const config = readFileSync(join(ROOT, 'src/app/core/brand/brand.config.ts'), 'utf8');
+const styles = readFileSync(join(ROOT, 'src/styles.css'), 'utf8');
+for (const section of ['finance', 'household', 'organization', 'travel']) {
+  const inConfig = new RegExp(`${section}: \\{[^}]*logoColor: '(#[0-9a-fA-F]{6})'`).exec(config)?.[1]?.toLowerCase();
+  const inCss = new RegExp(`--logo-${section}: (#[0-9a-fA-F]{6})`).exec(styles)?.[1]?.toLowerCase();
+  if (!inConfig || inConfig !== inCss) problems.push(`Logo-Farbe ${section}: brand.config.ts ${inConfig} ≠ styles.css ${inCss}`);
+}
+
 if (problems.length) {
-  console.error('Alter Produktname gefunden (Marke ist Veyora, docs/BRAND.md):\n  ' + problems.join('\n  '));
+  console.error('Alter Produktname gefunden (Marke ist Veyora, docs/BRAND_GUIDELINES.md):\n  ' + problems.join('\n  '));
   process.exit(1);
 }
-console.log('Marke: kein alter Produktname im Frontend.');
+console.log('Marke: kein alter Produktname im Frontend, Logo-Farben stimmen überein.');

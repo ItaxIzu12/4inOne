@@ -5,17 +5,17 @@ Regeln:
   Übersicht sortiert nach Betrag; eine Farbe nach Position würde bei jeder
   neuen Ausgabe umspringen.
 - Die Farbe folgt der Bedeutung: „Reisen“ trägt die Füllfarbe des Bereichs
-  Reisen (--travel-fill), „Wohnen“ das Rosa des Bereichs Haushalt
-  (--household-accent) – maßgeblich sind die Design-Tokens in
-  frontend/src/styles.css. Für Reisen bewusst die Füll- statt der
-  Akzentfarbe: Das dunklere Akzentblau #36608b läge bei Rot-Grün-Schwäche
-  zu nah am Mobilität-Indigo (ΔE 7,9 < 8).
+  Reisen (--travel-fill), „Wohnen“ den Farbton des Bereichs Haushalt
+  (--household-accent, ± 6°) – maßgeblich sind die Design-Tokens in
+  frontend/src/styles.css. Seit dem Veyora-Rebranding (28.11.2026) ist
+  Haushalt orange/karamell statt rosa; deshalb wechselte „Lebensmittel“ von
+  Orange zu Beere, damit es sich von „Wohnen“ unterscheidet.
 - Nur diese sieben Farben. Sie sind mit dem Palette-Prüfer des dataviz-Skills
   berechnet, nicht geschätzt, und zwar für ALLE Paare, weil die Liste sich
   umsortiert und jede Kategorie neben jeder anderen stehen kann:
-    normales Sehen   ΔE2000 ≥ 17,7 (Grenze 15)
-    Rot-Grün-Schwäche ΔE2000 ≥ 8,9 (Ziel 8; Deuteranopie/Protanopie nach Machado 2009)
-  Nachgerechnet am 11.11.2026, als die Bereichsfarben auf Tokens umgestellt wurden.
+    normales Sehen   ΔE2000 ≥ 21,6 (Grenze 15)
+    Rot-Grün-Schwäche ΔE2000 ≥ 11,1 (Ziel 8; Deuteranopie/Protanopie nach Machado 2009)
+  Nachgerechnet am 28.11.2026 mit den Veyora-Bereichsfarben (vorher 17,7 / 8,9).
   Gelb und Aqua liegen auf Weiß unter 3:1 — zulässig, weil der Name immer
   direkt neben der Farbe steht (Farbe ist nie die einzige Information).
 - Rot kommt nicht vor: Es steht in der App für negative Beträge.
@@ -23,12 +23,12 @@ Regeln:
   das neutrale Grau von „Sonstiges“, wie „Andere“ in einem Diagramm.
 """
 
-WOHNEN = '#ab445f'        # Rosa = Bereich Haushalt (--household-accent)
-LEBENSMITTEL = '#eb6834'  # Orange
-MOBILITAET = '#4a3aa7'    # Indigo (bewusst nicht Organisation-Lila)
+WOHNEN = '#ab632b'        # Karamell = Farbton Bereich Haushalt (--household-accent)
+LEBENSMITTEL = '#a8326e'  # Beere
+MOBILITAET = '#4a3aa7'    # Indigo (dunkler und blauer als das Organisation-Violett)
 FREIZEIT = '#dca800'      # Gelb
 GESUNDHEIT = '#1baf7a'    # Aqua-Grün
-REISEN = '#3d6b9a'        # Blau = Bereich Reisen (--travel-fill)
+REISEN = '#197390'        # Petrol = Bereich Reisen (--travel-fill)
 NEUTRAL = '#8a93a3'       # Grau für Sonstiges und Unbekanntes
 
 CATEGORY_PALETTE = [WOHNEN, LEBENSMITTEL, MOBILITAET, FREIZEIT, GESUNDHEIT, REISEN, NEUTRAL]

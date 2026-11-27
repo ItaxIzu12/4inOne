@@ -9,7 +9,7 @@
   overscroll-behavior: contain;
   background: var(--surface-app, #f6f4ef);
   color: var(--text-primary);
-  --pass: var(--travel-fill, #3d6b9a);
+  --pass: var(--travel-fill, #197390);
   --pass-text: color-mix(in srgb, #fff 93%, transparent);
 }
 .bpv {
@@ -57,7 +57,7 @@
   gap: 8px;
 }
 :is(.bpv__close, .bpv__ghost, .bpv__danger):focus-visible {
-  outline: 3px solid var(--focus-ring, var(--brand-primary, #172523));
+  outline: 3px solid var(--focus-ring, var(--brand-primary, #101820));
   outline-offset: 2px;
 }
 

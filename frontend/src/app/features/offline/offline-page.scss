@@ -149,7 +149,7 @@ h1 {
     color: var(--text-link, currentColor);
   }
   &:focus-visible {
-    outline: 3px solid var(--focus-ring, var(--brand-primary, #172523));
+    outline: 3px solid var(--focus-ring, var(--brand-primary, #101820));
     outline-offset: 2px;
   }
 }

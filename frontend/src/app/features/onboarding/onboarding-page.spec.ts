@@ -58,7 +58,7 @@ describe('Onboarding (Neubau 19.11.2026)', () => {
     c.saveAreas();
     http.expectOne((r) => r.url.endsWith('/onboarding/profile/') && r.method !== 'GET').flush({});
     http.expectOne((r) => r.url.endsWith('/finanzen/private/categories/')).flush([]);
-    http.expectOne((r) => r.url.endsWith('/finanzen/private/categories/setup/')).flush([{ id: 7, name: 'Lebensmittel', color: '#17694f' }]);
+    http.expectOne((r) => r.url.endsWith('/finanzen/private/categories/setup/')).flush([{ id: 7, name: 'Lebensmittel', color: '#0e7957' }]);
     expect(c.category()).toBe(7);
     c.expenseForm.setValue({ amount: '12,40', note: 'Bäcker' });
     c.saveEntry();
