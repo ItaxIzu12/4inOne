@@ -63,7 +63,7 @@ for (const width of [390, 1440]) {
     await emptyAccount(page);
     await page.goto('/');
     const start = page.locator('app-start-overview');
-    await expect(start.getByRole('heading', { name: 'Dein Start mit 4inOne' })).toBeVisible();
+    await expect(start.getByRole('heading', { name: 'Dein Start mit Veyora' })).toBeVisible();
     await expect(start.locator('.so__row')).toHaveCount(4);
     await expect(start).toContainText('0 von 4 Bereichen eingerichtet');
     expect(await noOverflow(page)).toBe(true);
@@ -126,7 +126,7 @@ test('Demo: nie ein Leitfaden', async ({ page }) => {
   }
 });
 
-test('Startseite: keine zweite Budget-Aufforderung neben „Dein Start mit 4inOne“; mit erster Ausgabe kommt die Finanzen-Karte', async ({ page }) => {
+test('Startseite: keine zweite Budget-Aufforderung neben „Dein Start mit Veyora“; mit erster Ausgabe kommt die Finanzen-Karte', async ({ page }) => {
   await emptyAccount(page);
   await page.goto('/');
   await expect(page.locator('app-start-overview')).toBeVisible();

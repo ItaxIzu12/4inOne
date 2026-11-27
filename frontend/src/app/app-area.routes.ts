@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { brandTitle } from './core/brand/brand.config';
 import { onboardingGuard } from './core/onboarding/onboarding.guard';
 import { HAUSHALT_DATA_PROVIDER } from './features/household/data/household-data-provider';
 import { RealHaushaltDataProvider } from './features/household/data/real-household-data-provider';
@@ -23,45 +24,45 @@ export const APP_AREA_ROUTES: Routes = [
       },
       {
         path: 'finanzen',
-        title: 'Finanzen | 4inOne',
+        title: brandTitle('Finanzen'),
         loadComponent: () =>
           import('./features/finance/private-finance').then((m) => m.PrivateFinance),
         data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'haushaltsfinanzen',
-        title: 'Haushaltsfinanzen | 4inOne',
+        title: brandTitle('Haushaltsfinanzen'),
         redirectTo: 'finanzen',
         pathMatch: 'full',
       },
       {
         path: 'haushalt',
-        title: 'Haushalt | 4inOne',
+        title: brandTitle('Haushalt'),
         loadComponent: () => import('./features/household/household').then((m) => m.Haushalt),
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'onboarding',
-        title: 'Willkommen | 4inOne',
+        title: brandTitle('Willkommen'),
         loadComponent: () =>
           import('./features/onboarding/onboarding-page').then((m) => m.OnboardingPage),
         data: { shell: 'bare', hideHeader: true },
       },
       {
         path: 'reisen',
-        title: 'Reisen | 4inOne',
+        title: brandTitle('Reisen'),
         loadComponent: () => import('./features/travel/travel').then((m) => m.Reisen),
         data: { shell: 'bare', dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'familie',
-        title: 'Personen & Gruppen | 4inOne',
+        title: brandTitle('Personen & Gruppen'),
         loadComponent: () => import('./features/people/people').then((m) => m.Familie),
         data: { shell: 'bare', sidebarNav: true },
       },
       {
         path: 'organisation',
-        title: 'Organisation | 4inOne',
+        title: brandTitle('Organisation'),
         loadComponent: () =>
           import('./features/organization/organization').then((m) => m.Organisation),
         data: { shell: 'bare', dashboardNav: true, sidebarNav: true },

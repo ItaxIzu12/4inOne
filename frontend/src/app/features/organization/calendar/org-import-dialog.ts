@@ -56,7 +56,7 @@ export class OrgImportDialog {
     if (!p) return null;
     const status = new Map(p.result.rows.map((r) => [r.row, r]));
     const notes = [
-      p.simplified ? `${p.simplified} ${p.simplified === 1 ? 'Termin hat' : 'Termine haben'} eine Wiederholung, die 4inOne nicht abbildet (z. B. mit Enddatum) – sie kommen einmalig.` : '',
+      p.simplified ? `${p.simplified} ${p.simplified === 1 ? 'Termin hat' : 'Termine haben'} eine Wiederholung, die Veyora nicht abbildet (z. B. mit Enddatum) – sie kommen einmalig.` : '',
       p.skipped ? `${p.skipped} abgesagte Termine oder Einzeländerungen werden nicht übernommen.` : '',
     ].filter(Boolean);
     return {

@@ -2,9 +2,10 @@ import { inject, Injectable } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, RouterStateSnapshot, TitleStrategy } from '@angular/router';
 
-export const DEFAULT_TITLE = '4inOne — Dein Alltag. Alles verbunden.';
-export const DEFAULT_DESCRIPTION =
-  'Finanzen, Haushalt, Termine und Reisen an einem Ort. Was zusammengehört, verknüpfst du – und entscheidest selbst, was du teilst.';
+import { BRAND, BRAND_DEFAULT_TITLE } from '../brand/brand.config';
+
+export const DEFAULT_TITLE = BRAND_DEFAULT_TITLE;
+export const DEFAULT_DESCRIPTION = BRAND.description;
 
 /**
  * Setzt bei jeder Navigation Seitentitel und Meta-Beschreibung aus den Routendaten (`title`, `data.description`).

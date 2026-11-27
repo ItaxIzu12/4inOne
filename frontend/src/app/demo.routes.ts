@@ -4,6 +4,7 @@ import { PlacesService } from './core/places/places.service';
 import { DemoPlacesService } from './core/places/demo-places.service';
 import { Provider } from '@angular/core';
 import { Routes } from '@angular/router';
+import { brandTitle } from './core/brand/brand.config';
 import { DEMO_MODE } from './core/demo-context';
 import { ContactsApiService } from './core/contacts/contacts-api.service';
 import { HouseholdApiService } from './core/household/household-api.service';
@@ -59,27 +60,27 @@ export const DEMO_ROUTES: Routes = [
       },
       {
         path: 'finanzen',
-        title: 'Finanzen – Demo | 4inOne',
+        title: brandTitle('Finanzen – Demo'),
         loadComponent: () =>
           import('./features/finance/private-finance').then((m) => m.PrivateFinance),
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'haushalt',
-        title: 'Haushalt – Demo | 4inOne',
+        title: brandTitle('Haushalt – Demo'),
         loadComponent: () => import('./features/household/household').then((m) => m.Haushalt),
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'organisation',
-        title: 'Organisation – Demo | 4inOne',
+        title: brandTitle('Organisation – Demo'),
         loadComponent: () =>
           import('./features/organization/organization').then((m) => m.Organisation),
         data: { dashboardNav: true, sidebarNav: true },
       },
       {
         path: 'reisen',
-        title: 'Reisen – Demo | 4inOne',
+        title: brandTitle('Reisen – Demo'),
         loadComponent: () => import('./features/travel/travel').then((m) => m.Reisen),
         data: { dashboardNav: true, sidebarNav: true },
       },
@@ -88,7 +89,7 @@ export const DEMO_ROUTES: Routes = [
         // Backend-Aufruf — zuvor fehlte diese Route komplett, wodurch "Familie & Freunde" aus der Demo heraus
         // zur Anmeldung zwang, obwohl der Rest der Demo ohne Login auskommt.
         path: 'familie',
-        title: 'Personen & Gruppen – Demo | 4inOne',
+        title: brandTitle('Personen & Gruppen – Demo'),
         loadComponent: () => import('./features/people/people').then((m) => m.Familie),
         data: { shell: 'bare', sidebarNav: true },
       },

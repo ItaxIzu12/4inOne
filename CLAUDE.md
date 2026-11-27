@@ -1,4 +1,4 @@
-# 4inOne — Claude Code Instructions
+# Veyora (vormals 4inOne) — Claude Code Instructions
 
 Read `AGENTS.md` first. Its feature protocol (§ 1) and the ten binding principles (§ 2) apply to every task; this file
 only adds what is specific to Claude Code. Do not duplicate rules here — change them in `AGENTS.md`.

@@ -56,7 +56,7 @@ class Trip(models.Model):
 
     class Climate(models.TextChoices):
         # Vom Nutzer gewählt (das Formular schlägt nur nach Reisemonat vor) — kein Wetterdienst: das Ziel ist Freitext,
-        # und es verlässt 4inOne nicht.
+        # und es verlässt Veyora nicht.
         WARM = 'WARM', 'Warm'
         MILD = 'MILD', 'Mild'
         COLD = 'COLD', 'Kalt'
@@ -259,7 +259,7 @@ class TripExpense(TripScopedModel):
 
 
 class TripSettlement(TripScopedModel):
-    """„Als beglichen markiert“: jemand hat einer anderen Person Geld für diese Reise gegeben. 4inOne überweist nie
+    """„Als beglichen markiert“: jemand hat einer anderen Person Geld für diese Reise gegeben. Veyora überweist nie
     selbst – das ist nur der Vermerk, damit die offene Schuld verschwindet. Betrag in der Reisewährung."""
 
     from_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')

@@ -91,7 +91,7 @@ export function contractFinance(c: ContractFacts): AutoPreview {
 export function contractReminderDay(c: ContractFacts): { day: string | null; problem: string } {
   if (c.status === 'CANCELLED' || c.status === 'ENDED') return { day: null, problem: 'Der Vertrag ist gekündigt oder beendet — es gibt keine Kündigungsfrist mehr.' };
   const hasNotice = !!(c.notice_period_days || c.notice_period_months);
-  if (!c.end_date && !hasNotice) return { day: null, problem: 'Vertragsende und Kündigungsfrist fehlen — ohne sie erfindet 4inOne keine Frist.' };
+  if (!c.end_date && !hasNotice) return { day: null, problem: 'Vertragsende und Kündigungsfrist fehlen — ohne sie erfindet Veyora keine Frist.' };
   if (!c.end_date) return { day: null, problem: 'Das Vertragsende fehlt — ohne Laufzeitende lässt sich keine Kündigungsfrist berechnen.' };
   if (!hasNotice) return { day: null, problem: 'Die Kündigungsfrist fehlt — trage sie ein (z. B. 1 Monat), dann entsteht die Erinnerung.' };
   const day = cancellationDeadline(c.end_date, c.notice_period_days, c.notice_period_months ?? null)!;

@@ -135,7 +135,7 @@ export interface TripExpense {
   /** Für wen: Nutzer-IDs; leer = alle Mitreisenden. */
   shared_with?: number[];
 }
-/** Ausgleichszahlung „als beglichen markiert“ – nur ein Vermerk, 4inOne bewegt nie Geld. */
+/** Ausgleichszahlung „als beglichen markiert“ – nur ein Vermerk, Veyora bewegt nie Geld. */
 export interface TripSettlement {
   id: number;
   trip?: number;

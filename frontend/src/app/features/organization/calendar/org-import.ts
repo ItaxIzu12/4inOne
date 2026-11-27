@@ -2,7 +2,7 @@
  * Kalenderdatei (ICS, RFC 5545) lesen — Export aus Google Kalender, Apple Kalender oder Outlook. Nur Termine
  * (VEVENT); Aufgaben, Alarme und Zeitzonen-Definitionen werden übergangen.
  *
- * Wiederholungen: 4inOne kennt täglich/wöchentlich/monatlich/jährlich ohne Ende. Eine Regel, die mehr verlangt
+ * Wiederholungen: Veyora kennt täglich/wöchentlich/monatlich/jährlich ohne Ende. Eine Regel, die mehr verlangt
  * (Ende, Anzahl, Intervall, bestimmte Wochentage …), wird NICHT stillschweigend verändert — der Termin kommt dann
  * einmalig und zählt unter `simplified`, damit die Vorschau das ehrlich sagt.
  */
@@ -122,7 +122,7 @@ function toRow(props: Prop[], localZone: string, result: ParsedIcs): EventImport
   if (end) endAt = toInstant(end, localZone);
   else if (get('DURATION')) endAt = addDuration(startAt, get('DURATION')!.value);
   if (allDay) {
-    // DTEND ist bei ganztägigen Terminen exklusiv; 4inOne speichert den letzten Tag (Mitternacht). Über das
+    // DTEND ist bei ganztägigen Terminen exklusiv; Veyora speichert den letzten Tag (Mitternacht). Über das
     // Kalenderdatum gerechnet, nicht „minus 24 Stunden“ — sonst verrutscht es an Tagen der Zeitumstellung.
     const lastDay = end && /^\d{8}/.test(end.value) ? toInstant({ params: {}, value: previousDay(end.value.slice(0, 8)) }, localZone) : null;
     endAt = lastDay && lastDay.getTime() >= startAt.getTime() ? lastDay : startAt;

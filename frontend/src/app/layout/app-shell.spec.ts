@@ -56,7 +56,7 @@ describe('AppShell', () => {
     expect(el.querySelector('.demo-banner')).toBeNull();
   });
 
-  it('still shows the demo banner on a public route even for an authenticated session (e.g. via "4inOne entdecken")', async () => {
+  it('still shows the demo banner on a public route even for an authenticated session (e.g. via "Veyora entdecken")', async () => {
     const auth = new FakeAuthService();
     auth.isAuthenticated.set(true);
     const fixture = await renderAt('/demo/finanzen', auth);

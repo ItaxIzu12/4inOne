@@ -30,7 +30,7 @@ describe('App', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('app-public-shell app-brand')?.textContent).toContain('4inOne');
+    expect(compiled.querySelector('app-public-shell app-brand')?.textContent).toContain('Veyora');
     // Besucher ohne Konto sollen nicht über die App-Navigation auf der Anmeldung landen.
     expect(compiled.querySelector('app-header')).toBeNull();
     expect(compiled.querySelector('app-bottom-nav')).toBeNull();

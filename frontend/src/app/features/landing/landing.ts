@@ -41,7 +41,7 @@ interface Suggestion extends Entry {
   key: string;
   reason: string;
 }
-/** Ein Szenario: ein Ausgangseintrag, was 4inOne dazu vorschlägt und was es bewusst nicht vorschlägt (mit Grund). */
+/** Ein Szenario: ein Ausgangseintrag, was Veyora dazu vorschlägt und was es bewusst nicht vorschlägt (mit Grund). */
 interface Scenario {
   key: string;
   label: string;
@@ -67,7 +67,7 @@ interface Question {
 /**
  * Öffentliche Startseite (/ ohne Anmeldung), 22.10.2026 „Produkt im Mittelpunkt“: wie hochwertige SaaS-Seiten zeigt sie
  * das echte Produkt statt Deko — eine klare Aussage, darunter das echte Dashboard (Rechner + Handy), dann ein großer
- * Aussage-Absatz, die Verknüpfungs-Probe zum Selbermachen (der Kern von 4inOne), die vier Bereiche als Umschalter mit
+ * Aussage-Absatz, die Verknüpfungs-Probe zum Selbermachen (der Kern von Veyora), die vier Bereiche als Umschalter mit
  * echtem Screenshot, Privatsphäre als Faktenliste, Fragen und ein Abschluss-Band.
  *
  * Ehrlich bleiben: nur echte Funktionen und Demo-Aufnahmen — keine Kundenstimmen, Bewertungen, Nutzerzahlen oder Preise.
@@ -156,7 +156,7 @@ export class Landing {
   ];
 
   /**
-   * Verknüpfungs-Probe: Besucher erleben den Kern von 4inOne selbst. Paare, Regeln und Begründungen folgen der echten
+   * Verknüpfungs-Probe: Besucher erleben den Kern von Veyora selbst. Paare, Regeln und Begründungen folgen der echten
    * Engine (Reise ↔ Aufgabe/Termin/Sparziel, Gerät ↔ Sparziel, Vertrag ↔ Aufgabe; „gleiche Zeit allein reicht nie“,
    * „Anbieter allein reicht nicht“). Nur auf dieser Seite, nichts wird gespeichert.
    */
@@ -346,15 +346,15 @@ export class Landing {
 
   readonly faq: Question[] = [
     { q: 'Muss ich alle vier Bereiche nutzen?', a: 'Nein. Jeder Bereich funktioniert für sich. Starte mit dem, den du brauchst, und nimm später dazu, was passt.' },
-    { q: 'Kann ich 4inOne ohne Konto ausprobieren?', a: 'Ja. Die Demo läuft ohne Anmeldung mit Beispieldaten. Du kannst alles anklicken; gespeichert wird nichts.' },
+    { q: 'Kann ich Veyora ohne Konto ausprobieren?', a: 'Ja. Die Demo läuft ohne Anmeldung mit Beispieldaten. Du kannst alles anklicken; gespeichert wird nichts.' },
     { q: 'Wer sieht meine persönlichen Daten?', a: 'Nur du. Den Haushalt teilst du mit den Menschen, die darin wohnen, eine Reise mit den Mitreisenden. Deinen Finanzbereich kann niemand sonst sehen, auch nicht über eine Verknüpfung.' },
-    { q: 'Wie funktionieren Verknüpfungen?', a: '4inOne erkennt an deinen Einträgen, was zusammengehören könnte, etwa eine Aufgabe, die dein Reiseziel nennt und kurz vor der Reise fällig ist, und schlägt es mit Begründung vor. Du entscheidest: verknüpfen, ablehnen oder später. Verknüpfte Einträge erreichst du mit einem Tipp voneinander. Neue Einträge legt 4inOne dabei nicht an, und niemand bekommt dadurch Zugriff.' },
-    { q: 'Muss ich mein Bankkonto verbinden?', a: 'Nein, 4inOne verbindet sich nicht mit deiner Bank. Ausgaben trägst du selbst ein oder importierst einen Kontoauszug als Datei, mit Vorschau vor dem Speichern.' },
-    { q: 'Gibt es eine mobile App?', a: '4inOne läuft im Browser, am Handy wie am Computer, ohne Installation. Eine App aus dem App Store oder Play Store gibt es nicht.' },
+    { q: 'Wie funktionieren Verknüpfungen?', a: 'Veyora erkennt an deinen Einträgen, was zusammengehören könnte, etwa eine Aufgabe, die dein Reiseziel nennt und kurz vor der Reise fällig ist, und schlägt es mit Begründung vor. Du entscheidest: verknüpfen, ablehnen oder später. Verknüpfte Einträge erreichst du mit einem Tipp voneinander. Neue Einträge legt Veyora dabei nicht an, und niemand bekommt dadurch Zugriff.' },
+    { q: 'Muss ich mein Bankkonto verbinden?', a: 'Nein, Veyora verbindet sich nicht mit deiner Bank. Ausgaben trägst du selbst ein oder importierst einen Kontoauszug als Datei, mit Vorschau vor dem Speichern.' },
+    { q: 'Gibt es eine mobile App?', a: 'Veyora läuft im Browser, am Handy wie am Computer, ohne Installation. Eine App aus dem App Store oder Play Store gibt es nicht.' },
     { q: 'Welche Funktionen gibt es schon?', a: 'Alle vier Bereiche, Verknüpfungen mit Vorschlägen, das Teilen von Haushalt und Reisen, der Import von Kontoauszügen und Kalendern als Datei und die Anmeldung mit zweitem Faktor. Noch nicht: Bankanbindung, ein laufender Abgleich mit externen Kalendern und automatische Abläufe.' },
-    { q: 'Wie schützt 4inOne mein Konto?', a: 'Passwörter werden nur als sicherer Hash gespeichert, die Anmeldung lässt sich mit einem zweiten Faktor absichern, und du siehst und beendest deine angemeldeten Geräte in den Einstellungen.' },
+    { q: 'Wie schützt Veyora mein Konto?', a: 'Passwörter werden nur als sicherer Hash gespeichert, die Anmeldung lässt sich mit einem zweiten Faktor absichern, und du siehst und beendest deine angemeldeten Geräte in den Einstellungen.' },
     { q: 'Kann ich meine Daten und mein Konto löschen?', a: 'Ja, jederzeit in den Einstellungen unter „Profil“. Dein Konto und deine Daten werden dann gelöscht.' },
-    { q: 'Was kostet 4inOne?', a: 'Das steht noch nicht fest. Sobald es feststeht, steht es hier. Die Demo kannst du jederzeit ohne Konto nutzen.' },
+    { q: 'Was kostet Veyora?', a: 'Das steht noch nicht fest. Sobald es feststeht, steht es hier. Die Demo kannst du jederzeit ohne Konto nutzen.' },
   ];
 
   // ---------- Bereichs-Umschalter (Tabs nach WAI-ARIA: Pfeiltasten, Pos1/Ende) ----------

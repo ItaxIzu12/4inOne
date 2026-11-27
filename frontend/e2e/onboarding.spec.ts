@@ -50,7 +50,7 @@ for (const width of [390, 1440]) {
     await mock(page, seen);
     await page.goto('/');
     await expect(page).toHaveURL(/\/onboarding$/);
-    await expect(page.getByRole('heading', { name: 'Willkommen bei 4inOne' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Willkommen bei Veyora' })).toBeVisible();
     await expect(page.getByText('Schritt 1 von 3')).toBeVisible();
     await axe(page);
     await page.screenshot({ path: `test-results/onboarding-1-${width}.png`, fullPage: true });

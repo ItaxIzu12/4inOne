@@ -146,7 +146,7 @@ describe('Dashboard', () => {
     const f = TestBed.createComponent(Dashboard);
     f.detectChanges();
     expect(f.nativeElement.querySelector('.dashboard-search')).toBeNull();
-    expect(f.nativeElement.textContent).not.toContain('Suche in 4inOne');
+    expect(f.nativeElement.textContent).not.toContain('Suche in Veyora');
   });
 
   describe('real account', () => {
@@ -286,7 +286,7 @@ describe('Dashboard', () => {
       } finally { vi.useRealTimers(); }
     });
 
-    it('a new account sees „Dein Start mit 4inOne“ with all four areas; it ticks off from real data and can be hidden in the account', () => {
+    it('a new account sees „Dein Start mit Veyora“ with all four areas; it ticks off from real data and can be hidden in the account', () => {
       const f = TestBed.createComponent(Dashboard);
       f.detectChanges();
       const http = TestBed.inject(HttpTestingController);

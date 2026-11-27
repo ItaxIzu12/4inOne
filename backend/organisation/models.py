@@ -278,7 +278,7 @@ class PersonalFile(models.Model):
 class CalendarSubscription(models.Model):
     """O3 (22.11.2026): Ein fremder Kalender (z. B. Google, Outlook, iCloud, Schulferien), nur lesend per ICS-Link
     abonniert. Der Server ruft ihn regelmäßig ab (organisation/subscriptions.py, Befehl refresh_calendar_subscriptions);
-    Änderungen in 4inOne gehen nie zurück. Nur die Person, die abonniert hat, sieht die Termine. Der Link ist oft
+    Änderungen in Veyora gehen nie zurück. Nur die Person, die abonniert hat, sieht die Termine. Der Link ist oft
     geheim (er enthält einen Schlüssel) – er wird nie vollständig zurückgegeben, nur der Rechnername."""
 
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='calendar_subscriptions')

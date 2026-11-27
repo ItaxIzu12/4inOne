@@ -25,7 +25,7 @@ test('unknown addresses show a 404 page that search engines do not index', async
   await visitor(page);
   await page.goto('/gibt-es-nicht');
   await expect(page).toHaveURL(/\/gibt-es-nicht$/);
-  await expect(page).toHaveTitle('Seite nicht gefunden | 4inOne');
+  await expect(page).toHaveTitle('Seite nicht gefunden | Veyora');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Diese Seite gibt es nicht.');
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
   expect(await axe(page)).toEqual([]);
@@ -38,10 +38,10 @@ test('legal pages have their own title and no app navigation; footer links are l
   await visitor(page);
   await page.setViewportSize({ width: 390, height: 844 });
   for (const [path, title] of [
-    ['/impressum', 'Impressum | 4inOne'],
-    ['/datenschutz', 'Datenschutzerklärung | 4inOne'],
-    ['/nutzungsbedingungen', 'Nutzungsbedingungen | 4inOne'],
-    ['/barrierefreiheit', 'Barrierefreiheit | 4inOne'],
+    ['/impressum', 'Impressum | Veyora'],
+    ['/datenschutz', 'Datenschutzerklärung | Veyora'],
+    ['/nutzungsbedingungen', 'Nutzungsbedingungen | Veyora'],
+    ['/barrierefreiheit', 'Barrierefreiheit | Veyora'],
   ]) {
     await page.goto(path);
     await expect(page).toHaveTitle(title);

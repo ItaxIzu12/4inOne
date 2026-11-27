@@ -151,7 +151,7 @@ def contract_reminder_day(entry) -> tuple[date | None, str]:
     if status in (FolderEntry.Status.CANCELLED, FolderEntry.Status.ENDED):
         return None, 'Der Vertrag ist gekündigt oder beendet — es gibt keine Kündigungsfrist mehr.'
     if entry.end_date is None and not has_notice_period(entry):
-        return None, 'Vertragsende und Kündigungsfrist fehlen — ohne sie erfindet 4inOne keine Frist.'
+        return None, 'Vertragsende und Kündigungsfrist fehlen — ohne sie erfindet Veyora keine Frist.'
     if entry.end_date is None:
         return None, 'Das Vertragsende fehlt — ohne Laufzeitende lässt sich keine Kündigungsfrist berechnen.'
     if not has_notice_period(entry):
@@ -193,7 +193,7 @@ TRIP_OWNER_ONLY = 'Nur wer die Reise angelegt hat'
 def trip_finance_problem(trip, user) -> str:
     """R3: Das Reisebudget erscheint als geplante Ausgabe im Monat der Abreise – nur mit eingetragenem Budget in Euro
     (Finanzen rechnet in Euro) und nur für die Person, die die Reise angelegt hat (das Budget gilt der ganzen Gruppe;
-    wie viel davon jemand selbst trägt, weiß 4inOne nicht — es wird nichts geraten)."""
+    wie viel davon jemand selbst trägt, weiß Veyora nicht — es wird nichts geraten)."""
     if trip.owner_id != user.pk:
         return f'{TRIP_OWNER_ONLY}, kann ihr Budget in Finanzen planen – es gilt für die ganze Reisegruppe.'
     if getattr(trip, 'status', '') == 'CANCELLED':

@@ -12,7 +12,7 @@ import { localDay } from './organization-logic';
 export const DAY_START_MIN = 7 * 60;
 export const DAY_END_MIN = 22 * 60;
 /** Lücken unter 30 Minuten zählen nicht. Angezeigt wird „ohne Termin“, nie „frei“ — die App kennt nur eingetragene
- * Termine, nicht Arbeit, Wege oder Kalender außerhalb von 4inOne (Abnahme 31.10.2026). */
+ * Termine, nicht Arbeit, Wege oder Kalender außerhalb von Veyora (Abnahme 31.10.2026). */
 export const MIN_GAP = 30;
 
 export type LineItem =

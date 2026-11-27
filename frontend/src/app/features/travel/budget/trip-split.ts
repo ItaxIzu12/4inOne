@@ -4,7 +4,7 @@ import { ReisenApi, Trip, TripBalances, TripExpense } from '../data/travel-api.s
 import { formatMoney } from '../shared/travel-logic';
 
 /** Reise › Budget › „Wer schuldet wem“ (15.11.2026): wer was ausgelegt hat, wer wem wie viel schuldet – mit den
- * wenigsten Überweisungen (backend reisen/split.py). „Als beglichen markieren“ ist nur ein Vermerk; 4inOne bewegt
+ * wenigsten Überweisungen (backend reisen/split.py). „Als beglichen markieren“ ist nur ein Vermerk; Veyora bewegt
  * nie Geld. Nur bei Reisen mit mehr als einer Person; gerechnet in der Reisewährung. */
 @Component({
   selector: 'app-trip-split',

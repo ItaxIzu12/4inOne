@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 
+import { BRAND } from '../../../core/brand/brand.config';
+
 /**
- * Das 4inOne-Logo: vier weiche Felder (je ein Bereich, die enge Ecke zeigt zur Mitte) und der Name.
+ * Die Marke Veyora: bis zum neuen Orbit-Logo (Phase 1 des Rebrandings, docs/BRAND.md) vier weiche Felder (je ein Bereich, die enge Ecke zeigt zur Mitte) und der Name.
  * Farben = Bereichsfarben (shared/styles/_editorial.scss): Finanzen oben links, Reisen oben rechts,
  * Organisation unten links, Haushalt unten rechts. Favicon (public/favicon.svg) und App-Icons zeigen dasselbe Zeichen.
  */
@@ -9,7 +11,7 @@ import { Component } from '@angular/core';
   selector: 'app-brand',
   standalone: true,
   template: `<span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span
-    ><span>4inOne</span>`,
+    ><span>{{ name }}</span>`,
   styles: `
     :host {
       display: inline-flex;
@@ -44,4 +46,6 @@ import { Component } from '@angular/core';
     }
   `,
 })
-export class Brand {}
+export class Brand {
+  protected readonly name = BRAND.name;
+}

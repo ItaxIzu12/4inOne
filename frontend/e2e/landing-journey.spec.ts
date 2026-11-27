@@ -2,7 +2,7 @@ import { test, expect, Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 /**
- * Die Startseite aus Sicht eines echten Erstbesuchers (24.10.2026): versteht er in Sekunden, was 4inOne ist und
+ * Die Startseite aus Sicht eines echten Erstbesuchers (24.10.2026): versteht er in Sekunden, was Veyora ist und
  * warum, erlebt er den Kern (Verknüpfen) selbst, findet er ohne Umweg in die Demo — am Handy und am Rechner, mit Maus
  * und nur mit der Tastatur. Dazu Integrität (keine toten Links, keine Fehler in der Konsole, keine fremden Server)
  * und Sicherheit (keine Skript-Einschleusung über die Adresse, keine privaten Daten ohne Konto).
@@ -39,7 +39,7 @@ for (const [label, width, height] of [['Handy', 390, 844], ['Rechner', 1440, 900
       await page.emulateMedia({ reducedMotion: 'reduce' });
     });
 
-    test('versteht im ersten Bildschirm, was 4inOne ist, warum, und wie es weitergeht', async ({ page }) => {
+    test('versteht im ersten Bildschirm, was Veyora ist, warum, und wie es weitergeht', async ({ page }) => {
       const { privateCalls } = await visitor(page);
       await page.goto('/');
       const h1 = page.getByRole('heading', { level: 1 });

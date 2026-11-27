@@ -48,7 +48,7 @@ const GROUPS: Group[] = [
     title: 'Datenschutz und Rechtliches',
     rows: [
       { icon: 'legal', label: 'Datenschutz', hint: 'Wie wir mit deinen Daten umgehen', route: '/datenschutz' },
-      { icon: 'legal', label: 'Nutzungsbedingungen', hint: 'Regeln für die Nutzung von 4inOne', route: '/nutzungsbedingungen' },
+      { icon: 'legal', label: 'Nutzungsbedingungen', hint: 'Regeln für die Nutzung von Veyora', route: '/nutzungsbedingungen' },
       { icon: 'legal', label: 'Impressum', hint: 'Anbieterkennzeichnung', route: '/impressum' },
       { icon: 'info', label: 'Barrierefreiheit', hint: 'Unser Stand und Kontakt', route: '/barrierefreiheit' },
     ],
@@ -56,7 +56,7 @@ const GROUPS: Group[] = [
 ];
 
 const GUIDE_ROWS: { scope: GuideScope; label: string; where: string; icon: IconName }[] = [
-  { scope: 'start', label: 'Dein Start mit 4inOne', where: 'auf der Startseite', icon: 'home' },
+  { scope: 'start', label: 'Dein Start mit Veyora', where: 'auf der Startseite', icon: 'home' },
   { scope: 'finanzen', label: 'So startest du mit Finanzen', where: 'in Finanzen', icon: 'finance' },
   { scope: 'haushalt', label: 'So startest du mit Haushalt', where: 'in Haushalt', icon: 'household' },
   { scope: 'organisation', label: 'So startest du mit Organisation', where: 'in Organisation', icon: 'calendar' },

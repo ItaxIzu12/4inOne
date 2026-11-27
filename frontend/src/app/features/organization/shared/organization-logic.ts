@@ -47,7 +47,7 @@ export function onDay(e: PersonalEvent, day: string): boolean {
   if (begins >= start) return true;
   if (!e.ends_at) return false;
   const until = new Date(e.ends_at);
-  // Ganztägig speichert 4inOne den letzten Tag als Mitternacht (wie das Backend, organisation/services.py: ends_at >=
+  // Ganztägig speichert Veyora den letzten Tag als Mitternacht (wie das Backend, organisation/services.py: ends_at >=
   // Tagesbeginn) – dieser Tag gehört noch dazu. Ein Termin mit Uhrzeit, der um 00:00 endet, dagegen nicht.
   return e.all_day ? until >= start : until > start;
 }

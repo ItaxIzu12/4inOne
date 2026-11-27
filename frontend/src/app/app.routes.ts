@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { AuthService } from './core/auth/auth.service';
 import { Router, Routes } from '@angular/router';
+import { BRAND, BRAND_DEFAULT_TITLE, brandTitle } from './core/brand/brand.config';
 import { adminGuard } from './features/admin/admin.guard';
 import { authGuard } from './core/auth/auth.guard';
 import { DEMO_ONLY } from './core/demo-only';
@@ -13,7 +14,7 @@ const ALL_ROUTES: Routes = [
     pathMatch: 'full',
     canMatch: [() => !inject(AuthService).isAuthenticated()],
     loadComponent: () => import('./features/landing/landing').then((m) => m.Landing),
-    title: '4inOne – Dein Alltag. Alles verbunden.',
+    title: BRAND_DEFAULT_TITLE,
     data: {
       shell: 'bare',
       hideHeader: true,
@@ -47,7 +48,7 @@ const ALL_ROUTES: Routes = [
   },
   {
     path: 'demo',
-    title: '4inOne – Demo',
+    title: `${BRAND.name} – Demo`,
     loadChildren: () => import('./demo.routes').then((m) => m.DEMO_ROUTES),
   },
   {
@@ -64,39 +65,39 @@ const ALL_ROUTES: Routes = [
     // Start ohne Netz (22.11.2026): gespeicherte Einkaufsliste. Der Service Worker hält alle App-Teile vorrätig
     // (ngsw-config.json › „/*.js“), deshalb lädt auch diese Seite ohne Netz nach.
     path: 'offline',
-    title: 'Offline | 4inOne',
+    title: brandTitle('Offline'),
     loadComponent: () => import('./features/offline/offline-page').then((m) => m.OfflinePage),
     data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'login',
-    title: 'Anmelden | 4inOne',
+    title: brandTitle('Anmelden'),
     loadComponent: () => import('./features/login/login').then((m) => m.Login),
     data: { mode: 'login', shell: 'bare', hideHeader: true },
   },
   {
     path: 'registrieren',
-    title: 'Konto erstellen | 4inOne',
+    title: brandTitle('Konto erstellen'),
     loadComponent: () => import('./features/login/login').then((m) => m.Login),
     data: { mode: 'register', shell: 'bare', hideHeader: true },
   },
   {
     path: 'passwort-vergessen',
-    title: 'Passwort vergessen | 4inOne',
+    title: brandTitle('Passwort vergessen'),
     loadComponent: () =>
       import('./features/forgot-password/forgot-password').then((m) => m.PasswortVergessen),
     data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'email-bestaetigen',
-    title: 'E-Mail bestätigen | 4inOne',
+    title: brandTitle('E-Mail bestätigen'),
     loadComponent: () =>
       import('./features/verify-email/verify-email').then((m) => m.EmailBestaetigen),
     data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'passwort-zuruecksetzen',
-    title: 'Neues Passwort | 4inOne',
+    title: brandTitle('Neues Passwort'),
     loadComponent: () =>
       import('./features/reset-password/reset-password').then(
         (m) => m.PasswortZuruecksetzen,
@@ -105,7 +106,7 @@ const ALL_ROUTES: Routes = [
   },
   {
     path: 'einstellungen',
-    title: 'Einstellungen | 4inOne',
+    title: brandTitle('Einstellungen'),
     loadComponent: () =>
       import('./features/settings/settings').then((m) => m.Einstellungen),
     canActivate: [authGuard],
@@ -113,14 +114,14 @@ const ALL_ROUTES: Routes = [
   },
   {
     path: 'einstellungen/profil',
-    title: 'Profil bearbeiten | 4inOne',
+    title: brandTitle('Profil bearbeiten'),
     loadComponent: () => import('./features/profile/profile').then((m) => m.Profil),
     canActivate: [authGuard],
     data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'einstellungen/zwei-faktor',
-    title: 'Zwei-Faktor-Anmeldung | 4inOne',
+    title: brandTitle('Zwei-Faktor-Anmeldung'),
     loadComponent: () => import('./features/mfa-setup/mfa-setup').then((m) => m.MfaSetup),
     canActivate: [authGuard],
     data: { shell: 'bare', hideHeader: true },
@@ -128,7 +129,7 @@ const ALL_ROUTES: Routes = [
   {
     // Admin-Panel (features/admin/, docs/MONITORING.md) — nur für Admin-Konten; das Backend prüft Staff + Zwei-Faktor
     path: 'admin',
-    title: 'Admin-Panel | 4inOne',
+    title: brandTitle('Admin-Panel'),
     loadComponent: () => import('./features/admin/admin').then((m) => m.Admin),
     canActivate: [adminGuard],
     data: { shell: 'bare', hideHeader: true },
@@ -136,45 +137,45 @@ const ALL_ROUTES: Routes = [
   {
     // Wer sieht was (22.11.2026): Übersicht der Freigaben je Bereich, nur lesen
     path: 'einstellungen/freigaben',
-    title: 'Wer sieht was | 4inOne',
+    title: brandTitle('Wer sieht was'),
     loadComponent: () => import('./features/sharing/sharing').then((m) => m.Sharing),
     canActivate: [authGuard],
     data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'einstellungen/sitzungen',
-    title: 'Angemeldete Geräte | 4inOne',
+    title: brandTitle('Angemeldete Geräte'),
     loadComponent: () => import('./features/sessions/sessions').then((m) => m.Sitzungen),
     canActivate: [authGuard],
     data: { shell: 'bare', hideHeader: true },
   },
   {
     path: 'impressum',
-    title: 'Impressum | 4inOne',
+    title: brandTitle('Impressum'),
     data: {
       theme: 'light',
       shell: 'bare',
       hideHeader: true,
-      description: 'Impressum von 4inOne: Anbieter, Kontakt und Verantwortliche.',
+      description: 'Impressum von Veyora: Anbieter, Kontakt und Verantwortliche.',
     },
     loadComponent: () => import('./features/imprint/imprint').then((m) => m.Impressum),
   },
   {
     path: 'datenschutz',
-    title: 'Datenschutzerklärung | 4inOne',
+    title: brandTitle('Datenschutzerklärung'),
     data: {
       theme: 'light',
       shell: 'bare',
       hideHeader: true,
       description:
-        'Wie 4inOne mit deinen Daten umgeht: welche Daten, wofür und welche Rechte du hast.',
+        'Wie Veyora mit deinen Daten umgeht: welche Daten, wofür und welche Rechte du hast.',
     },
     loadComponent: () => import('./features/privacy/privacy').then((m) => m.Datenschutz),
   },
   {
     path: 'nutzungsbedingungen',
-    title: 'Nutzungsbedingungen | 4inOne',
-    data: { theme: 'light', shell: 'bare', hideHeader: true, description: 'Die Nutzungsbedingungen von 4inOne.' },
+    title: brandTitle('Nutzungsbedingungen'),
+    data: { theme: 'light', shell: 'bare', hideHeader: true, description: 'Die Nutzungsbedingungen von Veyora.' },
     loadComponent: () =>
       import('./features/terms/terms').then(
         (m) => m.Nutzungsbedingungen,
@@ -182,19 +183,19 @@ const ALL_ROUTES: Routes = [
   },
   {
     path: 'barrierefreiheit',
-    title: 'Barrierefreiheit | 4inOne',
+    title: brandTitle('Barrierefreiheit'),
     data: {
       theme: 'light',
       shell: 'bare',
       hideHeader: true,
-      description: 'Erklärung zur Barrierefreiheit von 4inOne und wie du Barrieren melden kannst.',
+      description: 'Erklärung zur Barrierefreiheit von Veyora und wie du Barrieren melden kannst.',
     },
     loadComponent: () =>
       import('./features/accessibility/accessibility').then((m) => m.Barrierefreiheit),
   },
   {
     path: '',
-    title: '4inOne – Dein Überblick',
+    title: `${BRAND.name} – Dein Überblick`,
     canActivate: [authGuard],
     canActivateChild: [authGuard],
     loadChildren: () => import('./app-area.routes').then((m) => m.APP_AREA_ROUTES),
@@ -202,7 +203,7 @@ const ALL_ROUTES: Routes = [
   {
     // Unbekannte Adressen: eigene 404-Seite statt stiller Weiterleitung auf die Startseite (Soft-404)
     path: '**',
-    title: 'Seite nicht gefunden | 4inOne',
+    title: brandTitle('Seite nicht gefunden'),
     loadComponent: () => import('./features/not-found/not-found').then((m) => m.NotFound),
     data: { theme: 'light', shell: 'bare', hideHeader: true, notFound: true },
   },

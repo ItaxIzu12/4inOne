@@ -11,7 +11,7 @@ import { BoardingPass, passDate } from '../travel/shared/boarding-logic';
 import { offlinePasses } from '../travel/shared/boarding-offline';
 
 /**
- * /offline (22.11.2026): Start ohne Netz. Die Sitzung lässt sich nicht prüfen, also zeigt 4inOne nur, was ohnehin auf
+ * /offline (22.11.2026): Start ohne Netz. Die Sitzung lässt sich nicht prüfen, also zeigt Veyora nur, was ohnehin auf
  * diesem Gerät liegt: den zuletzt geladenen Stand der Einkaufslisten. Abhaken wird gemerkt; sobald wieder Netz da ist,
  * lädt die Seite die App neu und der Einkaufs-Reiter überträgt die Änderungen.
  */

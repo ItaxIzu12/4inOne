@@ -31,7 +31,7 @@
       @switch (step()) {
         <!-- ===================== 1 Du ===================== -->
         @case (1) {
-          <h1 id="ob-heading" #heading tabindex="-1">Willkommen bei 4inOne</h1>
+          <h1 id="ob-heading" #heading tabindex="-1">Willkommen bei Veyora</h1>
           <p class="lead">Drei kurze Schritte – danach legst du direkt deinen ersten echten Eintrag an.</p>
           <form class="form" [formGroup]="profile" (ngSubmit)="saveProfile()" novalidate>
             <div class="field">
@@ -47,7 +47,7 @@
               <app-select formControlName="currency" [options]="currencyOptions" />
             </app-field>
             <div class="field">
-              <span class="label" id="ob-usage">Wofür nutzt du 4inOne?</span>
+              <span class="label" id="ob-usage">Wofür nutzt du Veyora?</span>
               <div class="segment" role="group" aria-labelledby="ob-usage">
                 <button type="button" [attr.aria-pressed]="usage() === 'personal'" (click)="usage.set('personal')">
                   <app-icon name="user" aria-hidden="true" />Nur für mich
@@ -98,7 +98,7 @@
         <!-- ===================== 3 Erster Eintrag ===================== -->
         @case (3) {
           <h1 id="ob-heading" #heading tabindex="-1">{{ entryInfo().first }}</h1>
-          <p class="lead">Damit dein 4inOne nicht leer startet. Du kannst den Eintrag später jederzeit ändern oder löschen.</p>
+          <p class="lead">Damit dein Veyora nicht leer startet. Du kannst den Eintrag später jederzeit ändern oder löschen.</p>
           @if (selectedAreas().length > 1) {
             <div class="segment segment--areas" role="group" aria-label="Bereich für den ersten Eintrag">
               @for (area of selectedAreas(); track area.key) {

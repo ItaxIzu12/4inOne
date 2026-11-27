@@ -1,6 +1,6 @@
 """Bordkarte (Schritt 1, docs/BORDKARTE_KONZEPT.md, 22.11.2026).
 
-4inOne erzeugt nie einen eigenen Code: Es zeigt den ECHTEN Code der Airline, den die Person aus ihrer Bordkarte
+Veyora erzeugt nie einen eigenen Code: Es zeigt den ECHTEN Code der Airline, den die Person aus ihrer Bordkarte
 importiert (Wallet-Datei .pkpass oder Screenshot, ausgelesen im Browser). Hier liegen
 - das Lesen des IATA-Standards BCBP (Bar Coded Boarding Pass, Pflichtteil: Name, Buchungscode, Strecke, Flug, Datum,
   Sitz, Sequenz),

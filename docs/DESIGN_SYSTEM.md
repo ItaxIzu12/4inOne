@@ -1,4 +1,4 @@
-# 4inOne — Design System (V3, verbindlich ab 10.10.2026)
+# Veyora — Design System (V3, verbindlich ab 10.10.2026)
 
 > **Pflege:** Jede Änderung an Tokens, gemeinsamen Komponenten, Layout-Regeln oder Bereichsfarben wird hier und in
 > der Kurzfassung [`/DESIGN.md`](../DESIGN.md) im selben Schritt nachgetragen (siehe AGENTS.md › Design-Dokumentation).
@@ -145,6 +145,13 @@ Abstand — nie nur über Farbe.
 
 ### Referenz und Migrationsstand
 
+- **Rebranding zu Veyora, Phase 1 (28.11.2026):** sichtbarer Produktname überall „Veyora“ (Seitentitel, Manifest
+  `name`/`short_name`, Open-Graph-Angaben, `<app-brand>`-Schriftzug, Fließtexte, E-Mails, Export, Berichte). Name,
+  Leitsatz, Claim „Life, connected.“, Beschreibung und Bereichsnamen stehen typisiert in `core/brand/brand.config.ts`;
+  Seitentitel über `brandTitle('Seite')`. Farben bleiben bewusst Tokens (keine zweite Farbquelle). Teilen-Bild
+  `public/og-image.png` mit neuem Namen neu erzeugt, Gestaltung unverändert. Zeichen, Farben, Schrift, Bereichsnamen
+  und Landing-Screenshots (`public/images/landing`) unverändert; sie folgen mit dem Orbit-Logo bzw. in Phase 2.
+  `npm run check:brand` (auch in CI) verhindert den alten Namen im Frontend. Regeln: `docs/BRAND.md`.
 - **Hausschrift Instrument Sans (11.10.2026):** ersetzt Helvetica überall (App, Login, Landingpage; auch `select` und
   `textarea`). Eine variable WOFF2-Datei (Gewicht 400–700, Breite 75–100 %, 89 KB) aus dem offiziellen Projekt
   `github.com/Instrument/instrument-sans`, selbst gehostet unter `public/fonts/instrument-sans/` mit `OFL.txt` — kein

@@ -1,7 +1,7 @@
 """AI Readiness Layer: abschaltbarer Zugang zum Personal AI Core (docs/AI_INTEGRATION.md).
 
 Öffentlich: `ai_available(capability)`, `request(...)`, `AiResult`, die Fehler aus `errors`. Standardmäßig aus
-(`AI_ENABLED=False`); ohne Core arbeitet jede Funktion von 4inOne wie bisher.
+(`AI_ENABLED=False`); ohne Core arbeitet jede Funktion von Veyora wie bisher.
 """
 
 from integrations.ai.client import AiResult, health, request

@@ -66,7 +66,7 @@ def _send_invite_mail(invite: ContactInvite) -> bool:
     name = _display_name(invite.inviter)
     relation = 'Familie' if invite.relation == Contact.Relation.FAMILY else 'Freund:in'
     body = (
-        f'Hallo,\n\n{name} möchte dich bei 4inOne als {relation} hinzufügen.\n\n'
+        f'Hallo,\n\n{name} möchte dich bei Veyora als {relation} hinzufügen.\n\n'
         'Mit der Verbindung teilt ihr noch nichts. Ihr seht euch nur mit Namen und E-Mail-Adresse. '
         'Was ihr später teilt, entscheidet ihr jeweils ausdrücklich.\n\n'
         f'Einladung ansehen und annehmen: {link}\n\n'
@@ -74,7 +74,7 @@ def _send_invite_mail(invite: ContactInvite) -> bool:
         'Kennst du die Person nicht oder willst du das nicht, ignoriere diese E-Mail einfach.\n'
     )
     try:
-        send_mail(f'{name} lädt dich zu 4inOne ein', body, settings.DEFAULT_FROM_EMAIL, [invite.email], fail_silently=False)
+        send_mail(f'{name} lädt dich zu Veyora ein', body, settings.DEFAULT_FROM_EMAIL, [invite.email], fail_silently=False)
         return True
     except Exception:  # E-Mail-Server nicht erreichbar o. Ä.: die Einladung bleibt bestehen und ist erneut sendbar
         logger.exception('Einladungs-E-Mail konnte nicht gesendet werden')

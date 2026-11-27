@@ -10,7 +10,8 @@
     "test:a11y": "playwright test",
     "seo": "node scripts/seo.mjs",
     "build:pages": "node scripts/build-pages.mjs",
-    "check:architecture": "node scripts/check-architecture.mjs"
+    "check:architecture": "node scripts/check-architecture.mjs",
+    "check:brand": "node scripts/check-brand.mjs"
   },
   "private": true,
   "packageManager": "npm@11.16.0",

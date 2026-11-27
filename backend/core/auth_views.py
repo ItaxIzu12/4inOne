@@ -409,7 +409,7 @@ def _send_password_reset_mail(user, token: str) -> None:
     minutes = int(PASSWORD_RESET_TOKEN_LIFETIME.total_seconds() // 60)
     body = (
         'Hallo,\n\n'
-        'für dein 4inOne-Konto wurde ein neues Passwort angefordert.\n\n'
+        'für dein Veyora-Konto wurde ein neues Passwort angefordert.\n\n'
         f'Neues Passwort festlegen: {link}\n\n'
         f'Der Link gilt {minutes} Minuten und funktioniert nur einmal. '
         'Danach wirst du auf allen Geräten abgemeldet.\n\n'

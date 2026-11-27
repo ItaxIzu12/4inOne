@@ -1,7 +1,7 @@
 <main id="main-content" class="auth" tabindex="-1">
   <!-- Band in Deep Forest (Überarbeitung 19.11.2026): Rechner links neben dem Formular, Handy/Tablet kompakt oben. -->
-  <aside class="aside" aria-label="Über 4inOne">
-    <a class="aside__brand" routerLink="/" aria-label="4inOne – zur Startseite"><app-brand /></a>
+  <aside class="aside" aria-label="Über Veyora">
+    <a class="aside__brand" routerLink="/" aria-label="Veyora – zur Startseite"><app-brand /></a>
     <div class="aside__body">
       <div class="aside__intro">
         <p class="aside__lead">Dein Alltag.<br />Alles verbunden.</p>
@@ -14,7 +14,7 @@
         <li><i class="dot dot--travel" aria-hidden="true"></i>Reisen</li>
       </ul>
       <figure class="preview">
-        <figcaption class="preview__caption">So sieht ein Tag in 4inOne aus</figcaption>
+        <figcaption class="preview__caption">So sieht ein Tag in Veyora aus</figcaption>
         <div class="preview__card">
           <p class="preview__head"><b>Heute</b><span>Beispiel</span></p>
           <ul class="preview__rows">
@@ -48,7 +48,7 @@
   <section class="panel">
     <header class="panel__top">
       <a class="panel__back" routerLink="/"><icon-arrow-left aria-hidden="true" /><span>Startseite</span></a>
-      <a class="panel__brand" routerLink="/" aria-label="4inOne – zur Startseite"><app-brand /></a>
+      <a class="panel__brand" routerLink="/" aria-label="Veyora – zur Startseite"><app-brand /></a>
     </header>
 
     <div class="panel__body">
@@ -85,7 +85,7 @@
         @case ('link') {
           <h1 #stepHeading tabindex="-1">Konto verbinden</h1>
           <p class="lead">
-            Für <strong>{{ pendingEmail() }}</strong> gibt es schon ein 4inOne-Konto. Bestätige einmal mit seinem
+            Für <strong>{{ pendingEmail() }}</strong> gibt es schon ein Veyora-Konto. Bestätige einmal mit seinem
             Passwort – danach meldest du dich auch mit {{ providerName[pendingProvider()] }} an.
           </p>
           @if (submitError()) {
@@ -94,7 +94,7 @@
           @if (pendingHasPassword()) {
             <form class="form" [formGroup]="linkForm" (ngSubmit)="submitLink()" novalidate>
               <div class="field">
-                <label for="link-password">Passwort von 4inOne</label>
+                <label for="link-password">Passwort von Veyora</label>
                 <div class="secret">
                   <input id="link-password" formControlName="password" [type]="showPassword() ? 'text' : 'password'"
                     autocomplete="current-password"

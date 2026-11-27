@@ -37,7 +37,7 @@ def _download(user):
     response = api(user).get(URL)
     assert response.status_code == 200, response.status_code
     assert response['Content-Type'] == 'application/zip'
-    assert 'attachment; filename="4inone-daten-' in response['Content-Disposition']
+    assert 'attachment; filename="veyora-daten-' in response['Content-Disposition']
     assert response['Cache-Control'] == 'no-store'
     return zipfile.ZipFile(io.BytesIO(b''.join(response.streaming_content)))
 

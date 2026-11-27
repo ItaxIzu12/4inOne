@@ -159,7 +159,7 @@ test('the invite link: guests are told to sign in, the invited account can accep
   await page.route('**/api/v1/auth/csrf/', (r) => r.fulfill({ json: { csrfToken: 't' } }));
   await page.route('**/api/v1/auth/refresh/', (r) => r.fulfill({ status: 401, json: {} }));
   await page.goto('/einladung#abc');
-  await expect(page.getByRole('heading', { name: 'Du wurdest zu 4inOne eingeladen' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Du wurdest zu Veyora eingeladen' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Anmelden' })).toBeVisible();
 });
 

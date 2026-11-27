@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Full-Stack-Tests: echte Oberfläche (ng serve, Port 4211, Konfiguration „fullstack“) gegen echtes Django (Port 8010)
- * – nichts simuliert. Eigene Ports, damit ein lokal laufendes 4inOne (8000/4200) weiterlaufen kann.
+ * – nichts simuliert. Eigene Ports, damit ein lokal laufendes Veyora (8000/4200) weiterlaufen kann.
  * Eigene, frische SQLite-Datenbank unter test-results/ (nie backend/db.sqlite3), lokaler Testserver mit DEBUG=True,
  * nur auf localhost. Start: `npx playwright test -c playwright.fullstack.config.ts`.
  */

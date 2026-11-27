@@ -1,11 +1,11 @@
-# 4inOne — Project Rules for Coding Agents
+# Veyora (vormals 4inOne) — Project Rules for Coding Agents
 
 Binding for every agent (Codex, Claude Code, others). Claude-specific additions: `CLAUDE.md`.
 Last reviewed: 25.11.2026.
 
 ## Mission
 
-4inOne is a personal life-management app for **Finanzen, Haushalt, Organisation and Reisen**.
+Veyora (formerly 4inOne; brand rules: `docs/BRAND.md`) is a personal life-management app for **Finanzen, Haushalt, Organisation and Reisen**.
 
 Every area must work well on its own. The product becomes distinctive when it can represent that two or more things from different areas belong to the same real-life context.
 
@@ -150,11 +150,11 @@ Shared Personal AI Integration Standard (`docs/AI_INTEGRATION.md` § 0):
 
 - All AI goes through the **one adapter** `backend/integrations/ai` (versioned REST, capability discovery via
   `GET /v1/capabilities`, providers `core` or `mock`). The frontend never talks to the Core.
-- No models, OCR engines, AI SDKs or provider-specific code inside 4inOne. Models are swappable without app changes.
+- No models, OCR engines, AI SDKs or provider-specific code inside Veyora. Models are swappable without app changes.
 - The area service checks permissions and selects the minimum data **before** calling the adapter; requests carry the
   application and area context and only a per-application pseudonym of the person.
 - A newly needed capability goes into the catalogue `docs/AI_INTEGRATION.md` § 4.5 as an extension of the **shared**
-  Core, with result schema, mock answer and tests — never as an isolated AI solution inside 4inOne.
+  Core, with result schema, mock answer and tests — never as an isolated AI solution inside Veyora.
 - **Not now:** do not develop the Personal AI Core and do not integrate local AI models. Use `AI_PROVIDER=mock` for
   development of an approved capability.
 

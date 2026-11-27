@@ -4,11 +4,11 @@ Der Adapter (`integrations/ai/client.py`) spricht immer dieselbe Schnittstelle; 
 legt `AI_PROVIDER` fest:
 
 - `core` (Standard): der Personal AI Core über seine versionierte REST-API (`/v1/capabilities`, `/v1/tasks/…`,
-  `/v1/health`). Welches Modell er nutzt, ist seine Sache – ein Modellwechsel ändert in 4inOne nichts.
+  `/v1/health`). Welches Modell er nutzt, ist seine Sache – ein Modellwechsel ändert in Veyora nichts.
 - `mock`: deterministische Antworten im Prozess, für die Entwicklung, solange der Core nicht verfügbar ist. Jede
   Fähigkeit bringt ihre Mock-Antwort selbst mit (`Capability.mock`). In Produktion verboten (`check --deploy`).
 
-4inOne bindet nie selbst ein Modell ein.
+Veyora bindet nie selbst ein Modell ein.
 """
 
 from __future__ import annotations

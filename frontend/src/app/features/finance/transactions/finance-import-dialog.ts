@@ -81,7 +81,7 @@ export class FinanceImportDialog {
         };
       }),
       more: Math.max(0, p.rows.length - PREVIEW_ROWS),
-      note: 'Kategorien ergänzt 4inOne aus deinen früheren Buchungen mit demselben Empfänger. Alles andere landet in „Sonstiges“ – du kannst es danach ändern.',
+      note: 'Kategorien ergänzt Veyora aus deinen früheren Buchungen mit demselben Empfänger. Alles andere landet in „Sonstiges“ – du kannst es danach ändern.',
     };
   });
   private file: File | null = null;

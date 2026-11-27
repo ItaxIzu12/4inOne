@@ -1,4 +1,4 @@
-# 4inOne — DESIGN.md (Kurzfassung)
+# Veyora — DESIGN.md (Kurzfassung)
 
 Kanonisch und ausführlich: [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) · Werte: `frontend/src/styles.css` (`:root`).
 **Bei jeder UI-/Design-Änderung beide Dateien im selben Schritt aktualisieren.**
@@ -19,7 +19,7 @@ Systematisch im Grundgerüst, flexibel im Inhalt. Keine Gradients, Glas, Glow, D
 
 ## Regeln
 - Schrift überall Schibsted Grotesk (Google Font, OFL; App, Login, Website, Formulare, Logo) über `--font-body`/`--font-display`; Dateien `public/fonts/schibsted-grotesk` (zwei Teildateien nach Zeichenbereich), selbst gehostet statt Google-CDN (keine IP-Übertragung, LG München 20.01.2022), vorgeladen, `font-display: swap`. Keine Kursive (auch kein künstliches Neigen: `font-synthesis-style: none`, `em/i/cite` normal). Große Überschriften −0,03 em.
-- Marke überall `<app-brand>`: vier weiche Felder (enge Ecke zur Mitte) in den Bereichsfarben Finanzen `#0F9D6B` (oben links) · Reisen `#3B6FE0` (oben rechts) · Organisation `#E3961A` (unten links) · Haushalt `#E04F78` (unten rechts) + „4inOne“ in Tinte `#121826` (Schibsted Grotesk 750). Favicon, App-Icons und Teilen-Bild zeigen dasselbe Zeichen (21.10.2026). Das alte Kompass-Logo/-Name ist entfernt.
+- Marke überall `<app-brand>`: vier weiche Felder (enge Ecke zur Mitte) in den Bereichsfarben Finanzen `#0F9D6B` (oben links) · Reisen `#3B6FE0` (oben rechts) · Organisation `#E3961A` (unten links) · Haushalt `#E04F78` (unten rechts) + „Veyora“ in Tinte `#121826` (Schibsted Grotesk 750; Name aus `core/brand/brand.config.ts`). Favicon, App-Icons und Teilen-Bild zeigen dasselbe Zeichen (21.10.2026). Seit 28.11.2026 heißt das Produkt Veyora (Phase 1: Name, Titel, Texte, Teilen-Bild; das Orbit-Logo folgt, Regeln in `docs/BRAND.md`). Das alte Kompass-Logo/-Name ist entfernt.
 - Genau ein aktiver Navigationspunkt; Bottom-Navigation am Handy: Start · Finanzen · Haushalt · Organisation · Reisen.
 - Seitenkopf: Titel · Untertitel · Hauptaktion rechts; eine Primary-Aktion je Ansicht.
 - Reiter in allen Bereichen gleich: 46 px, 16 px/400, aktiv 600 mit Unterstrich in Bereichsfarbe; Handy 44 px, 13 px, nur Text. Kopf→Inhalt 16 px (Handy 12).

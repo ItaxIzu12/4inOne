@@ -97,7 +97,7 @@ export function parseCsv(text: string): ParsedCsv {
 }
 
 /** Datensparsam: IBANs (auch mit Leerzeichen) und „Kto 1234567890“ stehen manchmal im Verwendungszweck — sie werden
- * vor dem Senden entfernt, damit sie nie in 4inOne gespeichert werden. Spalten mit IBAN/Kontonummer liest der Import
+ * vor dem Senden entfernt, damit sie nie in Veyora gespeichert werden. Spalten mit IBAN/Kontonummer liest der Import
  * gar nicht erst aus. */
 export function withoutAccountNumbers(text: string): string {
   return text

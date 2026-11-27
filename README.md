@@ -1,10 +1,10 @@
-# 4inOne Product Specification V2
+# Veyora Product Specification V2
 
-**4inOne — Dein Alltag. Alles verbunden.**
+**Veyora — Dein Alltag. Alles verbunden.** (Claim: *Life, connected.* · vormals 4inOne, siehe `docs/BRAND.md`)
 
-This package is the current product and implementation source of truth for the existing 4inOne project.
+This package is the current product and implementation source of truth for the existing Veyora project (formerly 4inOne).
 
-4inOne is a personal life-management product for four independently useful areas:
+Veyora is a personal life-management product for four independently useful areas:
 
 - Finanzen
 - Haushalt

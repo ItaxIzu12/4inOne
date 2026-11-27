@@ -24,7 +24,7 @@ const TASKS = [
   { value: 'T2', label: 'Eine Änderung vornehmen und die Folgen prüfen' },
   { value: 'T3', label: 'Reise mit Budget und Kalender verbinden' },
   { value: 'T4', label: 'Eine Verbindung pausieren oder aufheben' },
-  { value: 'T5', label: 'Den Vorteil von 4inOne erklären' },
+  { value: 'T5', label: 'Den Vorteil von Veyora erklären' },
 ];
 const AREAS = [
   { value: 'FINANZEN', label: 'Finanzen' }, { value: 'HAUSHALT', label: 'Haushalt' }, { value: 'ORGANISATION', label: 'Organisation' },

@@ -6,8 +6,8 @@ import { Modal } from '../../../shared/ui/modal/modal';
 import { CalendarSubscription, OrganisationApi } from '../data/organization-api.service';
 
 /**
- * O3 – „Kalender abonnieren“: einen Kalender aus Google, Outlook, iCloud o. Ä. per Link NUR LESEND einbinden. 4inOne
- * ruft ihn etwa stündlich neu ab; Änderungen in 4inOne gehen nie zurück. Liste der eigenen Abos mit Stand und Fehler,
+ * O3 – „Kalender abonnieren“: einen Kalender aus Google, Outlook, iCloud o. Ä. per Link NUR LESEND einbinden. Veyora
+ * ruft ihn etwa stündlich neu ab; Änderungen in Veyora gehen nie zurück. Liste der eigenen Abos mit Stand und Fehler,
  * „Jetzt aktualisieren“ und „Entfernen“ (mit Rückfrage). Der Link wird nie wieder angezeigt, nur der Rechnername.
  */
 @Component({

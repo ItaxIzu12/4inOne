@@ -48,7 +48,7 @@ export const appConfig: ApplicationConfig = {
       inject(ThemeService);
     }),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor, accessLostInterceptor])),
-    // Offline-Einkaufsliste (22.11.2026): Der Service Worker hält nur die App-Dateien bereit, damit 4inOne auch ohne
+    // Offline-Einkaufsliste (22.11.2026): Der Service Worker hält nur die App-Dateien bereit, damit Veyora auch ohne
     // Netz startet (/offline). API-Antworten speichert er nie. Nur im Produktions-Build, nie in der Demo-Testversion
     // und nur für Personen, die angemeldet waren (Hinweis-Cookie) – öffentliche Besucher bekommen keinen.
     provideServiceWorker('ngsw-worker.js', {

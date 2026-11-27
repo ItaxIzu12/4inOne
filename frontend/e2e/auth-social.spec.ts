@@ -70,7 +70,7 @@ test('bestehendes Konto: verbinden nur mit Passwort, danach in die App', async (
   await page.screenshot({ path: 'test-results/auth-verbinden-1440.png', fullPage: true, animations: 'disabled' });
   await page.getByRole('button', { name: 'Verbinden und anmelden' }).click();
   await expect(page.locator('#link-password-error')).toHaveText('Bitte gib dein Passwort ein.');
-  await page.getByLabel('Passwort von 4inOne').fill('Sicher123!x');
+  await page.getByLabel('Passwort von Veyora').fill('Sicher123!x');
   await page.getByRole('button', { name: 'Verbinden und anmelden' }).click();
   await expect(page).not.toHaveURL(/\/login/);
   expect(body).toEqual({ password: 'Sicher123!x', mfa_code: '' });

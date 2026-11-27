@@ -66,7 +66,7 @@ export class AppShell {
 
   readonly auth = inject(AuthService);
   private router = inject(Router);
-  // Eigenes Signal statt nur auth.isAuthenticated(): wer über "4inOne entdecken" (Onboarding) oder einen
+  // Eigenes Signal statt nur auth.isAuthenticated(): wer über "Veyora entdecken" (Onboarding) oder einen
   // direkten Link auf eine öffentliche Vorschau-Route (siehe app.routes.ts) navigiert, sieht dort Demo-Daten,
   // auch während die eigene Sitzung (Token im Speicher) weiterhin angemeldet bleibt — der Demo-Hinweis unten
   // muss sich deshalb nach der tatsächlich angezeigten Route richten, nicht nur nach dem Anmeldestatus.

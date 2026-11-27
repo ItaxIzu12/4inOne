@@ -13,7 +13,7 @@ export interface PlaceHit {
 /** `lodging`: nur Unterkünfte (Hotels, Pensionen, Ferienwohnungen …). */
 export type PlaceKind = 'place' | 'lodging';
 export interface PlaceSuggestions {
-  /** Orte, die ich selbst schon eingetragen habe (verlassen 4inOne nicht). */
+  /** Orte, die ich selbst schon eingetragen habe (verlassen Veyora nicht). */
   own: string[];
   /** Treffer aus OpenStreetMap (Photon), über unseren Server — erst ab 3 Zeichen. */
   places: PlaceHit[];

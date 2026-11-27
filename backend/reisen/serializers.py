@@ -383,7 +383,7 @@ class TripBudgetCategorySerializer(TripScopedSerializer):
 
 
 class TripSettlementSerializer(TripScopedSerializer):
-    """„Als beglichen markieren“: Geld ist zwischen zwei Mitreisenden geflossen – nur ein Vermerk, 4inOne zahlt nie."""
+    """„Als beglichen markieren“: Geld ist zwischen zwei Mitreisenden geflossen – nur ein Vermerk, Veyora zahlt nie."""
 
     from_name = serializers.SerializerMethodField()
     to_name = serializers.SerializerMethodField()

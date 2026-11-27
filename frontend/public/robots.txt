@@ -1,4 +1,4 @@
-# 4inOne — öffentliche Seiten dürfen in Suchmaschinen, persönliche Bereiche und Links mit Token nicht.
+# Veyora — öffentliche Seiten dürfen in Suchmaschinen, persönliche Bereiche und Links mit Token nicht.
 User-agent: *
 Allow: /
 Disallow: /api/

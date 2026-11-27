@@ -55,7 +55,7 @@ for (const width of [390, 1440]) {
     await expect(dialog.locator('.imp-summary')).toContainText('4 Termine neu');
     await expect(dialog.locator('.imp-rows')).toContainText('Grundschule, Raum 4');
     await expect(dialog.locator('.imp-rows')).toContainText('wöchentlich');
-    await expect(dialog.locator('.imp-note')).toContainText('1 Termin hat eine Wiederholung, die 4inOne nicht abbildet');
+    await expect(dialog.locator('.imp-note')).toContainText('1 Termin hat eine Wiederholung, die Veyora nicht abbildet');
     await expect(dialog.locator('.imp-note')).toContainText('1 abgesagte Termine');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'));
