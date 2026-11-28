@@ -1,0 +1,18 @@
+// Breakpoints (docs/DESIGN_TOKENS.md). CSS-Variablen funktionieren in Media Queries nicht, deshalb hier als SCSS;
+// dieselben Werte stehen als Referenz in tokens.css (--lk-breakpoint-*). Bestehende Komponenten nutzen die Zahlen direkt
+// (760/1024) – neue Stylesheets bitte über diese Mixins.
+$sm: 480px;
+$md: 760px; // Handy ↔ Tablet: Bottom-Navigation, fester Hauptknopf
+$lg: 1024px; // Tablet ↔ Desktop: Seitenleiste
+$xl: 1280px; // maximale Inhaltsbreite
+
+@mixin below($bp) {
+  @media (max-width: $bp) {
+    @content;
+  }
+}
+@mixin above($bp) {
+  @media (min-width: $bp + 1px) {
+    @content;
+  }
+}

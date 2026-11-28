@@ -24,14 +24,14 @@ import { ChunkLoadRecovery } from '../../core/navigation/chunk-load-recovery';
     :host { position: fixed; z-index: 10001; left: 50%; top: max(20px, env(safe-area-inset-top)); transform: translateX(-50%);
       width: min(520px, calc(100vw - 32px)); pointer-events: none; }
     aside { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 18px; background: var(--surface-elevated, #fff);
-      color: var(--text-primary, #101820); border: 1px solid var(--border-subtle, #e6e9e3); border-radius: var(--radius-lg, 16px);
+      color: var(--text-primary, #101820); border: 1px solid var(--border-subtle, #e8e6e0); border-radius: var(--radius-lg, 16px);
       box-shadow: var(--shadow-overlay), 0 1px 3px rgb(20 33 67 / 6%); pointer-events: auto; }
     p { flex: 1; min-width: 0; margin: 0; font-size: 15px; line-height: 1.45; }
     b { display: block; font-weight: 600; }
     .actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
     button { min-height: 44px; border: 0; border-radius: var(--radius-md, 12px); cursor: pointer; font: inherit; }
     .primary { padding: 0 16px; background: var(--text-primary, #101820); color: var(--text-on-accent, #fff); font-weight: 600; }
-    .close { width: 44px; background: none; color: var(--text-secondary, #52615b); font-size: 24px; }
+    .close { width: 44px; background: none; color: var(--text-secondary, #4f5965); font-size: 24px; }
     .close:hover { background: var(--surface-hover); }
     button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
   `,

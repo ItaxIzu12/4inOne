@@ -1,0 +1,232 @@
+/* Lumiknot Design Tokens (28.11.2026) — Ebenen und Regeln: docs/DESIGN_TOKENS.md.
+
+   1. Primitive Tokens (--lk-…, diese Datei): rohe Werte. Nur hier stehen Farbwerte; Komponenten verwenden sie NIE
+      direkt, sondern die semantischen Tokens.
+   2. Semantische Tokens (src/styles.css, Dunkel: shared/styles/theme-dark.css): Rollen wie --surface-card,
+      --text-secondary, --success. Sie zeigen auf Primitive.
+   3. Komponenten-Tokens (unten): Rollen einzelner Bausteine (Knopf, Feld, Karte, Dialog), zeigen auf semantische.
+   4. Bereichs-Theme-Tokens (unten, [data-area]): --area-* je Bereich; ein gemeinsames System, nur der Akzent wechselt.
+
+   Reine Logo-Farben (--lk-*-brand) sind Markenfarben, keine Textfarben (Kontrast auf Weiß 2,2–4,4:1). */
+
+:root {
+  /* ===================== 1. Primitive ===================== */
+
+  /* Neutrale Markenfarben */
+  --lk-midnight: #101820;
+  --lk-graphite: #29323b;
+  --lk-ivory: #f7f6f2;
+  --lk-white: #ffffff;
+
+  /* Papier (warm, aus Ivory abgeleitet): Flächen und Linien im hellen Modus */
+  --lk-paper-100: #f2f1ec;
+  --lk-paper-200: #eeece7;
+  --lk-paper-300: #e8e6e0;
+  --lk-paper-400: #dfdcd5;
+  --lk-paper-500: #bab6ad;
+  --lk-paper-600: #857f76;
+  /* Schiefer (kühl, aus Graphite abgeleitet): zweite Textebene */
+  --lk-slate-400: #8b929a;
+  --lk-slate-600: #4f5965;
+
+  /* Nacht (aus Midnight abgeleitet): Flächen, Linien und Text im Dunkelmodus */
+  --lk-night-950: #0e141a;
+  --lk-night-925: #111820;
+  --lk-night-900: #161e26;
+  --lk-night-850: #1c252e;
+  --lk-night-800: #222c36;
+  --lk-night-750: #28333e;
+  --lk-night-700: #2a343e;
+  --lk-night-650: #333e49;
+  --lk-night-600: #34404c;
+  --lk-night-550: #3e4b58;
+  --lk-night-500: #4c5966;
+  --lk-night-400: #6e7b88;
+  --lk-night-200: #a9b4bf;
+  --lk-night-50: #e9edf1;
+
+  /* Bereiche: -brand = Logo-Farbe (= core/brand/brand.config.ts), -ink = Text/Fläche hell (≥ 4,5:1 auf Weiß, Ivory,
+     Papier 200), -tint = Tönung hell, -ink-dark = Text dunkel (≥ 6:1 auf Nacht 900), -tint-dark, -fill-dark */
+  --lk-finance-brand: #13a274;
+  --lk-finance-ink: #0e7957;
+  --lk-finance-tint: #e3f4ee;
+  --lk-finance-ink-dark: #5cc79c;
+  --lk-finance-tint-dark: #17302a;
+  --lk-finance-fill-dark: #1f7a5c;
+
+  --lk-household-brand: #f59a42;
+  --lk-household-ink: #955e28;
+  --lk-household-tint: #fef3e8;
+  --lk-household-ink-dark: #f2a35c;
+  --lk-household-tint-dark: #352719;
+  --lk-household-fill-dark: #9a5a1f;
+
+  --lk-organization-brand: #7864e7;
+  --lk-organization-ink: #6a59cc;
+  --lk-organization-tint: #efecfc;
+  --lk-organization-ink-dark: #a99bf2;
+  --lk-organization-tint-dark: #25213d;
+  --lk-organization-fill-dark: #5b4bc0;
+
+  --lk-travel-brand: #2197be;
+  --lk-travel-ink: #197390;
+  --lk-travel-tint: #e4f3f7;
+  --lk-travel-ink-dark: #6cc3e0;
+  --lk-travel-tint-dark: #17303a;
+  --lk-travel-fill-dark: #1d6d88;
+
+  /* Status (hell ≥ 4,5:1 auf Weiß und Ivory; dunkel ≥ 7:1 auf Nacht 900) */
+  --lk-green-700: #1e7a4d;
+  --lk-green-50: #e9f6ef;
+  --lk-green-300: #6fd3a0;
+  --lk-green-950: #173327;
+  --lk-amber-700: #8a5a00;
+  --lk-amber-50: #fdf3dc;
+  --lk-amber-300: #f0c46a;
+  --lk-amber-950: #332a14;
+  --lk-red-700: #b3261e;
+  --lk-red-50: #fdecea;
+  --lk-red-300: #f2998f;
+  --lk-red-950: #3a1d1b;
+  --lk-blue-700: #245fb0;
+  --lk-blue-50: #e8f1fd;
+  --lk-blue-300: #9cc3f5;
+  --lk-blue-950: #1a2a40;
+
+  /* Diagramme (Datenvisualisierung; Farbe nie allein bedeutungstragend, immer mit Beschriftung) */
+  --lk-chart-red: #c6324b;
+  --lk-chart-red-tint: #fde8eb;
+  --lk-chart-blue: #2f6fbf;
+  --lk-chart-blue-tint: #e6f0fc;
+  --lk-chart-amber: #a35f00;
+  --lk-chart-amber-tint: #fdf1dc;
+  --lk-chart-green: #1f8a4c;
+  --lk-chart-green-tint: #e3f6ec;
+  --lk-chart-red-dark: #f0798c;
+  --lk-chart-red-tint-dark: #3a1e25;
+  --lk-chart-blue-dark: #7fb0f0;
+  --lk-chart-amber-dark: #f0b45a;
+  --lk-chart-amber-tint-dark: #352915;
+
+  /* Schrift (OFL, selbst gehostet unter public/fonts) */
+  --lk-font-manrope: 'Manrope', Helvetica, Arial, sans-serif;
+  --lk-font-inter: 'Inter', Helvetica, Arial, sans-serif;
+  --lk-font-size-12: 12px;
+  --lk-font-size-13: 13px;
+  --lk-font-size-14: 14px;
+  --lk-font-size-16: 16px;
+  --lk-font-size-18: 18px;
+  --lk-font-size-20: 20px;
+  --lk-font-size-24: 24px;
+  --lk-font-size-30: 30px;
+  --lk-font-size-34: 34px;
+  --lk-font-size-44: 44px;
+  --lk-font-size-60: 60px;
+  --lk-line-tight: 1.1;
+  --lk-line-snug: 1.3;
+  --lk-line-normal: 1.45;
+  --lk-line-relaxed: 1.6;
+
+  /* Bewegung */
+  --lk-duration-100: 100ms;
+  --lk-duration-150: 150ms;
+  --lk-duration-200: 200ms;
+  --lk-duration-240: 240ms;
+  --lk-duration-300: 300ms;
+  --lk-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --lk-ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Schatten-Rohwerte */
+  --lk-shadow-1: 0 1px 2px rgba(16, 24, 32, 0.05);
+  --lk-shadow-2: 0 4px 12px -4px rgba(16, 24, 32, 0.12);
+  --lk-shadow-3: 0 12px 28px -12px rgba(16, 24, 32, 0.25);
+
+  /* Breakpoints (Referenz; in Media Queries die Werte aus shared/styles/_breakpoints.scss) */
+  --lk-breakpoint-sm: 480px;
+  --lk-breakpoint-md: 760px;
+  --lk-breakpoint-lg: 1024px;
+  --lk-breakpoint-xl: 1280px;
+
+  /* ===================== 3. Komponenten ===================== */
+  /* Zeigen auf semantische Tokens (styles.css). Neue und überarbeitete Bausteine verwenden diese Namen. */
+
+  --button-height: var(--control-height);
+  --button-radius: var(--radius-md);
+  --button-primary-bg: var(--brand-primary);
+  --button-primary-bg-hover: var(--brand-primary-hover);
+  --button-primary-fg: var(--text-on-accent);
+  --button-secondary-bg: var(--surface-card);
+  --button-secondary-bg-hover: var(--surface-hover);
+  --button-secondary-fg: var(--text-primary);
+  --button-secondary-border: var(--border-control);
+
+  --field-height: var(--control-height);
+  --field-radius: var(--radius-md);
+  --field-bg: var(--surface-card);
+  --field-fg: var(--text-primary);
+  --field-placeholder: var(--text-secondary);
+  --field-border: var(--border-control);
+  --field-border-focus: var(--focus-color);
+  --field-border-error: var(--error);
+
+  --card-bg: var(--surface-card);
+  --card-border: var(--border-subtle);
+  --card-radius: var(--radius-lg);
+  --card-padding: var(--space-5);
+  --card-shadow: var(--elevation-0);
+
+  --chip-radius: var(--radius-pill);
+  --chip-bg: var(--surface-pressed);
+  --chip-fg: var(--text-primary);
+
+  --dialog-bg: var(--surface-elevated);
+  --dialog-radius: var(--radius-lg);
+  --dialog-shadow: var(--elevation-3);
+
+  --nav-item-fg: var(--text-secondary);
+  --nav-item-fg-active: var(--text-primary);
+  --nav-item-bg-active: var(--surface-pressed);
+
+  /* ===================== 4. Bereichs-Theme (Standard: Startseite) ===================== */
+  --area-accent: var(--brand-primary);
+  --area-soft: var(--surface-pressed);
+  --area-fill: var(--brand-primary);
+  --area-on: var(--text-on-accent);
+  --area-logo: var(--text-primary);
+}
+
+/* Bereichs-Themes: ein Container mit data-area (App-Shell setzt es am Hauptinhalt) färbt nur den Akzent um.
+   Flächen, Schrift, Abstände und Bausteine bleiben gemeinsam – keine eigenen Designsysteme je Bereich. */
+[data-area='finance'] {
+  --area-accent: var(--finance-accent);
+  --area-soft: var(--finance-soft);
+  --area-fill: var(--finance-fill);
+  --area-on: var(--finance-on);
+  --area-logo: var(--logo-finance);
+}
+[data-area='household'] {
+  --area-accent: var(--household-accent);
+  --area-soft: var(--household-soft);
+  --area-fill: var(--household-fill);
+  --area-on: var(--household-on);
+  --area-logo: var(--logo-household);
+}
+[data-area='organization'] {
+  --area-accent: var(--organization-accent);
+  --area-soft: var(--organization-soft);
+  --area-fill: var(--organization-fill);
+  --area-on: var(--organization-on);
+  --area-logo: var(--logo-organization);
+}
+[data-area='travel'] {
+  --area-accent: var(--travel-accent);
+  --area-soft: var(--travel-soft);
+  --area-fill: var(--travel-fill);
+  --area-on: var(--travel-on);
+  --area-logo: var(--logo-travel);
+}
+
+/* Tabellenziffern für Beträge, Summen und Spalten (Inter/Manrope: nur Ziffern gleich breit, Satzzeichen bleiben). */
+.num {
+  font-variant-numeric: tabular-nums;
+}

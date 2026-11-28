@@ -55,10 +55,12 @@ const same = (label, expected, actual) => {
 
 // Bereichs-Registry: Schlüssel = ID, eindeutige Routen, Tokens für jedes Theme vorhanden.
 const styles = read('src/styles.css');
+const tokens = read('src/app/shared/styles/tokens.css');
 for (const [key, area] of Object.entries(BRAND.areas)) {
   same(`Registry ${key}: id`, key, area.id);
   if (key !== 'global') {
-    same(`Logo-Farbe ${key} (styles.css --logo-${key})`, area.logoColor, new RegExp(`--logo-${area.theme}: (#[0-9a-fA-F]{6})`).exec(styles)?.[1]);
+    same(`Logo-Farbe ${key} (tokens.css --lk-${key}-brand)`, area.logoColor, new RegExp(`--lk-${area.theme}-brand: (#[0-9a-fA-F]{6})`).exec(tokens)?.[1]);
+    if (!styles.includes(`--logo-${area.theme}: var(--lk-${area.theme}-brand)`)) problems.push(`styles.css: --logo-${area.theme} muss auf --lk-${area.theme}-brand zeigen`);
     if (!styles.includes(`--${area.theme}-accent:`)) problems.push(`Registry ${key}: Token --${area.theme}-accent fehlt in styles.css`);
   }
 }

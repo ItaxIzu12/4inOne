@@ -12,7 +12,7 @@
   gap: 4px;
   min-height: 46px;
   padding: 0 10px 0 12px;
-  border: 1px solid var(--border-default, #dde1da);
+  border: 1px solid var(--border-default, #dfdcd5);
   border-radius: 12px;
   background: var(--surface-card);
 }
@@ -46,9 +46,9 @@
 }
 kbd {
   padding: 3px 7px;
-  border: 1px solid var(--border-default, #dde1da);
+  border: 1px solid var(--border-default, #dfdcd5);
   border-radius: 6px;
-  background: var(--surface-sunken, #f1f3ef);
+  background: var(--surface-sunken, #f2f1ec);
   color: var(--text-secondary);
   font: inherit;
   font-size: 12px;
@@ -116,7 +116,7 @@ kbd {
   --soft: var(--travel-soft);
 }
 .gs__item.is-active {
-  background: var(--surface-hover, #f1f3ef);
+  background: var(--surface-hover, #f2f1ec);
 }
 .gs__tile {
   display: grid;

@@ -81,8 +81,8 @@ const H = 300;
       display: block;
       --curve-line: var(--finance-accent, #0e7957);
       --curve-fill: color-mix(in srgb, var(--finance-accent, #0e7957) 11%, transparent);
-      --curve-pace: var(--text-secondary, #52615b);
-      --curve-base: var(--border-subtle, #e6e9e3);
+      --curve-pace: var(--text-secondary, #4f5965);
+      --curve-base: var(--border-subtle, #e8e6e0);
       --curve-height: 180px;
     }
     .readout {

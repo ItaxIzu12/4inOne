@@ -82,7 +82,7 @@
   cursor: pointer;
 }
 .row:hover {
-  background: var(--surface-hover, #f1f3ef);
+  background: var(--surface-hover, #f2f1ec);
 }
 .tile {
   --cat: var(--finance-accent);
@@ -200,7 +200,7 @@
   align-items: baseline;
   gap: 2px 12px;
   padding: 12px 0;
-  border-top: 1px solid var(--border-subtle, #e6e9e3);
+  border-top: 1px solid var(--border-subtle, #e8e6e0);
 }
 .month__list li:first-child {
   border-top: 0;

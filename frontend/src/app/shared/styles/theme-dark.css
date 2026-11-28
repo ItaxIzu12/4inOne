@@ -1,138 +1,141 @@
 /* Dunkelmodus (22.11.2026): dieselben Token-Namen wie in styles.css, nur dunkle Werte. Gilt, wenn das System dunkel
    eingestellt ist (außer man hat in den Einstellungen „Hell“ gewählt) oder wenn „Dunkel“ gewählt ist
    (core/theme/theme.service.ts setzt data-theme an <html>). Komponenten verwenden Tokens; Weiß auf farbigen Knöpfen
-   bleibt weiß, deshalb ist die Hauptfarbe im Dunkeln ein helleres Waldgrün statt Weiß (Kontrast weiß darauf ≥ 7:1). */
+   bleibt weiß, deshalb ist die Hauptfarbe im Dunkeln ein helles Schiefer (Nacht 600) statt Weiß. Werte: Primitive aus
+   shared/styles/tokens.css (docs/DESIGN_TOKENS.md). */
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --surface-app: #0e141a;
-    --surface-card: #161e26;
-    --surface-elevated: #1c252e;
-    --surface-hover: #222c36;
-    --surface-pressed: #28333e;
-    --surface-sunken: #111820;
+    --surface-app: var(--lk-night-950);
+    --surface-card: var(--lk-night-900);
+    --surface-elevated: var(--lk-night-850);
+    --surface-hover: var(--lk-night-800);
+    --surface-pressed: var(--lk-night-750);
+    --surface-sunken: var(--lk-night-925);
 
-    --text-primary: #e9edf1;
-    --text-secondary: #a9b4bf;
-    --text-muted: #a9b4bf;
-    --text-on-accent: #ffffff;
+    --text-primary: var(--lk-night-50);
+    --text-secondary: var(--lk-night-200);
+    --text-muted: var(--lk-night-200);
+    --text-on-accent: var(--lk-white);
 
-    --border-subtle: #2a343e;
-    --border-default: #333e49;
-    --border-strong: #4c5966;
-    --border-control: #6e7b88;
+    --border-subtle: var(--lk-night-700);
+    --border-default: var(--lk-night-650);
+    --border-strong: var(--lk-night-500);
+    --border-control: var(--lk-night-400);
 
-    --brand-primary: #34404c;
-    --brand-primary-hover: #3e4b58;
-    --accent-evergreen: #5cc79c;
+    --brand-primary: var(--lk-night-600);
+    --brand-primary-hover: var(--lk-night-550);
+    --accent-evergreen: var(--lk-finance-ink-dark);
 
-    --finance-accent: #5cc79c;
-    --finance-soft: #17302a;
-    --household-accent: #f2a35c;
-    --household-soft: #352719;
-    --organization-accent: #a99bf2;
-    --organization-soft: #25213d;
-    --travel-accent: #6cc3e0;
-    --travel-soft: #17303a;
-    --finance-fill: #1f7a5c;
-    --household-fill: #9a5a1f;
-    --organization-fill: #5b4bc0;
-    --travel-fill: #1d6d88;
+    --finance-accent: var(--lk-finance-ink-dark);
+    --finance-soft: var(--lk-finance-tint-dark);
+    --household-accent: var(--lk-household-ink-dark);
+    --household-soft: var(--lk-household-tint-dark);
+    --organization-accent: var(--lk-organization-ink-dark);
+    --organization-soft: var(--lk-organization-tint-dark);
+    --travel-accent: var(--lk-travel-ink-dark);
+    --travel-soft: var(--lk-travel-tint-dark);
+    --finance-fill: var(--lk-finance-fill-dark);
+    --household-fill: var(--lk-household-fill-dark);
+    --organization-fill: var(--lk-organization-fill-dark);
+    --travel-fill: var(--lk-travel-fill-dark);
 
-    --success: #6fd3a0;
-    --success-soft: #173327;
-    --warning: #f0c46a;
-    --warning-soft: #332a14;
-    --error: #f2998f;
-    --error-soft: #3a1d1b;
-    --info: #9cc3f5;
-    --info-soft: #1a2a40;
+    --success: var(--lk-green-300);
+    --success-soft: var(--lk-green-950);
+    --warning: var(--lk-amber-300);
+    --warning-soft: var(--lk-amber-950);
+    --error: var(--lk-red-300);
+    --error-soft: var(--lk-red-950);
+    --info: var(--lk-blue-300);
+    --info-soft: var(--lk-blue-950);
 
     --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-overlay: 0 14px 32px -12px rgba(0, 0, 0, 0.7);
-    --focus-ring: 3px solid #8fd6b8;
-    --mint: #1d3329;
-    --accent-ink: #ffffff;
+    --focus-color: var(--lk-night-50);
+    --focus-ring: var(--focus-width) solid var(--focus-color);
+    --mint: var(--lk-finance-tint-dark);
+    --accent-ink: var(--lk-white);
     --color-amber-ink: #e3ab5f;
     --color-amber-glow: #c98f59;
-    --text-link: #8fd6b8;
-    --text-link-hover: #b2e6cf;
-    --chart-red: #f0798c;
-    --chart-red-soft: #3a1e25;
-    --chart-blue: #7fb0f0;
-    --chart-blue-soft: #1a2a40;
-    --chart-amber: #f0b45a;
-    --chart-amber-soft: #352915;
-    --chart-green: #6fd3a0;
-    --chart-green-soft: #173327;
-    --chart-track: #28333e;
+    --text-link: var(--lk-night-50);
+    --text-link-hover: var(--lk-white);
+    --chart-red: var(--lk-chart-red-dark);
+    --chart-red-soft: var(--lk-chart-red-tint-dark);
+    --chart-blue: var(--lk-chart-blue-dark);
+    --chart-blue-soft: var(--lk-blue-950);
+    --chart-amber: var(--lk-chart-amber-dark);
+    --chart-amber-soft: var(--lk-chart-amber-tint-dark);
+    --chart-green: var(--lk-green-300);
+    --chart-green-soft: var(--lk-green-950);
+    --chart-track: var(--lk-night-750);
   }
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --surface-app: #0e141a;
-  --surface-card: #161e26;
-  --surface-elevated: #1c252e;
-  --surface-hover: #222c36;
-  --surface-pressed: #28333e;
-  --surface-sunken: #111820;
+  --surface-app: var(--lk-night-950);
+  --surface-card: var(--lk-night-900);
+  --surface-elevated: var(--lk-night-850);
+  --surface-hover: var(--lk-night-800);
+  --surface-pressed: var(--lk-night-750);
+  --surface-sunken: var(--lk-night-925);
 
-  --text-primary: #e9edf1;
-  --text-secondary: #a9b4bf;
-  --text-muted: #a9b4bf;
-  --text-on-accent: #ffffff;
+  --text-primary: var(--lk-night-50);
+  --text-secondary: var(--lk-night-200);
+  --text-muted: var(--lk-night-200);
+  --text-on-accent: var(--lk-white);
 
-  --border-subtle: #2a343e;
-  --border-default: #333e49;
-  --border-strong: #4c5966;
-  --border-control: #6e7b88;
+  --border-subtle: var(--lk-night-700);
+  --border-default: var(--lk-night-650);
+  --border-strong: var(--lk-night-500);
+  --border-control: var(--lk-night-400);
 
-  --brand-primary: #34404c;
-  --brand-primary-hover: #3e4b58;
-  --accent-evergreen: #5cc79c;
+  --brand-primary: var(--lk-night-600);
+  --brand-primary-hover: var(--lk-night-550);
+  --accent-evergreen: var(--lk-finance-ink-dark);
 
-  --finance-accent: #5cc79c;
-  --finance-soft: #17302a;
-  --household-accent: #f2a35c;
-  --household-soft: #352719;
-  --organization-accent: #a99bf2;
-  --organization-soft: #25213d;
-  --travel-accent: #6cc3e0;
-  --travel-soft: #17303a;
-  --finance-fill: #1f7a5c;
-  --household-fill: #9a5a1f;
-  --organization-fill: #5b4bc0;
-  --travel-fill: #1d6d88;
+  --finance-accent: var(--lk-finance-ink-dark);
+  --finance-soft: var(--lk-finance-tint-dark);
+  --household-accent: var(--lk-household-ink-dark);
+  --household-soft: var(--lk-household-tint-dark);
+  --organization-accent: var(--lk-organization-ink-dark);
+  --organization-soft: var(--lk-organization-tint-dark);
+  --travel-accent: var(--lk-travel-ink-dark);
+  --travel-soft: var(--lk-travel-tint-dark);
+  --finance-fill: var(--lk-finance-fill-dark);
+  --household-fill: var(--lk-household-fill-dark);
+  --organization-fill: var(--lk-organization-fill-dark);
+  --travel-fill: var(--lk-travel-fill-dark);
 
-  --success: #6fd3a0;
-  --success-soft: #173327;
-  --warning: #f0c46a;
-  --warning-soft: #332a14;
-  --error: #f2998f;
-  --error-soft: #3a1d1b;
-  --info: #9cc3f5;
-  --info-soft: #1a2a40;
+  --success: var(--lk-green-300);
+  --success-soft: var(--lk-green-950);
+  --warning: var(--lk-amber-300);
+  --warning-soft: var(--lk-amber-950);
+  --error: var(--lk-red-300);
+  --error-soft: var(--lk-red-950);
+  --info: var(--lk-blue-300);
+  --info-soft: var(--lk-blue-950);
 
   --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-overlay: 0 14px 32px -12px rgba(0, 0, 0, 0.7);
-  --focus-ring: 3px solid #8fd6b8;
-  --mint: #1d3329;
-  --accent-ink: #ffffff;
+  --focus-color: var(--lk-night-50);
+  --focus-ring: var(--focus-width) solid var(--focus-color);
+  --mint: var(--lk-finance-tint-dark);
+  --accent-ink: var(--lk-white);
   --color-amber-ink: #e3ab5f;
   --color-amber-glow: #c98f59;
-  --text-link: #8fd6b8;
-  --text-link-hover: #b2e6cf;
-  --chart-red: #f0798c;
-  --chart-red-soft: #3a1e25;
-  --chart-blue: #7fb0f0;
-  --chart-blue-soft: #1a2a40;
-  --chart-amber: #f0b45a;
-  --chart-amber-soft: #352915;
-  --chart-green: #6fd3a0;
-  --chart-green-soft: #173327;
-  --chart-track: #28333e;
+  --text-link: var(--lk-night-50);
+  --text-link-hover: var(--lk-white);
+  --chart-red: var(--lk-chart-red-dark);
+  --chart-red-soft: var(--lk-chart-red-tint-dark);
+  --chart-blue: var(--lk-chart-blue-dark);
+  --chart-blue-soft: var(--lk-blue-950);
+  --chart-amber: var(--lk-chart-amber-dark);
+  --chart-amber-soft: var(--lk-chart-amber-tint-dark);
+  --chart-green: var(--lk-green-300);
+  --chart-green-soft: var(--lk-green-950);
+  --chart-track: var(--lk-night-750);
 }
 
 :root[data-theme='light'] {

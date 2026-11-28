@@ -8,14 +8,15 @@ Erwachsen, ruhig, hochwertig, klar, effizient — freundlich, nicht verspielt. E
 Systematisch im Grundgerüst, flexibel im Inhalt. Keine Gradients, Glas, Glow, Deko-Charts, Badge-Fluten, Karten in Karten.
 
 ## Tokens („Soft Editorial“, seit 22.10.2026; Lumiknot-Farben und -Schrift seit 28.11.2026 — App und Website)
-- Flächen: `--surface-app` Ivory `#F7F6F2`, Karten `#FFFFFF`, Sage `#ECEFEA` (zweite Fläche, aktive Zustände), Hover `#F1F3EF`; dunkle Bänder Midnight `#101820`.
-- Text: `--text-primary` Midnight `#101820` (16,5:1 auf Ivory), `--text-secondary` `#52615B` (6,0:1 Ivory, 5,6:1 Sage). Linien `#E6E9E3` / `#DDE1DA`, Feldränder `--border-control` `#879189` (3:1).
+- Ebenen: Primitive `--lk-*` (`shared/styles/tokens.css`) → Semantik (`styles.css`, dunkel `theme-dark.css`) → Komponenten (`--button-*`, `--field-*`, `--card-*` …) → Bereich (`--area-*` an `[data-area]`); Details `docs/DESIGN_TOKENS.md`. Komponenten nie mit Primitiven oder Hex-Werten.
+- Flächen: `--surface-app` Ivory `#F7F6F2`, Karten `#FFFFFF`, Papier `#EEECE7` (zweite Fläche, aktive Zustände), Hover `#F2F1EC`; dunkle Bänder Midnight `#101820`.
+- Text: `--text-primary` Midnight `#101820` (16,6:1 auf Ivory), `--text-secondary` Schiefer `#4F5965` (6,6:1 Ivory, 6,0:1 Papier). Linien `#E8E6E0` / `#DFDCD5`, Feldränder `--border-control` `#857F76` (4,0:1).
 - Hauptfarbe `--brand-primary` Midnight `#101820` (Knöpfe, Fokus), Hover Graphite `#29323B`; Akzent `--accent-evergreen` `#0E7957` (Links, Fortschritt, aktive Zustände) — nicht für Knöpfe, weil zugleich Finanzen-Farbe.
-- Bereiche (aus den Logo-Farben abgedunkelt), nur für Symbole, Balken, Beschriftungen, kleine Flächen (Fläche `--*-fill` = Text `--*-accent` · Tönung `--*-soft`): Finanzen `#0E7957` · `#E3F4EE`; Haushalt `#955E28` · `#FEF3E8`; Organisation `#6A59CC` · `#EFECFC`; Reisen `#197390` · `#E4F3F7`. Text ≥ 4,6:1 auf Weiß/Ivory/Sage, Weiß darauf ≥ 5,3:1. Reine Logo-Farben `--logo-*` (`#13A274` · `#F59A42` · `#7864E7` · `#2197BE`) nur für Logo, Farbpunkte und Dekor.
+- Bereiche (aus den Logo-Farben abgedunkelt), nur für Symbole, Balken, Beschriftungen, kleine Flächen (Fläche `--*-fill` = Text `--*-accent` · Tönung `--*-soft`): Finanzen `#0E7957` · `#E3F4EE`; Haushalt `#955E28` · `#FEF3E8`; Organisation `#6A59CC` · `#EFECFC`; Reisen `#197390` · `#E4F3F7`. Text ≥ 4,5:1 auf Weiß/Ivory/Papier, Weiß darauf ≥ 5,3:1. Reine Logo-Farben `--logo-*` (`#13A274` · `#F59A42` · `#7864E7` · `#2197BE`) nur für Logo, Farbpunkte und Dekor.
 - Status: Erfolg `#1e7a4d` · Warnung `#8a5a00` · Fehler `#b3261e` · Info `#245fb0` — nie nur über Farbe.
-- Typo (Inter für die Oberfläche, Manrope für Marke und Überschriften, selbst gehostet; keine Kursive; Überschriften Website 650, App 700): Seite 30 (Handy 24) · Abschnitt 20 · Text 16 · Sekundär 14 · Meta 13. Ziffern proportional.
+- Typo (Inter für die Oberfläche, Manrope für Marke und Überschriften, selbst gehostet; keine Kursive; Überschriften Website 650, App 700): Seite 30 (Handy 24) · Abschnitt 20 · Text 16 · Sekundär 14 · Meta 13. Beträge und Spalten mit tabellarischen Ziffern (`.num`).
 - Abstände 4 · 8 · 12 · 16 · 24 · 32 · 40 · 48 · 64. Radien App 8 · 12 · 16; Website-Karten 20–28. Schatten nur sehr zurückhaltend.
-- Layout: Inhalt max. 1280 px (Website 1240), Steuerhöhe 44 px; Fokus 2–3 px Midnight (auf dunklen Bändern Weiß).
+- Layout: Inhalt max. 1280 px (Website 1240), Steuerhöhe 44 px; Fokus 3 px Midnight, Abstand 2 px (dunkel: hell). Ebenen `--elevation-0…3`, Bewegung 150/200/240/300 ms, Breakpoints 480 · 760 · 1024 · 1280 (`_breakpoints.scss`).
 
 ## Regeln
 - Schriften (28.11.2026): Inter (`--font-body`) für App, Formulare und Fließtext, Manrope (`--font-brand` = `--font-display`) für Logo und Überschriften; beide OFL, Dateien `public/fonts/{inter,manrope}` (je zwei Teildateien nach Zeichenbereich), selbst gehostet statt Google-CDN (keine IP-Übertragung, LG München 20.01.2022), vorgeladen, `font-display: swap`. Keine Kursive (auch kein künstliches Neigen: `font-synthesis-style: none`, `em/i/cite` normal). Große Überschriften −0,03 em.

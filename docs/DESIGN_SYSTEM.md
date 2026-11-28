@@ -2,21 +2,26 @@
 
 > **Pflege:** Jede Änderung an Tokens, gemeinsamen Komponenten, Layout-Regeln oder Bereichsfarben wird hier und in
 > der Kurzfassung [`/DESIGN.md`](../DESIGN.md) im selben Schritt nachgetragen (siehe AGENTS.md › Design-Dokumentation).
-> Die Werte stehen als CSS-Variablen in `frontend/src/styles.css`; diese Datei ist ihre Beschreibung.
+> Token-Ebenen (Primitive → Semantik → Komponenten → Bereichs-Theme), alle Werte und Kontraste: [`docs/DESIGN_TOKENS.md`](DESIGN_TOKENS.md).
+> Dateien: `frontend/src/app/shared/styles/tokens.css` (Primitive, Komponenten, Bereiche), `frontend/src/styles.css`
+> (Semantik hell), `shared/styles/theme-dark.css` (Semantik dunkel).
 
 **Grundsatz:** Ein Designsystem, vier Fachbereiche. *Systematisch im Grundgerüst, flexibel im Inhalt.*
 Complex underneath, simple on top. Weniger Elemente, bessere Ordnung — keine Dekoration, um Platz zu füllen.
 
 ### Flächen, Text, Linien
 
-| Token | Wert | Verwendung |
+| Token | Wert (hell) | Verwendung |
 | --- | --- | --- |
-| `--surface-app` | `#f4f6fa` | Hintergrund der App (leicht blau getöntes Off-White) |
-| `--surface-card` / `--surface-elevated` | `#ffffff` | Karten, Modals, Menüs |
-| `--surface-hover` / `--surface-pressed` | `#f6f8fb` / `#eef2f7` | Hover / Press von Zeilen und Flächen |
-| `--text-primary` | `#1b2a44` | Text (getöntes Navy, kein Schwarz) |
-| `--text-secondary` = `--text-muted` | `#56657c` | Sekundärtext, Metadaten (≥ 5:1 auf `--surface-app`) |
-| `--border-subtle` / `--border-default` / `--border-strong` | `#e7ebf1` / `#dfe4ed` / `#b9c0ce` | Karten, Trennlinien / Standard / Eingaben |
+| `--surface-app` | Ivory `#f7f6f2` | Hintergrund der App und der Website |
+| `--surface-card` / `--surface-elevated` | `#ffffff` | Karten, Dialoge, Menüs |
+| `--surface-hover` / `--surface-pressed` | Papier `#f2f1ec` / `#eeece7` | Hover / gedrückt, zweite Fläche (Segment-Spur) |
+| `--text-primary` | Midnight `#101820` | Text |
+| `--text-secondary` = `--text-muted` | Schiefer `#4f5965` | Sekundärtext, Metadaten (7,1:1 auf Weiß, 6,0:1 auf Papier) |
+| `--border-subtle` / `--border-default` / `--border-strong` | `#e8e6e0` / `#dfdcd5` / `#bab6ad` | Karten, Trennlinien / Standard / stark |
+| `--border-control` | `#857f76` | Feldränder (4,0:1 auf Weiß) |
+
+Dunkelwerte und alle weiteren Rollen (Deaktiviert, Fokus, Zustände, Ebenen, Bewegung): `docs/DESIGN_TOKENS.md`.
 
 ### Marke, Bereiche, Status
 
@@ -26,7 +31,7 @@ Complex underneath, simple on top. Weniger Elemente, bessere Ordnung — keine D
   `npm run check:brand`) – nur Logo, Farbpunkte, Dekor, nie Text (2,2–4,4:1 auf Weiß).
 - Bereiche — **Akzente, keine Flächenfüller** (Symbol, kleiner Aktiv-Indikator, kleine Statusinfo), abgedunkelt aus
   den Logo-Farben: Finanzen `--finance-accent #0e7957` · Haushalt `--household-accent #955e28` · Organisation
-  `--organization-accent #6a59cc` · Reisen `--travel-accent #197390` (≥ 4,6:1 auf Weiß, Ivory und Sage; `--*-fill`
+  `--organization-accent #6a59cc` · Reisen `--travel-accent #197390` (≥ 4,5:1 auf Weiß, Ivory und Papier; `--*-fill`
   gleich, weißer Text darauf ≥ 5,3:1); je `--*-soft` als helle Fläche (`#e3f4ee` · `#fef3e8` · `#efecfc` · `#e4f3f7`,
   Akzent darauf ≥ 4,6:1). Dunkelmodus: `#5cc79c` · `#f2a35c` · `#a99bf2` · `#6cc3e0` (≥ 6,3:1 auf den Karten).
 - Status überall gleich: `--success #1e7a4d`, `--warning #8a5a00`, `--error #b3261e` (= `--danger`), `--info #245fb0`,
@@ -51,7 +56,8 @@ Teildateien nach Zeichenbereich, vorgeladen), keine Kursive. Davor Schibsted Gro
 | Metadaten | `--fs-meta` | 13 px |
 | Caption | `--fs-caption` | 12 px |
 
-Zahlen (Beträge, Zeiten, Datum, Zähler): `font-variant-numeric: tabular-nums`. Hierarchie über Größe, Gewicht und
+Zahlen (Beträge, Zeiten, Zähler in Spalten): tabellarische Ziffern über `.num` oder
+`font-variant-numeric: var(--font-numeric-tabular)` (seit 28.11.2026 wieder wirksam, siehe `docs/DESIGN_TOKENS.md` › Typografie). Hierarchie über Größe, Gewicht und
 Abstand — nie nur über Farbe.
 
 ### Abstände, Radien, Schatten
@@ -60,8 +66,8 @@ Abstand — nie nur über Farbe.
   großzügig, nicht überall derselbe Abstand (Startseite: Kopf→Band 32, Band→Heute 48, Heute→Für dich 40).
 - Radien: `--radius-sm 8` (Icons, kleine Flächen, Menüeinträge) · `--radius-md 12` (Buttons, Eingaben, Menüs) ·
   `--radius-lg 16` (Karten, Kopfkarten, Modals) · `--radius-pill` nur für kleine Chips. Keine 20–32-px-Radien.
-- Schatten nur für echte Ebenen: `--shadow-overlay` (Modal, Dropdown, Menü), sonst `--shadow-none`; Karten werden
-  durch Fläche, Linie und Abstand getrennt.
+- Schatten nur für echte Ebenen: `--elevation-0…3` (keine · Segment · Menü · Dialog), sonst `--shadow-none`; Karten
+  werden durch Fläche, Linie und Abstand getrennt.
 
 ### Layout
 
@@ -150,6 +156,14 @@ Abstand — nie nur über Farbe.
 
 ### Referenz und Migrationsstand
 
+- **Design-Token-Grundlage (28.11.2026, `docs/DESIGN_TOKENS.md`):** vier Ebenen – Primitive `--lk-*`
+  (`shared/styles/tokens.css`, einzige Stelle mit Farbwerten), Semantik (`styles.css`/`theme-dark.css` zeigen darauf),
+  Komponenten-Tokens (Knopf, Feld, Karte, Chip, Dialog, Navigation) und Bereichs-Themes `--area-*` an `[data-area]`
+  (App-Shell setzt es). Neu: Deaktiviert-, Fokus-, Zustands-, Ebenen-, z-Index-, Bewegungs- und Breakpoint-Tokens
+  (`_breakpoints.scss`). Helle Neutrale von grünlichem Sage auf warmes Papier aus Ivory und Schiefer aus Graphite
+  (gleiche Helligkeit, Kontraste neu berechnet; feste Altwerte in 22 Komponenten mitgezogen); Fokus und Links im
+  Dunkelmodus neutral statt grün. Tabellarische Ziffern wieder wirksam (Inter/Manrope verbreitern keine Satzzeichen).
+  Größenbudget des Startdownloads 500 → 512 kB (Tokens +8,6 kB unkomprimiert, ≈ +1,5 kB gzip).
 - **Zentrale Brand-Konfiguration (28.11.2026, `docs/BRAND_CONFIGURATION.md`):** Bereichs-Registry `BRAND.areas`
   (ID, Name, Marke, Beschreibung, Route, Symbol, Theme-Präfix, Logo-Kontext); Seitenleiste, Handy-Navigation,
   Fußzeile, Landing, Anmeldung und Onboarding lesen Namen, Symbole und Routen daraus. `check:brand` prüft Manifest,

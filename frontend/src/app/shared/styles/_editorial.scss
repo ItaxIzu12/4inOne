@@ -7,13 +7,13 @@
 
 @mixin tokens {
   --ground: #f7f6f2;
-  --ground-2: #ecefea;
+  --ground-2: #eeece7;
   --card: #ffffff;
   --ink: #101820;
-  --ink-soft: #52615b; // 6,1:1 auf --ground, 5,6:1 auf --ground-2
+  --ink-soft: #4f5965; // 6,1:1 auf --ground, 5,6:1 auf --ground-2
   --forest: #101820; // dunkle Bänder (Verknüpfen, Abschluss)
   --evergreen: #0e7957; // Akzent: Links, Fortschritt, aktive Zustände
-  --line: #dde1da;
+  --line: #dfdcd5;
   // Schriften global (styles.css): Manrope für Überschriften, Inter für Text
   --display: var(--font-display, 'Manrope', sans-serif);
   --sans: var(--font-body, 'Inter', sans-serif);

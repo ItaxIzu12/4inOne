@@ -28,6 +28,7 @@
               }
             ],
             "styles": [
+              "src/app/shared/styles/tokens.css",
               "src/styles.css",
               "src/app/shared/ui/form/form-controls.css",
               "src/app/shared/ui/form/choice-controls.css",
@@ -39,7 +40,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                  "maximumWarning": "512kB",
                   "maximumError": "1MB"
                 },
                 {

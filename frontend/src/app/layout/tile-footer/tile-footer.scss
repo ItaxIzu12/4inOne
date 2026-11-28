@@ -1,11 +1,11 @@
 // Globaler Fuß „Soft Editorial“: Porcelain, feine Linie oben, Marke links, Link-Spalten rechts, ©-Leiste unten.
 // Von außen anpassbar über --tf-ink, --tf-muted, --tf-line, --tf-ground und die Bereichsfarben --tf-finance/…
-// Kontraste: Forest #101820 auf Porcelain 14,8:1 · Sekundärtext #52615b 6,4:1.
+// Kontraste: Forest #101820 auf Porcelain 14,8:1 · Sekundärtext #4f5965 6,4:1.
 :host {
   display: block; // keine eigenen --tf-*-Werte hier: sie würden die von der Seite geerbten überschreiben
 }
 .tf {
-  border-top: 1px solid var(--tf-line, #dde1da);
+  border-top: 1px solid var(--tf-line, #dfdcd5);
   background: var(--tf-ground, #f7f6f2);
   color: var(--tf-ink, #101820);
 }
@@ -41,7 +41,7 @@ p {
 .tf__note {
   max-width: 34ch;
   margin-top: 8px;
-  color: var(--tf-muted, #52615b);
+  color: var(--tf-muted, #4f5965);
   font-size: 15px;
   line-height: 1.55;
 }
@@ -83,7 +83,7 @@ p {
 }
 .tf__head {
   margin-bottom: 6px;
-  color: var(--tf-muted, #52615b);
+  color: var(--tf-muted, #4f5965);
   font-size: 13px;
   font-weight: 600;
 }
@@ -130,8 +130,8 @@ p {
   --tone: var(--tf-travel, #197390);
 }
 .tf__bar {
-  border-top: 1px solid var(--tf-line, #dde1da);
-  color: var(--tf-muted, #52615b);
+  border-top: 1px solid var(--tf-line, #dfdcd5);
+  color: var(--tf-muted, #4f5965);
   font-size: 14px;
 }
 .tf__bar-inner {
@@ -147,7 +147,7 @@ p {
 }
 @media (hover: hover) and (pointer: fine) {
   .tf__col a:hover {
-    background: var(--tf-hover, #ecefea);
+    background: var(--tf-hover, #eeece7);
   }
 }
 @media (max-width: 900px) {

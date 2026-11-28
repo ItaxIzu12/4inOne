@@ -432,7 +432,7 @@ small {
   color: light-dark(#d61f3c, #ee8b9b);
 }
 .state--offen i {
-  color: light-dark(#8a93a3, #a9b5b0);
+  color: light-dark(#8a93a3, #a9b4bf);
 }
 .notes {
   margin: 4px 0 8px;
@@ -542,7 +542,7 @@ small {
   .row__chevron {
     width: 16px;
     height: 16px;
-    color: light-dark(#8a93a3, #a9b5b0);
+    color: light-dark(#8a93a3, #a9b4bf);
   }
 }
 // Raster nach verfügbarer Breite (nicht Fenster): Liste braucht ~600 px, sonst steht das Detail darunter.

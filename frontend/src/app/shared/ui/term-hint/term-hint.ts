@@ -48,7 +48,7 @@ import { AppIcon } from '../icons/app-icon';
       border: 0;
       border-radius: 50%;
       background: transparent;
-      color: var(--text-secondary, #52615b);
+      color: var(--text-secondary, #4f5965);
       cursor: pointer;
     }
     .hint-btn::before {

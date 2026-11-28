@@ -50,7 +50,7 @@ bedeutungstragend. Für Text, Symbole, Balken und Flächen gibt es kontrastgepr�
 | Organisation | `#6A59CC` | `#EFECFC` | `#A99BF2` |
 | Reisen | `#197390` | `#E4F3F7` | `#6CC3E0` |
 
-Text/Fläche ≥ 4,6:1 auf Weiß, Ivory und Sage; weißer Text darauf ≥ 5,3:1; Akzent auf Tönung ≥ 4,6:1;
+Text/Fläche ≥ 4,5:1 auf Weiß, Ivory und Papier; weißer Text darauf ≥ 5,3:1; Akzent auf Tönung ≥ 4,6:1;
 Dunkelmodus ≥ 6,3:1 auf den Karten. Tokens: `--logo-*`, `--*-accent`, `--*-fill`, `--*-soft` (styles.css).
 
 ## Schrift

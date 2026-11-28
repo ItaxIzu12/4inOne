@@ -104,7 +104,7 @@
   gap: 8px;
   min-height: 44px;
   padding: 0 14px;
-  border: 1px solid var(--border-default, #dde1da);
+  border: 1px solid var(--border-default, #dfdcd5);
   border-radius: 999px;
   background: var(--surface-card);
   color: var(--text-primary);
@@ -121,7 +121,7 @@
 }
 .transport-chip:hover,
 .category-chip:hover {
-  border-color: var(--border-strong, #b9c0b6);
+  border-color: var(--border-strong, #bab6ad);
 }
 .transport-chip[aria-pressed='true'] {
   border-color: var(--travel-accent);

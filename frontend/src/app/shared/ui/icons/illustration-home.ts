@@ -3,9 +3,9 @@ import { Component } from '@angular/core';
   selector: 'illustration-home',
   standalone: true,
   template: `<svg viewBox="0 0 180 165" fill="none" aria-hidden="true">
-    <circle cx="101" cy="33" r="23" fill="#DDEEDC" />
+    <circle cx="101" cy="33" r="23" fill="#e3f4ee" />
     <rect x="25" y="77" width="71" height="71" rx="16" fill="#E9E5F6" />
-    <rect x="91" y="92" width="67" height="56" rx="16" fill="#DDEEDC" />
+    <rect x="91" y="92" width="67" height="56" rx="16" fill="#e3f4ee" />
     <path
       d="M17 82 60 43l43 39M83 95l42-32 40 32"
       stroke="#29374E"

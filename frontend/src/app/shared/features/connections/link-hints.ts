@@ -111,7 +111,7 @@ export function connectionHints(type: ConnectionObjectType, ids: () => readonly 
     .dom-finanzen { --hint-soft: var(--finance-soft, #e3f4ee); --hint-text: var(--finance-accent, #0e7957); }
     .dom-haushalt { --hint-soft: var(--household-soft, #fef3e8); --hint-text: var(--household-accent, #955e28); }
     .dom-organisation { --hint-soft: var(--organization-soft, #efecfc); --hint-text: var(--organization-accent, #6a59cc); }
-    .hint--more { --hint-soft: var(--surface-hover, #f1f3ef); --hint-text: var(--text-secondary, #52615b); }
+    .hint--more { --hint-soft: var(--surface-hover, #f2f1ec); --hint-text: var(--text-secondary, #4f5965); }
     .sr-only {
       position: absolute;
       width: 1px;
