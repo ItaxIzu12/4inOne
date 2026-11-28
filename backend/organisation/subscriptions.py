@@ -2,7 +2,7 @@
 
 Ein ICS-Link (Google „Geheime Adresse im iCal-Format“, Outlook „ICS veröffentlichen“, iCloud „öffentlicher Kalender“,
 Schulferien …) wird serverseitig abgerufen und als nur lesbare Termine gespeichert. Bei jedem Abruf werden die Termine
-des Abos vollständig ersetzt – es gibt keine Kopie, die man in Veyora ändern könnte, und nichts geht zurück.
+des Abos vollständig ersetzt – es gibt keine Kopie, die man in Lumiknot ändern könnte, und nichts geht zurück.
 
 Sicherheit (Server ruft eine von Nutzern genannte Adresse auf – SSRF):
 - nur https (webcal:// wird zu https://) und nur Port 443, keine Zugangsdaten im Link;
@@ -103,7 +103,7 @@ def fetch(url: str) -> str:
         path = urlunsplit(('', '', parts.path or '/', parts.query, ''))
         try:
             response = pool.request(
-                'GET', path, headers={'Host': host, 'Accept': 'text/calendar, */*;q=0.5', 'User-Agent': 'Veyora-Kalenderabo/1.0'},
+                'GET', path, headers={'Host': host, 'Accept': 'text/calendar, */*;q=0.5', 'User-Agent': 'Lumiknot-Kalenderabo/1.0'},
                 redirect=False, preload_content=False,
             )
         except urllib3.exceptions.HTTPError:

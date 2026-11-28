@@ -1,4 +1,4 @@
-# Veyora — Markenrichtlinien
+# Lumiknot — Markenrichtlinien
 
 Verbindlich für alle neuen Entwicklungen seit 28.11.2026. Vorher hieß das Produkt **4inOne**; was technisch noch so
 heißt und warum, steht in `docs/REBRANDING_MIGRATION.md`. Logo-Regeln: `docs/LOGO_USAGE.md`. Namen und Bezeichner:
@@ -8,19 +8,19 @@ heißt und warum, steht in `docs/REBRANDING_MIGRATION.md`. Logo-Regeln: `docs/LO
 
 | | |
 |---|---|
-| Produktname | **Veyora** (so geschrieben; kein ®, solange keine Eintragung nachgewiesen ist) |
+| Produktname | **Lumiknot** (so geschrieben; kein ®, solange keine Eintragung nachgewiesen ist) |
 | Claim | *Life, connected.* |
 | Leitsatz in der App (de) | Dein Alltag. Alles verbunden. |
 | Bereiche in der App | Finanzen · Haushalt · Organisation · Reisen |
-| Bereichsnamen der Marke | Veyora Finance · Veyora Home · Veyora Planner · Veyora Travel |
+| Bereichsnamen der Marke | Lumiknot Finance · Lumiknot Home · Lumiknot Planner · Lumiknot Travel |
 | Werte | Verbindung, persönliche Unabhängigkeit, Intelligenz, Vertrauen, Einfachheit, Ordnung, ruhige Qualität, langfristiger Wert |
 
-Veyora ist ein datenschutzorientiertes, modulares, persönliches Ökosystem, das Finanzen, Haushalt, Organisation und
-Reisen verbindet. Jeder Bereich funktioniert allein; besonders wird Veyora durch Verknüpfungen zwischen Bereichen.
+Lumiknot ist ein datenschutzorientiertes, modulares, persönliches Ökosystem, das Finanzen, Haushalt, Organisation und
+Reisen verbindet. Jeder Bereich funktioniert allein; besonders wird Lumiknot durch Verknüpfungen zwischen Bereichen.
 
-**Sprache:** Die App ist deutsch und nennt die Bereiche deutsch. Die englischen Bereichsnamen („Veyora Home“) gelten
+**Sprache:** Die App ist deutsch und nennt die Bereiche deutsch. Die englischen Bereichsnamen („Lumiknot Home“) gelten
 für Marketing, Markenunterlagen und künftige internationale Auftritte – in der App nur, wo sie einen klaren Mehrwert
-haben. Global spricht die Marke als „Veyora“.
+haben. Global spricht die Marke als „Lumiknot“.
 
 ## Tonalität
 
@@ -67,7 +67,7 @@ Dunkelmodus ≥ 6,3:1 auf den Karten. Tokens: `--logo-*`, `--*-accent`, `--*-fil
 - `frontend/src/app/shared/ui/brand/orbit.ts`: Geometrie des Zeichens.
 - `frontend/src/styles.css`: Design-Tokens; `--logo-*` müssen `brand.config.ts` entsprechen (`npm run check:brand`).
 - `npm run brand:assets` erzeugt alle Logo-Dateien aus diesen Quellen; nie von Hand nachbearbeiten.
-- Fließtexte nennen „Veyora“ direkt; `npm run check:brand` (auch in CI) verhindert den alten Namen im Frontend.
+- Fließtexte nennen „Lumiknot“ direkt; `npm run check:brand` (auch in CI) verhindert den alten Namen im Frontend.
 
 ## Erweiterungsregeln
 
@@ -76,4 +76,22 @@ Dunkelmodus ≥ 6,3:1 auf den Karten. Tokens: `--logo-*`, `--*-accent`, `--*-fil
   `npm run brand:assets`, Kontrast prüfen, Doku hier und in `docs/DESIGN_SYSTEM.md` nachtragen.
 - Keine Verläufe, Neon-Effekte oder Schatten am Logo; die räumliche Variante gibt es nur für ausgewählte
   Markenpräsentationen, nie in der App.
-- Vor einer Veröffentlichung: Marken- (DPMA/EUIPO) und Domainprüfung für „Veyora“.
+- Vor einer Veröffentlichung: Marken- (DPMA/EUIPO) und Domainprüfung für „Lumiknot“ durch eine Fachperson (siehe
+  unten).
+
+## Namensprüfung (Vorab-Recherche 28.11.2026, keine Rechtsberatung)
+
+**Lumiknot** (gewählt am 28.11.2026):
+
+- **Domains** (direkt bei den Registern abgefragt): `lumiknot.de` (DENIC „free“), `.com`, `.net`, `.app`, `.io`,
+  `.eu` waren nicht registriert. Sichern, bevor der Name öffentlich wird.
+- **Gleicher Name:** keine Marke, Firma oder App „Lumiknot“ gefunden. „Lumi Knot“ ist Produktname für Taschen,
+  Sportkleidung und Deko (andere Waren, geringes Risiko).
+- **Klangnähe:** Gesprochen „Luminot“ ähnelt **Luminote** – mehrere Notiz-Apps (Luminotes AI, luminote.ai,
+  luminote.io) und US-Anmeldungen (u. a. Serial 99433903, Newsletter zu Finanzen/Technik). Weil Lumiknot Notizen
+  enthält, ist das der Punkt, den eine Fachperson prüfen sollte; Schreibweise und Bedeutung unterscheiden sich klar.
+- **Empfehlung:** Domains `.de` und `.com` registrieren; in DPMAregister und TMview nach „Lumiknot“ und „Luminote“
+  in den Klassen 9 (Software), 36 (Finanzen) und 42 (SaaS) suchen bzw. suchen lassen.
+
+**Verworfen – Veyora** (Zwischenname am 28.11.2026): US-Anmeldung „VEYORA“ der Veyora Inc. (Serial 99493030,
+Klasse 9, Brillen), `veyora.de/.com/.eu/.app/.net` vergeben, viele ähnliche Kunstnamen (Velora, Vyora, Veyra).

@@ -368,7 +368,7 @@ class BetaFeedback(models.Model):
         CHANGE = 'T2', 'Eine Änderung vornehmen und die Folgen prüfen'
         TRIP = 'T3', 'Reise mit Budget und Kalender verbinden'
         PAUSE = 'T4', 'Eine Verbindung pausieren oder aufheben'
-        BENEFIT = 'T5', 'Den Vorteil von Veyora erklären'
+        BENEFIT = 'T5', 'Den Vorteil von Lumiknot erklären'
 
     class Answer(models.TextChoices):
         YES = 'YES', 'Ja'

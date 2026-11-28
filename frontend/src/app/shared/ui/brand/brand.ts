@@ -4,7 +4,7 @@ import { BRAND, BrandContext } from '../../../core/brand/brand.config';
 import { ORBIT_ELEMENTS, ORBIT_STROKE, orbitViewBox } from './orbit';
 
 /**
- * Die Marke Veyora (28.11.2026, docs/LOGO_USAGE.md): Orbit-Zeichen (shared/ui/brand/orbit.ts) und Name in Manrope.
+ * Die Marke Lumiknot (28.11.2026, docs/LOGO_USAGE.md): Orbit-Zeichen (shared/ui/brand/orbit.ts) und Name in Manrope.
  *
  * - `context`: 'global' (Standard) zeigt alle vier Elemente gleich; in einem Bereich bleibt das passende Element voll
  *   und die anderen werden leiser – Form, Farben und Reihenfolge bleiben, die Marke bleibt erkennbar.

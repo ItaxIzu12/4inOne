@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Erzeugt alle Logo-Dateien von Veyora aus EINER Quelle (Geometrie shared/ui/brand/orbit.ts, Farben und Pfade
+// Erzeugt alle Logo-Dateien von Lumiknot aus EINER Quelle (Geometrie shared/ui/brand/orbit.ts, Farben und Pfade
 // core/brand/brand.config.ts). Aufruf: `npm run brand:assets` (Node ≥ 22.18, liest TypeScript direkt; Playwright-
 // Chromium für die PNG-Dateien). Ergebnis wird eingecheckt; Regeln in docs/LOGO_USAGE.md.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -59,20 +59,30 @@ function symbolSvg(opts: { small?: boolean; mono?: string; title?: boolean } = {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${orbitViewBox(opts.small)}" role="img" aria-label="${BRAND.name}">${title}${orbitPaths(opts)}</svg>\n`;
 }
 
-/** Zeichen + Name (+ Claim). Schrift Manrope eingebettet, damit die Datei überall gleich aussieht. */
-function lockupSvg(layout: 'horizontal' | 'vertical' | 'claim', ink = midnight): string {
+/** Zeichen + Name (+ Claim). Schrift Manrope eingebettet, damit die Datei überall gleich aussieht. Die Breite folgt
+ *  der gemessenen Textbreite (`measure`), damit ein längerer oder kürzerer Name nie abgeschnitten wird. */
+function lockupSvg(layout: 'horizontal' | 'vertical' | 'claim', widths: TextWidths, ink = midnight): string {
   const e = ORBIT_EXTENT;
   const symbol = (x: number, y: number, size: number) =>
     `<g transform="translate(${x} ${y}) scale(${size / (2 * e)}) translate(${e} ${e})">${orbitPaths()}</g>`;
   const style = `<style>${fontFace}text{font-family:Manrope,Helvetica,Arial,sans-serif;fill:${ink}}</style>`;
   if (layout === 'vertical') {
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 440" role="img" aria-label="${BRAND.name}"><title>${BRAND.name}</title>${style}${symbol(100, 0, 200)}<text x="200" y="330" text-anchor="middle" font-size="104" font-weight="700" letter-spacing="-3">${BRAND.name}</text><text x="200" y="404" text-anchor="middle" font-size="34" font-weight="500" letter-spacing="5">${BRAND.claim}</text></svg>\n`;
+    const width = Math.ceil(Math.max(widths.nameVertical, widths.claimVertical, 200) + 48);
+    const cx = width / 2;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} 440" role="img" aria-label="${BRAND.name}"><title>${BRAND.name}</title>${style}${symbol(cx - 100, 0, 200)}<text x="${cx}" y="330" text-anchor="middle" font-size="104" font-weight="700" letter-spacing="-3">${BRAND.name}</text><text x="${cx}" y="404" text-anchor="middle" font-size="34" font-weight="500" letter-spacing="5">${BRAND.claim}</text></svg>\n`;
   }
-  const claim = layout === 'claim'
-    ? `<text x="252" y="246" font-size="38" font-weight="500" letter-spacing="9">${BRAND.claim}</text>`
-    : '';
-  const height = layout === 'claim' ? 270 : 220;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 ${height}" role="img" aria-label="${BRAND.name}"><title>${BRAND.name}</title>${style}${symbol(0, layout === 'claim' ? 25 : 0, 220)}<text x="244" y="${layout === 'claim' ? 170 : 160}" font-size="156" font-weight="700" letter-spacing="-5">${BRAND.name}</text>${claim}</svg>\n`;
+  const claimLine = layout === 'claim';
+  const width = Math.ceil(244 + Math.max(widths.nameHorizontal, claimLine ? widths.claimHorizontal : 0) + 16);
+  const claim = claimLine ? `<text x="252" y="246" font-size="38" font-weight="500" letter-spacing="9">${BRAND.claim}</text>` : '';
+  const height = claimLine ? 270 : 220;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${BRAND.name}"><title>${BRAND.name}</title>${style}${symbol(0, claimLine ? 25 : 0, 220)}<text x="244" y="${claimLine ? 170 : 160}" font-size="156" font-weight="700" letter-spacing="-5">${BRAND.name}</text>${claim}</svg>\n`;
+}
+
+interface TextWidths {
+  nameHorizontal: number;
+  claimHorizontal: number;
+  nameVertical: number;
+  claimVertical: number;
 }
 
 /** Quadratisches Icon auf Ivory; `scale` = Anteil des Zeichens an der Kantenlänge. */
@@ -122,17 +132,47 @@ function ico(pngs: { size: number; data: Buffer }[]): Buffer {
   return Buffer.concat([header, ...pngs.map((p) => p.data)]);
 }
 
-console.log('Veyora-Logo-Dateien:');
+console.log('Lumiknot-Logo-Dateien:');
 write(BRAND.logo.symbol, symbolSvg());
 write(BRAND.logo.symbolMonoDark, symbolSvg({ mono: midnight }));
 write(BRAND.logo.symbolMonoLight, symbolSvg({ mono: white }));
-write(BRAND.logo.lockupHorizontal, lockupSvg('horizontal'));
-write('brand/veyora-lockup-horizontal-light.svg', lockupSvg('horizontal', white));
-write('brand/veyora-lockup-claim.svg', lockupSvg('claim'));
-write(BRAND.logo.lockupVertical, lockupSvg('vertical'));
 write(BRAND.logo.favicon, symbolSvg({ small: true }));
 
 const browser = await chromium.launch();
+const widths = await measure();
+write(BRAND.logo.lockupHorizontal, lockupSvg('horizontal', widths));
+write(BRAND.logo.lockupHorizontal.replace('.svg', '-light.svg'), lockupSvg('horizontal', widths, white));
+write(BRAND.logo.lockupHorizontal.replace('horizontal', 'claim'), lockupSvg('claim', widths));
+write(BRAND.logo.lockupVertical, lockupSvg('vertical', widths));
+/** Textbreiten in Manrope, so wie die Lockups sie setzen (Schriftgröße, Gewicht, Laufweite). */
+async function measure(): Promise<TextWidths> {
+  const page = await browser.newPage();
+  await page.setContent(`<style>${fontFace}</style><span style="font-family:Manrope">x</span>`);
+  await page.evaluate(() => document.fonts.ready);
+  const result = await page.evaluate(
+    ([name, claim]) => {
+      const w = (text: string, size: number, weight: number, spacing: number) => {
+        const el = document.createElement('span');
+        el.style.cssText = `font:${weight} ${size}px Manrope;letter-spacing:${spacing}px;white-space:nowrap;position:absolute`;
+        el.textContent = text;
+        document.body.append(el);
+        const width = el.getBoundingClientRect().width;
+        el.remove();
+        return width;
+      };
+      return {
+        nameHorizontal: w(name, 156, 700, -5),
+        claimHorizontal: w(claim, 38, 500, 9) + 8,
+        nameVertical: w(name, 104, 700, -3),
+        claimVertical: w(claim, 34, 500, 5),
+      };
+    },
+    [BRAND.name, BRAND.claim],
+  );
+  await page.close();
+  return result;
+}
+
 async function png(html: string, width: number, height = width, transparent = false): Promise<Buffer> {
   const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
   await page.setContent(html);

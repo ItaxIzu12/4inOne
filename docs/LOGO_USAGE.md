@@ -1,6 +1,6 @@
-# Veyora — Logo
+# Lumiknot — Logo
 
-Stand 28.11.2026. Vorlage: `docs/brand/veyora-orbit-reference.webp` (nur Referenz, nie in der App verwenden).
+Stand 28.11.2026. Vorlage: `docs/brand/lumiknot-orbit-reference.webp` (nur Referenz, nie in der App verwenden).
 
 ## Aufbau
 
@@ -28,17 +28,20 @@ Alle Dateien erzeugt `npm run brand:assets` (`frontend/scripts/brand-assets.mts`
 
 | Variante | Datei | Verwendung |
 |---|---|---|
-| Primär (horizontal) | `public/brand/veyora-lockup-horizontal.svg` | Standard überall, wo Platz ist |
-| Horizontal hell | `public/brand/veyora-lockup-horizontal-light.svg` | auf Midnight und dunklen Fotos |
-| Mit Claim | `public/brand/veyora-lockup-claim.svg` | Markenauftritte, Präsentationen |
-| Vertikal | `public/brand/veyora-lockup-vertical.svg` | quadratische Flächen, Titelseiten |
-| Nur Zeichen | `public/brand/veyora-symbol.svg` | Avatare, kleine Flächen, wenn der Name daneben steht |
-| Einfarbig dunkel | `public/brand/veyora-symbol-mono-dark.svg` | Druck einfarbig, Prägung, helle Flächen |
-| Einfarbig hell | `public/brand/veyora-symbol-mono-light.svg` | dunkle Flächen ohne Farbe |
+| Primär (horizontal) | `public/brand/lumiknot-lockup-horizontal.svg` | Standard überall, wo Platz ist |
+| Horizontal hell | `public/brand/lumiknot-lockup-horizontal-light.svg` | auf Midnight und dunklen Fotos |
+| Mit Claim | `public/brand/lumiknot-lockup-claim.svg` | Markenauftritte, Präsentationen |
+| Vertikal | `public/brand/lumiknot-lockup-vertical.svg` | quadratische Flächen, Titelseiten |
+| Nur Zeichen | `public/brand/lumiknot-symbol.svg` | Avatare, kleine Flächen, wenn der Name daneben steht |
+| Einfarbig dunkel | `public/brand/lumiknot-symbol-mono-dark.svg` | Druck einfarbig, Prägung, helle Flächen |
+| Einfarbig hell | `public/brand/lumiknot-symbol-mono-light.svg` | dunkle Flächen ohne Farbe |
 | Favicon | `public/favicon.svg`, `public/favicon.ico` (16/32/48) | Browser; Kleinvariante mit Strich 84 |
 | App-Icon | `public/apple-touch-icon.png` (180), `public/icon-192.png`, `public/icon-512.png` | iOS, PWA |
 | Maskable | `public/icon-maskable-512.png` | Android (Zeichen in 60 %, sicher im Kreis) |
 | Teilen-Bild | `public/og-image.png` (1200 × 630) | Open Graph |
+
+Nach jeder Änderung an den Dateien die Version `?v=` erhöhen – in `src/index.html` (Icons, `og:image`) und
+`public/manifest.webmanifest` –, damit Browser, installierte Apps und Messenger nicht das alte Bild behalten.
 
 In Angular immer `<app-brand>` statt einer Bilddatei: es zeichnet das Zeichen inline (scharf, ohne Anfrage), nutzt
 Manrope und kennt den Bereichskontext.
@@ -52,7 +55,7 @@ Manrope und kennt den Bereichskontext.
   keine Dauerbewegung.
 - Die App-Shell setzt den Kontext aus der URL (`/finanzen`, `/haushalt`, `/organisation`, `/reisen`, auch unter
   `/demo`).
-- `wordmark=false` zeigt nur das Zeichen; dann trägt es `role="img"` und `aria-label="Veyora"`. Mit Namen ist das
+- `wordmark=false` zeigt nur das Zeichen; dann trägt es `role="img"` und `aria-label="Lumiknot"`. Mit Namen ist das
   Zeichen dekorativ (`aria-hidden`), der Link drumherum hat ein eigenes `aria-label`.
 
 ## Regeln

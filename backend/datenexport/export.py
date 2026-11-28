@@ -259,13 +259,13 @@ class _Export:
         }
 
 
-README = """Veyora – Export deiner Daten
+README = """Lumiknot – Export deiner Daten
 ============================
 
 Erstellt am: {created}
 Konto: {email}
 
-Diese Datei enthält alle Daten, die Veyora zu deinem Konto gespeichert hat (Auskunft nach Art. 15 DSGVO und
+Diese Datei enthält alle Daten, die Lumiknot zu deinem Konto gespeichert hat (Auskunft nach Art. 15 DSGVO und
 Datenübertragbarkeit nach Art. 20 DSGVO). Die JSON-Dateien lassen sich mit jedem Texteditor öffnen und von anderen
 Programmen einlesen.
 
@@ -319,4 +319,4 @@ def build_export(user):
             missing=missing_text,
         ))
     tmp.seek(0)
-    return tmp, f'veyora-daten-{now:%Y-%m-%d}.zip', export.exported_models
+    return tmp, f'lumiknot-daten-{now:%Y-%m-%d}.zip', export.exported_models

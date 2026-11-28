@@ -1,6 +1,6 @@
 /**
  * Bordkarte (Schritt 1, docs/BORDKARTE_KONZEPT.md): Typen und das Lesen des IATA-Codes (BCBP) – dieselben Regeln wie
- * backend/reisen/boarding.py. Veyora erzeugt nie einen eigenen Code, es zeigt den echten der Airline.
+ * backend/reisen/boarding.py. Lumiknot erzeugt nie einen eigenen Code, es zeigt den echten der Airline.
  */
 export type BarcodeFormat = 'QR' | 'AZTEC' | 'PDF417' | 'CODE128';
 
@@ -28,7 +28,7 @@ export interface BoardingPass {
   sequence: string;
 }
 
-/** Formate von BarcodeDetector (Browser) → Veyora. */
+/** Formate von BarcodeDetector (Browser) → Lumiknot. */
 export const DETECTOR_FORMATS: Record<string, BarcodeFormat> = { qr_code: 'QR', aztec: 'AZTEC', pdf417: 'PDF417', code_128: 'CODE128' };
 /** Formate → bwip-js. */
 export const BWIP_FORMATS: Record<BarcodeFormat, string> = { QR: 'qrcode', AZTEC: 'azteccode', PDF417: 'pdf417', CODE128: 'code128' };

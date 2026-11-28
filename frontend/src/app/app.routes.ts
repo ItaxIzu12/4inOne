@@ -156,7 +156,7 @@ const ALL_ROUTES: Routes = [
       theme: 'light',
       shell: 'bare',
       hideHeader: true,
-      description: 'Impressum von Veyora: Anbieter, Kontakt und Verantwortliche.',
+      description: 'Impressum von Lumiknot: Anbieter, Kontakt und Verantwortliche.',
     },
     loadComponent: () => import('./features/imprint/imprint').then((m) => m.Impressum),
   },
@@ -168,14 +168,14 @@ const ALL_ROUTES: Routes = [
       shell: 'bare',
       hideHeader: true,
       description:
-        'Wie Veyora mit deinen Daten umgeht: welche Daten, wofür und welche Rechte du hast.',
+        'Wie Lumiknot mit deinen Daten umgeht: welche Daten, wofür und welche Rechte du hast.',
     },
     loadComponent: () => import('./features/privacy/privacy').then((m) => m.Datenschutz),
   },
   {
     path: 'nutzungsbedingungen',
     title: brandTitle('Nutzungsbedingungen'),
-    data: { theme: 'light', shell: 'bare', hideHeader: true, description: 'Die Nutzungsbedingungen von Veyora.' },
+    data: { theme: 'light', shell: 'bare', hideHeader: true, description: 'Die Nutzungsbedingungen von Lumiknot.' },
     loadComponent: () =>
       import('./features/terms/terms').then(
         (m) => m.Nutzungsbedingungen,
@@ -188,7 +188,7 @@ const ALL_ROUTES: Routes = [
       theme: 'light',
       shell: 'bare',
       hideHeader: true,
-      description: 'Erklärung zur Barrierefreiheit von Veyora und wie du Barrieren melden kannst.',
+      description: 'Erklärung zur Barrierefreiheit von Lumiknot und wie du Barrieren melden kannst.',
     },
     loadComponent: () =>
       import('./features/accessibility/accessibility').then((m) => m.Barrierefreiheit),

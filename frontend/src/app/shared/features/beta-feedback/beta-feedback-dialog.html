@@ -13,7 +13,7 @@
   @if (sent()) {
     <div class="bf-thanks" role="status">
       <p><b>Danke!</b> Deine Rückmeldung ist angekommen.</p>
-      <p class="muted">Sie hilft, Veyora verständlicher zu machen. Du kannst jederzeit weitere schicken.</p>
+      <p class="muted">Sie hilft, Lumiknot verständlicher zu machen. Du kannst jederzeit weitere schicken.</p>
     </div>
   } @else {
     <p class="bf-intro">Alles ist freiwillig – beantworte, was dir einfällt. Bitte keine Passwörter, Konto- oder Vertragsnummern eintragen.</p>
@@ -51,7 +51,7 @@
       </div>
     </fieldset>
     <fieldset class="bf-scale">
-      <legend>Würdest du Veyora nach dem Test weiter nutzen?</legend>
+      <legend>Würdest du Lumiknot nach dem Test weiter nutzen?</legend>
       <div class="bf-options">
         @for (a of answers; track a.value) {
           <button type="button" class="bf-option bf-option--wide" [attr.aria-pressed]="wouldContinue() === a.value" (click)="toggle(wouldContinue, a.value, '')">{{ a.label }}</button>

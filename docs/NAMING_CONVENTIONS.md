@@ -1,4 +1,4 @@
-# Veyora — Namenskonventionen
+# Lumiknot — Namenskonventionen
 
 Stand 28.11.2026. Gilt für alles Neue; Bestehendes wird nur nach `docs/REBRANDING_MIGRATION.md` umbenannt.
 
@@ -6,23 +6,23 @@ Stand 28.11.2026. Gilt für alles Neue; Bestehendes wird nur nach `docs/REBRANDI
 
 | Wo | Schreibweise | Beispiel |
 |---|---|---|
-| Sichtbarer Text | `Veyora` | „Willkommen bei Veyora“, „Veyora-Konto“ |
-| Bereich (Marketing) | `Veyora <Bereich>` | Veyora Finance · Home · Planner · Travel |
-| Bereich (App, deutsch) | Finanzen · Haushalt · Organisation · Reisen | Seitentitel „Haushalt \| Veyora“ |
-| Seitentitel | `brandTitle('Seite')` | „Anmelden \| Veyora“ |
+| Sichtbarer Text | `Lumiknot` | „Willkommen bei Lumiknot“, „Lumiknot-Konto“ |
+| Bereich (Marketing) | `Lumiknot <Bereich>` | Lumiknot Finance · Home · Planner · Travel |
+| Bereich (App, deutsch) | Finanzen · Haushalt · Organisation · Reisen | Seitentitel „Haushalt \| Lumiknot“ |
+| Seitentitel | `brandTitle('Seite')` | „Anmelden \| Lumiknot“ |
 
-Nie „VEYORA“ im Fließtext, nie mit ®.
+Nie „LUMIKNOT“ im Fließtext, nie mit ®.
 
 ## Technisch
 
 | Was | Konvention | Beispiel |
 |---|---|---|
-| Kurzform (Slug) | `veyora` | `BRAND.slug` |
-| Neue Umgebungsvariablen | `VEYORA_…` | `VEYORA_EXPORT_DIR` |
-| Downloads | `veyora-<inhalt>[-JJJJ-MM-TT].<endung>` | `veyora-daten-2026-11-28.zip`, `veyora-backup-codes.txt` |
-| User-Agent nach außen | `Veyora/<version> (+zweck)` | `Veyora/1 (+exchange rates)` |
-| Neue Docker-/systemd-/Pfad-Namen | `veyora-…` | erst mit Phase 4 (Infrastruktur), siehe Migration |
-| Neue Speicherschlüssel im Browser | `veyora.<bereich>.<name>` | `veyora.finance.reviewHidden` |
+| Kurzform (Slug) | `lumiknot` | `BRAND.slug` |
+| Neue Umgebungsvariablen | `LUMIKNOT_…` | `LUMIKNOT_EXPORT_DIR` |
+| Downloads | `lumiknot-<inhalt>[-JJJJ-MM-TT].<endung>` | `lumiknot-daten-2026-11-28.zip`, `lumiknot-backup-codes.txt` |
+| User-Agent nach außen | `Lumiknot/<version> (+zweck)` | `Lumiknot/1 (+exchange rates)` |
+| Neue Docker-/systemd-/Pfad-Namen | `lumiknot-…` | erst mit Phase 4 (Infrastruktur), siehe Migration |
+| Neue Speicherschlüssel im Browser | `lumiknot.<bereich>.<name>` | `lumiknot.finance.reviewHidden` |
 
 ## Bereiche im Code
 

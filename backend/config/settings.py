@@ -349,7 +349,7 @@ SIMPLE_JWT = {
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:4200').rstrip('/')
 
 # E-Mail-Versand: siehe MAILERS am Ende dieser Datei. Absender und Gültigkeit von Einladungen:
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='Veyora <no-reply@veyora.local>')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='Lumiknot <no-reply@lumiknot.local>')
 CONTACT_INVITE_EXPIRY_DAYS = env.int('CONTACT_INVITE_EXPIRY_DAYS', default=14)
 
 # Besucherzählung (website/): wie lange die Tageszähler aufbewahrt werden (`manage.py prune_website`, täglich).
@@ -388,7 +388,7 @@ CONTENT_SECURITY_POLICY = {
 
 # django-otp: Name, der in der Authenticator-App (Google Authenticator etc.)
 # neben dem Konto angezeigt wird, siehe TOTPDevice.config_url.
-OTP_TOTP_ISSUER = 'Veyora'
+OTP_TOTP_ISSUER = 'Lumiknot'
 
 # django-axes: Brute-Force-/Credential-Stuffing-Schutz (ARCHITEKTUR.md §3.1)
 AXES_FAILURE_LIMIT = 5
@@ -404,7 +404,7 @@ AXES_VERBOSE = False
 # Angriffsfläche/Komplexität für den MVP, siehe ARCHITEKTUR.md §2.1.
 REDIS_URL = env('REDIS_URL', default='redis://localhost:6379/0')
 
-# Personal AI Core (docs/AI_INTEGRATION.md, integrations/ai/): standardmäßig AUS. Ohne diese Werte macht Veyora keinen
+# Personal AI Core (docs/AI_INTEGRATION.md, integrations/ai/): standardmäßig AUS. Ohne diese Werte macht Lumiknot keinen
 # einzigen KI-Aufruf, und jede Funktion arbeitet wie ohne KI. Nur das Backend spricht mit dem Core.
 AI_ENABLED = env.bool('AI_ENABLED', default=False)
 # Provider des Adapters: 'core' = Personal AI Core (REST), 'mock' = feste Antworten für die Entwicklung (nie in Produktion)

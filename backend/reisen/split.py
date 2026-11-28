@@ -7,7 +7,7 @@ Daraus die wenigsten Überweisungen: immer die größte Schuld an das größte G
 Gerechnet wird in der Reisewährung (TripExpense.amount_trip) mit Decimal auf den Cent. Bleibt bei der Teilung ein Rest
 (10,00 € durch 3), bekommen ihn die ersten Personen nach Nutzer-ID je einen Cent – nachvollziehbar und stabil.
 Ausgaben ohne Zahler (ältere) oder ohne Kurs in die Reisewährung zählen nicht mit; `unassigned` sagt, wie viele das
-sind. Veyora bewegt nie Geld – „beglichen“ ist nur ein Vermerk (TripSettlement).
+sind. Lumiknot bewegt nie Geld – „beglichen“ ist nur ein Vermerk (TripSettlement).
 """
 
 from __future__ import annotations

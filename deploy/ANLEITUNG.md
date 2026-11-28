@@ -154,8 +154,12 @@ EMAIL_PORT=587
 EMAIL_HOST_USER=
 EMAIL_HOST_PASSWORD=
 EMAIL_USE_TLS=True
-DEFAULT_FROM_EMAIL=4inOne <hallo@4inone.de>
+DEFAULT_FROM_EMAIL=Lumiknot <hallo@4inone.de>
 ```
+
+Der Anzeigename im Absender ist seit dem Rebranding „Lumiknot“; die Adresse bleibt bei der bestehenden Domain, bis es
+eine Lumiknot-Domain gibt (`docs/REBRANDING_MIGRATION.md`, Phase 4). Auf einem bereits laufenden Server diese Zeile in
+der `.env` ebenso anpassen und den Dienst neu starten.
 
 Sonderzeichen im Datenbank-Passwort müssen in der `DATABASE_URL` kodiert werden, z. B. `@` als `%40`. Am einfachsten
 nimmst du ein Passwort nur aus Buchstaben und Ziffern.

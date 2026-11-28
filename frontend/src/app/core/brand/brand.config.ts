@@ -1,5 +1,5 @@
 /**
- * Markenidentität Veyora (Rebranding 28.11.2026; docs/BRAND_GUIDELINES.md). Die EINE Stelle für Produktname, Claim,
+ * Markenidentität Lumiknot (Rebranding 28.11.2026; docs/BRAND_GUIDELINES.md). Die EINE Stelle für Produktname, Claim,
  * Beschreibung, Bereiche, Logo-Farben und -Dateien, SEO-Angaben und Beschriftungen im Frontend.
  *
  * Farben: Die reinen Markenfarben (Logo, Teilen-Bild, Icons) stehen hier. Die Oberfläche nutzt die semantischen
@@ -22,7 +22,7 @@ export interface BrandSectionInfo {
 
 export interface BrandConfig {
   readonly name: string;
-  /** Technische Kurzform für neue Bezeichner (Downloads, neue Variablen `VEYORA_…`). docs/NAMING_CONVENTIONS.md */
+  /** Technische Kurzform für neue Bezeichner (Downloads, neue Variablen `LUMIKNOT_…`). docs/NAMING_CONVENTIONS.md */
   readonly slug: string;
   /** Deutscher Leitsatz in der App. */
   readonly tagline: string;
@@ -48,38 +48,38 @@ export interface BrandConfig {
 }
 
 export const BRAND: BrandConfig = {
-  name: 'Veyora',
-  slug: 'veyora',
+  name: 'Lumiknot',
+  slug: 'lumiknot',
   tagline: 'Dein Alltag. Alles verbunden.',
   claim: 'Life, connected.',
   description:
     'Finanzen, Haushalt, Termine und Reisen an einem Ort. Was zusammengehört, verknüpfst du – und entscheidest selbst, was du teilst.',
   sections: {
-    finance: { label: 'Finanzen', brandName: 'Veyora Finance', logoColor: '#13A274' },
-    household: { label: 'Haushalt', brandName: 'Veyora Home', logoColor: '#F59A42' },
-    organization: { label: 'Organisation', brandName: 'Veyora Planner', logoColor: '#7864E7' },
-    travel: { label: 'Reisen', brandName: 'Veyora Travel', logoColor: '#2197BE' },
+    finance: { label: 'Finanzen', brandName: 'Lumiknot Finance', logoColor: '#13A274' },
+    household: { label: 'Haushalt', brandName: 'Lumiknot Home', logoColor: '#F59A42' },
+    organization: { label: 'Organisation', brandName: 'Lumiknot Planner', logoColor: '#7864E7' },
+    travel: { label: 'Reisen', brandName: 'Lumiknot Travel', logoColor: '#2197BE' },
   },
   neutrals: { midnight: '#101820', graphite: '#29323B', ivory: '#F7F6F2', white: '#FFFFFF' },
   fonts: { brand: 'Manrope', ui: 'Inter' },
   logo: {
-    symbol: 'brand/veyora-symbol.svg',
-    symbolMonoDark: 'brand/veyora-symbol-mono-dark.svg',
-    symbolMonoLight: 'brand/veyora-symbol-mono-light.svg',
-    lockupHorizontal: 'brand/veyora-lockup-horizontal.svg',
-    lockupVertical: 'brand/veyora-lockup-vertical.svg',
+    symbol: 'brand/lumiknot-symbol.svg',
+    symbolMonoDark: 'brand/lumiknot-symbol-mono-dark.svg',
+    symbolMonoLight: 'brand/lumiknot-symbol-mono-light.svg',
+    lockupHorizontal: 'brand/lumiknot-lockup-horizontal.svg',
+    lockupVertical: 'brand/lumiknot-lockup-vertical.svg',
     favicon: 'favicon.svg',
     appIcon: 'icon-512.png',
     maskableIcon: 'icon-maskable-512.png',
   },
   seo: { ogImage: 'og-image.png', themeColor: '#101820', backgroundColor: '#F7F6F2' },
-  a11y: { homeLink: 'Veyora – Startseite', logo: 'Veyora' },
+  a11y: { homeLink: 'Lumiknot – Startseite', logo: 'Lumiknot' },
 };
 
 /** Titel der Startseite und Fallback, wenn eine Route keinen eigenen Titel hat. */
 export const BRAND_DEFAULT_TITLE = `${BRAND.name} — ${BRAND.tagline}`;
 
-/** Seitentitel im Format „Seite | Veyora“. */
+/** Seitentitel im Format „Seite | Lumiknot“. */
 export function brandTitle(page: string): string {
   return `${page} | ${BRAND.name}`;
 }

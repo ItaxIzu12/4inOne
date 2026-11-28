@@ -18,7 +18,7 @@ describe('TileFooter', () => {
     expect(legal).toEqual(['/impressum', '/datenschutz', '/nutzungsbedingungen', '/barrierefreiheit']);
     expect(el.querySelector('.tf__logo app-brand')).toBeTruthy();
     expect(el.querySelector('nav[aria-label="Produkt"], .tf__area')).toBeNull();
-    expect(el.querySelector('.tf__bar')?.textContent).toContain('Veyora');
+    expect(el.querySelector('.tf__bar')?.textContent).toContain('Lumiknot');
   });
 
   it('full: columns Bereiche (into the demo), Produkt and Rechtliches — no big wordmark, no colour tiles', () => {

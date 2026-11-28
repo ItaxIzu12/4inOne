@@ -1,6 +1,6 @@
 """Dynamische Fähigkeiten-Abfrage (docs/AI_INTEGRATION.md § 4.1, gemeinsamer Standard).
 
-Veyora nutzt eine Fähigkeit nur, wenn der Provider sie gerade in der passenden Version anbietet (`GET /v1/capabilities`).
+Lumiknot nutzt eine Fähigkeit nur, wenn der Provider sie gerade in der passenden Version anbietet (`GET /v1/capabilities`).
 Das Ergebnis wird je Prozess kurz zwischengespeichert (AI_CAPABILITY_CACHE_SECONDS). Schlägt die Abfrage fehl, gilt
 für eine Minute „nichts verfügbar“ – dann gibt es keine Aufgaben-Aufrufe und keine Vorschläge, aber auch keine
 Wartezeit für die Person.

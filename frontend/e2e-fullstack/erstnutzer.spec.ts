@@ -3,7 +3,7 @@ import { pickDate } from '../e2e/helpers';
 
 /**
  * Vollständiger Testlauf als echte Erstnutzerin (21.11.2026): echte Oberfläche gegen echtes Django mit frischer
- * Test-Datenbank (playwright.fullstack.config.ts) — nichts nachgestellt. Sophie entdeckt Veyora zum ersten Mal,
+ * Test-Datenbank (playwright.fullstack.config.ts) — nichts nachgestellt. Sophie entdeckt Lumiknot zum ersten Mal,
  * registriert sich, richtet sich ein und legt in jedem Bereich alles an, was man anlegen kann. Danach prüft Max
  * (zweites, unabhängiges Konto), dass er davon nichts sieht. Demo-Besetzung wie überall: Sophie, Max.
  */
@@ -34,7 +34,7 @@ async function newUser(browser: Browser, name: string, email: string): Promise<P
 test('1 · Registrierung und Onboarding mit erster echter Ausgabe', async ({ browser }) => {
   sophie = await newUser(browser, 'Sophie', sophieMail);
   const p = sophie;
-  await expect(p.getByRole('heading', { name: 'Willkommen bei Veyora' })).toBeVisible();
+  await expect(p.getByRole('heading', { name: 'Willkommen bei Lumiknot' })).toBeVisible();
   await p.getByLabel('Wie dürfen wir dich nennen?').fill('Sophie Weber');
   await p.getByRole('button', { name: 'Weiter' }).click();
   await expect(p.getByRole('heading', { name: 'Womit möchtest du anfangen?' })).toBeVisible();
@@ -58,7 +58,7 @@ test('2 · Startseite erklärt die vier Bereiche und kennt die erste Ausgabe', a
   const p = sophie;
   await p.goto('/');
   const start = p.locator('app-start-overview');
-  await expect(start.getByRole('heading', { name: 'Dein Start mit Veyora' })).toBeVisible();
+  await expect(start.getByRole('heading', { name: 'Dein Start mit Lumiknot' })).toBeVisible();
   await expect(start).toContainText('0 von 4 Bereichen eingerichtet');
   await expect(start.locator('.so__row', { hasText: 'Finanzen' })).toContainText('1 von 3 · als Nächstes: Monatsbudget');
   await expect(p.getByRole('heading', { name: /Sophie/ })).toBeVisible();
@@ -237,7 +237,7 @@ test('6 · Reisen: Reise, Packliste, Aufgabe, Budget', async () => {
   await expect(p.locator('main')).toContainText('Flug');
   await expect(p.locator('main')).toContainText('720'); // 900 − 180 übrig
 
-  // Übersicht: Veyora schlägt das Sparziel „Urlaub Lissabon“ zum Verknüpfen vor
+  // Übersicht: Lumiknot schlägt das Sparziel „Urlaub Lissabon“ zum Verknüpfen vor
   await nav.getByRole('tab', { name: 'Übersicht', exact: true }).click();
   await p.getByRole('button', { name: 'Mit „Urlaub Lissabon“ verknüpfen' }).click();
   await expect(p.getByRole('region', { name: 'Gehört zu dieser Reise' })).toContainText('Urlaub Lissabon');

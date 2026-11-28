@@ -1,5 +1,5 @@
 /**
- * Geometrie des Veyora-Orbit-Zeichens (28.11.2026, Vorlage docs/brand/veyora-orbit-reference.webp; Regeln
+ * Geometrie des Lumiknot-Orbit-Zeichens (28.11.2026, Vorlage docs/brand/lumiknot-orbit-reference.webp; Regeln
  * docs/LOGO_USAGE.md). Vier gleiche Elemente, je um 90° um die Mitte gedreht – keine nachgezeichneten Kurven, sondern
  * eine Konstruktion aus Gerade, Kreisbogen und Diagonale:
  *

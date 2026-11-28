@@ -36,10 +36,10 @@ async function renderAt(url: string, auth: FakeAuthService) {
 }
 
 describe('Header', () => {
-  it('always renders the Veyora brand (not the old compass)', async () => {
+  it('always renders the Lumiknot brand (not the old compass)', async () => {
     const fixture = await renderAt('/login', new FakeAuthService());
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('.brand app-brand')?.textContent).toContain('Veyora');
+    expect(el.querySelector('.brand app-brand')?.textContent).toContain('Lumiknot');
     expect(el.textContent).not.toContain('Kompass');
   });
 

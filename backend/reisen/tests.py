@@ -303,7 +303,7 @@ def test_shared_trip_budget_never_leaks_into_or_out_of_private_finances(client, 
 
 
 def test_sharing_a_trip_grants_no_access_to_the_owners_finanzen_or_haushalt_data(client, users):
-    """Teilnahme an EINER Reise darf keine anderen privaten Veyora-Daten freischalten (AGENTS.md
+    """Teilnahme an EINER Reise darf keine anderen privaten Lumiknot-Daten freischalten (AGENTS.md
     Privacy-Prinzipien) — hier konkret geprüft gegen echte Finanzen-/Haushalt-Modelle, nicht nur per
     Feld-Introspektion wie test_shared_trip_budget_never_leaks_into_or_out_of_private_finances oben."""
     household = Household.objects.create(name='Alices Haushalt')

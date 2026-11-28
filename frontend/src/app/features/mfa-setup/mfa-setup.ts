@@ -109,11 +109,11 @@ export class MfaSetup {
   }
 
   protected download(): void {
-    const text = `Veyora – Backup-Codes für die Zwei-Faktor-Authentifizierung\nJeder Code funktioniert einmal.\n\n${this.backupCodes().join('\n')}\n`;
+    const text = `Lumiknot – Backup-Codes für die Zwei-Faktor-Authentifizierung\nJeder Code funktioniert einmal.\n\n${this.backupCodes().join('\n')}\n`;
     const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'veyora-backup-codes.txt';
+    link.download = 'lumiknot-backup-codes.txt';
     link.click();
     URL.revokeObjectURL(url);
   }

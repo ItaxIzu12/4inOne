@@ -2,7 +2,7 @@
 
 Zwei Quellen:
 1. **Eigene Orte** — was die Person selbst schon eingetragen hat (eigene Termine, Reisen, an denen sie beteiligt ist).
-   Verlässt Veyora nicht.
+   Verlässt Lumiknot nicht.
 2. **Photon** (https://photon.komoot.io, betrieben von komoot, Daten von OpenStreetMap) — nur der Suchtext wird
    gesendet, über DIESEN Server: der Dienst sieht weder IP-Adresse noch Konto. Erst ab 3 Zeichen, Ergebnisse 24 h im
    Cache (gleiche Suche → keine zweite Anfrage), Anfragen je Person begrenzt (PlacesRateThrottle). Ein Ausfall des
@@ -107,7 +107,7 @@ def external_places(query: str, kind: str = 'place', near: str = '') -> tuple[li
     if kind == 'lodging':
         params += [('osm_tag', tag) for tag in LODGING_TAGS]
     url = f"{base}?{urllib.parse.urlencode(params)}"
-    request = urllib.request.Request(url, headers={'User-Agent': 'Veyora/1 (+place suggestions)', 'Accept': 'application/json'})
+    request = urllib.request.Request(url, headers={'User-Agent': 'Lumiknot/1 (+place suggestions)', 'Accept': 'application/json'})
     try:
         with urllib.request.urlopen(request, timeout=3) as response:  # noqa: S310 — feste Adresse aus den Einstellungen
             if response.status != 200:

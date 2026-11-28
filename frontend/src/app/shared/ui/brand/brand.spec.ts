@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { Brand } from './brand';
 
-describe('Brand (Veyora-Orbit)', () => {
+describe('Brand (Lumiknot-Orbit)', () => {
   function render(inputs: Record<string, unknown> = {}) {
     const fixture = TestBed.createComponent(Brand);
     for (const [key, value] of Object.entries(inputs)) fixture.componentRef.setInput(key, value);
@@ -13,7 +13,7 @@ describe('Brand (Veyora-Orbit)', () => {
   it('zeigt Zeichen mit vier Elementen und den Namen; das Zeichen ist dann dekorativ', () => {
     const el = render();
     expect(el.querySelectorAll('path.el')).toHaveLength(4);
-    expect(el.querySelector('.name')?.textContent).toBe('Veyora');
+    expect(el.querySelector('.name')?.textContent).toBe('Lumiknot');
     expect(el.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
   });
 
@@ -34,6 +34,6 @@ describe('Brand (Veyora-Orbit)', () => {
     const svg = el.querySelector('svg')!;
     expect(el.querySelector('.name')).toBeNull();
     expect(svg.getAttribute('role')).toBe('img');
-    expect(svg.getAttribute('aria-label')).toBe('Veyora');
+    expect(svg.getAttribute('aria-label')).toBe('Lumiknot');
   });
 });

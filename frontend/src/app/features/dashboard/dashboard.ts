@@ -254,7 +254,7 @@ export class Dashboard {
   /** Für die Suche oben: Buchungen des Monats und eigene Aufgaben (die Startseite zeigt sie selbst nicht). */
   readonly boardSummary = signal<FinanceSummary | null>(null);
   readonly boardTasks = signal<PersonalTask[]>([]);
-  /** „Für dich“ zeigt nur noch, was Veyora einzigartig macht: höchstens einen Verknüpfungs-Vorschlag. Reise und
+  /** „Für dich“ zeigt nur noch, was Lumiknot einzigartig macht: höchstens einen Verknüpfungs-Vorschlag. Reise und
    * Fristen stehen unter „Demnächst“. Der Vorschlag kommt mit „Heute“ vom Server — solange das lädt, ein Platzhalter. */
   readonly forYouLoading = computed(() => this.live() && this.todayLoading());
   readonly demoPair = signal<{ goal: SavingsGoal; task: PersonalTask } | null>(null);
@@ -596,7 +596,7 @@ export class Dashboard {
   get rest(): TodayRow[] {
     return this.plan().rest;
   }
-  /** „Dein Start mit Veyora“ (21.11.2026, ersetzt „Erste Schritte“): die vier Bereiche mit ihrem Stand aus echten Daten
+  /** „Dein Start mit Lumiknot“ (21.11.2026, ersetzt „Erste Schritte“): die vier Bereiche mit ihrem Stand aus echten Daten
    * (GuideService); weg, sobald alle eingerichtet sind oder die Person die Karte ausblendet (im Konto gespeichert). */
   readonly guide = inject(GuideService);
   readonly startRows = computed<StartRow[] | null>(() => {

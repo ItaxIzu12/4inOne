@@ -25,7 +25,7 @@ test('unknown addresses show a 404 page that search engines do not index', async
   await visitor(page);
   await page.goto('/gibt-es-nicht');
   await expect(page).toHaveURL(/\/gibt-es-nicht$/);
-  await expect(page).toHaveTitle('Seite nicht gefunden | Veyora');
+  await expect(page).toHaveTitle('Seite nicht gefunden | Lumiknot');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Diese Seite gibt es nicht.');
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
   expect(await axe(page)).toEqual([]);
@@ -38,10 +38,10 @@ test('legal pages have their own title and no app navigation; footer links are l
   await visitor(page);
   await page.setViewportSize({ width: 390, height: 844 });
   for (const [path, title] of [
-    ['/impressum', 'Impressum | Veyora'],
-    ['/datenschutz', 'Datenschutzerklärung | Veyora'],
-    ['/nutzungsbedingungen', 'Nutzungsbedingungen | Veyora'],
-    ['/barrierefreiheit', 'Barrierefreiheit | Veyora'],
+    ['/impressum', 'Impressum | Lumiknot'],
+    ['/datenschutz', 'Datenschutzerklärung | Lumiknot'],
+    ['/nutzungsbedingungen', 'Nutzungsbedingungen | Lumiknot'],
+    ['/barrierefreiheit', 'Barrierefreiheit | Lumiknot'],
   ]) {
     await page.goto(path);
     await expect(page).toHaveTitle(title);
@@ -52,7 +52,7 @@ test('legal pages have their own title and no app navigation; footer links are l
   // Rechtsseiten im Stil der Startseite: Hausschrift, keine Kursive, warmweißer Grund
   expect(await page.locator('h1').evaluate((h) => getComputedStyle(h).fontFamily)).toContain('Manrope');
   expect(await page.evaluate(() => [...document.querySelectorAll('body *')].filter((e) => getComputedStyle(e).fontStyle === 'italic').length)).toBe(0);
-  expect(await page.locator('app-public-shell').evaluate((h) => getComputedStyle(h).backgroundColor)).toBe('rgb(247, 246, 242)'); // Ivory (Veyora)
+  expect(await page.locator('app-public-shell').evaluate((h) => getComputedStyle(h).backgroundColor)).toBe('rgb(247, 246, 242)'); // Ivory (Lumiknot)
   for (const box of await links.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))) {
     expect(box).toBeGreaterThanOrEqual(44);
   }
@@ -62,7 +62,7 @@ test('legal pages have their own title and no app navigation; footer links are l
 test('share preview, touch icon and robots.txt are in place', async ({ page, request }) => {
   await visitor(page);
   await page.goto('/');
-  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /og-image\.png$/);
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /og-image\.png(\?v=\d+)?$/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', /^apple-touch-icon\.png(\?v=\d+)?$/); // ?v= erzwingt das Neuladen gespeicherter Symbole
   for (const file of ['/og-image.png', '/apple-touch-icon.png']) {

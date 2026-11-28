@@ -242,7 +242,7 @@ export class AuthService {
     return this.http.get(`${API_BASE_URL}/auth/export/`, { responseType: 'blob', observe: 'response' }).pipe(
       map((response) => ({
         blob: response.body as Blob,
-        filename: /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')?.[1] ?? 'veyora-daten.zip',
+        filename: /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')?.[1] ?? 'lumiknot-daten.zip',
       })),
     );
   }

@@ -111,7 +111,7 @@ test('Datenexport (DSGVO): eigene Aufgabe steckt im ZIP, fremde nicht, keine Geh
   const download = lena.waitForEvent('download');
   await lena.getByRole('button', { name: 'Daten herunterladen' }).click();
   const datei = await download;
-  expect(datei.suggestedFilename()).toMatch(/^veyora-daten-\d{4}-\d{2}-\d{2}\.zip$/);
+  expect(datei.suggestedFilename()).toMatch(/^lumiknot-daten-\d{4}-\d{2}-\d{2}\.zip$/);
   await expect(lena.getByText('Die Datei wurde heruntergeladen.')).toBeVisible();
 
   const zip = unzip(readFileSync((await datei.path())!));

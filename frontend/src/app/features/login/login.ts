@@ -36,7 +36,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 }
 
 /**
- * Anmelden und Konto erstellen (Neubau 19.11.2026, Veyora-Stil): links ein Band in Deep Forest mit Leitsatz, den vier
+ * Anmelden und Konto erstellen (Neubau 19.11.2026, Lumiknot-Stil): links ein Band in Deep Forest mit Leitsatz, den vier
  * Bereichen und dem Datenschutz-Versprechen, rechts eine Formularspalte. Oben „Weiter mit Google/Apple“, nur wenn
  * eingerichtet; darunter E-Mail und Passwort. Dieselbe Seite übernimmt die Folgeschritte: Zwei-Faktor-Code,
  * Verknüpfen eines bestehenden Kontos (nur mit dessen Passwort) und den Abschluss nach der Rückkehr vom Anbieter.
@@ -102,7 +102,7 @@ export class Login {
     return form ? personalParts(form.controls.name.value, form.controls.email.value) : [];
   }
 
-  /** Feldfehler erst nach dem ersten Absenden zeigen (Veyora-Regel), danach live. */
+  /** Feldfehler erst nach dem ersten Absenden zeigen (Lumiknot-Regel), danach live. */
   protected readonly loginTried = signal(false);
   protected readonly registerTried = signal(false);
   protected readonly linkTried = signal(false);

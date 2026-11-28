@@ -39,7 +39,7 @@ for (const file of files(out)) {
     // Testversion: nicht in Suchmaschinen; Vorschaubild mit Unterordner.
     let text = readFileSync(file, 'utf8');
     if (!text.includes('name="robots"')) text = text.replace('<head>', '<head><meta name="robots" content="noindex, nofollow">');
-    text = text.replace('content="/og-image.png"', `content="${base}og-image.png"`);
+    text = text.replace('content="/og-image.png', `content="${base}og-image.png`); // ?v=… bleibt erhalten
     writeFileSync(file, text);
     html++;
   }

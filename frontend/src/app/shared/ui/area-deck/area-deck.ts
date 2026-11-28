@@ -2,7 +2,7 @@ import { afterNextRender, Component, computed, DestroyRef, inject, input, model,
 import { RouterLink } from '@angular/router';
 import { AppIcon, IconName } from '../icons/app-icon';
 
-/** Die vier Bereiche von Veyora — jeder mit seiner Logo-Farbe. */
+/** Die vier Bereiche von Lumiknot — jeder mit seiner Logo-Farbe. */
 export type AreaTone = 'finance' | 'household' | 'organisation' | 'travel';
 
 /** Eine Zeile der Vorschau: Text, optional ein Wert rechts, ein Balken (0–1) und ein Zustand. */

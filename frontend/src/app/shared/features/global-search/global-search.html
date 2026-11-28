@@ -9,7 +9,7 @@
     aria-controls="gs-results"
     [attr.aria-expanded]="open() && query().trim().length >= minLength"
     [attr.aria-activedescendant]="active() >= 0 ? 'gs-item-' + active() : null"
-    [attr.aria-label]="demo() ? 'Demo durchsuchen' : 'In Veyora suchen'"
+    [attr.aria-label]="demo() ? 'Demo durchsuchen' : 'In Lumiknot suchen'"
     placeholder="Suchen …"
     autocomplete="off"
     (input)="onInput($any($event.target).value)"

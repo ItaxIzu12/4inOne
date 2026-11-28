@@ -7,7 +7,7 @@ Regeln:
 - Die Farbe folgt der Bedeutung: „Reisen“ trägt die Füllfarbe des Bereichs
   Reisen (--travel-fill), „Wohnen“ den Farbton des Bereichs Haushalt
   (--household-accent, ± 6°) – maßgeblich sind die Design-Tokens in
-  frontend/src/styles.css. Seit dem Veyora-Rebranding (28.11.2026) ist
+  frontend/src/styles.css. Seit dem Lumiknot-Rebranding (28.11.2026) ist
   Haushalt orange/karamell statt rosa; deshalb wechselte „Lebensmittel“ von
   Orange zu Beere, damit es sich von „Wohnen“ unterscheidet.
 - Nur diese sieben Farben. Sie sind mit dem Palette-Prüfer des dataviz-Skills
@@ -15,7 +15,7 @@ Regeln:
   umsortiert und jede Kategorie neben jeder anderen stehen kann:
     normales Sehen   ΔE2000 ≥ 21,6 (Grenze 15)
     Rot-Grün-Schwäche ΔE2000 ≥ 11,1 (Ziel 8; Deuteranopie/Protanopie nach Machado 2009)
-  Nachgerechnet am 28.11.2026 mit den Veyora-Bereichsfarben (vorher 17,7 / 8,9).
+  Nachgerechnet am 28.11.2026 mit den Lumiknot-Bereichsfarben (vorher 17,7 / 8,9).
   Gelb und Aqua liegen auf Weiß unter 3:1 — zulässig, weil der Name immer
   direkt neben der Farbe steht (Farbe ist nie die einzige Information).
 - Rot kommt nicht vor: Es steht in der App für negative Beträge.

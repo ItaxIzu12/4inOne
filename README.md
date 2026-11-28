@@ -1,10 +1,10 @@
-# Veyora Product Specification V2
+# Lumiknot Product Specification V2
 
-**Veyora — Dein Alltag. Alles verbunden.** (Claim: *Life, connected.* · vormals 4inOne, siehe `docs/BRAND_GUIDELINES.md`)
+**Lumiknot — Dein Alltag. Alles verbunden.** (Claim: *Life, connected.* · vormals 4inOne, siehe `docs/BRAND_GUIDELINES.md`)
 
-This package is the current product and implementation source of truth for the existing Veyora project (formerly 4inOne).
+This package is the current product and implementation source of truth for the existing Lumiknot project (formerly 4inOne).
 
-Veyora is a personal life-management product for four independently useful areas:
+Lumiknot is a personal life-management product for four independently useful areas:
 
 - Finanzen
 - Haushalt

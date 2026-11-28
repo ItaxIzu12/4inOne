@@ -149,13 +149,13 @@ describe('Landing', () => {
   it('answers the questions people have, honestly — including what is not there yet and that the price is open', () => {
     const { component } = render();
     const questions = component.faq.map((f) => f.q);
-    for (const q of ['Muss ich alle vier Bereiche nutzen?', 'Kann ich Veyora ohne Konto ausprobieren?', 'Wer sieht meine persönlichen Daten?', 'Wie funktionieren Verknüpfungen?', 'Muss ich mein Bankkonto verbinden?', 'Gibt es eine mobile App?', 'Welche Funktionen gibt es schon?', 'Kann ich meine Daten und mein Konto löschen?', 'Was kostet Veyora?'])
+    for (const q of ['Muss ich alle vier Bereiche nutzen?', 'Kann ich Lumiknot ohne Konto ausprobieren?', 'Wer sieht meine persönlichen Daten?', 'Wie funktionieren Verknüpfungen?', 'Muss ich mein Bankkonto verbinden?', 'Gibt es eine mobile App?', 'Welche Funktionen gibt es schon?', 'Kann ich meine Daten und mein Konto löschen?', 'Was kostet Lumiknot?'])
       expect(questions).toContain(q);
     const answers = component.faq.map((f) => f.a).join(' ');
     expect(answers).toContain('Deinen Finanzbereich kann niemand sonst sehen');
-    expect(answers).toContain('Veyora verbindet sich nicht mit deiner Bank');
+    expect(answers).toContain('Lumiknot verbindet sich nicht mit deiner Bank');
     expect(answers).toContain('Noch nicht: Bankanbindung');
-    expect(component.faq.find((f) => f.q === 'Was kostet Veyora?')?.a).toContain('steht noch nicht fest');
+    expect(component.faq.find((f) => f.q === 'Was kostet Lumiknot?')?.a).toContain('steht noch nicht fest');
   });
 
   it('avoids the generic page kit: no italics, no checkmark lists, no blur-in', () => {

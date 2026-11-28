@@ -197,7 +197,7 @@ def _goal_or_budget(user, trip: Trip, today: date) -> list[Suggestion]:
 
     total = _budget_total(trip)
     if trip.currency != Trip.Currency.EUR:
-        # Die privaten Finanzen rechnen nur in Euro, und Veyora kennt keine
+        # Die privaten Finanzen rechnen nur in Euro, und Lumiknot kennt keine
         # Wechselkurse. Statt still nichts zu sagen: erklären und die Person
         # das Ziel selbst in Euro anlegen lassen.
         if total is None:
@@ -209,7 +209,7 @@ def _goal_or_budget(user, trip: Trip, today: date) -> list[Suggestion]:
                 title=f'Für „{trip.title}“ sparen',
                 reason=(
                     f'Das Budget der Reise ist in {trip.currency} geplant, deine Finanzen rechnen in Euro. '
-                    'Veyora kennt keinen Wechselkurs – lege das Sparziel deshalb selbst in Euro an und '
+                    'Lumiknot kennt keinen Wechselkurs – lege das Sparziel deshalb selbst in Euro an und '
                     'verknüpfe es dann mit der Reise.'
                 ),
                 trip=trip,
@@ -227,7 +227,7 @@ def _goal_or_budget(user, trip: Trip, today: date) -> list[Suggestion]:
                 kind='TRIP_BUDGET',
                 title=f'Budget für „{trip.title}“ festlegen',
                 reason=(
-                    'Ohne Budget kann Veyora nicht ausrechnen, wie viel du bis zur Abreise '
+                    'Ohne Budget kann Lumiknot nicht ausrechnen, wie viel du bis zur Abreise '
                     'pro Monat zurücklegen solltest.'
                 ),
                 trip=trip,

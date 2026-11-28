@@ -42,7 +42,7 @@ const robots = readFileSync('public/robots.txt', 'utf8').replace(/\nSitemap: .*\
 writeFileSync('public/robots.txt', `${robots}\n\nSitemap: ${origin}/sitemap.xml\n`);
 
 let html = readFileSync('src/index.html', 'utf8');
-html = html.replace(/<meta property="og:image" content="[^"]*" \/>/, `<meta property="og:image" content="${origin}/og-image.png" />`);
+html = html.replace(/<meta property="og:image" content="(?:[^"]*\/)?(og-image\.png[^"]*)" \/>/, (_, file) => `<meta property="og:image" content="${origin}/${file}" />`); // Version (?v=…) bleibt, damit Dienste das neue Bild laden
 html = html.replace(/\n\s*<meta property="og:url" content="[^"]*" \/>/, '');
 html = html.replace(/(\n(\s*)<meta property="og:type" content="website" \/>)/, `$1\n$2<meta property="og:url" content="${origin}/" />`);
 // Bewusst kein <link rel="canonical"> hier: index.html gilt für jede Seite, ein fester Wert erklärte alle Unterseiten

@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const DIRS = ['src', 'public', 'e2e', 'e2e-fullstack'];
 const TEXT = /\.(ts|html|scss|css|json|webmanifest|txt|mjs|svg)$/;
-const OLD = /4[ _-]?in[ _-]?one/i;
+const OLD = /4[ _-]?in[ _-]?one|veyora/i; // 4inOne bis 27.11.2026, Veyora als Zwischenname am 28.11.2026
 
 /** Bewusst beibehaltene technische Namen (Datei → erlaubtes Muster). */
 const ALLOWED = [
@@ -54,7 +54,7 @@ for (const section of ['finance', 'household', 'organization', 'travel']) {
 }
 
 if (problems.length) {
-  console.error('Alter Produktname gefunden (Marke ist Veyora, docs/BRAND_GUIDELINES.md):\n  ' + problems.join('\n  '));
+  console.error('Alter Produktname gefunden (Marke ist Lumiknot, docs/BRAND_GUIDELINES.md):\n  ' + problems.join('\n  '));
   process.exit(1);
 }
 console.log('Marke: kein alter Produktname im Frontend, Logo-Farben stimmen überein.');

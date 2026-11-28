@@ -50,7 +50,7 @@ class EcbProvider:
     """Lädt die aktuelle EZB-Tabelle: (Kursdatum, {Währung: Einheiten je 1 EUR})."""
 
     def fetch(self) -> tuple[date, dict[str, Decimal]]:
-        request = urllib.request.Request(ECB_URL, headers={'User-Agent': 'Veyora/1 (+exchange rates)'})
+        request = urllib.request.Request(ECB_URL, headers={'User-Agent': 'Lumiknot/1 (+exchange rates)'})
         with urllib.request.urlopen(request, timeout=5) as response:  # noqa: S310 — feste HTTPS-Adresse
             body = response.read(_MAX_BYTES + 1)
         return parse_ecb(body)

@@ -62,7 +62,7 @@
         [attr.data-autofocus]="editId() ? null : ''"
       />
     </app-field>
-    <!-- Text vor der Kategorie: aus früheren Buchungen mit demselben Text schlägt Veyora die Kategorie vor (F1). -->
+    <!-- Text vor der Kategorie: aus früheren Buchungen mit demselben Text schlägt Lumiknot die Kategorie vor (F1). -->
     <app-field label="Wofür?" [optional]="true">
       <input id="booking-note" formControlName="note" maxlength="255" autocomplete="off" placeholder="z. B. REWE, Miete, Gehalt" (input)="noteInput()" />
     </app-field>

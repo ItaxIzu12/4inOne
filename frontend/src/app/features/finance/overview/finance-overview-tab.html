@@ -15,7 +15,7 @@
 @if (startGuide()) {
   <!-- Neues Konto: drei echte Schritte statt einer Seite voller Nullen (hakt sich mit Daten ab); gemeinsamer Baustein -->
   <app-start-guide area="finanzen" heading="So startest du mit Finanzen"
-    intro="Mit einem Monatsbudget und deinen Ausgaben zeigt dir Veyora jeden Tag, wie viel noch übrig ist."
+    intro="Mit einem Monatsbudget und deinen Ausgaben zeigt dir Lumiknot jeden Tag, wie viel noch übrig ist."
     demoPath="/demo/finanzen" [steps]="guideSteps()" (pick)="guidePick($event)" (alt)="importOpen.set(true)"
     (hide)="ctx.guide.hide('finanzen')" />
 }

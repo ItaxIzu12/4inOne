@@ -53,10 +53,10 @@ def send_verification_mail(user) -> bool:
     link = link_for(user)
     body = (
         'Hallo,\n\n'
-        'bitte bestätige deine E-Mail-Adresse für Veyora. Danach erscheinen Einladungen von anderen Personen direkt '
+        'bitte bestätige deine E-Mail-Adresse für Lumiknot. Danach erscheinen Einladungen von anderen Personen direkt '
         'in der App, und du kannst sie dort annehmen.\n\n'
         f'E-Mail-Adresse bestätigen: {link}\n\n'
-        'Der Link gilt 3 Tage. Hast du kein Konto bei Veyora angelegt, ignoriere diese E-Mail einfach.\n'
+        'Der Link gilt 3 Tage. Hast du kein Konto bei Lumiknot angelegt, ignoriere diese E-Mail einfach.\n'
     )
     try:
         send_mail('Bitte bestätige deine E-Mail-Adresse', body, settings.DEFAULT_FROM_EMAIL, [user.email])

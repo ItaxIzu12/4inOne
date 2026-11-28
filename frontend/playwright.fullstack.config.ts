@@ -1,12 +1,18 @@
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Full-Stack-Tests: echte Oberfläche (ng serve, Port 4211, Konfiguration „fullstack“) gegen echtes Django (Port 8010)
- * – nichts simuliert. Eigene Ports, damit ein lokal laufendes Veyora (8000/4200) weiterlaufen kann.
- * Eigene, frische SQLite-Datenbank unter test-results/ (nie backend/db.sqlite3), lokaler Testserver mit DEBUG=True,
- * nur auf localhost. Start: `npx playwright test -c playwright.fullstack.config.ts`.
+ * – nichts simuliert. Eigene Ports, damit ein lokal laufendes Lumiknot (8000/4200) weiterlaufen kann.
+ * Eigene, frische SQLite-Datenbank im Temp-Ordner des Systems (nie backend/db.sqlite3), lokaler Testserver mit
+ * DEBUG=True, nur auf localhost. Start: `npx playwright test -c playwright.fullstack.config.ts`.
+ *
+ * Die Datenbank liegt bewusst NICHT unter test-results/: Jeder Playwright-Lauf leert diesen Ordner beim Start. Lief
+ * parallel ein zweiter Lauf (z. B. einzelne e2e-Specs), verschwand die Datenbank mitten im Test („unable to open
+ * database file“, 28.11.2026).
  */
-const DB = `${process.cwd()}/test-results/fullstack.sqlite3`;
+const DB = join(tmpdir(), 'lumiknot-fullstack-tests.sqlite3');
 const backendEnv = [
   'DEBUG=True',
   'SECRET_KEY=fullstack-test-only',
@@ -27,7 +33,7 @@ export default defineConfig({
   workers: 1,
   webServer: [
     {
-      command: `mkdir -p test-results && rm -f "${DB}" && cd ../backend && env ${backendEnv} ${python} manage.py migrate --noinput && env ${backendEnv} ${python} manage.py runserver 127.0.0.1:8010 --noreload`,
+      command: `rm -f "${DB}" && cd ../backend && env ${backendEnv} ${python} manage.py migrate --noinput && env ${backendEnv} ${python} manage.py runserver 127.0.0.1:8010 --noreload`,
       url: 'http://127.0.0.1:8010/api/v1/auth/csrf/',
       reuseExistingServer: false,
       timeout: 180_000,

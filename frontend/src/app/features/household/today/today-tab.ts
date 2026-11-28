@@ -58,7 +58,7 @@ export class UebersichtTab {
     return [
       { key: 'aufgabe', title: 'Erste Aufgabe anlegen', hint: 'Was regelmäßig ansteht, z. B. Bad putzen. Auf Wunsch mit Wiederholung und wer dran ist.', done: !!h?.task },
       { key: 'einkauf', title: 'Einkauf planen', hint: 'Die gemeinsame Liste – was jemand einträgt, sehen alle im Haushalt sofort.', done: !!h?.shopping },
-      { key: 'geraet', title: 'Gerät oder Vertrag ablegen', hint: 'Garantie, Kündigungsfrist, Kosten – Veyora erinnert dich rechtzeitig.', done: !!h?.folder, optional: true,
+      { key: 'geraet', title: 'Gerät oder Vertrag ablegen', hint: 'Garantie, Kündigungsfrist, Kosten – Lumiknot erinnert dich rechtzeitig.', done: !!h?.folder, optional: true,
         alt: { label: 'Oder einen Vertrag hinzufügen', icon: 'finance' } },
     ];
   });

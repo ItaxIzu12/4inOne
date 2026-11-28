@@ -1,4 +1,4 @@
-"""Passwort-Richtlinie von Veyora (seit 20.11.2026).
+"""Passwort-Richtlinie von Lumiknot (seit 20.11.2026).
 
 Grundlage: Kampagne „Mach dein Passwort stark“ des Landeskriminalamts NRW (veröffentlicht über die
 Verbraucherzentrale NRW, Stand 05/2025) und die BSI-Empfehlung „Sichere Passwörter erstellen“. Eine verbindliche

@@ -1,4 +1,4 @@
-/* Schriften (Veyora, 28.11.2026; docs/BRAND_GUIDELINES.md): Manrope für Marke und Überschriften, Inter für die
+/* Schriften (Lumiknot, 28.11.2026; docs/BRAND_GUIDELINES.md): Manrope für Marke und Überschriften, Inter für die
    Oberfläche. Beide OFL, variable Schriften, selbst gehostet statt über das Google-CDN (keine IP-Übertragung an
    Dritte, LG München 20.01.2022); je zwei Teildateien nach Zeichenbereich, swap zeigt sofort die Ersatzschrift.
    Bewusst ohne Kursiv. */
@@ -54,7 +54,7 @@ cite {
   font-style: normal;
 }
 
-/* Veyora Design System — kanonisch beschrieben in docs/DESIGN_SYSTEM.md (bei Änderungen dort mitpflegen).
+/* Lumiknot Design System — kanonisch beschrieben in docs/DESIGN_SYSTEM.md (bei Änderungen dort mitpflegen).
    Oben die semantischen Tokens (System V3); darunter die älteren Namen, die nur noch auf sie zeigen. */
 
 :root {
@@ -79,7 +79,7 @@ cite {
   --border-control: #879189; /* Feldränder: 3,0:1 auf Weiß (WCAG 1.4.11) */
 
   /* ---------- Marke und Bereiche (Akzente, keine Flächenfüller) ---------- */
-  /* Hauptfarbe für Knöpfe und Fokus: Midnight, Hover Graphite (Veyora, 28.11.2026). Evergreen ist der Akzent (Links,
+  /* Hauptfarbe für Knöpfe und Fokus: Midnight, Hover Graphite (Lumiknot, 28.11.2026). Evergreen ist der Akzent (Links,
      Fortschritt, aktive Zustände) — nicht für Knöpfe, weil es zugleich die Finanzen-Farbe ist. */
   --brand-primary: #101820;
   --brand-primary-hover: #29323b;
@@ -90,7 +90,7 @@ cite {
   --logo-household: #f59a42;
   --logo-organization: #7864e7;
   --logo-travel: #2197be;
-  /* Bereichsfarben (Veyora, aus den Logo-Farben abgedunkelt): Text- und Flächenvariante ≥ 4,6:1 auf Weiß, Ivory und
+  /* Bereichsfarben (Lumiknot, aus den Logo-Farben abgedunkelt): Text- und Flächenvariante ≥ 4,6:1 auf Weiß, Ivory und
      Sage, weißer Text darauf ≥ 5,3:1; die Tönung nur für kleine Flächen (Text darauf ≥ 4,6:1). */
   --finance-accent: #0e7957;
   --finance-soft: #e3f4ee;

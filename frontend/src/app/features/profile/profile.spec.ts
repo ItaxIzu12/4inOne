@@ -28,10 +28,10 @@ describe('Profil', () => {
 
     TestBed.inject(HttpTestingController)
       .expectOne((r) => r.url.endsWith('/auth/export/'))
-      .flush(new Blob(['zip']), { headers: { 'Content-Disposition': 'attachment; filename="veyora-daten-2026-11-15.zip"' } });
+      .flush(new Blob(['zip']), { headers: { 'Content-Disposition': 'attachment; filename="lumiknot-daten-2026-11-15.zip"' } });
     fixture.detectChanges();
     expect(click).toHaveBeenCalled();
-    expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe('veyora-daten-2026-11-15.zip');
+    expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe('lumiknot-daten-2026-11-15.zip');
     expect(el.textContent).toContain('Die Datei wurde heruntergeladen.');
     click.mockRestore();
   });

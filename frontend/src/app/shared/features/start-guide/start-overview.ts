@@ -22,8 +22,8 @@ export interface StartRow {
   template: `
     <section class="so" aria-labelledby="so-h">
       <div class="so__head">
-        <h2 id="so-h">Dein Start mit Veyora</h2>
-        <button type="button" class="so__hide" (click)="hide.emit()" aria-label="Dein Start mit Veyora ausblenden">
+        <h2 id="so-h">Dein Start mit Lumiknot</h2>
+        <button type="button" class="so__hide" (click)="hide.emit()" aria-label="Dein Start mit Lumiknot ausblenden">
           <app-icon name="close" aria-hidden="true" />
         </button>
       </div>

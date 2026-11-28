@@ -1,5 +1,5 @@
 /**
- * Kalenderwoche für de-DE — die EINE Stelle für Wochen in Veyora (Finanzen, Haushalt, Organisation, Reisen).
+ * Kalenderwoche für de-DE — die EINE Stelle für Wochen in Lumiknot (Finanzen, Haushalt, Organisation, Reisen).
  *
  * - Eine Woche beginnt am Montag und endet am Sonntag.
  * - Die Nummer folgt ISO 8601: KW 1 ist die Woche mit dem ersten Donnerstag des Jahres

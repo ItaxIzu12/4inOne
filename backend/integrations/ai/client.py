@@ -1,4 +1,4 @@
-"""AI Service Adapter: einziger Zugang von Veyora zu KI (docs/AI_INTEGRATION.md § 2–5, gemeinsamer Standard).
+"""AI Service Adapter: einziger Zugang von Lumiknot zu KI (docs/AI_INTEGRATION.md § 2–5, gemeinsamer Standard).
 
 - Fachlogik ruft nur `request(capability, payload, user=…, area=…)` auf. Welcher Provider antwortet (Personal AI Core
   oder Mock) und welches Modell dahinter steckt, bleibt hier verborgen (`providers.py`).

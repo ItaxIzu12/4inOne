@@ -134,7 +134,7 @@ def build_csv(household: Household, period: Period) -> str:
     buffer = io.StringIO()
     writer = csv.writer(buffer, delimiter=';')
 
-    writer.writerow(['Veyora — Finanzbericht', _text_cell(household.name), _text_cell(period.label)])
+    writer.writerow(['Lumiknot — Finanzbericht', _text_cell(household.name), _text_cell(period.label)])
     writer.writerow([])
     writer.writerow(['Datum', 'Beschreibung', 'Kategorie', 'Betrag (€)'])
     gesamt = Decimal('0')
@@ -198,7 +198,7 @@ def build_pdf(household: Household, period: Period) -> bytes:
     doc = SimpleDocTemplate(
         buffer, pagesize=A4,
         leftMargin=20 * mm, rightMargin=20 * mm, topMargin=18 * mm, bottomMargin=18 * mm,
-        title=f'Veyora-Finanzbericht {period.label}',
+        title=f'Lumiknot-Finanzbericht {period.label}',
     )
 
     def table(rows, col_widths, header=True):
@@ -220,7 +220,7 @@ def build_pdf(household: Household, period: Period) -> bytes:
         return t
 
     elements = [
-        Paragraph('Veyora — Finanzbericht', title_style),
+        Paragraph('Lumiknot — Finanzbericht', title_style),
         Paragraph(f'{household.name} · {period.label}', meta_style),
         Paragraph(
             f'Erstellt am {timezone.localdate().strftime("%d.%m.%Y")}. Einkommen, feste Abzüge und Puffer basieren '

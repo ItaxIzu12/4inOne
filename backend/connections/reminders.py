@@ -96,13 +96,13 @@ def build_digest(user, weekly: bool, tz_name: str | None = None) -> tuple[str, s
         parts += ['', f'Fristen in den nächsten {horizon} Tagen', *_clip(deadline_lines)]
     parts += [
         '',
-        f'In Veyora öffnen: {settings.FRONTEND_URL}/',
+        f'In Lumiknot öffnen: {settings.FRONTEND_URL}/',
         '',
-        'Du bekommst diese E-Mail, weil du in Veyora Erinnerungen per E-Mail eingeschaltet hast. Abschalten oder auf '
+        'Du bekommst diese E-Mail, weil du in Lumiknot Erinnerungen per E-Mail eingeschaltet hast. Abschalten oder auf '
         f'„wöchentlich“ ändern: {settings.FRONTEND_URL}/einstellungen/profil',
     ]
     count = len(day_lines) + len(task_lines) + len(deadline_lines)
-    subject = f'Veyora – {"deine Woche" if weekly else "heute"}: {count} {"Punkt" if count == 1 else "Punkte"}'
+    subject = f'Lumiknot – {"deine Woche" if weekly else "heute"}: {count} {"Punkt" if count == 1 else "Punkte"}'
     return subject, '\n'.join(parts) + '\n'
 
 

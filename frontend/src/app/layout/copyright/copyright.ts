@@ -7,7 +7,7 @@ import { Component } from '@angular/core';
 @Component({
   selector: 'app-copyright',
   standalone: true,
-  template: `<p class="copyright">&copy; {{ year }} Veyora</p>`,
+  template: `<p class="copyright">&copy; {{ year }} Lumiknot</p>`,
   styles: `
     .copyright {
       font-size: 13px;

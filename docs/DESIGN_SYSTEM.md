@@ -1,4 +1,4 @@
-# Veyora — Design System (V3, verbindlich ab 10.10.2026)
+# Lumiknot — Design System (V3, verbindlich ab 10.10.2026)
 
 > **Pflege:** Jede Änderung an Tokens, gemeinsamen Komponenten, Layout-Regeln oder Bereichsfarben wird hier und in
 > der Kurzfassung [`/DESIGN.md`](../DESIGN.md) im selben Schritt nachgetragen (siehe AGENTS.md › Design-Dokumentation).
@@ -20,7 +20,7 @@ Complex underneath, simple on top. Weniger Elemente, bessere Ordnung — keine D
 
 ### Marke, Bereiche, Status
 
-- Marke (Veyora, 28.11.2026): `--brand-primary #101820` Midnight (Knöpfe, Fokus), Hover `#29323b` Graphite;
+- Marke (Lumiknot, 28.11.2026): `--brand-primary #101820` Midnight (Knöpfe, Fokus), Hover `#29323b` Graphite;
   `--text-primary #101820`, `--surface-app #f7f6f2` Ivory. Logo-Farben als `--logo-finance #13a274` · `--logo-household
   #f59a42` · `--logo-organization #7864e7` · `--logo-travel #2197be` (= `core/brand/brand.config.ts`, geprüft von
   `npm run check:brand`) – nur Logo, Farbpunkte, Dekor, nie Text (2,2–4,4:1 auf Weiß).
@@ -34,7 +34,7 @@ Complex underneath, simple on top. Weniger Elemente, bessere Ordnung — keine D
 
 ### Typografie
 
-Seit 28.11.2026 (Veyora): **Inter** für die Oberfläche (`--font-body`) und **Manrope** für Marke und Überschriften
+Seit 28.11.2026 (Lumiknot): **Inter** für die Oberfläche (`--font-body`) und **Manrope** für Marke und Überschriften
 (`--font-brand` = `--font-display`), beide variabel, selbst gehostet unter `public/fonts/{inter,manrope}` (OFL, je zwei
 Teildateien nach Zeichenbereich, vorgeladen), keine Kursive. Davor Schibsted Grotesk. Vier Gewichte:
 400 `--fw-regular`, 500 `--fw-medium`, 600 `--fw-semibold`, 700 `--fw-bold`.
@@ -150,8 +150,13 @@ Abstand — nie nur über Farbe.
 
 ### Referenz und Migrationsstand
 
-- **Veyora-Logo, Farben und Schrift (28.11.2026, Phase 2):** Orbit-Zeichen nach der Vorlage
-  `docs/brand/veyora-orbit-reference.webp` als Konstruktion (`shared/ui/brand/orbit.ts`: vier gleiche Elemente aus
+- **Name Lumiknot statt Veyora (28.11.2026):** derselbe Tag, nur der Name wechselt (Markenlage, `docs/BRAND_GUIDELINES.md`
+  › Namensprüfung). Name überall aus `core/brand/brand.config.ts`; Lockups messen die Textbreite jetzt selbst
+  (`scripts/brand-assets.mts`), damit ein längerer Name nicht abgeschnitten wird; Logo-Dateien unter
+  `public/brand/lumiknot-*`, Icon-Version `?v=4`, Teilen-Bild und Landing-Screenshots neu. Zeichen, Farben, Schrift
+  und Layout unverändert.
+- **Lumiknot-Logo, Farben und Schrift (28.11.2026, Phase 2):** Orbit-Zeichen nach der Vorlage
+  `docs/brand/lumiknot-orbit-reference.webp` als Konstruktion (`shared/ui/brand/orbit.ts`: vier gleiche Elemente aus
   Zuleitung, 135°-Bogen r = 108 und Diagonale, Strich 68, je um 90° gedreht; Reisen liegt zuletzt oben). `<app-brand>`
   zeichnet es inline mit `--logo-*`, Name in Manrope 700; `context` (`global` · `finance` · `household` ·
   `organization` · `travel`, in der App-Shell aus der URL) lässt die drei anderen Elemente auf 42 % Deckkraft gehen
@@ -165,7 +170,7 @@ Abstand — nie nur über Farbe.
   in Login und „Dein Start“ nutzen `--logo-*`. Landing-Screenshots (`public/images/landing`) neu aus der Demo
   (22.10.2026 08:30, 1440 × 900 und @2x, Handy 390 × 844 @2x), Ausschnitte und Alternativtexte angepasst. Regeln:
   `docs/LOGO_USAGE.md`, `docs/BRAND_GUIDELINES.md`.
-- **Rebranding zu Veyora, Phase 1 (28.11.2026):** sichtbarer Produktname überall „Veyora“ (Seitentitel, Manifest
+- **Rebranding zu Lumiknot, Phase 1 (28.11.2026):** sichtbarer Produktname überall „Lumiknot“ (Seitentitel, Manifest
   `name`/`short_name`, Open-Graph-Angaben, `<app-brand>`-Schriftzug, Fließtexte, E-Mails, Export, Berichte). Name,
   Leitsatz, Claim „Life, connected.“, Beschreibung und Bereichsnamen stehen typisiert in `core/brand/brand.config.ts`;
   Seitentitel über `brandTitle('Seite')`. Farben bleiben bewusst Tokens (keine zweite Farbquelle). Teilen-Bild

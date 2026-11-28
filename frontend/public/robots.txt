@@ -1,4 +1,4 @@
-# Veyora — öffentliche Seiten dürfen in Suchmaschinen, persönliche Bereiche und Links mit Token nicht.
+# Lumiknot — öffentliche Seiten dürfen in Suchmaschinen, persönliche Bereiche und Links mit Token nicht.
 User-agent: *
 Allow: /
 Disallow: /api/
