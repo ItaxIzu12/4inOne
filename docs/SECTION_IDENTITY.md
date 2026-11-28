@@ -1,5 +1,7 @@
 # Lumiknot — Bereichsidentitäten
 
+> Teil der Brand Governance (`docs/BRAND_GOVERNANCE.md`): verbindlich für den Charakter der vier Bereiche und ihre erlaubten Abweichungen.
+
 Stand 28.11.2026. Ein Produkt, eine Marke, vier Bereiche. Jeder Bereich hat einen eigenen Charakter – erkennbar am
 Logo-Element, am Akzent und an der Bildsprache –, aber kein eigenes Designsystem. Technik: Registry
 `docs/BRAND_CONFIGURATION.md`, Tokens `docs/DESIGN_TOKENS.md` › Bereichs-Themes, Logo `docs/LOGO_USAGE.md`,

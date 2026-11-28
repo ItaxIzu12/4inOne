@@ -1,5 +1,7 @@
 # Lumiknot — Brand Configuration
 
+> Teil der Brand Governance (`docs/BRAND_GOVERNANCE.md`): verbindlich für die technische Markenquelle, die Bereichs-Registry und ihre Prüfungen.
+
 Stand 28.11.2026. Wie die Marke technisch an **einer** Stelle definiert ist und wie alle anderen Stellen davon
 abgeleitet oder dagegen geprüft werden. Was die Marke bedeutet: `docs/BRAND_IDENTITY.md`; wie sie aussieht:
 `docs/BRAND_GUIDELINES.md`, `docs/LOGO_USAGE.md`; Namen: `docs/NAMING_CONVENTIONS.md`.

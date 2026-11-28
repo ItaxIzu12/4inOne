@@ -1,5 +1,7 @@
 # Lumiknot — Logo
 
+> Teil der Brand Governance (`docs/BRAND_GOVERNANCE.md`): verbindlich für Bildmarke, Wortmarke, Logo-Varianten und die Logo-Komponente.
+
 Stand 28.11.2026. Vorlage: `docs/brand/lumiknot-orbit-reference.webp` (nur Referenz, nie in der App verwenden).
 Übersicht aller Varianten: `docs/brand/lumiknot-logo-overview.png`; Größen- und Hintergrundprüfung:
 `docs/brand/lumiknot-logo-qa.png`. Markenstrategie: `docs/BRAND_IDENTITY.md`, Farben und Schrift:

@@ -1,5 +1,7 @@
 # Lumiknot — Markenidentität
 
+> Teil der Brand Governance (`docs/BRAND_GOVERNANCE.md`): verbindlich für Purpose, Versprechen, Werte, Persönlichkeit, Zielgruppen, Ton und Markenarchitektur.
+
 Verbindlich seit 28.11.2026. Dieses Dokument legt fest, **wofür** die Marke steht und **wie** sie spricht. Wie sie
 aussieht (Farben, Schrift, Logo), regeln `docs/BRAND_GUIDELINES.md` und `docs/LOGO_USAGE.md`; Namen und Bezeichner
 `docs/NAMING_CONVENTIONS.md`. Bei Widerspruch gilt für Produktumfang und Versprechen `PRODUCT.md` und

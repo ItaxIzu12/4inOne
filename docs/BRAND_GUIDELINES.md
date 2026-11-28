@@ -1,7 +1,10 @@
 # Lumiknot — Markenrichtlinien
 
+> Teil der Brand Governance (`docs/BRAND_GOVERNANCE.md`): verbindlich für den kompakten Markenauftritt, Markenpalette, Bild- und Iconsprache.
+
 Verbindlich für alle neuen Entwicklungen seit 28.11.2026. Vorher hieß das Produkt **4inOne**; was technisch noch so
-heißt und warum, steht in `docs/REBRANDING_MIGRATION.md`. Markenstrategie und Tonalität: `docs/BRAND_IDENTITY.md`. Logo-Regeln: `docs/LOGO_USAGE.md`. Namen und Bezeichner:
+heißt und warum, steht in `docs/REBRANDING_MIGRATION.md`. Zuständigkeiten und Freigabe: `docs/BRAND_GOVERNANCE.md`.
+Markenstrategie und Tonalität: `docs/BRAND_IDENTITY.md`. Logo-Regeln: `docs/LOGO_USAGE.md`. Namen und Bezeichner:
 `docs/NAMING_CONVENTIONS.md`. Gestaltung im Detail: `docs/DESIGN_SYSTEM.md`, Kurzfassung `DESIGN.md`.
 
 ## Identität
@@ -24,8 +27,7 @@ haben. Global spricht die Marke als „Lumiknot“.
 
 ## Tonalität
 
-Ruhig, klar, ehrlich. Kurze Sätze, keine Superlative, keine Versprechen ohne Beleg. Datenschutz als Tatsache
-formulieren („Geteilt wird nur, was du teilst.“), nicht als Werbebotschaft.
+Ruhig, klar, ehrlich, Du-Form – verbindlich mit Regeln und Beispielen in `docs/BRAND_IDENTITY.md` › 7.
 
 ## Farben
 
@@ -41,42 +43,47 @@ formulieren („Geteilt wird nur, was du teilst.“), nicht als Werbebotschaft.
 | White | `#FFFFFF` | Karten |
 
 Die reinen Bereichsfarben erreichen auf Weiß nur 2,2–4,4:1 und sind deshalb **nie Textfarbe** und nie allein
-bedeutungstragend. Für Text, Symbole, Balken und Flächen gibt es kontrastgeprüfte Varianten (WCAG 2.2 AA):
-
-| Bereich | Text / Fläche | Tönung | Dunkelmodus |
-|---|---|---|---|
-| Finanzen | `#0E7957` | `#E3F4EE` | `#5CC79C` |
-| Haushalt | `#955E28` | `#FEF3E8` | `#F2A35C` |
-| Organisation | `#6A59CC` | `#EFECFC` | `#A99BF2` |
-| Reisen | `#197390` | `#E4F3F7` | `#6CC3E0` |
-
-Text/Fläche ≥ 4,5:1 auf Weiß, Ivory und Papier; weißer Text darauf ≥ 5,3:1; Akzent auf Tönung ≥ 4,6:1;
-Dunkelmodus ≥ 6,3:1 auf den Karten. Tokens: `--logo-*`, `--*-accent`, `--*-fill`, `--*-soft` (styles.css).
+bedeutungstragend. Für Text, Symbole, Balken und Flächen gibt es kontrastgeprüfte Ableitungen (hell und dunkel);
+ihre Werte, die neutralen Abstufungen (Papier, Schiefer, Nacht) und alle Kontraste stehen verbindlich in
+`docs/DESIGN_TOKENS.md` › Farben.
 
 ## Schrift
 
-- **Manrope** (Marke, Logo, Überschriften; 700 für den Namen, 650–700 für Überschriften).
-- **Inter** (Oberfläche, Formulare, Fließtext; 400–600).
-- Beide OFL, selbst gehostet (`public/fonts`), keine Kursive.
+- **Manrope** für Marke, Logo und Überschriften; **Inter** für Oberfläche, Formulare und Fließtext.
+- Beide SIL Open Font License, selbst gehostet (`public/fonts`), keine Kursive.
+- Größen, Gewichte, Zeilenhöhen und Ziffern: `docs/DESIGN_TOKENS.md` › Typografie.
+
+## Bildsprache
+
+- **Echte Produktansichten** zuerst: Screenshots aus der Demo (Besetzung Sophie, Max, Lena, Jonas), mit ehrlichen
+  Daten. Keine erfundenen Kennzahlen, Bewertungen oder Stimmen.
+- **Illustrationen** nur flach, ruhig und in Token-Farben, für Leerzustände, Onboarding und Markenmomente – nie als
+  Füllung in Alltagsansichten.
+- Nicht: Stockfotos, generische KI-Bilder, 3D-Objekte, Verläufe, Fotos oder Screenshots als App-Hintergrund.
+- Bereiche zeigen ihren Charakter über Inhalte (Räume, Orte, Zeitachsen, Zahlen), siehe `docs/SECTION_IDENTITY.md`.
+
+## Iconsprache
+
+- **Eine Familie:** `app-icon` (`frontend/src/app/shared/ui/icons`), 24er-Raster, Linie 1,8 px, runde Enden und
+  Ecken – dieselbe Formsprache wie die runden Enden des Orbit-Zeichens. Keine zweite Icon-Bibliothek.
+- **Feste Bereichssymbole:** Finanzen Brieftasche (`finance`), Haushalt Haus (`household`), Organisation Kalender
+  (`calendar`), Reisen Flugzeug (`travel`); in der Brand-Registry hinterlegt, nie je Ansicht wechseln.
+- Größen: 16 (Hilfe, im Text) · 18–20 (Listen) · 22–24 (Navigation) · bis 32 (Kopfbereiche); Farbe über
+  `currentColor`, im Bereich `--area-accent`.
+- Keine 3D-Icons in Alltagsansichten; Symbole tragen nie allein Bedeutung (Beschriftung oder `aria-label`).
 
 ## Single Source of Truth
 
-Ausführlich mit Typen, Registry, Prüfungen und Erweiterungsregeln: `docs/BRAND_CONFIGURATION.md`.
-
-
-- `frontend/src/app/core/brand/brand.config.ts` (`BRAND`): Name, Kurzform, Claim, Leitsatz, Beschreibung, Bereiche
-  (deutscher Name, Markenname, Logo-Farbe), neutrale Farben, Schriften, Logo-Dateien, SEO-Angaben (Teilen-Bild,
-  Theme- und Hintergrundfarbe), Beschriftungen. Seitentitel immer `brandTitle('Seite')`.
-- `frontend/src/app/shared/ui/brand/orbit.ts`: Geometrie des Zeichens.
-- `frontend/src/styles.css`: Design-Tokens; `--logo-*` müssen `brand.config.ts` entsprechen (`npm run check:brand`).
-- `npm run brand:assets` erzeugt alle Logo-Dateien aus diesen Quellen; nie von Hand nachbearbeiten.
-- Fließtexte nennen „Lumiknot“ direkt; `npm run check:brand` (auch in CI) verhindert den alten Namen im Frontend.
+Technisch ist `frontend/src/app/core/brand/brand.config.ts` die eine Quelle (Name, Claim, Bereiche, Markenfarben,
+Logo-Pfade, SEO); Geometrie in `shared/ui/brand/orbit.ts`, Primitive in `shared/styles/tokens.css`. Alles Abgeleitete
+(Logo-Dateien, Manifest, `index.html`, Backend) wird erzeugt oder von `npm run check:brand` geprüft – Einzelheiten in
+`docs/BRAND_CONFIGURATION.md`.
 
 ## Erweiterungsregeln
 
 - Neue Seiten: Titel über `brandTitle()`, Logo nur über `<app-brand>`, Farben nur über Tokens.
-- Neuer Bereich oder neue Markenfarbe: zuerst `brand.config.ts` und `orbit.ts`/`styles.css`, dann
-  `npm run brand:assets`, Kontrast prüfen, Doku hier und in `docs/DESIGN_SYSTEM.md` nachtragen.
+- Neuer Bereich oder neue Markenfarbe: Identitätsänderung mit Freigabe (`docs/BRAND_GOVERNANCE.md` › 5); Ablauf in
+  `docs/BRAND_CONFIGURATION.md` › 6 und `docs/DESIGN_TOKENS.md` › 10.
 - Keine Verläufe, Neon-Effekte oder Schatten am Logo; die räumliche Variante gibt es nur für ausgewählte
   Markenpräsentationen, nie in der App.
 - Vor einer Veröffentlichung: Marken- (DPMA/EUIPO) und Domainprüfung für „Lumiknot“ durch eine Fachperson (siehe

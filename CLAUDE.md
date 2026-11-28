@@ -18,9 +18,12 @@ The user describes features in plain language and expects the architecture to be
 
 - Read the documentation for the area (`docs/*_V1.md`) and inspect the existing code before changing it.
 - Visual work: read `DESIGN.md`; inspect existing Angular components, CSS/SCSS tokens and the installed icon system.
-- Brand: the product is **Lumiknot** (`docs/BRAND_IDENTITY.md` for purpose, promise and tone; `docs/BRAND_CONFIGURATION.md` for the central config and section registry; `docs/SECTION_IDENTITY.md`, `docs/MOTION_GUIDELINES.md` for area character and motion; `docs/BRAND_GUIDELINES.md`, `docs/LOGO_USAGE.md`, `docs/NAMING_CONVENTIONS.md`);
-  logo only via `<app-brand>`, page titles via `brandTitle()`, colors via tokens. Old technical `4inone` names stay
-  unless `docs/REBRANDING_MIGRATION.md` says otherwise. After logo/color changes run `npm run brand:assets`.
+- Brand and UI: the product is **Lumiknot**. Before any UI, text or brand change read `docs/BRAND_GOVERNANCE.md`
+  (which document decides what, approval levels) and the topic documents it names (`docs/DESIGN_TOKENS.md`,
+  `docs/DESIGN_SYSTEM.md`, `docs/LOGO_USAGE.md`, `docs/SECTION_IDENTITY.md`, `docs/MOTION_GUIDELINES.md`,
+  `docs/BRAND_IDENTITY.md`, `docs/BRAND_CONFIGURATION.md`, `docs/NAMING_CONVENTIONS.md`). Logo only via `<app-brand>`,
+  titles via `brandTitle()`, colours via semantic/component tokens. Old technical `4inone` names stay unless
+  `docs/REBRANDING_MIGRATION.md` says otherwise. After logo/colour changes run `npm run brand:assets`.
 - Backend work: inspect existing apps, serializers, views, services and permission checks before creating patterns.
 
 ## Do not
@@ -32,6 +35,10 @@ The user describes features in plain language and expects the architecture to be
 - bypass backend permissions for convenience;
 - use screenshots as application backgrounds to imitate a reference design;
 - develop the Personal AI Core or integrate local AI models (`AGENTS.md` § 2.5);
+- change the brand identity (name, claim, logo, wordmark, brand colours, primitive tokens, fonts, area names, new
+  area, tone or motion principles) without the user's explicit approval (`docs/BRAND_GOVERNANCE.md` § 5);
+- introduce a separate design system, component library or per-area styling instead of extending the global one;
+- use the generic-AI look listed in `AGENTS.md` § 6 (template SaaS, glass, gradients, neon, bento, stock/AI images);
 - start architecture improvements without the user's approval; after each approved step run the full test suite
   and confirm the existing application still works (`AGENTS.md` § 1).
 
@@ -47,7 +54,7 @@ The user describes features in plain language and expects the architecture to be
 
 - Backend: `backend/.venv/bin/python -m pytest -q`, `manage.py check`, `manage.py makemigrations --check --dry-run`
   (test databases only, never the user's development database).
-- Frontend: `npm run check:architecture`, `npm run check:brand`, `npx ng test --watch=false`, `npx ng build`, Playwright specs of the touched
+- Frontend: `npm run check:architecture`, `npm run check:brand`, `npm run check:docs`, `npx ng test --watch=false`, `npx ng build`, Playwright specs of the touched
   area (`npx playwright test e2e/<spec> --project=chromium`), full-stack specs with
   `-c playwright.fullstack.config.ts` when backend and frontend interact.
 - UI changes: check in the browser preview (desktop and 390 px, light and dark) and run the axe checks.
@@ -57,8 +64,9 @@ The user describes features in plain language and expects the architecture to be
 
 ## Design documentation
 
-After any visual or design-system change, update `docs/DESIGN_SYSTEM.md` and `DESIGN.md` in the same step
-(`AGENTS.md` § 6).
+After any visual or design-system change, update `docs/DESIGN_SYSTEM.md` and `DESIGN.md` in the same step, token
+changes also in `docs/DESIGN_TOKENS.md` (`AGENTS.md` § 6). Brand decisions go into the binding document named in
+`docs/BRAND_GOVERNANCE.md` § 1 and the decision log in `docs/BRAND_IDENTITY.md` § 12.
 
 ## Completion report
 

@@ -1,5 +1,7 @@
 # Lumiknot — Namenskonventionen
 
+> Teil der Brand Governance (`docs/BRAND_GOVERNANCE.md`): verbindlich für Schreibweisen und technische Bezeichner.
+
 Stand 28.11.2026. Gilt für alles Neue; Bestehendes wird nur nach `docs/REBRANDING_MIGRATION.md` umbenannt.
 
 ## Marke

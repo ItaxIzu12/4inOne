@@ -1,5 +1,7 @@
 # Lumiknot — Motion Guidelines
 
+> Teil der Brand Governance (`docs/BRAND_GOVERNANCE.md`): verbindlich für Bewegung und reduzierte Bewegung.
+
 Stand 28.11.2026. Tokens: `docs/DESIGN_TOKENS.md` › Bewegung. Logo: `docs/LOGO_USAGE.md`. Bereiche:
 `docs/SECTION_IDENTITY.md`.
 

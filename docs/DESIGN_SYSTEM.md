@@ -1,5 +1,7 @@
 # Lumiknot — Design System (V3, verbindlich ab 10.10.2026)
 
+> Teil der Brand Governance (`docs/BRAND_GOVERNANCE.md`): verbindlich für Gestaltungsregeln, Bausteine, Layout, Zustände und den Änderungsverlauf.
+
 > **Pflege:** Jede Änderung an Tokens, gemeinsamen Komponenten, Layout-Regeln oder Bereichsfarben wird hier und in
 > der Kurzfassung [`/DESIGN.md`](../DESIGN.md) im selben Schritt nachgetragen (siehe AGENTS.md › Design-Dokumentation).
 > Token-Ebenen (Primitive → Semantik → Komponenten → Bereichs-Theme), alle Werte und Kontraste: [`docs/DESIGN_TOKENS.md`](DESIGN_TOKENS.md).
@@ -156,6 +158,11 @@ Abstand — nie nur über Farbe.
 
 ### Referenz und Migrationsstand
 
+- **Brand Governance (28.11.2026, `docs/BRAND_GOVERNANCE.md`):** jedes Marken- und Designthema hat genau ein
+  verbindliches Dokument; Freigabestufen A–D, Anti-Generic-Regeln, Architekturgrenzen. Bild- und Iconsprache neu in
+  `docs/BRAND_GUIDELINES.md`; veraltete Abschnitte hier (alte Bereichsfarben, Material-Symbols-Regel, 15–20 % 3D)
+  durch Verweise ersetzt; `frontend/DESIGN_SYSTEM.md` als historisch gekennzeichnet. `npm run check:docs` (CI) prüft
+  die Dokumentverweise. Keine sichtbare Änderung.
 - **Dynamische Logo-Komponente (28.11.2026, `docs/LOGO_USAGE.md` › 6, `docs/SECTION_IDENTITY.md`,
   `docs/MOTION_GUIDELINES.md`):** `<app-brand>` kann zusätzlich `layout` (horizontal · vertikal · Zeichen · Wortmarke),
   `claim`, `tone` (farbig · einfarbig mit Lücken), `surface` (auto · hell · dunkel), `motion` (statisch · einmal
@@ -974,21 +981,14 @@ The interface should support long-term daily use rather than optimizing every sc
 
 ## Visual balance
 
-Recommended product balance:
-
-- approximately 80–85% normal product UI;
-- approximately 15–20% illustration/3D/emotional visual accents.
-
-Marketing material may use more expressive imagery than the daily product.
+Die tägliche Oberfläche ist fast ausschließlich ruhige Produkt-UI. Illustrationen nur flach und sparsam für
+Leerzustände, Onboarding und Markenmomente; kein 3D in Alltagsansichten (seit 28.11.2026, `docs/BRAND_GUIDELINES.md`
+› Bildsprache). Marketing darf ausdrucksstärker sein, bleibt aber bei echten Produktansichten.
 
 ## Domain colors
 
-Use a consistent orientation system:
-
-- Finanzen — green (`--finance-accent #0b6e4b`)
-- Haushalt — Beere (`--household-accent #a8325a`, Fläche `--household-soft #fce8ee`; 6,4:1 auf Weiß)
-- Organisation — Amber (`--organization-accent #8a5800`; weiße Schrift auf der Füllung 6,0:1)
-- Reisen — blue (`--travel-accent #2453b4`)
+Ein Orientierungssystem: Finanzen grün, Haushalt orange/karamell, Organisation violett, Reisen petrol/blau – Werte und
+Kontraste verbindlich in `docs/DESIGN_TOKENS.md` › Farben (bis 28.11.2026: Haushalt Beere, Organisation Amber).
 
 Domain colors are accents, not backgrounds for entire dense screens.
 
@@ -1010,11 +1010,8 @@ Avoid excessive gradients, glow effects and floating decorative objects in funct
 
 ## Icon system
 
-Use one consistent icon family already available in the project where possible.
-
-If Angular Material/Material Symbols is already established, prefer **Material Symbols Rounded**.
-
-If a coherent family such as Lucide is already established, keep it rather than adding another library.
+Eine Familie: `app-icon` (eigene Linien-Icons, 24er-Raster, Linie 1,8, runde Enden), keine zweite Bibliothek –
+verbindlich in `docs/BRAND_GUIDELINES.md` › Iconsprache.
 
 ### Domain icons
 
@@ -1039,25 +1036,11 @@ Suggested scale:
 
 Do not use oversized 3D icons for ordinary data cards.
 
-## 3D and illustration
+## Illustration
 
-Good uses:
-
-- onboarding;
-- landing/marketing;
-- empty states;
-- app-store imagery;
-- occasional travel/hero moments.
-
-Avoid as primary controls in:
-
-- sidebar/bottom navigation;
-- settings;
-- finance transactions;
-- task lists;
-- calendars;
-- forms;
-- tables.
+Seit 28.11.2026 gilt `docs/BRAND_GUIDELINES.md` › Bildsprache: flache, ruhige Illustrationen in Token-Farben nur für
+Onboarding, Leerzustände und Markenmomente; kein 3D. Nie als Bedienelement in Navigation, Einstellungen,
+Transaktionen, Aufgabenlisten, Kalendern, Formularen oder Tabellen.
 
 ## Finanzen
 

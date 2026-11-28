@@ -1,5 +1,7 @@
 # Lumiknot — Design Tokens
 
+> Teil der Brand Governance (`docs/BRAND_GOVERNANCE.md`): verbindlich für alle Token-Werte, Farben, Kontraste, Typografie-, Bewegungs- und Breakpoint-Werte.
+
 Stand 28.11.2026. Verbindlich für alle Stylesheets. Übergeordnet: `docs/DESIGN_SYSTEM.md` (Regeln, Bausteine,
 Layout), Kurzfassung `DESIGN.md`; Marke: `docs/BRAND_GUIDELINES.md`, `docs/BRAND_CONFIGURATION.md`.
 

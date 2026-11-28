@@ -73,6 +73,7 @@ jobs:
       - run: npm ci
       - run: npm run check:architecture
       - run: npm run check:brand
+      - run: npm run check:docs
       - run: npx ng test --watch=false
       - run: npx ng build
       - run: npm run build:pages

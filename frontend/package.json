@@ -12,6 +12,7 @@
     "build:pages": "node scripts/build-pages.mjs",
     "check:architecture": "node scripts/check-architecture.mjs",
     "check:brand": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-brand.mjs",
+    "check:docs": "node scripts/check-docs.mjs",
     "brand:assets": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/brand-assets.mts"
   },
   "private": true,

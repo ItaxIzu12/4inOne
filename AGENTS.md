@@ -1,11 +1,11 @@
 # Lumiknot (vormals 4inOne) — Project Rules for Coding Agents
 
 Binding for every agent (Codex, Claude Code, others). Claude-specific additions: `CLAUDE.md`.
-Last reviewed: 25.11.2026.
+Last reviewed: 28.11.2026.
 
 ## Mission
 
-Lumiknot (formerly 4inOne; brand rules: `docs/BRAND_GUIDELINES.md`) is a personal life-management app for **Finanzen, Haushalt, Organisation and Reisen**.
+Lumiknot (formerly 4inOne; brand governance: `docs/BRAND_GOVERNANCE.md`) is a personal life-management app for **Finanzen, Haushalt, Organisation and Reisen**.
 
 Every area must work well on its own. The product becomes distinctive when it can represent that two or more things from different areas belong to the same real-life context.
 
@@ -31,7 +31,7 @@ If implementation, old mockups or historical notes conflict, use this priority:
 4. `docs/AUTH_AND_PERMISSIONS.md`
 5. `docs/CONNECTION_ENGINE.md`
 6. `docs/DATA_MODEL.md`
-7. `docs/DESIGN_SYSTEM.md`
+7. `docs/DESIGN_SYSTEM.md` and the brand documents mapped in `docs/BRAND_GOVERNANCE.md` § 1 (each one binding for its topic)
 8. `docs/ARCHITECTURE.md`
 9. `docs/AI_INTEGRATION.md`
 10. `docs/SECURITY.md`
@@ -54,13 +54,15 @@ requirement inside this architecture. Apply the ten principles in § 2 automatic
 - **Defaults instead of questions:** when the request is clear, follow the existing pattern of the area (data model
   style, API style, UI components, wording, demo behaviour) and state the assumptions in the hand-over.
 - **Ask only** when the answer changes what gets built and cannot be derived: a choice between materially different
-  behaviours, a destructive data change, a new app/service/infrastructure, a new outside service, an AI capability, or
-  something the user explicitly deferred (e.g. Smart Scan).
+  behaviours, a destructive data change, a new app/service/infrastructure, a new outside service, an AI capability, a
+  change to the brand identity (`docs/BRAND_GOVERNANCE.md` § 5, level C), or something the user explicitly deferred
+  (e.g. Smart Scan).
 
 ### Feature protocol (every substantial change)
 
 1. Analyse the requirement.
-2. Inspect the existing code and read the relevant docs (area doc `docs/*_V1.md`, `docs/ARCHITECTURE.md`).
+2. Inspect the existing code and read the relevant docs (area doc `docs/*_V1.md`, `docs/ARCHITECTURE.md`; for any UI
+   change also the brand and design documents in § 6).
 3. Identify reusable modules, components, services, APIs and models; check whether the behaviour already exists.
 4. Check dependencies and impact: permissions, Connection Engine, demo, offline, data export, cleanup, search.
 5. Make a short plan; choose the smallest safe implementation.
@@ -248,19 +250,36 @@ Demo data and real user data must be clearly separated.
 - A demo environment must be visibly labelled.
 - Users may deliberately adopt templates, but templates are not disguised demo records.
 
-## 6. Design rules
+## 6. Design and brand rules
 
-The production UI should be calm, modern, adult and friendly.
+The production UI is calm, modern, adult and friendly – "Quiet Luxury": warm paper, deep ink, little colour, precise
+typography. Binding governance: `docs/BRAND_GOVERNANCE.md`.
 
-- Use one consistent icon family.
-- Prefer regular UI icons over 3D icons in daily-use screens.
-- Use 3D/illustration mainly for onboarding, marketing, empty states and occasional hero moments.
-- Domain colors are orientation aids, not full-screen decoration.
-- Finances should be the most restrained visual area.
+**Before any UI, text or brand change, read** `docs/BRAND_GOVERNANCE.md` (which document decides what), `DESIGN.md`,
+and the documents for the topic: tokens `docs/DESIGN_TOKENS.md`, components and layout `docs/DESIGN_SYSTEM.md`, logo
+`docs/LOGO_USAGE.md`, areas `docs/SECTION_IDENTITY.md`, motion `docs/MOTION_GUIDELINES.md`, tone
+`docs/BRAND_IDENTITY.md` § 7, names `docs/NAMING_CONVENTIONS.md`.
+
+- **The brand identity is not changed without explicit approval** (name, claim, logo, wordmark, brand colours, primitive
+  tokens, fonts, area names, new product area, tone or motion principles – level C in `docs/BRAND_GOVERNANCE.md` § 5).
+- **Extend the one design system, never start another:** reuse `shared/ui`/`shared/features`, use semantic and
+  component tokens (no hex values or primitives in components), areas only change their accent (`--area-*`).
+- Logo only via `<app-brand>`, page titles via `brandTitle()`, brand values from `core/brand/brand.config.ts`.
+- One icon family (`app-icon`, line icons); no 3D icons or illustrations in daily-use screens; flat illustrations only
+  for onboarding, empty states and brand moments.
+- Domain colours are orientation accents, not full-screen decoration; colour never carries meaning alone.
+- WCAG 2.2 AA, keyboard, 44 px targets, visible focus, `prefers-reduced-motion`; check 320 px to desktop, light and dark.
+- **Anti-generic:** no template SaaS look, glassmorphism, gradients, neon/glow, oversized radii, arbitrary bento
+  grids, badges without real status, generic illustrations or stock/AI images, decorative animation, interchangeable
+  marketing copy. Prioritise functional clarity, hierarchy, deliberate whitespace, typography and real user needs.
+- **Boundaries:** brand and design work never changes backend architecture, data models, authentication, permissions,
+  REST interfaces, Connection Engine, the Personal AI standard, business logic, persistent data (including browser
+  storage keys and cookies) or infrastructure as a side effect – such a change is its own approved step.
 
 ### Design-Dokumentation (immer aktuell halten)
 
-Jede Änderung an Design-Tokens (`frontend/src/styles.css`), gemeinsamen UI-Komponenten (`frontend/src/app/shared`,
+Jede Änderung an Design-Tokens (`frontend/src/app/shared/styles/tokens.css`, `frontend/src/styles.css`,
+`theme-dark.css` – dann auch `docs/DESIGN_TOKENS.md`), gemeinsamen UI-Komponenten (`frontend/src/app/shared`,
 `app-shell`), Layout-Regeln, Bereichsfarben oder am Referenz-Screen wird **im selben Schritt** in
 `docs/DESIGN_SYSTEM.md` (ausführlich) und `DESIGN.md` (Kurzfassung) nachgetragen. Bereichsspezifische Design-Entscheidungen
 zusätzlich im jeweiligen `docs/*_V1.md`. Der Abschnitt „Referenz und Migrationsstand“ zeigt, welche Bereiche das System

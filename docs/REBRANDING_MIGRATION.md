@@ -1,5 +1,7 @@
 # Rebranding 4inOne → Lumiknot — Migration
 
+> Teil der Brand Governance (`docs/BRAND_GOVERNANCE.md`): verbindlich für die Umbenennung 4inOne → Lumiknot und beibehaltene Altbezeichner.
+
 Stand 28.11.2026. Markenstrategie: `docs/BRAND_IDENTITY.md` · Markenregeln: `docs/BRAND_GUIDELINES.md` · Logo:
 `docs/LOGO_USAGE.md` · Namen: `docs/NAMING_CONVENTIONS.md` · Bestandsaudit:
 `docs/audits/LUMIKNOT_MARKEN_AUDIT_2026-11-28.md`.
