@@ -1,4 +1,4 @@
-# 4inOne — lokale Dienste für die Entwicklung: PostgreSQL und Redis.
+# Lumiknot — lokale Dienste für die Entwicklung: PostgreSQL und Redis.
 #
 # Django und Angular laufen bewusst NICHT im Container (schnelles Neuladen, Debugger, gleiche Python-Umgebung wie die
 # Tests) — genau wie auf dem Server, wo Django per systemd läuft (deploy/ANLEITUNG.md).

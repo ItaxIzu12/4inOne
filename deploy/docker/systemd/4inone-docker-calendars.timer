@@ -1,6 +1,6 @@
-# 4inOne (Docker): Kalender-Abos aktualisieren. Aktivieren: sudo systemctl enable --now 4inone-docker-calendars.timer
+# Lumiknot (Docker): Kalender-Abos aktualisieren. Aktivieren: sudo systemctl enable --now 4inone-docker-calendars.timer
 [Unit]
-Description=4inOne (Docker): Kalender-Abos aktualisieren
+Description=Lumiknot (Docker): Kalender-Abos aktualisieren
 
 [Timer]
 OnCalendar=hourly

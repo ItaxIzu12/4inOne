@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 4inOne lokal starten und stoppen — ein Befehl für alles.
+# Lumiknot lokal starten und stoppen — ein Befehl für alles.
 #
 #   ./scripts/4inone.sh            startet Datenbank (Docker), Backend (Django) und Frontend (Angular), öffnet den Browser
 #   ./scripts/4inone.sh stop       hält alles wieder an (Daten bleiben erhalten)
@@ -127,7 +127,7 @@ cmd_start() {
 
   open "http://localhost:$FRONTEND_PORT" 2>/dev/null || true
   echo
-  echo "  4inOne läuft. Beenden mit: ./scripts/4inone.sh stop"
+  echo "  Lumiknot läuft. Beenden mit: ./scripts/4inone.sh stop"
 }
 
 cmd_stop() {

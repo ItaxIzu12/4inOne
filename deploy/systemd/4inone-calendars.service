@@ -2,7 +2,7 @@
 # sind; interne Adressen blockt der Code selbst (organisation/subscriptions.py). Braucht ausgehendes HTTPS.
 # Ausgelöst von 4inone-calendars.timer.
 [Unit]
-Description=4inOne: abonnierte Kalender aktualisieren
+Description=Lumiknot: abonnierte Kalender aktualisieren
 After=network-online.target postgresql.service
 Wants=network-online.target
 

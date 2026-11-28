@@ -150,6 +150,9 @@ Abstand — nie nur über Farbe.
 
 ### Referenz und Migrationsstand
 
+- **Finanzen › Transaktionen, Suchfeld (28.11.2026):** darf schmaler werden als die Grundbreite seines Eingabefelds
+  (`min-width: 0`, Eingabefeld `width: 0`); vorher ragte es unter Linux-Chromium bei 320 px 3 px über den Rand.
+  Aussehen sonst unverändert.
 - **Logo-System vervollständigt (28.11.2026, `docs/LOGO_USAGE.md`):** neue Variante „Nur Wortmarke“
   (`public/brand/lumiknot-wordmark(-light).svg`, Manrope 700, −0,032 em); Lockups setzen Textfarbe und Schrift als
   Attribute statt als `text{…}`-Regel und die einfarbigen Zeichen haben eigene Masken-IDs, damit eingebettete SVGs

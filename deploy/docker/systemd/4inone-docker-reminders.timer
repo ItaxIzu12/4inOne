@@ -1,6 +1,6 @@
-# 4inOne (Docker): Erinnerungen per E-Mail. Aktivieren: sudo systemctl enable --now 4inone-docker-reminders.timer
+# Lumiknot (Docker): Erinnerungen per E-Mail. Aktivieren: sudo systemctl enable --now 4inone-docker-reminders.timer
 [Unit]
-Description=4inOne (Docker): Erinnerungen per E-Mail
+Description=Lumiknot (Docker): Erinnerungen per E-Mail
 
 [Timer]
 OnCalendar=*-*-* 07:00:00

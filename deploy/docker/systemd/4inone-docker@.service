@@ -1,7 +1,7 @@
-# 4inOne im Docker-Betrieb: eine wiederkehrende Aufgabe (%i = backup|cleanup|prune|reminders|calendars).
+# Lumiknot im Docker-Betrieb: eine wiederkehrende Aufgabe (%i = backup|cleanup|prune|reminders|calendars).
 # Gestartet von den Timern 4inone-docker-*.timer; die Befehle stehen in deploy/docker/run-task.sh.
 [Unit]
-Description=4inOne (Docker): Aufgabe %i
+Description=Lumiknot (Docker): Aufgabe %i
 After=docker.service network-online.target
 Requires=docker.service
 Wants=network-online.target

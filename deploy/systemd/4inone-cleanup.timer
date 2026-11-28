@@ -1,6 +1,6 @@
 # Täglich um 03:15 (nach dem Backup um 02:45). Aktivieren: sudo systemctl enable --now 4inone-cleanup.timer
 [Unit]
-Description=4inOne: tägliches Aufräumen abgelaufener Daten
+Description=Lumiknot: tägliches Aufräumen abgelaufener Daten
 
 [Timer]
 OnCalendar=*-*-* 03:15:00

@@ -1,6 +1,6 @@
-# 4inOne (Docker): tägliches verschlüsseltes Backup. Aktivieren: sudo systemctl enable --now 4inone-docker-backup.timer
+# Lumiknot (Docker): tägliches verschlüsseltes Backup. Aktivieren: sudo systemctl enable --now 4inone-docker-backup.timer
 [Unit]
-Description=4inOne (Docker): tägliches verschlüsseltes Backup
+Description=Lumiknot (Docker): tägliches verschlüsseltes Backup
 
 [Timer]
 OnCalendar=*-*-* 02:45:00

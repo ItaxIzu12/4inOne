@@ -1,4 +1,4 @@
-# 4inOne — nginx im Container „web“ (Docker-Variante von deploy/nginx/4inone.conf, gleiche Regeln).
+# Lumiknot — nginx im Container „web“ (Docker-Variante von deploy/nginx/4inone.conf, gleiche Regeln).
 # Vorlage: ${SERVER_NAME} und ${ADMIN_URL_PATH} setzt das nginx-Image beim Start aus der Umgebung ein.
 # Zertifikate: /etc/nginx/certs/fullchain.pem und privkey.pem (Volume, siehe deploy/docker/ANLEITUNG.md).
 

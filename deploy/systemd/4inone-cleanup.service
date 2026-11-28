@@ -3,7 +3,7 @@
 # Eigener Dienst (nicht in 4inone-prune.service), damit ein Fehler dort diese Löschungen nicht verhindert.
 # Ausgelöst von 4inone-cleanup.timer. Probelauf: manage.py cleanup_expired --dry-run
 [Unit]
-Description=4inOne: abgelaufene Daten und verwaiste Verbindungen löschen
+Description=Lumiknot: abgelaufene Daten und verwaiste Verbindungen löschen
 After=postgresql.service
 
 [Service]

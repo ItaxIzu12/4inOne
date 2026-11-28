@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 4inOne — lokale PostgreSQL-Datenbank (Docker) verwalten.
+# Lumiknot — lokale PostgreSQL-Datenbank (Docker) verwalten.
 #
 #   ./scripts/dev-db.sh init           Zugangsdaten in backend/.env ergänzen (fehlende Werte, nichts wird überschrieben)
 #   ./scripts/dev-db.sh up             PostgreSQL + Redis starten und warten, bis sie bereit sind

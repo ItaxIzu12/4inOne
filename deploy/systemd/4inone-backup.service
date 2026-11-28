@@ -1,6 +1,6 @@
 # Verschlüsseltes Backup von Datenbank und hochgeladenen Dateien (deploy/scripts/backup.sh).
 [Unit]
-Description=4inOne: Backup
+Description=Lumiknot: Backup
 
 [Service]
 Type=oneshot

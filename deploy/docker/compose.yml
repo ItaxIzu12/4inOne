@@ -1,9 +1,9 @@
-# 4inOne — Produktionsbetrieb mit Docker Compose (Ziel: GEEKOM GT1 Mega, docs/ARCHITECTURE.md § 7, Phase 3).
+# Lumiknot — Produktionsbetrieb mit Docker Compose (Ziel: GEEKOM GT1 Mega, docs/ARCHITECTURE.md § 7, Phase 3).
 #
 # Ergänzt den systemd-Weg (deploy/ANLEITUNG.md), ersetzt ihn nicht. Anleitung: deploy/docker/ANLEITUNG.md.
 #   cd /srv/4inone && docker compose -f deploy/docker/compose.yml --env-file /srv/4inone-data/docker.env up -d --build
 #
-# Grundsätze: eigene PostgreSQL-Datenbank nur für 4inOne; nur „web“ ist von außen erreichbar; Daten in festen
+# Grundsätze: eigene PostgreSQL-Datenbank nur für Lumiknot; nur „web“ ist von außen erreichbar; Daten in festen
 # Verzeichnissen unter DATA_DIR (einfach zu sichern); Zugangsdaten nur aus env-Dateien, nie im Image;
 # Speicher- und CPU-Grenzen je Dienst, damit der Personal AI Core auf demselben Gerät genug Platz behält.
 name: 4inone-prod

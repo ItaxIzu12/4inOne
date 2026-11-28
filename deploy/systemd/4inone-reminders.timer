@@ -1,6 +1,6 @@
 # Täglich um 07:00. Aktivieren: sudo systemctl enable --now 4inone-reminders.timer
 [Unit]
-Description=4inOne: tägliche Erinnerungen
+Description=Lumiknot: tägliche Erinnerungen
 
 [Timer]
 OnCalendar=*-*-* 07:00:00

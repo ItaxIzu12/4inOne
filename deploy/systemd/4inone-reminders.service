@@ -2,7 +2,7 @@
 # haben. Mehrfaches Ausführen am selben Tag schickt nichts doppelt. Braucht einen echten Mailserver (EMAIL_HOST …).
 # Ausgelöst von 4inone-reminders.timer. Probelauf: manage.py send_reminder_emails --dry-run
 [Unit]
-Description=4inOne: Erinnerungen per E-Mail senden
+Description=Lumiknot: Erinnerungen per E-Mail senden
 After=network-online.target postgresql.service
 Wants=network-online.target
 

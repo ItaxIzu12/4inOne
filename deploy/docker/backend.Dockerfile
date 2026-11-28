@@ -1,4 +1,4 @@
-# 4inOne Backend (Django + gunicorn) für den Betrieb mit Docker Compose (deploy/docker/compose.yml).
+# Lumiknot Backend (Django + gunicorn) für den Betrieb mit Docker Compose (deploy/docker/compose.yml).
 # Build-Kontext ist das Repository (siehe .dockerignore): docker compose -f deploy/docker/compose.yml build
 FROM python:3.13-slim
 

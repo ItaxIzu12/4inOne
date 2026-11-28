@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 4inOne (Docker-Betrieb) — wiederkehrende Aufgaben, gestartet von den systemd-Timern in deploy/docker/systemd/.
+# Lumiknot (Docker-Betrieb) — wiederkehrende Aufgaben, gestartet von den systemd-Timern in deploy/docker/systemd/.
 # Gleiche Aufgaben und Zeiten wie im systemd-Weg (deploy/systemd/); der Test backend/core/test_deploy_schedule.py
 # prüft, dass hier jeder Wartungsbefehl vorkommt.
 #

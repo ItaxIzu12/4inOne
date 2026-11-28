@@ -3,7 +3,7 @@
 #   sudo systemctl daemon-reload && sudo systemctl enable --now 4inone
 # Die Einstellungen liest Django selbst aus backend/.env (config/settings.py › read_env) — kein EnvironmentFile nötig.
 [Unit]
-Description=4inOne Django (gunicorn)
+Description=Lumiknot Django (gunicorn)
 After=network.target postgresql.service redis-server.service
 
 [Service]

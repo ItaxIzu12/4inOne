@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 4inOne — Update einspielen: neuen Stand holen, prüfen, Datenbank anpassen, Seite neu bauen, Dienst neu starten.
+# Lumiknot — Update einspielen: neuen Stand holen, prüfen, Datenbank anpassen, Seite neu bauen, Dienst neu starten.
 # Als Benutzer `deploy` auf dem Server ausführen:  /srv/4inone/deploy/scripts/update.sh
 # Bricht beim ersten Fehler ab; die laufende Seite bleibt dann unverändert, bis der Fehler behoben ist.
 set -euo pipefail

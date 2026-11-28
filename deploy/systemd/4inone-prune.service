@@ -1,7 +1,7 @@
 # Löscht abgelaufene Tageszähler der Besucherzählung (PAGEVIEW_RETENTION_DAYS) und alte Anmelde-Ereignisse des
 # Admin-Panels (AUTH_EVENT_RETENTION_DAYS, docs/MONITORING.md). Ausgelöst von 4inone-prune.timer.
 [Unit]
-Description=4inOne: alte Besucherzähler und Anmelde-Ereignisse löschen
+Description=Lumiknot: alte Besucherzähler und Anmelde-Ereignisse löschen
 
 [Service]
 Type=oneshot

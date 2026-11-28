@@ -1,4 +1,4 @@
-# 4inOne Web (Angular-Build + nginx) für Docker Compose (deploy/docker/compose.yml). nginx liefert die App aus,
+# Lumiknot Web (Angular-Build + nginx) für Docker Compose (deploy/docker/compose.yml). nginx liefert die App aus,
 # reicht /api/ und den Admin an das Backend weiter und beendet HTTPS.
 FROM node:24-bookworm-slim AS build
 WORKDIR /src

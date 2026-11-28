@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 4inOne — tägliches Backup: Datenbank (pg_dump) + hochgeladene Dateien (PRIVATE_MEDIA_ROOT), verschlüsselt mit `age`.
+# Lumiknot — tägliches Backup: Datenbank (pg_dump) + hochgeladene Dateien (PRIVATE_MEDIA_ROOT), verschlüsselt mit `age`.
 #
 # Verschlüsselt wird mit einem ÖFFENTLICHEN Schlüssel: der Server kann Backups schreiben, aber nicht lesen. Den
 # privaten Schlüssel nur offline aufbewahren (Passwort-Manager, USB-Stick) — ohne ihn ist jedes Backup wertlos.

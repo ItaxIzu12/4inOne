@@ -1,6 +1,6 @@
-# 4inOne (Docker): alte Besucherzähler und Anmelde-Ereignisse löschen. Aktivieren: sudo systemctl enable --now 4inone-docker-prune.timer
+# Lumiknot (Docker): alte Besucherzähler und Anmelde-Ereignisse löschen. Aktivieren: sudo systemctl enable --now 4inone-docker-prune.timer
 [Unit]
-Description=4inOne (Docker): alte Besucherzähler und Anmelde-Ereignisse löschen
+Description=Lumiknot (Docker): alte Besucherzähler und Anmelde-Ereignisse löschen
 
 [Timer]
 OnCalendar=*-*-* 03:30:00

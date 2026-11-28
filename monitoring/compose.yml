@@ -1,4 +1,4 @@
-# GlitchTip (Open Source, Sentry-kompatibel) — Fehler-Monitoring für 4inOne, getrennt von der App.
+# GlitchTip (Open Source, Sentry-kompatibel) — Fehler-Monitoring für Lumiknot, getrennt von der App.
 # Vorlage: https://glitchtip.com/assets/compose.sample.yml (15.11.2026), gehärtet:
 #   - Datenbank mit Passwort statt „trust“, eigene Datenbank nur für GlitchTip
 #   - nur auf 127.0.0.1 erreichbar (auf dem Server davor nginx mit TLS, siehe docs/MONITORING.md)
