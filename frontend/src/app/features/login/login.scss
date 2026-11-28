@@ -48,9 +48,6 @@
   color: #fff;
   text-decoration: none;
 }
-.aside__brand app-brand {
-  color: #fff;
-}
 .aside__brand:focus-visible {
   outline: 2px solid var(--surface-card);
   outline-offset: 6px;
@@ -601,17 +598,7 @@ input[aria-invalid='true'] {
   font-size: 16px;
   text-align: center;
 }
-.finishing__mark {
-  animation: breathe 1.6s ease-in-out infinite alternate;
-}
-@keyframes breathe {
-  from {
-    opacity: 0.55;
-  }
-  to {
-    opacity: 1;
-  }
-}
+/* Kein Dauer-Pulsieren (docs/MOTION_GUIDELINES.md): das Zeichen zeichnet sich einmal (<app-brand motion="animated">). */
 
 .panel__foot {
   display: flex;
@@ -635,7 +622,6 @@ input[aria-invalid='true'] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .finishing__mark,
   .panel__body {
     animation: none;
   }

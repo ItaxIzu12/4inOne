@@ -11,6 +11,8 @@ import { BRAND, BRAND_SECTIONS } from '../src/app/core/brand/brand.config.ts';
 import {
   ORBIT_ELEMENTS,
   ORBIT_EXTENT,
+  ORBIT_MONO_GAP,
+  orbitElementsAbove,
   ORBIT_EXTENT_SMALL,
   ORBIT_STROKE,
   ORBIT_STROKE_SMALL,
@@ -43,8 +45,8 @@ function orbitPaths(opts: { small?: boolean; mono?: string; id?: string } = {}):
   const e = opts.small ? ORBIT_EXTENT_SMALL : ORBIT_EXTENT;
   const id = opts.id ?? 'o';
   const masks = ORBIT_ELEMENTS.map((_, i) => {
-    const later = ORBIT_ELEMENTS.slice(i + 1)
-      .map((el) => `<path d="${el.d}" transform="rotate(${el.rotate})" fill="none" stroke="#000" stroke-width="${stroke + 36}" stroke-linecap="round" stroke-linejoin="round"/>`)
+    const later = orbitElementsAbove(i)
+      .map((el) => `<path d="${el.d}" transform="rotate(${el.rotate})" fill="none" stroke="#000" stroke-width="${stroke + 2 * ORBIT_MONO_GAP}" stroke-linecap="round" stroke-linejoin="round"/>`)
       .join('');
     return `<mask id="${id}${i}" maskUnits="userSpaceOnUse" x="${-e}" y="${-e}" width="${2 * e}" height="${2 * e}"><rect x="${-e}" y="${-e}" width="${2 * e}" height="${2 * e}" fill="#fff"/>${later}</mask>`;
   }).join('');

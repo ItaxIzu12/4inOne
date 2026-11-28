@@ -108,17 +108,36 @@ Manrope und kennt den Bereichskontext.
 **Optional (nicht erstellt):** eine räumliche Darstellung mit leichter Tiefe wie in der Vorlage, nur für ausgewählte
 Markenpräsentationen, nie in der App oder als Icon. Erst auf Anfrage.
 
-## 6. Bereichskontext (`<app-brand [context]>`)
+## 6. Logo-Komponente `<app-brand>` – erlaubte Zustände
 
-- `global` (Standard): alle vier Elemente gleich.
-- `finance` · `household` · `organization` · `travel`: das passende Element bleibt voll, die anderen gehen auf 42 %
-  Deckkraft. Form, Farben und Reihenfolge ändern sich nie.
-- Übergang 240 ms nur über Deckkraft; bei `prefers-reduced-motion` ohne Übergang. Keine Rotation, kein Pulsieren,
-  keine Dauerbewegung.
-- Die App-Shell setzt den Kontext aus der URL (`/finanzen`, `/haushalt`, `/organisation`, `/reisen`, auch unter
-  `/demo`).
-- `wordmark=false` zeigt nur das Zeichen; dann trägt es `role="img"` und `aria-label="Lumiknot"`. Mit Namen ist das
-  Zeichen dekorativ (`aria-hidden`), der Link drumherum heißt „Lumiknot – Startseite“ (`BRAND.a11y.homeLink`).
+Die App zeigt das Logo **nur** über `<app-brand>` (`shared/ui/brand/brand.ts`). Sie zeichnet aus derselben Geometrie
+(`orbit.ts`) und denselben Farben (`brand.config.ts`) wie der Datei-Generator – es gibt keine zweite SVG-Geometrie.
+
+| Eingabe | Werte | Standard | Wann |
+|---|---|---|---|
+| `context` | `global` · `finance` · `household` · `organization` · `travel` | `global` | Bereich hervorheben (App-Shell setzt ihn aus der URL) |
+| `layout` | `horizontal` · `vertical` · `symbol` · `wordmark` | `horizontal` | Kopfzeilen / quadratische Flächen / schmale Leisten, Avatare / wo das Zeichen schon steht |
+| `claim` | `true` · `false` | `false` | „Life, connected.“ unter dem Namen (Markenauftritte, vertikal) |
+| `tone` | `color` · `mono` | `color` | einfarbig auf unruhigem Grund, Druckähnliches; Lücken an den Überlagerungen |
+| `surface` | `auto` · `light` · `dark` | `auto` | `auto` erbt die Textfarbe; `dark` = Weiß auf Midnight-Bändern |
+| `motion` | `static` · `animated` | `static` | `animated` nur für Start-Momente (einmal zeichnen, ≈ 0,7 s) |
+| `size` | Zahl (px Zeichenhöhe) | Schriftgröße × 1,3 | unter 24 px automatisch Kleinvariante (Strich 84) |
+| `wordmark` | `true` · `false` | `true` | älter; `false` = `layout="symbol"` |
+
+**Bereichskontext:** Das passende Element bleibt voll, die anderen gehen auf 42 % Deckkraft. Form, Farben und
+Reihenfolge ändern sich nie. Die Hauptnavigation zeigt immer alle vier Elemente (`docs/SECTION_IDENTITY.md`).
+
+**Bewegung:** Bereichswechsel 240 ms nur über Deckkraft; `motion="animated"` zeichnet die Elemente einmal nacheinander
+und blendet den Namen ein. Keine Rotation, kein Pulsieren, keine Dauerbewegung; bei `prefers-reduced-motion` sofort
+der Endzustand (`docs/MOTION_GUIDELINES.md`).
+
+**Barrierefreiheit:** Mit sichtbarem Namen ist das Zeichen dekorativ (`aria-hidden`), der Link drumherum heißt
+„Lumiknot – Startseite“ (`BRAND.a11y.homeLink`). Bei `layout="symbol"` trägt das Zeichen `role="img"` und
+`aria-label="Lumiknot"`.
+
+**Einsatz (28.11.2026):** App-Shell (Seitenleiste, Handy-Kopf: `context` aus der URL), öffentliche Kopf- und
+Fußzeilen, Anmeldung (dunkles Band `surface="dark"`, Abschluss `motion="animated"`), Passwort-/E-Mail-Seiten,
+Onboarding, Offline-Seite.
 
 ## 7. Exportvorgaben
 

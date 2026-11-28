@@ -14,9 +14,15 @@
  */
 export type OrbitSection = 'finance' | 'household' | 'organization' | 'travel';
 
-/** Strichstärke der Hauptvariante; ab 48 px abwärts die kräftigere Kleinvariante (Favicon, kleine Icons). */
+/** Strichstärke der Hauptvariante und der kräftigeren Kleinvariante (Favicon, Zeichen unter 24 px). */
 export const ORBIT_STROKE = 68;
 export const ORBIT_STROKE_SMALL = 84;
+
+/** Einfarbig: Lücke (je Seite) dort, wo ein Element über einem anderen liegt – sonst verschmelzen die Elemente. */
+export const ORBIT_MONO_GAP = 18;
+
+/** Ab dieser Zeichengröße (px) abwärts die Kleinvariante (Strich 84) verwenden (docs/LOGO_USAGE.md › Mindestgrößen). */
+export const ORBIT_SMALL_BELOW = 24;
 
 /** Halbe Kantenlänge des Zeichens inklusive Strich (Kleinvariante etwas größer). */
 export const ORBIT_EXTENT = 226;
@@ -41,6 +47,11 @@ export const ORBIT_ELEMENTS: readonly OrbitElement[] = [
   { section: 'organization', d: element(-30), rotate: 180 },
   { section: 'travel', d: element(-30), rotate: 270 },
 ];
+
+/** Einfarbig: welche Elemente ein Element überdecken (alle später gezeichneten) – für die Lücken-Masken. */
+export function orbitElementsAbove(index: number): readonly OrbitElement[] {
+  return ORBIT_ELEMENTS.slice(index + 1);
+}
 
 export function orbitViewBox(small = false): string {
   const e = small ? ORBIT_EXTENT_SMALL : ORBIT_EXTENT;

@@ -1,7 +1,7 @@
 <main id="main-content" class="auth" tabindex="-1">
   <!-- Band in Deep Forest (Überarbeitung 19.11.2026): Rechner links neben dem Formular, Handy/Tablet kompakt oben. -->
   <aside class="aside" [attr.aria-label]="'Über ' + brand">
-    <a class="aside__brand" routerLink="/" [attr.aria-label]="homeLabel"><app-brand /></a>
+    <a class="aside__brand" routerLink="/" [attr.aria-label]="homeLabel"><app-brand surface="dark" /></a>
     <div class="aside__body">
       <div class="aside__intro">
         <p class="aside__lead">Dein Alltag.<br />Alles verbunden.</p>
@@ -56,7 +56,7 @@
         <!-- ======================= Abschluss nach Google/Apple ======================= -->
         @case ('finishing') {
           <div class="finishing" role="status">
-            <span class="finishing__mark" aria-hidden="true"><app-brand /></span>
+            <span class="finishing__mark" aria-hidden="true"><app-brand motion="animated" /></span>
             <p>Anmeldung wird abgeschlossen …</p>
           </div>
         }

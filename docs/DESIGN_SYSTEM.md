@@ -156,6 +156,12 @@ Abstand — nie nur über Farbe.
 
 ### Referenz und Migrationsstand
 
+- **Dynamische Logo-Komponente (28.11.2026, `docs/LOGO_USAGE.md` › 6, `docs/SECTION_IDENTITY.md`,
+  `docs/MOTION_GUIDELINES.md`):** `<app-brand>` kann zusätzlich `layout` (horizontal · vertikal · Zeichen · Wortmarke),
+  `claim`, `tone` (farbig · einfarbig mit Lücken), `surface` (auto · hell · dunkel), `motion` (statisch · einmal
+  zeichnen) und `size` (unter 24 px Kleinvariante). Einfarbig-Lücken aus derselben Geometrie wie die Logo-Dateien
+  (`ORBIT_MONO_GAP`, `orbitElementsAbove` in `orbit.ts`). Anmeldung: dauerhaftes „Atmen“ des Logos beim Abschluss durch
+  einmaliges Zeichnen ersetzt; weißes Logo im dunklen Band über `surface="dark"` statt eigener Regel.
 - **Design-Token-Grundlage (28.11.2026, `docs/DESIGN_TOKENS.md`):** vier Ebenen – Primitive `--lk-*`
   (`shared/styles/tokens.css`, einzige Stelle mit Farbwerten), Semantik (`styles.css`/`theme-dark.css` zeigen darauf),
   Komponenten-Tokens (Knopf, Feld, Karte, Chip, Dialog, Navigation) und Bereichs-Themes `--area-*` an `[data-area]`

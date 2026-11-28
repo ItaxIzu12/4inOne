@@ -18,7 +18,7 @@ The user describes features in plain language and expects the architecture to be
 
 - Read the documentation for the area (`docs/*_V1.md`) and inspect the existing code before changing it.
 - Visual work: read `DESIGN.md`; inspect existing Angular components, CSS/SCSS tokens and the installed icon system.
-- Brand: the product is **Lumiknot** (`docs/BRAND_IDENTITY.md` for purpose, promise and tone; `docs/BRAND_CONFIGURATION.md` for the central config and section registry; `docs/BRAND_GUIDELINES.md`, `docs/LOGO_USAGE.md`, `docs/NAMING_CONVENTIONS.md`);
+- Brand: the product is **Lumiknot** (`docs/BRAND_IDENTITY.md` for purpose, promise and tone; `docs/BRAND_CONFIGURATION.md` for the central config and section registry; `docs/SECTION_IDENTITY.md`, `docs/MOTION_GUIDELINES.md` for area character and motion; `docs/BRAND_GUIDELINES.md`, `docs/LOGO_USAGE.md`, `docs/NAMING_CONVENTIONS.md`);
   logo only via `<app-brand>`, page titles via `brandTitle()`, colors via tokens. Old technical `4inone` names stay
   unless `docs/REBRANDING_MIGRATION.md` says otherwise. After logo/color changes run `npm run brand:assets`.
 - Backend work: inspect existing apps, serializers, views, services and permission checks before creating patterns.
