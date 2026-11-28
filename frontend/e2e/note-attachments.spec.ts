@@ -26,6 +26,10 @@ for (const width of [390, 1440]) {
     await expect(dialog.locator('.na__tile')).toHaveCount(2);
     await expect(dialog.getByRole('alert')).toContainText('„notiz.txt“: nur Fotos (JPG, PNG, WebP) und PDF.');
     await expect(dialog).toContainText('Wird beim Speichern übernommen.');
+    // Erst messen, wenn der Dialog fertig eingeblendet ist (180 ms): sonst sieht axe Mischfarben der Einblendung.
+    await page.waitForFunction(() =>
+      document.getAnimations().every((a) => a.playState !== 'running' || a.effect?.getComputedTiming().iterations === Infinity),
+    );
     expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()).violations).toEqual([]);
     await dialog.getByRole('button', { name: 'Speichern' }).click();
     await expect(dialog).toHaveCount(0);

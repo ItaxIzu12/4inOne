@@ -20,6 +20,7 @@ from finanzen.models import Category
 pytestmark = pytest.mark.django_db
 BASE = '/api/v1/finanzen/private/'
 STYLES = Path(__file__).resolve().parents[3] / 'frontend/src/styles.css'
+TOKENS = Path(__file__).resolve().parents[3] / 'frontend/src/app/shared/styles/tokens.css'
 
 
 @pytest.fixture
@@ -68,11 +69,19 @@ def _hue(hex_color):
 def test_travel_and_home_match_the_area_colors_of_the_app():
     """Reisen = die Füllfarbe des Bereichs Reisen, Wohnen = derselbe Farbton wie
     der Bereich Haushalt. Geprüft gegen die Design-Tokens, die in der App
-    wirklich gelten (frontend/src/styles.css, bei doppelten Werten der letzte)."""
-    css = STYLES.read_text()
-    tokens = {}
-    for m in re.finditer(r'--(travel-fill|household-accent):\s*(#[0-9a-fA-F]{6})', css):
-        tokens[m.group(1)] = m.group(2).lower()  # späterer Wert überschreibt
+    wirklich gelten (frontend/src/styles.css → Primitive in shared/styles/tokens.css, heller Modus)."""
+    # Tokens zeigen seit 28.11.2026 auf Primitive (shared/styles/tokens.css): var(--…) bis zum Farbwert auflösen.
+    raw = {}
+    for path in (TOKENS, STYLES):
+        for m in re.finditer(r'--([a-z0-9-]+):\s*([^;]+);', path.read_text()):
+            raw.setdefault(m.group(1), m.group(2).strip())  # erster Wert = heller Modus in :root
+
+    def resolve(name, depth=0):
+        value = raw[name]
+        ref = re.fullmatch(r'var\(--([a-z0-9-]+)\)', value)
+        return resolve(ref.group(1), depth + 1) if ref and depth < 10 else value.lower()
+
+    tokens = {name: resolve(name) for name in ('travel-fill', 'household-accent')}
     assert tokens['travel-fill'] == cc.REISEN
     assert abs(_hue(tokens['household-accent']) - _hue(cc.WOHNEN)) < 6
 
