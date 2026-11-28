@@ -36,7 +36,7 @@ Reisebudget, Reiseaufgaben und Packliste sind Funktionen innerhalb von Reisen. N
 
 Der Besucher versteht nach dem Video:
 
-- 4inOne ist eine Web-App für Finanzen, Haushalt, Organisation und Reisen.
+- Lumiknot ist eine Web-App für Finanzen, Haushalt, Organisation und Reisen.
 - Jeder Bereich lässt sich eigenständig nutzen.
 - Das Dashboard gibt einen kompakten Einstieg in den Alltag.
 - Am Reisebeispiel sieht man die echte Bedienung und einen konkreten Nutzen.
@@ -51,13 +51,13 @@ Zeitangaben sind Schnittziele, keine bereits feststehende Videolänge.
 
 | Zeit | Bild und Handlung | Sprechertext als Arbeitsfassung |
 | --- | --- | --- |
-| 0–8 Sek. | Kurze persönliche Begrüßung, dann echtes Dashboard. | „Ausgaben, Termine, Haushalt und Reisen: Im Alltag gibt es einiges im Blick zu behalten. Dafür gibt es 4inOne.“ |
+| 0–8 Sek. | Kurze persönliche Begrüßung, dann echtes Dashboard. | „Ausgaben, Termine, Haushalt und Reisen: Im Alltag gibt es einiges im Blick zu behalten. Dafür gibt es Lumiknot.“ |
 | 8–18 Sek. | Vier Bereichskarten und Heute-Ansicht gezielt zeigen. | „Hier findest du vier Bereiche an einem Ort. Du kannst mit einem anfangen. Dein Dashboard zeigt dir, was heute ansteht.“ |
 | 18–28 Sek. | In Reisen wechseln, vorbereitete Berlin-Reise öffnen. | „Zum Beispiel dein nächstes Wochenende in Berlin: Ziel und Zeitraum stehen schon fest. Jetzt geht es an die Vorbereitung.“ |
 | 28–42 Sek. | Packliste öffnen und einen Gegenstand abhaken; anschließend eine offene Reiseaufgabe zeigen. | „Mit der Packliste behältst du im Blick, was noch fehlt. Aufgaben wie Tickets buchen sammelst du direkt bei deiner Reise.“ |
 | 42–53 Sek. | Reisebudget und vorhandene Ausgaben zeigen. Nur geprüfte Anzeigen verwenden. | „Auch dein geplantes Reisebudget und die erfassten Reiseausgaben findest du hier.“ |
 | 53–63 Sek. | Zur Reiseübersicht zurückkehren; tatsächlichen Stand der Vorbereitung zeigen. | „So siehst du, was vorbereitet ist und was noch offen bleibt – ohne alles erneut zusammensuchen zu müssen.“ |
-| 63–75 Sek. | Abschluss mit ruhigem Dashboardbild oder kurzer persönlicher Verabschiedung. | „Probier 4inOne ohne Anmeldung mit Beispieldaten aus. Wenn es zu dir passt, startest du anschließend mit deinem eigenen Konto.“ |
+| 63–75 Sek. | Abschluss mit ruhigem Dashboardbild oder kurzer persönlicher Verabschiedung. | „Probier Lumiknot ohne Anmeldung mit Beispieldaten aus. Wenn es zu dir passt, startest du anschließend mit deinem eigenen Konto.“ |
 
 Nach Abschluss von Funktion und Design den Text an die dann vorhandenen Oberflächen und Begriffe anpassen. Die Aufnahme muss den gezeigten Ablauf wirklich ausführen, nicht nur mit Schnitten vortäuschen.
 
@@ -78,7 +78,7 @@ Nach Abschluss von Funktion und Design den Text an die dann vorhandenen Oberflä
 
 - Video rechts neben dem Nutzenversprechen; auf dem Handy unter dem Einstieg.
 - Echtes Dashboard-Standbild als Vorschaubild, klarer Play-Button.
-- Titel: „So unterstützt dich 4inOne im Alltag“.
+- Titel: „So unterstützt dich Lumiknot im Alltag“.
 - Erst nach dem Schnitt die tatsächliche Laufzeit angeben.
 - Kein Autoplay. Nutzer starten und steuern das Video selbst.
 - Primärer Einstieg bleibt: „Ohne Anmeldung ausprobieren“.
@@ -107,4 +107,4 @@ Das Vorschaubild zuerst laden; Video oder externen Player erst bei Bedarf. Beste
 
 ## Spätere Erfolgskontrolle
 
-Mit Personen testen, die 4inOne nicht kennen: Können sie die vier Bereiche, den Nutzen und den Einstieg ohne Anmeldung erklären? Video nicht allein nach Wiedergaben bewerten, sondern auch danach, ob Besucher anschließend die Demo sinnvoll nutzen. Kein garantierter Conversion-Effekt angenommen.
+Mit Personen testen, die Lumiknot nicht kennen: Können sie die vier Bereiche, den Nutzen und den Einstieg ohne Anmeldung erklären? Video nicht allein nach Wiedergaben bewerten, sondern auch danach, ob Besucher anschließend die Demo sinnvoll nutzen. Kein garantierter Conversion-Effekt angenommen.

@@ -1,10 +1,10 @@
-# 4inOne — Product Vision V2
+# Lumiknot — Product Vision V2
 
 ## Product statement
 
-**4inOne — Dein Alltag. Alles verbunden.**
+**Lumiknot — Dein Alltag. Alles verbunden.**
 
-4inOne is a personal life-management app for four everyday areas:
+Lumiknot is a personal life-management app for four everyday areas:
 
 1. Finanzen
 2. Haushalt
@@ -85,7 +85,7 @@ The interface should feel calm even when the underlying model is powerful.
 
 ## Intended audience
 
-4inOne should work for:
+Lumiknot should work for:
 
 - individuals;
 - couples;

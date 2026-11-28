@@ -62,7 +62,7 @@ Schneeketten) prüfen“; Wintersport → Skibrille, Skisocken, „Skipass kaufe
 (ohne Wetterangabe gilt Schnee). Keine Mengen nach Reisedauer — die Anzahl entscheidet jeder selbst. Das Formular
 schlägt das Wetter nur vor (Juni–August warm, November–Februar kalt, sonst mild; Wintersport → Schnee), sichtbar als
 „Geschätzt nach Reisemonat – bitte prüfen“; eine eigene Wahl bleibt stehen. Kein Wetterdienst: Das Ziel verlässt
-4inOne nicht. Ohne Angabe wird nichts Jahreszeitliches angenommen.
+Lumiknot nicht. Ohne Angabe wird nichts Jahreszeitliches angenommen.
 
 **Gepäck** (`Trip.baggage`, Liste, Migration `0012_trip_baggage_list`): kombinierbare Chips Handgepäck · Aufgabegepäck ·
 Gepäck im Auto; nichts gewählt = keine Angabe („Noch unklar“ entfällt, alte Werte wurden übernommen). Kompakte Packliste
@@ -197,7 +197,7 @@ antwortet 405; Rollen ändern und Entfernen bleiben wie bisher.
 
 ## Tagesablauf und Stornofrist (12.11.2026, Migration `reisen/0013_trip_event_kind_cancellation`)
 
-Anlass: Vergleich mit Booking.com, CHECK24, TripIt und Wanderlog – 4inOne ist die Zentrale *nach* der Buchung, egal
+Anlass: Vergleich mit Booking.com, CHECK24, TripIt und Wanderlog – Lumiknot ist die Zentrale *nach* der Buchung, egal
 wo gebucht wurde. Alles wird selbst eingetragen; weiterhin keine Buchungs-, Flug- oder Wetter-APIs.
 
 - **Reiter „Ablauf“** (`trip-itinerary.ts`): jeder Reisetag als Abschnitt („Di., 24. Nov.“ · „Tag 1 · Anreise“ … „Tag 3 ·
@@ -264,7 +264,7 @@ wo gebucht wurde. Alles wird selbst eingetragen; weiterhin keine Buchungs-, Flug
   mit Zahler gleich auf die Personen, für die sie war; in der Reisewährung (`amount_trip`), auf den Cent, Rest-Cent
   reihum nach Nutzer-ID. Saldo = ausgelegt − Anteil (± Beglichenes). Wenigste Überweisungen: größte Schuld an das größte
   Guthaben (höchstens n − 1). Ausgaben ohne Zahler (ältere) oder ohne Kurs zählen nicht mit – die Karte sagt, wie viele.
-- **Als beglichen markieren** legt einen `TripSettlement` an (nur ein Vermerk, 4inOne bewegt nie Geld), „Zurücknehmen“
+- **Als beglichen markieren** legt einen `TripSettlement` an (nur ein Vermerk, Lumiknot bewegt nie Geld), „Zurücknehmen“
   löscht ihn. Sehen dürfen alle Mitreisenden (`GET trips/<id>/balances/`), vermerken nur Besitzer:in und
   Bearbeiter:innen; Zahler, „Für wen“ und Begleichungen nur mit Mitreisenden (Backend prüft). Nichts geht nach Finanzen.
 - Alleinreise: keine Karte, kein „… hat bezahlt“. Migration `reisen/0014_expense_split_settlements`.

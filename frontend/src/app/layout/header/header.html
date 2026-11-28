@@ -1,6 +1,6 @@
 <header class="header">
   <div class="header-inner">
-    <a class="brand" [routerLink]="homeLink()" aria-label="Lumiknot — zum Start" (click)="goHome()">
+    <a class="brand" [routerLink]="homeLink()" [attr.aria-label]="homeLabel" (click)="goHome()">
       <app-brand />
     </a>
 

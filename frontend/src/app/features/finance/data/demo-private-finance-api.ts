@@ -56,12 +56,13 @@ function money(n: number): string {
   return n.toFixed(2);
 }
 
+// Farben wie bei echten Konten (backend/finanzen/category_colors.py), damit Demo und Konto gleich aussehen.
 const CATEGORIES: FinanceCategory[] = [
-  { id: 1, name: 'Wohnen', color: '#164c49', monthly_goal: '800.00' },
-  { id: 2, name: 'Lebensmittel', color: '#8a5a23', monthly_goal: '400.00' },
-  { id: 3, name: 'Mobilität', color: '#2f5aa8', monthly_goal: '200.00' },
-  { id: 4, name: 'Freizeit', color: '#7a4fb5', monthly_goal: '300.00' },
-  { id: 5, name: 'Gesundheit', color: '#b5384f', monthly_goal: '100.00' },
+  { id: 1, name: 'Wohnen', color: '#ab632b', monthly_goal: '800.00' },
+  { id: 2, name: 'Lebensmittel', color: '#a8326e', monthly_goal: '400.00' },
+  { id: 3, name: 'Mobilität', color: '#4a3aa7', monthly_goal: '200.00' },
+  { id: 4, name: 'Freizeit', color: '#dca800', monthly_goal: '300.00' },
+  { id: 5, name: 'Gesundheit', color: '#1baf7a', monthly_goal: '100.00' },
   { id: 6, name: 'Sonstiges', color: '#8a93a3', monthly_goal: '200.00' },
 ];
 
@@ -267,7 +268,7 @@ export class DemoPrivateFinanceApi {
     if (dryRun || !fresh.length) return of(result);
     let fallback = this.categoryList.find((c) => c.name === FALLBACK_CATEGORY);
     if (!fallback && fresh.some((f) => !f.category)) {
-      fallback = { id: this.nextId++, name: FALLBACK_CATEGORY, color: '#8a94a6', monthly_goal: null };
+      fallback = { id: this.nextId++, name: FALLBACK_CATEGORY, color: '#8a93a3', monthly_goal: null };
       this.categoryList.push(fallback);
     }
     for (const { row, category } of fresh) {

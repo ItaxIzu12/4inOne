@@ -1,4 +1,4 @@
-# 4inOne — Profile and Settings
+# Lumiknot — Profile and Settings
 
 ## Entry point
 

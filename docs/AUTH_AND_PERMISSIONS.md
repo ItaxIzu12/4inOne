@@ -1,4 +1,4 @@
-# 4inOne — Authentication and Permissions V2
+# Lumiknot — Authentication and Permissions V2
 
 ## Registration
 

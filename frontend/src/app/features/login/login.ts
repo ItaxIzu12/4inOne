@@ -1,4 +1,5 @@
 import { AppIcon } from '../../shared/ui/icons/app-icon';
+import { BRAND } from '../../core/brand/brand.config';
 import { Brand } from '../../shared/ui/brand/brand';
 import { HttpErrorResponse } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
@@ -49,6 +50,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   styleUrl: './login.scss',
 })
 export class Login {
+  protected readonly homeLabel = BRAND.a11y.homeLink;
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

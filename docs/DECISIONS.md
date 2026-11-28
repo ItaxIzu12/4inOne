@@ -1,4 +1,4 @@
-# 4inOne — Product Decisions V2
+# Lumiknot — Product Decisions V2
 
 This file records decisions that should not be repeatedly reopened without new evidence.
 
@@ -58,7 +58,7 @@ Daily-use UI should use one consistent standard icon family.
 
 Finances prioritizes trust, readability and clarity over playful decoration.
 
-## D12 — Travel is not the center of 4inOne
+## D12 — Travel is not the center of Lumiknot
 
 Travel is a useful domain and a strong cross-domain demonstration, but ordinary household/planning/purchase scenarios are equally important.
 
@@ -110,20 +110,20 @@ Die eingefrorene Haushaltsfinanzoberfläche und ihr Link wurden entfernt. Alte F
 
 ## D19 — Modularer Monolith und Zielarchitektur (24.11.2026)
 
-4inOne bleibt ein modularer Monolith mit einer eigenen PostgreSQL-Datenbank. Die Zielarchitektur (Schichten,
+Lumiknot bleibt ein modularer Monolith mit einer eigenen PostgreSQL-Datenbank. Die Zielarchitektur (Schichten,
 Abhängigkeitsregeln, öffentliche Schnittstellen je Bereich) steht in `docs/ARCHITECTURE.md` § 3; neue Funktionen müssen
 dazu passen. Umbauten nach dem Maßnahmenplan (§ 4) beginnen erst nach Freigabe durch den Nutzer. Bestehende Funktionen
 und Daten bleiben erhalten; Migrationen sind additiv, destruktive nur mit Freigabe.
 
 ## D20 — Personal AI Core ist ein eigenes System (24.11.2026)
 
-Ergänzt D15. KI kommt später aus dem separat entwickelten Personal AI Core auf demselben Gerät. 4inOne spricht ihn nur
+Ergänzt D15. KI kommt später aus dem separat entwickelten Personal AI Core auf demselben Gerät. Lumiknot spricht ihn nur
 über das Backend an (authentifizierte API, eigenes versioniertes Format, kein fest verdrahteter Anbieter), ist ohne ihn
 voll funktionsfähig (`AI_ENABLED=False` ist Standard) und lässt KI nur Vorschläge machen; Buchungen und sensible Daten
 ändert sie nie selbst. Einzelheiten: `docs/AI_INTEGRATION.md`.
 
 **Ergänzung 25.11.2026 — gemeinsamer Personal-AI-Integrationsstandard:** Alle Anwendungen am Personal AI Core nutzen
-dieselbe versionierte REST-Schnittstelle mit Fähigkeiten-Abfrage (`/v1/capabilities`). In 4inOne gibt es genau einen
+dieselbe versionierte REST-Schnittstelle mit Fähigkeiten-Abfrage (`/v1/capabilities`). In Lumiknot gibt es genau einen
 Adapter (`integrations/ai`) mit den Providern `core` und `mock` (Entwicklung); keine eingebundenen Modelle oder
 OCR-Engines (auch Smart Scan nutzt den Core). Neue Fähigkeiten werden im Katalog `docs/AI_INTEGRATION.md` § 4.5
 beschrieben und als Erweiterung des gemeinsamen Core umgesetzt.

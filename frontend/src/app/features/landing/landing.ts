@@ -1,4 +1,5 @@
 import { afterNextRender, afterRenderEffect, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { BRAND } from '../../core/brand/brand.config';
 import { RouterLink } from '@angular/router';
 import { AnimatedBeam } from '../../shared/ui/animated-beam/animated-beam';
 import { AreaTone } from '../../shared/ui/area-deck/area-deck';
@@ -90,6 +91,7 @@ const DECIDED: Record<Decision, string> = {
   styleUrls: ['./landing.scss', './landing-sections.scss', './landing-play.scss', './landing-end.scss'],
 })
 export class Landing {
+  protected readonly homeLabel = BRAND.a11y.homeLink;
   /** Testversion nur mit Demo (GitHub Pages): keine Wege zu Anmeldung/Registrierung. */
   protected readonly demoOnly = DEMO_ONLY;
   readonly areas: Area[] = [

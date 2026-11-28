@@ -150,6 +150,16 @@ Abstand — nie nur über Farbe.
 
 ### Referenz und Migrationsstand
 
+- **Logo-System vervollständigt (28.11.2026, `docs/LOGO_USAGE.md`):** neue Variante „Nur Wortmarke“
+  (`public/brand/lumiknot-wordmark(-light).svg`, Manrope 700, −0,032 em); Lockups setzen Textfarbe und Schrift als
+  Attribute statt als `text{…}`-Regel und die einfarbigen Zeichen haben eigene Masken-IDs, damit eingebettete SVGs
+  sich nicht gegenseitig umfärben. Größenprüfung 16–512 px (`docs/brand/lumiknot-logo-qa.png`), Mindestgrößen,
+  Schutzraum, Export- und Farbangaben dokumentiert. Zeichen, Farben und App unverändert.
+- **Marken-Audit, kleine Angleichungen (28.11.2026, `docs/audits/LUMIKNOT_MARKEN_AUDIT_2026-11-28.md`):** alle
+  Startseiten-Links am Logo heißen für Bildschirmleser einheitlich „Lumiknot – Startseite“ (`BRAND.a11y.homeLink`
+  statt drei Schreibweisen); die Demo-Finanzkategorien nutzen dieselben Farben wie echte Konten
+  (`backend/finanzen/category_colors.py`: Wohnen Karamell, Lebensmittel Beere, Mobilität Indigo, Freizeit Gelb,
+  Gesundheit Aqua-Grün). Sonst keine sichtbare Änderung.
 - **Name Lumiknot statt Veyora (28.11.2026):** derselbe Tag, nur der Name wechselt (Markenlage, `docs/BRAND_GUIDELINES.md`
   › Namensprüfung). Name überall aus `core/brand/brand.config.ts`; Lockups messen die Textbreite jetzt selbst
   (`scripts/brand-assets.mts`), damit ein längerer Name nicht abgeschnitten wird; Logo-Dateien unter

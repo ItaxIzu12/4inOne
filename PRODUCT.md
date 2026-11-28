@@ -9,7 +9,7 @@ web
 ## Users
 
 Primär: Einzelpersonen, die ihren Alltag an einem Ort organisieren wollen. Dieselbe Plattform tragen Paare, Familien,
-WGs und zeitweise Gruppen (z. B. Reisebegleitungen) — aber 4inOne ist eine persönliche Alltagsplattform, die gemeinsam
+WGs und zeitweise Gruppen (z. B. Reisebegleitungen) — aber Lumiknot ist eine persönliche Alltagsplattform, die gemeinsam
 wird, wo die Person es wählt, keine „Familien-App, die Singles auch nutzen dürfen“ (docs/PRODUCT_VISION.md).
 
 Typische Situation auf der App-Startseite (bestätigt 15.10.2026): ein kurzer Blick am Morgen, oft am Handy. Die erste
@@ -23,7 +23,7 @@ finden, was zusammengehört.
 
 ## Positioning
 
-„Du organisierst etwas einmal. 4inOne verbindet, was dazu gehört.“ Der Unterschied ist die Verknüpfungsebene zwischen
+„Du organisierst etwas einmal. Lumiknot verbindet, was dazu gehört.“ Der Unterschied ist die Verknüpfungsebene zwischen
 echten Alltags-Objekten (Sparziel ↔ Gerät, Reise ↔ Termin …) mit erklärbaren Vorschlägen — nicht das bloße
 Nebeneinander von Kalender, Liste und Budget (docs/COMPETITIVE_POSITIONING.md).
 
@@ -44,8 +44,9 @@ Beispieldaten.
 
 ## Brand Commitments
 
-Name „4inOne“, Zeichen aus vier weichen Feldern in eigenen, kräftigen Farben (`<app-brand>`; die UI nutzt seit 22.10.2026 gedeckte Bereichstöne, „Soft Editorial“), Leitsatz „Dein Alltag. Alles
-verbunden.“, Schrift Schibsted Grotesk für alles (Google Font, selbst gehostet, ohne Kursive), Sprache Deutsch in Du-Form, ruhig und erwachsen. Linke Navigation und bestehende Icons bleiben.
+Name „Lumiknot“ (seit 28.11.2026, vormals 4inOne), Orbit-Zeichen aus vier verschlungenen Elementen in den Bereichsfarben
+(`<app-brand>`; die UI nutzt kontrastgeprüfte Bereichstöne), Leitsatz „Dein Alltag. Alles verbunden.“, Claim „Life, connected.“,
+Schrift Manrope (Marke, Überschriften) und Inter (Oberfläche), selbst gehostet, ohne Kursive; Regeln in `docs/BRAND_GUIDELINES.md`, Sprache Deutsch in Du-Form, ruhig und erwachsen. Linke Navigation und bestehende Icons bleiben.
 
 ## Evidence on Hand
 

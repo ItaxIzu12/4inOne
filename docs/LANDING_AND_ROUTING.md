@@ -1,6 +1,6 @@
 # Öffentliche Startseite und neue URLs
 
-Die Startseite erklärt 4inOne vor dem Einstieg in die Demo. Sie verwendet das vorhandene Markenlogo und die einheitlichen SVG-Icons. Keine neuen 3D-Modelle, externen Schriften oder Bildabhängigkeiten. Das persönliche Dashboard wurde nicht neu gestaltet; seine Änderungen betreffen ausschließlich Links und die explizite Trennung von Demo und persönlichem Konto.
+Die Startseite erklärt Lumiknot vor dem Einstieg in die Demo. Sie verwendet das vorhandene Markenlogo und die einheitlichen SVG-Icons. Keine neuen 3D-Modelle, externen Schriften oder Bildabhängigkeiten. Das persönliche Dashboard wurde nicht neu gestaltet; seine Änderungen betreffen ausschließlich Links und die explizite Trennung von Demo und persönlichem Konto.
 
 ## URLs
 

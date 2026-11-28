@@ -25,7 +25,7 @@ Docker, systemd, Domain), `fourinone` (nginx-Variablen), `4io` (Cookie, Browser-
 |---|---|---|
 | 1 Sichtbare Marke | Seitentitel, Texte, Aria-Labels, Manifest, Open Graph, E-Mails, Export, Finanzbericht, Logo, Icons | umgestellt (Phase 1–2) |
 | 2 Intern technisch | Kommentare, Docstrings, Testnamen, Prüf-IDs `4inone.E001`, `scripts/4inone.sh` | Kommentare umgestellt; Prüf-IDs und Skriptname bleiben |
-| 3 Persistente Daten | Browser-Speicher `4io-*`/`4io_*` (Darstellung, Einkaufsansicht, **Offline-Warteschlange**, Offline-Bordkarten), Cookie `4io_signed_in`, Volume `4inone_postgres_data`, Datenbank-Name und -Nutzer `fourinone` (Docker), Backups `4inone_*.tar.age` | bleiben (sonst Verlust von Einstellungen und noch nicht gesendeten Offline-Änderungen) |
+| 3 Persistente Daten | Browser-Speicher `4io-*`/`4io_*` (Darstellung, Einkaufsansicht, **Offline-Warteschlange**, Offline-Bordkarten; kurzlebig im Sitzungsspeicher `4io_reloaded_for_app`, `4io_chunk_reload_at`), Cookie `4io_signed_in`, Volume `4inone_postgres_data`, Datenbank-Name und -Nutzer `fourinone` (Docker), Backups `4inone_*.tar.age` | bleiben (sonst Verlust von Einstellungen und noch nicht gesendeten Offline-Änderungen) |
 | 4 Infrastruktur | Compose-Projekte `4inone-prod`/`4inone-monitoring`, Images `4inone-backend:local`/`4inone-web:local`, `/srv/4inone`, `/srv/4inone-data`, `4inone.service`, `4inone-docker@…`, nginx `4inone*.conf`, `$fourinone_home`, Domain `4inone.de`, Repository `ItaxIzu12/4inOne`, Pages-Pfad `/4inOne/` | bleiben bis Phase 4 (eigene Freigabe) |
 | 5 Historisch | datierte Einträge in `docs/` (Changelogs, Audits, Notizen), Git-Historie | bleiben unverändert |
 | 6 Sicherheitskritisch | Schlüsselableitung `4inone-bordkarte:`, HMAC `4inone-ai:`, Signatur-Salz `4inone.oauth.*`, `AI_APPLICATION_ID=4inone`, Backup-Schlüssel `4inone-backup.key` | **nie** nebenbei ändern |
@@ -50,7 +50,7 @@ Cache selbst und bleibt kompatibel).
 | Was | Wie | Risiko |
 |---|---|---|
 | Orbit-Logo | `shared/ui/brand/orbit.ts` (Geometrie), `<app-brand>` mit `context`, `npm run brand:assets` für alle Dateien | keins |
-| Icons, Manifest | Favicon SVG/ICO, Apple-Touch, 192/512, **Maskable** neu; Theme Midnight, Hintergrund Ivory; Icon-Links mit `?v=3` | Browser und installierte PWAs übernehmen neue Icons verzögert (Cache) |
+| Icons, Manifest | Favicon SVG/ICO, Apple-Touch, 192/512, **Maskable** neu; Theme Midnight, Hintergrund Ivory; Icon-Links mit `?v=4` (seit dem Namen Lumiknot) | Browser und installierte PWAs übernehmen neue Icons verzögert (Cache) |
 | Farben | Bereichsfarben aus den Logo-Farben (Haushalt Rosé → Orange/Karamell, Organisation Amber → Violett), Midnight statt Deep Forest, Ivory statt Porcelain, Dunkelmodus-Neutrale bläulich | rein visuell; Kontraste berechnet (`docs/BRAND_GUIDELINES.md`) und durch axe-Tests abgesichert |
 | Schrift | Manrope + Inter selbst gehostet, Schibsted Grotesk entfernt | erster Besuch lädt bis ~170 KB statt ~68 KB Schrift; vorgeladen nur die zwei Latin-Dateien (~73 KB) |
 | Teilen-Bild, Landing-Screenshots | neu erzeugt | Teilen-Vorschauen bei Diensten aktualisieren sich verzögert |

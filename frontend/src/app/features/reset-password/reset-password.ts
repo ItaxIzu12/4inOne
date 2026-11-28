@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { BRAND } from '../../core/brand/brand.config';
 import { Component, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
@@ -32,6 +33,7 @@ type State = 'form' | 'done' | 'invalid-link';
   styleUrl: '../forgot-password/forgot-password.css',
 })
 export class PasswortZuruecksetzen {
+  protected readonly homeLabel = BRAND.a11y.homeLink;
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly token = tokenFromLink(inject(ActivatedRoute).snapshot);

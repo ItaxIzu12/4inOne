@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { BRAND } from '../../core/brand/brand.config';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { InvitationsService } from '../../core/invitations/invitations.service';
@@ -19,6 +20,7 @@ type State = 'checking' | 'done' | 'invalid';
   styleUrl: '../forgot-password/forgot-password.css',
 })
 export class EmailBestaetigen {
+  protected readonly homeLabel = BRAND.a11y.homeLink;
   protected readonly auth = inject(AuthService);
   private readonly invitations = inject(InvitationsService);
   protected readonly state = signal<State>('checking');

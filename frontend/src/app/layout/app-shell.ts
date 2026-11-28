@@ -3,7 +3,7 @@ import { ErrorNoticeDirective } from '../shared/ui/error-notice/error-notice';
 import { Component, DestroyRef, input, output, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IsActiveMatchOptions, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { BrandContext } from '../core/brand/brand.config';
+import { BRAND, BrandContext } from '../core/brand/brand.config';
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
 import { BackToTop } from './back-to-top/back-to-top';
@@ -35,6 +35,7 @@ const AREA_CONTEXT: Record<string, BrandContext> = {
   styleUrls: ['./app-shell.scss', './app-shell-late.scss'],
 })
 export class AppShell {
+  protected readonly homeLabel = BRAND.a11y.homeLink;
   /** Testversion nur mit Demo (GitHub Pages): keine Wege zu Anmeldung/Registrierung. */
   protected readonly demoOnly = DEMO_ONLY;
   /** Auf der Startseite filtert die Suche live (dashboardQuery); überall sonst führt Enter dorthin. */

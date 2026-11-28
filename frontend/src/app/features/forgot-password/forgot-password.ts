@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { BRAND } from '../../core/brand/brand.config';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -14,6 +15,7 @@ import { Brand } from '../../shared/ui/brand/brand';
   styleUrl: './forgot-password.css',
 })
 export class PasswortVergessen {
+  protected readonly homeLabel = BRAND.a11y.homeLink;
   private readonly fb = inject(FormBuilder);
   private readonly scroll = inject(ScrollService);
   private readonly auth = inject(AuthService);

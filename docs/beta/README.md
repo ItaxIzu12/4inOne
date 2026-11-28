@@ -1,7 +1,7 @@
-# Beta-Test 4inOne (Entwicklungsplan Phase 5)
+# Beta-Test Lumiknot (Entwicklungsplan Phase 5)
 
 **Ziel:** Nachweisen, ob Menschen ohne technische Erklärung verstehen, was die Verbindungen zwischen den Bereichen tun,
-ob sie dabei Zeit sparen und die Kontrolle behalten — und ob sie 4inOne wiederholt nutzen.
+ob sie dabei Zeit sparen und die Kontrolle behalten — und ob sie Lumiknot wiederholt nutzen.
 **Nicht Ziel:** Lob sammeln. Positive Rückmeldungen allein gelten nicht als Nachweis langfristiger Nutzung.
 
 ## Rahmen
@@ -44,7 +44,7 @@ ob sie dabei Zeit sparen und die Kontrolle behalten — und ob sie 4inOne wieder
    ausgeführt, Feedback eingeschaltet. Eine Probe-Session mit einer Person aus dem Team.
 2. **Start (Tag 1, begleitet):** Interview Teil A (5 min) → Aufgaben 1–5 mit lautem Denken, beobachten und
    protokollieren, **nicht helfen**, solange die Person nicht festhängt (dann Hilfe notieren) → Interview Teil B.
-3. **Freie Nutzung (Woche 1–3):** Die Person nutzt 4inOne im Alltag und schickt Rückmeldungen über „Feedback geben“.
+3. **Freie Nutzung (Woche 1–3):** Die Person nutzt Lumiknot im Alltag und schickt Rückmeldungen über „Feedback geben“.
    Nach Woche 1 kurze Nachfrage (Teil C).
 4. **Abschluss:** Interview Teil D, Fragebogen im Dialog „Feedback geben“ mit Aufgabe „T5“.
 5. **Auswertung:** beide Berichte erzeugen, [AUSWERTUNG.md](AUSWERTUNG.md) ausfüllen, Probleme priorisieren, Blocker

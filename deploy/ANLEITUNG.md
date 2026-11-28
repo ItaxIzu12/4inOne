@@ -1,4 +1,4 @@
-# 4inOne live stellen — Schritt für Schritt von null
+# Lumiknot live stellen — Schritt für Schritt von null
 
 > Alternative mit Docker Compose (z. B. für den eigenen Mini-PC): [`deploy/docker/ANLEITUNG.md`](docker/ANLEITUNG.md).
 > Geänderte nginx-, systemd- oder Compose-Dateien prüft `deploy/ci/check-deploy.sh` (auch in CI, Job `deploy`).

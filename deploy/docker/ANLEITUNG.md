@@ -1,4 +1,4 @@
-# 4inOne mit Docker Compose betreiben (GEEKOM GT1 Mega)
+# Lumiknot mit Docker Compose betreiben (GEEKOM GT1 Mega)
 
 Stand 24.11.2026 · Ergänzt den Weg ohne Container (`deploy/ANLEITUNG.md`), ersetzt ihn nicht.
 Hintergrund und Ressourcenbudget: `docs/ARCHITECTURE.md` § 7.
@@ -7,7 +7,7 @@ Hintergrund und Ressourcenbudget: `docs/ARCHITECTURE.md` § 7.
 
 ```text
 Heimnetz ──HTTPS──▶ web (nginx: Angular + Weiterleitung)  ──▶ backend (Django/gunicorn, 2 Worker)
-                                                                  ├──▶ postgres (eigene Datenbank, nur 4inOne)
+                                                                  ├──▶ postgres (eigene Datenbank, nur Lumiknot)
                                                                   └──▶ redis (nur Cache, ohne Platte)
 Daten auf dem Gerät: /srv/4inone-data/{postgres,private_media,certs,backups}
 Zeitpläne: systemd-Timer auf dem Gerät → deploy/docker/run-task.sh → `docker compose exec`
@@ -51,7 +51,7 @@ Zwei Dateien, beide `chmod 600`, beide **nie** ins Repository:
    **Nicht** eintragen: `DATABASE_URL`, `REDIS_URL`, `PRIVATE_MEDIA_ROOT`, `BEHIND_PROXY`, `RATE_LIMIT_CACHE`,
    `ADMIN_URL_PATH`. Diese setzt `compose.yml` selbst passend zum Aufbau.
 
-KI bleibt aus (`AI_ENABLED` nicht setzen). 4inOne läuft vollständig ohne den Personal AI Core
+KI bleibt aus (`AI_ENABLED` nicht setzen). Lumiknot läuft vollständig ohne den Personal AI Core
 (`docs/AI_INTEGRATION.md`).
 
 ## 3. Zertifikat
@@ -123,7 +123,7 @@ c build && c run --rm backend python manage.py migrate && c up -d
 c run --rm backend python manage.py check --deploy
 ```
 
-Migrationen sind in 4inOne nur additiv (`docs/DECISIONS.md` D19). Trotzdem vor jedem Update sichern.
+Migrationen sind in Lumiknot nur additiv (`docs/DECISIONS.md` D19). Trotzdem vor jedem Update sichern.
 
 ## Grenzen
 

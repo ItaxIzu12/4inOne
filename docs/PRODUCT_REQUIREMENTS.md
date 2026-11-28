@@ -1,4 +1,4 @@
-# 4inOne — Product Requirements V2
+# Lumiknot — Product Requirements V2
 
 ## 1. App shell and dashboard
 

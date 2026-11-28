@@ -1,6 +1,6 @@
 # Lokale Datenbank: PostgreSQL in Docker (seit 15.11.2026)
 
-Lokal läuft 4inOne mit **PostgreSQL 16** in Docker — derselben Datenbank wie auf dem Server (Ubuntu 24.04,
+Lokal läuft Lumiknot mit **PostgreSQL 16** in Docker — derselben Datenbank wie auf dem Server (Ubuntu 24.04,
 `deploy/ANLEITUNG.md`) und in der CI. SQLite wird nur noch für die Wegwerf-Datenbank der Full-Stack-Tests benutzt
 (`frontend/playwright.fullstack.config.ts`) und als Rückfall, wenn `DATABASE_URL` fehlt.
 

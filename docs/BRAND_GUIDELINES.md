@@ -1,7 +1,7 @@
 # Lumiknot — Markenrichtlinien
 
 Verbindlich für alle neuen Entwicklungen seit 28.11.2026. Vorher hieß das Produkt **4inOne**; was technisch noch so
-heißt und warum, steht in `docs/REBRANDING_MIGRATION.md`. Logo-Regeln: `docs/LOGO_USAGE.md`. Namen und Bezeichner:
+heißt und warum, steht in `docs/REBRANDING_MIGRATION.md`. Markenstrategie und Tonalität: `docs/BRAND_IDENTITY.md`. Logo-Regeln: `docs/LOGO_USAGE.md`. Namen und Bezeichner:
 `docs/NAMING_CONVENTIONS.md`. Gestaltung im Detail: `docs/DESIGN_SYSTEM.md`, Kurzfassung `DESIGN.md`.
 
 ## Identität

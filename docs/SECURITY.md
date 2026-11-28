@@ -1,6 +1,6 @@
-# 4inOne — Security Requirements V2
+# Lumiknot — Security Requirements V2
 
-4inOne may contain financial, household, calendar, travel and relationship data. Security and privacy are product requirements.
+Lumiknot may contain financial, household, calendar, travel and relationship data. Security and privacy are product requirements.
 
 ## Core rules
 

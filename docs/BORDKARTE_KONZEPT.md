@@ -1,4 +1,4 @@
-# Bordkarte und Flugdaten in 4inOne — Konzept
+# Bordkarte und Flugdaten in Lumiknot — Konzept
 
 Stand: 22.11.2026 · Bereich: Reisen · Skizze: [Artifact „Bordkarte in 4inOne“](https://claude.ai/artifact/CWrc8fAD1rHbGfhQykmN5A) (privat)
 
@@ -29,15 +29,15 @@ und 3 sind Ideen und werden erst nach ausdrücklicher Freigabe gebaut.
   `frontend/e2e-fullstack/bordkarte.spec.ts` (echtes Backend, Browser ohne BarcodeDetector, Screenshot und PDF).
 
 Ziel: Buchung einmal übernehmen statt abtippen, Flugzeiten und Check-in im Blick behalten und nach dem
-Online-Check-in die **echte** Bordkarte der Airline in 4inOne zeigen — auch ohne Netz am Gate.
+Online-Check-in die **echte** Bordkarte der Airline in Lumiknot zeigen — auch ohne Netz am Gate.
 
 ## So läuft es ab
 
 1. **Buchen, wo du willst** — trip.com, Airline, Booking: wie bisher. Die Bestätigung kommt per Mail.
-2. **Einmal übernehmen** — Mail weiterleiten oder PDF/Screenshot hochladen. 4inOne legt Reise, Flüge, Hotel und
+2. **Einmal übernehmen** — Mail weiterleiten oder PDF/Screenshot hochladen. Lumiknot legt Reise, Flüge, Hotel und
    Stornofrist als Vorschlag an; gespeichert wird erst nach deinem Okay. *(Schritt 2)*
 3. **Einchecken, Bordkarte rein** — Check-in bei der Airline, dann die Bordkarte (Wallet-Datei `.pkpass` oder
-   Screenshot) hinzufügen. 4inOne liest den Code und zeigt die Karte. *(Schritt 1)*
+   Screenshot) hinzufügen. Lumiknot liest den Code und zeigt die Karte. *(Schritt 1)*
 
 ## Skizze in Worten
 
@@ -66,8 +66,8 @@ Online-Check-in die **echte** Bordkarte der Airline in 4inOne zeigen — auch oh
 | Buchung von trip.com o. ä. automatisch holen | über Umweg | Keine offene Schnittstelle für private Buchungen. Stattdessen Mail weiterleiten (viele Mails enthalten maschinenlesbare Flugdaten, schema.org „FlightReservation“) oder PDF/Screenshot hochladen; den Rest liest eine KI aus. |
 | Zeitpunkt Online-Check-in | ja | Aus den Regeln der Airline (meist 24–48 Std. vor Abflug), ohne Zusatzdienst. |
 | Gate, Verspätung, Boardingzeit live | mit Dienst | Nur über einen kostenpflichtigen Flugdaten-Dienst (z. B. FlightAware, Aviationstack, Cirium). Lohnt sich zusammen mit Benachrichtigungen. |
-| Online-Check-in direkt in 4inOne | nein | Machen nur Airline-App oder -Website. 4inOne verlinkt zur richtigen Zeit dorthin. |
-| QR-Code selbst erzeugen | nein | Ein selbst gebauter Code wäre an Kontrolle und Gate ungültig. 4inOne zeigt den **echten** Code der Airline (Standard IATA BCBP), gelesen aus der importierten Bordkarte. |
+| Online-Check-in direkt in Lumiknot | nein | Machen nur Airline-App oder -Website. Lumiknot verlinkt zur richtigen Zeit dorthin. |
+| QR-Code selbst erzeugen | nein | Ein selbst gebauter Code wäre an Kontrolle und Gate ungültig. Lumiknot zeigt den **echten** Code der Airline (Standard IATA BCBP), gelesen aus der importierten Bordkarte. |
 | Bordkarte ohne Netz am Gate | ja | Wie die Offline-Einkaufsliste: auf dem Gerät gespeichert, beim Abmelden gelöscht. |
 
 ## Datenschutz und Sicherheit

@@ -70,7 +70,7 @@ Kein Event-Bus im MVP für die drei bestehenden Kernmodule (Finanzen/Haushalt/Or
 
 **Hinweis zu den Finanz-Differenzierungsfeatures aus dem Gesamtkonzept** (Einkauf-zu-Ausgabe-Moment, Fairness-Anzeige, Abo-Radar): Diese laufen alle über bestehende Service-Aufrufe zwischen `haushalt` und `finanzen` — kein neues architektonisches Konzept nötig. Der Einkauf-zu-Ausgabe-Moment ruft z. B. `finanzen.services.create_transaction_from_shopping_list()` auf, sobald eine `ShoppingList` als erledigt markiert wird; die Fairness-Anzeige ist eine reine Aggregations-Abfrage über bestehende `Transaction`-Datensätze pro `HouseholdMembership`, kein zusätzliches Datenmodell.
 
-### 2.1b Connection Engine — neues, zentrales Architekturprinzip für 4inOne
+### 2.1b Connection Engine — neues, zentrales Architekturprinzip für Lumiknot
 
 **Kernidee (aus der Produktbeschreibung):** Eine Information wird einmal eingegeben und ist danach über mehrere Module hinweg sichtbar/verknüpft, ohne Duplizierung. Beispiel: Ein Reisebudget gehört gleichzeitig zu `reisen` UND `finanzen` — es wird nicht zweimal angelegt.
 

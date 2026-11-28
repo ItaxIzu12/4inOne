@@ -1,14 +1,14 @@
 # Aufgaben für Testpersonen
 
 > Bitte laut denken: Sag, was du suchst, was du erwartest und was dich überrascht. Es gibt kein Richtig oder Falsch —
-> getestet wird 4inOne, nicht du.
+> getestet wird Lumiknot, nicht du.
 
 Für die Beobachtung: Aufgabe vorlesen, dann nur zuhören. Die Erfolgskriterien in *kursiv* nicht vorlesen.
 
 ## T1 – Einen Vertrag anlegen und verbinden
 
 „Du hast einen Internetvertrag: 39,99 € im Monat, er läuft bis Ende nächsten Jahres, Kündigungsfrist ein Monat.
-Trag ihn in 4inOne ein. Sorge dafür, dass die Kosten in deinen Finanzen eingeplant sind und du rechtzeitig an die
+Trag ihn in Lumiknot ein. Sorge dafür, dass die Kosten in deinen Finanzen eingeplant sind und du rechtzeitig an die
 Kündigung erinnert wirst.“
 
 *Geschafft, wenn:* Vertrag unter Haushalt › Verträge, Frist „1 · Monate“, beide Verbindungen eingeschaltet und
@@ -40,7 +40,7 @@ Vertrag selbst und bisherige Buchungen noch da sind.
 
 ## T5 – Den Vorteil erklären
 
-„Stell dir vor, eine Freundin fragt, wozu 4inOne gut ist. Was sagst du ihr — ohne auf den Bildschirm zu schauen?“
+„Stell dir vor, eine Freundin fragt, wozu Lumiknot gut ist. Was sagst du ihr — ohne auf den Bildschirm zu schauen?“
 
 *Protokollieren:* wörtlich. Nennt die Person einen **konkreten** Vorteil (z. B. „Fristen vergesse ich nicht mehr“)
 oder nur Allgemeines („alles in einer App“)?

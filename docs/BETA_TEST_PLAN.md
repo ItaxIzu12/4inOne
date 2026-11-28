@@ -1,4 +1,4 @@
-# 4inOne — External Beta Preparation
+# Lumiknot — External Beta Preparation
 
 Plan für 5–15 reale Testpersonen · 11. Oktober 2026
 
@@ -6,7 +6,7 @@ Plan für 5–15 reale Testpersonen · 11. Oktober 2026
 
 ### Ziel und Freigabe
 
-Wir prüfen, ob Menschen 4inOne verstehen, einen persönlichen Nutzen finden, passende Dinge zusammenbringen und Vorschläge richtig einordnen. Entscheidend sind beobachtetes Verhalten und konkrete Schwierigkeiten, nicht Zustimmung zum Konzept.
+Wir prüfen, ob Menschen Lumiknot verstehen, einen persönlichen Nutzen finden, passende Dinge zusammenbringen und Vorschläge richtig einordnen. Entscheidend sind beobachtetes Verhalten und konkrete Schwierigkeiten, nicht Zustimmung zum Konzept.
 
 **Dieser Plan ist keine Beta-Freigabe.** Der [Readiness Audit](PRE_BETA_READINESS_AUDIT.md) steht weiter auf NO. Stand 11.10.2026 (Nachtrag im Audit): Passwort-Recovery (P1-01) und die konfigurierbare API-Adresse (P1-02) sind behoben. Offen vor der ersten Einladung:
 
@@ -61,7 +61,7 @@ Diese Aufgaben können mit frei erfundenen Angaben bearbeitet werden. Es gibt ke
 9. **Wiederfinden:** Wechsle zu einem anderen Bereich und finde einen zuvor erstellten Eintrag wieder. Lade die Seite neu und prüfe, ob er noch da ist.
 10. **Konto und Kontrolle:** Finde Profil oder Einstellungen. Prüfe eine Angabe, ändere bei Bedarf einen erfundenen Anzeigenamen und melde dich anschließend ab und wieder an.
 
-**Nur für die Moderation:** Keine Einträge passend machen, bevor die Person frei gearbeitet hat. Falls für Aufgabe 7 kein unterstütztes Paar vorhanden ist, einen passenden Alltagskontext als Zusatzaufgabe anbieten und die Aufgabe als angeleitet markieren. Gerät + Sparziel ist ein unterstütztes Paar (geprüft 11.10.2026). Achtung: Nennt das Sparziel den Gerätenamen (z. B. „Neue Waschmaschine“), bietet 4inOne dieses Paar bereits als Vorschlag an. Dann protokollieren, ob die Person den Zusammenhang über den Vorschlag oder selbst hergestellt hat; beides ist gültig, aber getrennt zu zählen.
+**Nur für die Moderation:** Keine Einträge passend machen, bevor die Person frei gearbeitet hat. Falls für Aufgabe 7 kein unterstütztes Paar vorhanden ist, einen passenden Alltagskontext als Zusatzaufgabe anbieten und die Aufgabe als angeleitet markieren. Gerät + Sparziel ist ein unterstütztes Paar (geprüft 11.10.2026). Achtung: Nennt das Sparziel den Gerätenamen (z. B. „Neue Waschmaschine“), bietet Lumiknot dieses Paar bereits als Vorschlag an. Dann protokollieren, ob die Person den Zusammenhang über den Vorschlag oder selbst hergestellt hat; beides ist gültig, aber getrennt zu zählen.
 
 Vorschläge sind bedingungsabhängig. Falls keiner erscheint, Aufgabe 8 als **nicht testbar** protokollieren, nicht als Verständnisfehler. Für eine gesonderte Vorschlagsprüfung kann die Person ausdrücklich eine zusätzliche erfundene Berlin-Reise etwa 30 Tage in der Zukunft und eine Organisationsaufgabe „Hotel Berlin bestätigen“ sieben Tage davor anlegen. Dieser Kontext entspricht einer vorhandenen getesteten Regel (Ortsname im Aufgabentitel, fällig bis 30 Tage vor Reisebeginn; geprüft 11.10.2026). Er ist als vorbereitete Zusatzaufgabe zu kennzeichnen; keine heimlich eingespeisten Daten. Für eine unabhängige Entscheidung zum Vorschlag ein noch nicht manuell verknüpftes Paar verwenden.
 
@@ -69,7 +69,7 @@ Vorschläge sind bedingungsabhängig. Falls keiner erscheint, Aufgabe 8 als **ni
 
 Nach der ersten Nutzung, ohne Produktbegriffe vorab zu erklären:
 
-- Was glaubst du, ist 4inOne?
+- Was glaubst du, ist Lumiknot?
 - Wobei könnte es dir helfen? Wobei eher nicht?
 - Was war für dich der größte Vorteil, falls du einen gesehen hast?
 - Was bedeutet „Verknüpfen“ für dich?
@@ -84,7 +84,7 @@ Nach der ersten Nutzung, ohne Produktbegriffe vorab zu erklären:
 
 Nach der freiwilligen Woche:
 
-- Hast du 4inOne noch einmal geöffnet? Für welche konkrete Situation?
+- Hast du Lumiknot noch einmal geöffnet? Für welche konkrete Situation?
 - Welche Bereiche hast du von dir aus verwendet? Warum diese?
 - Gab es einen Moment, in dem du lieber ein anderes Werkzeug benutzt hast? Was war leichter?
 - Hast du einen Zusammenhang oder einen Vorschlag genutzt? Was hat dir das erspart, falls etwas?
@@ -119,7 +119,7 @@ Anzahl betroffener Personen / Anzahl mit derselben Gelegenheit:
 Nächster Schritt / verantwortlich / Status:
 ```
 
-Jeden Feature Request anhand des Problems prüfen: Wie viele Personen hatten unabhängig dieselbe Schwierigkeit? Löst er ein Kernproblem von 4inOne? Passt er zu vier eigenständigen Bereichen mit optionalen Zusammenhängen? Gibt es bereits einen einfacheren Weg, etwa verständlichere Copy oder bessere Auffindbarkeit? Erst danach Entscheidung: vorhandenen Weg verbessern / später prüfen / nicht verfolgen. Nicht Wünsche zählen, sondern gemeinsame Ursachen und Auswirkungen.
+Jeden Feature Request anhand des Problems prüfen: Wie viele Personen hatten unabhängig dieselbe Schwierigkeit? Löst er ein Kernproblem von Lumiknot? Passt er zu vier eigenständigen Bereichen mit optionalen Zusammenhängen? Gibt es bereits einen einfacheren Weg, etwa verständlichere Copy oder bessere Auffindbarkeit? Erst danach Entscheidung: vorhandenen Weg verbessern / später prüfen / nicht verfolgen. Nicht Wünsche zählen, sondern gemeinsame Ursachen und Auswirkungen.
 
 ## Success Criteria
 

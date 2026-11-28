@@ -8,7 +8,7 @@ seine Zugangsdaten in `backend/.env` stehen — ohne Werte gibt es weder Knopf n
 ### Google (kostenlos, lokal testbar)
 
 1. <https://console.cloud.google.com> › Projekt anlegen › **APIs & Dienste › OAuth-Zustimmungsbildschirm**:
-   Typ „Extern“, App-Name „4inOne“, Support-E-Mail, Bereiche `openid`, `email`, `profile`. Solange die App im
+   Typ „Extern“, App-Name „Lumiknot“, Support-E-Mail, Bereiche `openid`, `email`, `profile`. Solange die App im
    Testmodus ist, eigene Google-Konten unter „Testnutzer“ eintragen.
 2. **Anmeldedaten › OAuth-Client-ID erstellen**, Typ „Webanwendung“. Autorisierte Weiterleitungs-URI:
    - lokal: `http://localhost:8000/api/v1/auth/oauth/google/callback/`
@@ -60,7 +60,7 @@ Knopf → GET /api/v1/auth/oauth/<anbieter>/start/          state + nonce + PKCE
   (5/min + axes), Zwei-Faktor wie bisher.
 - Konten ohne Passwort (nur Google/Apple) können über „Passwort vergessen“ eines festlegen. Konto löschen entfernt
   die Verknüpfungen; der DSGVO-Export enthält sie (`konto.json › verknuepfte_anmeldungen`).
-- An 4inOne gehen nur Name und E-Mail; der Hinweis steht unter den Formularen. In der **Datenschutzerklärung** Google
+- An Lumiknot gehen nur Name und E-Mail; der Hinweis steht unter den Formularen. In der **Datenschutzerklärung** Google
   und Apple als Anmeldewege nennen (GO_LIVE.md).
 
 ## Tests

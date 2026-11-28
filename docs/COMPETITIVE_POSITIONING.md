@@ -1,8 +1,8 @@
-# 4inOne — Competitive Positioning
+# Lumiknot — Competitive Positioning
 
 ## Category context
 
-4inOne overlaps with several existing product categories:
+Lumiknot overlaps with several existing product categories:
 
 - family organizers;
 - shared calendars;
@@ -21,7 +21,7 @@ Do not lead with:
 - “We have a Today screen.”
 - “We have shared planning.”
 
-These can be necessary capabilities, but they do not explain why 4inOne should exist.
+These can be necessary capabilities, but they do not explain why Lumiknot should exist.
 
 ## Stronger positioning
 
@@ -29,11 +29,11 @@ Lead with the reduction of fragmented work across life areas.
 
 Recommended idea:
 
-> **4inOne versteht, welche Dinge in deinem Alltag zusammengehören.**
+> **Lumiknot versteht, welche Dinge in deinem Alltag zusammengehören.**
 
 Alternative plain-language expression:
 
-> **Du organisierst etwas einmal. 4inOne verbindet, was dazu gehört.**
+> **Du organisierst etwas einmal. Lumiknot verbindet, was dazu gehört.**
 
 ## Product difference
 
@@ -64,7 +64,7 @@ The product should let the user see that these belong together and later offer u
 
 ## Target perception
 
-A user should describe 4inOne as:
+A user should describe Lumiknot as:
 
 > “It keeps several everyday areas in one place, but the useful part is that related things can actually be connected instead of living as separate entries.”
 

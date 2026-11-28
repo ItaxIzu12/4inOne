@@ -1,4 +1,4 @@
-# 4inOne — Demo, Landing and Onboarding
+# Lumiknot — Demo, Landing and Onboarding
 
 ## Goal
 
@@ -24,7 +24,7 @@ Do not lead with architecture terms such as “Connection Engine”. Lead with a
 
 Recommended short explanation:
 
-> 4inOne verbindet Finanzen, Haushalt, Organisation und Reisen. Jeder Bereich funktioniert auch alleine. Wenn Dinge zusammengehören, kann 4inOne sie miteinander verbinden.
+> Lumiknot verbindet Finanzen, Haushalt, Organisation und Reisen. Jeder Bereich funktioniert auch alleine. Wenn Dinge zusammengehören, kann Lumiknot sie miteinander verbinden.
 
 Use one concrete example, preferably not travel-only.
 
@@ -37,7 +37,7 @@ Use one concrete example, preferably not travel-only.
 - Liefertermin
 - Altgerät entsorgen
 
-This demonstrates that 4inOne is about everyday connections rather than being primarily a travel planner.
+This demonstrates that Lumiknot is about everyday connections rather than being primarily a travel planner.
 
 ## Demo mode
 
@@ -106,7 +106,7 @@ straight to the right form and tick off from real data (`GET /api/v1/onboarding/
 | Reisen | Erste Reise anlegen | Packliste beginnen | Reisebudget festlegen |
 
 An area counts as set up once steps 1 and 2 are done; then its guide disappears. The start page shows
-„Dein Start mit 4inOne“ with all four areas. Every guide can be hidden with ✕ — stored in the account
+„Dein Start mit Lumiknot“ with all four areas. Every guide can be hidden with ✕ — stored in the account
 (`OnboardingProfile.dismissed_guides`, `PUT /api/v1/onboarding/guide/ {area, hidden}`), so it stays hidden on all
 devices; Einstellungen › „Startleitfäden“ shows them again. While the start overview is shown and there is neither a
 budget nor an expense, the start page leaves out its finance card. Only the person's own visible data counts (own household, own/participated trips). Never shown in the demo.
@@ -117,7 +117,7 @@ A very short tour may explain:
 
 1. Today — what matters now.
 2. Four areas — useful independently.
-3. Connections — what makes 4inOne different.
+3. Connections — what makes Lumiknot different.
 
 Avoid long multi-page feature tutorials.
 
@@ -125,4 +125,4 @@ Avoid long multi-page feature tutorials.
 
 After 30–60 seconds, a new user should be able to explain:
 
-> “4inOne organizes several parts of everyday life, and it can connect things that belong together so I don't have to manage the same context in different apps.”
+> “Lumiknot organizes several parts of everyday life, and it can connect things that belong together so I don't have to manage the same context in different apps.”

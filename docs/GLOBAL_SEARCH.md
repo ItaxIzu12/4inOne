@@ -1,4 +1,4 @@
-# 4inOne — Global Search
+# Lumiknot — Global Search
 
 ## Purpose
 

@@ -1,4 +1,5 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { BRAND } from '../../core/brand/brand.config';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
@@ -39,6 +40,7 @@ import { DEMO_ONLY } from '../../core/demo-only';
   styleUrl: './header.css',
 })
 export class Header {
+  protected readonly homeLabel = BRAND.a11y.homeLink;
   /** Testversion nur mit Demo (GitHub Pages): keine Wege zu Anmeldung/Registrierung. */
   protected readonly demoOnly = DEMO_ONLY;
   protected readonly auth = inject(AuthService);

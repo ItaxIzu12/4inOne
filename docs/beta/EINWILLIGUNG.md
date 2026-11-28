@@ -2,16 +2,16 @@
 
 > Vorlage — vor dem Einsatz mit den Angaben der verantwortlichen Stelle ergänzen und rechtlich prüfen lassen.
 
-Ich nehme freiwillig am Beta-Test von 4inOne teil (Zeitraum: ______ bis ______).
+Ich nehme freiwillig am Beta-Test von Lumiknot teil (Zeitraum: ______ bis ______).
 
 **Was gespeichert wird**
-- die Daten, die ich selbst in 4inOne eintrage (wie bei jeder Nutzung);
+- die Daten, die ich selbst in Lumiknot eintrage (wie bei jeder Nutzung);
 - meine Rückmeldungen über „Feedback geben“: Bereich, Aufgabe, Bewertungen, Freitext, mein Konto und die Seite,
   auf der ich war;
 - für die Auswertung, **wann** ich in welchem Bereich etwas angelegt oder erledigt habe (nur Datum und Anzahl,
   keine Inhalte).
 
-**Wofür:** nur, um 4inOne verständlicher und zuverlässiger zu machen. Ausgewertet wird pseudonymisiert (P1, P2 …).
+**Wofür:** nur, um Lumiknot verständlicher und zuverlässiger zu machen. Ausgewertet wird pseudonymisiert (P1, P2 …).
 Kein Weitergeben an Dritte, keine Werbung, keine Analyse-Dienste.
 
 **Beobachtung:** Bei den begleiteten Terminen werden Notizen gemacht. ☐ Ich bin einverstanden, dass dabei der

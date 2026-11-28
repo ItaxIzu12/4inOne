@@ -54,7 +54,7 @@ function orbitPaths(opts: { small?: boolean; mono?: string; id?: string } = {}):
   return `<defs>${masks}</defs>${paths}`;
 }
 
-function symbolSvg(opts: { small?: boolean; mono?: string; title?: boolean } = {}): string {
+function symbolSvg(opts: { small?: boolean; mono?: string; title?: boolean; id?: string } = {}): string {
   const title = opts.title === false ? '' : `<title>${BRAND.name}</title>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${orbitViewBox(opts.small)}" role="img" aria-label="${BRAND.name}">${title}${orbitPaths(opts)}</svg>\n`;
 }
@@ -65,17 +65,30 @@ function lockupSvg(layout: 'horizontal' | 'vertical' | 'claim', widths: TextWidt
   const e = ORBIT_EXTENT;
   const symbol = (x: number, y: number, size: number) =>
     `<g transform="translate(${x} ${y}) scale(${size / (2 * e)}) translate(${e} ${e})">${orbitPaths()}</g>`;
-  const style = `<style>${fontFace}text{font-family:Manrope,Helvetica,Arial,sans-serif;fill:${ink}}</style>`;
+  // Farbe und Schrift als Attribute, nicht als `text{…}`-Regel: eine eingebettete SVG-Datei würde die Regel sonst
+  // auf die ganze Seite und auf andere Logos übertragen.
+  const style = `<style>${fontFace}</style>`;
+  const font = `font-family="Manrope, Helvetica, Arial, sans-serif" fill="${ink}"`;
   if (layout === 'vertical') {
     const width = Math.ceil(Math.max(widths.nameVertical, widths.claimVertical, 200) + 48);
     const cx = width / 2;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} 440" role="img" aria-label="${BRAND.name}"><title>${BRAND.name}</title>${style}${symbol(cx - 100, 0, 200)}<text x="${cx}" y="330" text-anchor="middle" font-size="104" font-weight="700" letter-spacing="-3">${BRAND.name}</text><text x="${cx}" y="404" text-anchor="middle" font-size="34" font-weight="500" letter-spacing="5">${BRAND.claim}</text></svg>\n`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} 440" role="img" aria-label="${BRAND.name}"><title>${BRAND.name}</title>${style}${symbol(cx - 100, 0, 200)}<text ${font} x="${cx}" y="330" text-anchor="middle" font-size="104" font-weight="700" letter-spacing="-3">${BRAND.name}</text><text ${font} x="${cx}" y="404" text-anchor="middle" font-size="34" font-weight="500" letter-spacing="5">${BRAND.claim}</text></svg>\n`;
   }
   const claimLine = layout === 'claim';
   const width = Math.ceil(244 + Math.max(widths.nameHorizontal, claimLine ? widths.claimHorizontal : 0) + 16);
-  const claim = claimLine ? `<text x="252" y="246" font-size="38" font-weight="500" letter-spacing="9">${BRAND.claim}</text>` : '';
+  const claim = claimLine ? `<text ${font} x="252" y="246" font-size="38" font-weight="500" letter-spacing="9">${BRAND.claim}</text>` : '';
   const height = claimLine ? 270 : 220;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${BRAND.name}"><title>${BRAND.name}</title>${style}${symbol(0, claimLine ? 25 : 0, 220)}<text x="244" y="${claimLine ? 170 : 160}" font-size="156" font-weight="700" letter-spacing="-5">${BRAND.name}</text>${claim}</svg>\n`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${BRAND.name}"><title>${BRAND.name}</title>${style}${symbol(0, claimLine ? 25 : 0, 220)}<text ${font} x="244" y="${claimLine ? 170 : 160}" font-size="156" font-weight="700" letter-spacing="-5">${BRAND.name}</text>${claim}</svg>\n`;
+}
+
+/** Nur der Name (Wortmarke), gleiche Setzung wie im horizontalen Lockup. */
+function wordmarkSvg(widths: TextWidths, ink = midnight): string {
+  const width = Math.ceil(widths.nameHorizontal + 16);
+  // Farbe und Schrift als Attribute, nicht als `text{…}`-Regel: eine eingebettete SVG-Datei würde die Regel sonst
+  // auf die ganze Seite und auf andere Logos übertragen.
+  const style = `<style>${fontFace}</style>`;
+  const font = `font-family="Manrope, Helvetica, Arial, sans-serif" fill="${ink}"`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} 200" role="img" aria-label="${BRAND.name}"><title>${BRAND.name}</title>${style}<text ${font} x="4" y="152" font-size="156" font-weight="700" letter-spacing="-5">${BRAND.name}</text></svg>\n`;
 }
 
 interface TextWidths {
@@ -134,8 +147,8 @@ function ico(pngs: { size: number; data: Buffer }[]): Buffer {
 
 console.log('Lumiknot-Logo-Dateien:');
 write(BRAND.logo.symbol, symbolSvg());
-write(BRAND.logo.symbolMonoDark, symbolSvg({ mono: midnight }));
-write(BRAND.logo.symbolMonoLight, symbolSvg({ mono: white }));
+write(BRAND.logo.symbolMonoDark, symbolSvg({ mono: midnight, id: 'lk-dark' }));
+write(BRAND.logo.symbolMonoLight, symbolSvg({ mono: white, id: 'lk-light' }));
 write(BRAND.logo.favicon, symbolSvg({ small: true }));
 
 const browser = await chromium.launch();
@@ -144,6 +157,8 @@ write(BRAND.logo.lockupHorizontal, lockupSvg('horizontal', widths));
 write(BRAND.logo.lockupHorizontal.replace('.svg', '-light.svg'), lockupSvg('horizontal', widths, white));
 write(BRAND.logo.lockupHorizontal.replace('horizontal', 'claim'), lockupSvg('claim', widths));
 write(BRAND.logo.lockupVertical, lockupSvg('vertical', widths));
+write(BRAND.logo.wordmark, wordmarkSvg(widths));
+write(BRAND.logo.wordmark.replace('.svg', '-light.svg'), wordmarkSvg(widths, white));
 /** Textbreiten in Manrope, so wie die Lockups sie setzen (Schriftgröße, Gewicht, Laufweite). */
 async function measure(): Promise<TextWidths> {
   const page = await browser.newPage();

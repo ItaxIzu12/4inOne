@@ -39,6 +39,7 @@ export interface BrandConfig {
     readonly symbolMonoLight: string;
     readonly lockupHorizontal: string;
     readonly lockupVertical: string;
+    readonly wordmark: string;
     readonly favicon: string;
     readonly appIcon: string;
     readonly maskableIcon: string;
@@ -68,6 +69,7 @@ export const BRAND: BrandConfig = {
     symbolMonoLight: 'brand/lumiknot-symbol-mono-light.svg',
     lockupHorizontal: 'brand/lumiknot-lockup-horizontal.svg',
     lockupVertical: 'brand/lumiknot-lockup-vertical.svg',
+    wordmark: 'brand/lumiknot-wordmark.svg',
     favicon: 'favicon.svg',
     appIcon: 'icon-512.png',
     maskableIcon: 'icon-maskable-512.png',

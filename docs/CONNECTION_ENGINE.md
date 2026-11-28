@@ -1,4 +1,4 @@
-# 4inOne — Connection Engine V1
+# Lumiknot — Connection Engine V1
 
 ## Purpose
 

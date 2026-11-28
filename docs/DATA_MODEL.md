@@ -1,4 +1,4 @@
-# 4inOne — Data Model Direction V2
+# Lumiknot — Data Model Direction V2
 
 This document describes conceptual entities. The existing repository remains the implementation starting point.
 

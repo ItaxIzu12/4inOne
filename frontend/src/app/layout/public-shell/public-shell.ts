@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { BRAND } from '../../core/brand/brand.config';
 import { RouterLink } from '@angular/router';
 import { Brand } from '../../shared/ui/brand/brand';
 import { TileFooter } from '../tile-footer/tile-footer';
@@ -17,6 +18,7 @@ import { DEMO_ONLY } from '../../core/demo-only';
   styleUrl: './public-shell.scss',
 })
 export class PublicShell {
+  protected readonly homeLabel = BRAND.a11y.homeLink;
   /** Testversion nur mit Demo (GitHub Pages): kein „Anmelden“. */
   protected readonly demoOnly = DEMO_ONLY;
 }

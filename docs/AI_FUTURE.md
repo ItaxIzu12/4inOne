@@ -1,4 +1,4 @@
-# 4inOne — Optional AI Direction
+# Lumiknot — Optional AI Direction
 
 > Konkrete Schnittstelle, Konfiguration und Regeln für die spätere Anbindung an den Personal AI Core: [`AI_INTEGRATION.md`](AI_INTEGRATION.md) (24.11.2026).
 

@@ -1,11 +1,11 @@
-# Prüfstand für 4inOne — Offline-KI mit Streamlit + Ollama + YOLO auf dem MacBook Air
+# Prüfstand für Lumiknot — Offline-KI mit Streamlit + Ollama + YOLO auf dem MacBook Air
 
 **Stand:** 07.11.2026 · **Gerät:** MacBook Air M4 · **Zweck:** Nachschlage- und Arbeitsdokument zum Abspeichern. Ein eigenständiges Versuchslabor
-(Streamlit-App) auf deinem MacBook Air, um offline KI-Spezialisten für 4inOne auszuprobieren, zu messen und erst dann
-zu entscheiden, was davon in 4inOne kommt.
+(Streamlit-App) auf deinem MacBook Air, um offline KI-Spezialisten für Lumiknot auszuprobieren, zu messen und erst dann
+zu entscheiden, was davon in Lumiknot kommt.
 
 > **Wichtig vorab**
-> - Der Prüfstand (früher „KI-Labor“) ist **getrennt von der 4inOne-App**. Smart Scan und alle KI-Phasen in 4inOne bleiben zurückgestellt,
+> - Der Prüfstand (früher „KI-Labor“) ist **getrennt von der Lumiknot-App**. Smart Scan und alle KI-Phasen in Lumiknot bleiben zurückgestellt,
 >   bis du die App selbst gründlich getestet hast (deine Entscheidung vom 06.11.2026).
 > - Alle Befehle unten sind **Vorschläge zum Selbst-Ausführen**. Sie laden Software und Modelle (teils mehrere GB) aus
 >   dem Internet — danach läuft alles offline.
@@ -22,7 +22,7 @@ zu entscheiden, was davon in 4inOne kommt.
 | Alles offline auf dem MacBook | ✅ **Gut**, mit Grenzen | Ollama läuft lokal, Daten verlassen den Mac nicht. Grenzen setzt der Arbeitsspeicher (RAM) — siehe Abschnitt 2. |
 | „Ollama mit YOLO verbinden“ | ⚠️ **Teilweise** | Das sind zwei verschiedene Werkzeuge: **YOLO findet Objekte im Bild** (Kästchen um „Typenschild“, „Kassenbon“), **liest aber keinen Text**. **Ollama** führt Sprachmodelle aus (auch solche, die Bilder verstehen). Sinnvoll ist eine **Kette**: YOLO findet die Stelle → OCR liest den Text → Sprachmodell ordnet die Felder zu. Für Verträge (PDF/Fotos von Text) braucht man YOLO meist **gar nicht**. |
 | „KIs offline trainieren“ | ⚠️ **Realistisch nur als Feintuning** | Ein Sprachmodell **von Grund auf** zu trainieren ist auf einem Laptop unmöglich (dafür braucht es Rechenzentren). Möglich ist: **YOLO feintunen** (eigene Bilder, z. B. Typenschilder) und **kleine Sprachmodelle mit LoRA feintunen** (über MLX auf Apple Silicon). Ollama selbst trainiert nicht — es **führt** fertige oder feingetunte Modelle aus. |
-| Basierend auf 4inOne | ✅ **Sehr gut** | Klarer Rahmen, echte Aufgaben (Verträge, Geräte, Buchungen, Reisen), und mit den Demo-Daten (Sophie, Max, Lena) gibt es sofort fiktive Testdaten. |
+| Basierend auf Lumiknot | ✅ **Sehr gut** | Klarer Rahmen, echte Aufgaben (Verträge, Geräte, Buchungen, Reisen), und mit den Demo-Daten (Sophie, Max, Lena) gibt es sofort fiktive Testdaten. |
 
 **Die wichtigste Empfehlung:** Erst **ohne Training** anfangen — gute Anweisungen (Prompts), feste JSON-Formate,
 Beispiele und eigene Prüfregeln. Dann **messen**. Nur wo die Messung zeigt, dass es nicht reicht, wird feingetunt.
@@ -79,7 +79,7 @@ Deine Größe siehst du unter Apple-Menü › „Über diesen Mac“ › „Spei
 | Werkzeug | Aufgabe | Läuft offline? | Lizenz (wichtig für später!) |
 |---|---|---|---|
 | **Ollama** | Sprach- und Bild-Sprachmodelle lokal ausführen, per HTTP-Schnittstelle (`http://localhost:11434`) | ✅ nach dem Herunterladen | MIT (Ollama selbst); **jedes Modell hat eigene Lizenz** (z. B. Llama-Lizenz, Apache-2.0 bei vielen Qwen-Modellen, Gemma-Bedingungen) — vor kommerzieller Nutzung prüfen |
-| **YOLO (Ultralytics)** | Objekte im Bild finden und einrahmen; eigenes Training | ✅ | **AGPL-3.0** — für ein kommerzielles SaaS wie 4inOne heißt das: entweder eigenen Code offenlegen oder **Enterprise-Lizenz** kaufen. Für deinen privaten Prüfstand unproblematisch. |
+| **YOLO (Ultralytics)** | Objekte im Bild finden und einrahmen; eigenes Training | ✅ | **AGPL-3.0** — für ein kommerzielles SaaS wie Lumiknot heißt das: entweder eigenen Code offenlegen oder **Enterprise-Lizenz** kaufen. Für deinen privaten Prüfstand unproblematisch. |
 | **OCR** (Tesseract, alternativ Apple Vision) | Text aus Bildern lesen | ✅ | Tesseract: Apache-2.0 |
 | **pypdf** | Text aus PDFs mit Textebene lesen (ohne OCR) | ✅ | BSD |
 | **Pydantic** | Antworten des Modells gegen ein festes Schema prüfen | ✅ | MIT |
@@ -87,25 +87,25 @@ Deine Größe siehst du unter Apple-Menü › „Über diesen Mac“ › „Spei
 | **Streamlit** | Oberfläche deines Prüfstands | ✅ | Apache-2.0 |
 | **Label Studio** (lokal) | Bilder/Texte beschriften für Training | ✅ lokal installiert | Apache-2.0 (Community) |
 
-**Grundregel für 4inOne (aus dem Entwicklungsplan):** Zahlen, Summen, Fristen und Rechte berechnet **immer der
+**Grundregel für Lumiknot (aus dem Entwicklungsplan):** Zahlen, Summen, Fristen und Rechte berechnet **immer der
 normale Code** (Python/Django) — das Sprachmodell hilft nur beim **Verstehen und Formulieren**. Kein Ergebnis wird ohne
 Bestätigung durch den Menschen gespeichert.
 
 ---
 
-## 4. Die Spezialisten für 4inOne
+## 4. Die Spezialisten für Lumiknot
 
 Jeder Spezialist hat **eine** Aufgabe, ein **festes Ausgabeformat** und **eigene Prüfregeln**. Ein Verteiler
 (Router) entscheidet, wer zuständig ist.
 
-| # | Spezialist | 4inOne-Bereich | Eingabe → Ausgabe | Technik | Modell-Vorschlag (Größe nach RAM) |
+| # | Spezialist | Lumiknot-Bereich | Eingabe → Ausgabe | Technik | Modell-Vorschlag (Größe nach RAM) |
 |---|---|---|---|---|---|
 | 0 | **Verteiler** | alle | Text/Datei → „welcher Spezialist?“ | erst feste Regeln (Dateityp, Schlagwörter), dann kleines Modell | 1–3B (z. B. `qwen2.5:1.5b`, `llama3.2:3b`) |
 | 1 | **Vertrags-Leser** | Haushalt › Verträge | PDF/Foto → Anbieter, Vertragsnummer, Beginn, Ende, Kündigungsfrist (Zahl + Tage/Monate), Betrag, Intervall, Preis ab Datum | pypdf bzw. OCR → Sprachmodell mit JSON-Schema → **Belegprüfung** | 7–8B (z. B. `qwen2.5:7b`, `llama3.1:8b`) |
 | 2 | **Typenschild-Leser** | Haushalt › Geräte | Foto → Hersteller, Modell, Seriennummer (getrennt!) | **YOLO** findet das Typenschild → Ausschnitt → OCR → Regeln/Sprachmodell; `0/O`, `1/I/l` markieren | YOLO „nano/small“ + 3–7B |
 | 3 | **Beleg-Leser** | Finanzen (Kassenbon) | Foto → Händler, Datum, Summe | OCR → Sprachmodell (JSON) → Summe gegen Positionen prüfen | 3–7B |
-| 4 | **Kategorien-Helfer** | Finanzen › Transaktionen | Buchungstext („REWE Markt 1234“) → Kategorie-Vorschlag | Beispiele im Prompt (Few-Shot) aus den 4inOne-Kategorien; später ggf. LoRA | 1,5–3B |
-| 5 | **Haushalts-Planer** | Haushalt › Aufgaben | Freitext → Aufgabe mit Raum, Wiederholung, Dauer | JSON-Schema mit den 4inOne-Werten (`recurrence_days`, Räume) | 3B |
+| 4 | **Kategorien-Helfer** | Finanzen › Transaktionen | Buchungstext („REWE Markt 1234“) → Kategorie-Vorschlag | Beispiele im Prompt (Few-Shot) aus den Lumiknot-Kategorien; später ggf. LoRA | 1,5–3B |
+| 5 | **Haushalts-Planer** | Haushalt › Aufgaben | Freitext → Aufgabe mit Raum, Wiederholung, Dauer | JSON-Schema mit den Lumiknot-Werten (`recurrence_days`, Räume) | 3B |
 | 6 | **Reise-Helfer** | Reisen | Ziel, Dauer, Jahreszeit → Packliste/To-dos als Vorschlag | Sprachmodell, nur Vorschläge, nichts automatisch anlegen | 3–7B |
 | 7 | **Erklärer** | übergreifend | Frage + **von Python berechnete** Zahlen → verständlicher Satz | Retrieval/Kontext aus Testdaten; das Modell rechnet nie selbst | 7–8B |
 | 8 | **Einbettungen (Suche)** | übergreifend | Texte → Vektoren für „ähnliche Einträge finden“ | `nomic-embed-text` o. ä. über Ollama | klein |
@@ -120,7 +120,7 @@ Jeder Spezialist hat **eine** Aufgabe, ein **festes Ausgabeformat** und **eigene
 ## 5. Aufbau des Prüfstands
 
 ```
-ki-labor/                      ← eigener Ordner, NICHT im 4inOne-Repository
+ki-labor/                      ← eigener Ordner, NICHT im Lumiknot-Repository
 ├── app.py                     Streamlit-Startseite
 ├── pages/
 │   ├── 1_Vertrag.py           Spezialist 1
@@ -162,7 +162,7 @@ Datei/Text ─▶ Verteiler ─▶ Spezialist
 
 ## 6. Einrichtung Schritt für Schritt (selbst ausführen)
 
-> Alles in einem **eigenen Ordner** außerhalb von 4inOne. Downloads: Python-Pakete (~1–2 GB mit PyTorch für YOLO),
+> Alles in einem **eigenen Ordner** außerhalb von Lumiknot. Downloads: Python-Pakete (~1–2 GB mit PyTorch für YOLO),
 > Modelle (je 1–8 GB), Tesseract (~30 MB).
 
 **6.1 Grundlagen**
@@ -210,7 +210,7 @@ from pydantic import BaseModel, Field
 
 
 class ContractFields(BaseModel):
-    """Felder wie im 4inOne-Vertragsformular. Fehlendes bleibt None — nie raten."""
+    """Felder wie im Lumiknot-Vertragsformular. Fehlendes bleibt None — nie raten."""
     provider: Optional[str] = None
     name: Optional[str] = None
     contract_number: Optional[str] = None
@@ -401,7 +401,7 @@ Weg auf Apple Silicon: **MLX** (von Apple) → LoRA-Adapter trainieren → zu Ol
    ```
    FROM ./kategorien-helfer.gguf
    PARAMETER temperature 0
-   SYSTEM "Du ordnest Buchungstexte genau einer 4inOne-Kategorie zu."
+   SYSTEM "Du ordnest Buchungstexte genau einer Lumiknot-Kategorie zu."
    ```
    ```bash
    ollama create kategorien-helfer -f Modelfile
@@ -423,10 +423,10 @@ Weg auf Apple Silicon: **MLX** (von Apple) → LoRA-Adapter trainieren → zu Ol
 ## 9. Prüfen und Messen — damit du es überprüfen kannst
 
 **Testdaten (nur fiktiv oder eigene, nie echte fremde Daten):**
-- 10 Verträge: Telekom-Beispiel aus der 4inOne-QA (39,99 €, 01.01.–31.12.2027, 1 Monat Frist, 34,99 € ab 01.03.2027),
+- 10 Verträge: Telekom-Beispiel aus der Lumiknot-QA (39,99 €, 01.01.–31.12.2027, 1 Monat Frist, 34,99 € ab 01.03.2027),
   Strom 75 €, plus Varianten: Scan, schräges Handyfoto, ohne Kündigungsfrist, mit Preisänderung.
 - 10 Typenschilder: Samsung TEST-WM-100 / TEST-ABC-123 und eigene Geräte.
-- 100 Buchungstexte mit richtiger Kategorie (aus den 4inOne-Demo-Kategorien).
+- 100 Buchungstexte mit richtiger Kategorie (aus den Lumiknot-Demo-Kategorien).
 - Zu jeder Datei eine `*.json` mit den **erwarteten** Feldern.
 
 **Messskript-Idee** (`eval/run_eval.py`): Für jedes Dokument jeden Feldwert vergleichen und zählen:
@@ -455,18 +455,18 @@ Zusätzlich messen: Dauer pro Dokument (Sekunden), RAM-Verbrauch (Aktivitätsanz
 - Ollama nur auf `localhost` lassen (Standard). Nicht ins Netz freigeben.
 - Für Training und Tests **nur fiktive oder eigene Dokumente**. Keine Online-Beschriftungsdienste mit echten
   Verträgen/Ausweisen.
-- Testdaten **nicht** ins 4inOne-Repository legen (die `.gitignore` von 4inOne schließt u. a. Datenbanken, Uploads,
+- Testdaten **nicht** ins Lumiknot-Repository legen (die `.gitignore` von Lumiknot schließt u. a. Datenbanken, Uploads,
   `*.har` und Beta-Auswertungen aus; ein eigener Ordner `~/ki-labor` ist sicherer).
 - Modelle und Pakete nur aus offiziellen Quellen (ollama.com, Hugging Face, PyPI).
 
 ---
 
-## 11. Vom Prüfstand zu 4inOne — später, nach deiner Freigabe
+## 11. Vom Prüfstand zu Lumiknot — später, nach deiner Freigabe
 
 Der Plan dafür steht bereits in `docs/SMART_SCAN_V1_PLAN.md` (zurückgestellt). Wenn der Prüfstand gute Messwerte liefert:
 
 1. Spezialisten mit den besten Werten auswählen (Messbericht aus Abschnitt 9).
-2. In 4inOne als Django-Dienst einbauen: Upload → Job → Vorschlag → **bestehender Dialog** zum Prüfen → Speichern über
+2. In Lumiknot als Django-Dienst einbauen: Upload → Job → Vorschlag → **bestehender Dialog** zum Prüfen → Speichern über
    die bestehende API → Verbindungen erst danach anbieten (Connection Engine V2, Schalter standardmäßig aus).
 3. Lizenzen klären (YOLO: AGPL → Enterprise-Lizenz oder Alternative; Modell-Lizenzen).
 4. Im SaaS-Betrieb: Verarbeitungsort transparent machen — Ollama auf einem Server ist **nicht** offline auf dem Gerät
@@ -483,7 +483,7 @@ Der Plan dafür steht bereits in `docs/SMART_SCAN_V1_PLAN.md` (zurückgestellt).
 | 3 | YOLO für Typenschilder: 100–300 Fotos beschriften, trainieren | erkennt Typenschild auf neuen Fotos zuverlässig |
 | 4 | Spezialist 2 (Typenschild) komplett, Verwechslungen markiert | 10 Testfotos gemessen |
 | 5 | Nur wo nötig: LoRA-Feintuning (z. B. Kategorien) | messbar besser als der Prompt-Ansatz |
-| 6 | Messbericht schreiben → Entscheidung über Übernahme in 4inOne | du hast alles selbst geprüft |
+| 6 | Messbericht schreiben → Entscheidung über Übernahme in Lumiknot | du hast alles selbst geprüft |
 
 ---
 
@@ -514,4 +514,4 @@ Der Plan dafür steht bereits in `docs/SMART_SCAN_V1_PLAN.md` (zurückgestellt).
 - Streamlit: <https://docs.streamlit.io>
 - Tesseract OCR: <https://github.com/tesseract-ocr/tesseract>
 - Label Studio: <https://labelstud.io>
-- 4inOne intern: `docs/SMART_SCAN_V1_PLAN.md`, `4inOne_Entwicklungsplan_Connections_V2_Testing_SmartScan.md` (Phase 6/8)
+- Lumiknot intern: `docs/SMART_SCAN_V1_PLAN.md`, `4inOne_Entwicklungsplan_Connections_V2_Testing_SmartScan.md` (Phase 6/8)

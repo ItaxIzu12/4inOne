@@ -1,6 +1,6 @@
 # Fehler-Monitoring und Admin-Panel (seit 15.11.2026)
 
-**Was du davon hast:** Stürzt in 4inOne etwas ab oder fällt eine Anmeldung auf (falsches Passwort, Sperre nach zu
+**Was du davon hast:** Stürzt in Lumiknot etwas ab oder fällt eine Anmeldung auf (falsches Passwort, Sperre nach zu
 vielen Versuchen, falscher Zwei-Faktor-Code), meldet GlitchTip das — mit Codezeile und Häufigkeit, per Mail, sobald
 ein Mailserver eingetragen ist. Im **Admin-Panel** (`/admin`) siehst du alle Anmeldungen, Fehlversuche, Sperren und die
 offenen Fehler auf einen Blick.
@@ -14,9 +14,9 @@ offenen Fehler auf einen Blick.
 | **Anbindung im Frontend + Admin-Seite** | `frontend/src/app/core/monitoring/`, `features/admin/` | Fehler aus dem Browser (SDK erst bei Bedarf nachgeladen), Admin-Panel |
 
 ```
-Browser ──Fehler──▶ 4inOne-Backend /api/v1/monitoring/tunnel/ ──▶ GlitchTip (127.0.0.1:8001)
+Browser ──Fehler──▶ Lumiknot-Backend /api/v1/monitoring/tunnel/ ──▶ GlitchTip (127.0.0.1:8001)
 Backend ──Fehler + auffällige Anmeldungen (Sentry-SDK)────────────▶ GlitchTip
-Admin-Panel ◀── /api/v1/admin/… (Ereignisse aus der 4inOne-DB, offene Fehler über die GlitchTip-API)
+Admin-Panel ◀── /api/v1/admin/… (Ereignisse aus der Lumiknot-DB, offene Fehler über die GlitchTip-API)
 ```
 
 Der Browser schickt nie direkt an GlitchTip, sondern über den **Tunnel** im eigenen Backend: so bleibt die
@@ -46,7 +46,7 @@ Content-Security-Policy bei `connect-src 'self'`, und Werbeblocker fangen nichts
    ```bash
    cd backend && .venv/bin/python manage.py monitoring_admin deine@adresse.de
    ```
-   Dann in 4inOne **Zwei-Faktor einrichten**, einmal ab- und mit Code wieder anmelden → Kontomenü › „Admin-Panel“.
+   Dann in Lumiknot **Zwei-Faktor einrichten**, einmal ab- und mit Code wieder anmelden → Kontomenü › „Admin-Panel“.
    Entziehen: `monitoring_admin deine@adresse.de --remove`.
 7. Alarm-Mails: in GlitchTip unter Projekt › **Alerts** einrichten. Ohne Mailserver landen Mails nur im Protokoll
    (`./monitoring/glitchtip.sh logs`); echter Versand mit `GLITCHTIP_EMAIL_URL=smtp://…` in `monitoring/.env`.
@@ -67,7 +67,7 @@ Content-Security-Policy bei `connect-src 'self'`, und Werbeblocker fangen nichts
   (außer Content-Type/Accept/User-Agent) oder Query-Strings, keine lokalen Variablen. Doppelt abgesichert: das SDK
   sammelt standardmäßig keine Personendaten, zusätzlich entfernt `scrub_event` (Backend) bzw. `scrubBrowserEvent`
   (Frontend) alles Genannte und ersetzt E-Mail-Adressen in Texten durch „[E-Mail]“. Keine Leistungsmessung.
-- **Im Admin-Panel / in der 4inOne-DB (`AuthEvent`):** Art, Zeitpunkt, Konto (falls bekannt), IP **gekürzt**
+- **Im Admin-Panel / in der Lumiknot-DB (`AuthEvent`):** Art, Zeitpunkt, Konto (falls bekannt), IP **gekürzt**
   (IPv4 /24, IPv6 /48). Eine bei Fehlversuchen eingetippte Adresse wird nie gespeichert. E-Mails im Panel maskiert
   (`s•••@example.com`). Aufbewahrung 90 Tage (`AUTH_EVENT_RETENTION_DAYS`, `manage.py prune_auth_events` täglich
   über `4inone-prune.timer`). Konto gelöscht → Ereignis ohne Personenbezug bis zum Fristende. Im DSGVO-Export unter
@@ -96,4 +96,4 @@ Einschalten hätte genügt. Jetzt zählt die Sitzung.
   `client_max_body_size 40M`. Zugang zur GlitchTip-Oberfläche zusätzlich beschränken (VPN/IP-Liste oder Basic Auth).
 - `SENTRY_DSN` zeigt dann auf diese Adresse; die CSP der App bleibt unverändert (Browser sendet über den Tunnel).
 - `SENTRY_ENVIRONMENT=produktion`, optional `SENTRY_RELEASE` (z. B. Git-Commit) für „seit welcher Version“.
-- Backups: die GlitchTip-Datenbank ist entbehrlich (Fehlerberichte), muss also nicht ins 4inOne-Backup.
+- Backups: die GlitchTip-Datenbank ist entbehrlich (Fehlerberichte), muss also nicht ins Lumiknot-Backup.

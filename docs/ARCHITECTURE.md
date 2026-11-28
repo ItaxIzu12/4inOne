@@ -1,4 +1,4 @@
-# 4inOne — Architektur (Ist-Analyse, Zielbild, Refactoring-Plan)
+# Lumiknot — Architektur (Ist-Analyse, Zielbild, Refactoring-Plan)
 
 **Stand:** 24.11.2026 · **Gilt für:** Backend (`backend/`), Frontend (`frontend/`), Betrieb (`deploy/`, `docker-compose.yml`).
 **KI-Anbindung:** eigenes Dokument [`AI_INTEGRATION.md`](AI_INTEGRATION.md).
@@ -8,7 +8,7 @@ bleibt Hintergrund für Code-Kommentare; bei Widersprüchen gilt dieses Dokument
 **Freigabe:** Der Maßnahmenplan (§ 4) ist ein Vorschlag. Umgesetzt wird erst nach Freigabe durch den Nutzer, Phase für
 Phase (`docs/DECISIONS.md` D19).
 
-Leitsatz: **4inOne ist bereits ein modularer Monolith.** Das Ziel ist kein Umbau, sondern die Abhängigkeitsrichtungen
+Leitsatz: **Lumiknot ist bereits ein modularer Monolith.** Das Ziel ist kein Umbau, sondern die Abhängigkeitsrichtungen
 klarer machen, den Betrieb auf dem eigenen Mini-PC vorbereiten und eine schmale, abschaltbare KI-Schnittstelle schaffen.
 Bestehende Funktionen und Daten bleiben unverändert erhalten.
 
@@ -230,7 +230,7 @@ Die verbindlichen Regeln in § 8 bleiben. Ergänzungen:
 
 ### 3.4 Datenhaltung
 
-- **Eine eigene PostgreSQL-Datenbank** nur für 4inOne. Kein gemeinsamer Datenbankzugriff mit dem Personal AI Core oder
+- **Eine eigene PostgreSQL-Datenbank** nur für Lumiknot. Kein gemeinsamer Datenbankzugriff mit dem Personal AI Core oder
   anderen Anwendungen. Austausch nur über authentifizierte APIs.
 - Geld als `Decimal`, Zeitzone `Europe/Berlin`, Constraints in der Datenbank (wie heute).
 - Local-first bleibt gezielt: Offline-Lesen/Abhaken dort, wo es im Alltag zählt (Einkauf, Bordkarte). Eine allgemeine
@@ -313,7 +313,7 @@ Angular ──▶ Django (Rechte, Regeln, Validierung) ──▶ integrations/ai
 
 - Nur das Backend spricht mit dem AI Core, und zwar nur über den einen Adapter `integrations/ai` (gemeinsamer
   Standard, `AI_INTEGRATION.md` § 0): versionierte REST-API, Fähigkeiten-Abfrage über `/v1/capabilities`, Provider
-  `core` oder `mock` (Entwicklung). Das Frontend kennt weder Adresse noch Token; 4inOne bindet kein Modell ein.
+  `core` oder `mock` (Entwicklung). Das Frontend kennt weder Adresse noch Token; Lumiknot bindet kein Modell ein.
 - Abschaltbar (`AI_ENABLED=False` als Standard). Ohne KI-Dienst funktioniert jede Funktion wie heute.
 - KI liefert **Vorschläge**. Gespeichert wird erst nach Bestätigung über die bestehenden APIs. Finanzbuchungen und
   sensible Daten verändert die KI nie selbst.
@@ -346,17 +346,17 @@ Richtwerte für den gemeinsamen Betrieb mit dem Personal AI Core (vor dem Umzug 
 
 | Dienst | RAM-Budget | Hinweis |
 |---|---:|---|
-| PostgreSQL 16 (4inOne) | 512 MB | `shared_buffers` 128–256 MB reichen für eine Person bzw. Familie |
+| PostgreSQL 16 (Lumiknot) | 512 MB | `shared_buffers` 128–256 MB reichen für eine Person bzw. Familie |
 | Redis | 64 MB | `maxmemory 64mb`, `allkeys-lru`; nur Cache |
 | gunicorn (Django) | 2 × ~150 MB | **2 Worker** statt 3 genügen; Timeout 30 s bleibt |
 | nginx | 32 MB | |
 | GlitchTip (optional) | ~1 GB | nur bei Bedarf starten; Alternative: Fehler-Mails/Logs |
-| **Summe 4inOne** | **≈ 1 GB** (+ 1 GB mit GlitchTip) | |
-| Personal AI Core (lokales Modell) | Rest (8–12 GB) | eigener Stack, eigene Datenbank, **nicht** Teil von 4inOne |
+| **Summe Lumiknot** | **≈ 1 GB** (+ 1 GB mit GlitchTip) | |
+| Personal AI Core (lokales Modell) | Rest (8–12 GB) | eigener Stack, eigene Datenbank, **nicht** Teil von Lumiknot |
 
 - **Speicher:** Datenbank und Dateien im Bereich weniger GB; Backups 14 Tage lokal + Kopie außerhalb des Geräts
   (externer Datenträger oder zweiter Ort). Ein Backup auf derselben SSD schützt nicht vor deren Ausfall.
-- **Netz:** 4inOne nur hinter nginx mit HTTPS; der AI Core lauscht im internen Docker-Netz oder auf `127.0.0.1`,
+- **Netz:** Lumiknot nur hinter nginx mit HTTPS; der AI Core lauscht im internen Docker-Netz oder auf `127.0.0.1`,
   nie öffentlich.
 - **Konfiguration:** alles über Umgebungsvariablen (`.env.example` ist die vollständige Liste).
 

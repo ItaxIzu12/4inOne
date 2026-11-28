@@ -1,5 +1,11 @@
 # 4inOne — Designsystem öffentliche Seiten (MASTER, Stand 21.10.2026)
 
+> **Historisch (Hinweis 28.11.2026):** Dieser Stand ist überholt. Name, Logo, Farben und Schrift gelten seit dem
+> Rebranding nach `docs/BRAND_GUIDELINES.md` und `docs/LOGO_USAGE.md` (Lumiknot, Orbit-Zeichen, Manrope + Inter,
+> Midnight/Ivory); die gültigen Werte stehen in `DESIGN.md` und `docs/DESIGN_SYSTEM.md`. Aufbau, Abschnitte und
+> Bausteine der öffentlichen Seiten unten beschreiben weiterhin die Landing; Ordner und Dateiname bleiben, weil
+> Doku und Code darauf verweisen.
+
 Richtung **„Editorial hell“** (vom Nutzer gewählt aus drei Vorschlägen: Editorial hell · Dunkel & präzise · Swiss
 Raster). Erarbeitet mit `ui-taste` (Richtungswahl, Designvertrag), `ui-ux-pro-max` (Typo-/Stil-/UX-Leitlinien),
 `magic-ui` (Muster Magic Card, Animated Beam, Blur Fade — nach Angular übertragen, keine React-Pakete) und

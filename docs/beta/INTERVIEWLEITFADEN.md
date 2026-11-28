@@ -13,22 +13,22 @@ Offen fragen, nicht bestätigen lassen. Statt „War das einfach?“ lieber „W
 
 1. Was ist dir in Erinnerung geblieben?
 2. Als du die Verbindungen eingeschaltet hast: Was dachtest du, passiert dann? Hat es gestimmt?
-3. Gab es einen Moment, in dem du unsicher warst, ob 4inOne etwas ohne dich ändert?
+3. Gab es einen Moment, in dem du unsicher warst, ob Lumiknot etwas ohne dich ändert?
 4. Was würdest du als Erstes ändern?
 
 ## C – Nach Woche 1 (10 min, Telefon/Chat)
 
-1. Wofür hast du 4inOne diese Woche benutzt? Wofür nicht, obwohl du es vorhattest?
+1. Wofür hast du Lumiknot diese Woche benutzt? Wofür nicht, obwohl du es vorhattest?
 2. Hat dich etwas überrascht oder geärgert?
 3. Hast du „Feedback geben“ gefunden? (Nur fragen, nicht zeigen.)
 
 ## D – Abschluss (20–30 min)
 
-1. Erzähl von einer Situation in den letzten Wochen, in der 4inOne dir geholfen hat — oder hätte helfen sollen.
-2. Hat sich durch 4inOne an deinem Ablauf etwas geändert? Was genau?
+1. Erzähl von einer Situation in den letzten Wochen, in der Lumiknot dir geholfen hat — oder hätte helfen sollen.
+2. Hat sich durch Lumiknot an deinem Ablauf etwas geändert? Was genau?
 3. Welche Bereiche hast du wirklich benutzt, welche nie? Warum?
 4. Hattest du jederzeit das Gefühl, selbst zu entscheiden, was wo erscheint?
-5. Würdest du 4inOne nach dem Test weiter benutzen? Was müsste passieren, damit du es sicher tust — oder sicher nicht?
-6. (T5 noch einmal) Wie würdest du einer Freundin 4inOne erklären?
+5. Würdest du Lumiknot nach dem Test weiter benutzen? Was müsste passieren, damit du es sicher tust — oder sicher nicht?
+6. (T5 noch einmal) Wie würdest du einer Freundin Lumiknot erklären?
 
 Am Ende: um eine Rückmeldung im Dialog „Feedback geben“ mit Aufgabe „T5“ bitten (gleiche Fragen für alle).

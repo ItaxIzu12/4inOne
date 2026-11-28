@@ -3,9 +3,9 @@
 **Stand:** 04.11.2026 · **Status: vorbereitet, nicht begonnen — auf Wunsch zurückgestellt (06.11.2026), bis du die App selbst gründlich getestet hast.** Beginn erst, wenn das Qualitäts-Gate
 (`docs/RELEASE_READINESS.md`) erfüllt und die Beta (Phase 5, `docs/beta/`) ausgewertet ist.
 **Freigegebene Technik (Nutzerentscheidung 04.11.2026), angepasst an den gemeinsamen Personal-AI-Integrationsstandard
-(25.11.2026, `docs/AI_INTEGRATION.md` § 0):** `pypdf` liest die Textebene von PDFs in 4inOne (kein Modell). OCR
+(25.11.2026, `docs/AI_INTEGRATION.md` § 0):** `pypdf` liest die Textebene von PDFs in Lumiknot (kein Modell). OCR
 (Tesseract, Deutsch) und das lokale Vision-/Sprachmodell (Ollama) laufen **im Personal AI Core** und werden über die
-Fähigkeiten `ocr` und `extract_document` (Katalog `AI_INTEGRATION.md` § 4.5) über `integrations/ai` angesprochen — 4inOne
+Fähigkeiten `ocr` und `extract_document` (Katalog `AI_INTEGRATION.md` § 4.5) über `integrations/ai` angesprochen — Lumiknot
 bindet sie nicht selbst ein. Weiterhin alles lokal auf dem eigenen Gerät, nichts an externe Dienste. In der Entwicklung
 `AI_PROVIDER=mock`.
 
@@ -21,7 +21,7 @@ Ein Scan bucht nie, legt nie Stammdaten ohne Bestätigung an und erfindet keine 
 |---|---|---|
 | 1. Hochladen | Vertrag/Gerät hinzufügen › „Aus Foto oder PDF ausfüllen“ | JPEG/PNG/HEIC/PDF, ≤ 10 MB, ≤ 10 Seiten; Prüfung wie `core/files.py prepare_upload` (Magic Bytes, EXIF/Standort entfernen) |
 | 2. Text | Django, Hintergrund-Job | PDF mit Textebene → `pypdf`; sonst Seiten als Bild → Fähigkeit `ocr` im Personal AI Core (Tesseract `deu+eng`) |
-| 3. Felder | Personal AI Core, Fähigkeit `extract_document` | Festes JSON-Schema; Antwort in 4inOne mit dem Ergebnis-Serializer der Fähigkeit prüfen (`integrations/ai`); ungültig → Felder leer, nicht raten |
+| 3. Felder | Personal AI Core, Fähigkeit `extract_document` | Festes JSON-Schema; Antwort in Lumiknot mit dem Ergebnis-Serializer der Fähigkeit prüfen (`integrations/ai`); ungültig → Felder leer, nicht raten |
 | 4. Abgleich | Django | Jedes Feld nur übernehmen, wenn es **wörtlich** im extrahierten Text belegt ist (Fundstelle gespeichert); sonst „unsicher“ |
 | 5. Prüfen | bestehender Dialog, vorausgefüllt | unsichere/fehlende Felder markiert („Bitte prüfen“), Fundstelle als Zitat; nichts gespeichert, bis „Speichern“ |
 | 6. Speichern | bestehende API | wie manuelles Anlegen; Datei nur als Anhang, wenn die Person es **ankreuzt** |

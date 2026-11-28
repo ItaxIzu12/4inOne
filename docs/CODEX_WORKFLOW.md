@@ -1,4 +1,4 @@
-# 4inOne — Codex Workflow
+# Lumiknot — Codex Workflow
 
 ## Goal
 

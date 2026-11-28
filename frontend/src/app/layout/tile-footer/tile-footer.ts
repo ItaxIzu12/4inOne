@@ -1,4 +1,5 @@
 import { Component, input } from '@angular/core';
+import { BRAND } from '../../core/brand/brand.config';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Brand } from '../../shared/ui/brand/brand';
 import { IconName } from '../../shared/ui/icons/app-icon';
@@ -27,6 +28,7 @@ interface FooterArea {
   styleUrl: './tile-footer.scss',
 })
 export class TileFooter {
+  protected readonly homeLabel = BRAND.a11y.homeLink;
   /** Testversion nur mit Demo (GitHub Pages): keine Wege zu Anmeldung/Registrierung. */
   protected readonly demoOnly = DEMO_ONLY;
   readonly variant = input<'full' | 'compact'>('compact');

@@ -1,4 +1,4 @@
-# 4inOne — Roadmap V2
+# Lumiknot — Roadmap V2
 
 This roadmap reflects the current strategy: make the four domains reliable first, then add cross-domain intelligence.
 

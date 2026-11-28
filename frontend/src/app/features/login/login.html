@@ -1,7 +1,7 @@
 <main id="main-content" class="auth" tabindex="-1">
   <!-- Band in Deep Forest (Überarbeitung 19.11.2026): Rechner links neben dem Formular, Handy/Tablet kompakt oben. -->
   <aside class="aside" aria-label="Über Lumiknot">
-    <a class="aside__brand" routerLink="/" aria-label="Lumiknot – zur Startseite"><app-brand /></a>
+    <a class="aside__brand" routerLink="/" [attr.aria-label]="homeLabel"><app-brand /></a>
     <div class="aside__body">
       <div class="aside__intro">
         <p class="aside__lead">Dein Alltag.<br />Alles verbunden.</p>
@@ -48,7 +48,7 @@
   <section class="panel">
     <header class="panel__top">
       <a class="panel__back" routerLink="/"><icon-arrow-left aria-hidden="true" /><span>Startseite</span></a>
-      <a class="panel__brand" routerLink="/" aria-label="Lumiknot – zur Startseite"><app-brand /></a>
+      <a class="panel__brand" routerLink="/" [attr.aria-label]="homeLabel"><app-brand /></a>
     </header>
 
     <div class="panel__body">

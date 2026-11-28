@@ -1,6 +1,6 @@
 # Testversion auf GitHub Pages (nur Demo)
 
-**Zweck:** Freunden einen Link schicken, damit sie 4inOne mit Beispieldaten ausprobieren — ohne Konto, ohne Server.
+**Zweck:** Freunden einen Link schicken, damit sie Lumiknot mit Beispieldaten ausprobieren — ohne Konto, ohne Server.
 **Nur zum Testen.** Vor dem Livegang entfernen (siehe unten). Stand: 06.11.2026.
 
 ## Was die Testversion ist
