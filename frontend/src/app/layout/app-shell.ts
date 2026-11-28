@@ -3,14 +3,14 @@ import { ErrorNoticeDirective } from '../shared/ui/error-notice/error-notice';
 import { Component, DestroyRef, input, output, ElementRef, HostListener, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IsActiveMatchOptions, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { BRAND, BrandContext } from '../core/brand/brand.config';
+import { BRAND, BRAND_SECTIONS, BrandContext, brandAreaForUrl } from '../core/brand/brand.config';
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
 import { BackToTop } from './back-to-top/back-to-top';
 import { BetaFeedbackDialog } from '../shared/features/beta-feedback/beta-feedback-dialog';
 import { BetaFeedbackInfo, BetaFeedbackService } from '../shared/features/beta-feedback/beta-feedback.service';
 import { Brand } from '../shared/ui/brand/brand';
-import { AppIcon, IconName } from '../shared/ui/icons/app-icon';
+import { AppIcon } from '../shared/ui/icons/app-icon';
 import { IconInfo } from '../shared/ui/icons/icon-info';
 import { IconLegal } from '../shared/ui/icons/icon-legal';
 import { IconLogout } from '../shared/ui/icons/icon-logout';
@@ -19,13 +19,6 @@ import { IconSettings } from '../shared/ui/icons/icon-settings';
 import { IconTwoFactor } from '../shared/ui/icons/icon-two-factor';
 import { NotificationBell } from './notification-bell/notification-bell';
 import { DEMO_ONLY } from '../core/demo-only';
-/** URL-Abschnitt → Logo-Kontext. */
-const AREA_CONTEXT: Record<string, BrandContext> = {
-  finanzen: 'finance',
-  haushalt: 'household',
-  organisation: 'organization',
-  reisen: 'travel',
-};
 
 @Component({
   selector: 'app-shell',
@@ -91,9 +84,7 @@ export class AppShell {
   });
   /** Bereich der aktuellen Seite für das Logo (docs/LOGO_USAGE.md): dort bleibt das passende Element voll. */
   readonly brandContext = computed<BrandContext>(() => {
-    const url = (this.currentUrl()?.urlAfterRedirects ?? this.router.url).split(/[?#]/)[0].replace(/^\/demo(?=\/)/, '');
-    const area = url.split('/')[1];
-    return AREA_CONTEXT[area] ?? 'global';
+    return brandAreaForUrl(this.currentUrl()?.urlAfterRedirects ?? this.router.url);
   });
   readonly name = computed(() => this.isDemoRoute() ? 'Sophie' : this.auth.currentUser()?.name || 'Mein Konto');
   /** „Mira Neu“ → „MN“, „Sophie“ → „S“. */
@@ -105,21 +96,13 @@ export class AppShell {
   readonly accountHint = computed(() => (this.isDemoRoute() ? 'Vorschau' : 'Mein Konto'));
   readonly links = computed(() => {
     const live = !this.isDemoRoute();
-    return [
-      { label: 'Startseite', icon: 'home' as IconName, path: live ? '/' : '/demo' },
-      {
-        label: 'Finanzen',
-        icon: 'finance' as IconName,
-        path: live ? '/finanzen' : '/demo/finanzen',
-      },
-      {
-        label: 'Haushalt',
-        icon: 'household' as IconName,
-        path: live ? '/haushalt' : '/demo/haushalt',
-      },
-      { label: 'Organisation', icon: 'calendar' as IconName, path: live ? '/organisation' : '/demo/organisation' },
-      { label: 'Reisen', icon: 'travel' as IconName, path: live ? '/reisen' : '/demo/reisen' },
-    ];
+    const base = live ? '/' : '/demo';
+    // Bereiche aus der Brand-Registry (core/brand/brand.config.ts): Name, Symbol und Pfad an einer Stelle.
+    return [BRAND.areas.global, ...BRAND_SECTIONS].map((area) => ({
+      label: area.label,
+      icon: area.icon, // BrandIcon ⊂ IconName, vom Typprüfer gesichert
+      path: area.route ? `${base === '/' ? '' : base}/${area.route}` : base,
+    }));
   });
   onSearchInput(value: string) {
     if (this.dashboardHeader()) this.dashboardQuery.emit(value);

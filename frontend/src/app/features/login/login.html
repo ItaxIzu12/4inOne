@@ -1,6 +1,6 @@
 <main id="main-content" class="auth" tabindex="-1">
   <!-- Band in Deep Forest (Überarbeitung 19.11.2026): Rechner links neben dem Formular, Handy/Tablet kompakt oben. -->
-  <aside class="aside" aria-label="Über Lumiknot">
+  <aside class="aside" [attr.aria-label]="'Über ' + brand">
     <a class="aside__brand" routerLink="/" [attr.aria-label]="homeLabel"><app-brand /></a>
     <div class="aside__body">
       <div class="aside__intro">
@@ -14,7 +14,7 @@
         <li><i class="dot dot--travel" aria-hidden="true"></i>Reisen</li>
       </ul>
       <figure class="preview">
-        <figcaption class="preview__caption">So sieht ein Tag in Lumiknot aus</figcaption>
+        <figcaption class="preview__caption">So sieht ein Tag in {{ brand }} aus</figcaption>
         <div class="preview__card">
           <p class="preview__head"><b>Heute</b><span>Beispiel</span></p>
           <ul class="preview__rows">
@@ -85,7 +85,7 @@
         @case ('link') {
           <h1 #stepHeading tabindex="-1">Konto verbinden</h1>
           <p class="lead">
-            Für <strong>{{ pendingEmail() }}</strong> gibt es schon ein Lumiknot-Konto. Bestätige einmal mit seinem
+            Für <strong>{{ pendingEmail() }}</strong> gibt es schon ein {{ brand }}-Konto. Bestätige einmal mit seinem
             Passwort – danach meldest du dich auch mit {{ providerName[pendingProvider()] }} an.
           </p>
           @if (submitError()) {
@@ -94,7 +94,7 @@
           @if (pendingHasPassword()) {
             <form class="form" [formGroup]="linkForm" (ngSubmit)="submitLink()" novalidate>
               <div class="field">
-                <label for="link-password">Passwort von Lumiknot</label>
+                <label for="link-password">Passwort von {{ brand }}</label>
                 <div class="secret">
                   <input id="link-password" formControlName="password" [type]="showPassword() ? 'text' : 'password'"
                     autocomplete="current-password"

@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { BRAND } from '../../core/brand/brand.config';
+import { BRAND, BRAND_SECTIONS } from '../../core/brand/brand.config';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Brand } from '../../shared/ui/brand/brand';
 import { IconName } from '../../shared/ui/icons/app-icon';
@@ -28,6 +28,7 @@ interface FooterArea {
   styleUrl: './tile-footer.scss',
 })
 export class TileFooter {
+  protected readonly brand = BRAND.name;
   protected readonly homeLabel = BRAND.a11y.homeLink;
   /** Testversion nur mit Demo (GitHub Pages): keine Wege zu Anmeldung/Registrierung. */
   protected readonly demoOnly = DEMO_ONLY;
@@ -37,10 +38,11 @@ export class TileFooter {
 
   readonly year = new Date().getFullYear();
 
-  readonly areas: FooterArea[] = [
-    { tone: 'finance', icon: 'finance', name: 'Finanzen', path: 'finanzen' },
-    { tone: 'household', icon: 'household', name: 'Haushalt', path: 'haushalt' },
-    { tone: 'organisation', icon: 'calendar', name: 'Organisation', path: 'organisation' },
-    { tone: 'travel', icon: 'travel', name: 'Reisen', path: 'reisen' },
-  ];
+  // Aus der Brand-Registry; `tone` = Klassenname im Stylesheet (Organisation heißt dort historisch `organisation`).
+  readonly areas: FooterArea[] = BRAND_SECTIONS.map((area) => ({
+    tone: area.id === 'organization' ? 'organisation' : area.id,
+    icon: area.icon,
+    name: area.label,
+    path: area.route,
+  }));
 }

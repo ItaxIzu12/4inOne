@@ -44,17 +44,51 @@ for (const dir of DIRS) {
   }
 }
 
-// Logo-Farben: --logo-* in styles.css müssen den Werten in brand.config.ts entsprechen (eine Quelle, kein Auseinanderlaufen).
-const config = readFileSync(join(ROOT, 'src/app/core/brand/brand.config.ts'), 'utf8');
-const styles = readFileSync(join(ROOT, 'src/styles.css'), 'utf8');
-for (const section of ['finance', 'household', 'organization', 'travel']) {
-  const inConfig = new RegExp(`${section}: \\{[^}]*logoColor: '(#[0-9a-fA-F]{6})'`).exec(config)?.[1]?.toLowerCase();
-  const inCss = new RegExp(`--logo-${section}: (#[0-9a-fA-F]{6})`).exec(styles)?.[1]?.toLowerCase();
-  if (!inConfig || inConfig !== inCss) problems.push(`Logo-Farbe ${section}: brand.config.ts ${inConfig} ≠ styles.css ${inCss}`);
+// Eine Quelle, abgeleitete Stellen geprüft (docs/BRAND_CONFIGURATION.md): brand.config.ts ist verbindlich; styles.css,
+// Manifest, index.html und das Backend (config/brand.py) dürfen nicht davon abweichen.
+const { BRAND, BRAND_DEFAULT_TITLE, BRAND_SECTIONS } = await import('../src/app/core/brand/brand.config.ts');
+const read = (path) => readFileSync(join(ROOT, path), 'utf8');
+const same = (label, expected, actual) => {
+  const norm = (v) => String(v ?? '').trim().toLowerCase();
+  if (norm(expected) !== norm(actual)) problems.push(`${label}: erwartet „${expected}“ (brand.config.ts), gefunden „${actual}“`);
+};
+
+// Bereichs-Registry: Schlüssel = ID, eindeutige Routen, Tokens für jedes Theme vorhanden.
+const styles = read('src/styles.css');
+for (const [key, area] of Object.entries(BRAND.areas)) {
+  same(`Registry ${key}: id`, key, area.id);
+  if (key !== 'global') {
+    same(`Logo-Farbe ${key} (styles.css --logo-${key})`, area.logoColor, new RegExp(`--logo-${area.theme}: (#[0-9a-fA-F]{6})`).exec(styles)?.[1]);
+    if (!styles.includes(`--${area.theme}-accent:`)) problems.push(`Registry ${key}: Token --${area.theme}-accent fehlt in styles.css`);
+  }
 }
+const routes = BRAND_SECTIONS.map((a) => a.route);
+if (new Set(routes).size !== routes.length || routes.includes('')) problems.push(`Registry: Routen leer oder doppelt (${routes.join(', ')})`);
+
+// PWA-Manifest
+const manifest = JSON.parse(read('public/manifest.webmanifest'));
+same('Manifest name', BRAND.name, manifest.name);
+same('Manifest short_name', BRAND.name, manifest.short_name);
+same('Manifest description', BRAND.tagline, manifest.description);
+same('Manifest background_color', BRAND.seo.backgroundColor, manifest.background_color);
+same('Manifest theme_color', BRAND.pwa.themeColor, manifest.theme_color);
+
+// index.html (Crawler und Teilen-Vorschauen lesen sie ohne JavaScript, deshalb fest geschrieben)
+const html = read('src/index.html');
+const meta = (attr, name) => new RegExp(`<meta\\s+${attr}="${name}"\\s+content="([^"]*)"`).exec(html.replace(/\n\s*/g, ' '))?.[1];
+same('index.html <title>', BRAND_DEFAULT_TITLE, /<title>([^<]*)<\/title>/.exec(html)?.[1]);
+same('index.html og:title', BRAND_DEFAULT_TITLE, meta('property', 'og:title'));
+same('index.html og:site_name', BRAND.name, meta('property', 'og:site_name'));
+same('index.html description', BRAND.description, meta('name', 'description'));
+same('index.html theme-color', BRAND.seo.themeColor, meta('name', 'theme-color'));
+
+// Backend (Django): gespiegelte Werte
+const backend = readFileSync(join(ROOT, '../backend/config/brand.py'), 'utf8');
+same('backend/config/brand.py PRODUCT_NAME', BRAND.name, /^PRODUCT_NAME = '([^']*)'/m.exec(backend)?.[1]);
+same('backend/config/brand.py PRODUCT_SLUG', BRAND.slug, /^PRODUCT_SLUG = '([^']*)'/m.exec(backend)?.[1]);
 
 if (problems.length) {
-  console.error('Alter Produktname gefunden (Marke ist Lumiknot, docs/BRAND_GUIDELINES.md):\n  ' + problems.join('\n  '));
+  console.error('Markenprüfung fehlgeschlagen (docs/BRAND_CONFIGURATION.md):\n  ' + problems.join('\n  '));
   process.exit(1);
 }
-console.log('Marke: kein alter Produktname im Frontend, Logo-Farben stimmen überein.');
+console.log('Marke: kein alter Produktname; Registry, styles.css, Manifest, index.html und Backend stimmen mit brand.config.ts überein.');

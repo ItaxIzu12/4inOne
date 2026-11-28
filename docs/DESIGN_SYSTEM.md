@@ -150,6 +150,10 @@ Abstand — nie nur über Farbe.
 
 ### Referenz und Migrationsstand
 
+- **Zentrale Brand-Konfiguration (28.11.2026, `docs/BRAND_CONFIGURATION.md`):** Bereichs-Registry `BRAND.areas`
+  (ID, Name, Marke, Beschreibung, Route, Symbol, Theme-Präfix, Logo-Kontext); Seitenleiste, Handy-Navigation,
+  Fußzeile, Landing, Anmeldung und Onboarding lesen Namen, Symbole und Routen daraus. `check:brand` prüft Manifest,
+  `index.html`, `styles.css` und `backend/config/brand.py` dagegen. Sichtbar unverändert.
 - **Finanzen › Transaktionen, Suchfeld (28.11.2026):** darf schmaler werden als die Grundbreite seines Eingabefelds
   (`min-width: 0`, Eingabefeld `width: 0`); vorher ragte es unter Linux-Chromium bei 320 px 3 px über den Rand.
   Aussehen sonst unverändert.

@@ -47,7 +47,7 @@
           width="1440"
           height="900"
           fetchpriority="high"
-          alt="Die Startseite von Lumiknot in der Demo: je eine Karte für Finanzen, Haushalt, Organisation und Reisen mit der Antwort für heute, darunter der Tagesplan und die Finanzen."
+          alt="Die Startseite von {{ brand }} in der Demo: je eine Karte für Finanzen, Haushalt, Organisation und Reisen mit der Antwort für heute, darunter der Tagesplan und die Finanzen."
         />
         </picture>
       </div>
@@ -71,19 +71,19 @@
         <h2 id="problem-title">Vier Apps wissen nichts voneinander. Dein Alltag schon.</h2>
         <p>
           Du planst eine Reise, passt dein Budget an und denkst an das Hotel. Bisher hältst du das selbst zusammen.
-          In Lumiknot hängt es an einer Stelle.
+          In {{ brand }} hängt es an einer Stelle.
         </p>
         <a class="link link--arrow problem__next" routerLink="/" fragment="verknuepfen"
           >Gleich hier ausprobieren<app-icon name="arrow" aria-hidden="true"
         /></a>
       </div>
-      <ul class="compare" aria-label="Zwei Beispiele, vorher und mit Lumiknot">
+      <ul class="compare" [attr.aria-label]="'Zwei Beispiele, vorher und mit ' + brand">
         @for (ex of compare; track ex.title) {
           <li class="compare__item">
             <h3>{{ ex.title }}</h3>
             <dl>
               <div class="compare__before"><dt>Vorher</dt><dd>{{ ex.before }}</dd></div>
-              <div class="compare__after"><dt>Mit Lumiknot</dt><dd>{{ ex.after }}</dd></div>
+              <div class="compare__after"><dt>Mit {{ brand }}</dt><dd>{{ ex.after }}</dd></div>
             </dl>
           </li>
         }
@@ -95,9 +95,9 @@
   <section id="verknuepfen" class="section play" aria-labelledby="play-title">
     <div class="wrap">
       <div class="play__head">
-        <h2 id="play-title">Probier aus, was Lumiknot verbindet.</h2>
+        <h2 id="play-title">Probier aus, was {{ brand }} verbindet.</h2>
         <p>
-          Wähle ein Beispiel. Lumiknot schlägt vor, was aus deinen Einträgen dazugehört, und sagt dir, warum. Ob verknüpft
+          Wähle ein Beispiel. {{ brand }} schlägt vor, was aus deinen Einträgen dazugehört, und sagt dir, warum. Ob verknüpft
           wird, entscheidest du – Vorschlag für Vorschlag.
         </p>
       </div>
@@ -220,7 +220,7 @@
                 </span>
               </li>
             } @empty {
-              <li class="sug sug--empty">Keine Vorschläge mehr. Abgelehnte schlägt Lumiknot für dieses Paar nicht wieder vor.</li>
+              <li class="sug sug--empty">Keine Vorschläge mehr. Abgelehnte schlägt {{ brand }} für dieses Paar nicht wieder vor.</li>
             }
           </ul>
           @if (step() >= 3) {
@@ -374,7 +374,7 @@
     <div class="wrap privacy__inner">
       <div class="privacy__head">
         <h2 id="privacy-title">Privat ist die Grundeinstellung.</h2>
-        <p>Teilen ist bei Lumiknot immer eine eigene Entscheidung, nie ein Nebeneffekt.</p>
+        <p>Teilen ist bei {{ brand }} immer eine eigene Entscheidung, nie ein Nebeneffekt.</p>
         <dl class="facts">
           @for (fact of facts; track fact.title) {
             <div class="fact">

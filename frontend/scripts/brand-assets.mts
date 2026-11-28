@@ -7,7 +7,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
-import { BRAND } from '../src/app/core/brand/brand.config.ts';
+import { BRAND, BRAND_SECTIONS } from '../src/app/core/brand/brand.config.ts';
 import {
   ORBIT_ELEMENTS,
   ORBIT_EXTENT,
@@ -36,7 +36,7 @@ function orbitPaths(opts: { small?: boolean; mono?: string; id?: string } = {}):
   const common = `fill="none" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"`;
   if (!opts.mono) {
     return ORBIT_ELEMENTS.map(
-      (el) => `<path d="${el.d}" transform="rotate(${el.rotate})" stroke="${BRAND.sections[el.section].logoColor}" ${common}/>`,
+      (el) => `<path d="${el.d}" transform="rotate(${el.rotate})" stroke="${BRAND.areas[el.section].logoColor}" ${common}/>`,
     ).join('');
   }
   // Einfarbig: jedes Element wird dort ausgespart, wo spätere Elemente darüber liegen (Lücke 18 Einheiten).
@@ -109,8 +109,8 @@ function transparentHtml(size: number): string {
 }
 
 function ogHtml(): string {
-  const pills = (Object.keys(BRAND.sections) as (keyof typeof BRAND.sections)[])
-    .map((key) => `<span style="background:var(--${key})">${BRAND.sections[key].label}</span>`)
+  const pills = BRAND_SECTIONS
+    .map((area) => `<span style="background:var(--${area.id})">${area.label}</span>`)
     .join('');
   const inter = readFileSync(join(PUBLIC, 'fonts/inter/Inter-Variable.woff2')).toString('base64');
   return `<style>${fontFace}@font-face{font-family:Inter;src:url(data:font/woff2;base64,${inter}) format('woff2');font-weight:100 900}

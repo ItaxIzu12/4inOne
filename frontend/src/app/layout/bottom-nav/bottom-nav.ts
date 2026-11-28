@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+
+import { BRAND } from '../../core/brand/brand.config';
 import { IconFinanzen } from '../../shared/ui/icons/icon-finance';
 import { IconHaushalt } from '../../shared/ui/icons/icon-household';
 import { IconOrganisation } from '../../shared/ui/icons/icon-organization';
@@ -25,8 +27,8 @@ export class BottomNav {
   // zeigt auf /app/..., der Guard leitet im ausgeloggten Zustand zu /login.
   protected readonly items: NavItem[] = [
     { route: '/', label: 'Start' },
-    { route: '/finanzen', label: 'Finanzen', accent: 'finance' },
-    { route: '/haushalt', label: 'Haushalt', accent: 'household' },
-    { route: '/organisation', label: 'Organisation', accent: 'organize' },
+    { route: `/${BRAND.areas.finance.route}`, label: BRAND.areas.finance.label, accent: 'finance' },
+    { route: `/${BRAND.areas.household.route}`, label: BRAND.areas.household.label, accent: 'household' },
+    { route: `/${BRAND.areas.organization.route}`, label: BRAND.areas.organization.label, accent: 'organize' },
   ];
 }

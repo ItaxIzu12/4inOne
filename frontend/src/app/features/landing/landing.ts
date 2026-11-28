@@ -1,5 +1,5 @@
 import { afterNextRender, afterRenderEffect, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, signal, viewChild, viewChildren } from '@angular/core';
-import { BRAND } from '../../core/brand/brand.config';
+import { BRAND, BrandSection } from '../../core/brand/brand.config';
 import { RouterLink } from '@angular/router';
 import { AnimatedBeam } from '../../shared/ui/animated-beam/animated-beam';
 import { AreaTone } from '../../shared/ui/area-deck/area-deck';
@@ -9,6 +9,12 @@ import { TileFooter } from '../../layout/tile-footer/tile-footer';
 import { DEMO_ONLY } from '../../core/demo-only';
 
 /** Ein Bereich der App, so wie er auf der Startseite gezeigt wird. Bild und Werte stammen aus der echten Demo. */
+/** Name, Symbol, Schlüssel und Demo-Link eines Bereichs aus der Brand-Registry; die Texte der Startseite bleiben hier. */
+function areaIdentity(id: BrandSection): Pick<Area, 'key' | 'icon' | 'name' | 'demo'> {
+  const area = BRAND.areas[id];
+  return { key: area.route, icon: area.icon, name: area.label, demo: `/demo/${area.route}` };
+}
+
 interface Area {
   key: string;
   tone: AreaTone;
@@ -91,68 +97,57 @@ const DECIDED: Record<Decision, string> = {
   styleUrls: ['./landing.scss', './landing-sections.scss', './landing-play.scss', './landing-end.scss'],
 })
 export class Landing {
+  protected readonly brand = BRAND.name;
   protected readonly homeLabel = BRAND.a11y.homeLink;
   /** Testversion nur mit Demo (GitHub Pages): keine Wege zu Anmeldung/Registrierung. */
   protected readonly demoOnly = DEMO_ONLY;
   readonly areas: Area[] = [
     {
-      key: 'finanzen',
+      ...areaIdentity('finance'),
       problem: 'Ende des Monats fragst du dich, wohin das Geld gegangen ist.',
       benefit: 'Du sparst gezielt auf das, was dir wichtig ist, statt am Monatsende zu rätseln.',
       tone: 'finance',
-      icon: 'finance',
-      name: 'Finanzen',
       features: [
         { title: 'Monatsbudget und Kategorien', text: 'Du siehst jeden Tag, was im Monat noch übrig ist.' },
         { title: 'Sparziele mit Fortschritt', text: 'Für die neue Waschmaschine oder den nächsten Urlaub.' },
         { title: 'Kontoauszug importieren', text: 'Als Datei, mit Vorschau vor dem Speichern. Ohne Bankverbindung.' },
       ],
-      demo: '/demo/finanzen',
       shot: { name: 'finanzen', desk: [320, 100, 820], phone: [350, 340, 620, 290], alt: 'Finanzen in der Demo: noch verfügbar im Oktober 662,30 €, etwa 66 € pro Tag, darunter Einnahmen, Ausgaben, Gespartes und die Ausgabenkurve.' },
     },
     {
-      key: 'haushalt',
+      ...areaIdentity('household'),
       problem: 'Wer kauft ein, wer putzt, wann läuft die Garantie ab? Das steht auf Zetteln und in Chats.',
       benefit: 'Alle im Haushalt sehen dasselbe, und Fristen fallen dir rechtzeitig auf.',
       tone: 'household',
-      icon: 'household',
-      name: 'Haushalt',
       features: [
         { title: 'Routinen mit Zuständigkeit', text: 'Wer gießt die Pflanzen, wer bringt den Müll raus.' },
         { title: 'Gemeinsame Einkaufsliste', text: 'Alle im Haushalt sehen dieselbe Liste.' },
         { title: 'Geräte und Verträge', text: 'Garantien, Wartungen und Kündigungsfristen rechtzeitig im Blick.' },
       ],
-      demo: '/demo/haushalt',
       shot: { name: 'haushalt', desk: [320, 100, 800], phone: [336, 250, 580, 180], alt: 'Haushalt in der Demo: 3 Aufgaben heute mit etwa 45 Minuten, darunter die Räume nach Dringlichkeit und die heute fälligen Aufgaben.' },
     },
     {
-      key: 'organisation',
+      ...areaIdentity('organization'),
       problem: 'Termine im Kalender, Aufgaben im Kopf, Notizen irgendwo.',
       benefit: 'Dein Tag steht an einer Stelle, mit dem, was als Nächstes kommt.',
       tone: 'organisation',
-      icon: 'calendar',
-      name: 'Organisation',
       features: [
         { title: 'Kalender', text: 'Tag, Woche und Monat, mit Ort und Uhrzeit.' },
         { title: 'Aufgaben', text: 'Mit Fälligkeit, auch wiederkehrend.' },
         { title: 'Notizen und Dateien', text: 'Alles zu einem Vorhaben an einer Stelle.' },
       ],
-      demo: '/demo/organisation',
       shot: { name: 'organisation', desk: [320, 100, 1090], phone: [1076, 450, 320, 300], alt: 'Organisation in der Demo: Monatskalender Oktober mit Terminen wie Zahnarzt, Badminton und Teammeeting.' },
     },
     {
-      key: 'reisen',
+      ...areaIdentity('travel'),
       problem: 'Unterkunft, Packliste und Budget verteilen sich über Mails, Listen und Tabellen.',
       benefit: 'Eine Reise mit allem, was dazugehört, auch zusammen mit den Mitreisenden.',
       tone: 'travel',
-      icon: 'travel',
-      name: 'Reisen',
       features: [
         { title: 'Planung', text: 'Anreise, Unterkunft und Aufgaben vor der Abfahrt.' },
         { title: 'Packliste', text: 'Zum Abhaken, mit Stand: 12 von 24 gepackt.' },
         { title: 'Budget und Mitreisende', text: 'Teile genau diese Reise mit den Menschen, die mitfahren.' },
       ],
-      demo: '/demo/reisen',
       shot: { name: 'reisen', desk: [320, 100, 1090], phone: [330, 232, 700, 240], alt: 'Reisen in der Demo: die Wochenendreise von Düsseldorf nach Berlin als Bordkarte, in 12 Tagen, mit 4 offenen Aufgaben und 12 von 24 gepackten Sachen, danach Davos und Gardasee.' },
     },
   ];
@@ -348,15 +343,15 @@ export class Landing {
 
   readonly faq: Question[] = [
     { q: 'Muss ich alle vier Bereiche nutzen?', a: 'Nein. Jeder Bereich funktioniert für sich. Starte mit dem, den du brauchst, und nimm später dazu, was passt.' },
-    { q: 'Kann ich Lumiknot ohne Konto ausprobieren?', a: 'Ja. Die Demo läuft ohne Anmeldung mit Beispieldaten. Du kannst alles anklicken; gespeichert wird nichts.' },
+    { q: `Kann ich ${BRAND.name} ohne Konto ausprobieren?`, a: 'Ja. Die Demo läuft ohne Anmeldung mit Beispieldaten. Du kannst alles anklicken; gespeichert wird nichts.' },
     { q: 'Wer sieht meine persönlichen Daten?', a: 'Nur du. Den Haushalt teilst du mit den Menschen, die darin wohnen, eine Reise mit den Mitreisenden. Deinen Finanzbereich kann niemand sonst sehen, auch nicht über eine Verknüpfung.' },
-    { q: 'Wie funktionieren Verknüpfungen?', a: 'Lumiknot erkennt an deinen Einträgen, was zusammengehören könnte, etwa eine Aufgabe, die dein Reiseziel nennt und kurz vor der Reise fällig ist, und schlägt es mit Begründung vor. Du entscheidest: verknüpfen, ablehnen oder später. Verknüpfte Einträge erreichst du mit einem Tipp voneinander. Neue Einträge legt Lumiknot dabei nicht an, und niemand bekommt dadurch Zugriff.' },
-    { q: 'Muss ich mein Bankkonto verbinden?', a: 'Nein, Lumiknot verbindet sich nicht mit deiner Bank. Ausgaben trägst du selbst ein oder importierst einen Kontoauszug als Datei, mit Vorschau vor dem Speichern.' },
-    { q: 'Gibt es eine mobile App?', a: 'Lumiknot läuft im Browser, am Handy wie am Computer, ohne Installation. Eine App aus dem App Store oder Play Store gibt es nicht.' },
+    { q: 'Wie funktionieren Verknüpfungen?', a: `${BRAND.name} erkennt an deinen Einträgen, was zusammengehören könnte, etwa eine Aufgabe, die dein Reiseziel nennt und kurz vor der Reise fällig ist, und schlägt es mit Begründung vor. Du entscheidest: verknüpfen, ablehnen oder später. Verknüpfte Einträge erreichst du mit einem Tipp voneinander. Neue Einträge legt ${BRAND.name} dabei nicht an, und niemand bekommt dadurch Zugriff.` },
+    { q: 'Muss ich mein Bankkonto verbinden?', a: `Nein, ${BRAND.name} verbindet sich nicht mit deiner Bank. Ausgaben trägst du selbst ein oder importierst einen Kontoauszug als Datei, mit Vorschau vor dem Speichern.` },
+    { q: 'Gibt es eine mobile App?', a: `${BRAND.name} läuft im Browser, am Handy wie am Computer, ohne Installation. Eine App aus dem App Store oder Play Store gibt es nicht.` },
     { q: 'Welche Funktionen gibt es schon?', a: 'Alle vier Bereiche, Verknüpfungen mit Vorschlägen, das Teilen von Haushalt und Reisen, der Import von Kontoauszügen und Kalendern als Datei und die Anmeldung mit zweitem Faktor. Noch nicht: Bankanbindung, ein laufender Abgleich mit externen Kalendern und automatische Abläufe.' },
-    { q: 'Wie schützt Lumiknot mein Konto?', a: 'Passwörter werden nur als sicherer Hash gespeichert, die Anmeldung lässt sich mit einem zweiten Faktor absichern, und du siehst und beendest deine angemeldeten Geräte in den Einstellungen.' },
+    { q: `Wie schützt ${BRAND.name} mein Konto?`, a: 'Passwörter werden nur als sicherer Hash gespeichert, die Anmeldung lässt sich mit einem zweiten Faktor absichern, und du siehst und beendest deine angemeldeten Geräte in den Einstellungen.' },
     { q: 'Kann ich meine Daten und mein Konto löschen?', a: 'Ja, jederzeit in den Einstellungen unter „Profil“. Dein Konto und deine Daten werden dann gelöscht.' },
-    { q: 'Was kostet Lumiknot?', a: 'Das steht noch nicht fest. Sobald es feststeht, steht es hier. Die Demo kannst du jederzeit ohne Konto nutzen.' },
+    { q: `Was kostet ${BRAND.name}?`, a: 'Das steht noch nicht fest. Sobald es feststeht, steht es hier. Die Demo kannst du jederzeit ohne Konto nutzen.' },
   ];
 
   // ---------- Bereichs-Umschalter (Tabs nach WAI-ARIA: Pfeiltasten, Pos1/Ende) ----------

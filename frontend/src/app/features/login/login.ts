@@ -50,6 +50,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   styleUrl: './login.scss',
 })
 export class Login {
+  protected readonly brand = BRAND.name;
   protected readonly homeLabel = BRAND.a11y.homeLink;
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);

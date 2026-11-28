@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import { BRAND, BrandContext } from '../../../core/brand/brand.config';
+import { BRAND, BRAND_SECTIONS, BrandContext } from '../../../core/brand/brand.config';
 import { ORBIT_ELEMENTS, ORBIT_STROKE, orbitViewBox } from './orbit';
 
 /**
@@ -80,7 +80,5 @@ export class Brand {
   protected readonly viewBox = orbitViewBox();
   protected readonly stroke = ORBIT_STROKE;
   protected readonly elements = ORBIT_ELEMENTS;
-  protected readonly colors = Object.fromEntries(
-    Object.entries(BRAND.sections).map(([key, s]) => [key, s.logoColor]),
-  ) as Record<string, string>;
+  protected readonly colors = Object.fromEntries(BRAND_SECTIONS.map((s) => [s.id, s.logoColor])) as Record<string, string>;
 }

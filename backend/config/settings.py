@@ -18,6 +18,8 @@ from pathlib import Path
 
 import environ
 
+from config.brand import PRODUCT_NAME, PRODUCT_SLUG
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -349,7 +351,7 @@ SIMPLE_JWT = {
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:4200').rstrip('/')
 
 # E-Mail-Versand: siehe MAILERS am Ende dieser Datei. Absender und Gültigkeit von Einladungen:
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='Lumiknot <no-reply@lumiknot.local>')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=f'{PRODUCT_NAME} <no-reply@{PRODUCT_SLUG}.local>')
 CONTACT_INVITE_EXPIRY_DAYS = env.int('CONTACT_INVITE_EXPIRY_DAYS', default=14)
 
 # Besucherzählung (website/): wie lange die Tageszähler aufbewahrt werden (`manage.py prune_website`, täglich).
@@ -388,7 +390,7 @@ CONTENT_SECURITY_POLICY = {
 
 # django-otp: Name, der in der Authenticator-App (Google Authenticator etc.)
 # neben dem Konto angezeigt wird, siehe TOTPDevice.config_url.
-OTP_TOTP_ISSUER = 'Lumiknot'
+OTP_TOTP_ISSUER = PRODUCT_NAME  # Name neuer Einträge in Authenticator-Apps
 
 # django-axes: Brute-Force-/Credential-Stuffing-Schutz (ARCHITEKTUR.md §3.1)
 AXES_FAILURE_LIMIT = 5

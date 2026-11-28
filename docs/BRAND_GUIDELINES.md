@@ -61,6 +61,9 @@ Dunkelmodus ≥ 6,3:1 auf den Karten. Tokens: `--logo-*`, `--*-accent`, `--*-fil
 
 ## Single Source of Truth
 
+Ausführlich mit Typen, Registry, Prüfungen und Erweiterungsregeln: `docs/BRAND_CONFIGURATION.md`.
+
+
 - `frontend/src/app/core/brand/brand.config.ts` (`BRAND`): Name, Kurzform, Claim, Leitsatz, Beschreibung, Bereiche
   (deutscher Name, Markenname, Logo-Farbe), neutrale Farben, Schriften, Logo-Dateien, SEO-Angaben (Teilen-Bild,
   Theme- und Hintergrundfarbe), Beschriftungen. Seitentitel immer `brandTitle('Seite')`.

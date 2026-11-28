@@ -1,4 +1,5 @@
 import { Component, DestroyRef, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
+import { BRAND } from '../../core/brand/brand.config';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
@@ -65,6 +66,7 @@ function parseAmount(raw: string): number | null {
   styleUrl: './onboarding-page.scss',
 })
 export class OnboardingPage {
+  protected readonly brand = BRAND.name;
   private readonly api = inject(OnboardingApiService);
   private readonly auth = inject(AuthService);
   private readonly entries = inject(FirstEntryService);
